@@ -60,7 +60,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             'gateway': '2001:db8:0:1::c0a8:a01'}, }
 
     def setUp(self):
-        super(DHCPAgentOVSTestFramework, self).setUp()
+        super().setUp()
         config.setup_logging()
         self.conf_fixture = self.useFixture(fixture_config.Config())
         self.conf = self.conf_fixture.conf
@@ -135,7 +135,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
     def create_port_dict(self, network_id, subnet_id, mac_address,
                          ip_version=lib_const.IP_VERSION_4, ip_address=None):
         ip_address = (self._IP_ADDRS[ip_version]['addr']
-            if not ip_address else ip_address)
+                      if not ip_address else ip_address)
         port_dict = dhcp.DictModel(id=uuidutils.generate_uuid(),
                                    name="foo",
                                    mac_address=mac_address,

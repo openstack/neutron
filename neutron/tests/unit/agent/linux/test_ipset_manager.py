@@ -32,7 +32,7 @@ FAKE_IPS = [('10.0.0.1', 'fa:16:3e:aa:bb:c1'),
 
 class BaseIpsetManagerTest(base.BaseTestCase):
     def setUp(self):
-        super(BaseIpsetManagerTest, self).setUp()
+        super().setUp()
         self.ipset = ipset_manager.IpsetManager()
         self.execute = mock.patch.object(self.ipset, "execute").start()
         self.expected_calls = []
@@ -67,7 +67,7 @@ class BaseIpsetManagerTest(base.BaseTestCase):
 
     def expect_set(self, addresses):
         temp_input = ['create %s hash:net family inet' % TEST_SET_NAME_NEW]
-        temp_input.extend('add %s %s' % (TEST_SET_NAME_NEW, ip)
+        temp_input.extend('add {} {}'.format(TEST_SET_NAME_NEW, ip)
                           for ip in self.ipset._sanitize_addresses(addresses))
         input = '\n'.join(temp_input)
         self.expected_calls.extend([

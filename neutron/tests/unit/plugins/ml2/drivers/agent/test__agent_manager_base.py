@@ -28,7 +28,7 @@ class RPCCallBackImpl(amb.CommonAgentManagerRpcCallBackBase):
 
 class Test_CommonAgentManagerRpcCallBackBase(base.BaseTestCase):
     def setUp(self):
-        super(Test_CommonAgentManagerRpcCallBackBase, self).setUp()
+        super().setUp()
         self.rpc_callbacks = RPCCallBackImpl(None, None, None)
 
     def test_get_and_clear_updated_devices(self):

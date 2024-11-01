@@ -30,7 +30,7 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['logger', 'test_with_agent']
 
     def setUp(self):
-        super(PlacementReportPluginTestCases, self).setUp()
+        super().setUp()
         self.service_plugin = plugin.PlacementReportPlugin()
 
     def test__get_rp_by_name_found(self):
@@ -110,7 +110,7 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         with mock.patch.object(self.service_plugin._core_plugin,
                 '_get_agent_by_type_and_host') as mock_get_agent, \
             mock.patch.object(self.service_plugin,
-                '_sync_placement_state') as mock_sync:
+                              '_sync_placement_state') as mock_sync:
 
             self.service_plugin.handle_placement_config(
                 mock.ANY, mock.ANY, mock.ANY, payload)
@@ -131,7 +131,7 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         with mock.patch.object(self.service_plugin._core_plugin,
                 '_get_agent_by_type_and_host') as mock_get_agent, \
             mock.patch.object(self.service_plugin,
-                '_sync_placement_state') as mock_sync:
+                              '_sync_placement_state') as mock_sync:
 
             self.service_plugin.handle_placement_config(
                 mock.ANY, mock.ANY, mock.ANY, payload)
@@ -154,7 +154,7 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         with mock.patch.object(self.service_plugin._core_plugin,
                 '_get_agent_by_type_and_host') as mock_get_agent, \
             mock.patch.object(self.service_plugin,
-                '_sync_placement_state') as mock_sync:
+                              '_sync_placement_state') as mock_sync:
 
             self.service_plugin.handle_placement_config(
                 mock.ANY, mock.ANY, mock.ANY, payload)
@@ -175,7 +175,7 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         with mock.patch.object(self.service_plugin._core_plugin,
                 '_get_agent_by_type_and_host') as mock_get_agent, \
             mock.patch.object(self.service_plugin,
-                '_sync_placement_state') as mock_sync:
+                              '_sync_placement_state') as mock_sync:
 
             self.service_plugin.handle_placement_config(
                 mock.ANY, mock.ANY, mock.ANY, payload)
@@ -196,7 +196,7 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
                 '_get_agent_by_type_and_host',
                 return_value={'resources_synced': False}) as mock_get_agent, \
             mock.patch.object(self.service_plugin,
-                '_sync_placement_state') as mock_sync:
+                              '_sync_placement_state') as mock_sync:
 
             self.service_plugin.handle_placement_config(
                 mock.ANY, mock.ANY, mock.ANY, payload)
@@ -216,10 +216,10 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         agent_db = mock.Mock()
 
         with mock.patch.object(self.service_plugin._batch_notifier,
-                'queue_event') as mock_queue_event, \
+                               'queue_event') as mock_queue_event, \
             mock.patch.object(self.service_plugin._placement_client,
-               'list_resource_providers',
-               return_value={'resource_providers': [{'uuid': 'fake uuid'}]}):
+                'list_resource_providers',
+                return_value={'resource_providers': [{'uuid': 'fake uuid'}]}):
 
             self.service_plugin._sync_placement_state(agent, agent_db)
 
@@ -238,11 +238,12 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         agent_db = mock.Mock()
 
         with mock.patch.object(self.service_plugin._batch_notifier,
-                'queue_event') as mock_queue_event, \
-            mock.patch.object(self.service_plugin._placement_client,
-               'list_resource_providers',
-               return_value={'resource_providers': [
-                   {'uuid': 'fake uuid'}]}) as mock_list_rps:
+                               'queue_event') as mock_queue_event, \
+            mock.patch.object(
+                self.service_plugin._placement_client,
+                'list_resource_providers',
+                return_value={'resource_providers': [
+                    {'uuid': 'fake uuid'}]}) as mock_list_rps:
 
             self.service_plugin._sync_placement_state(agent, agent_db)
 
@@ -268,9 +269,9 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         mock_state = mock.Mock(return_value=[])
 
         with mock.patch.object(self.service_plugin._batch_notifier,
-                'queue_event') as mock_queue_event, \
+                               'queue_event') as mock_queue_event, \
             mock.patch('neutron.agent.common.placement_report.PlacementState',
-                return_value=mock_state) as mock_placement_state:
+                       return_value=mock_state) as mock_placement_state:
 
             self.service_plugin._sync_placement_state(agent, agent_db)
 
@@ -308,9 +309,9 @@ class PlacementReportPluginTestCases(test_plugin.Ml2PluginV2TestCase):
         mock_state = mock.Mock(return_value=[])
 
         with mock.patch.object(self.service_plugin._batch_notifier,
-                'queue_event') as mock_queue_event, \
+                               'queue_event') as mock_queue_event, \
             mock.patch('neutron.agent.common.placement_report.PlacementState',
-                return_value=mock_state) as mock_placement_state:
+                       return_value=mock_state) as mock_placement_state:
 
             self.service_plugin._sync_placement_state(agent, agent_db)
 

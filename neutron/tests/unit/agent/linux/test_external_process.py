@@ -46,7 +46,7 @@ DEFAULT_ENVVAR = ep.PROCESS_TAG + '=' + ep.DEFAULT_SERVICE_NAME
 class BaseTestProcessMonitor(base.BaseTestCase):
 
     def setUp(self):
-        super(BaseTestProcessMonitor, self).setUp()
+        super().setUp()
         self.log_patch = mock.patch("neutron.agent.linux.external_process."
                                     "LOG.error")
         self.error_log = self.log_patch.start()
@@ -117,7 +117,7 @@ class TestProcessMonitor(BaseTestProcessMonitor):
 
 class TestProcessManager(base.BaseTestCase):
     def setUp(self):
-        super(TestProcessManager, self).setUp()
+        super().setUp()
         self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         self.execute = self.execute_p.start()
         self.delete_if_exists = mock.patch(
@@ -454,7 +454,7 @@ class TestProcessManagerScript(TestProcessManager):
             active.__get__ = mock.Mock(return_value=False)
             pm.enable()
 
-        with open(output.name, 'r') as f:
+        with open(output.name) as f:
             ret_value = f.readline().strip()
         expected_value = ('Variable PROCESS_TAG set: %s-%s' %
                           (service_name, uuid))
@@ -475,7 +475,7 @@ class TestProcessManagerScript(TestProcessManager):
             mock_kill_cmd.return_value = [script.name, output.name]
             pm.disable(sig='15')
 
-        with open(output.name, 'r') as f:
+        with open(output.name) as f:
             ret_value = f.readline().strip()
         expected_value = ('Variable PROCESS_TAG set: %s-%s' %
                           (service_name, uuid))

@@ -41,15 +41,15 @@ class VxlanTypeTest(base_type_tunnel.TunnelTypeTestMixin,
         return self.driver.add_endpoint(ip, host, port)
 
     def test_add_endpoint(self):
-        endpoint = super(VxlanTypeTest, self).test_add_endpoint()
+        endpoint = super().test_add_endpoint()
         self.assertEqual(VXLAN_UDP_PORT_ONE, endpoint.udp_port)
 
     def test_get_endpoint_by_host(self):
-        endpoint = super(VxlanTypeTest, self).test_get_endpoint_by_host()
+        endpoint = super().test_get_endpoint_by_host()
         self.assertEqual(VXLAN_UDP_PORT_ONE, endpoint.udp_port)
 
     def test_get_endpoint_by_ip(self):
-        endpoint = super(VxlanTypeTest, self).test_get_endpoint_by_ip()
+        endpoint = super().test_get_endpoint_by_ip()
         self.assertEqual(VXLAN_UDP_PORT_ONE, endpoint.udp_port)
 
     def test_get_endpoints(self):

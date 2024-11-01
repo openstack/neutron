@@ -195,12 +195,12 @@ class MechDriverConfFixture(config_fixture.Config):
         :param registration_func: The method which do the config group's
                                   registration.
         """
-        super(MechDriverConfFixture, self).__init__(conf)
+        super().__init__(conf)
         self.prohibit_list_cfg = prohibit_list_cfg
         self.registration_func = registration_func
 
     def setUp(self):
-        super(MechDriverConfFixture, self).setUp()
+        super().setUp()
         self.registration_func(self.conf)
         for group, option in self.prohibit_list_cfg.items():
             self.config(group=group, **option)

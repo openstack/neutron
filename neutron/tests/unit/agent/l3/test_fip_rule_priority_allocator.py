@@ -44,7 +44,7 @@ class TestFipPriority(base.BaseTestCase):
 
 class TestFipRulePriorityAllocator(base.BaseTestCase):
     def setUp(self):
-        super(TestFipRulePriorityAllocator, self).setUp()
+        super().setUp()
         self.priority_rule_start = 100
         self.priority_rule_end = 200
         self.data_store_path = '/data_store_path_test'

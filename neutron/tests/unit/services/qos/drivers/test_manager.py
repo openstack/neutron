@@ -36,7 +36,7 @@ from neutron.tests.unit.services.qos import base
 class TestQosDriversManagerBase(base.BaseQosTestCase):
 
     def setUp(self):
-        super(TestQosDriversManagerBase, self).setUp()
+        super().setUp()
         self.config_parse()
         self.setup_coreplugin(load_plugins=False)
         self._loaded_qos_drivers = []
@@ -91,7 +91,7 @@ class TestQoSDriversRulesValidations(TestQosDriversManagerBase):
     """Test validation of rules for port"""
 
     def setUp(self):
-        super(TestQoSDriversRulesValidations, self).setUp()
+        super().setUp()
         self.ctxt = context.Context('fake_user', 'fake_tenant')
 
     def _get_port(self, vif_type, vnic_type):
@@ -295,7 +295,7 @@ class TestQosDriversCalls(TestQosDriversManagerBase):
     """Test QoS driver calls"""
 
     def setUp(self):
-        super(TestQosDriversCalls, self).setUp()
+        super().setUp()
         self.driver_manager = self._create_manager_with_drivers(
             {'driver-A': {'is_loaded': True}})
 

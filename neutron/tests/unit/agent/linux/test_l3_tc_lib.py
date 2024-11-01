@@ -156,7 +156,7 @@ TC_FILTERS_ADD_BY_OTHERS_FOR_ALL_PROTOCOL = TC_FILTERS_ADD_BY_OTHERS_BASE % {
 
 class TestFloatingIPTcCommandBase(base.BaseTestCase):
     def setUp(self):
-        super(TestFloatingIPTcCommandBase, self).setUp()
+        super().setUp()
         self.tc = tc_lib.FloatingIPTcCommandBase(
             FLOATING_IP_DEVICE_NAME,
             namespace=FLOATING_IP_ROUTER_NAMESPACE)
@@ -343,7 +343,7 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
 
 class TestFloatingIPTcCommand(base.BaseTestCase):
     def setUp(self):
-        super(TestFloatingIPTcCommand, self).setUp()
+        super().setUp()
         self.tc = tc_lib.FloatingIPTcCommand(
             FLOATING_IP_DEVICE_NAME,
             namespace=FLOATING_IP_ROUTER_NAMESPACE)

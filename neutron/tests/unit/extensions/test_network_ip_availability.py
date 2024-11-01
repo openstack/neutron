@@ -26,15 +26,16 @@ API_RESOURCE = 'network-ip-availabilities'
 IP_AVAIL_KEY = 'network_ip_availability'
 IP_AVAILS_KEY = 'network_ip_availabilities'
 EXTENSIONS_PATH = ':'.join(extensions.__path__)
-PLUGIN_NAME = '%s.%s' % (plugin_module.NetworkIPAvailabilityPlugin.__module__,
-                         plugin_module.NetworkIPAvailabilityPlugin.__name__)
+PLUGIN_NAME = '{}.{}'.format(
+    plugin_module.NetworkIPAvailabilityPlugin.__module__,
+    plugin_module.NetworkIPAvailabilityPlugin.__name__)
 
 
 class TestNetworkIPAvailabilityAPI(
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def setUp(self):
         svc_plugins = {'plugin_name': PLUGIN_NAME}
-        super(TestNetworkIPAvailabilityAPI, self).setUp(
+        super().setUp(
                 service_plugins=svc_plugins)
         self.plugin = plugin_module.NetworkIPAvailabilityPlugin()
         ext_mgr = api_ext.PluginAwareExtensionManager(

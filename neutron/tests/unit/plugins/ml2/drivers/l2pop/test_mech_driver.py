@@ -69,7 +69,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
     tenant = 'tenant'
 
     def setUp(self):
-        super(TestL2PopulationRpcTestCase, self).setUp()
+        super().setUp()
 
         self.adminContext = context.get_admin_context()
 
@@ -352,13 +352,13 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 port = self._add_router_interface(subnet, router, HOST)
 
                 expected = {port['network_id']:
-                    {'ports': {'20.0.0.2': [constants.FLOODING_ENTRY]},
-                     'network_type': 'vxlan', 'segment_id': 1}}
+                            {'ports': {'20.0.0.2': [constants.FLOODING_ENTRY]},
+                             'network_type': 'vxlan', 'segment_id': 1}}
 
                 self.mock_fanout.reset_mock()
                 interface_info = {'subnet_id': subnet['id']}
-                self.plugin.remove_router_interface(self.adminContext,
-                                         router['id'], interface_info)
+                self.plugin.remove_router_interface(
+                    self.adminContext, router['id'], interface_info)
                 self.mock_fanout.assert_called_with(
                     mock.ANY, 'remove_fdb_entries', expected)
 
@@ -374,9 +374,10 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     device_owner=constants.DEVICE_OWNER_DVR_INTERFACE)\
                         as port:
                 port_id = port['port']['id']
-                plugin.update_distributed_port_binding(self.adminContext,
+                plugin.update_distributed_port_binding(
+                    self.adminContext,
                     port_id, {'port': {portbindings.HOST_ID: HOST_4,
-                    'device_id': router['id']}})
+                              'device_id': router['id']}})
                 port = self._show('ports', port_id, as_admin=True)
                 self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
                                  port['port'][portbindings.VIF_TYPE])
@@ -733,7 +734,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                                 p1['mac_address'],
                                                 p1_ips[0])]},
                                          'network_type': 'vxlan',
-                                         'segment_id': 1}}
+                                          'segment_id': 1}}
 
                             self.mock_cast.assert_called_with(
                                     mock.ANY, 'add_fdb_entries', expected1,
@@ -749,7 +750,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                                 p3['mac_address'],
                                                 p3_ips[0])]},
                                          'network_type': 'vxlan',
-                                         'segment_id': 1}}
+                                          'segment_id': 1}}
 
                             self.mock_fanout.assert_called_with(
                                 mock.ANY, 'add_fdb_entries', expected2)
@@ -844,15 +845,16 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
 
                         # agent on host 1 should be updated with entry from
                         # another host
-                        expected = {p3['network_id']:
-                            {'ports':
-                             {'20.0.0.2': [
-                                 constants.FLOODING_ENTRY,
-                                 l2pop_rpc.PortInfo(
-                                     p3['mac_address'],
-                                     p3['fixed_ips'][0]['ip_address'])]},
-                             'network_type': 'vxlan',
-                             'segment_id': 1}}
+                        expected = {
+                            p3['network_id']:
+                                {'ports':
+                                 {'20.0.0.2': [
+                                      constants.FLOODING_ENTRY,
+                                      l2pop_rpc.PortInfo(
+                                          p3['mac_address'],
+                                          p3['fixed_ips'][0]['ip_address'])]},
+                                 'network_type': 'vxlan',
+                                 'segment_id': 1}}
 
                         self.mock_cast.assert_called_once_with(
                             mock.ANY, 'add_fdb_entries', expected, HOST)
@@ -1417,7 +1419,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.context, port['port']['network_id']),
                 models.PortBinding(), None)
             l2pop_mech._fixed_ips_changed(
-                port_context, None, port['port'], (set(['10.0.0.1']), set()))
+                port_context, None, port['port'], ({'10.0.0.1'}, set()))
 
         # There's no need to send an RPC update if the IP address for an
         # unbound port changed.

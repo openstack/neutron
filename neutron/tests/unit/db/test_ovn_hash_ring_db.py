@@ -33,7 +33,7 @@ HASH_RING_TEST_GROUP = 'test_group'
 class TestHashRing(testlib_api.SqlTestCaseLight):
 
     def setUp(self):
-        super(TestHashRing, self).setUp()
+        super().setUp()
         self.admin_ctx = context.get_admin_context()
         self.addCleanup(self._delete_objs)
 

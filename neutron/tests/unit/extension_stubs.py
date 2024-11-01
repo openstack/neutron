@@ -49,7 +49,7 @@ class StubExtensionWithReqs(StubExtension):
         return ["foo"]
 
 
-class StubPlugin(object):
+class StubPlugin:
 
     def __init__(self, supported_extensions=None):
         supported_extensions = supported_extensions or []

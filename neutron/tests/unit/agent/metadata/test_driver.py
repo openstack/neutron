@@ -42,7 +42,7 @@ from neutron.tests.unit.agent.linux import test_utils
 _uuid = uuidutils.generate_uuid
 
 
-class FakeL3NATAgent(object):
+class FakeL3NATAgent:
 
     def __init__(self):
         self.conf = cfg.CONF
@@ -91,7 +91,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     }
 
     def setUp(self):
-        super(TestMetadataDriverProcess, self).setUp()
+        super().setUp()
         mock.patch('eventlet.spawn').start()
         agent_config.register_interface_driver_opts_helper(cfg.CONF)
         cfg.CONF.set_override('interface_driver',
@@ -204,7 +204,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 "%s.conf" % router_id)
             mock_open = self.useFixture(
                 lib_fixtures.OpenFixture(cfg_file)).mock_open
-            bind_v6_line = 'bind %s:%s interface %s' % (
+            bind_v6_line = 'bind {}:{} interface {}'.format(
                 self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
             if dad_failed:
                 mock_wait.side_effect = ip_lib.DADFailed(

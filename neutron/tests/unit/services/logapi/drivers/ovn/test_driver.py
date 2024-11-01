@@ -293,7 +293,7 @@ class TestOVNDriver(TestOVNDriverBase):
         info_args, _info_kwargs = m_info.call_args_list[0]
         self.assertIn('Cleared %d, Not found %d (out of %d visited) ACLs',
                       info_args[0])
-        self.assertIn('for network log {}'.format(log_name), info_args[0])
+        self.assertIn(f'for network log {log_name}', info_args[0])
         self.assertEqual(len(pg_dict["acls"]) - 1, info_args[1])
         self.assertEqual(len(pg_dict["acls"]) - 4, info_args[2])
         self.assertEqual(len(pg_dict["acls"]), info_args[3])

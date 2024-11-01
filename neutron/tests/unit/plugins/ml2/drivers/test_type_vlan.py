@@ -34,7 +34,7 @@ TENANT_NET = 'phys_net2'
 UNCONFIGURED_NET = 'no_net'
 VLAN_MIN = 200
 VLAN_MAX = 209
-TENANT_VLAN_RANGES = ["%s:%s:%s" % (TENANT_NET, VLAN_MIN, VLAN_MAX)]
+TENANT_VLAN_RANGES = ["{}:{}:{}".format(TENANT_NET, VLAN_MIN, VLAN_MAX)]
 NETWORK_VLAN_RANGES = [PROVIDER_NET] + TENANT_VLAN_RANGES
 UPDATED_VLAN_RANGES = {
     PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)],
@@ -57,7 +57,7 @@ SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
 class VlanTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(VlanTypeTest, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('network_vlan_ranges',
                               NETWORK_VLAN_RANGES,
                               group='ml2_type_vlan')
@@ -360,7 +360,7 @@ class VlanTypeAllocationTest(testlib_api.SqlTestCase):
 class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(VlanTypeTestWithNetworkSegmentRange, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('network_vlan_ranges',
                               NETWORK_VLAN_RANGES,
                               group='ml2_type_vlan')

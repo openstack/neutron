@@ -50,7 +50,7 @@ _long_description = 'x' * (db_const.LONG_DESCRIPTION_FIELD_SIZE + 1)
 class FlavorExtensionTestCase(extension.ExtensionTestCase):
 
     def setUp(self):
-        super(FlavorExtensionTestCase, self).setUp()
+        super().setUp()
         ctx = context.get_admin_context()
         ctx.project_id = 'test-project'
         self.env = {'neutron.context': ctx}
@@ -427,7 +427,7 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                      status=exc.HTTPBadRequest.code)
 
 
-class DummyServicePlugin(object):
+class DummyServicePlugin:
 
     def driver_loaded(self, driver, service_profile):
         pass
@@ -440,7 +440,7 @@ class DummyServicePlugin(object):
         return "Dummy service plugin, aware of flavors"
 
 
-class DummyServiceDriver(object):
+class DummyServiceDriver:
 
     @staticmethod
     def get_service_type():
@@ -453,7 +453,7 @@ class DummyServiceDriver(object):
 class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                            base.PluginFixture):
     def setUp(self):
-        super(FlavorPluginTestCase, self).setUp()
+        super().setUp()
 
         self.config_parse()
         cfg.CONF.set_override(

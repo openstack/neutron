@@ -270,7 +270,7 @@ def create_patch_ports(source, destination):
     :param destination: Instance of OVSBridge
     """
     common = common_utils.get_rand_name(max_length=4, prefix='')
-    prefix = '%s-%s-' % (PATCH_PREFIX, common)
+    prefix = '{}-{}-'.format(PATCH_PREFIX, common)
 
     source_name = common_utils.get_rand_device_name(prefix=prefix)
     destination_name = common_utils.get_rand_device_name(prefix=prefix)
@@ -316,7 +316,7 @@ class RootHelperProcess(subprocess.Popen):
         cmd = shlex.split(root_helper) + cmd
         self.child_pid = None
         LOG.debug("Spawning process %s", cmd)
-        super(RootHelperProcess, self).__init__(cmd, *args, **kwargs)
+        super().__init__(cmd, *args, **kwargs)
         self._wait_for_child_process()
 
     def kill(self, sig=signal.SIGKILL, skip_errors=None):
@@ -391,7 +391,7 @@ class RootHelperProcess(subprocess.Popen):
         return self.poll() is None
 
 
-class Pinger(object):
+class Pinger:
     """Class for sending ICMP packets asynchronously
 
     The aim is to keep sending ICMP packets on background while executing other
@@ -480,7 +480,7 @@ class Pinger(object):
                                "first")
 
 
-class NetcatTester(object):
+class NetcatTester:
     TCP = n_const.PROTO_NAME_TCP
     UDP = n_const.PROTO_NAME_UDP
     SCTP = n_const.PROTO_NAME_SCTP
@@ -642,7 +642,7 @@ class NamespaceFixture(fixtures.Fixture):
     """
 
     def __init__(self, prefix=NS_PREFIX):
-        super(NamespaceFixture, self).__init__()
+        super().__init__()
         self.prefix = prefix
 
     def _setUp(self):
@@ -713,7 +713,7 @@ class NamedVethFixture(VethFixture):
     """
 
     def __init__(self, veth0_prefix=VETH0_PREFIX, veth1_prefix=VETH1_PREFIX):
-        super(NamedVethFixture, self).__init__()
+        super().__init__()
         self.veth0_name = self.get_veth_name(veth0_prefix)
         self.veth1_name = self.get_veth_name(veth1_prefix)
 
@@ -742,7 +742,7 @@ class MacvtapFixture(fixtures.Fixture):
     :type ip_dev: IPDevice
     """
     def __init__(self, src_dev=None, mode=None, prefix=MACVTAP_PREFIX):
-        super(MacvtapFixture, self).__init__()
+        super().__init__()
         self.src_dev = src_dev
         self.mode = mode
         self.prefix = prefix
@@ -773,7 +773,7 @@ class PortFixture(fixtures.Fixture, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, bridge=None, namespace=None, mac=None, port_id=None):
-        super(PortFixture, self).__init__()
+        super().__init__()
         self.bridge = bridge
         self.namespace = namespace
         self.mac = (mac or
@@ -786,7 +786,7 @@ class PortFixture(fixtures.Fixture, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _setUp(self):
-        super(PortFixture, self)._setUp()
+        super()._setUp()
         if not self.bridge:
             self.bridge = self.useFixture(self._create_bridge_fixture()).bridge
 
@@ -826,7 +826,7 @@ class OVSBridgeFixture(fixtures.Fixture):
     """
 
     def __init__(self, prefix=BR_PREFIX):
-        super(OVSBridgeFixture, self).__init__()
+        super().__init__()
         self.prefix = prefix
 
     def _setUp(self):
@@ -846,7 +846,7 @@ class OVSTrunkBridgeFixture(OVSBridgeFixture):
 class OVSTrunkBridgeFixtureTrunkBridge(fixtures.Fixture):
 
     def __init__(self, trunk_id):
-        super(OVSTrunkBridgeFixtureTrunkBridge, self).__init__()
+        super().__init__()
         self.trunk_id = trunk_id
 
     def _setUp(self):
@@ -860,7 +860,7 @@ class OVSPortFixture(PortFixture):
 
     def __init__(self, bridge=None, namespace=None, mac=None, port_id=None,
                  hybrid_plug=False):
-        super(OVSPortFixture, self).__init__(bridge, namespace, mac, port_id)
+        super().__init__(bridge, namespace, mac, port_id)
         self.hybrid_plug = hybrid_plug
         self.vlan_tag = None
 
@@ -868,7 +868,7 @@ class OVSPortFixture(PortFixture):
         return OVSBridgeFixture()
 
     def _setUp(self):
-        super(OVSPortFixture, self)._setUp()
+        super()._setUp()
 
         # because in some tests this port can be used to providing connection
         # between linuxbridge agents and vlan_id can be also added to this
@@ -963,7 +963,7 @@ class LinuxBridgeFixture(fixtures.Fixture):
     """
     def __init__(self, prefix=BR_PREFIX, namespace=UNDEFINED,
                  prefix_is_full_name=False):
-        super(LinuxBridgeFixture, self).__init__()
+        super().__init__()
         self.prefix = prefix
         self.prefix_is_full_name = prefix_is_full_name
         self.namespace = namespace
@@ -1011,7 +1011,7 @@ class LinuxBridgePortFixture(PortFixture):
     """
 
     def __init__(self, bridge, namespace=None, mac=None, port_id=None):
-        super(LinuxBridgePortFixture, self).__init__(
+        super().__init__(
             bridge, namespace, mac, port_id)
         # we need to override port_id value here because in Port() class it is
         # always generated as random. In LinuxBridgePortFixture we need to have
@@ -1023,7 +1023,7 @@ class LinuxBridgePortFixture(PortFixture):
         return LinuxBridgeFixture()
 
     def _setUp(self):
-        super(LinuxBridgePortFixture, self)._setUp()
+        super()._setUp()
         br_port_name = self._get_port_name()
         if br_port_name:
             self.veth_fixture = self.useFixture(
@@ -1052,7 +1052,7 @@ class LinuxBridgePortFixture(PortFixture):
         return None
 
 
-class VethBridge(object):
+class VethBridge:
 
     def __init__(self, ports):
         self.ports = ports
@@ -1089,7 +1089,7 @@ class VethPortFixture(PortFixture):
         return VethBridgeFixture()
 
     def _setUp(self):
-        super(VethPortFixture, self)._setUp()
+        super()._setUp()
         self.port = self.bridge.allocate_port()
 
         ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)

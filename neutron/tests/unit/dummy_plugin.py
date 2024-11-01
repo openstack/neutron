@@ -51,7 +51,7 @@ RESOURCE_ATTRIBUTE_MAP = {
 }
 
 
-class Dummy(object):
+class Dummy:
 
     @classmethod
     def get_name(cls):

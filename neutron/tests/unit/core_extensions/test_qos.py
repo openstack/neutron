@@ -41,7 +41,7 @@ def _get_test_dbdata(qos_policy_id, qos_network_policy_id=None):
 class QosCoreResourceExtensionTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(QosCoreResourceExtensionTestCase, self).setUp()
+        super().setUp()
         self.core_extension = qos_core.QosCoreResourceExtension()
         policy_p = mock.patch('neutron.objects.qos.policy.QosPolicy')
         self.policy_m = policy_p.start()
@@ -286,7 +286,8 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
                               qos_consts.QOS_POLICY_ID: None}
             qos_policy_id = mock.Mock()
             qos_policy = mock.MagicMock()
-            with mock.patch.object(policy.QosPolicyDefault, "get_object",
+            with mock.patch.object(
+                    policy.QosPolicyDefault, "get_object",
                     return_value=qos_policy_id) as mock_get_default_policy_id:
                 self.policy_m.get_policy_obj = mock.Mock(
                     return_value=qos_policy)
@@ -305,7 +306,8 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
                               'id': network_id,
                               qos_consts.QOS_POLICY_ID: None}
             qos_policy = mock.MagicMock()
-            with mock.patch.object(policy.QosPolicyDefault, "get_object",
+            with mock.patch.object(
+                    policy.QosPolicyDefault, "get_object",
                     return_value=None) as mock_get_default_policy_id:
                 self.policy_m.get_object = mock.Mock(return_value=qos_policy)
                 self.core_extension.process_fields(

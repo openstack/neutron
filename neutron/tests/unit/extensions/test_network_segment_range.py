@@ -34,7 +34,7 @@ TEST_PLUGIN_KLASS = (
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 
-class NetworkSegmentRangeExtensionManager(object):
+class NetworkSegmentRangeExtensionManager:
 
     def get_resources(self):
         return ext_range.Network_segment_range.get_resources()
@@ -106,7 +106,7 @@ class NetworkSegmentRangeTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = ["provider", "network-segment-range"]
 
     def __init__(self):
-        super(NetworkSegmentRangeTestPlugin, self).__init__()
+        super().__init__()
         self.type_manager = mock.Mock()
 
 
@@ -120,7 +120,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                            SERVICE_PLUGIN_KLASS}
         cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
         ext_mgr = NetworkSegmentRangeExtensionManager()
-        super(TestNetworkSegmentRange, self).setUp(
+        super().setUp(
             plugin=plugin, ext_mgr=ext_mgr, service_plugins=service_plugins)
 
     def _test_create_network_segment_range(self, expected=None, **kwargs):
@@ -134,7 +134,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
             d.setdefault('physical_network', 'phys_net')
             d.setdefault('minimum', 200)
             d.setdefault('maximum', 300)
-        return (super(TestNetworkSegmentRange, self).
+        return (super().
                 _test_create_network_segment_range(expected, **kwargs))
 
     def test_create_network_segment_range_empty_name(self):

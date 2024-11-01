@@ -40,7 +40,7 @@ NETWORK_SEGMENT_FLAT = amb.NetworkSegment('flat', 'physnet1', None)
 
 class TestMacvtapRPCCallbacks(base.BaseTestCase):
     def setUp(self):
-        super(TestMacvtapRPCCallbacks, self).setUp()
+        super().setUp()
 
         agent = mock.Mock()
         agent.mgr = mock.Mock()
@@ -68,12 +68,12 @@ class TestMacvtapRPCCallbacks(base.BaseTestCase):
     def test_port_update(self):
         port = {'id': 'port-id123', 'mac_address': 'mac1'}
         self.rpc.port_update(context=None, port=port)
-        self.assertEqual(set(['mac1']), self.rpc.updated_devices)
+        self.assertEqual({'mac1'}, self.rpc.updated_devices)
 
 
 class TestMacvtapManager(base.BaseTestCase):
     def setUp(self):
-        super(TestMacvtapManager, self).setUp()
+        super().setUp()
         with mock.patch.object(ip_lib, 'device_exists', return_value=True):
             self.mgr = macvtap_neutron_agent.MacvtapManager(INTERFACE_MAPPINGS)
 
@@ -124,7 +124,7 @@ class TestMacvtapManager(base.BaseTestCase):
 
             result = self.mgr.get_all_devices()
             mock_ld.assert_called_once_with(macvtap_neutron_agent.MACVTAP_FS)
-            self.assertEqual(set(['mac0', 'mac1']), result)
+            self.assertEqual({'mac0', 'mac1'}, result)
             self.assertEqual({'mac0': 'macvtap0', 'mac1': 'macvtap1'},
                              self.mgr.mac_device_name_mappings)
 

@@ -29,7 +29,7 @@ from neutron.objects import tag as tag_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class TimeStampExtensionManager(object):
+class TimeStampExtensionManager:
 
     def get_resources(self):
         return []
@@ -55,12 +55,12 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
 
     def setUp(self):
         ext_mgr = TimeStampExtensionManager()
-        super(TimeStampChangedsinceTestCase, self).setUp(plugin=self.plugin,
-                                                         ext_mgr=ext_mgr)
+        super().setUp(plugin=self.plugin,
+                      ext_mgr=ext_mgr)
         self.addCleanup(manager.NeutronManager.clear_instance)
 
     def setup_coreplugin(self, core_plugin=None, load_plugins=True):
-        super(TimeStampChangedsinceTestCase, self).setup_coreplugin(
+        super().setup_coreplugin(
             self.plugin, load_plugins=False)
         self.patched_default_svc_plugins.return_value = ['timestamp']
         manager.init()
@@ -257,7 +257,7 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
         timenow.reset_mock()
         for tag in tags:
             _tag_obj = tag_obj.Tag(ctx, standard_attr_id=standard_attr_id,
-                                  tag=tag)
+                                   tag=tag)
             _tag_obj.create()
             ret.append(_tag_obj)
         return ret

@@ -30,6 +30,6 @@ class FloatingIPDNSDbObjectTestcase(obj_test_base.BaseDbObjectTestCase,
     _test_class = floatingip.FloatingIPDNS
 
     def setUp(self):
-        super(FloatingIPDNSDbObjectTestcase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'floatingip_id': lambda: self._create_test_fip_id()})

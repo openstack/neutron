@@ -41,7 +41,7 @@ HOSTNAME = 'myhost'
 class QosExtensionBaseTestCase(test_agent.BasicRouterOperationsFramework):
 
     def setUp(self):
-        super(QosExtensionBaseTestCase, self).setUp()
+        super().setUp()
 
         self.gw_ip_qos_ext = gateway_ip_qos.RouterGatewayIPQosAgentExtension()
         self.context = context.get_admin_context()
@@ -159,7 +159,7 @@ class RouterGatewayIPQosAgentExtensionTestCase(
         QosExtensionBaseTestCase):
 
     def setUp(self):
-        super(RouterGatewayIPQosAgentExtensionTestCase, self).setUp()
+        super().setUp()
         self.gw_ip_qos_ext.initialize(
             self.connection, lib_const.L3_AGENT_MODE)
         self._set_pull_mock()

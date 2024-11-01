@@ -29,7 +29,7 @@ class MTUNetworkTestSetup(base.BaseFullStackTestCase):
         env = environment.Environment(
             environment.EnvironmentDescription(),
             self.host_desc)
-        super(MTUNetworkTestSetup, self).setUp(env)
+        super().setUp(env)
 
         self.tenant_id = uuidutils.generate_uuid()
 

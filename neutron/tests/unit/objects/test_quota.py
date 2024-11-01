@@ -34,7 +34,7 @@ class ResourceDeltaDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = quota.ResourceDelta
 
     def setUp(self):
-        super(ResourceDeltaDbObjectTestCase, self).setUp()
+        super().setUp()
         for obj in self.obj_fields:
             self._create_test_reservation(res_id=obj['reservation_id'])
 
@@ -56,7 +56,7 @@ class ReservationDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def _create_test_reservation(self, res=None, exp=None):
         res_id = uuidutils.generate_uuid()
         reservation = self._test_class(self.context,
-            id=res_id, resource=res, expiration=exp)
+                                       id=res_id, resource=res, expiration=exp)
         reservation.create()
         return reservation
 
@@ -73,14 +73,15 @@ class ReservationDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                 self.context, dt, None))
         with db_api.CONTEXT_READER.using(self.context):
             objs = self._test_class.get_objects(self.context,
-                id=[res1.id, res2.id])
+                                                id=[res1.id, res2.id])
         self.assertEqual([], objs)
 
     def test_reservation_synthetic_field(self):
         res = self._create_test_reservation()
         resource = 'test-res'
-        res_delta = quota.ResourceDelta(self.context,
-            resource=resource, reservation_id=res.id, amount='10')
+        res_delta = quota.ResourceDelta(
+            self.context, resource=resource,
+            reservation_id=res.id, amount='10')
         res_delta.create()
         obj = self._test_class.get_object(self.context, id=res.id)
         self.assertEqual(res_delta, obj.resource_deltas[0])

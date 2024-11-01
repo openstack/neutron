@@ -36,7 +36,7 @@ class BaseSegmentationIdTest(base.BaseFullStackTestCase):
                 network_type=self.network_type),
             host_descriptions)
 
-        super(BaseSegmentationIdTest, self).setUp(env)
+        super().setUp(env)
         self.project_id = uuidutils.generate_uuid()
 
     def _create_network(self):

@@ -40,7 +40,7 @@ def get_fake_port():
 
 class TestIronicNotifier(base.BaseTestCase):
     def setUp(self):
-        super(TestIronicNotifier, self).setUp()
+        super().setUp()
         with mock.patch.object(connection.Connection, 'baremetal',
                                autospec=False):
             self.ironic_notifier = ironic.Notifier()

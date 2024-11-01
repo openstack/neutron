@@ -191,7 +191,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                 _safe_fipnamespace_delete_on_ext_net,
                 router['gw_port']['network_id'])
 
-        return super(TestDvrRouter, self).manage_router(agent, router)
+        return super().manage_router(agent, router)
 
     def test_dvr_update_floatingip_statuses(self):
         self.agent.conf.agent_mode = 'dvr'
@@ -1282,7 +1282,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         snat_ns = router_updated.snat_namespace.name
         fixed_ip_cent = centralized_floatingip['fixed_ip_address']
         router_updated.get_centralized_fip_cidr_set = mock.Mock(
-            return_value=set(["19.4.4.3/32"]))
+            return_value={"19.4.4.3/32"})
         self.assertTrue(self._assert_iptables_rules_not_exist(
             router_updated.snat_iptables_manager, 'nat', expected_rules))
         port = router_updated.get_ex_gw_port()
@@ -1303,9 +1303,9 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         router = self.agent.router_info[router_info['id']]
         centralized_fips = router.get_centralized_fip_cidr_set()
         if expected_result_empty:
-            self.assertEqual(set([]), centralized_fips)
+            self.assertEqual(set(), centralized_fips)
         else:
-            self.assertNotEqual(set([]), centralized_fips)
+            self.assertNotEqual(set(), centralized_fips)
 
     def test_get_centralized_fip_cidr_set(self):
         router_info = self.generate_dvr_router_info(
@@ -1815,8 +1815,8 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
             # When floatingip are associated, make sure that the
             # corresponding rules and routes in route table are created
             # for the router.
-            expected_rule = {u'from': lib_constants.IPv4_ANY,
-                             u'iif': fip_ns_int_name,
+            expected_rule = {'from': lib_constants.IPv4_ANY,
+                             'iif': fip_ns_int_name,
                              'priority': str(router_fip_table_idx),
                              'table': str(router_fip_table_idx),
                              'type': 'unicast'}
@@ -2264,9 +2264,9 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         routes = ip_device.route.list_onlink_routes(lib_constants.IP_VERSION_4)
         self.assertGreater(len(routes), 0)
         self.assertEqual(len(fip_agent_gw_port['extra_subnets']), len(routes))
-        extra_subnet_cidr = set(extra_subnet['cidr'] for extra_subnet
-                                in fip_agent_gw_port['extra_subnets'])
-        routes_cidr = set(route['cidr'] for route in routes)
+        extra_subnet_cidr = {extra_subnet['cidr'] for extra_subnet
+                             in fip_agent_gw_port['extra_subnets']}
+        routes_cidr = {route['cidr'] for route in routes}
         self.assertEqual(extra_subnet_cidr, routes_cidr)
 
     def test_dvr_router_update_ecmp_routes(self):

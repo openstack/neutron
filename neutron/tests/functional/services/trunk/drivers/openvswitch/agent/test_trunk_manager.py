@@ -39,7 +39,7 @@ class FakeOVSDBException(Exception):
 
 class TrunkParentPortTestCase(base.BaseSudoTestCase):
     def setUp(self):
-        super(TrunkParentPortTestCase, self).setUp()
+        super().setUp()
         trunk_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
         port_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
@@ -97,7 +97,7 @@ class TrunkParentPortTestCase(base.BaseSudoTestCase):
 
 class SubPortTestCase(base.BaseSudoTestCase):
     def setUp(self):
-        super(SubPortTestCase, self).setUp()
+        super().setUp()
         trunk_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
         port_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
@@ -158,7 +158,7 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
     net2_cidr = '192.168.0.1/24'
 
     def setUp(self):
-        super(TrunkManagerTestCase, self).setUp()
+        super().setUp()
         trunk_id = uuidutils.generate_uuid()
         self.tester = self.useFixture(
             conn_testers.OVSTrunkConnectionTester(
@@ -235,7 +235,7 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
 class TrunkManagerDisposeTrunkTestCase(base.BaseSudoTestCase):
 
     def setUp(self):
-        super(TrunkManagerDisposeTrunkTestCase, self).setUp()
+        super().setUp()
         trunk_id = uuidutils.generate_uuid()
         self.trunk = trunk_manager.TrunkParentPort(
             trunk_id, uuidutils.generate_uuid())

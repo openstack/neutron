@@ -36,7 +36,7 @@ class TestPortsBinding(base.BaseFullStackTestCase):
                 agent_down_time=10),
             host_descriptions)
 
-        super(TestPortsBinding, self).setUp(env)
+        super().setUp(env)
 
         self.l2_agent_process = self.environment.hosts[0].l2_agent
         self.l2_agent = self.safe_client.client.list_agents(

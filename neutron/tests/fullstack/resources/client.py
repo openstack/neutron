@@ -37,7 +37,7 @@ class ClientFixture(fixtures.Fixture):
     """Manage and cleanup neutron resources."""
 
     def __init__(self, client):
-        super(ClientFixture, self).__init__()
+        super().__init__()
         self.client = client
 
     def _create_resource(self, resource_type, spec):
@@ -76,7 +76,7 @@ class ClientFixture(fixtures.Fixture):
     def create_local_ip_association(self, local_ip_id, port_id, fixed_ip=None):
         delete = self.delete_local_ip_association
 
-        path = '/local_ips/{0}/port_associations'.format(local_ip_id)
+        path = f'/local_ips/{local_ip_id}/port_associations'
         body = {'port_association': {'fixed_port_id': port_id}}
         if fixed_ip:
             body['port_association']['fixed_ip'] = fixed_ip
@@ -86,11 +86,11 @@ class ClientFixture(fixtures.Fixture):
         return data
 
     def delete_local_ip(self, local_ip_id):
-        path = "/local-ips/{0}".format(local_ip_id)
+        path = f"/local-ips/{local_ip_id}"
         self.client.delete(path)
 
     def delete_local_ip_association(self, local_ip_id, port_id):
-        path = "/local_ips/{0}/port_associations/{1}".format(
+        path = "/local_ips/{}/port_associations/{}".format(
             local_ip_id, port_id)
         self.client.delete(path)
 

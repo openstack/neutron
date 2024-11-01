@@ -44,7 +44,7 @@ class TestPortsRebind(base.BaseFullStackTestCase):
                 agent_down_time=10),
             host_descriptions)
 
-        super(TestPortsRebind, self).setUp(env)
+        super().setUp(env)
 
         self.l2_agent_process = self.environment.hosts[0].l2_agent
         self.l2_agent = self.safe_client.client.list_agents(
@@ -143,7 +143,7 @@ class TestRouterPortRebind(TestPortsRebind):
     use_l3_agent = True
 
     def setUp(self):
-        super(TestRouterPortRebind, self).setUp()
+        super().setUp()
 
         self.tenant_id = uuidutils.generate_uuid()
         self.ext_net = self.safe_client.create_network(

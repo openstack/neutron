@@ -32,7 +32,7 @@ FAKE_IPAM_CLASS = 'neutron.tests.unit.ipam.fake_driver.FakeDriver'
 class IpamSubnetRequestTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(IpamSubnetRequestTestCase, self).setUp()
+        super().setUp()
         self.tenant_id = uuidutils.generate_uuid()
         self.subnet_id = uuidutils.generate_uuid()
 
@@ -41,7 +41,7 @@ class TestIpamSubnetRequests(IpamSubnetRequestTestCase):
 
     def test_subnet_request(self):
         pool = ipam_req.SubnetRequest(self.tenant_id,
-                                  self.subnet_id)
+                                      self.subnet_id)
         self.assertEqual(self.tenant_id, pool.tenant_id)
         self.assertEqual(self.subnet_id, pool.subnet_id)
         self.assertIsNone(pool.gateway_ip)
@@ -49,8 +49,8 @@ class TestIpamSubnetRequests(IpamSubnetRequestTestCase):
 
     def test_subnet_request_gateway(self):
         request = ipam_req.SubnetRequest(self.tenant_id,
-                                     self.subnet_id,
-                                     gateway_ip='1.2.3.1')
+                                         self.subnet_id,
+                                         gateway_ip='1.2.3.1')
         self.assertEqual('1.2.3.1', str(request.gateway_ip))
 
     def test_subnet_request_bad_gateway(self):
@@ -64,8 +64,8 @@ class TestIpamSubnetRequests(IpamSubnetRequestTestCase):
         allocation_pools = [netaddr.IPRange('1.2.3.4', '1.2.3.5'),
                             netaddr.IPRange('1.2.3.7', '1.2.3.9')]
         request = ipam_req.SubnetRequest(self.tenant_id,
-                                     self.subnet_id,
-                                     allocation_pools=allocation_pools)
+                                         self.subnet_id,
+                                         allocation_pools=allocation_pools)
         self.assertEqual(allocation_pools, request.allocation_pools)
 
     def test_subnet_request_range_not_list(self):
@@ -105,10 +105,10 @@ class TestIpamAnySubnetRequest(IpamSubnetRequestTestCase):
 
     def test_subnet_request(self):
         request = ipam_req.AnySubnetRequest(self.tenant_id,
-                                        self.subnet_id,
-                                        constants.IPv4,
-                                        24,
-                                        gateway_ip='0.0.0.1')
+                                            self.subnet_id,
+                                            constants.IPv4,
+                                            24,
+                                            gateway_ip='0.0.0.1')
         self.assertEqual(24, request.prefixlen)
 
     def test_subnet_request_bad_prefix_type(self):
@@ -166,9 +166,9 @@ class TestIpamSpecificSubnetRequest(IpamSubnetRequestTestCase):
 
     def test_subnet_request(self):
         request = ipam_req.SpecificSubnetRequest(self.tenant_id,
-                                             self.subnet_id,
-                                             '1.2.3.0/24',
-                                             gateway_ip='1.2.3.1')
+                                                 self.subnet_id,
+                                                 '1.2.3.0/24',
+                                                 gateway_ip='1.2.3.1')
         self.assertEqual(24, request.prefixlen)
         self.assertEqual(netaddr.IPAddress('1.2.3.1'), request.gateway_ip)
         self.assertEqual(netaddr.IPNetwork('1.2.3.0/24'), request.subnet_cidr)
@@ -233,7 +233,7 @@ class TestAddressRequest(base.BaseTestCase):
 class TestIpamDriverLoader(base.BaseTestCase):
 
     def setUp(self):
-        super(TestIpamDriverLoader, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
 
     def _verify_fake_ipam_driver_is_loaded(self, driver_name):
@@ -404,7 +404,7 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
 class TestGetRequestFactory(base.BaseTestCase):
 
     def setUp(self):
-        super(TestGetRequestFactory, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('ipam_driver', 'fake')
         self.driver = driver.Pool.get_instance(None, None)
 

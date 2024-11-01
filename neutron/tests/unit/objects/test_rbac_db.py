@@ -82,7 +82,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
     _test_class = FakeNeutronDbObject
 
     def setUp(self):
-        super(RbacNeutronDbObjectTestCase, self).setUp()
+        super().setUp()
         FakeNeutronDbObject.update_post = mock.Mock()
 
     @mock.patch.object(_test_class.rbac_db_cls, 'db_model')
@@ -199,8 +199,8 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
             {'action': 'unknown_action'})
 
     @mock.patch.object(obj_db_api, 'get_object')
-    def test_validate_rbac_policy_delete_skips_db_object_owner(self,
-                                                            mock_get_object):
+    def test_validate_rbac_policy_delete_skips_db_object_owner(
+            self, mock_get_object):
         policy = {'action': rbac_db_models.ACCESS_SHARED,
                   'target_project': 'fake_project_id',
                   'object_id': 'fake_obj_id',
@@ -242,8 +242,9 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
         with mock.patch.object(
                 self._test_class, 'get_bound_project_ids',
                 return_value={'fake_tid2', 'fake_tid3'}), \
-                mock.patch.object(self._test_class,
-                 '_get_db_obj_rbac_entries') as get_rbac_entries_mock, \
+                mock.patch.object(
+                    self._test_class,
+                    '_get_db_obj_rbac_entries') as get_rbac_entries_mock, \
                 mock.patch.object(
                     self._test_class,
                     '_get_projects_with_shared_access_to_db_obj') as sh_tids:

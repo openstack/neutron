@@ -28,7 +28,7 @@ class FakePlugin(pdc.PortSecurityDbCommon):
 class PortSecurityDbCommonTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(PortSecurityDbCommonTestCase, self).setUp()
+        super().setUp()
         self.plugin = FakePlugin()
 
     def _test__get_security_binding_no_binding(self, getter):

@@ -31,7 +31,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class TestDriverController(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestDriverController, self).setUp()
+        super().setUp()
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.fake_l3 = mock.Mock()
         self.dc = driver_controller.DriverController(self.fake_l3)

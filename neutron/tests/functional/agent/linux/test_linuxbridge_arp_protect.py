@@ -28,7 +28,7 @@ arping = net_helpers.assert_arping
 class LinuxBridgeARPSpoofTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(LinuxBridgeARPSpoofTestCase, self).setUp()
+        super().setUp()
 
         lbfixture = self.useFixture(net_helpers.LinuxBridgeFixture())
         self.addCleanup(setattr, arp_protect, 'NAMESPACE', None)

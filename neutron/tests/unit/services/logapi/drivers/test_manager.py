@@ -48,7 +48,7 @@ class TestGetParameter(base.BaseLogTestCase):
 class TestLogDriversManagerBase(base.BaseLogTestCase):
 
     def setUp(self):
-        super(TestLogDriversManagerBase, self).setUp()
+        super().setUp()
         self.config_parse()
         self.setup_coreplugin(load_plugins=False)
 
@@ -101,7 +101,7 @@ class TestLogDriversManagerLoggingTypes(TestLogDriversManagerBase):
                           'supported_logging_types':
                               ['security_group', 'firewall']}
              })
-        self.assertEqual(set(['security_group', 'firewall']),
+        self.assertEqual({'security_group', 'firewall'},
                          driver_manager.supported_logging_types)
 
 
@@ -109,7 +109,7 @@ class TestLogDriversCalls(TestLogDriversManagerBase):
     """Test log driver calls"""
 
     def setUp(self):
-        super(TestLogDriversCalls, self).setUp()
+        super().setUp()
         self.driver_manager = self._create_manager_with_drivers(
             {'driver-A': {'is_loaded': True}})
 
@@ -135,7 +135,7 @@ class TestHandleResourceCallback(TestLogDriversManagerBase):
     """Test handle resource callback"""
 
     def setUp(self):
-        super(TestHandleResourceCallback, self).setUp()
+        super().setUp()
         self._cb_mgr = mock.Mock()
         self.useFixture(fixture.CallbackRegistryFixture(
             callback_manager=self._cb_mgr))

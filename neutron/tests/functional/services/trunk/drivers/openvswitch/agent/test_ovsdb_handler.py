@@ -47,7 +47,7 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
         trunk bridge which its creation is simulated when creating a port in l2
         agent framework.
         """
-        super(OVSDBHandlerTestCase, self).setUp()
+        super().setUp()
         trunk_id = uuidutils.generate_uuid()
         self.trunk_dict = {
             'id': trunk_id,
@@ -121,7 +121,7 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
                         filtered_events[event_type].append(dev)
             return filtered_events
         mock.patch.object(polling_manager, 'get_events',
-            side_effect=filter_events).start()
+                          side_effect=filter_events).start()
 
     def _fill_trunk_dict(self, num=3):
         ports = self.create_test_ports(amount=num)
@@ -175,7 +175,7 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
         self.wait_until_ports_state(self.ports, up=True)
         common_utils.wait_until_true(
             lambda: (deleted_sp.patch_port_trunk_name not in
-                self.trunk_br.get_port_name_list()))
+                     self.trunk_br.get_port_name_list()))
 
     def test_cleanup_on_vm_delete(self):
         with mock.patch.object(self.ovsdb_handler, 'handle_trunk_remove'):

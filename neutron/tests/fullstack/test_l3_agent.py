@@ -178,7 +178,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
             suffix = agent.get_namespace_suffix()
         else:
             suffix = self.environment.hosts[0].l3_agent.get_namespace_suffix()
-        return "%s@%s" % (namespace, suffix)
+        return "{}@{}".format(namespace, suffix)
 
     def _get_l3_agents_with_ha_state(
             self, router_id, ha_state=None):
@@ -332,7 +332,7 @@ class TestLegacyL3Agent(TestL3Agent):
                 network_type='vlan', l2_pop=False,
                 qos=True),
             host_descriptions)
-        super(TestLegacyL3Agent, self).setUp(env)
+        super().setUp(env)
 
     def test_mtu_update(self):
         tenant_id = uuidutils.generate_uuid()
@@ -400,7 +400,7 @@ class TestHAL3Agent(TestL3Agent):
                 agent_down_time=30,
                 qos=True),
             host_descriptions)
-        super(TestHAL3Agent, self).setUp(env)
+        super().setUp(env)
 
     def _is_ha_router_active_on_one_agent(self, router_id):
         agents = self.client.list_l3_agent_hosting_routers(router_id)
@@ -566,7 +566,7 @@ class TestHAL3Agent(TestL3Agent):
         self._test_ha_router_failover('disconnect')
 
     def _get_keepalived_state(self, keepalived_state_file):
-        with open(keepalived_state_file, "r") as fd:
+        with open(keepalived_state_file) as fd:
             return fd.read()
 
     def _get_state_file_for_primary_agent(self, router_id):

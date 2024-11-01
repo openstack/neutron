@@ -42,7 +42,7 @@ _uuid = uuidutils.generate_uuid
 
 class PolicyFileTestCase(base.BaseTestCase):
     def setUp(self):
-        super(PolicyFileTestCase, self).setUp()
+        super().setUp()
         self.context = context.Context('fake', 'fake', is_admin=False)
         self.target = {'tenant_id': 'fake'}
 
@@ -66,7 +66,7 @@ class PolicyFileTestCase(base.BaseTestCase):
 
 class PolicyTestCase(base.BaseTestCase):
     def setUp(self):
-        super(PolicyTestCase, self).setUp()
+        super().setUp()
         # NOTE(vish): preload rules to circumvent reloading from file
         rules = {
             "true": '@',
@@ -264,7 +264,7 @@ class PolicyTestCase(base.BaseTestCase):
 class DefaultPolicyTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(DefaultPolicyTestCase, self).setUp()
+        super().setUp()
         tmpfilename = self.get_temp_file_path('policy.yaml')
         self.rules = {
             "default": '',
@@ -357,7 +357,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         policy._ENFORCER.set_rules(oslo_policy.Rules(self.rules))
 
     def setUp(self):
-        super(NeutronPolicyTestCase, self).setUp()
+        super().setUp()
         # Add Fake resources to RESOURCE_ATTRIBUTE_MAP
         attributes.RESOURCES.update(FAKE_RESOURCES)
         self._set_rules()
@@ -425,7 +425,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def _test_action_on_attr(self, context, action, obj, attr, value,
                              exception=None, **kwargs):
-        action = "%s_%s" % (action, obj)
+        action = "{}_{}".format(action, obj)
         target = {'tenant_id': 'the_owner', attr: value}
         if kwargs:
             target.update(kwargs)
@@ -759,9 +759,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         # Construct RuleChecks for an action, attribute and subattribute
         match_rule = oslo_policy.RuleCheck('rule', action)
         attr_rule = oslo_policy.RuleCheck(
-            'rule', '%s:%ss' % (action, FAKE_RESOURCE_NAME))
+            'rule', '{}:{}s'.format(action, FAKE_RESOURCE_NAME))
         sub_attr_rules = [oslo_policy.RuleCheck(
-            'rule', '%s:%s:%s' % (action, 'attr', 'sub_attr_1'))]
+            'rule', '{}:{}:{}'.format(action, 'attr', 'sub_attr_1'))]
         # Build an AndCheck from the given RuleChecks
         # Make the checks nested to better check the recursion
         sub_attr_rules = oslo_policy.AndCheck(sub_attr_rules)

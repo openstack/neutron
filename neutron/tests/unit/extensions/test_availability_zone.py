@@ -26,7 +26,7 @@ from neutron.tests.common import helpers
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class AZExtensionManager(object):
+class AZExtensionManager:
 
     def get_resources(self):
         agent.Agent().update_attributes_map(az_def.RESOURCE_ATTRIBUTE_MAP)
@@ -60,7 +60,7 @@ class TestAZAgentCase(AZTestCommon):
         plugin = ('neutron.tests.unit.extensions.'
                   'test_availability_zone.AZTestPlugin')
         ext_mgr = AZExtensionManager()
-        super(TestAZAgentCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def test_list_availability_zones(self):
         self._register_azs()
@@ -120,7 +120,7 @@ class TestAZAgentCase(AZTestCommon):
         helpers.register_dhcp_agent(host='host1', az='nova1')
         res = self._list('agents', as_admin=True)
         self.assertEqual('nova1',
-            res['agents'][0]['availability_zone'])
+                         res['agents'][0]['availability_zone'])
 
     def test_validate_availability_zones(self):
         self._register_azs()
@@ -137,7 +137,7 @@ class TestAZAgentCase(AZTestCommon):
 class TestAZNetworkCase(AZTestCommon):
     def setUp(self):
         ext_mgr = AZExtensionManager()
-        super(TestAZNetworkCase, self).setUp(plugin='ml2', ext_mgr=ext_mgr)
+        super().setUp(plugin='ml2', ext_mgr=ext_mgr)
 
     def test_availability_zones_in_create_response(self):
         with self.network() as net:

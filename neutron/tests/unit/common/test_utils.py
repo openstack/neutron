@@ -36,7 +36,7 @@ from neutron.tests.unit import tests
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class _PortRange(object):
+class _PortRange:
     """A linked list of port ranges."""
     def __init__(self, base, prev_ref=None):
         self.base = base
@@ -80,7 +80,7 @@ _hex_str = lambda num: format(num, '#06x')
 
 def _hex_format(port, mask):
     if mask != 0xffff:
-        return "%s/%s" % (_hex_str(port), _hex_str(0xffff & mask))
+        return "{}/{}".format(_hex_str(port), _hex_str(0xffff & mask))
     return _hex_str(port)
 
 
@@ -432,7 +432,7 @@ class TestThrottler(base.BaseTestCase):
         self.assertLess(timestamp, lock_with_timer.timestamp)
 
     def test_method_docstring_is_preserved(self):
-        class Klass(object):
+        class Klass:
             @utils.throttler()
             def method(self):
                 """Docstring"""
@@ -440,7 +440,7 @@ class TestThrottler(base.BaseTestCase):
         self.assertEqual("Docstring", Klass.method.__doc__)
 
     def test_method_still_callable(self):
-        class Klass(object):
+        class Klass:
             @utils.throttler()
             def method(self):
                 pass
@@ -449,7 +449,7 @@ class TestThrottler(base.BaseTestCase):
         obj.method()
 
 
-class BaseUnitConversionTest(object):
+class BaseUnitConversionTest:
 
     def test_bytes_to_bits(self):
         test_values = [
@@ -503,7 +503,7 @@ class TestIECUnitConversions(BaseUnitConversionTest, base.BaseTestCase):
 class TestRpBandwidthValidator(base.BaseTestCase):
 
     def setUp(self):
-        super(TestRpBandwidthValidator, self).setUp()
+        super().setUp()
         self.device_name_set = {'ens4', 'ens7'}
         self.valid_rp_bandwidths = {
             'ens7': {'egress': 10000, 'ingress': 10000}
@@ -577,7 +577,7 @@ class SpawnWithOrWithoutProfilerTestCase(
 
 
 @utils.SingletonDecorator
-class _TestSingletonClass(object):
+class _TestSingletonClass:
 
     def __init__(self):
         self.variable = None

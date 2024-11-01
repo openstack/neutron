@@ -34,7 +34,7 @@ def convert_firstip_to_ipaddress(range_item):
     return netaddr.IPAddress(range_item['first_ip'])
 
 
-class TestNeutronDbIpamMixin(object):
+class TestNeutronDbIpamMixin:
 
     def _create_network(self, plugin, ctx, shared=False):
         network = {'network': {'name': 'net',
@@ -68,7 +68,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
     """Test case for the Neutron's DB IPAM driver subnet pool interface."""
 
     def setUp(self):
-        super(TestNeutronDbIpamPool, self).setUp()
+        super().setUp()
         self._tenant_id = 'test-tenant'
 
         # Configure plugin for tests
@@ -261,7 +261,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         return ipam_subnet, subnet
 
     def setUp(self):
-        super(TestNeutronDbIpamSubnet, self).setUp()
+        super().setUp()
         self._tenant_id = 'test-tenant'
 
         # Configure plugin for tests

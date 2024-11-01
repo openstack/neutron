@@ -27,7 +27,7 @@ from neutron.tests.unit.plugins.ml2 import test_plugin
 _uuid = uuidutils.generate_uuid
 
 
-class SubnetpoolPrefixOpsTestBase(object):
+class SubnetpoolPrefixOpsTestBase:
 
     @contextlib.contextmanager
     def address_scope(self, ip_version, prefixes=None, shared=False,
@@ -106,12 +106,13 @@ class SubnetpoolPrefixOpsTestBase(object):
 
     def test_add_prefix_with_address_scope_overlapping_cidr(self):
         with self.address_scope(self.ip_version) as addr_scope:
-            with self.subnetpool(self.ip_version,
-                         prefixes=[self.subnetpool_prefixes[0]],
-                         address_scope_id=addr_scope['id']) as sp_to_augment,\
+            with self.subnetpool(
+                    self.ip_version,
+                    prefixes=[self.subnetpool_prefixes[0]],
+                    address_scope_id=addr_scope['id']) as sp_to_augment,\
                 self.subnetpool(self.ip_version,
-                             prefixes=[self.subnetpool_prefixes[1]],
-                             address_scope_id=addr_scope['id']):
+                                prefixes=[self.subnetpool_prefixes[1]],
+                                address_scope_id=addr_scope['id']):
                 prefixes_to_add = [self.cidr_to_add]
                 self.driver.add_prefixes(
                     self.context,
@@ -122,12 +123,13 @@ class SubnetpoolPrefixOpsTestBase(object):
 
     def test_add_prefix_with_address_scope(self):
         with self.address_scope(self.ip_version) as addr_scope:
-            with self.subnetpool(self.ip_version,
-                         prefixes=[self.subnetpool_prefixes[1]],
-                         address_scope_id=addr_scope['id']) as sp_to_augment,\
+            with self.subnetpool(
+                    self.ip_version,
+                    prefixes=[self.subnetpool_prefixes[1]],
+                    address_scope_id=addr_scope['id']) as sp_to_augment,\
                 self.subnetpool(self.ip_version,
-                             prefixes=[self.subnetpool_prefixes[0]],
-                             address_scope_id=addr_scope['id']):
+                                prefixes=[self.subnetpool_prefixes[0]],
+                                address_scope_id=addr_scope['id']):
                 prefixes_to_add = [self.overlapping_cidr]
                 self.assertRaises(exc.AddressScopePrefixConflict,
                                   self.driver.add_prefixes,

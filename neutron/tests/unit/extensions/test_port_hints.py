@@ -35,16 +35,13 @@ class PortHintsExtensionTestPlugin(
 
     def create_port(self, context, port):
         with db_api.CONTEXT_WRITER.using(context):
-            new_port = super(PortHintsExtensionTestPlugin,
-                             self).create_port(context, port)
+            new_port = super().create_port(context, port)
             self._process_create_port(context, port['port'], new_port)
         return new_port
 
     def update_port(self, context, id, port):
         with db_api.CONTEXT_WRITER.using(context):
-            updated_port = super(
-                PortHintsExtensionTestPlugin,
-                self).update_port(context, id, port)
+            updated_port = super().update_port(context, id, port)
             self._process_update_port(context, port['port'], updated_port)
         return updated_port
 
@@ -57,7 +54,7 @@ class PortHintsExtensionTestCase(
     def setUp(self, *args):
         plugin = ('neutron.tests.unit.extensions.test_port_hints.'
                   'PortHintsExtensionTestPlugin')
-        super(PortHintsExtensionTestCase, self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
 
     def _create_and_check_port_hints(self, hints):
         keys = [('name', 'name_1'),

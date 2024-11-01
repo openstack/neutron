@@ -46,7 +46,7 @@ class BaseOvnIdlTest(n_base.BaseLoggingTestCase,
     schemas = ['OVN_Southbound', 'OVN_Northbound']
 
     def setUp(self):
-        super(BaseOvnIdlTest, self).setUp()
+        super().setUp()
         ovn_conf.register_opts()
         self.api = impl.OvsdbSbOvnIdl(self.connection['OVN_Southbound'])
         self.nbapi = impl.OvsdbNbOvnIdl(self.connection['OVN_Northbound'])
@@ -57,7 +57,7 @@ class BaseOvnIdlTest(n_base.BaseLoggingTestCase,
 class TestSbApi(BaseOvnIdlTest):
 
     def setUp(self):
-        super(TestSbApi, self).setUp()
+        super().setUp()
         self.data = {
             'chassis': [
                 {'other_config': {'ovn-bridge-mappings':
@@ -167,7 +167,7 @@ class TestSbApi(BaseOvnIdlTest):
         chassis, switch = self._add_switch(
             self.data['chassis'][0]['name'])
         port, binding = self._add_port_to_switch(switch)
-        mac_ip = '%s %s' % (mac, ipaddr)
+        mac_ip = '{} {}'.format(mac, ipaddr)
         pb_update_event = events.WaitForUpdatePortBindingEvent(
             port.name, mac=[mac_ip])
         self.handler.watch_event(pb_update_event)
@@ -226,7 +226,7 @@ class TestSbApi(BaseOvnIdlTest):
             ports[1].name, chassis[1].name).execute(check_error=True)
 
         self.api.db_set('Port_Binding', bindings[1].uuid,
-            additional_chassis=[chassis[0].uuid]).execute(
+                        additional_chassis=[chassis[0].uuid]).execute(
                 check_error=True, log_errors=True)
 
         result = self.api.get_ports_on_chassis(
@@ -266,7 +266,7 @@ class TestSbApi(BaseOvnIdlTest):
 class TestNbApi(BaseOvnIdlTest):
 
     def setUp(self):
-        super(TestNbApi, self).setUp()
+        super().setUp()
         self.data = {
             'lbs': [
                 {'name': 'pf-floatingip-fip_id1-tcp',

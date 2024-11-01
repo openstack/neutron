@@ -31,7 +31,7 @@ _uuid = uuidutils.generate_uuid
 
 class TestBasicRouterOperations(base.BaseTestCase):
     def setUp(self):
-        super(TestBasicRouterOperations, self).setUp()
+        super().setUp()
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
         self.device_exists = self.device_exists_p.start()

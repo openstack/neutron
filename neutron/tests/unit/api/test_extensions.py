@@ -81,7 +81,7 @@ class ExtensionsTestApp(base_wsgi.Router):
         controller = ext_stubs.StubBaseAppController()
         mapper.resource("dummy_resource", "/dummy_resources",
                         controller=controller)
-        super(ExtensionsTestApp, self).__init__(mapper)
+        super().__init__(mapper)
 
 
 class FakePluginWithExtension(service_base.ServicePluginBase):
@@ -102,7 +102,7 @@ class FakePluginWithExtension(service_base.ServicePluginBase):
 class ExtensionPathTest(base.BaseTestCase):
 
     def setUp(self):
-        super(ExtensionPathTest, self).setUp()
+        super().setUp()
         self.base_path = extensions.get_extensions_path()
 
     def test_get_extensions_path_with_plugins(self):
@@ -459,7 +459,7 @@ class ResourceExtensionTest(base.BaseTestCase):
 class ActionExtensionTest(base.BaseTestCase):
 
     def setUp(self):
-        super(ActionExtensionTest, self).setUp()
+        super().setUp()
         self.extension_app = _setup_extensions_test_app()
 
     def test_extended_action_for_adding_extra_data(self):
@@ -600,11 +600,11 @@ class ExtensionManagerTest(base.BaseTestCase):
     def test__check_faulty_extensions_raise_not_default_ext(self):
         ext_mgr = extensions.ExtensionManager('')
         with testtools.ExpectedException(exceptions.ExtensionsNotFound):
-            ext_mgr._check_faulty_extensions(set(['foo']))
+            ext_mgr._check_faulty_extensions({'foo'})
 
     def test_invalid_extensions_are_not_registered(self):
 
-        class InvalidExtension(object):
+        class InvalidExtension:
             """Invalid extension.
 
             This Extension doesn't implement extension methods :
@@ -749,7 +749,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
             self.assertIn("e3", ext_mgr.extensions)
 
     def test_extensions_are_not_loaded_for_plugins_unaware_of_extensions(self):
-        class ExtensionUnawarePlugin(object):
+        class ExtensionUnawarePlugin:
             """This plugin does not implement supports_extension method.
 
             Extensions will not be loaded when this plugin is used.
@@ -764,7 +764,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
     def test_extensions_not_loaded_for_plugin_without_expected_interface(self):
 
-        class PluginWithoutExpectedIface(object):
+        class PluginWithoutExpectedIface:
             """Does not implement get_foo method as expected by extension."""
             supported_extension_aliases = ["supported_extension"]
 
@@ -861,7 +861,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
     def test_custom_supported_implementation(self):
         self.useFixture(CustomExtensionCheckMapMemento())
 
-        class FakePlugin(object):
+        class FakePlugin:
             pass
 
         class FakeExtension(ext_stubs.StubExtension):
@@ -886,7 +886,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
     def test_custom_supported_implementation_plugin_specific(self):
         self.useFixture(CustomExtensionCheckMapMemento())
 
-        class FakePlugin(object):
+        class FakePlugin:
             pass
 
         class FakeExtension(ext_stubs.StubExtension):
@@ -903,7 +903,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
 class ExtensionControllerTest(testlib_api.WebTestCase):
 
     def setUp(self):
-        super(ExtensionControllerTest, self).setUp()
+        super().setUp()
         self.test_app = _setup_extensions_test_app()
 
     def test_index_gets_all_registerd_extensions(self):
@@ -952,7 +952,7 @@ def _setup_extensions_test_app(extension_manager=None):
     return webtest.TestApp(setup_extensions_middleware(extension_manager))
 
 
-class SimpleExtensionManager(object):
+class SimpleExtensionManager:
 
     def __init__(self, resource_ext=None, action_ext=None, request_ext=None):
         self.resource_ext = resource_ext
@@ -978,14 +978,14 @@ class SimpleExtensionManager(object):
         return request_extensions
 
 
-class ExtensionExtendedAttributeTestPlugin(object):
+class ExtensionExtendedAttributeTestPlugin:
 
     supported_extension_aliases = [
         'ext-obj-test', "extended-ext-attr"
     ]
 
     def __init__(self, configfile=None):
-        super(ExtensionExtendedAttributeTestPlugin, self)
+        super()
         self.objs = []
         self.objh = {}
 
@@ -1006,7 +1006,7 @@ class ExtensionExtendedAttributeTestPlugin(object):
 
 class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
     def setUp(self):
-        super(ExtensionExtendedAttributeTestCase, self).setUp()
+        super().setUp()
         plugin = (
             "neutron.tests.unit.api.test_extensions."
             "ExtensionExtendedAttributeTestPlugin"
@@ -1076,6 +1076,6 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         obj = self._ext_test_resource_create(attr)
         obj_id = obj['id']
         res = self._do_request('GET', _get_path(
-            'ext_test_resources/{0}'.format(obj_id)))
+            f'ext_test_resources/{obj_id}'))
         obj2 = res['ext_test_resource']
         self.assertEqual(obj2[extattr.EXTENDED_ATTRIBUTE], attr)

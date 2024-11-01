@@ -27,7 +27,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
     CORE_PLUGIN_CLASS = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
     def setUp(self):
-        super(TestOVNClientPlacementExtension, self).setUp()
+        super().setUp()
         self.setup_coreplugin(self.CORE_PLUGIN_CLASS, load_plugins=True)
         self.plugin_driver = mock.Mock()
         self.placement_driver = p_extension.OVNClientPlacementExtension(

@@ -66,7 +66,7 @@ class L3AgentFipQoSExtensionTestFramework(framework.L3AgentTestFramework):
             direction=constants.EGRESS_DIRECTION)
 
     def setUp(self):
-        super(L3AgentFipQoSExtensionTestFramework, self).setUp()
+        super().setUp()
         self.conf.set_override('extensions', ['fip_qos'], 'agent')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)

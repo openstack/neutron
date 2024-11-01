@@ -28,7 +28,7 @@ from neutron.tests.unit.extensions import test_l3
 class AZL3ExtensionManager(test_az.AZExtensionManager):
 
     def get_resources(self):
-        return (super(AZL3ExtensionManager, self).get_resources() +
+        return (super().get_resources() +
                 l3.L3.get_resources())
 
 
@@ -56,8 +56,8 @@ class TestAZRouterCase(test_az.AZTestCommon, test_l3.L3NatTestCaseMixin):
         service_plugins = {'l3_plugin_name': l3_plugin}
 
         ext_mgr = AZL3ExtensionManager()
-        super(TestAZRouterCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
-                                            service_plugins=service_plugins)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr,
+                      service_plugins=service_plugins)
 
     def test_create_router_with_az(self):
         self._register_azs()

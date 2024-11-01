@@ -46,7 +46,7 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
 
-class OVSOFControllerHelper(object):
+class OVSOFControllerHelper:
     """Helper class that runs os-ken openflow controller."""
 
     def start_of_controller(self, conf):
@@ -111,7 +111,7 @@ class OVSOFControllerHelper(object):
 class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
 
     def setUp(self):
-        super(OVSAgentTestFramework, self).setUp()
+        super().setUp()
         agent_rpc = ('neutron.plugins.ml2.drivers.openvswitch.agent.'
                      'ovs_neutron_agent.OVSPluginApi')
         mock.patch(agent_rpc).start()

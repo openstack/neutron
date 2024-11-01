@@ -39,12 +39,13 @@ class AddressScopeRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
     _parent_class = address_scope.AddressScope
 
     def setUp(self):
-        super(AddressScopeRBACDbObjectTestCase, self).setUp()
+        super().setUp()
         for obj in self.db_objs:
             as_obj = address_scope.AddressScope(
                 self.context,
                 id=obj['object_id'],
-                name="test_as_%s_%s" % (obj['object_id'], obj['project_id']),
+                name="test_as_{}_{}".format(
+                    obj['object_id'], obj['project_id']),
                 project_id=obj['project_id'],
                 ip_version=lib_constants.IP_ALLOWED_VERSIONS[0],
             )

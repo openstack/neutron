@@ -139,7 +139,7 @@ object_data = {
 class TestObjectVersions(test_base.BaseTestCase):
 
     def setUp(self):
-        super(TestObjectVersions, self).setUp()
+        super().setUp()
         # NOTE(ihrachys): seed registry with all objects under neutron.objects
         # before validating the hashes
         objects.register_objects()

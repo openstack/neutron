@@ -57,7 +57,7 @@ TEST_IP_NUD_STATES = ((TEST_IP_NEIGH, 'permanent'),
 
 class IpLibTestFramework(functional_base.BaseSudoTestCase):
     def setUp(self):
-        super(IpLibTestFramework, self).setUp()
+        super().setUp()
         self._configure()
 
     def _configure(self):
@@ -271,7 +271,7 @@ class IpLibTestCase(IpLibTestFramework):
         self.addCleanup(ip.netns.delete, attr.namespace)
         self.assertFalse(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
         device = ip.add_vxlan('test_vxlan_device', 9999, local='fd00::1',
-            group=TEST_IP6_VXLAN_GROUP, dev='test_device')
+                              group=TEST_IP6_VXLAN_GROUP, dev='test_device')
         self.addCleanup(self._safe_delete_device, device)
         self.assertTrue(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
         device.link.delete()
@@ -740,7 +740,7 @@ class TestSetIpNonlocalBind(functional_base.BaseSudoTestCase):
 class NamespaceTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(NamespaceTestCase, self).setUp()
+        super().setUp()
         self.namespace = 'test_ns_' + uuidutils.generate_uuid()
         ip_lib.create_network_namespace(self.namespace)
         self.addCleanup(self._delete_namespace)
@@ -772,7 +772,7 @@ class NamespaceTestCase(functional_base.BaseSudoTestCase):
 class IpMonitorTestCase(functional_base.BaseLoggingTestCase):
 
     def setUp(self):
-        super(IpMonitorTestCase, self).setUp()
+        super().setUp()
         self.addCleanup(self._cleanup)
         self.namespace = 'ns_' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(self.namespace)
@@ -805,7 +805,7 @@ class IpMonitorTestCase(functional_base.BaseLoggingTestCase):
     def _read_file(self, ip_addresses):
         try:
             registers = []
-            with open(self.temp_file, 'r') as f:
+            with open(self.temp_file) as f:
                 data = f.read()
                 for line in data.splitlines():
                     register = jsonutils.loads(line)
@@ -816,7 +816,7 @@ class IpMonitorTestCase(functional_base.BaseLoggingTestCase):
                 if ip_address not in registers:
                     return False
             return True
-        except (OSError, IOError, ValueError):
+        except (OSError, ValueError):
             return False
 
     def _check_read_file(self, ip_addresses):
@@ -824,7 +824,7 @@ class IpMonitorTestCase(functional_base.BaseLoggingTestCase):
             utils.wait_until_true(lambda: self._read_file(ip_addresses),
                                   timeout=30)
         except utils.WaitTimeout:
-            with open(self.temp_file, 'r') as f:
+            with open(self.temp_file) as f:
                 registers = f.read()
             self.fail('Defined IP addresses: %s, IP addresses registered: %s' %
                       (ip_addresses, registers))
@@ -917,7 +917,7 @@ class IpMonitorTestCase(functional_base.BaseLoggingTestCase):
 class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(IpRouteCommandTestCase, self).setUp()
+        super().setUp()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         ip_lib.IPWrapper(self.namespace).add_dummy('test_device')
         self.device = ip_lib.IPDevice('test_device', namespace=self.namespace)
@@ -1072,7 +1072,7 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
 class IpAddrCommandTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(IpAddrCommandTestCase, self).setUp()
+        super().setUp()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         ip_lib.IPWrapper(self.namespace).add_dummy('test_device')
         self.device = ip_lib.IPDevice('test_device', namespace=self.namespace)

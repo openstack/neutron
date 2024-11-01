@@ -57,7 +57,7 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
                 l2_pop=self.l2_pop,
                 arp_responder=self.arp_responder),
             host_descriptions)
-        super(BaseConnectivitySameNetworkTest, self).setUp(env)
+        super().setUp(env)
 
     def _prepare_network(self, tenant_uuid):
         net_args = {'network_type': self.network_type}

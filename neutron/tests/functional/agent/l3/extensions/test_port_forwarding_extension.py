@@ -37,7 +37,7 @@ class L3AgentFipPortForwardingExtensionTestFramework(
      framework.L3AgentTestFramework):
 
     def setUp(self):
-        super(L3AgentFipPortForwardingExtensionTestFramework, self).setUp()
+        super().setUp()
         self.conf.set_override('extensions', ['port_forwarding'], 'agent')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)
@@ -142,7 +142,7 @@ class L3AgentFipPortForwardingExtensionTestFramework(
         conf_path = os.path.join(keepalived_pm.pids_path, keepalived_pm.uuid,
                                  'keepalived.conf')
 
-        regex = "%s dev %s" % (fip_pf, interface_name)
+        regex = "{} dev {}".format(fip_pf, interface_name)
         pattern = re.compile(regex)
 
         def check_harouter_fip_is_set():

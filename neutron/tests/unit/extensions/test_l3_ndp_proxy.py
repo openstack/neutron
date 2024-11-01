@@ -47,7 +47,7 @@ class TestL3NDPProxyIntPlugin(address_scope_db.AddressScopeDbMixin,
                                    l3_ext_gw_mode.ALIAS, dvr_apidef.ALIAS]
 
 
-class ExtendL3NDPPRroxyExtensionManager(object):
+class ExtendL3NDPPRroxyExtensionManager:
 
     def get_resources(self):
         return (l3.L3.get_resources() +
@@ -74,7 +74,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         plugin = ('neutron.tests.unit.extensions.'
                   'test_l3_ndp_proxy.TestL3NDPProxyIntPlugin')
         ext_mgr = ExtendL3NDPPRroxyExtensionManager()
-        super(L3NDPProxyTestCase, self).setUp(
+        super().setUp(
               ext_mgr=ext_mgr, service_plugins=svc_plugins, plugin=plugin)
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
@@ -258,8 +258,8 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                        "no external gateway or the external gateway port has "
                        "no IPv6 address or IPv6 address scope.") % router_id
             self._update_router(router_id, {'enable_ndp_proxy': True},
-                expected_code=exc.HTTPConflict.code,
-                expected_message=err_msg)
+                                expected_code=exc.HTTPConflict.code,
+                                expected_message=err_msg)
 
     def test_enable_ndp_proxy_without_address_scope(self):
         with self.network() as ext_net, \
@@ -442,10 +442,10 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
     def test_remove_subnet(self):
         with self.subnet(ip_version=constants.IP_VERSION_6,
-                    ipv6_ra_mode=constants.DHCPV6_STATEFUL,
-                    ipv6_address_mode=constants.DHCPV6_STATEFUL,
-                    subnetpool_id=self.subnetpool_id,
-                    cidr='2001::50:0/112') as subnet, \
+                         ipv6_ra_mode=constants.DHCPV6_STATEFUL,
+                         ipv6_address_mode=constants.DHCPV6_STATEFUL,
+                         subnetpool_id=self.subnetpool_id,
+                         cidr='2001::50:0/112') as subnet, \
                 self.port(subnet) as port:
             subnet_id = subnet['subnet']['id']
             port_id = port['port']['id']
@@ -469,10 +469,11 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         with self.address_scope(
             ip_version=constants.IP_VERSION_6,
             tenant_id=self._tenant_id) as addr_scope, \
-                self.subnetpool(['2001::100:0:0/100'],
-                **{'address_scope_id': addr_scope['address_scope']['id'],
-                   'default_prefixlen': 112, 'name': 'test1',
-                   'tenant_id': self._tenant_id}) as subnetpool, \
+                self.subnetpool(
+                    ['2001::100:0:0/100'],
+                    **{'address_scope_id': addr_scope['address_scope']['id'],
+                    'default_prefixlen': 112, 'name': 'test1',
+                    'tenant_id': self._tenant_id}) as subnetpool, \
                 self.subnet(
                     cidr='2001::100:1:0/112',
                     ip_version=constants.IP_VERSION_6,
@@ -496,7 +497,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
     def test_create_router_with_external_gateway(self):
         def _create_router(self, data, expected_code=exc.HTTPCreated.code,
-                          expected_message=None):
+                           expected_message=None):
             router_req = self.new_create_request(
                 'routers', data, self.fmt, as_admin=True)
             res = router_req.get_response(self.ext_api)

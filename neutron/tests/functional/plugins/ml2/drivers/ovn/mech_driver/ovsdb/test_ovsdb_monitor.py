@@ -54,7 +54,7 @@ class WaitForDataPathBindingCreateEvent(event.WaitEvent):
         table = 'Datapath_Binding'
         events = (self.ROW_CREATE,)
         conditions = (('external_ids', '=', {'name2': net_name}),)
-        super(WaitForDataPathBindingCreateEvent, self).__init__(
+        super().__init__(
             events, table, conditions, timeout=15)
 
 
@@ -74,7 +74,7 @@ class DistributedLockTestEvent(event.WaitEvent):
     def __init__(self):
         table = 'Logical_Switch_Port'
         events = (self.ROW_CREATE,)
-        super(DistributedLockTestEvent, self).__init__(
+        super().__init__(
             events, table, (), timeout=15)
         self.event_name = 'DistributedLockTestEvent'
 
@@ -108,7 +108,7 @@ class GlobalTestEvent(DistributedLockTestEvent):
 class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestNBDbMonitor, self).setUp()
+        super().setUp()
         self.chassis = self.add_fake_chassis('ovs-host1')
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         self.net = self._make_network(self.fmt, 'net1', True)
@@ -678,7 +678,7 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
     FAKE_CHASSIS_HOST = 'fake-chassis-host'
 
     def setUp(self):
-        super(TestAgentMonitor, self).setUp()
+        super().setUp()
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         self.mock_ovsdb_idl = mock.Mock()
         self.handler = self.sb_api.idl.notify_handler
@@ -697,19 +697,25 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         self.assertIsInstance(
             neutron_agent.AgentCache().get(self.chassis_name),
             neutron_agent.ControllerGatewayAgent)
-        self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
-            {'ovn-cms-options': ''})).execute(check_error=True)
-        n_utils.wait_until_true(lambda:
+        self.sb_api.db_set(
+            'Chassis', self.chassis_name,
+            ('other_config',
+             {'ovn-cms-options': ''})).execute(check_error=True)
+        n_utils.wait_until_true(
+            lambda:
             isinstance(neutron_agent.AgentCache().get(self.chassis_name),
-                       neutron_agent.ControllerAgent))
+            neutron_agent.ControllerAgent))
 
         # Change back to gw chassis
-        self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
-            {'ovn-cms-options': 'enable-chassis-as-gw'})).execute(
-                check_error=True)
-        n_utils.wait_until_true(lambda:
+        self.sb_api.db_set(
+            'Chassis', self.chassis_name,
+            ('other_config',
+             {'ovn-cms-options': 'enable-chassis-as-gw'})).execute(
+                 check_error=True)
+        n_utils.wait_until_true(
+            lambda:
             isinstance(neutron_agent.AgentCache().get(self.chassis_name),
-                       neutron_agent.ControllerGatewayAgent))
+            neutron_agent.ControllerGatewayAgent))
 
     def test_agent_updated_at_use_nb_cfg_timestamp(self):
         def check_agent_ts():
@@ -728,7 +734,7 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         # Also increment nb_cfg by 1 to trigger ChassisAgentWriteEvent which
         # is responsible to update AgentCache
         old_nb_cfg = self.sb_api.db_get('Chassis_Private', self.chassis_name,
-            'nb_cfg').execute(check_error=True)
+                                        'nb_cfg').execute(check_error=True)
         self.sb_api.db_set('Chassis_Private', self.chassis_name, (
             'nb_cfg', old_nb_cfg + 1)).execute(check_error=True)
         try:

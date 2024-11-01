@@ -48,7 +48,7 @@ class FakeLogDriver(log_ext.LoggingDriver):
 class LoggingExtensionBaseTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(LoggingExtensionBaseTestCase, self).setUp()
+        super().setUp()
         conn_patcher = mock.patch(
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
@@ -69,7 +69,7 @@ class LoggingExtensionBaseTestCase(base.BaseTestCase):
 class LoggingExtensionTestCase(LoggingExtensionBaseTestCase):
 
     def setUp(self):
-        super(LoggingExtensionTestCase, self).setUp()
+        super().setUp()
         self.agent_ext.initialize(
             self.connection, ovs_constants.EXTENSION_DRIVER_TYPE)
         self.log_driver = mock.Mock()

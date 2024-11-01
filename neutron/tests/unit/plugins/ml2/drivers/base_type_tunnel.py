@@ -40,12 +40,12 @@ SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
                         'NetworkSegmentRangePlugin')
 
 
-class TunnelTypeTestMixin(object):
+class TunnelTypeTestMixin:
     DRIVER_CLASS = None
     TYPE = None
 
     def setUp(self):
-        super(TunnelTypeTestMixin, self).setUp()
+        super().setUp()
         self.driver = self.DRIVER_CLASS()
         self.driver.tunnel_ranges = TUNNEL_RANGES
         self.driver.sync_allocations()
@@ -279,7 +279,7 @@ class TunnelTypeTestMixin(object):
         self.assertNotIn(TUNNEL_IP_ONE, endpoints)
 
 
-class TunnelTypeMultiRangeTestMixin(object):
+class TunnelTypeMultiRangeTestMixin:
     DRIVER_CLASS = None
 
     TUN_MIN0 = 100
@@ -289,7 +289,7 @@ class TunnelTypeMultiRangeTestMixin(object):
     TUNNEL_MULTI_RANGES = [(TUN_MIN0, TUN_MAX0), (TUN_MIN1, TUN_MAX1)]
 
     def setUp(self):
-        super(TunnelTypeMultiRangeTestMixin, self).setUp()
+        super().setUp()
         self.driver = self.DRIVER_CLASS()
         self.driver.tunnel_ranges = self.TUNNEL_MULTI_RANGES
         self.driver.sync_allocations()
@@ -309,13 +309,13 @@ class TunnelTypeMultiRangeTestMixin(object):
             self.assertFalse(alloc.allocated)
 
 
-class TunnelRpcCallbackTestMixin(object):
+class TunnelRpcCallbackTestMixin:
 
     DRIVER_CLASS = None
     TYPE = None
 
     def setUp(self):
-        super(TunnelRpcCallbackTestMixin, self).setUp()
+        super().setUp()
         self.driver = self.DRIVER_CLASS()
 
     def _test_tunnel_sync(self, kwargs, delete_tunnel=False):
@@ -421,14 +421,14 @@ class TunnelRpcCallbackTestMixin(object):
         self._test_tunnel_sync_raises(kwargs)
 
 
-class TunnelTypeMTUTestMixin(object):
+class TunnelTypeMTUTestMixin:
 
     DRIVER_CLASS = None
     TYPE = None
     ENCAP_OVERHEAD = 0
 
     def setUp(self):
-        super(TunnelTypeMTUTestMixin, self).setUp()
+        super().setUp()
         self.driver = self.DRIVER_CLASS()
 
     def _test_get_mtu(self, ip_version):
@@ -466,12 +466,12 @@ class TunnelTypeMTUTestMixin(object):
         self._test_get_mtu(6)
 
 
-class TunnelTypeNetworkSegmentRangeTestMixin(object):
+class TunnelTypeNetworkSegmentRangeTestMixin:
 
     DRIVER_CLASS = None
 
     def setUp(self):
-        super(TunnelTypeNetworkSegmentRangeTestMixin, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
         self.context = context.Context()
         self.driver = self.DRIVER_CLASS()

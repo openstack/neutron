@@ -117,7 +117,7 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                     self.assertTrue(strutils.bool_from_string(
                         lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW]))
                     hcg = self.nb_api.lookup('HA_Chassis_Group',
-                                            ovn_utils.ovn_name(router_id))
+                                             ovn_utils.ovn_name(router_id))
                     self.assertIsNotNone(hcg)
 
                     # Remove the external GW port.

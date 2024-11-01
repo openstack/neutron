@@ -33,7 +33,7 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
                                 test_keepalived.KeepalivedConfBaseMixin):
 
     def setUp(self):
-        super(KeepalivedManagerTestCase, self).setUp()
+        super().setUp()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
 

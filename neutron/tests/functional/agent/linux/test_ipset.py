@@ -30,7 +30,7 @@ UNRELATED_IP = '1.1.1.1'
 class IpsetBase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(IpsetBase, self).setUp()
+        super().setUp()
 
         bridge = self.useFixture(net_helpers.VethBridgeFixture()).bridge
         self.source, self.destination = self.useFixture(

@@ -33,7 +33,7 @@ OPTS = [
 
 def _get_namespace_name(id_, suffix=None):
     suffix = suffix or cfg.CONF.test_namespace_suffix
-    return "%s%s%s" % (linux_dhcp.NS_PREFIX, id_, suffix)
+    return "{}{}{}".format(linux_dhcp.NS_PREFIX, id_, suffix)
 
 
 def NetModel_init(self, d):
@@ -62,7 +62,8 @@ def monkeypatch_dhcplocalprocess_init():
     def new_init(self, conf, network, process_monitor, version=None,
                  plugin=None, segment=None):
         network_copy = copy.deepcopy(network)
-        network_copy.id = "%s%s" % (network.id, cfg.CONF.test_namespace_suffix)
+        network_copy.id = "{}{}".format(
+            network.id, cfg.CONF.test_namespace_suffix)
         original_init(
             self, conf, network_copy, process_monitor, version, plugin,
             segment)

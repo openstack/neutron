@@ -36,7 +36,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
     _extension_drivers = ['qos']
 
     def get_additional_service_plugins(self):
-        p = super(TestRevisionPlugin, self).get_additional_service_plugins()
+        p = super().get_additional_service_plugins()
         p.update({'revision_plugin_name': 'revisions',
                   'qos_plugin_name': 'qos',
                   'tag_name': 'tag'})
@@ -46,7 +46,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(TestRevisionPlugin, self).setUp()
+        super().setUp()
         self.cp = directory.get_plugin()
         self.l3p = directory.get_plugin(constants.L3)
         self._ctx = nctx.get_admin_context()

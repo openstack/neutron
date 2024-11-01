@@ -40,7 +40,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
     fake_conf_fixture = ConfFixture(fake_conf)
 
     def setUp(self):
-        super(TestMetadataProxyHandler, self).setUp()
+        super().setUp()
         self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(proxy_base, 'LOG')
         self.log = self.log_p.start()
@@ -192,7 +192,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
 
 class TestUnixDomainMetadataProxy(base.BaseTestCase):
     def setUp(self):
-        super(TestUnixDomainMetadataProxy, self).setUp()
+        super().setUp()
         self.cfg_p = mock.patch.object(agent, 'cfg')
         self.cfg = self.cfg_p.start()
         self.cfg.CONF.metadata_proxy_socket = '/the/path'

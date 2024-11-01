@@ -33,7 +33,7 @@ class TestSubnet(base.BaseFullStackTestCase):
             environment.EnvironmentDescription(network_type='vlan',
                                                l2_pop=False),
             host_descriptions)
-        super(TestSubnet, self).setUp(env)
+        super().setUp(env)
         self._project_id = uuidutils.generate_uuid()
         self._network = self._create_network(self._project_id)
 

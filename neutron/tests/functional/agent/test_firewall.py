@@ -97,7 +97,7 @@ class BaseFirewallTestCase(linux_base.BaseOVSLinuxTestCase):
     def setUp(self):
         security_config.register_securitygroups_opts()
         self.net_id = uuidutils.generate_uuid()
-        super(BaseFirewallTestCase, self).setUp()
+        super().setUp()
         self.tester, self.firewall = getattr(self, self.initialize)()
         if self.firewall_name == "openvswitch":
             self.assign_vlan_to_peers()
@@ -274,8 +274,9 @@ class FirewallTestCase(BaseFirewallTestCase):
         self._assert_sg_out_tcp_rules_appear_in_order(sg_rules)
 
     def _assert_sg_out_tcp_rules_appear_in_order(self, sg_rules):
-        outgoing_rule_pref = '-A %s-o%s' % (self.firewall.iptables.wrap_name,
-                                            self.src_port_desc['device'][3:13])
+        outgoing_rule_pref = '-A {}-o{}'.format(
+            self.firewall.iptables.wrap_name,
+            self.src_port_desc['device'][3:13])
         rules = [
             r for r in self.firewall.iptables.get_rules_for_table('filter')
             if r.startswith(outgoing_rule_pref)

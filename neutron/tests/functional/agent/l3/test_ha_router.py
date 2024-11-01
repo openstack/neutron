@@ -249,8 +249,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
         _check_lla_status(router1, False)
 
     def test_ha_router_process_ipv6_subnets_to_existing_port(self):
-        router_info = self.generate_router_info(enable_ha=True,
-            ip_version=constants.IP_VERSION_6)
+        router_info = self.generate_router_info(
+            enable_ha=True, ip_version=constants.IP_VERSION_6)
         router = self.manage_router(self.agent, router_info)
 
         def verify_ip_in_keepalived_config(router, iface):
@@ -264,10 +264,9 @@ class L3HATestCase(framework.L3AgentTestFramework):
         slaac_mode = {'ra_mode': slaac, 'address_mode': slaac}
 
         # Add a second IPv6 subnet to the router internal interface.
-        self._add_internal_interface_by_subnet(router.router, count=1,
-                ip_version=constants.IP_VERSION_6,
-                ipv6_subnet_modes=[slaac_mode],
-                interface_id=interface_id)
+        self._add_internal_interface_by_subnet(
+            router.router, count=1, ip_version=constants.IP_VERSION_6,
+            ipv6_subnet_modes=[slaac_mode], interface_id=interface_id)
         router.process()
         self.wait_until_ha_router_has_state(router, 'primary')
 
@@ -487,7 +486,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
 class L3HATestFailover(framework.L3AgentTestFramework):
 
     def setUp(self):
-        super(L3HATestFailover, self).setUp()
+        super().setUp()
         conf = self._configure_agent('agent2')
         self.failover_agent = neutron_l3_agent.L3NATAgentWithStateReport(
             'agent2', conf)

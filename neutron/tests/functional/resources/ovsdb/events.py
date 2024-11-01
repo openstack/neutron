@@ -29,7 +29,7 @@ class WaitForCrLrpPortBindingEvent(event.RowEvent):
     def __init__(self, timeout=5):
         self.logical_port_events = collections.defaultdict(threading.Event)
         self.timeout = timeout
-        super(WaitForCrLrpPortBindingEvent, self).__init__(
+        super().__init__(
             (self.ROW_CREATE, self.ROW_UPDATE), 'Port_Binding', None)
 
     def match_fn(self, event, row, old=None):
@@ -50,7 +50,7 @@ class WaitForCreatePortBindingEvent(test_event.WaitForPortBindingEvent):
 
     def run(self, event, row, old):
         self.row = row
-        super(WaitForCreatePortBindingEvent, self).run(event, row, old)
+        super().run(event, row, old)
 
 
 class WaitForUpdatePortBindingEvent(test_event.WaitForPortBindingEvent):

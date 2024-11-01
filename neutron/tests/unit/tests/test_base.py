@@ -27,7 +27,7 @@ class BrokenExceptionHandlerTestCase(base.DietTestCase):
     # Embedded to hide from the regular test discovery
     class MyTestCase(base.DietTestCase):
         def setUp(self):
-            super(BrokenExceptionHandlerTestCase.MyTestCase, self).setUp()
+            super().setUp()
             self.addOnException(self._diag_collect)
 
         def _diag_collect(self, exc_info):
@@ -48,7 +48,7 @@ class SystemExitTestCase(base.DietTestCase):
     # Embedded to hide from the regular test discovery
     class MyTestCase(base.DietTestCase):
         def __init__(self, exitcode):
-            super(SystemExitTestCase.MyTestCase, self).__init__()
+            super().__init__()
             self.exitcode = exitcode
 
         def runTest(self):
@@ -70,8 +70,8 @@ class SystemExitTestCase(base.DietTestCase):
             self.fail('SystemExit escaped!')
 
         self.assertEqual([], result.errors)
-        self.assertCountEqual(set(id(t) for t in expectedFails),
-                              set(id(t) for (t, traceback) in result.failures))
+        self.assertCountEqual({id(t) for t in expectedFails},
+                              {id(t) for (t, traceback) in result.failures})
 
 
 class CatchTimeoutTestCase(base.DietTestCase):

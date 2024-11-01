@@ -24,7 +24,7 @@ from neutron.tests import base
 class TestBRCookieOpenflow(base.BaseTestCase):
 
     def setUp(self):
-        super(TestBRCookieOpenflow, self).setUp()
+        super().setUp()
         conn_patcher = mock.patch(
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
@@ -69,4 +69,4 @@ class TestBRCookieOpenflow(base.BaseTestCase):
         self.assertEqual(new_cookie, self.br.default_cookie)
         self.assertIn(new_cookie, self.br.reserved_cookies)
         self.assertNotIn(def_cookie, self.br.reserved_cookies)
-        self.assertEqual(set([new_cookie]), self.br.reserved_cookies)
+        self.assertEqual({new_cookie}, self.br.reserved_cookies)

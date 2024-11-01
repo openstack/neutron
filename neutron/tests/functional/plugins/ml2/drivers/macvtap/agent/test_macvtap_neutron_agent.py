@@ -25,7 +25,7 @@ from neutron.tests.functional import base as functional_base
 
 class MacvtapAgentTestCase(functional_base.BaseSudoTestCase):
     def setUp(self):
-        super(MacvtapAgentTestCase, self).setUp()
+        super().setUp()
         self.mgr = macvtap_neutron_agent.MacvtapManager({})
 
     def test_get_all_devices(self):
@@ -50,9 +50,9 @@ class MacvtapAgentTestCase(functional_base.BaseSudoTestCase):
                 lambda: {macvtap.link.address} == self.mgr.get_all_devices(),
                 timeout=10)
         except common_utils.WaitTimeout:
-            msg = 'MacVTap address: %s, read devices: %s\n' % (
+            msg = 'MacVTap address: {}, read devices: {}\n'.format(
                 macvtap.link.address, self.mgr.get_all_devices())
             for device in ip_lib.IPWrapper().get_devices():
-                msg += '  Device %s, MAC: %s' % (device.name,
-                                                 device.link.address)
+                msg += '  Device {}, MAC: {}'.format(device.name,
+                                                     device.link.address)
             self.fail(msg)

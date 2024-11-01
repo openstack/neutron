@@ -86,7 +86,7 @@ class TestNetworkSegmentRange(testlib_api.SqlTestCase):
                      'maximum': 900}
 
     def setUp(self):
-        super(TestNetworkSegmentRange, self).setUp()
+        super().setUp()
         with mock.patch("neutron_lib.plugins.directory.get_plugin"):
             self.plugin = range_plugin.NetworkSegmentRangePlugin()
         self.context = context.get_admin_context()

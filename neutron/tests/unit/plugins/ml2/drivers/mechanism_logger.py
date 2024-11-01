@@ -26,7 +26,7 @@ class LoggerMechanismDriver(api.MechanismDriver):
     Generally used for testing and debugging.
     """
     def __init__(self, *args, **kwargs):
-        super(LoggerMechanismDriver, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._supported_extensions = set()
 
     def initialize(self):
@@ -45,16 +45,16 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
         removed_keys = set(og_item.keys()) - set(curr_item.keys())
         added_keys = set(curr_item.keys()) - set(og_item.keys())
-        output = "{}:\n".format(method_name)
+        output = f"{method_name}:\n"
 
         for k in curr_item.keys():
             if k in og_item and og_item[k] != curr_item[k]:
                 output += "key[{}], {} -> {}\n".format(
                         k, og_item[k], curr_item[k])
         for add_k in added_keys:
-            output += "key[{}], None -> {}\n".format(add_k, curr_item[add_k])
+            output += f"key[{add_k}], None -> {curr_item[add_k]}\n"
         for rem_k in removed_keys:
-            output += "key[{}], {} -> None\n".format(rem_k, og_item[rem_k])
+            output += f"key[{rem_k}], {og_item[rem_k]} -> None\n"
 
         LOG.debug(output)
 

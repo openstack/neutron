@@ -29,14 +29,14 @@ from neutron.tests import base
 FAKE_FD = 8
 
 
-class FakeEntry(object):
+class FakeEntry:
     def __init__(self, name, value):
         setattr(self, name, value)
 
 
 class TestUnwatchLog(base.BaseTestCase):
     def setUp(self):
-        super(TestUnwatchLog, self).setUp()
+        super().setUp()
         self.temp_file = self.get_temp_file_path('unwatch_log_temp_file')
 
     def test_unwatch_log(self):
@@ -140,7 +140,7 @@ class TestPrivileges(base.BaseTestCase):
 
 class TestPidfile(base.BaseTestCase):
     def setUp(self):
-        super(TestPidfile, self).setUp()
+        super().setUp()
         self.os_p = mock.patch.object(daemon, 'os')
         self.os = self.os_p.start()
         self.os.open.return_value = FAKE_FD
@@ -233,7 +233,7 @@ class TestPidfile(base.BaseTestCase):
 
 class TestDaemon(base.BaseTestCase):
     def setUp(self):
-        super(TestDaemon, self).setUp()
+        super().setUp()
         self.os_p = mock.patch.object(daemon, 'os')
         self.os = self.os_p.start()
 

@@ -30,7 +30,7 @@ def safe_remove_file(file_path):
 
 class TestResourceAllocator(base.BaseLoggingTestCase):
     def setUp(self):
-        super(TestResourceAllocator, self).setUp()
+        super().setUp()
         self.ra = resource_allocator.ResourceAllocator(
             helpers.get_random_string(6), lambda: 42)
         self.addCleanup(safe_remove_file, self.ra._state_file_path)

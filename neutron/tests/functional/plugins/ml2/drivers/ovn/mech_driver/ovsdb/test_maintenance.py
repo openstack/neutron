@@ -51,7 +51,7 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
     """A helper class to keep the code more organized."""
 
     def setUp(self):
-        super(_TestMaintenanceHelper, self).setUp()
+        super().setUp()
         self._ovn_client = self.mech_driver._ovn_client
         self._l3_ovn_client = self.l3_plugin._ovn_client
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
@@ -122,7 +122,7 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
                 return row
 
     def _set_global_dhcp_opts(self, ip_version, opts):
-        opt_string = ','.join(['{0}:{1}'.format(key, value)
+        opt_string = ','.join([f'{key}:{value}'
                                for key, value
                                in opts.items()])
         if ip_version == n_const.IP_VERSION_6:
@@ -750,9 +750,10 @@ class TestMaintenance(_TestMaintenanceHelper):
     def test_check_for_igmp_snooping_enabled(self):
         cfg.CONF.set_override('igmp_snooping_enable', False, group='OVS')
         net = self._create_network('net')
-        ls = self.nb_api.db_find('Logical_Switch',
+        ls = self.nb_api.db_find(
+            'Logical_Switch',
             ('name', '=', utils.ovn_name(net['id']))).execute(
-            check_error=True)[0]
+                check_error=True)[0]
 
         self.assertEqual('false', ls['other_config'][ovn_const.MCAST_SNOOP])
         self.assertEqual(
@@ -766,9 +767,10 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertRaises(periodics.NeverAgain,
                           self.maint.check_for_igmp_snoop_support)
 
-        ls = self.nb_api.db_find('Logical_Switch',
+        ls = self.nb_api.db_find(
+            'Logical_Switch',
             ('name', '=', utils.ovn_name(net['id']))).execute(
-            check_error=True)[0]
+                check_error=True)[0]
 
         self.assertEqual('true', ls['other_config'][ovn_const.MCAST_SNOOP])
         self.assertEqual(
@@ -946,11 +948,11 @@ class TestMaintenance(_TestMaintenanceHelper):
         def _verify_lb(test, protocol, vip_ext_port, vip_int_port):
             ovn_lbs = self._find_pf_lb(router_id, fip_id)
             test.assertEqual(1, len(ovn_lbs))
-            test.assertEqual('pf-floatingip-{}-{}'.format(fip_id, protocol),
+            test.assertEqual(f'pf-floatingip-{fip_id}-{protocol}',
                              ovn_lbs[0].name)
             test.assertEqual(
-                {'{}:{}'.format(fip_ip, vip_ext_port):
-                 '{}:{}'.format(p1_ip, vip_int_port)},
+                {f'{fip_ip}:{vip_ext_port}':
+                 f'{p1_ip}:{vip_int_port}'},
                 ovn_lbs[0].vips)
 
         ext_net = self._create_network('ext_networktest', external=True)
@@ -1190,8 +1192,8 @@ class TestMaintenance(_TestMaintenanceHelper):
             'fixed_ip_address': logical_ip}}
 
         # Create floating IP without gateway_port
-        with mock.patch.object(utils,
-                'is_nat_gateway_port_supported', return_value=False):
+        with mock.patch.object(
+                utils, 'is_nat_gateway_port_supported', return_value=False):
             fip = self.l3_plugin.create_floatingip(self.context, fip_info)
 
         self.assertEqual(router['id'], fip['router_id'])
@@ -1207,7 +1209,8 @@ class TestMaintenance(_TestMaintenanceHelper):
 
         # Call the maintenance task and check that the value has been
         # updated in the NAT rule
-        self.assertRaises(periodics.NeverAgain,
+        self.assertRaises(
+            periodics.NeverAgain,
             self.maint.update_nat_floating_ip_with_gateway_port_reference)
 
         rules = self.nb_api.get_all_logical_routers_with_rports()[0]
@@ -1231,7 +1234,7 @@ class TestMaintenance(_TestMaintenanceHelper):
             self.context, resource_id=router2['id'])
         pra_list = servicetype_obj.ProviderResourceAssociation.get_objects(
             self.context, provider_name=provider_name)
-        pra_res_ids = set(pra.resource_id for pra in pra_list)
+        pra_res_ids = {pra.resource_id for pra in pra_list}
         self.assertIn(router1['id'], pra_res_ids)
         self.assertNotIn(router2['id'], pra_res_ids)
 
@@ -1240,7 +1243,7 @@ class TestMaintenance(_TestMaintenanceHelper):
             self.maint.add_provider_resource_association_to_routers)
         pra_list = servicetype_obj.ProviderResourceAssociation.get_objects(
             self.context, provider_name=provider_name)
-        pra_res_ids = set(pra.resource_id for pra in pra_list)
+        pra_res_ids = {pra.resource_id for pra in pra_list}
         self.assertIn(router1['id'], pra_res_ids)
         self.assertIn(router2['id'], pra_res_ids)
 
@@ -1336,7 +1339,7 @@ class TestMaintenance(_TestMaintenanceHelper):
 
         # Create static routes via Neutron
         with mock.patch.object(self.nb_api,
-                'add_static_route', columns=None):
+                               'add_static_route', columns=None):
             self.l3_plugin.update_router(
                 self.context, router['id'],
                 {'router': {'routes': [{'destination': '10.10.0.0/24',
@@ -1369,7 +1372,7 @@ class TestMaintenance(_TestMaintenanceHelper):
         for route in sroute_info:
             if route.ip_prefix == '10.10.0.0/24':
                 self.assertEqual(route.external_ids,
-                    {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
+                                 {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
             if route.ip_prefix == '20.0.0.0/24':
                 self.assertEqual({}, route.external_ids)
             if route.ip_prefix == '30.0.0.0/24':
@@ -1378,18 +1381,18 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Call the maintenance task and check that the value has been
         # updated in the external_ids.
         self.assertRaises(periodics.NeverAgain,
-            self.maint.update_router_static_routes)
+                          self.maint.update_router_static_routes)
 
         sroutes = self.nb_api.get_all_logical_routers_static_routes()[0]
         sroute_info = sroutes['static_routes']
         for route in sroute_info:
             if route.ip_prefix == '10.10.0.0/24':
                 self.assertEqual(route.external_ids,
-                    {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
+                                 {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
             # Check if the OVN static route was updated with the Neutron key
             if route.ip_prefix == '20.0.0.0/24':
                 self.assertEqual(route.external_ids,
-                    {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
+                                 {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
             # Check if the externally managed OVN static route remains
             # without the Neutron key.
             if route.ip_prefix == '30.0.0.0/24':
@@ -1459,7 +1462,8 @@ class TestLogMaintenance(_TestMaintenanceHelper,
         # Check a meter and fair meter exist
         self.assertTrue(self.nb_api._tables['Meter'].rows)
         self.assertTrue(self.nb_api._tables['Meter_Band'].rows)
-        self.assertEqual(len([*self.nb_api._tables['Meter'].rows.values()]),
+        self.assertEqual(
+            len([*self.nb_api._tables['Meter'].rows.values()]),
             len([*self.nb_api._tables['Meter_Band'].rows.values()]))
         self._check_meters_consistency()
         # Update burst and rate limit values on the configuration

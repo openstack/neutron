@@ -48,7 +48,7 @@ _get_path = test_base._get_path
 class QuotaExtensionTestCase(testlib_api.WebTestCase):
 
     def setUp(self):
-        super(QuotaExtensionTestCase, self).setUp()
+        super().setUp()
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 
@@ -91,7 +91,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
     def setUp(self):
         cfg.CONF.set_override(
             'quota_driver', qconf.QUOTA_DB_DRIVER, group='QUOTAS')
-        super(QuotaExtensionDbTestCase, self).setUp()
+        super().setUp()
 
     def test_quotas_loaded_right(self):
         res = self.api.get(_get_path('quotas', fmt=self.fmt))
@@ -426,7 +426,7 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
     def setUp(self):
         cfg.CONF.set_override(
             'quota_driver', qconf.QUOTA_DB_DRIVER, group='QUOTAS')
-        super(QuotaExtensionCfgTestCase, self).setUp()
+        super().setUp()
 
     def test_quotas_default_values(self):
         self._test_quota_default_values(
@@ -498,8 +498,8 @@ class TestDbQuotaDriver(base.BaseTestCase):
 
             self.assertEqual(quotas, foo_quotas)
             get_project_quotas.assert_called_once_with(ctx,
-                                                      default_quotas,
-                                                      target_project)
+                                                       default_quotas,
+                                                       target_project)
 
 
 class TestQuotaDriverLoad(base.BaseTestCase):

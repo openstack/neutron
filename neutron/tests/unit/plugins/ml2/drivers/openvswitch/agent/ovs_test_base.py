@@ -33,7 +33,7 @@ _DVR_AGENT_NAME = ('neutron.plugins.ml2.drivers.openvswitch.agent.'
 
 class OVSAgentConfigTestBase(base.BaseTestCase):
     def setUp(self):
-        super(OVSAgentConfigTestBase, self).setUp()
+        super().setUp()
         self.mod_agent = importutils.import_module(_AGENT_NAME)
         self.mod_dvr_agent = importutils.import_module(_DVR_AGENT_NAME)
 
@@ -49,7 +49,7 @@ class OVSOSKenTestBase(OVSAgentConfigTestBase):
         self.fake_oflib_of = fake_oflib.patch_fake_oflib_of()
         self.fake_oflib_of.start()
         self.addCleanup(self.fake_oflib_of.stop)
-        super(OVSOSKenTestBase, self).setUp()
+        super().setUp()
         conn_patcher = mock.patch(
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()

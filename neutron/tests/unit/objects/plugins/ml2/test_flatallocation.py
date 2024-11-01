@@ -24,6 +24,6 @@ class FlatAllocationIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
 
 
 class FlatAllocationDbObjTestCase(test_base.BaseDbObjectTestCase,
-                                 testlib_api.SqlTestCase):
+                                  testlib_api.SqlTestCase):
 
     _test_class = flatallocation.FlatAllocation

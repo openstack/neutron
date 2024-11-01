@@ -31,7 +31,7 @@ lba = linuxbridge_neutron_agent
 class LinuxBridgeAgentTests(test_ip_lib.IpLibTestFramework):
 
     def setUp(self):
-        super(LinuxBridgeAgentTests, self).setUp()
+        super().setUp()
         agent_rpc = ('neutron.agent.rpc.PluginApi')
         mock.patch(agent_rpc).start()
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()

@@ -34,7 +34,7 @@ placement_opts = [
 cfg.CONF.register_opts(placement_opts)
 
 
-class FakePlacement(object):
+class FakePlacement:
 
     rp_template = {
         "uuid": None,

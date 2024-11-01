@@ -74,7 +74,7 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
                    }]
 
     def setUp(self):
-        super(OpenvswitchMechanismBaseTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('firewall_driver', 'iptables_hybrid',
                               'SECURITYGROUP')
         self.driver = mech_openvswitch.OpenvswitchMechanismDriver()
@@ -101,7 +101,7 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
             fake_vif_details.get(portbindings.VIF_DETAILS_BRIDGE_NAME, ''))
         # replace callback with noop
         registry.unsubscribe(fake_callback, a_const.OVS_BRIDGE_NAME,
-                           events.BEFORE_READ)
+                             events.BEFORE_READ)
         registry.subscribe(noop_callback, a_const.OVS_BRIDGE_NAME,
                            events.BEFORE_READ)
         fake_vif_details = {}
@@ -143,7 +143,7 @@ class OpenvswitchMechanismSGDisabledBaseTestCase(
         cfg.CONF.set_override('enable_security_group',
                               False,
                               group='SECURITYGROUP')
-        super(OpenvswitchMechanismSGDisabledBaseTestCase, self).setUp()
+        super().setUp()
 
 
 class OpenvswitchMechanismHybridPlugTestCase(OpenvswitchMechanismBaseTestCase):
@@ -309,7 +309,7 @@ class OpenvswitchMechanismFirewallUndefinedTestCase(
         # this simple test case just ensures backward compatibility where
         # the server has no firewall driver configured, which should result
         # in hybrid plugging.
-        super(OpenvswitchMechanismFirewallUndefinedTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('firewall_driver', '', 'SECURITYGROUP')
         self.driver = mech_openvswitch.OpenvswitchMechanismDriver()
         self.driver.initialize()
@@ -329,11 +329,12 @@ class OpenvswitchMechanismDPDKTestCase(OpenvswitchMechanismBaseTestCase):
                          'iface_types': [a_const.OVS_DPDK_VHOST_USER]}}
 
     VHOST_SERVER_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
-                    'integration_bridge': 'br-int',
-                    'tunnel_types': GOOD_TUNNEL_TYPES,
-                    'datapath_type': a_const.OVS_DATAPATH_NETDEV,
-                    'ovs_capabilities': {
-                        'iface_types': [a_const.OVS_DPDK_VHOST_USER_CLIENT]}}
+                            'integration_bridge': 'br-int',
+                            'tunnel_types': GOOD_TUNNEL_TYPES,
+                            'datapath_type': a_const.OVS_DATAPATH_NETDEV,
+                            'ovs_capabilities': {
+                                'iface_types':
+                                    [a_const.OVS_DPDK_VHOST_USER_CLIENT]}}
 
     SYSTEM_CONFIGS = {'bridge_mappings': GOOD_MAPPINGS,
                       'integration_bridge': 'br-int',
@@ -425,7 +426,7 @@ class OpenvswitchMechVnicTypesTestCase(OpenvswitchMechanismBaseTestCase):
             }
         }
         self.default_supported_vnics = self.supported_vnics
-        super(OpenvswitchMechVnicTypesTestCase, self).setUp()
+        super().setUp()
 
     def test_default_vnic_types(self):
         self.assertEqual(self.default_supported_vnics,

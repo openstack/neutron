@@ -37,7 +37,7 @@ _get_path = test_base._get_path
 class DetailQuotaExtensionTestCase(testlib_api.WebTestCase):
 
     def setUp(self):
-        super(DetailQuotaExtensionTestCase, self).setUp()
+        super().setUp()
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
 

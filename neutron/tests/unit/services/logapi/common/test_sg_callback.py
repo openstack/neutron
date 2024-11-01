@@ -51,7 +51,7 @@ def fake_register():
 class TestSecurityGroupRuleCallback(base.BaseTestCase):
 
     def setUp(self):
-        super(TestSecurityGroupRuleCallback, self).setUp()
+        super().setUp()
         self.driver_manager = driver_mgr.LoggingServiceDriverManager()
 
     @mock.patch.object(sg_callback.SecurityGroupRuleCallBack, 'handle_event')

@@ -28,7 +28,7 @@ from neutron.tests import base
 class DHCPAgentExtensionTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(DHCPAgentExtensionTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('enable_ipv6', True, group='DHCP')
         self.context = context.get_admin_context()
         self.int_br = mock.Mock()
@@ -48,7 +48,7 @@ class DHCPAgentExtensionTestCase(base.BaseTestCase):
     def tearDown(self):
         self.ovs_dhcp.app_mgr.uninstantiate(self.ovs_dhcp.dhcp4_app.name)
         self.ovs_dhcp.app_mgr.uninstantiate(self.ovs_dhcp.dhcp6_app.name)
-        super(DHCPAgentExtensionTestCase, self).tearDown()
+        super().tearDown()
 
     def test_handle_port(self):
         port = {"port_id": "p1",

@@ -30,7 +30,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class TestUserDefined(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestUserDefined, self).setUp()
+        super().setUp()
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.fake_l3 = mock.MagicMock()
         self.fake_l3._make_router_interface_info = mock.MagicMock(
@@ -166,7 +166,7 @@ class TestUserDefined(testlib_api.SqlTestCase):
 class TestUserDefinedNoLsp(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestUserDefinedNoLsp, self).setUp()
+        super().setUp()
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.fake_l3 = mock.MagicMock()
         self.fake_l3._make_router_interface_info = mock.MagicMock(

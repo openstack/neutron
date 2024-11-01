@@ -26,7 +26,7 @@ class TagDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = tag.Tag
 
     def setUp(self):
-        super(TagDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {
                 'standard_attr_id':

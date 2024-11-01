@@ -32,7 +32,8 @@ class L3NATAgentForTest(agent.L3NATAgentWithStateReport):
         orig_build_ns_name = namespaces.build_ns_name
 
         def build_ns_name(prefix, identifier):
-            return "%s%s" % (orig_build_ns_name(prefix, identifier), ns_suffix)
+            return "{}{}".format(
+                orig_build_ns_name(prefix, identifier), ns_suffix)
 
         build_ns = mock.patch.object(namespaces, 'build_ns_name').start()
         build_ns.side_effect = build_ns_name
@@ -58,7 +59,7 @@ class L3NATAgentForTest(agent.L3NATAgentWithStateReport):
         parse_id = mock.patch.object(namespaces, 'get_id_from_ns_name').start()
         parse_id.side_effect = get_id_from_ns_name
 
-        super(L3NATAgentForTest, self).__init__(host, conf)
+        super().__init__(host, conf)
 
     def _create_router(self, router_id, router):
         """Create a router with suffix added to the router namespace name.
@@ -67,7 +68,7 @@ class L3NATAgentForTest(agent.L3NATAgentWithStateReport):
         on the same node.
         """
         router = (
-            super(L3NATAgentForTest, self)._create_router(router_id, router))
+            super()._create_router(router_id, router))
 
         router.get_internal_device_name = types.MethodType(
             get_internal_device_name, router)
@@ -80,7 +81,7 @@ class L3NATAgentForTest(agent.L3NATAgentWithStateReport):
 def _append_suffix(dev_name):
     # If dev_name = 'xyz123' and the suffix is 'hostB' then the result
     # will be 'xy_stB'
-    return '%s_%s' % (dev_name[:-4], cfg.CONF.test_namespace_suffix[-3:])
+    return '{}_{}'.format(dev_name[:-4], cfg.CONF.test_namespace_suffix[-3:])
 
 
 def get_internal_device_name(ri, port_id):

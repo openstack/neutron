@@ -43,7 +43,7 @@ class TestExtensionDriverBase(api.ExtensionDriver):
 
 class TestExtensionDriver(TestExtensionDriverBase):
     def initialize(self):
-        super(TestExtensionDriver, self).initialize()
+        super().initialize()
         # keep track of values
         self.val_by_id = {}
 

@@ -37,13 +37,13 @@ from neutron.tests import base
 
 class ConfFixture(config_fixture.Config):
     def setUp(self):
-        super(ConfFixture, self).setUp()
+        super().setUp()
         cache.register_oslo_configs(self.conf)
 
 
 class NewCacheConfFixture(ConfFixture):
     def setUp(self):
-        super(NewCacheConfFixture, self).setUp()
+        super().setUp()
         self.config(
             group='cache',
             enabled=True,
@@ -56,7 +56,7 @@ class TestMetadataProxyHandlerBase(base.BaseTestCase):
     fake_conf_fixture = ConfFixture(fake_conf)
 
     def setUp(self):
-        super(TestMetadataProxyHandlerBase, self).setUp()
+        super().setUp()
         self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(proxy_base, 'LOG')
         self.log = self.log_p.start()
@@ -109,7 +109,7 @@ class TestMetadataProxyHandlerRpc(TestMetadataProxyHandlerBase):
 
 
 @ddt.ddt
-class _TestMetadataProxyHandlerCacheMixin(object):
+class _TestMetadataProxyHandlerCacheMixin:
 
     def test_call(self):
         req = mock.Mock()
@@ -413,7 +413,7 @@ class TestMetadataProxyHandlerNewCache(TestMetadataProxyHandlerBase,
 
 class TestUnixDomainMetadataProxy(base.BaseTestCase):
     def setUp(self):
-        super(TestUnixDomainMetadataProxy, self).setUp()
+        super().setUp()
         self.cfg_p = mock.patch.object(agent, 'cfg')
         self.cfg = self.cfg_p.start()
         looping_call_p = mock.patch(

@@ -33,7 +33,7 @@ DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 class TestMl2PortBinding(ml2_test_base.ML2TestFramework,
                          agents_db.AgentDbMixin):
     def setUp(self):
-        super(TestMl2PortBinding, self).setUp()
+        super().setUp()
         self.admin_context = context.get_admin_context()
         self.host_args = {portbindings.HOST_ID: helpers.HOST,
                           'admin_state_up': True}

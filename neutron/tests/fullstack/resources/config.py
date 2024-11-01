@@ -50,7 +50,7 @@ class ConfigFixture(config_fixtures.ConfigFileFixture):
     is initializing a new instance of the class.
     """
     def __init__(self, env_desc, host_desc, temp_dir, base_filename):
-        super(ConfigFixture, self).__init__(
+        super().__init__(
             base_filename, config_fixtures.ConfigDict(), temp_dir)
         self.env_desc = env_desc
         self.host_desc = host_desc
@@ -63,7 +63,7 @@ class NeutronConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir,
                  connection, rabbitmq_environment, use_local_apipaste=True):
-        super(NeutronConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir, base_filename='neutron.conf')
 
         self.config.update({
@@ -123,7 +123,7 @@ class NeutronConfigFixture(ConfigFixture):
         if env_desc.has_placement:
             service_plugins = self.config['DEFAULT']['service_plugins']
             self.config['DEFAULT']['service_plugins'] = (
-                '%s,%s' % (service_plugins, 'placement')
+                '{},{}'.format(service_plugins, 'placement')
             )
             self.config.update({
                 'placement': {
@@ -150,7 +150,7 @@ class NeutronConfigFixture(ConfigFixture):
                                    start=NEUTRON_SERVER_PORT_START,
                                    end=NEUTRON_SERVER_PORT_END)).port
         })
-        super(NeutronConfigFixture, self)._setUp()
+        super()._setUp()
 
     def _generate_host(self):
         return utils.get_rand_name(prefix='host-')
@@ -173,7 +173,7 @@ class NeutronConfigFixture(ConfigFixture):
 class ML2ConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir, tenant_network_types):
-        super(ML2ConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
         mechanism_drivers = self.env_desc.mech_drivers
@@ -213,7 +213,7 @@ class ML2ConfigFixture(ConfigFixture):
 class OVSConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir, local_ip, **kwargs):
-        super(OVSConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir,
             base_filename='openvswitch_agent.ini')
 
@@ -223,7 +223,8 @@ class OVSConfigFixture(ConfigFixture):
             'ovs': {
                 'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
-                'bridge_mappings': '%s:%s' % (PHYSICAL_NETWORK_NAME, ext_dev),
+                'bridge_mappings': '{}:{}'.format(
+                    PHYSICAL_NETWORK_NAME, ext_dev),
                 'of_inactivity_probe': '0',
                 'ovsdb_debug': 'True',
             },
@@ -248,8 +249,8 @@ class OVSConfigFixture(ConfigFixture):
         else:
             if env_desc.report_bandwidths:
                 self.config['ovs'][constants.RP_BANDWIDTHS] = \
-                    '%s:%s:%s' % (ext_dev, MINIMUM_BANDWIDTH_EGRESS_KBPS,
-                                  MINIMUM_BANDWIDTH_INGRESS_KBPS)
+                    '{}:{}:{}'.format(ext_dev, MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                                      MINIMUM_BANDWIDTH_INGRESS_KBPS)
 
         if env_desc.qos:
             self.config['agent']['extensions'] = 'qos'
@@ -282,7 +283,7 @@ class OVSConfigFixture(ConfigFixture):
                                    start=OVS_OF_PORT_LISTEN_START,
                                    end=OVS_OF_PORT_LISTEN_END)).port
         })
-        super(OVSConfigFixture, self)._setUp()
+        super()._setUp()
 
     def _generate_integration_bridge(self):
         return utils.get_rand_device_name(prefix='br-int')
@@ -300,8 +301,8 @@ class OVSConfigFixture(ConfigFixture):
         log_dir_path = os.path.join(fullstack_base.DEFAULT_LOG_DIR, test_name)
         if not os.path.exists(log_dir_path):
             os.mkdir(log_dir_path, 0o755)
-        return '%s/%s.log' % (log_dir_path,
-                              utils.get_rand_name(prefix="test-sg-"))
+        return '{}/{}.log'.format(log_dir_path,
+                                  utils.get_rand_name(prefix="test-sg-"))
 
     def get_br_int_name(self):
         return self.config.ovs.integration_bridge
@@ -315,20 +316,19 @@ class OVSConfigFixture(ConfigFixture):
 
 class SRIOVConfigFixture(ConfigFixture):
     def __init__(self, env_desc, host_desc, temp_dir, local_ip):
-        super(SRIOVConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir,
             base_filename='sriov_agent.ini')
 
         device1 = utils.get_rand_device_name(prefix='ens5')
         device2 = utils.get_rand_device_name(prefix='ens6')
-        phys_dev_mapping = '%s:%s,%s:%s' % (PHYSICAL_NETWORK_NAME, device1,
-                                            PHYSICAL_NETWORK_NAME, device2)
-        rp_bandwidths = '%s:%s:%s,%s:%s:%s' % (device1,
-                                               MINIMUM_BANDWIDTH_EGRESS_KBPS,
-                                               MINIMUM_BANDWIDTH_INGRESS_KBPS,
-                                               device2,
-                                               MINIMUM_BANDWIDTH_EGRESS_KBPS,
-                                               MINIMUM_BANDWIDTH_INGRESS_KBPS)
+        phys_dev_mapping = '{pnn}:{d1},{pnn}:{d2}'.format(
+            pnn=PHYSICAL_NETWORK_NAME, d1=device1, d2=device2)
+        rp_bandwidths = '{d1}:{mbek}:{mbik},{d2}:{mbek}:{mbik}'.format(
+            d1=device1,
+            d2=device2,
+            mbek=MINIMUM_BANDWIDTH_EGRESS_KBPS,
+            mbik=MINIMUM_BANDWIDTH_INGRESS_KBPS)
         self.config.update({
             'sriov_nic': {
                 'physical_device_mappings': phys_dev_mapping,
@@ -337,13 +337,13 @@ class SRIOVConfigFixture(ConfigFixture):
         })
 
     def _setUp(self):
-        super(SRIOVConfigFixture, self)._setUp()
+        super()._setUp()
 
 
 class PlacementConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir):
-        super(PlacementConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir, base_filename='placement.ini')
         self.config.update({
             'DEFAULT': {
@@ -353,14 +353,14 @@ class PlacementConfigFixture(ConfigFixture):
         })
 
     def _setUp(self):
-        super(PlacementConfigFixture, self)._setUp()
+        super()._setUp()
 
 
 class LinuxBridgeConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir, local_ip,
                  physical_device_name):
-        super(LinuxBridgeConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir,
             base_filename="linuxbridge_agent.ini"
         )
@@ -407,14 +407,14 @@ class LinuxBridgeConfigFixture(ConfigFixture):
     def _generate_bridge_mappings(self, device_name):
         bridge_mappings_extra = ('_lb' if 'segments' in self.service_plugins
                                  else '')
-        return '%s%s:%s' % (PHYSICAL_NETWORK_NAME, bridge_mappings_extra,
-                            device_name)
+        return '{}{}:{}'.format(PHYSICAL_NETWORK_NAME, bridge_mappings_extra,
+                                device_name)
 
 
 class L3ConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir, integration_bridge=None):
-        super(L3ConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir, base_filename='l3_agent.ini')
         if host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
             self._prepare_config_with_ovs_agent(integration_bridge)
@@ -462,7 +462,7 @@ class L3ConfigFixture(ConfigFixture):
 class DhcpConfigFixture(ConfigFixture):
 
     def __init__(self, env_desc, host_desc, temp_dir, integration_bridge=None):
-        super(DhcpConfigFixture, self).__init__(
+        super().__init__(
             env_desc, host_desc, temp_dir, base_filename='dhcp_agent.ini')
 
         if host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
@@ -483,7 +483,7 @@ class DhcpConfigFixture(ConfigFixture):
             })
 
     def _setUp(self):
-        super(DhcpConfigFixture, self)._setUp()
+        super()._setUp()
         self.addCleanup(self._clean_dhcp_path)
 
     def _prepare_config_with_ovs_agent(self, integration_bridge):

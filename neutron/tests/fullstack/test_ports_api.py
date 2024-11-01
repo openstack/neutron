@@ -34,7 +34,7 @@ class TestPortsApi(base.BaseFullStackTestCase):
                 agent_down_time=10,
                 ml2_extension_drivers=['uplink_status_propagation']),
             host_descriptions)
-        super(TestPortsApi, self).setUp(env)
+        super().setUp(env)
 
         self.tenant_id = uuidutils.generate_uuid()
         self.network = self.safe_client.create_network(self.tenant_id)

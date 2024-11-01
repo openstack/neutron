@@ -49,7 +49,7 @@ FAKE_LOG_OBJECT = log_object.Log(**log_object_dict)
 class LoggingExtensionTestFramework(test_firewall.BaseFirewallTestCase):
 
     def setUp(self):
-        super(LoggingExtensionTestFramework, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('extensions', ['log'], group='agent')
         self.context = neutron_context.get_admin_context_without_session()
         self._set_resource_rpc_mock()
@@ -100,7 +100,7 @@ class TestLoggingExtension(LoggingExtensionTestFramework):
     def _is_log_flow_set(self, table, actions):
         flows = self.log_driver.int_br.br.dump_flows_for_table(table)
         pattern = re.compile(
-            r"^.* table=%s.* actions=%s" % (table, actions)
+            r"^.* table={}.* actions={}".format(table, actions)
         )
         for flow in flows.splitlines():
             if pattern.match(flow.strip()):

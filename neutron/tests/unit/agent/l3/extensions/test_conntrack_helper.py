@@ -42,7 +42,7 @@ class ConntrackHelperExtensionBaseTestCase(
         test_agent.BasicRouterOperationsFramework):
 
     def setUp(self):
-        super(ConntrackHelperExtensionBaseTestCase, self).setUp()
+        super().setUp()
 
         self.cth_ext = cth.ConntrackHelperAgentExtension()
 
@@ -99,7 +99,7 @@ class ConntrackHelperExtensionInitializeTestCase(
 class ConntrackHelperExtensionTestCase(ConntrackHelperExtensionBaseTestCase):
 
     def setUp(self):
-        super(ConntrackHelperExtensionTestCase, self).setUp()
+        super().setUp()
         self.cth_ext.initialize(
             self.connection, constants.L3_AGENT_MODE)
         self._set_bulk_pull_mock()
@@ -228,7 +228,7 @@ class ConntrackHelperExtensionTestCase(ConntrackHelperExtensionBaseTestCase):
 
 class ConntrackHelperMappingTestCase(base.BaseTestCase):
     def setUp(self):
-        super(ConntrackHelperMappingTestCase, self).setUp()
+        super().setUp()
         self.mapping = cth.ConntrackHelperMapping()
         self.router1 = uuidutils.generate_uuid()
         self.router2 = uuidutils.generate_uuid()

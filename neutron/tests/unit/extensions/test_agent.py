@@ -38,7 +38,7 @@ L3_HOSTB = 'hostb'
 DHCP_HOSTC = 'hostc'
 
 
-class AgentTestExtensionManager(object):
+class AgentTestExtensionManager:
 
     def get_resources(self):
         return agent.Agent.get_resources()
@@ -56,7 +56,7 @@ class TestAgentPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     supported_extension_aliases = [agent_apidef.ALIAS]
 
 
-class AgentDBTestMixIn(object):
+class AgentDBTestMixIn:
 
     def _list_agents(self, expected_res_status=None,
                      query_string=None):
@@ -100,7 +100,7 @@ class AgentDBTestCase(AgentDBTestMixIn,
     def setUp(self):
         plugin = 'neutron.tests.unit.extensions.test_agent.TestAgentPlugin'
         ext_mgr = AgentTestExtensionManager()
-        super(AgentDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
         self.adminContext = context.get_admin_context()
 
     def test_create_agent(self):
@@ -126,7 +126,7 @@ class AgentDBTestCase(AgentDBTestMixIn,
         self._register_agent_states()
         agents = self._list_agents(
             query_string=('binary=' + constants.AGENT_PROCESS_L3 +
-                '&host=' + L3_HOSTB))
+                          '&host=' + L3_HOSTB))
         self.assertEqual(1, len(agents['agents']))
         com_id = agents['agents'][0]['id']
         agent = self._show('agents', com_id, as_admin=True)
@@ -145,5 +145,5 @@ class AgentDBTestCase(AgentDBTestMixIn,
         time.sleep(1.5)
         agents = self._list_agents(
             query_string=('binary=' + constants.AGENT_PROCESS_L3 +
-                '&host=' + L3_HOSTB))
+                          '&host=' + L3_HOSTB))
         self.assertFalse(agents['agents'][0]['alive'])

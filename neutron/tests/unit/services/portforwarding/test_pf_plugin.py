@@ -49,7 +49,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class TestPortForwardingPlugin(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestPortForwardingPlugin, self).setUp()
+        super().setUp()
 
         with mock.patch.object(
                 resource_manager.ResourceCallbacksManager, '_singleton',
@@ -214,7 +214,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock_pf_get_objects.return_value = [pf_obj, other_pf_obj]
         self.pf_plugin._check_port_forwarding_update(self.ctxt, pf_obj)
         mock_get_port.assert_called_once_with(self.ctxt, 'int_port_id')
-        mock_pf_get_objects.assert_called_once_with(self.ctxt,
+        mock_pf_get_objects.assert_called_once_with(
+            self.ctxt,
             floatingip_id=pf_obj.floatingip_id, protocol=pf_obj.protocol)
 
     @mock.patch.object(port_forwarding.PortForwarding, 'get_objects')
@@ -271,7 +272,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock_pf_get_objects.return_value = [pf_obj, other_pf_obj]
         self.assertRaisesRegex(
             lib_exc.BadRequest,
-            "already exist.*{}".format(same_internal_ip),
+            f"already exist.*{same_internal_ip}",
             self.pf_plugin._check_port_forwarding_update,
             self.ctxt, pf_obj)
         mock_get_port.assert_called_once_with(self.ctxt, 'same_int_port_id')

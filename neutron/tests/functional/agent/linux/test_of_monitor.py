@@ -24,7 +24,7 @@ class OFMonitorTestCase(functional_base.BaseSudoTestCase):
     DEFAULT_FLOW = {'table': 0, 'cookie': '0', 'actions': 'NORMAL'}
 
     def setUp(self):
-        super(OFMonitorTestCase, self).setUp()
+        super().setUp()
         self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.of_monitor = of_monitor.OFMonitor(self.bridge.br_name,
                                                start=False)
@@ -66,8 +66,8 @@ class OFMonitorTestCase(functional_base.BaseSudoTestCase):
         try:
             utils.wait_until_true(_read_and_check, timeout=5)
         except utils.WaitTimeout:
-            self.fail('Flow "%s" with action %s not found' % (reference_flow,
-                                                              event_type))
+            self.fail('Flow "{}" with action {} not found'.format(
+                reference_flow, event_type))
         event = events_container.pop()
         self.assertEqual(event_type, event.event_type)
         self.assertEqual(self._format_flow(reference_flow, event_type),

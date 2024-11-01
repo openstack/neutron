@@ -34,7 +34,7 @@ class StatelessRulesNotConfiguredException(Exception):
     pass
 
 
-class OVSVersionChecker(object):
+class OVSVersionChecker:
     conntrack_supported = None
 
     sanity_check.setup_conf()
@@ -61,7 +61,7 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
                 network_type=self.network_type,
                 debug_iptables=debug_iptables),
             host_descriptions)
-        super(BaseSecurityGroupsSameNetworkTest, self).setUp(env)
+        super().setUp(env)
 
         if (self.firewall_driver == 'openvswitch' and
                 not OVSVersionChecker.supports_ovsfirewall()):

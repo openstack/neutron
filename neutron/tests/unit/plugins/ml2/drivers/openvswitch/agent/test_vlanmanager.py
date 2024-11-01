@@ -22,7 +22,7 @@ from neutron.tests import base
 
 class LocalVlanManagerFixture(fixtures.Fixture):
     def _setUp(self):
-        super(LocalVlanManagerFixture, self)._setUp()
+        super()._setUp()
         self.vlan_manager = vlanmanager.LocalVlanManager()
         self.addCleanup(self.restore_manager)
         # Remove _instance attribute from VlanManager in order to not obtain a
@@ -53,7 +53,7 @@ class TestLocalVLANMapping(base.BaseTestCase):
 class TestLocalVlanManager(base.BaseTestCase):
 
     def setUp(self):
-        super(TestLocalVlanManager, self).setUp()
+        super().setUp()
         self.vlan_manager = self.useFixture(LocalVlanManagerFixture()).manager
 
     def test_is_singleton(self):

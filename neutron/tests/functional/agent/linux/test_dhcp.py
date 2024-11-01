@@ -32,7 +32,7 @@ from neutron.tests.functional import base as functional_base
 
 class TestDhcp(functional_base.BaseSudoTestCase):
     def setUp(self):
-        super(TestDhcp, self).setUp()
+        super().setUp()
         conf = cfg.ConfigOpts()
         config.register_interface_driver_opts_helper(conf)
         config.register_interface_opts(conf)

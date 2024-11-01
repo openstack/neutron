@@ -38,7 +38,7 @@ class NamespaceManagerTestCaseFramework(base.BaseTestCase):
 class TestNamespaceManager(NamespaceManagerTestCaseFramework):
 
     def setUp(self):
-        super(TestNamespaceManager, self).setUp()
+        super().setUp()
         self.ns_manager = self._create_namespace_manager()
 
     def test_get_prefix_and_id(self):

@@ -22,7 +22,7 @@ from neutron.tests import base
 
 class NeutronKeystoneContextTestCase(base.BaseTestCase):
     def setUp(self):
-        super(NeutronKeystoneContextTestCase, self).setUp()
+        super().setUp()
 
         @webob.dec.wsgify
         def fake_app(req):

@@ -50,7 +50,7 @@ class TestMultiSegs(base.BaseFullStackTestCase):
             ),
             host_descriptions)
 
-        super(TestMultiSegs, self).setUp(env)
+        super().setUp(env)
         self.project_id = uuidutils.generate_uuid()
 
     def _spawn_vm(self, neutron_port=None):

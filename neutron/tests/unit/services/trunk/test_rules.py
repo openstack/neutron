@@ -38,7 +38,7 @@ from neutron.tests.unit.services.trunk import fakes
 class SubPortsValidatorTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(SubPortsValidatorTestCase, self).setUp()
+        super().setUp()
         self.segmentation_types = {
             constants.SEGMENTATION_TYPE_VLAN: plugin_utils.is_valid_vlan_tag}
         self.context = mock.ANY
@@ -121,7 +121,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
         validator = rules.SubPortsValidator(
             self.segmentation_types,
             [{'segmentation_type': 'fake',
-            'segmentation_id': 100}])
+              'segmentation_id': 100}])
         self.assertRaises(n_exc.InvalidInput,
                           validator.validate,
                           self.context, basic_validation=True)
@@ -130,7 +130,7 @@ class SubPortsValidatorTestCase(base.BaseTestCase):
 class SubPortsValidatorPrepareTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(SubPortsValidatorPrepareTestCase, self).setUp()
+        super().setUp()
         self.segmentation_types = {
             constants.SEGMENTATION_TYPE_VLAN: plugin_utils.is_valid_vlan_tag}
         self.context = mock.ANY
@@ -151,7 +151,7 @@ class SubPortsValidatorPrepareTestCase(base.BaseTestCase):
 class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(SubPortsValidatorMtuSanityTestCase, self).setUp()
+        super().setUp()
         self.segmentation_types = {
             constants.SEGMENTATION_TYPE_VLAN: plugin_utils.is_valid_vlan_tag}
 
@@ -227,7 +227,7 @@ class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
 class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(TrunkPortValidatorTestCase, self).setUp()
+        super().setUp()
         self.drivers_patch = mock.patch.object(drivers, 'register').start()
         self.compat_patch = mock.patch.object(
             trunk_plugin.TrunkPlugin, 'check_compatibility').start()

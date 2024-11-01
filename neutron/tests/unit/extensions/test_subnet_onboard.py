@@ -28,7 +28,7 @@ from neutron.tests.unit.plugins.ml2 import test_plugin
 _uuid = uuidutils.generate_uuid
 
 
-class SubnetOnboardTestsBase(object):
+class SubnetOnboardTestsBase:
 
     @contextlib.contextmanager
     def address_scope(self, ip_version, prefixes=None, shared=False,
@@ -71,9 +71,10 @@ class SubnetOnboardTestsBase(object):
 
     def test_onboard_subnet_address_scope(self):
         with self.address_scope(self.ip_version) as addr_scope:
-            with self.subnetpool(self.ip_version,
-                             prefixes=self.subnetpool_prefixes,
-                             address_scope_id=addr_scope['id']) as subnetpool:
+            with self.subnetpool(
+                    self.ip_version,
+                    prefixes=self.subnetpool_prefixes,
+                    address_scope_id=addr_scope['id']) as subnetpool:
                 self._test_onboard_cidr(subnetpool['id'], self.cidr_to_onboard)
 
     def test_onboard_subnet_overlapping_cidr_no_address_scope(self):
@@ -89,37 +90,42 @@ class SubnetOnboardTestsBase(object):
 
     def test_onboard_subnet_address_scope_multiple_pools(self):
         with self.address_scope(self.ip_version) as addr_scope:
-            with self.subnetpool(self.ip_version,
-                          prefixes=[self.subnetpool_prefixes[0]],
-                          address_scope_id=addr_scope['id']) as onboard_pool,\
+            with self.subnetpool(
+                    self.ip_version,
+                    prefixes=[self.subnetpool_prefixes[0]],
+                    address_scope_id=addr_scope['id']) as onboard_pool,\
                 self.subnetpool(self.ip_version,
-                             prefixes=[self.subnetpool_prefixes[1]],
-                             address_scope_id=addr_scope['id']):
+                                prefixes=[self.subnetpool_prefixes[1]],
+                                address_scope_id=addr_scope['id']):
                 self._test_onboard_cidr(onboard_pool['id'],
                                         self.cidr_to_onboard)
 
     def test_onboard_subnet_address_scope_overlap_multiple_pools(self):
         with self.address_scope(self.ip_version) as addr_scope:
-            with self.subnetpool(self.ip_version,
-                          prefixes=[self.subnetpool_prefixes[0]],
-                          address_scope_id=addr_scope['id']) as onboard_pool,\
-                self.subnetpool(self.ip_version,
-                             prefixes=[self.subnetpool_prefixes[1]],
-                             address_scope_id=addr_scope['id']) as other_pool:
+            with self.subnetpool(
+                    self.ip_version,
+                    prefixes=[self.subnetpool_prefixes[0]],
+                    address_scope_id=addr_scope['id']) as onboard_pool,\
+                    self.subnetpool(
+                        self.ip_version,
+                        prefixes=[self.subnetpool_prefixes[1]],
+                        address_scope_id=addr_scope['id']) as other_pool:
                 self.assertRaises(exc.AddressScopePrefixConflict,
-                              self._test_onboard_cidr,
-                              onboard_pool['id'],
-                              other_pool['prefixes'][0])
+                                  self._test_onboard_cidr,
+                                  onboard_pool['id'],
+                                  other_pool['prefixes'][0])
 
     def test_onboard_subnet_move_between_pools_same_address_scope(self):
         with self.address_scope(self.ip_version) as addr_scope:
             with self.subnetpool(self.ip_version,
                                  prefixes=[self.cidr_to_onboard],
                                  address_scope_id=addr_scope['id']) as source:
-                with self.subnetpool(self.ip_version,
+                with self.subnetpool(
+                        self.ip_version,
                         address_scope_id=addr_scope['id'],
                         prefixes=self.subnetpool_prefixes) as target:
-                    with self.subnet(cidr=self.cidr_to_onboard,
+                    with self.subnet(
+                            cidr=self.cidr_to_onboard,
                             ip_version=self.ip_version) as subnet_to_onboard:
                         subnet_to_onboard = subnet_to_onboard['subnet']
 
@@ -132,16 +138,18 @@ class SubnetOnboardTestsBase(object):
                         self.assertEqual(1, len(source_pool_subnets))
 
                         # Attempt to move the subnet to the target pool
-                        self.assertRaises(exc.AddressScopePrefixConflict,
-                              self._test_onboard_network_subnets,
-                              subnet_to_onboard['network_id'], target['id'])
+                        self.assertRaises(
+                            exc.AddressScopePrefixConflict,
+                            self._test_onboard_network_subnets,
+                            subnet_to_onboard['network_id'], target['id'])
 
     def test_onboard_subnet_move_between_pools(self):
         with self.subnetpool(self.ip_version,
                              prefixes=self.subnetpool_prefixes) as source:
             with self.subnetpool(self.ip_version,
                                  prefixes=self.subnetpool_prefixes) as target:
-                with self.subnet(cidr=self.cidr_to_onboard,
+                with self.subnet(
+                        cidr=self.cidr_to_onboard,
                         ip_version=self.ip_version) as subnet_to_onboard:
                     subnet_to_onboard = subnet_to_onboard['subnet']
 
@@ -178,14 +186,14 @@ class SubnetOnboardTestsBase(object):
 
     def test_onboard_subnet_invalid_request(self):
         with self.subnetpool(self.ip_version,
-                prefixes=self.subnetpool_prefixes) as subnetpool:
+                             prefixes=self.subnetpool_prefixes) as subnetpool:
             self.assertRaises(exc.InvalidInput,
                               self._test_onboard_subnet_no_network_id,
                               subnetpool['id'], self.cidr_to_onboard)
 
     def test_onboard_subnet_network_not_found(self):
         with self.subnetpool(self.ip_version,
-                prefixes=self.subnetpool_prefixes) as subnetpool:
+                             prefixes=self.subnetpool_prefixes) as subnetpool:
             self.assertRaises(exc.NetworkNotFound,
                               self._test_onboard_subnet_non_existing_network,
                               subnetpool['id'], self.cidr_to_onboard)

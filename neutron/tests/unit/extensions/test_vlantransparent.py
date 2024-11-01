@@ -26,7 +26,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 
 
-class VlanTransparentExtensionManager(object):
+class VlanTransparentExtensionManager:
 
     def get_resources(self):
         return []
@@ -49,8 +49,7 @@ class VlanTransparentExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_network(self, context, network):
         with db_api.CONTEXT_WRITER.using(context):
-            new_net = super(VlanTransparentExtensionTestPlugin,
-                            self).create_network(context, network)
+            new_net = super().create_network(context, network)
             # Update the vlan_transparent in the database
             n = network['network']
             vlan_transparent = vlan_apidef.get_vlan_transparent(n)
@@ -69,8 +68,8 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
 
         # Update the plugin and extensions path
         ext_mgr = VlanTransparentExtensionManager()
-        super(VlanTransparentExtensionTestCase, self).setUp(plugin=plugin,
-                                                            ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin,
+                      ext_mgr=ext_mgr)
 
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', quota_conf.QUOTA_DB_DRIVER,

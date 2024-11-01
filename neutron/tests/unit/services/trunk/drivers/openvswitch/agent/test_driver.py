@@ -30,7 +30,7 @@ TRUNK_MANAGER = ('neutron.services.trunk.drivers.openvswitch.agent.'
 class OvsTrunkSkeletonTest(base.BaseTestCase):
 
     def setUp(self):
-        super(OvsTrunkSkeletonTest, self).setUp()
+        super().setUp()
         trunk_manager_cls_mock = mock.patch(TRUNK_MANAGER).start()
         self.trunk_manager = trunk_manager_cls_mock.return_value
         handler = ovsdb_handler.OVSDBHandler(self.trunk_manager)

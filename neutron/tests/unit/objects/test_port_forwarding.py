@@ -29,7 +29,7 @@ class PortForwardingObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
     _test_class = port_forwarding.PortForwarding
 
     def setUp(self):
-        super(PortForwardingObjectTestCase, self).setUp()
+        super().setUp()
         # 'portforwardings' table will store the 'internal_ip_address' and
         # 'internal_port' as a single 'socket' column.
         # Port forwarding object accepts 'internal_ip_address' and
@@ -87,7 +87,7 @@ class PortForwardingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = port_forwarding.PortForwarding
 
     def setUp(self):
-        super(PortForwardingDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'floatingip_id':
                 lambda: self._create_test_fip_id_for_port_forwarding(),

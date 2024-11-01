@@ -27,7 +27,7 @@ class TestIpamSubnetManager(testlib_api.SqlTestCase):
     """Test case for SubnetManager DB helper class"""
 
     def setUp(self):
-        super(TestIpamSubnetManager, self).setUp()
+        super().setUp()
         self.setup_coreplugin(core_plugin=CORE_PLUGIN)
         self.ctx = context.get_admin_context()
         self.neutron_subnet_id = uuidutils.generate_uuid()

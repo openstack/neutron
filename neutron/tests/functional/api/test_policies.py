@@ -40,7 +40,7 @@ class APIPolicyTestCase(base.BaseLoggingTestCase):
     api_version = "2.0"
 
     def setUp(self):
-        super(APIPolicyTestCase, self).setUp()
+        super().setUp()
         self.useFixture(fixture.APIDefinitionFixture())
         self.extension_path = os.path.abspath(os.path.join(
             TEST_PATH, "../../../extensions"))

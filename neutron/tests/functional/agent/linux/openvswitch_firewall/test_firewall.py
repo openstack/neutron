@@ -23,7 +23,7 @@ from neutron.tests.functional import base
 
 class TestGetTagFromOtherConfig(base.BaseSudoTestCase):
     def setUp(self):
-        super(TestGetTagFromOtherConfig, self).setUp()
+        super().setUp()
         self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
     def set_port_tag(self, port_name, tag):

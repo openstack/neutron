@@ -95,7 +95,7 @@ class TestGetRootHelperChildPid(functional_base.BaseSudoTestCase):
             "get_root_helper_child_pid is expected to return the pid of the "
             "bash process")
         self._addcleanup_sleep_process(child_pid)
-        with open('/proc/%s/cmdline' % child_pid, 'r') as f_proc_cmdline:
+        with open('/proc/%s/cmdline' % child_pid) as f_proc_cmdline:
             cmdline = f_proc_cmdline.readline().split('\0')[0]
         self.assertIn('bash', cmdline)
 
@@ -174,7 +174,7 @@ class TestFindChildPids(functional_base.BaseSudoTestCase):
             self.assertIn(_pid, child_pids_recursive_after)
 
     def test_find_non_existing_process(self):
-        with open('/proc/sys/kernel/pid_max', 'r') as fd:
+        with open('/proc/sys/kernel/pid_max') as fd:
             pid_max = int(fd.readline().strip())
         self.assertEqual([], utils.find_child_pids(pid_max))
 
@@ -208,8 +208,8 @@ line 4
         self.assertEqual(file, content)
 
     def test_read_if_exists_no_file(self):
-        temp_dir = tempfile.TemporaryDirectory()
-        content = utils.read_if_exists(
-            os.path.join(temp_dir.name, 'non-existing-file'),
-            run_as_root=self.run_as_root)
+        with tempfile.TemporaryDirectory() as temp_dir:
+            content = utils.read_if_exists(
+                os.path.join(temp_dir, 'non-existing-file'),
+                run_as_root=self.run_as_root)
         self.assertEqual('', content)

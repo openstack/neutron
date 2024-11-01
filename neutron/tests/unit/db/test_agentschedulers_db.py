@@ -67,7 +67,7 @@ DEVICE_OWNER_COMPUTE = ''.join([constants.DEVICE_OWNER_COMPUTE_PREFIX,
                                 DHCP_HOSTA])
 
 
-class AgentSchedulerTestMixIn(object):
+class AgentSchedulerTestMixIn:
 
     block_dhcp_notifier = False
 
@@ -114,45 +114,45 @@ class AgentSchedulerTestMixIn(object):
     def _list_routers_hosted_by_l3_agent(self, agent_id,
                                          expected_code=exc.HTTPOk.code,
                                          admin_context=True):
-        path = "/agents/%s/%s.%s" % (agent_id,
-                                     l3agentscheduler.L3_ROUTERS,
-                                     self.fmt)
+        path = "/agents/{}/{}.{}".format(agent_id,
+                                         l3agentscheduler.L3_ROUTERS,
+                                         self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
 
     def _list_networks_hosted_by_dhcp_agent(self, agent_id,
                                             expected_code=exc.HTTPOk.code,
                                             admin_context=True):
-        path = "/agents/%s/%s.%s" % (agent_id,
-                                     das_apidef.DHCP_NETS,
-                                     self.fmt)
+        path = "/agents/{}/{}.{}".format(agent_id,
+                                         das_apidef.DHCP_NETS,
+                                         self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
 
     def _list_l3_agents_hosting_router(self, router_id,
                                        expected_code=exc.HTTPOk.code,
                                        admin_context=True):
-        path = "/routers/%s/%s.%s" % (router_id,
-                                      l3agentscheduler.L3_AGENTS,
-                                      self.fmt)
+        path = "/routers/{}/{}.{}".format(router_id,
+                                          l3agentscheduler.L3_AGENTS,
+                                          self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
 
     def _list_dhcp_agents_hosting_network(self, network_id,
                                           expected_code=exc.HTTPOk.code,
                                           admin_context=True):
-        path = "/networks/%s/%s.%s" % (network_id,
-                                       das_apidef.DHCP_AGENTS,
-                                       self.fmt)
+        path = "/networks/{}/{}.{}".format(network_id,
+                                           das_apidef.DHCP_AGENTS,
+                                           self.fmt)
         return self._request_list(path, expected_code=expected_code,
                                   admin_context=admin_context)
 
     def _add_router_to_l3_agent(self, id, router_id,
                                 expected_code=exc.HTTPCreated.code,
                                 admin_context=True):
-        path = "/agents/%s/%s.%s" % (id,
-                                     l3agentscheduler.L3_ROUTERS,
-                                     self.fmt)
+        path = "/agents/{}/{}.{}".format(id,
+                                         l3agentscheduler.L3_ROUTERS,
+                                         self.fmt)
         req = self._path_create_request(path,
                                         {'router_id': router_id},
                                         admin_context=admin_context)
@@ -162,9 +162,9 @@ class AgentSchedulerTestMixIn(object):
     def _add_network_to_dhcp_agent(self, id, network_id,
                                    expected_code=exc.HTTPCreated.code,
                                    admin_context=True):
-        path = "/agents/%s/%s.%s" % (id,
-                                     das_apidef.DHCP_NETS,
-                                     self.fmt)
+        path = "/agents/{}/{}.{}".format(id,
+                                         das_apidef.DHCP_NETS,
+                                         self.fmt)
         req = self._path_create_request(path,
                                         {'network_id': network_id},
                                         admin_context=admin_context)
@@ -174,10 +174,10 @@ class AgentSchedulerTestMixIn(object):
     def _remove_network_from_dhcp_agent(self, id, network_id,
                                         expected_code=exc.HTTPNoContent.code,
                                         admin_context=True):
-        path = "/agents/%s/%s/%s.%s" % (id,
-                                        das_apidef.DHCP_NETS,
-                                        network_id,
-                                        self.fmt)
+        path = "/agents/{}/{}/{}.{}".format(id,
+                                            das_apidef.DHCP_NETS,
+                                            network_id,
+                                            self.fmt)
         req = self._path_delete_request(path,
                                         admin_context=admin_context)
         res = req.get_response(self.ext_api)
@@ -186,10 +186,10 @@ class AgentSchedulerTestMixIn(object):
     def _remove_router_from_l3_agent(self, id, router_id,
                                      expected_code=exc.HTTPNoContent.code,
                                      admin_context=True):
-        path = "/agents/%s/%s/%s.%s" % (id,
-                                        l3agentscheduler.L3_ROUTERS,
-                                        router_id,
-                                        self.fmt)
+        path = "/agents/{}/{}/{}.{}".format(id,
+                                            l3agentscheduler.L3_ROUTERS,
+                                            router_id,
+                                            self.fmt)
         req = self._path_delete_request(path, admin_context=admin_context)
         res = req.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
@@ -255,7 +255,7 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         self.client_mock = mock.MagicMock(name="mocked client")
         mock.patch.object(
             n_rpc, 'get_client').start().return_value = self.client_mock
-        super(OvsAgentSchedulerTestCaseBase, self).setUp(
+        super().setUp(
             'ml2', service_plugins=service_plugins)
         mock.patch.object(
             self.plugin, 'filter_hosts_with_network_access',
@@ -871,7 +871,8 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         agent_b = helpers.register_l3_agent(
             host=L3_HOSTB, agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
         with self.subnet() as s, \
-                mock.patch.object(l3_notifier.client, 'prepare',
+                mock.patch.object(
+                    l3_notifier.client, 'prepare',
                     return_value=l3_notifier.client) as mock_prepare, \
                 mock.patch.object(l3_notifier.client, 'cast') as mock_cast, \
                 mock.patch.object(l3_notifier.client, 'call'):
@@ -899,7 +900,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 candidate_agent = (agent_b if agent['host'] == L3_HOSTA
                                    else agent_a)
                 self.l3plugin.reschedule_router(self.adminContext, r['id'],
-                        candidates=[candidate_agent])
+                                                candidates=[candidate_agent])
                 # make sure dvr serviceable ports are checked when rescheduling
                 self.assertTrue(ports_exist.called)
 
@@ -1017,13 +1018,13 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             # Get all routers
             ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA)
             self.assertEqual(3, len(ret_a))
-            self.assertEqual(set(router_ids), set([r['id'] for r in ret_a]))
+            self.assertEqual(set(router_ids), {r['id'] for r in ret_a})
 
             # Get all routers (router_ids=None)
             ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
                                            router_ids=None)
             self.assertEqual(3, len(ret_a))
-            self.assertEqual(set(router_ids), set([r['id'] for r in ret_a]))
+            self.assertEqual(set(router_ids), {r['id'] for r in ret_a})
 
             # Get router2 only
             ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
@@ -1442,7 +1443,7 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                                    AgentSchedulerTestMixIn,
                                    test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
-        super(OvsDhcpAgentNotifierTestCase, self).setUp('ml2')
+        super().setUp('ml2')
         mock.patch.object(
             self.plugin, 'filter_hosts_with_network_access',
             side_effect=lambda context, network_id, hosts: hosts).start()
@@ -1613,8 +1614,8 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
         payload = events.DBEventPayload(
             ctx,
             metadata={'host': 'HOST A',
-                      'current_segment_ids': set([
-                          'segment-1', 'segment-2', 'segment-3'])})
+                      'current_segment_ids': {
+                          'segment-1', 'segment-2', 'segment-3'}})
         segments_plugin = mock.Mock()
         segments_plugin.get_segments.return_value = [
             {'id': 'segment-1', 'hosts': ['HOST A'],
@@ -1704,7 +1705,7 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
             }
         else:
             service_plugins = None
-        super(OvsL3AgentNotifierTestCase, self).setUp(
+        super().setUp(
             'ml2', service_plugins=service_plugins)
         ext_mgr = extensions.PluginAwareExtensionManager.get_instance()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)

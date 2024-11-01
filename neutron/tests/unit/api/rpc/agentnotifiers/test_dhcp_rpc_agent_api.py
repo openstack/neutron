@@ -35,7 +35,7 @@ from neutron.tests import base
 class TestDhcpAgentNotifyAPI(base.BaseTestCase):
 
     def setUp(self):
-        super(TestDhcpAgentNotifyAPI, self).setUp()
+        super().setUp()
         self.notifier = (
             dhcp_rpc_agent_api.DhcpAgentNotifyAPI(plugin=mock.Mock()))
 
@@ -145,9 +145,9 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         mock_context = mock.MagicMock()
         mock_context.is_admin = True
         methods = ['network_create_end', 'network_update_end',
-                  'network_delete_end', 'subnet_create_end',
-                  'subnet_update_end', 'subnet_delete_end',
-                  'port_create_end', 'port_update_end', 'port_delete_end']
+                   'network_delete_end', 'subnet_create_end',
+                   'subnet_update_end', 'subnet_delete_end',
+                   'port_create_end', 'port_update_end', 'port_delete_end']
         with mock.patch.object(self.notifier, '_schedule_network') as f:
             with mock.patch.object(self.notifier, '_get_enabled_agents') as g:
                 for method in methods:

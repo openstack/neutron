@@ -94,7 +94,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     NESTED_NAMESPACE_SEPARATOR = '@'
 
     def setUp(self):
-        super(L3AgentTestFramework, self).setUp()
+        super().setUp()
         self.mock_plugin_api = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
@@ -238,9 +238,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.assertTrue(rpc.called)
 
         # Assert that every defined FIP is updated via RPC
-        expected_fips = set([
+        expected_fips = {
             (fip['id'], constants.FLOATINGIP_STATUS_ACTIVE) for fip in
-            router.router[constants.FLOATINGIP_KEY]])
+            router.router[constants.FLOATINGIP_KEY]}
         call = [args[0] for args in rpc.call_args_list][0]
         actual_fips = set(list(call[2].items()))
         self.assertEqual(expected_fips, actual_fips)
@@ -344,8 +344,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         slaac = constants.IPV6_SLAAC
         slaac_mode = {'ra_mode': slaac, 'address_mode': slaac}
         subnet_modes = [slaac_mode] * 2
-        self._add_internal_interface_by_subnet(router.router,
-            count=2, ip_version=constants.IP_VERSION_6,
+        self._add_internal_interface_by_subnet(
+            router.router, count=2, ip_version=constants.IP_VERSION_6,
             ipv6_subnet_modes=subnet_modes)
         router.process()
 
@@ -587,7 +587,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         for ip_version in ip_versions:
             _routes = ip_lib.list_ip_routes(ns_name, ip_version)
             routes.extend(_routes)
-        routes = set(route['cidr'] for route in routes)
+        routes = {route['cidr'] for route in routes}
         ex_gw_port = router.get_ex_gw_port()
         if not ex_gw_port:
             if not enable_gw:
@@ -614,29 +614,29 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     def _create_router(self, router_info, agent):
 
-        ns_name = "%s%s%s" % (
+        ns_name = "{}{}{}".format(
             'qrouter-' + router_info['id'],
             self.NESTED_NAMESPACE_SEPARATOR, agent.host)
-        ext_name = "qg-%s-%s" % (agent.host, _uuid()[-4:])
-        int_name = "qr-%s-%s" % (agent.host, _uuid()[-4:])
+        ext_name = "qg-{}-{}".format(agent.host, _uuid()[-4:])
+        int_name = "qr-{}-{}".format(agent.host, _uuid()[-4:])
 
         get_ns_name = mock.patch.object(
             namespaces.RouterNamespace, '_get_ns_name').start()
         get_ns_name.return_value = ns_name
         get_ext_name = mock.patch.object(l3_router_info.RouterInfo,
-            'get_external_device_name').start()
+                                         'get_external_device_name').start()
         get_ext_name.return_value = ext_name
         get_int_name = mock.patch.object(l3_router_info.RouterInfo,
-            'get_internal_device_name').start()
+                                         'get_internal_device_name').start()
         get_int_name.return_value = int_name
 
         router = self.manage_router(agent, router_info)
 
         router_ext_name = mock.patch.object(router,
-            'get_external_device_name').start()
+                                            'get_external_device_name').start()
         router_ext_name.return_value = get_ext_name.return_value
         router_int_name = mock.patch.object(router,
-            'get_internal_device_name').start()
+                                            'get_internal_device_name').start()
         router_int_name.return_value = get_int_name.return_value
 
         return router

@@ -29,7 +29,7 @@ class UplinkStatusPropagationML2ExtDriverTestCase(
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(UplinkStatusPropagationML2ExtDriverTestCase, self).setUp()
+        super().setUp()
         self.plugin = directory.get_plugin()
 
     def test_extend_port_dict_no_project_default(self):

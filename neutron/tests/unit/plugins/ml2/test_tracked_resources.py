@@ -34,7 +34,7 @@ class SgTestCaseWrapper(test_securitygroup.SecurityGroupDBTestCase):
     # service_plugins keyword parameter.
 
     def setUp(self, plugin, **kwargs):
-        super(SgTestCaseWrapper, self).setUp(plugin)
+        super().setUp(plugin)
 
 
 class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
@@ -44,7 +44,7 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
         self.addCleanup(self._cleanup)
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase.quota_db_driver = (
             'neutron.db.quota.driver.DbQuotaDriver')
-        super(BaseTestTrackedResources, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         self._project_id = uuidutils.generate_uuid()
         # TODO(ralonsoh): "tenant_id" reference should be removed.
@@ -60,7 +60,7 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
             self.ctx, resource_name, self._project_id)
 
 
-class BaseTestEventHandler(object):
+class BaseTestEventHandler:
 
     def setUp(self):
         # Prevent noise from default security group operations
@@ -85,7 +85,7 @@ class BaseTestEventHandler(object):
         handler_patch = mock.patch(
             'neutron.quota.resource.TrackedResource._db_event_handler')
         self.handler_mock = handler_patch.start()
-        super(BaseTestEventHandler, self).setUp()
+        super().setUp()
 
     def _verify_event_handler_calls(self, data, expected_call_count=1):
         if not hasattr(data, '__iter__') or isinstance(data, dict):
@@ -191,7 +191,7 @@ class TestL3ResourcesEventHandler(BaseTestEventHandler,
         self.addCleanup(self._cleanup)
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase.quota_db_driver = (
             'neutron.db.quota.driver.DbQuotaDriver')
-        super(TestL3ResourcesEventHandler, self).setUp()
+        super().setUp()
         self.useFixture(fixture.APIDefinitionFixture())
         ext_mgr = test_l3.L3TestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)

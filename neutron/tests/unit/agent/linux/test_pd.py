@@ -21,7 +21,7 @@ from neutron.agent.linux import pd
 from neutron.tests import base as tests_base
 
 
-class FakeRouter(object):
+class FakeRouter:
     def __init__(self, router_id):
         self.router_id = router_id
 

@@ -180,8 +180,8 @@ class ConnectionTester(fixtures.Fixture):
                                     timeout=icmp_timeout)
         except RuntimeError:
             raise ConnectionTesterException(
-                "ICMP packets can't get from %s namespace to %s address" % (
-                    src_namespace, ip_address))
+                "ICMP packets can't get from {} namespace to {} "
+                "address".format(src_namespace, ip_address))
 
     def _test_arp_connectivity(self, direction, protocol, src_port, dst_port):
         src_namespace, ip_address = self._get_namespace_and_address(direction)
@@ -205,8 +205,8 @@ class ConnectionTester(fixtures.Fixture):
         except ConnectionTesterException:
             pass
         else:
-            dst_port_info = str()
-            src_port_info = str()
+            dst_port_info = ''
+            src_port_info = ''
             if dst_port is not None:
                 dst_port_info = " and destination port %d" % dst_port
             if src_port is not None:
@@ -399,11 +399,11 @@ class OVSConnectionTester(OVSBaseConnectionTester):
     """
 
     def __init__(self, ip_cidr, br_int_cls):
-        super(OVSConnectionTester, self).__init__(ip_cidr)
+        super().__init__(ip_cidr)
         self.br_int_cls = br_int_cls
 
     def _setUp(self):
-        super(OVSConnectionTester, self)._setUp()
+        super()._setUp()
         br_name = self.useFixture(
             net_helpers.OVSBridgeFixture()).bridge.br_name
         self.bridge = self.br_int_cls(br_name)
@@ -487,11 +487,11 @@ class OVSTrunkConnectionTester(OVSBaseConnectionTester):
     """
 
     def __init__(self, ip_cidr, br_trunk_name):
-        super(OVSTrunkConnectionTester, self).__init__(ip_cidr)
+        super().__init__(ip_cidr)
         self._br_trunk_name = br_trunk_name
 
     def _setUp(self):
-        super(OVSTrunkConnectionTester, self)._setUp()
+        super()._setUp()
         self.bridge = self.useFixture(
             net_helpers.OVSBridgeFixture()).bridge
         self.br_trunk = self.useFixture(
@@ -569,10 +569,10 @@ class LinuxBridgeConnectionTester(ConnectionTester):
 
     def __init__(self, *args, **kwargs):
         self.bridge_name = kwargs.pop('bridge_name', None)
-        super(LinuxBridgeConnectionTester, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _setUp(self):
-        super(LinuxBridgeConnectionTester, self)._setUp()
+        super()._setUp()
         bridge_args = {}
         if self.bridge_name:
             bridge_args = {'prefix': self.bridge_name,
@@ -599,4 +599,4 @@ class LinuxBridgeConnectionTester(ConnectionTester):
 
     def flush_arp_tables(self):
         self.bridge.neigh.flush(4, 'all')
-        super(LinuxBridgeConnectionTester, self).flush_arp_tables()
+        super().flush_arp_tables()

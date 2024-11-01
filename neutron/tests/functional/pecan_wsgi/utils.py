@@ -58,7 +58,7 @@ class FakeSingularCollectionExtension(api_extensions.ExtensionDescriptor):
         return [pecan_utils.PecanResourceExtension(self.RESOURCE, ctrllr)]
 
 
-class FakeSingularCollectionPlugin(object):
+class FakeSingularCollectionPlugin:
 
     supported_extension_aliases = ['fake-sc']
 
@@ -204,7 +204,7 @@ class FakeExtension(api_extensions.ExtensionDescriptor):
             return {}
 
 
-class FakePlugin(object):
+class FakePlugin:
 
     PLUGIN_TYPE = 'fake-ext-plugin'
     supported_extension_aliases = ['fake-ext']

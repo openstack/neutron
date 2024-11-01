@@ -25,7 +25,7 @@ from neutron.tests import base as test_base
 from neutron.tests.unit import testlib_api
 
 
-class FakeModel(object):
+class FakeModel:
     def __init__(self, *args, **kwargs):
         pass
 
@@ -89,7 +89,7 @@ class CRUDScenarioTestCase(testlib_api.SqlTestCase):
     CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
     def setUp(self):
-        super(CRUDScenarioTestCase, self).setUp()
+        super().setUp()
         # TODO(ihrachys): revisit plugin setup once we decouple
         # neutron.objects.db.api from core plugin instance
         self.setup_coreplugin(self.CORE_PLUGIN)

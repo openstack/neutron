@@ -27,6 +27,6 @@ class AllowedAddrPairsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = allowedaddresspairs.AllowedAddressPair
 
     def setUp(self):
-        super(AllowedAddrPairsDbObjTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'port_id': lambda: self._create_test_port_id()})

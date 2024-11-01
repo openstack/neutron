@@ -31,7 +31,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 
 class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
     def setUp(self):
-        super(NetworkRbacTestcase, self).setUp(plugin='ml2')
+        super().setUp(plugin='ml2')
         self.context = context.get_admin_context()
 
     def _make_networkrbac(self, network, target,

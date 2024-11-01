@@ -30,7 +30,7 @@ SERVICE_NAME = "service"
 class BaseTestProcessMonitor(base.BaseLoggingTestCase):
 
     def setUp(self):
-        super(BaseTestProcessMonitor, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
         self._child_processes = []
         self._process_monitor = None

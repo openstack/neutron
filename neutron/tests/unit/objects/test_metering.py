@@ -34,7 +34,7 @@ class MeteringLabelRuleDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         return metering_label.id
 
     def setUp(self):
-        super(MeteringLabelRuleDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'metering_label_id': self._create_test_metering_label_id})
 

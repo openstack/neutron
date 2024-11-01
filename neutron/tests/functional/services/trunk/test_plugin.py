@@ -23,7 +23,7 @@ from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 class TestTrunkServicePlugin(ml2_test_base.ML2TestFramework):
 
     def setUp(self):
-        super(TestTrunkServicePlugin, self).setUp()
+        super().setUp()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
 
     def test_ovs_bridge_name_set_when_trunk_bound(self):
@@ -49,7 +49,8 @@ class TestTrunkServicePlugin(ml2_test_base.ML2TestFramework):
             port['port'][pb.HOST_ID] = helpers.HOST
             bound_port = self.core_plugin.update_port(self.context,
                                                       port['port']['id'], port)
-            self.assertEqual('br-fake',
+            self.assertEqual(
+                'br-fake',
                 bound_port[pb.VIF_DETAILS].get(pb.VIF_DETAILS_BRIDGE_NAME))
 
     def test_ovs_bridge_name_not_set_if_integration_bridge_not_set(self):

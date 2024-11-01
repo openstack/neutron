@@ -26,7 +26,7 @@ from neutron.tests import base
 class TestChecks(base.BaseTestCase):
 
     def setUp(self):
-        super(TestChecks, self).setUp()
+        super().setUp()
         self.checks = checks.CoreChecks()
 
     def test_get_checks_list(self):
@@ -162,8 +162,8 @@ class TestChecks(base.BaseTestCase):
 
     def test_port_binding_profile_sanity(self):
         new_format = {"allocation":
-            {"397aec7a-1f69-11ec-9f1a-7b14e597e275":
-                "41d7391e-1f69-11ec-a899-8f9d6d950f8d"}}
+                      {"397aec7a-1f69-11ec-9f1a-7b14e597e275":
+                       "41d7391e-1f69-11ec-a899-8f9d6d950f8d"}}
         old_format = {"allocation": "41d7391e-1f69-11ec-a899-8f9d6d950f8d"}
         cases = (([new_format], Code.SUCCESS),
                  ([old_format], Code.FAILURE))

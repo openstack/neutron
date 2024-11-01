@@ -36,7 +36,7 @@ from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit import testlib_api
 
 
-class ProviderExtensionManager(object):
+class ProviderExtensionManager:
 
     def get_resources(self):
         return []
@@ -55,7 +55,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
     fmt = 'json'
 
     def setUp(self):
-        super(ProvidernetExtensionTestCase, self).setUp()
+        super().setUp()
 
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
 

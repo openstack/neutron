@@ -28,7 +28,7 @@ class AddressGroupDbObjectTestCase(
     _test_class = address_group.AddressGroup
 
     def setUp(self):
-        super(AddressGroupDbObjectTestCase, self).setUp()
+        super().setUp()
 
     def _create_test_address_group(self):
         self.objs[0].create()
@@ -61,7 +61,7 @@ class AddressGroupRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
     _parent_class = address_group.AddressGroup
 
     def setUp(self):
-        super(AddressGroupRBACDbObjectTestCase, self).setUp()
+        super().setUp()
         for obj in self.db_objs:
             ag_obj = address_group.AddressGroup(self.context,
                                                 id=obj['object_id'],
@@ -91,7 +91,7 @@ class AddressAssociationObjectTestCase(
     _test_class = address_group.AddressAssociation
 
     def setUp(self):
-        super(AddressAssociationObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {
                 'address_group_id':

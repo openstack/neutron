@@ -196,7 +196,7 @@ class AgentRPCMethods(base.BaseTestCase):
 class TestCacheBackedPluginApi(base.BaseTestCase):
 
     def setUp(self):
-        super(TestCacheBackedPluginApi, self).setUp()
+        super().setUp()
         self._api = rpc.CacheBackedPluginApi(lib_topics.PLUGIN)
         self._api._legacy_interface = mock.Mock()
         self._api.remote_resource_cache = mock.Mock()
@@ -212,7 +212,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             id=self._port_id, network_id=self._network_id,
             device_id='vm_uuid',
             mac_address=netaddr.EUI('fa:16:3e:ec:c7:d9'), admin_state_up=True,
-            security_group_ids=set([uuidutils.generate_uuid()]),
+            security_group_ids={uuidutils.generate_uuid()},
             fixed_ips=[], allowed_address_pairs=[],
             device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
             bindings=[ports.PortBinding(port_id=self._port_id,
@@ -247,7 +247,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                    payload=events.DBEventPayload(
                                        mock.ANY,
                                        metadata={
-                                           'changed_fields': set(['name'])
+                                           'changed_fields': {'name'}
                                        },
                                        resource_id=self._port_id,
                                        states=(self._port, updated_port)))
@@ -271,7 +271,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             payload=events.DBEventPayload(
                 mock.ANY,
                 metadata={
-                    'changed_fields': set(['name', 'bindings'])
+                    'changed_fields': {'name', 'bindings'}
                 },
                 resource_id=self._port_id,
                 states=(self._port, updated_port)))
@@ -297,7 +297,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             payload=events.DBEventPayload(
                 mock.ANY,
                 metadata={
-                    'changed_fields': set(['name', 'bindings'])
+                    'changed_fields': {'name', 'bindings'}
                 },
                 resource_id=self._port_id,
                 states=(self._port, updated_port)))
@@ -313,7 +313,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             payload=events.DBEventPayload(
                 mock.ANY,
                 metadata={
-                    'changed_fields': set(['name', 'bindings'])
+                    'changed_fields': {'name', 'bindings'}
                 },
                 resource_id=self._port_id,
                 states=(None, None)))
@@ -322,7 +322,7 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             payload=events.DBEventPayload(
                 mock.ANY,
                 metadata={
-                    'changed_fields': set(['name', 'bindings'])
+                    'changed_fields': {'name', 'bindings'}
                 },
                 resource_id=self._port_id,
                 states=(self._port, None)))

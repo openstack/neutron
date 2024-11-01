@@ -150,7 +150,7 @@ class QosBandwidthLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = rule.QosBandwidthLimitRule
 
     def setUp(self):
-        super(QosBandwidthLimitRuleDbObjectTestCase, self).setUp()
+        super().setUp()
 
         # Prepare policy to be able to insert a rule
         for obj in self.db_objs:
@@ -190,7 +190,7 @@ class QosDscpMarkingRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = rule.QosDscpMarkingRule
 
     def setUp(self):
-        super(QosDscpMarkingRuleDbObjectTestCase, self).setUp()
+        super().setUp()
         # Prepare policy to be able to insert a rule
         for obj in self.db_objs:
             generated_qos_policy_id = obj['qos_policy_id']
@@ -233,7 +233,7 @@ class QosMinimumBandwidthRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = rule.QosMinimumBandwidthRule
 
     def setUp(self):
-        super(QosMinimumBandwidthRuleDbObjectTestCase, self).setUp()
+        super().setUp()
         # Prepare policy to be able to insert a rule
         for obj in self.db_objs:
             generated_qos_policy_id = obj['qos_policy_id']
@@ -280,7 +280,7 @@ class QosPacketRateLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = rule.QosPacketRateLimitRule
 
     def setUp(self):
-        super(QosPacketRateLimitRuleDbObjectTestCase, self).setUp()
+        super().setUp()
 
         # Prepare policy to be able to insert a rule
         for obj in self.db_objs:
@@ -331,7 +331,7 @@ class QosMinimumPacketRateRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = rule.QosMinimumPacketRateRule
 
     def setUp(self):
-        super(QosMinimumPacketRateRuleDbObjectTestCase, self).setUp()
+        super().setUp()
         # Prepare policy to be able to insert a rule
         for obj in self.db_objs:
             generated_qos_policy_id = obj['qos_policy_id']

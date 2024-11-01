@@ -27,8 +27,7 @@ class SecurityGroupNormalizedCidrTestExtManager(
     def get_resources(self):
         self.update_attributes_map(
             security_groups_normalized_cidr.RESOURCE_ATTRIBUTE_MAP)
-        return super(
-            SecurityGroupNormalizedCidrTestExtManager, self).get_resources()
+        return super().get_resources()
 
 
 class TestPlugin(test_securitygroup.SecurityGroupTestPlugin):
@@ -41,7 +40,7 @@ class TestSecurityGroupsNormalizedCidr(
         test_securitygroup.SecurityGroupDBTestCase):
 
     def setUp(self):
-        super(TestSecurityGroupsNormalizedCidr, self).setUp(
+        super().setUp(
               plugin=DB_PLUGIN_KLASS,
               ext_mgr=SecurityGroupNormalizedCidrTestExtManager())
 

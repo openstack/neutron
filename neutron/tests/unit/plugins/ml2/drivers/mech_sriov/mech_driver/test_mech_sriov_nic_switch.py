@@ -32,11 +32,11 @@ class TestFakePortContext(base.FakePortContext):
     def __init__(self, agent_type, agents, segments,
                  vnic_type=portbindings.VNIC_NORMAL,
                  profile=None):
-        super(TestFakePortContext, self).__init__(agent_type,
-                                                  agents,
-                                                  segments,
-                                                  vnic_type=vnic_type,
-                                                  profile=profile)
+        super().__init__(agent_type,
+                         agents,
+                         segments,
+                         vnic_type=vnic_type,
+                         profile=profile)
 
     def set_binding(self, segment_id, vif_type, vif_details, state):
         self._bound_segment_id = segment_id
@@ -75,7 +75,7 @@ class SriovNicSwitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
                    }]
 
     def setUp(self):
-        super(SriovNicSwitchMechanismBaseTestCase, self).setUp()
+        super().setUp()
         self.driver = mech_driver.SriovNicSwitchMechanismDriver()
         self.driver.initialize()
 
@@ -112,8 +112,8 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
         segments = []
         # uuid -v5 87f1895c-73bb-11e8-9008-c4d987b2a692 host:eth0
         profile = {'allocation':
-            {'fake_request_group_uuid':
-                '5762cf50-781b-5f01-8ebc-0cce8c9e74cd'}}
+                   {'fake_request_group_uuid':
+                    '5762cf50-781b-5f01-8ebc-0cce8c9e74cd'}}
 
         port_ctx = base.FakePortContext(
             self.AGENT_TYPE,
@@ -138,17 +138,17 @@ class SriovMechVlanTestCase(SriovNicSwitchMechanismBaseTestCase,
 
     def test_type_vlan(self):
         context = TestFakePortContext(self.AGENT_TYPE,
-                                  self.AGENTS,
-                                  self.VLAN_SEGMENTS,
-                                  portbindings.VNIC_DIRECT)
+                                      self.AGENTS,
+                                      self.VLAN_SEGMENTS,
+                                      portbindings.VNIC_DIRECT)
         self.driver.bind_port(context)
         self._check_bound(context, self.VLAN_SEGMENTS[1])
 
     def test_type_vlan_bad(self):
         context = TestFakePortContext(self.AGENT_TYPE,
-                                  self.AGENTS_BAD,
-                                  self.VLAN_SEGMENTS,
-                                  portbindings.VNIC_DIRECT)
+                                      self.AGENTS_BAD,
+                                      self.VLAN_SEGMENTS,
+                                      portbindings.VNIC_DIRECT)
         self.driver.bind_port(context)
         self._check_unbound(context)
 
@@ -253,7 +253,7 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
                 'vnic_type_prohibit_list': []
             }
         }
-        super(SriovSwitchMechVnicTypesTestCase, self).setUp()
+        super().setUp()
 
     def test_default_vnic_types(self):
         mech_driver.SRIOV_SUPPORTED_VNIC_TYPES = self.default_supported_vnics

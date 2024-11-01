@@ -49,7 +49,7 @@ def register_mock_callback(resource, event):
 class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(TrunkPluginTestCase, self).setUp()
+        super().setUp()
         self.drivers_patch = mock.patch.object(drivers, 'register').start()
         self.compat_patch = mock.patch.object(
             trunk_plugin.TrunkPlugin, 'check_compatibility').start()
@@ -108,8 +108,8 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             if not trunk_port_validator.can_be_trunked_or_untrunked(
                     self.context):
                 self.assertRaises(trunk_exc.TrunkInUse,
-                              self.trunk_plugin.delete_trunk,
-                              self.context, trunk['id'])
+                                  self.trunk_plugin.delete_trunk,
+                                  self.context, trunk['id'])
 
     def _test_trunk_create_notify(self, event):
         with self.port() as parent_port:
@@ -260,8 +260,8 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             trunk_obj.update()
             s = create_subport_dict(subport['port']['id'])
             self.assertRaises(trunk_exc.TrunkInErrorState,
-                self.trunk_plugin.add_subports,
-                self.context, trunk['id'], {'sub_ports': [s]})
+                              self.trunk_plugin.add_subports,
+                              self.context, trunk['id'], {'sub_ports': [s]})
 
     def test_add_subports_trunk_goes_to_down(self):
         with self.port() as port, self.port() as subport:
@@ -371,7 +371,7 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
 class TrunkPluginCompatDriversTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(TrunkPluginCompatDriversTestCase, self).setUp()
+        super().setUp()
         mock.patch.object(drivers, 'register').start()
 
     def test_plugin_fails_to_start_no_loaded_drivers(self):
@@ -400,6 +400,6 @@ class TrunkPluginCompatDriversTestCase(test_plugin.Ml2PluginV2TestCase):
             fake_driver = fakes.FakeDriver.create()
             plugin = trunk_plugin.TrunkPlugin()
             self.assertTrue(fake_driver.is_loaded)
-            self.assertEqual(set([]), plugin.supported_agent_types)
-            self.assertEqual(set(['foo_intfs']), plugin.supported_interfaces)
+            self.assertEqual(set(), plugin.supported_agent_types)
+            self.assertEqual({'foo_intfs'}, plugin.supported_interfaces)
             self.assertEqual([fake_driver], plugin.registered_drivers)

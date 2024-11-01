@@ -82,11 +82,13 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.net_ext_a.create()
         self.ext_sub_a = subnet_obj.Subnet(self.context,
                                            id=self.ext_sub_a_id,
-            project_id=self.tenant_id,
-            ip_version=constants.IP_VERSION_4,
-            cidr=net_utils.AuthenticIPNetwork('192.0.2.0/25'),
-            gateway_ip=netaddr.IPAddress('192.0.2.1'),
-            network_id=self.ext_net_a_id)
+                                           project_id=self.tenant_id,
+                                           ip_version=constants.IP_VERSION_4,
+                                           cidr=net_utils.AuthenticIPNetwork(
+                                               '192.0.2.0/25'),
+                                           gateway_ip=netaddr.IPAddress(
+                                               '192.0.2.1'),
+                                           network_id=self.ext_net_a_id)
         self.ext_sub_a.create()
 
         self.ext_net_b_id = _uuid()

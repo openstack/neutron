@@ -27,7 +27,7 @@ class DVRServerRpcApiTestCase(base.BaseTestCase):
         self.rpc = dvr_rpc.DVRServerRpcApi('fake_topic')
         self.mock_cctxt = self.rpc.client.prepare.return_value
         self.ctxt = mock.ANY
-        super(DVRServerRpcApiTestCase, self).setUp()
+        super().setUp()
 
     def test_get_dvr_mac_address_by_host(self):
         self.rpc.get_dvr_mac_address_by_host(self.ctxt, 'foo_host')

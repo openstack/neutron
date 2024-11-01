@@ -75,7 +75,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
     MIN_RATE = esm.IP_LINK_CAPABILITY_MIN_TX_RATE
 
     def setUp(self):
-        super(TestESwitchManagerApi, self).setUp()
+        super().setUp()
         device_mappings = {'physnet1': ['p6p1']}
         self.eswitch_mgr = esm.ESwitchManager()
         self.addCleanup(self.cleanup)
@@ -425,7 +425,7 @@ class TestEmbSwitch(base.BaseTestCase):
         '00:00:00:00:00:33': '0000:06:00.3'}
 
     def setUp(self):
-        super(TestEmbSwitch, self).setUp()
+        super().setUp()
         exclude_devices = set()
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
                         "eswitch_manager.PciOsWrapper.scan_vf_devices",
@@ -581,8 +581,8 @@ class TestEmbSwitch(base.BaseTestCase):
                            "eswitch_manager.PciOsWrapper."
                            "is_assigned_vf_direct", return_value=True), \
                 mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                        "eswitch_manager.PciOsWrapper.pf_device_exists",
-                        return_value=True):
+                           "eswitch_manager.PciOsWrapper.pf_device_exists",
+                           return_value=True):
             result = self.emb_switch.get_pci_device(self.PCI_SLOT)
             self.assertEqual(self.ASSIGNED_MAC, result)
 

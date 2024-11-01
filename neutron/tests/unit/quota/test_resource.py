@@ -105,7 +105,7 @@ class TestTrackedResource(testlib_api.SqlTestCase):
 
     def setUp(self):
         cfg.CONF.set_override('quota_driver', QUOTA_DRIVER, group='QUOTAS')
-        super(TestTrackedResource, self).setUp()
+        super().setUp()
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.resource = 'meh'
         self.other_resource = 'othermeh'

@@ -52,7 +52,7 @@ class FakeNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin):
 class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
 
     def setUp(self):
-        super(TestL2populationRpcCallBackTunnelMixinBase, self).setUp()
+        super().setUp()
         self.vlan_manager = self.useFixture(
             test_vlanmanager.LocalVlanManagerFixture()).manager
         self.fakeagent = FakeNeutronAgent()

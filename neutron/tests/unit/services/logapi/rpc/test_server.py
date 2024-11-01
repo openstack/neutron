@@ -29,7 +29,7 @@ from neutron.tests import base
 class LoggingApiNotificationTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(LoggingApiNotificationTestCase, self).setUp()
+        super().setUp()
         self.test_obj = server_rpc.LoggingApiNotification()
 
     def test___init__(self):

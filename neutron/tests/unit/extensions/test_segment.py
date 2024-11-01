@@ -62,7 +62,7 @@ DHCP_HOSTB = 'dhcp-host-b'
 HTTP_NOT_FOUND = 404
 
 
-class SegmentTestExtensionManager(object):
+class SegmentTestExtensionManager:
 
     def get_resources(self):
         ext_segment.Segment().update_attributes_map(
@@ -94,14 +94,14 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override(
             'network_vlan_ranges',
-            ['physnet:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
-             'physnet0:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
-             'physnet1:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
-             'physnet2:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX)],
+            ['physnet:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
+             'physnet0:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
+             'physnet1:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
+             'physnet2:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX)],
             group='ml2_type_vlan')
         ext_mgr = SegmentTestExtensionManager()
-        super(SegmentTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
-                                           service_plugins=service_plugins)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr,
+                      service_plugins=service_plugins)
         ml2_plugin.MAX_BIND_TRIES = 0
         self.addCleanup(self._cleanup)
 
@@ -151,7 +151,7 @@ class SegmentTestPlugin(ml2_plugin.Ml2Plugin, db.SegmentDbMixin):
 
 class TestSegmentNameDescription(SegmentTestCase):
     def setUp(self):
-        super(TestSegmentNameDescription, self).setUp()
+        super().setUp()
         with self.network() as network:
             self.network = network['network']
 
@@ -165,7 +165,7 @@ class TestSegmentNameDescription(SegmentTestCase):
             d.setdefault('physical_network', 'physnet')
             d.setdefault('network_type', constants.TYPE_VLAN)
             d.setdefault('segmentation_id', 200)
-        return super(TestSegmentNameDescription, self)._test_create_segment(
+        return super()._test_create_segment(
             expected, **kwargs)
 
     def test_create_segment_no_name(self):
@@ -440,7 +440,7 @@ class TestSegment(SegmentTestCase):
 
 class TestSegmentML2(SegmentTestCase):
     def setUp(self):
-        super(TestSegmentML2, self).setUp(plugin='ml2')
+        super().setUp(plugin='ml2')
 
     def test_segment_notification_on_create_network(self):
         with mock.patch.object(registry, 'publish') as publish:
@@ -531,12 +531,13 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         with self.subnet(network=network, segment_id=segment_id) as subnet:
             subnet = subnet['subnet']
 
-        res = self._create_subnet(self.fmt,
-                                 net_id=net['id'],
-                                 tenant_id=net['tenant_id'],
-                                 gateway_ip=constants.ATTR_NOT_SPECIFIED,
-                                 cidr='10.0.1.0/24',
-                                 service_types=[constants.DEVICE_OWNER_ROUTED])
+        res = self._create_subnet(
+            self.fmt,
+            net_id=net['id'],
+            tenant_id=net['tenant_id'],
+            gateway_ip=constants.ATTR_NOT_SPECIFIED,
+            cidr='10.0.1.0/24',
+            service_types=[constants.DEVICE_OWNER_ROUTED])
         self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
     def test_association_to_dynamic_segment_not_allowed(self):
@@ -584,8 +585,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
             net = network['network']
 
         segment1 = self._test_create_segment(network_id=net['id'],
-                                            physical_network='physnet1',
-                                            segmentation_id=200)['segment']
+                                             physical_network='physnet1',
+                                             segmentation_id=200)['segment']
         self._test_create_segment(network_id=net['id'],
                                   physical_network='physnet2',
                                   segmentation_id=200)
@@ -675,7 +676,7 @@ class HostSegmentMappingTestCase(SegmentTestCase):
                               group='ml2')
         if not plugin:
             plugin = 'ml2'
-        super(HostSegmentMappingTestCase, self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
         db.subscribe()
 
     def _get_segments_for_host(self, host):
@@ -712,7 +713,7 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
     def setUp(self, plugin=None):
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
-        super(TestMl2HostSegmentMappingNoAgent, self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
 
     def test_update_segment_host_mapping(self):
         ctx = context.get_admin_context()
@@ -891,7 +892,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
             network_id=network['id'], physical_network=physical_network,
             segmentation_id=201, network_type=constants.TYPE_VLAN)['segment']
         segments_host_db = self._get_segments_for_host(host1)
-        self.assertEqual(set((segment['id'], segment2['id'])),
+        self.assertEqual({segment['id'], segment2['id']},
                          set(segments_host_db))
 
     def test_segment_deletion_removes_host_mapping(self):
@@ -1031,7 +1032,7 @@ class TestMl2HostSegmentMappingLinuxBridge(TestMl2HostSegmentMappingOVS):
     def setUp(self, plugin=None):
         cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
                               group=c_experimental.EXPERIMENTAL_CFG_GROUP)
-        super(TestMl2HostSegmentMappingLinuxBridge, self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
 
     def _register_agent(self, host, mappings=None, plugin=None):
         helpers.register_linuxbridge_agent(host=host,
@@ -1075,7 +1076,7 @@ class TestHostSegmentMappingNoSupportFromPlugin(HostSegmentMappingTestCase):
     def setUp(self):
         plugin = ('neutron.tests.unit.extensions.test_segment.'
                   'NoSupportHostSegmentMappingPlugin')
-        super(TestHostSegmentMappingNoSupportFromPlugin, self).setUp(
+        super().setUp(
               plugin=plugin)
 
     @mock.patch(mock_path)
@@ -2025,7 +2026,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
 class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
 
     def setUp(self):
-        super(TestSegmentAwareIpamML2, self).setUp(plugin='ml2')
+        super().setUp(plugin='ml2')
 
     def test_segmentation_id_stored_in_db(self):
         network, segment, subnet = self._create_test_segment_with_subnet()
@@ -2050,7 +2051,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                               ['physnet:200:209', 'physnet0:200:209',
                                'physnet1:200:209', 'physnet2:200:209'],
                               group='ml2_type_vlan')
-        super(TestNovaSegmentNotifier, self).setUp(plugin='ml2')
+        super().setUp(plugin='ml2')
         # Need notifier here
         self.patch_notifier.stop()
         self._mock_keystone_auth()
@@ -2115,7 +2116,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.mock_p_client.associate_aggregates.assert_called_with(
             segment_id, [aggregate.uuid])
         self.mock_n_client.aggregates.add_host.assert_called_with(aggregate.id,
-            'fakehost')
+                                                                  'fakehost')
         total, reserved = self._calculate_inventory_total_and_reserved(
             subnet['subnet'])
         inventory, _ = self._get_inventory(total, reserved)
@@ -2701,7 +2702,7 @@ class TestDhcpAgentSegmentScheduling(HostSegmentMappingTestCase):
     block_dhcp_notifier = False
 
     def setUp(self):
-        super(TestDhcpAgentSegmentScheduling, self).setUp()
+        super().setUp()
         self.dhcp_agent_db = agentschedulers_db.DhcpAgentSchedulerDbMixin()
         self.ctx = context.get_admin_context()
 
@@ -2797,12 +2798,12 @@ class TestSegmentHostRoutes(TestSegmentML2):
         driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override(
             'network_vlan_ranges',
-            ['physnet:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
-             'physnet0:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
-             'physnet1:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX),
-             'physnet2:%s:%s' % (self.VLAN_MIN, self.VLAN_MAX)],
+            ['physnet:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
+             'physnet0:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
+             'physnet1:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
+             'physnet2:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX)],
             group='ml2_type_vlan')
-        super(TestSegmentHostRoutes, self).setUp()
+        super().setUp()
 
     def _create_subnets_segments(self, gateway_ips, cidrs):
         with self.network() as network:
@@ -3003,7 +3004,7 @@ class TestSegmentHostMappingNoStore(
         cfg.CONF.set_override('network_vlan_ranges', ['phys_net1'],
                               group='ml2_type_vlan')
         cfg.CONF.set_override('service_plugins', [])
-        super(TestSegmentHostMappingNoStore, self).setUp(
+        super().setUp(
             plugin='neutron.plugins.ml2.plugin.Ml2Plugin')
         # set to None for simulating server start
         db._USER_CONFIGURED_SEGMENT_PLUGIN = None

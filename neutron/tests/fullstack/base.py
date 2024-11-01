@@ -55,7 +55,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
     CLEAN_DB_AFTER_TEST = True
 
     def setUp(self, environment):
-        super(BaseFullStackTestCase, self).setUp()
+        super().setUp()
 
         tests_base.setup_test_logging(
             cfg.CONF, DEFAULT_LOG_DIR, '%s.txt' % self.get_name())
@@ -92,7 +92,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
 
     def get_name(self):
         class_name, test_name = self.id().split(".")[-2:]
-        return "%s.%s" % (class_name, test_name)
+        return "{}.{}".format(class_name, test_name)
 
     def _wait_until_agent_up(self, agent_id):
         def _agent_up():

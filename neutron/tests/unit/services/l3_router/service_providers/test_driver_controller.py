@@ -38,7 +38,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class TestDriverController(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestDriverController, self).setUp()
+        super().setUp()
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.fake_l3 = mock.Mock()
         self.dc = driver_controller.DriverController(self.fake_l3)
@@ -100,8 +100,8 @@ class TestDriverController(testlib_api.SqlTestCase):
                                          metadata={'router_db': router_db},
                                          states=(router,)))
         mock_cb.assert_called_with(resources.ROUTER_CONTROLLER,
-            events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
-            payload=mock.ANY)
+                                   events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
+                                   payload=mock.ANY)
         payload = mock_cb.mock_calls[0][2]['payload']
         self.assertEqual(router, payload.request_body)
         self.assertEqual(router_db, payload.latest_state)
@@ -215,7 +215,7 @@ class TestDriverController(testlib_api.SqlTestCase):
             self.assertEqual(self.dc.drivers[driver],
                              self.dc.get_provider_for_router(self.ctx,
                                                              body['id']),
-                             'Expecting %s for body %s' % (driver, body))
+                             'Expecting {} for body {}'.format(driver, body))
 
     @mock.patch('neutron_lib.callbacks.registry.publish')
     def test__clear_router_provider(self, mock_cb):
@@ -229,8 +229,8 @@ class TestDriverController(testlib_api.SqlTestCase):
                                          metadata={'router_db': mock.Mock()},
                                          states=(body,)))
         mock_cb.assert_called_with(resources.ROUTER_CONTROLLER,
-            events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
-            payload=mock.ANY)
+                                   events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
+                                   payload=mock.ANY)
         payload = mock_cb.mock_calls[0][2]['payload']
         self.assertEqual(self.ctx, payload.context)
         self.assertIn('old_driver', payload.metadata)
@@ -243,7 +243,8 @@ class TestDriverController(testlib_api.SqlTestCase):
                                        payload=events.DBEventPayload(
                                            self.ctx,
                                            resource_id=body['id']))
-        mock_cb.assert_called_with(resources.ROUTER_CONTROLLER,
+        mock_cb.assert_called_with(
+            resources.ROUTER_CONTROLLER,
             events.PRECOMMIT_DELETE_ASSOCIATIONS, mock.ANY,
             payload=mock.ANY)
         with testtools.ExpectedException(ValueError):

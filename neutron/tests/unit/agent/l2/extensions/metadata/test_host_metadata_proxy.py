@@ -25,7 +25,7 @@ from neutron.tests import base
 class TestHostMedataHAProxyDaemonMonitor(base.BaseTestCase):
 
     def setUp(self):
-        super(TestHostMedataHAProxyDaemonMonitor, self).setUp()
+        super().setUp()
 
         self.ensure_dir = mock.patch(
             'oslo_utils.fileutils.ensure_tree').start()

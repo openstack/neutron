@@ -21,7 +21,7 @@ from neutron.tests import base
 class TestL2AgentExtensionsManager(base.BaseTestCase):
 
     def setUp(self):
-        super(TestL2AgentExtensionsManager, self).setUp()
+        super().setUp()
         mock.patch('neutron.agent.l2.extensions.qos.QosAgentExtension',
                    autospec=True).start()
         conf = cfg.CONF

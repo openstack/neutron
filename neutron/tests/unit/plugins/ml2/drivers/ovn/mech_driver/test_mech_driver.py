@@ -215,25 +215,27 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
     def test_delete_mac_binding_entries(self):
         self.config(group='ovn', ovn_sb_private_key=None)
         expected = ('ovsdb-client transact tcp:127.0.0.1:6642 --timeout 30 '
-                   '\'["OVN_Southbound", {"op": "delete", "table": '
-                   '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
+                    '\'["OVN_Southbound", {"op": "delete", "table": '
+                    '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
         with mock.patch.object(processutils, 'execute') as mock_execute:
             self.mech_driver.delete_mac_binding_entries('1.1.1.1')
-            mock_execute.assert_called_once_with(*shlex.split(expected),
-                    log_errors=processutils.LOG_FINAL_ERROR)
+            mock_execute.assert_called_once_with(
+                *shlex.split(expected),
+                log_errors=processutils.LOG_FINAL_ERROR)
 
     def test_delete_mac_binding_entries_ssl(self):
         self.config(group='ovn', ovn_sb_private_key='pk')
         self.config(group='ovn', ovn_sb_certificate='cert')
         self.config(group='ovn', ovn_sb_ca_cert='ca')
         expected = ('ovsdb-client transact tcp:127.0.0.1:6642 --timeout 30 '
-                   '-p pk -c cert -C ca '
-                   '\'["OVN_Southbound", {"op": "delete", "table": '
-                   '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
+                    '-p pk -c cert -C ca '
+                    '\'["OVN_Southbound", {"op": "delete", "table": '
+                    '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
         with mock.patch.object(processutils, 'execute') as mock_execute:
             self.mech_driver.delete_mac_binding_entries('1.1.1.1')
-            mock_execute.assert_called_once_with(*shlex.split(expected),
-                    log_errors=processutils.LOG_FINAL_ERROR)
+            mock_execute.assert_called_once_with(
+                *shlex.split(expected),
+                log_errors=processutils.LOG_FINAL_ERROR)
 
 
 class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
@@ -336,9 +338,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             # we will update the SG rules
             ovn_acl_up.assert_has_calls([
                 mock.call(mock.ANY, mock.ANY, mock.ANY,
-                    rule['security_group_id'], rule, is_add_acl=False),
+                          rule['security_group_id'], rule, is_add_acl=False),
                 mock.call(mock.ANY, mock.ANY, mock.ANY,
-                    rule['security_group_id'], rule, is_add_acl=True)
+                          rule['security_group_id'], rule, is_add_acl=True)
             ])
 
             mock_del.assert_called_once_with(
@@ -565,8 +567,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with self.network() as n:
             with self.subnet(n):
                 res = self._create_port(self.fmt, n['network']['id'],
-                                  arg_list=('extra_dhcp_opts',),
-                                  **extra_dhcp_opts)
+                                        arg_list=('extra_dhcp_opts',),
+                                        **extra_dhcp_opts)
                 port_id = self.deserialize(self.fmt, res)['port']['id']
                 # Assert the log message contained the invalid DHCP options
                 expected_call = mock.call(
@@ -699,7 +701,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                      called_args_dict.get('port_security'))
 
                     self.assertIn(ovn_const.UNKNOWN_ADDR,
-                            called_args_dict.get('addresses'))
+                                  called_args_dict.get('addresses'))
                     data = {'port': {'mac_address': '00:00:00:00:00:01'}}
                     req = self.new_update_request(
                         'ports',
@@ -713,7 +715,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     self.assertEqual([],
                                      called_args_dict.get('port_security'))
                     self.assertIn(ovn_const.UNKNOWN_ADDR,
-                            called_args_dict.get('addresses'))
+                                  called_args_dict.get('addresses'))
 
                     # Enable port security
                     data = {'port': {'port_security_enabled': 'True'}}
@@ -2550,7 +2552,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         agent_type = ovn_const.OVN_CONTROLLER_AGENT
         agent = self._add_chassis_agent(nb_cfg, agent_type,
                                         chassis_private)
-        self.assertTrue(agent.alive, "Agent of type %s alive=%s" % (
+        self.assertTrue(agent.alive, "Agent of type {} alive={}".format(
             agent.agent_type, agent.alive))
 
     def _test__update_dnat_entry_if_needed(self, up=True, dvr=True):
@@ -2613,7 +2615,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                            device_owner=const.DEVICE_OWNER_ROUTER_GW) as port:
 
                 grps.return_value = [{'port_id': port['port']['id'],
-                    'network_id':network['network']['id']}]
+                                      'network_id':network['network']['id']}]
 
                 # Let's update the MTU to something different
                 network['network']['mtu'] = new_mtu
@@ -3107,7 +3109,7 @@ class OVNMechanismDriverTestCase(MechDriverSetupBase,
                               group='ml2_type_geneve')
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'], group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
-        super(OVNMechanismDriverTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('global_physnet_mtu', 1550)
         # Make sure the node and target_node for the hash ring in the
         # mechanism driver matches
@@ -3170,7 +3172,7 @@ class TestOVNMechanismDriverSubnetsV2(test_plugin.TestMl2SubnetsV2,
         # with metadata since it will book an IP address on each subnet.
         ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', False,
                                        group='ovn')
-        super(TestOVNMechanismDriverSubnetsV2, self).setUp()
+        super().setUp()
 
     # NOTE(rtheis): Mock the OVN port update since it is getting subnet
     # information for ACL processing. This interferes with the update_port
@@ -3180,7 +3182,7 @@ class TestOVNMechanismDriverSubnetsV2(test_plugin.TestMl2SubnetsV2,
                 mock.patch.object(self.mech_driver._ovn_client,
                                   '_get_subnet_dhcp_options_for_port',
                                   return_value={}):
-            super(TestOVNMechanismDriverSubnetsV2, self).\
+            super().\
                 test_subnet_update_ipv4_and_ipv6_pd_v6stateless_subnets()
 
     # NOTE(rtheis): Mock the OVN port update since it is getting subnet
@@ -3191,7 +3193,7 @@ class TestOVNMechanismDriverSubnetsV2(test_plugin.TestMl2SubnetsV2,
                 mock.patch.object(self.mech_driver._ovn_client,
                                   '_get_subnet_dhcp_options_for_port',
                                   return_value={}):
-            super(TestOVNMechanismDriverSubnetsV2, self).\
+            super().\
                 test_subnet_update_ipv4_and_ipv6_pd_slaac_subnets()
 
     # NOTE(numans) Overriding the base test case here because the base test
@@ -3225,7 +3227,7 @@ class TestOVNMechanismDriverPortsV2(test_plugin.TestMl2PortsV2,
         # with metadata since it will book an IP address on each subnet.
         ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', False,
                                        group='ovn')
-        super(TestOVNMechanismDriverPortsV2, self).setUp()
+        super().setUp()
 
     # NOTE(rtheis): Override this test to verify that updating
     # a port MAC fails when the port is bound.
@@ -3257,7 +3259,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         cfg.CONF.set_override('max_header_size', 38,
                               group='ml2_type_geneve')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
-        super(TestOVNMechanismDriverSegment, self).setUp()
+        super().setUp()
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
         self.addCleanup(p.stop)
@@ -3526,7 +3528,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         agent['configurations'] = {
             'bridge-mappings': 'physnet1:br-ex1,physnet1:br-ex2'}
         self.assertRaises(ValueError, self.mech_driver.check_segment_for_agent,
-            segment, agent)
+                          segment, agent)
 
 
 @mock.patch.object(n_net, 'get_random_mac', lambda *_: '01:02:03:04:05:06')
@@ -4139,8 +4141,8 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
             'foo-subnet', port_id='foo-port', **expected_dhcp_options)
 
 
-class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
-        test_security_group.Ml2SecurityGroupsTestCase):
+class TestOVNMechanismDriverSecurityGroup(
+        MechDriverSetupBase, test_security_group.Ml2SecurityGroupsTestCase):
     # This set of test cases is supplement to test_acl.py, the purpose is to
     # test acl methods invoking. Content correctness of args of acl methods
     # is mainly guaranteed by acl_test.py.
@@ -4160,7 +4162,7 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
                               group='ml2_type_geneve')
         cfg.CONF.set_override('dns_servers', ['8.8.8.8'], group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
-        super(TestOVNMechanismDriverSecurityGroup, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         revision_plugin.RevisionPlugin()
 
@@ -4489,7 +4491,7 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         cfg.CONF.set_override('max_header_size', 38,
                               group='ml2_type_geneve')
-        super(TestOVNMechanismDriverMetadataPort, self).setUp()
+        super().setUp()
         self.nb_ovn = self.mech_driver.nb_ovn
         self.sb_ovn = self.mech_driver.sb_ovn
         self.ctx = context.get_admin_context()
@@ -4685,7 +4687,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
 class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
 
     def setUp(self):
-        super(TestOVNVVirtualPort, self).setUp()
+        super().setUp()
         self.context = context.get_admin_context()
         self.nb_idl = self.mech_driver._ovn_client._nb_idl
         self.net = self._make_network(
@@ -4790,7 +4792,7 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
 class TestOVNAvailabilityZone(OVNMechanismDriverTestCase):
 
     def setUp(self):
-        super(TestOVNAvailabilityZone, self).setUp()
+        super().setUp()
         self.context = context.get_admin_context()
         self.sb_idl = self.mech_driver._ovn_client._sb_idl
 

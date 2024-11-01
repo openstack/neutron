@@ -39,7 +39,7 @@ PORT_ADDR_PAIR = {'fixed_ips': [{'ip_address': '10.1.1.1'}],
 class TestLinuxBridgeARPSpoofing(base.BaseTestCase):
 
     def setUp(self):
-        super(TestLinuxBridgeARPSpoofing, self).setUp()
+        super().setUp()
         self.execute = mock.patch.object(utils, "execute").start()
 
     @mock.patch.object(arp_protect, "delete_arp_spoofing_protection")

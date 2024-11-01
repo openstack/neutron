@@ -26,7 +26,7 @@ from neutron.tests.unit.agent.l2.extensions.dhcp \
 class DHCPIPv4ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
 
     def setUp(self):
-        super(DHCPIPv4ResponderTestCase, self).setUp()
+        super().setUp()
         self.dhcp4_responer = dhcp_ipv4.DHCPIPv4Responder(self.agent_api,
                                                           self.ext_api)
         self.dhcp4_responer.int_br = self.int_br

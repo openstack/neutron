@@ -29,7 +29,7 @@ class WaitForBridgesEvent(event.RowEvent):
         self.bridges_not_seen = set(bridges)
         self.timeout = timeout
         self.event = threading.Event()
-        super(WaitForBridgesEvent, self).__init__(
+        super().__init__(
             (self.ROW_CREATE,), 'Bridge', None)
 
     def matches(self, event, row, old=None):

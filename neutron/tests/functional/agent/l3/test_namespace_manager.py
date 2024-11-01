@@ -30,7 +30,7 @@ _uuid = uuidutils.generate_uuid
 class NamespaceManagerTestFramework(base.BaseSudoTestCase):
 
     def setUp(self):
-        super(NamespaceManagerTestFramework, self).setUp()
+        super().setUp()
         self.agent_conf = cfg.CONF
         self.metadata_driver_mock = mock.Mock()
         self.namespace_manager = namespace_manager.NamespaceManager(

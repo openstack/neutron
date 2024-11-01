@@ -102,7 +102,7 @@ class PluginConfFixture(fixtures.Fixture):
     """Plugin configuration shared across the unit and functional tests."""
 
     def __init__(self, plugin_name, parent_setup=None):
-        super(PluginConfFixture, self).__init__()
+        super().__init__()
         self.plugin_name = plugin_name
         self.parent_setup = parent_setup
 
@@ -114,7 +114,7 @@ class PluginConfFixture(fixtures.Fixture):
 class Ml2ConfFixture(PluginConfFixture):
 
     def __init__(self, parent_setup=None):
-        super(Ml2ConfFixture, self).__init__(PLUGIN_NAME, parent_setup)
+        super().__init__(PLUGIN_NAME, parent_setup)
 
 
 class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
@@ -134,7 +134,7 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
         # Ensure that the parent setup can be called without arguments
         # by the common configuration setUp.
         parent_setup = functools.partial(
-            super(Ml2PluginV2TestCase, self).setUp,
+            super().setUp,
             plugin=PLUGIN_NAME,
             service_plugins=service_plugins,
         )
@@ -211,7 +211,7 @@ class TestMl2V2HTTPResponse(test_plugin.TestV2HTTPResponse,
 class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                         Ml2PluginV2TestCase):
     def setUp(self, plugin=None):
-        super(TestMl2NetworksV2, self).setUp()
+        super().setUp()
         # provider networks
         self.pnets = [{'name': 'net1',
                        pnet.NETWORK_TYPE: 'vlan',
@@ -400,7 +400,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                     self.assertEqual(expected, actual)
 
     def _lookup_network_by_segmentation_id(self, seg_id, num_expected_nets):
-        params_str = "%s=%s" % (pnet.SEGMENTATION_ID, seg_id)
+        params_str = "{}={}".format(pnet.SEGMENTATION_ID, seg_id)
         net_req = self.new_list_request('networks', None,
                                         params=params_str,
                                         as_admin=True)
@@ -520,7 +520,8 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         mech_drivers = plugin.mechanism_manager.ordered_mech_drivers
         for mech_driver in (md.obj for md in mech_drivers if
                             hasattr(md.obj, 'agent_type')):
-            mock.patch.object(type(mech_driver), 'agent_type',
+            mock.patch.object(
+                type(mech_driver), 'agent_type',
                 new_callable=mock.PropertyMock(return_value=None)).start()
 
         with self.network(as_admin=True,
@@ -680,7 +681,7 @@ class TestMl2NetworksWithVlanTransparencyBase(TestMl2NetworksV2):
     def setUp(self, plugin=None):
         config.register_common_config_options()
         cfg.CONF.set_override('vlan_transparent', True)
-        super(TestMl2NetworksWithVlanTransparencyBase, self).setUp(plugin)
+        super().setUp(plugin)
 
 
 class TestMl2NetworksWithVlanTransparency(
@@ -910,7 +911,7 @@ class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
     """
 
     def setUp(self):
-        super(TestMl2DbOperationBounds, self).setUp()
+        super().setUp()
         self.kwargs = self.get_api_kwargs()
         # NOTE(slaweq): In this class we are not testing any operations related
         # to policy module so we don't need to checu policies
@@ -1100,11 +1101,11 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             net_id = net['network']['id']
         port_id = uuidutils.generate_uuid()
         port_obj.Port(self.context,
-                id=port_id, project_id='tenant', network_id=net_id,
-                mac_address=netaddr.EUI('08-00-01-02-03-04'),
-                admin_state_up=True, status='ACTIVE',
-                device_id=device_id,
-                device_owner=DEVICE_OWNER_COMPUTE).create()
+                      id=port_id, project_id='tenant', network_id=net_id,
+                      mac_address=netaddr.EUI('08-00-01-02-03-04'),
+                      admin_state_up=True, status='ACTIVE',
+                      device_id=device_id,
+                      device_owner=DEVICE_OWNER_COMPUTE).create()
         self.assertIsNone(plugin._port_provisioned(
             'port', 'evt', 'trigger', payload=events.DBEventPayload(
                 self.context, resource_id=port_id)))
@@ -1482,7 +1483,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             plugin = directory.get_plugin()
 
             with mock.patch.object(plugin, '_process_port_binding',
-                side_effect=ml2_exc.MechanismDriverError(
+                                   side_effect=ml2_exc.MechanismDriverError(
                     method='create_port_bulk')) as _process_port_binding:
 
                 res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
@@ -1812,7 +1813,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             'admin_state_up': True,
             'binding:host_id': 'newhost',
             'binding:vif_type': 'unbound',
-            'binding:vnic_type': u'normal',
+            'binding:vnic_type': 'normal',
             'status': 'DOWN'}.items(),
             b_update_events[1].latest_state.items())
         self.assertEqual('newhost', a_update_events[0]['binding:host_id'])
@@ -1899,7 +1900,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def _test_operation_resillient_to_ipallocation_failure(self, func):
 
-        class IPAllocationsGrenade(object):
+        class IPAllocationsGrenade:
             insert_ip_called = False
             except_raised = False
 
@@ -1994,8 +1995,8 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
             query_params = "security_groups=%s" % (
                            port1['port']['security_groups'][0])
             ports_data = self._list('ports', query_params=query_params)
-            self.assertEqual(set([port1['port']['id'], port2['port']['id']]),
-                             set([port['id'] for port in ports_data['ports']]))
+            self.assertEqual({port1['port']['id'], port2['port']['id']},
+                             {port['id'] for port in ports_data['ports']})
             self.assertEqual(2, len(ports_data['ports']))
             query_params = "security_groups=%s&limit=1" % (
                            port1['port']['security_groups'][0])
@@ -2003,7 +2004,7 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
             self.assertIn(ports_data['ports'][0]['id'],
                           [port1['port']['id'], port2['port']['id']])
             self.assertEqual(1, len(ports_data['ports']))
-            query_params = "security_groups=%s&id=%s" % (
+            query_params = "security_groups={}&id={}".format(
                            port1['port']['security_groups'][0],
                            port1['port']['id'])
             ports_data = self._list('ports', query_params=query_params)
@@ -2019,15 +2020,15 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
                 sg_dbMixin._create_port_security_group_binding(
                     ctx, port2['port']['id'], sg['id'])
             port2['port']['security_groups'][0] = sg['id']
-            query_params = "security_groups=%s&id=%s" % (
+            query_params = "security_groups={}&id={}".format(
                            port1['port']['security_groups'][0],
                            port1['port']['id'])
             ports_data = self._list('ports', query_params=query_params)
             self.assertEqual(port1['port']['id'], ports_data['ports'][0]['id'])
             self.assertEqual(1, len(ports_data['ports']))
-            query_params = "security_groups=%s&id=%s" % (
-                           (port2['port']['security_groups'][0],
-                            port2['port']['id']))
+            query_params = "security_groups={}&id={}".format(
+                           port2['port']['security_groups'][0],
+                            port2['port']['id'])
             ports_data = self._list('ports', query_params=query_params)
             self.assertEqual(port2['port']['id'], ports_data['ports'][0]['id'])
             self.assertEqual(1, len(ports_data['ports']))
@@ -2036,7 +2037,7 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
 class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(TestMl2PortsV2WithRevisionPlugin, self).setUp()
+        super().setUp()
         self.revision_plugin = revision_plugin.RevisionPlugin()
 
     def test_update_port_status_bumps_revision(self):
@@ -2297,7 +2298,7 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
     def _register_type_driver_with_mtu(self, driver, mtu):
         plugin = directory.get_plugin()
 
-        class FakeDriver(object):
+        class FakeDriver:
             def get_mtu(self, physical_network=None):
                 return mtu
 
@@ -2404,7 +2405,7 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 
 class TestMl2DvrPortsV2(TestMl2PortsV2):
     def setUp(self):
-        super(TestMl2DvrPortsV2, self).setUp()
+        super().setUp()
         extensions = ['router',
                       constants.L3_AGENT_SCHEDULER_EXT_ALIAS,
                       constants.L3_DISTRIBUTED_EXT_ALIAS]
@@ -2539,7 +2540,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             group='SECURITYGROUP')
         quota_check = mock.patch.object(quota.QuotaEngine, 'quota_limit_check')
         self.mock_quota_check = quota_check.start()
-        super(TestMl2PortBinding, self).setUp()
+        super().setUp()
 
     def _check_port_binding_profile(self, port, profile=None):
         self.assertIn('id', port)
@@ -2761,9 +2762,9 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         bound_context.network.current = {'id': 'net_id'}
 
         with mock.patch.object(ml2_db, 'get_binding_level_objs',
-                return_value=[db_portbinding]),\
+                               return_value=[db_portbinding]),\
                 mock.patch.object(driver_context.PortContext,
-                '_push_binding_level') as pbl_mock:
+                                  '_push_binding_level') as pbl_mock:
             plugin._commit_port_binding(
                     port_context, bound_context, True)
             pbl_mock.assert_called_once_with(db_portbinding)
@@ -2953,7 +2954,7 @@ class TestMl2PortBindingVnicType(Ml2PluginV2TestCase,
 class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
 
     def setUp(self, plugin=None):
-        super(TestMultiSegmentNetworks, self).setUp()
+        super().setUp()
 
     def test_allocate_dynamic_segment(self):
         data = {'network': {'name': 'net1'}}
@@ -3186,7 +3187,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
             for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                           pnet.SEGMENTATION_ID]:
                 self.assertEqual(segment.get(field),
-                            segments[segment_index][field])
+                                 segments[segment_index][field])
 
         # Tests get_network()
         net_req = self.new_show_request('networks', network['network']['id'],
@@ -3198,7 +3199,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
             for field in [pnet.NETWORK_TYPE, pnet.PHYSICAL_NETWORK,
                           pnet.SEGMENTATION_ID]:
                 self.assertEqual(segment.get(field),
-                            segments[segment_index][field])
+                                 segments[segment_index][field])
 
     def test_create_network_with_provider_and_multiprovider_fail(self):
         data = {'network': {'name': 'net1',
@@ -3356,7 +3357,7 @@ class TestMl2PortSecurity(Ml2PluginV2TestCase):
                               group='SECURITYGROUP')
         quota_check = mock.patch.object(quota.QuotaEngine, 'quota_limit_check')
         self.mock_quota_check = quota_check.start()
-        super(TestMl2PortSecurity, self).setUp()
+        super().setUp()
 
     def test_port_update_without_security_groups(self):
         with self.port() as port:
@@ -3373,7 +3374,7 @@ class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
     _mechanism_drivers = ['openvswitch', 'logger']
 
     def setUp(self):
-        super(TestMl2HostsNetworkAccess, self).setUp()
+        super().setUp()
         helpers.register_ovs_agent(
             host='host1', bridge_mappings={'physnet1': 'br-eth-1'})
         helpers.register_ovs_agent(
@@ -3431,7 +3432,7 @@ class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
 class DHCPOptsTestCase(test_dhcpopts.TestExtraDhcpOpt):
 
     def setUp(self, plugin=None):
-        super(DHCPOptsTestCase, self).setUp(plugin=PLUGIN_NAME)
+        super().setUp(plugin=PLUGIN_NAME)
 
 
 class Ml2PluginV2FaultyDriverTestCase(test_plugin.NeutronDbPluginV2TestCase):
@@ -3443,7 +3444,7 @@ class Ml2PluginV2FaultyDriverTestCase(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('mechanism_drivers',
                               ['test', 'logger'],
                               group='ml2')
-        super(Ml2PluginV2FaultyDriverTestCase, self).setUp(PLUGIN_NAME)
+        super().setUp(PLUGIN_NAME)
         self.port_create_status = 'DOWN'
 
 
@@ -3820,7 +3821,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
 
     def test_create_network_mtu_on_precommit(self):
         with mock.patch.object(mech_test.TestMechanismDriver,
-                        'create_network_precommit') as bmp:
+                               'create_network_precommit') as bmp:
             with mock.patch.object(self.driver, '_get_network_mtu') as mtu:
                 mtu.return_value = 1100
                 with self.network() as network:
@@ -3967,7 +3968,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
             self.assertNotIn(mpnet_apidef.SEGMENTS, observed_network)
             # Where new segment in not part of the network
             self.assertNotEqual(segmentation_id,
-                observed_network[pnet.SEGMENTATION_ID])
+                                observed_network[pnet.SEGMENTATION_ID])
 
     def test_precommit_create_builds_multisegment_original_network(self):
         event = events.PRECOMMIT_CREATE
@@ -4000,7 +4001,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
             self.assertIn(mpnet_apidef.SEGMENTS, observed_network)
             # Where new segment in not part of the multisegment
             self.assertNotIn(network_segments[2],
-                observed_network[mpnet_apidef.SEGMENTS])
+                             observed_network[mpnet_apidef.SEGMENTS])
 
     def test_precommit_delete_builds_multisegment_original_network(self):
         event = events.PRECOMMIT_DELETE
@@ -4026,7 +4027,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
             self.assertEqual(2, len(observed_network[mpnet_apidef.SEGMENTS]))
             # Where new segment is part of segments
             self.assertIn(expected_segment,
-                observed_network[mpnet_apidef.SEGMENTS])
+                          observed_network[mpnet_apidef.SEGMENTS])
 
 
 class TestMl2PluginCallRPCMechanismDrivers(Ml2PluginV2TestCase):

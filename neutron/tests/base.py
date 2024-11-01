@@ -183,7 +183,7 @@ def _catch_timeout(f):
 
 class _CatchTimeoutMetaclass(abc.ABCMeta):
     def __init__(cls, name, bases, dct):
-        super(_CatchTimeoutMetaclass, cls).__init__(name, bases, dct)
+        super().__init__(name, bases, dct)
         for name, method in inspect.getmembers(
                 # NOTE(ihrachys): we should use isroutine because it will catch
                 # both unbound methods (python2) and functions (python3)
@@ -205,7 +205,7 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
     """
 
     def setUp(self):
-        super(DietTestCase, self).setUp()
+        super().setUp()
 
         # NOTE(slaweq): Make deprecation warnings only happen once.
         warnings.simplefilter("once", DeprecationWarning)
@@ -295,7 +295,7 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
                                    testtools.content.TracebackContent(
                                        (ctx.type_, ctx.value, ctx.tb), self))
 
-        return super(DietTestCase, self).addOnException(safe_handler)
+        return super().addOnException(safe_handler)
 
     def check_for_systemexit(self, exc_info):
         if isinstance(exc_info[1], SystemExit):
@@ -371,7 +371,7 @@ class ProcessMonitorFixture(fixtures.Fixture):
 class BaseTestCase(DietTestCase):
 
     def setUp(self):
-        super(BaseTestCase, self).setUp()
+        super().setUp()
 
         self.useFixture(lockutils.ExternalLockFixture())
         self.useFixture(fixture.APIDefinitionFixture())
@@ -485,7 +485,7 @@ class BaseTestCase(DietTestCase):
                                               raise_on_exception=False):
         class SimpleThread(threading.Thread):
             def __init__(self, q):
-                super(SimpleThread, self).__init__()
+                super().__init__()
                 self.q = q
                 self.exception = None
 
@@ -533,7 +533,7 @@ class BaseTestCase(DietTestCase):
 class PluginFixture(fixtures.Fixture):
 
     def __init__(self, core_plugin=None):
-        super(PluginFixture, self).__init__()
+        super().__init__()
         self.core_plugin = core_plugin
 
     def _setUp(self):
@@ -581,7 +581,7 @@ class Timeout(fixtures.Fixture):
     """
 
     def __init__(self, timeout=None, scaling=1):
-        super(Timeout, self).__init__()
+        super().__init__()
         if timeout is None:
             timeout = os.environ.get('OS_TEST_TIMEOUT', 0)
         try:
@@ -595,6 +595,6 @@ class Timeout(fixtures.Fixture):
             raise ValueError('scaling value must be >= 1')
 
     def setUp(self):
-        super(Timeout, self).setUp()
+        super().setUp()
         if self.test_timeout > 0:
             self.useFixture(fixtures.Timeout(self.test_timeout, gentle=True))

@@ -37,7 +37,7 @@ class IPAllocationPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = subnet.IPAllocationPool
 
     def setUp(self):
-        super(IPAllocationPoolDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'subnet_id': lambda: self._create_test_subnet_id()})
 
@@ -47,7 +47,7 @@ class DNSNameServerObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
     _test_class = subnet.DNSNameServer
 
     def setUp(self):
-        super(DNSNameServerObjectIfaceTestCase, self).setUp()
+        super().setUp()
         self.pager_map[self._test_class.obj_name()] = (
             obj_base.Pager(sorts=[('order', True)]))
 
@@ -58,7 +58,7 @@ class DNSNameServerDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = subnet.DNSNameServer
 
     def setUp(self):
-        super(DNSNameServerDbObjectTestCase, self).setUp()
+        super().setUp()
         self._subnet_id = self._create_test_subnet_id()
         self.update_obj_fields({'subnet_id': self._subnet_id})
 
@@ -101,7 +101,7 @@ class RouteDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = subnet.Route
 
     def setUp(self):
-        super(RouteDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'subnet_id': lambda: self._create_test_subnet_id()})
 
@@ -113,12 +113,12 @@ class SubnetServiceTypeObjectIfaceTestCase(
 
 
 class SubnetServiceTypeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
-                            testlib_api.SqlTestCase):
+                                        testlib_api.SqlTestCase):
 
     _test_class = subnet.SubnetServiceType
 
     def setUp(self):
-        super(SubnetServiceTypeDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'subnet_id': lambda: self._create_test_subnet_id()})
 
@@ -128,7 +128,7 @@ class SubnetObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
     _test_class = subnet.Subnet
 
     def setUp(self):
-        super(SubnetObjectIfaceTestCase, self).setUp()
+        super().setUp()
         self.pager_map[subnet.DNSNameServer.obj_name()] = (
             obj_base.Pager(sorts=[('order', True)]))
         # Base class will mock those out only when rbac_db_model is set for the
@@ -152,7 +152,7 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
     def setUp(self):
-        super(SubnetDbObjectTestCase, self).setUp()
+        super().setUp()
         # set up plugin because some models used here require a plugin
         # (specifically, rbac models and their get_valid_actions validators)
         self.setup_coreplugin(self.CORE_PLUGIN)
@@ -317,7 +317,7 @@ class NetworkSubnetLockDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = subnet.NetworkSubnetLock
 
     def setUp(self):
-        super(NetworkSubnetLockDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'network_id': lambda: self._create_test_network_id()})
 

@@ -30,7 +30,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common \
 from neutron.tests import base
 
 
-class OFCTLParamListMatcher(object):
+class OFCTLParamListMatcher:
 
     def _parse(self, params):
         actions_pos = params.find('actions')
@@ -48,7 +48,7 @@ class OFCTLParamListMatcher(object):
     __repr__ = __str__
 
 
-class StringSetMatcher(object):
+class StringSetMatcher:
     """A helper object for unordered CSV strings
 
     Will compare equal if both strings, when read as a comma-separated set
@@ -68,7 +68,7 @@ class StringSetMatcher(object):
 
     def __repr__(self):
         sep = '' if self.separator == ',' else " on %s" % self.separator
-        return '<comma-separated string for %s%s>' % (self.set, sep)
+        return '<comma-separated string for {}{}>'.format(self.set, sep)
 
 
 class OVS_Lib_Test_Common(base.BaseTestCase):
@@ -96,7 +96,7 @@ class OVS_Lib_Test(base.BaseTestCase):
     """
 
     def setUp(self):
-        super(OVS_Lib_Test, self).setUp()
+        super().setUp()
         self.BR_NAME = "br-int"
 
         # Don't attempt to connect to ovsdb
@@ -158,7 +158,7 @@ class OVS_Lib_Test(base.BaseTestCase):
             ('cookie', 1754),
             ('priority', 3),
             ('tun_id', lsw_id),
-            ('actions', "mod_vlan_vid:%s,output:%s" % (vid, ofport))])
+            ('actions', "mod_vlan_vid:{},output:{}".format(vid, ofport))])
         flow_dict_7 = collections.OrderedDict([
             ('cookie', 1256),
             ('priority', 4),
@@ -385,10 +385,10 @@ class OVS_Lib_Test(base.BaseTestCase):
                                  "%s,in_port=%d" % (cookie_spec, ofport))),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input=StringSetMatcher(
-                                 "%s,tun_id=%s" % (cookie_spec, lsw_id))),
+                                 "{},tun_id={}".format(cookie_spec, lsw_id))),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input=StringSetMatcher(
-                                 "%s,dl_vlan=%s" % (cookie_spec, vid))),
+                                 "{},dl_vlan={}".format(cookie_spec, vid))),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input="%s" % cookie_spec),
         ]
@@ -707,7 +707,7 @@ class OVS_Lib_Test(base.BaseTestCase):
 class TestDeferredOVSBridge(base.BaseTestCase):
 
     def setUp(self):
-        super(TestDeferredOVSBridge, self).setUp()
+        super().setUp()
 
         self.br = mock.Mock()
         self.mock_do_action_flows_by_group_id = mock.patch.object(

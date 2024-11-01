@@ -54,7 +54,7 @@ SERVICE_PLUGIN_KLASS = 'neutron.services.qos.qos_plugin.QoSPlugin'
 class TestQosPlugin(base.BaseQosTestCase):
 
     def setUp(self):
-        super(TestQosPlugin, self).setUp()
+        super().setUp()
         self.setup_coreplugin(load_plugins=False)
 
         mock.patch('neutron.objects.db.api.create_object').start()
@@ -900,7 +900,8 @@ class TestQosPlugin(base.BaseQosTestCase):
         setattr(_policy, "rules", [self.min_bw_rule])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                         return_value=_policy) as mock_qos_get_obj:
-            self.assertRaises(qos_exc.QoSRuleParameterConflict,
+            self.assertRaises(
+                qos_exc.QoSRuleParameterConflict,
                 self.qos_plugin.create_policy_bandwidth_limit_rule,
                 self.ctxt, self.policy.id, self.rule_data)
             mock_qos_get_obj.assert_called_once_with(self.ctxt, id=_policy.id)
@@ -911,7 +912,8 @@ class TestQosPlugin(base.BaseQosTestCase):
         setattr(_policy, "rules", [self.rule])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                         return_value=_policy) as mock_qos_get_obj:
-            self.assertRaises(qos_exc.QoSRuleParameterConflict,
+            self.assertRaises(
+                qos_exc.QoSRuleParameterConflict,
                 self.qos_plugin.create_policy_minimum_bandwidth_rule,
                 self.ctxt, self.policy.id, self.rule_data)
             mock_qos_get_obj.assert_called_once_with(self.ctxt, id=_policy.id)
@@ -1082,7 +1084,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                 self.qos_plugin.get_policy_bandwidth_limit_rule(
                     self.ctxt, self.rule.id, self.policy.id)
                 get_object_mock.assert_called_once_with(self.ctxt,
-                    id=self.rule.id)
+                                                        id=self.rule.id)
 
     def test_get_policy_bandwidth_limit_rules_for_policy(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
@@ -1214,7 +1216,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                 self.qos_plugin.get_policy_minimum_bandwidth_rule(
                     self.ctxt, self.rule.id, self.policy.id)
                 get_object_mock.assert_called_once_with(self.ctxt,
-                    id=self.rule.id)
+                                                        id=self.rule.id)
 
     def test_get_policy_minimum_bandwidth_rules_for_policy(self):
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
@@ -1621,7 +1623,8 @@ class TestQosPlugin(base.BaseQosTestCase):
         for new_rule_data in rules:
             with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                             return_value=_policy) as mock_qos_get_obj:
-                self.assertRaises(qos_exc.QoSRuleParameterConflict,
+                self.assertRaises(
+                    qos_exc.QoSRuleParameterConflict,
                     self.qos_plugin.create_policy_minimum_packet_rate_rule,
                     self.ctxt, self.policy.id, new_rule_data)
                 mock_qos_get_obj.assert_called_once_with(self.ctxt,
@@ -1633,7 +1636,8 @@ class TestQosPlugin(base.BaseQosTestCase):
             setattr(_policy, "rules", [min_pps_rule])
             with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                             return_value=_policy) as mock_qos_get_obj:
-                self.assertRaises(qos_exc.QoSRuleParameterConflict,
+                self.assertRaises(
+                    qos_exc.QoSRuleParameterConflict,
                     self.qos_plugin.create_policy_minimum_packet_rate_rule,
                     self.ctxt, self.policy.id, self.rule_data)
                 mock_qos_get_obj.assert_called_once_with(self.ctxt,
@@ -1715,7 +1719,8 @@ class TestQosPlugin(base.BaseQosTestCase):
             setattr(_policy, 'rules', rules)
             with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                             return_value=_policy) as mock_qos_get_obj:
-                self.assertRaises(qos_exc.QoSRuleParameterConflict,
+                self.assertRaises(
+                    qos_exc.QoSRuleParameterConflict,
                     self.qos_plugin.update_policy_minimum_packet_rate_rule,
                     self.ctxt, rule_data['minimum_packet_rate_rule']['id'],
                     self.policy.id, self.rule_data)
@@ -1868,7 +1873,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                           pl_utils.vnic_type_trait(vnic_type)], ret)
 
 
-class QoSRuleAliasTestExtensionManager(object):
+class QoSRuleAliasTestExtensionManager:
 
     def get_resources(self):
         return qos_rules_alias.Qos_rules_alias.get_resources()
@@ -1880,7 +1885,7 @@ class QoSRuleAliasTestExtensionManager(object):
         return []
 
 
-class QoSRuleAliasMinimumPacketRateTestExtensionManager(object):
+class QoSRuleAliasMinimumPacketRateTestExtensionManager:
 
     def get_resources(self):
         return qos_pps_minimum_rule_alias.Qos_pps_minimum_rule_alias.\
@@ -1903,8 +1908,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         plugin = 'ml2'
         service_plugins = {'qos_plugin_name': SERVICE_PLUGIN_KLASS}
         ext_mgr = QoSRuleAliasTestExtensionManager()
-        super(TestQoSRuleAlias, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
-                                            service_plugins=service_plugins)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr,
+                      service_plugins=service_plugins)
         self.qos_plugin = directory.get_plugin(plugins_constants.QOS)
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
@@ -1924,8 +1929,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _update_rule(self, rule_type, rule_id, **kwargs):
         data = {'alias_%s_rule' % rule_type: kwargs}
-        resource = '%s/alias-%s-rules' % (qos.ALIAS,
-                                          rule_type.replace('_', '-'))
+        resource = '{}/alias-{}-rules'.format(qos.ALIAS,
+                                              rule_type.replace('_', '-'))
         request = self.new_update_request(resource, data, rule_id, self.fmt,
                                           as_admin=True)
         res = request.get_response(self.ext_api)
@@ -1933,8 +1938,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         return self.deserialize(self.fmt, res)
 
     def _show_rule(self, rule_type, rule_id):
-        resource = '%s/alias-%s-rules' % (qos.ALIAS,
-                                          rule_type.replace('_', '-'))
+        resource = '{}/alias-{}-rules'.format(qos.ALIAS,
+                                              rule_type.replace('_', '-'))
         request = self.new_show_request(resource, rule_id, self.fmt,
                                         as_admin=True)
         res = request.get_response(self.ext_api)
@@ -1942,8 +1947,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         return self.deserialize(self.fmt, res)
 
     def _delete_rule(self, rule_type, rule_id):
-        resource = '%s/alias-%s-rules' % (qos.ALIAS,
-                                          rule_type.replace('_', '-'))
+        resource = '{}/alias-{}-rules'.format(qos.ALIAS,
+                                              rule_type.replace('_', '-'))
         request = self.new_delete_request(resource, rule_id, self.fmt,
                                           as_admin=True)
         res = request.get_response(self.ext_api)
@@ -2011,8 +2016,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             rule_id = uuidutils.generate_uuid()
             with mock.patch('neutron.objects.qos.rule.QosRule.get_object',
                             return_value=None):
-                resource = '%s/alias-%s-rules' % (qos.ALIAS,
-                                                  rule_type.replace('_', '-'))
+                resource = '{}/alias-{}-rules'.format(
+                    qos.ALIAS, rule_type.replace('_', '-'))
                 request = self.new_show_request(resource, rule_id, self.fmt,
                                                 as_admin=True)
                 res = request.get_response(self.ext_api)
@@ -2060,7 +2065,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
     MIN_PPS_RP = 'e16161f4-1626-11ec-a5a2-1fc9396e27cc'
 
     def setUp(self):
-        super(TestQosPluginDB, self).setUp()
+        super().setUp()
         self.setup_coreplugin(load_plugins=False)
         cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
         cfg.CONF.set_override("service_plugins", ["qos"])
@@ -2617,7 +2622,8 @@ class TestQosPluginDB(base.BaseQosTestCase):
             rule.direction = 'any'
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
-            self.assertRaises(NotImplementedError,
+            self.assertRaises(
+                NotImplementedError,
                 self.qos_plugin._change_placement_allocation, qos1, qos2,
                 orig_port, port)
         mock_update_qos_alloc.assert_not_called()
@@ -2630,7 +2636,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
-                port)
+                                                         port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_min_bw_dataplane_enforcement_with_pps(
@@ -2643,7 +2649,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
-                port)
+                                                         port)
         mock_update_qos_alloc.assert_called_once_with(
             consumer_uuid='uu:id',
             alloc_diff={
@@ -2691,7 +2697,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
-                port)
+                                                         port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_no_original_allocation(self):
@@ -2706,13 +2712,13 @@ class TestQosPluginDB(base.BaseQosTestCase):
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
-                port)
+                                                         port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_new_policy_empty(self):
         qos1 = self._make_qos_policy()
-        orig_port, port = self._prepare_port_for_placement_allocation(qos1,
-            original_min_kbps=1000, original_min_kpps=2000)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, original_min_kbps=1000, original_min_kpps=2000)
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(
@@ -2756,7 +2762,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
-                port)
+                                                         port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_new_rule_not_min_bw(self):
@@ -2764,8 +2770,8 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos2 = self._make_qos_policy()
         bw_limit_rule = rule_object.QosDscpMarkingRule(dscp_mark=16)
         qos2.rules = [bw_limit_rule]
-        orig_port, port = self._prepare_port_for_placement_allocation(qos1,
-            original_min_kbps=1000)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, original_min_kbps=1000)
 
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:

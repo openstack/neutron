@@ -22,7 +22,7 @@ from neutron.extensions import subnet_service_types
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class SubnetServiceTypesExtensionManager(object):
+class SubnetServiceTypesExtensionManager:
 
     def get_resources(self):
         return []
@@ -59,8 +59,7 @@ class SubnetServiceTypesExtensionTestCase(
         plugin = ('neutron.tests.unit.extensions.test_subnet_service_types.' +
                   'SubnetServiceTypesExtensionTestPlugin')
         ext_mgr = SubnetServiceTypesExtensionManager()
-        super(SubnetServiceTypesExtensionTestCase,
-              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _create_service_subnet(self, service_types=None, cidr=None,
                                network=None, enable_dhcp=False):

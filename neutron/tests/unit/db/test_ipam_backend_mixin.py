@@ -35,7 +35,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 class TestIpamBackendMixin(base.BaseTestCase):
 
     def setUp(self):
-        super(TestIpamBackendMixin, self).setUp()
+        super().setUp()
         self.mixin = ipam_backend_mixin.IpamBackendMixin()
         self.ctx = mock.Mock()
         self.default_new_ips = (('id-1', '192.168.1.1'),
@@ -358,7 +358,7 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def setUp(self, plugin=None):
         if not plugin:
             plugin = 'neutron.tests.unit.db.test_ipam_backend_mixin.TestPlugin'
-        super(TestPortUpdateIpam, self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
         ml2_plugin.MAX_BIND_TRIES = 0
         self.addCleanup(self._cleanup)
 
@@ -398,4 +398,4 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
 class TestPortUpdateIpamML2(TestPortUpdateIpam):
     def setUp(self):
-        super(TestPortUpdateIpamML2, self).setUp(plugin='ml2')
+        super().setUp(plugin='ml2')

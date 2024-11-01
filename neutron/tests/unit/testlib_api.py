@@ -35,9 +35,9 @@ class ExpectedException(testtools.ExpectedException):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if super(ExpectedException, self).__exit__(exc_type,
-                                                   exc_value,
-                                                   traceback):
+        if super().__exit__(exc_type,
+                            exc_value,
+                            traceback):
             self.exception = exc_value
             return True
         return False
@@ -47,7 +47,7 @@ def create_request(path, body, content_type, method='GET',
                    query_string=None, context=None, headers=None):
     headers = headers or {}
     if query_string:
-        url = "%s?%s" % (path, query_string)
+        url = "{}?{}".format(path, query_string)
     else:
         url = path
     req = wsgi.Request.blank(url)
@@ -100,7 +100,7 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
     DRIVER = 'sqlite'
 
     def __init__(self, test):
-        super(OpportunisticSqlFixture, self).__init__()
+        super().__init__()
         self.test = test
 
     @classmethod
@@ -117,7 +117,7 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
 
     def _delete_from_schema(self, engine):
         if self.test.BUILD_SCHEMA:
-            super(OpportunisticSqlFixture, self)._delete_from_schema(engine)
+            super()._delete_from_schema(engine)
 
     def _init_resources(self):
         testresources.setUpResources(
@@ -179,11 +179,11 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
             ]
 
 
-class BaseSqlTestCase(object):
+class BaseSqlTestCase:
     BUILD_SCHEMA = True
 
     def setUp(self):
-        super(BaseSqlTestCase, self).setUp()
+        super().setUp()
 
         self._setup_database_fixtures()
 
@@ -204,7 +204,7 @@ class SqlTestCase(BaseSqlTestCase, base.BaseTestCase):
     """regular sql test"""
 
 
-class OpportunisticDBTestMixin(object):
+class OpportunisticDBTestMixin:
     """Mixin that converts a BaseSqlTestCase to use the
     OpportunisticSqlFixture.
     """
@@ -290,7 +290,7 @@ class WebTestCase(SqlTestCase):
     fmt = 'json'
 
     def setUp(self):
-        super(WebTestCase, self).setUp()
+        super().setUp()
         json_deserializer = wsgi.JSONDeserializer()
         self._deserializers = {
             'application/json': json_deserializer,
@@ -307,7 +307,7 @@ class WebTestCase(SqlTestCase):
         return result
 
 
-class SubDictMatch(object):
+class SubDictMatch:
 
     def __init__(self, sub_dict):
         self.sub_dict = sub_dict

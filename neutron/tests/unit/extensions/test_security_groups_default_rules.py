@@ -27,7 +27,7 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_securitygroup.'
                    'SecurityGroupTestPlugin')
 
 
-class DefaultSecurityGroupRulesTestExtensionManager(object):
+class DefaultSecurityGroupRulesTestExtensionManager:
 
     def get_resources(self):
         return sgdf_ext.Security_groups_default_rules.get_resources()
@@ -45,7 +45,7 @@ class TestDefaultSecurityGroupRules(
     def setUp(self, plugin=None, ext_mgr=None):
         plugin = DB_PLUGIN_KLASS
         ext_mgr = DefaultSecurityGroupRulesTestExtensionManager()
-        super(TestDefaultSecurityGroupRules, self).setUp(
+        super().setUp(
             plugin=plugin, ext_mgr=ext_mgr)
 
     def _build_default_security_group_rule(
@@ -212,7 +212,7 @@ class TestDefaultSecurityGroupRules(
             self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
             res_sg = self.deserialize(self.fmt, res)
             prefix = res_sg['default_security_group_rule']['remote_ip_prefix']
-            self.assertEqual('%s/%s' % (
+            self.assertEqual('{}/{}'.format(
                 remote_ip_prefix, addr[remote_ip_prefix]['mask']), prefix)
 
     def test_create_default_security_group_rule_tcp_protocol_as_number(self):

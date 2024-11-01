@@ -25,7 +25,7 @@ from neutron.tests import base
 
 class TestNetnsCleanup(base.BaseTestCase):
     def setUp(self):
-        super(TestNetnsCleanup, self).setUp()
+        super().setUp()
         conn_patcher = mock.patch(
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
@@ -223,7 +223,7 @@ class TestNetnsCleanup(base.BaseTestCase):
         with mock.patch.object(util, '_kill_listen_processes',
                                return_value=1):
             with mock.patch.object(util, 'wait_until_no_listen_pids_namespace',
-                            side_effect=util.PidsInNamespaceException):
+                                   side_effect=util.PidsInNamespaceException):
                 namespace = mock.ANY
                 with testtools.ExpectedException(
                         util.PidsInNamespaceException):

@@ -35,7 +35,7 @@ from neutron.tests.unit.plugins.ml2 import test_plugin
 
 class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
     def setUp(self):
-        super(TrunkSkeletonTest, self).setUp()
+        super().setUp()
         self.mock_registry_provide = mock.patch(
             'neutron.api.rpc.callbacks.producer.registry.provide').start()
         self.drivers_patch = mock.patch.object(drivers, 'register').start()
@@ -146,8 +146,9 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
             trunk = self._create_test_trunk(_trunk_port)
             trunk_host = 'test-host'
             test_obj = server.TrunkSkeleton()
-            self.mock_update_port.return_value = {portbindings.VIF_TYPE:
-                                         portbindings.VIF_TYPE_BINDING_FAILED}
+            self.mock_update_port.return_value = (
+                {portbindings.VIF_TYPE:
+                 portbindings.VIF_TYPE_BINDING_FAILED})
             self.assertRaises(trunk_exc.SubPortBindingError,
                               test_obj._handle_port_binding,
                               self.context,
@@ -178,8 +179,9 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
         test_obj = server.TrunkSkeleton()
         test_obj._trunk_plugin = self.trunk_plugin
         test_obj._core_plugin = self.core_plugin
-        self.mock_update_port.return_value = {portbindings.VIF_TYPE:
-                                         portbindings.VIF_TYPE_BINDING_FAILED}
+        self.mock_update_port.return_value = (
+            {portbindings.VIF_TYPE:
+             portbindings.VIF_TYPE_BINDING_FAILED})
         updated_subports = test_obj.update_subport_bindings(self.context,
                                                             subports=subports)
         trunk = trunk_obj.Trunk.get_object(self.context, id=trunk['id'])
@@ -209,8 +211,9 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
         test_obj = server.TrunkSkeleton()
         test_obj._trunk_plugin = self.trunk_plugin
         test_obj._core_plugin = self.core_plugin
-        self.mock_update_port.return_value = {portbindings.VIF_TYPE:
-                                         portbindings.VIF_TYPE_BINDING_FAILED}
+        self.mock_update_port.return_value = (
+            {portbindings.VIF_TYPE:
+             portbindings.VIF_TYPE_BINDING_FAILED})
         mock_trunk_obj = mock.Mock(port_id=parent_port['port']['id'])
         mock_trunk_obj.update.side_effect = exc.StaleDataError
 
@@ -249,8 +252,9 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
         test_obj = server.TrunkSkeleton()
         test_obj._trunk_plugin = self.trunk_plugin
         test_obj._core_plugin = self.core_plugin
-        self.mock_update_port.return_value = {portbindings.VIF_TYPE:
-                                         portbindings.VIF_TYPE_BINDING_FAILED}
+        self.mock_update_port.return_value = (
+            {portbindings.VIF_TYPE:
+             portbindings.VIF_TYPE_BINDING_FAILED})
         mock_trunk_obj = mock.Mock(port_id=parent_port['port']['id'])
         mock_trunk_obj.update.side_effect = KeyError
 
@@ -299,7 +303,7 @@ class TrunkSkeletonTest(test_plugin.Ml2PluginV2TestCase):
 
 class TrunkStubTest(base.BaseTestCase):
     def setUp(self):
-        super(TrunkStubTest, self).setUp()
+        super().setUp()
         self.test_obj = server.TrunkStub()
 
     def test___init__(self):

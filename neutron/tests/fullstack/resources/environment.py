@@ -34,7 +34,7 @@ from neutron.tests.fullstack.resources import process
 LOG = logging.getLogger(__name__)
 
 
-class EnvironmentDescription(object):
+class EnvironmentDescription:
     """A set of characteristics of an environment setup.
 
     Does the setup, as a whole, support tunneling? How about l2pop?
@@ -85,7 +85,7 @@ class EnvironmentDescription(object):
         return self.network_type in ('vxlan', 'gre')
 
 
-class HostDescription(object):
+class HostDescription:
     """A set of characteristics of an environment Host.
 
     What agents should the host spawn? What mode should each agent operate
@@ -398,7 +398,7 @@ class Environment(fixtures.Fixture):
         :param hosts_desc: A list of HostDescription instances.
         """
 
-        super(Environment, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.hosts_desc = hosts_desc
         self.hosts = []

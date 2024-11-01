@@ -26,7 +26,7 @@ from neutron_lib import constants
 class CapabilitiesTest(base.BaseTestCase):
 
     def setUp(self):
-        super(CapabilitiesTest, self).setUp()
+        super().setUp()
         self._mgr = mock.Mock()
         self.useFixture(fixture.CallbackRegistryFixture(
             callback_manager=self._mgr))

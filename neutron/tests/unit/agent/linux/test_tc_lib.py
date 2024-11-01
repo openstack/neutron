@@ -40,7 +40,7 @@ TC_FILTERS_OUTPUT = (
 ) % {'bw': BW_LIMIT, 'burst': BURST}
 
 
-class BaseUnitConversionTest(object):
+class BaseUnitConversionTest:
 
     def test_convert_to_kilobits_bare_value(self):
         value = "1000"
@@ -116,7 +116,7 @@ class TestHandleFromHexToString(base.BaseTestCase):
 
 class TestTcCommand(base.BaseTestCase):
     def setUp(self):
-        super(TestTcCommand, self).setUp()
+        super().setUp()
         self.tc = tc_lib.TcCommand(DEVICE_NAME, KERNEL_HZ_VALUE)
         self.mock_list_tc_qdiscs = mock.patch.object(tc_lib,
                                                      'list_tc_qdiscs').start()
@@ -220,7 +220,7 @@ class TestTcCommand(base.BaseTestCase):
 class TcTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(TcTestCase, self).setUp()
+        super().setUp()
         self.mock_add_tc_qdisc = mock.patch.object(
             priv_tc_lib, 'add_tc_qdisc').start()
         self.namespace = 'namespace'
@@ -333,7 +333,7 @@ class TcTestCase(base.BaseTestCase):
 class TcPolicyClassTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(TcPolicyClassTestCase, self).setUp()
+        super().setUp()
         self.mock_add_tc_policy_class = mock.patch.object(
             priv_tc_lib, 'add_tc_policy_class').start()
         self.mock_list_tc_policy_classes = mock.patch.object(

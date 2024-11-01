@@ -51,7 +51,7 @@ class FirewallMigrationTestCase(base.BaseFullStackTestCase):
         env = environment.Environment(
             environment.EnvironmentDescription(),
             host_descriptions)
-        super(FirewallMigrationTestCase, self).setUp(env)
+        super().setUp(env)
         # fullstack doesn't separate nodes running ovs agent so iptables rules
         # are implemented in root namespace
         self.iptables_manager = iptables_manager.IptablesManager()

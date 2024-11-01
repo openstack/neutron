@@ -26,7 +26,7 @@ from neutron.tests.functional import base
 
 class TestDestroyPatchPorts(base.BaseSudoTestCase):
     def setUp(self):
-        super(TestDestroyPatchPorts, self).setUp()
+        super().setUp()
         self.int_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         bridge_mappings = {}
         self.bridges = []
@@ -43,7 +43,7 @@ class TestDestroyPatchPorts(base.BaseSudoTestCase):
         config.set_override('integration_bridge', self.int_br.br_name, "OVS")
         config.set_override(
             'bridge_mappings',
-            ','.join(["%s:%s" % (net, br)
+            ','.join(["{}:{}".format(net, br)
                       for net, br in bridge_mappings.items()]),
             "OVS")
 

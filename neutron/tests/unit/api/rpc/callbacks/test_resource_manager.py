@@ -22,7 +22,7 @@ IS_VALID_RESOURCE_TYPE = (
     'neutron.api.rpc.callbacks.resources.is_valid_resource_type')
 
 
-class ResourceCallbacksManagerTestCaseMixin(object):
+class ResourceCallbacksManagerTestCaseMixin:
 
     def test_register_fails_on_invalid_type(self):
         self.assertRaises(
@@ -66,7 +66,7 @@ class ProducerResourceCallbacksManagerTestCase(
         base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
 
     def setUp(self):
-        super(ProducerResourceCallbacksManagerTestCase, self).setUp()
+        super().setUp()
         self.mgr = self.prod_mgr
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
@@ -108,7 +108,7 @@ class ConsumerResourceCallbacksManagerTestCase(
         base.BaseQosTestCase, ResourceCallbacksManagerTestCaseMixin):
 
     def setUp(self):
-        super(ConsumerResourceCallbacksManagerTestCase, self).setUp()
+        super().setUp()
         self.mgr = self.cons_mgr
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
@@ -136,5 +136,5 @@ class ConsumerResourceCallbacksManagerTestCase(
         callback2 = lambda: None
         self.mgr.register(callback1, 'TYPE1')
         self.mgr.register(callback2, 'TYPE2')
-        self.assertEqual(set([callback1]), self.mgr.get_callbacks('TYPE1'))
-        self.assertEqual(set([callback2]), self.mgr.get_callbacks('TYPE2'))
+        self.assertEqual({callback1}, self.mgr.get_callbacks('TYPE1'))
+        self.assertEqual({callback2}, self.mgr.get_callbacks('TYPE2'))

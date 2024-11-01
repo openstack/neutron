@@ -32,7 +32,7 @@ _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path
 
 
-class ExtraRouteTestExtensionManager(object):
+class ExtraRouteTestExtensionManager:
 
     def get_resources(self):
         return l3.L3.get_resources()
@@ -58,7 +58,7 @@ class TestExtraRouteL3NatServicePlugin(test_l3.TestL3NatServicePlugin,
     supported_extension_aliases = [l3_apidef.ALIAS, xroute_apidef.ALIAS]
 
 
-class ExtraRouteDBTestCaseBase(object):
+class ExtraRouteDBTestCaseBase:
     def _routes_update_prepare(
             self, router_id, subnet_id,
             port_id, routes, skip_add=False, tenant_id=None, as_admin=False):

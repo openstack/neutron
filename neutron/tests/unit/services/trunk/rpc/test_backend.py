@@ -26,7 +26,7 @@ from neutron.tests import tools
 class ServerSideRpcBackendTest(base.BaseTestCase):
     # TODO(fitoduarte): add more test to improve coverage of module
     def setUp(self):
-        super(ServerSideRpcBackendTest, self).setUp()
+        super().setUp()
         self._mgr = mock.Mock()
         self.useFixture(fixture.CallbackRegistryFixture(
             callback_manager=self._mgr))

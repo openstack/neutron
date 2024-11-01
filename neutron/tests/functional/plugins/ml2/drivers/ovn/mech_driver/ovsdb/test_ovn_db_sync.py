@@ -52,7 +52,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
     _extension_drivers = ['port_security', 'dns', 'qos', 'revision_plugin']
 
     def setUp(self, *args):
-        super(TestOvnNbSync, self).setUp(maintenance_worker=True)
+        super().setUp(maintenance_worker=True)
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
         cfg.CONF.set_override('quota_security_group_rule', -1, group='QUOTAS')
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
@@ -109,7 +109,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         if resource in ['security-groups']:
             return self._sg_api
         else:
-            return super(TestOvnNbSync, self)._api_for_resource(resource)
+            return super()._api_for_resource(resource)
 
     def _create_resources(self, restart_ovsdb_processes=False):
         net_kwargs = {dns_apidef.DNSDOMAIN: 'ovn.test.'}
@@ -549,7 +549,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self.create_fip_fws.append(('pf-floatingip-{}-tcp'.format(r1_f3['id']),
                                     {'vip': '{}:8080'.format(
                                         r1_f3['floating_ip_address']),
-                                     'ips': ['{}:80'.format(p5_ip)],
+                                     'ips': [f'{p5_ip}:80'],
                                      'protocol': 'tcp',
                                      'may_exist': False},
                                     'neutron-' + r1['id'],))
@@ -809,8 +809,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
             for lrouter_name, routes_to_delete in routers.items():
                 txn.add(self.nb_api.delete_static_routes(lrouter_name,
-                                                        routes_to_delete,
-                                                        True))
+                                                         routes_to_delete,
+                                                         True))
 
             for lrouter_name, nat_dict in self.create_lrouter_nats:
                 txn.add(self.nb_api.add_nat_rule_in_lrouter(
@@ -999,10 +999,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         db_ports = self._list('ports')
         db_port_ids = [port['id'] for port in db_ports['ports'] if
                        not utils.is_lsp_ignored(port)]
-        db_port_ids_dhcp_valid = set(
+        db_port_ids_dhcp_valid = {
             port['id'] for port in db_ports['ports']
             if not utils.is_network_device_port(port) and
-            port['id'] not in self.lport_dhcp_ignored)
+            port['id'] not in self.lport_dhcp_ignored}
 
         _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_lport_ids = [
@@ -1813,7 +1813,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 class TestOvnSbSync(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestOvnSbSync, self).setUp(maintenance_worker=True)
+        super().setUp(maintenance_worker=True)
         self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
             self.plugin, self.mech_driver.sb_ovn, self.mech_driver)
         self.addCleanup(self.sb_synchronizer.stop)

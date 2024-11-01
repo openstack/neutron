@@ -38,7 +38,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class TestConntrackHelperPlugin(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestConntrackHelperPlugin, self).setUp()
+        super().setUp()
 
         with mock.patch.object(
                 resource_manager.ResourceCallbacksManager, '_singleton',

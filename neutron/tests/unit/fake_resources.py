@@ -26,7 +26,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 
 
-class FakeOvsdbNbOvnIdl(object):
+class FakeOvsdbNbOvnIdl:
 
     def __init__(self, **kwargs):
         self.lswitch_table = FakeOvsdbTable.create_one_ovsdb_table()
@@ -171,7 +171,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.schedule_new_gateway = mock.Mock()
 
 
-class FakeOvsdbSbOvnIdl(object):
+class FakeOvsdbSbOvnIdl:
 
     def __init__(self, **kwargs):
         self.chassis_exists = mock.Mock()
@@ -199,19 +199,19 @@ class FakeOvsdbSbOvnIdl(object):
         self.get_chassis_host_for_port = mock.Mock(return_value=set())
 
 
-class FakeOvsdbTransaction(object):
+class FakeOvsdbTransaction:
     def __init__(self, **kwargs):
         self.insert = mock.Mock()
 
 
-class FakePlugin(object):
+class FakePlugin:
 
     def __init__(self, **kwargs):
         self.get_ports = mock.Mock()
         self._get_port_security_group_bindings = mock.Mock()
 
 
-class FakeStandardAttribute(object):
+class FakeStandardAttribute:
 
     def __init__(self, _id=1, resource_type=mock.ANY, description=mock.ANY,
                  revision_number=1):
@@ -221,14 +221,14 @@ class FakeStandardAttribute(object):
         self.revision_number = revision_number
 
 
-class FakeQosNetworkPolicyBinding(object):
+class FakeQosNetworkPolicyBinding:
 
     def __init__(self, policy_id=mock.ANY, network_id=mock.ANY):
         self.policy_id = policy_id
         self.network_id = network_id
 
 
-class FakeQosFIPPolicyBinding(object):
+class FakeQosFIPPolicyBinding:
 
     def __init__(self, policy_id=mock.ANY, fip_id=mock.ANY):
         self.policy_id = policy_id
@@ -250,7 +250,7 @@ class FakeResource(dict):
             A dictionary with all methods
         """
         info = info or {}
-        super(FakeResource, self).__init__(info)
+        super().__init__(info)
         methods = methods or {}
 
         self.__name__ = type(self).__name__
@@ -285,8 +285,8 @@ class FakeResource(dict):
     def __repr__(self):
         reprkeys = sorted(k for k in self.__dict__.keys() if k[0] != '_' and
                           k != 'manager')
-        info = ", ".join("%s=%s" % (k, getattr(self, k)) for k in reprkeys)
-        return "<%s %s>" % (self.__class__.__name__, info)
+        info = ", ".join("{}={}".format(k, getattr(self, k)) for k in reprkeys)
+        return "<{} {}>".format(self.__class__.__name__, info)
 
     def keys(self):
         return self._info.keys()
@@ -295,11 +295,11 @@ class FakeResource(dict):
         return self._info
 
     def update(self, info):
-        super(FakeResource, self).update(info)
+        super().update(info)
         self._add_details(info)
 
 
-class FakeNetwork(object):
+class FakeNetwork:
     """Fake one or more networks."""
 
     @staticmethod
@@ -341,7 +341,7 @@ class FakeNetwork(object):
                             loaded=True)
 
 
-class FakeNetworkContext(object):
+class FakeNetworkContext:
     def __init__(self, network, segments):
         self.fake_network = network
         self.fake_segments = segments
@@ -364,7 +364,7 @@ class FakeNetworkContext(object):
         return self.fake_segments
 
 
-class FakeSubnetContext(object):
+class FakeSubnetContext:
     def __init__(self, subnet, original_subnet=None, network=None):
         self.fake_subnet = subnet
         self.fake_original_subnet = original_subnet
@@ -485,7 +485,7 @@ class FakeOvsdbTable(FakeResource):
         return result
 
 
-class FakePort(object):
+class FakePort:
     """Fake one or more ports."""
 
     @staticmethod
@@ -533,7 +533,7 @@ class FakePort(object):
                             loaded=True)
 
 
-class FakePortContext(object):
+class FakePortContext:
     def __init__(self, port, host, segments_to_bind):
         self.fake_port = port
         self.fake_host = host
@@ -553,7 +553,7 @@ class FakePortContext(object):
         return self.fake_segments_to_bind
 
 
-class FakeSecurityGroup(object):
+class FakeSecurityGroup:
     """Fake one or more security groups."""
 
     @staticmethod
@@ -584,7 +584,7 @@ class FakeSecurityGroup(object):
                             loaded=True)
 
 
-class FakeSecurityGroupRule(object):
+class FakeSecurityGroupRule:
     """Fake one or more security group rules."""
 
     @staticmethod
@@ -628,7 +628,7 @@ class FakeSecurityGroupRule(object):
                             loaded=True)
 
 
-class FakeSegment(object):
+class FakeSegment:
     """Fake one or more segments."""
 
     @staticmethod
@@ -658,7 +658,7 @@ class FakeSegment(object):
                             loaded=True)
 
 
-class FakeSubnet(object):
+class FakeSubnet:
     """Fake one or more subnets."""
 
     @staticmethod
@@ -698,7 +698,7 @@ class FakeSubnet(object):
                             loaded=True)
 
 
-class FakeFloatingIp(object):
+class FakeFloatingIp:
     """Fake one or more floating ips."""
 
     @staticmethod
@@ -744,7 +744,7 @@ class FakeFloatingIp(object):
                             loaded=True)
 
 
-class FakeRouter(object):
+class FakeRouter:
     """Fake one or more Neutron routers."""
 
     @staticmethod
@@ -781,7 +781,7 @@ class FakeRouter(object):
         return FakeResource(info=copy.deepcopy(router_attrs), loaded=True)
 
 
-class FakeOVNPort(object):
+class FakeOVNPort:
     """Fake one or more ports."""
 
     @staticmethod
@@ -842,7 +842,7 @@ FakeStaticRoute = collections.namedtuple(
     defaults=([],))
 
 
-class FakeOVNRouterPort(object):
+class FakeOVNRouterPort:
     """Fake one or more Logical Router Ports."""
 
     @staticmethod
@@ -878,7 +878,7 @@ class FakeOVNRouterPort(object):
         return type('Logical_Router_Port', (object, ), port_attrs)()
 
 
-class FakeOVNRouter(object):
+class FakeOVNRouter:
 
     @staticmethod
     def create_one_router(attrs=None):
@@ -940,7 +940,7 @@ class FakeOVNRouter(object):
              'static_routes': routes})
 
 
-class FakeChassis(object):
+class FakeChassis:
 
     @staticmethod
     def create(attrs=None, az_list=None, chassis_as_gw=False,
@@ -950,8 +950,8 @@ class FakeChassis(object):
                datapath_type=None):
         cms_opts = []
         if az_list:
-            cms_opts.append("%s=%s" % (ovn_const.CMS_OPT_AVAILABILITY_ZONES,
-                                       ':'.join(az_list)))
+            cms_opts.append("{}={}".format(
+                ovn_const.CMS_OPT_AVAILABILITY_ZONES, ':'.join(az_list)))
         if chassis_as_gw:
             cms_opts.append(ovn_const.CMS_OPT_CHASSIS_AS_GW)
 
@@ -959,28 +959,28 @@ class FakeChassis(object):
             cms_opts.append(ovn_const.CMS_OPT_CHASSIS_AS_EXTPORT_HOST)
 
         if rp_bandwidths:
-            cms_opts.append('%s=%s' % (n_const.RP_BANDWIDTHS,
-                                       ';'.join(rp_bandwidths)))
+            cms_opts.append('{}={}'.format(n_const.RP_BANDWIDTHS,
+                                           ';'.join(rp_bandwidths)))
         elif rp_bandwidths == '':  # Test wrongly defined parameter
             cms_opts.append('%s=' % n_const.RP_BANDWIDTHS)
 
         if rp_inventory_defaults:
-            inv_defaults = ';'.join('%s:%s' % (key, value) for key, value in
-                                    rp_inventory_defaults.items())
-            cms_opts.append('%s=%s' % (n_const.RP_INVENTORY_DEFAULTS,
-                                       inv_defaults))
+            inv_defaults = ';'.join('{}:{}'.format(
+                key, value) for key, value in rp_inventory_defaults.items())
+            cms_opts.append('{}={}'.format(n_const.RP_INVENTORY_DEFAULTS,
+                                           inv_defaults))
         elif rp_inventory_defaults == '':  # Test wrongly defined parameter
             cms_opts.append('%s=' % n_const.RP_INVENTORY_DEFAULTS)
 
         if rp_hypervisors:
-            cms_opts.append('%s=%s' % (n_const.RP_HYPERVISORS,
-                                       ';'.join(rp_hypervisors)))
+            cms_opts.append('{}={}'.format(n_const.RP_HYPERVISORS,
+                                           ';'.join(rp_hypervisors)))
         elif rp_hypervisors == '':  # Test wrongly defined parameter
             cms_opts.append('%s=' % n_const.RP_HYPERVISORS)
 
         if card_serial_number:
-            cms_opts.append('%s=%s' % (ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
-                                       card_serial_number))
+            cms_opts.append('{}={}'.format(
+                ovn_const.CMS_OPT_CARD_SERIAL_NUMBER, card_serial_number))
 
         # NOTE(ralonsoh): LP#1990229, once min OVN version >= 20.06, the CMS
         # options and the bridge mappings should be stored only in

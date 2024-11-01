@@ -28,6 +28,6 @@ class PortHintsDbObjectTestCase(
     _test_class = port_hints.PortHints
 
     def setUp(self):
-        super(PortHintsDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'port_id': lambda: self._create_test_port_id()})

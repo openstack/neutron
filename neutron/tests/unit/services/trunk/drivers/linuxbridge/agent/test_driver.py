@@ -30,7 +30,7 @@ from neutron.tests import base
 
 class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
     def setUp(self):
-        super(LinuxBridgeTrunkDriverTestCase, self).setUp()
+        super().setUp()
         self.plumber = mock.create_autospec(trunk_plumber.Plumber())
         self.stub = mock.create_autospec(driver.trunk_rpc.TrunkStub())
         self.tapi = mock.create_autospec(driver._TrunkAPI(self.stub))
@@ -150,7 +150,7 @@ class LinuxBridgeTrunkDriverTestCase(base.BaseTestCase):
 
 class TrunkAPITestCase(base.BaseTestCase):
     def setUp(self):
-        super(TrunkAPITestCase, self).setUp()
+        super().setUp()
         self.stub = mock.create_autospec(driver.trunk_rpc.TrunkStub())
         self.tapi = driver._TrunkAPI(self.stub)
         self.trunk = trunk.Trunk(id=uuidutils.generate_uuid(),

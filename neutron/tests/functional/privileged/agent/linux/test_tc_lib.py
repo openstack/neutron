@@ -28,7 +28,7 @@ from neutron.tests.functional import base as functional_base
 class TcQdiscTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(TcQdiscTestCase, self).setUp()
+        super().setUp()
         self.namespace = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(self.namespace)
         self.addCleanup(self._remove_ns, self.namespace)
@@ -179,7 +179,7 @@ class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
                '1:7': {'rate': 35001, 'ceil': 90000, 'burst': 1701}}
 
     def setUp(self):
-        super(TcPolicyClassTestCase, self).setUp()
+        super().setUp()
         self.namespace = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(self.namespace)
         self.addCleanup(self._remove_ns, self.namespace)
@@ -261,7 +261,7 @@ class TcFilterClassTestCase(functional_base.BaseSudoTestCase):
                '1:7': {'rate': 35001, 'ceil': 90000, 'burst': 1701}}
 
     def setUp(self):
-        super(TcFilterClassTestCase, self).setUp()
+        super().setUp()
         self.namespace = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(self.namespace)
         self.addCleanup(self._remove_ns, self.namespace)

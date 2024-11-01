@@ -37,7 +37,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
         env_desc = environment.EnvironmentDescription(
             mech_drivers='openvswitch', log=True)
         env = environment.Environment(env_desc, host_desc)
-        super(BaseLoggingTestCase, self).setUp(env)
+        super().setUp(env)
 
         self.tenant_id = uuidutils.generate_uuid()
         self.network = self.safe_client.create_network(
@@ -61,7 +61,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
             flows = vm.bridge.dump_flows_for_table(table)
             flows_list = flows.splitlines()
             pattern = re.compile(
-                r"^.* table=%s.* actions=%s" % (table, actions))
+                r"^.* table={}.* actions={}".format(table, actions))
             for flow in flows_list:
                 if pattern.match(flow.strip()):
                     return True
@@ -74,7 +74,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
 
         def _is_log_event(log_id, action, regex_str):
             regex_p = re.compile(
-                r"^.*action=%s.* log_resource_ids=\[[^\]]*%s" % (
+                r"^.*action={}.* log_resource_ids=\[[^\]]*{}".format(
                     action, log_id) + ".*" + regex_str if regex_str else "")
 
             with open(config.network_log.local_output_log_base) as f:

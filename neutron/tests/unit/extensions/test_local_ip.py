@@ -25,7 +25,7 @@ from neutron.extensions import local_ip as lip_ext
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class LocalIPTestExtensionManager(object):
+class LocalIPTestExtensionManager:
 
     def get_resources(self):
         return lip_ext.Local_ip.get_resources()
@@ -91,8 +91,8 @@ class TestLocalIP(LocalIPTestBase):
             'neutron.services.local_ip.local_ip_plugin.LocalIPPlugin',)
         mock.patch("neutron.api.rpc.handlers.resources_rpc."
                    "ResourcesPushRpcApi.push").start()
-        super(TestLocalIP, self).setUp(ext_mgr=ext_mgr,
-                                       service_plugins=svc_plugins)
+        super().setUp(ext_mgr=ext_mgr,
+                      service_plugins=svc_plugins)
 
     def test_create_local_ip_with_local_port_id(self):
         with self.port() as p:
@@ -332,7 +332,7 @@ class TestLocalIP(LocalIPTestBase):
                 self._create_local_ip_association(
                     lip['id'], fixed_port['id'])
                 self.fail("Local IP associated with Port "
-                        "with no IPs")
+                          "with no IPs")
             except webob.exc.HTTPClientError as e:
                 self.assertEqual(400, e.code)
 

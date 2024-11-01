@@ -32,7 +32,7 @@ HASH_RING_TEST_GROUP = 'test_group'
 class TestHashRingManager(testlib_api.SqlTestCaseLight):
 
     def setUp(self):
-        super(TestHashRingManager, self).setUp()
+        super().setUp()
         self.hash_ring_manager = hash_ring_manager.HashRingManager(
             HASH_RING_TEST_GROUP)
         self.admin_ctx = context.get_admin_context()

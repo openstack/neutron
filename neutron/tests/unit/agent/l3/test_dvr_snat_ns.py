@@ -27,7 +27,7 @@ _uuid = uuidutils.generate_uuid
 
 class TestDvrSnatNs(base.BaseTestCase):
     def setUp(self):
-        super(TestDvrSnatNs, self).setUp()
+        super().setUp()
         self.conf = mock.Mock()
         self.conf.state_path = cfg.CONF.state_path
         self.driver = mock.Mock()

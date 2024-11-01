@@ -40,14 +40,14 @@ class ExtraDhcpOptTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_port(self, context, port):
         with db_api.CONTEXT_WRITER.using(context):
             edos = port['port'].get(edo_ext.EXTRADHCPOPTS, [])
-            new_port = super(ExtraDhcpOptTestPlugin, self).create_port(
+            new_port = super().create_port(
                 context, port)
             self._process_port_create_extra_dhcp_opts(context, new_port, edos)
         return new_port
 
     def update_port(self, context, id, port):
         with db_api.CONTEXT_WRITER.using(context):
-            rtn_port = super(ExtraDhcpOptTestPlugin, self).update_port(
+            rtn_port = super().update_port(
                 context, id, port)
             self._update_extra_dhcp_opts_on_port(context, id, port, rtn_port)
         return rtn_port
@@ -56,7 +56,7 @@ class ExtraDhcpOptTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 class ExtraDhcpOptDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin=DB_PLUGIN_KLASS):
-        super(ExtraDhcpOptDBTestCase, self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
 
 
 class TestExtraDhcpOpt(ExtraDhcpOptDBTestCase):

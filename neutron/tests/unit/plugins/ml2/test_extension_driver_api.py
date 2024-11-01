@@ -29,7 +29,7 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(ExtensionDriverTestCase, self).setUp()
+        super().setUp()
         self._plugin = directory.get_plugin()
         self._ctxt = context.get_admin_context()
 
@@ -179,7 +179,7 @@ class DBExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(DBExtensionDriverTestCase, self).setUp()
+        super().setUp()
         self._plugin = directory.get_plugin()
         self._ctxt = context.get_admin_context()
 

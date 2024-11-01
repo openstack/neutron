@@ -15,8 +15,11 @@
 
 from unittest import mock
 
-from neutron_lib import constants as n_const
+from neutron_lib.api.definitions import l3
+from neutron_lib import constants as const
 from neutron_lib import context as ncontext
+from neutron_lib.services.logapi import constants as log_const
+from neutron_lib.services.trunk import constants as trunk_const
 from oslo_config import cfg
 
 from neutron.common.ovn import constants
@@ -28,10 +31,6 @@ from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.services.logapi.drivers.ovn \
     import test_driver as test_log_driver
-from neutron_lib.api.definitions import l3
-from neutron_lib import constants as const
-from neutron_lib.services.logapi import constants as log_const
-from neutron_lib.services.trunk import constants as trunk_const
 
 from tenacity import wait_none
 
@@ -88,7 +87,7 @@ class TestOVNClientBase(base.BaseTestCase):
     def setUp(self):
         ml2_conf.register_ml2_plugin_opts()
         ovn_conf.register_opts()
-        super(TestOVNClientBase, self).setUp()
+        super().setUp()
         self.nb_idl = mock.MagicMock()
         self.sb_idl = mock.MagicMock()
         self.ovn_client = ovn_client.OVNClient(self.nb_idl, self.sb_idl)
@@ -97,7 +96,7 @@ class TestOVNClientBase(base.BaseTestCase):
 class TestOVNClient(TestOVNClientBase):
 
     def setUp(self):
-        super(TestOVNClient, self).setUp()
+        super().setUp()
         self.get_plugin = mock.patch(
             'neutron_lib.plugins.directory.get_plugin').start()
 
@@ -133,7 +132,7 @@ class TestOVNClient(TestOVNClientBase):
             self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
         self.nb_idl.add_static_route.assert_called_once_with(
             'neutron-' + router['id'],
-            ip_prefix=n_const.IPv4_ANY,
+            ip_prefix=const.IPv4_ANY,
             nexthop='10.42.0.1',
             maintain_bfd=False,
             external_ids={
@@ -184,7 +183,7 @@ class TestOVNClient(TestOVNClientBase):
             self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
         self.nb_idl.add_static_route.assert_has_calls([
             mock.call('neutron-' + router['id'],
-                      ip_prefix=n_const.IPv4_ANY,
+                      ip_prefix=const.IPv4_ANY,
                       nexthop=subnet1['gateway_ip'],
                       maintain_bfd=False,
                       external_ids={
@@ -193,7 +192,7 @@ class TestOVNClient(TestOVNClientBase):
                          constants.OVN_LRSR_EXT_ID_KEY: 'true'},
                       ),
             mock.call('neutron-' + router['id'],
-                      ip_prefix=n_const.IPv4_ANY,
+                      ip_prefix=const.IPv4_ANY,
                       nexthop=subnet2['gateway_ip'],
                       maintain_bfd=False,
                       external_ids={
@@ -375,7 +374,7 @@ class TestOVNClient(TestOVNClientBase):
                 return_value=per_subnet_cidrs):
             cidrs = self.ovn_client._get_snat_cidrs_for_external_router(
                 ctx, 'fake-id')
-        self.assertEqual([n_const.IPv4_ANY], cidrs)
+        self.assertEqual([const.IPv4_ANY], cidrs)
 
 
 class TestOVNClientFairMeter(TestOVNClientBase,

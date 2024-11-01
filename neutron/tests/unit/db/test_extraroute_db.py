@@ -32,7 +32,7 @@ class _Plugin(extraroute_db.ExtraRoute_dbonly_mixin):
 
 class TestExtraRouteDb(testlib_api.SqlTestCase):
     def setUp(self):
-        super(TestExtraRouteDb, self).setUp()
+        super().setUp()
         self._plugin = _Plugin()
         directory.add_plugin(constants.CORE, self._plugin)
 
@@ -79,8 +79,8 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
     def assertEqualRoutes(self, a, b):
         """Compare a list of routes without caring for the list order."""
         return self.assertSetEqual(
-            set(frozenset(r.items()) for r in a),
-            set(frozenset(r.items()) for r in b))
+            {frozenset(r.items()) for r in a},
+            {frozenset(r.items()) for r in b})
 
     def test_add_extra_routes(self):
         self.assertEqual(
@@ -196,7 +196,8 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
 
             return _wrapper
 
-        with mock.patch.object(self._plugin, '_get_extra_routes_by_router_id',
+        with mock.patch.object(
+                self._plugin, '_get_extra_routes_by_router_id',
                 wraps=_remove_last_route(
                     self._plugin._get_extra_routes_by_router_id)) \
                 as mock_get_routes:

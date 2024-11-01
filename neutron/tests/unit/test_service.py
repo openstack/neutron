@@ -52,7 +52,7 @@ class TestRpcWorker(base.BaseTestCase):
 
 class TestRunRpcWorkers(base.BaseTestCase):
     def setUp(self):
-        super(TestRunRpcWorkers, self).setUp()
+        super().setUp()
         self.worker_count = service._get_worker_count()
 
     def _test_rpc_workers(self, config_value, expected_passed_value):
@@ -86,7 +86,7 @@ class TestRunRpcWorkers(base.BaseTestCase):
 
 class TestRunWsgiApp(base.BaseTestCase):
     def setUp(self):
-        super(TestRunWsgiApp, self).setUp()
+        super().setUp()
         self.worker_count = service._get_worker_count()
 
     def _test_api_workers(self, config_value, expected_passed_value):

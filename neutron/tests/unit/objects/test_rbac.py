@@ -27,13 +27,13 @@ from neutron.tests import base as neutron_test_base
 from neutron.tests.unit.objects import test_base
 
 
-class TestRBACObjectMixin(object):
+class TestRBACObjectMixin:
 
     _test_class = None
     _parent_class = None
 
     def get_random_object_fields(self, obj_cls=None):
-        fields = (super(TestRBACObjectMixin, self).
+        fields = (super().
                   get_random_object_fields(obj_cls))
         rnd_actions = self._test_class.db_model.get_valid_actions()
         idx = random.randint(0, len(rnd_actions) - 1)
@@ -85,9 +85,7 @@ class RBACBaseObjectTestCase(neutron_test_base.BaseTestCase):
 class RBACBaseObjectIfaceTestCase(test_base.BaseObjectIfaceTestCase):
 
     def test_get_object(self, context=None):
-        super(RBACBaseObjectIfaceTestCase,
-              self).test_get_object(context=mock.ANY)
+        super().test_get_object(context=mock.ANY)
 
     def test_get_objects(self, context=None):
-        super(RBACBaseObjectIfaceTestCase,
-              self).test_get_objects(context=mock.ANY)
+        super().test_get_objects(context=mock.ANY)

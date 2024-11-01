@@ -38,7 +38,7 @@ class WaitForLogicalSwitchPortUpdateEvent(event.WaitEvent):
 class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestOVNTrunkDriver, self).setUp()
+        super().setUp()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
         self.trunk_plugin.add_segmentation_type(
             trunk_consts.SEGMENTATION_TYPE_VLAN,

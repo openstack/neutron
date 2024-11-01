@@ -25,7 +25,7 @@ class TestOVSCLIConfig(base.BaseOVSLinuxTestCase):
 
     def setup_config(self, args=None):
         self.conf = ovs_cleanup.setup_conf()
-        super(TestOVSCLIConfig, self).setup_config(args=args)
+        super().setup_config(args=args)
 
     def test_ovs_opts_registration(self):
         self.assertFalse(self.conf.ovs_all_ports)

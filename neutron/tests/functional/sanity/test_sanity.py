@@ -28,7 +28,7 @@ class SanityTestCase(base.BaseLoggingTestCase):
     where someone modifies the API without updating the check script.
     """
     def setUp(self):
-        super(SanityTestCase, self).setUp()
+        super().setUp()
         # needed for test_dnsmasq_version()
         cfg.CONF.register_opts(dhcp_conf.DNSMASQ_OPTS)
 

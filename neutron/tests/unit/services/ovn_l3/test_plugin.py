@@ -70,7 +70,7 @@ class BaseTestOVNL3RouterPluginMixin():
                    'impl_idl_ovn.Backend.schema_helper').start()
         driver_type_conf.register_ml2_drivers_geneve_opts(cfg=cfg.CONF)
         cfg.CONF.set_override('max_header_size', 38, group='ml2_type_geneve')
-        super(BaseTestOVNL3RouterPluginMixin, self).setUp()
+        super().setUp()
         revision_plugin.RevisionPlugin()
         # MTU needs to be 1442 instead of 1500 because GENEVE headers size
         # must be at least 38 when using OVN
@@ -238,8 +238,8 @@ class BaseTestOVNL3RouterPluginMixin():
             'listener_%s' % self.listener_id: '80:pool_%s' % self.pool_id}
         self.lb_vip_lsp = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'external_ids': {ovn_const.OVN_PORT_NAME_EXT_ID_KEY:
-                                    '%s%s' % (ovn_const.LB_VIP_PORT_PREFIX,
-                                              self.ovn_lb.uuid)},
+                                    '{}{}'.format(ovn_const.LB_VIP_PORT_PREFIX,
+                                                  self.ovn_lb.uuid)},
                    'name': uuidutils.generate_uuid(),
                    'addresses': ['10.0.0.100 ff:ff:ff:ff:ff:ee'],
                    'uuid': uuidutils.generate_uuid()})
@@ -2050,7 +2050,7 @@ class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
     def test_add_router_interface_need_to_frag(self, ari, grps, gns, gn):
         router_id = 'router-id'
         interface_info = {'port_id': 'router-port-id',
-                'network_id': 'priv-net'}
+                          'network_id': 'priv-net'}
         ari.return_value = self.fake_router_interface_info
         grps.return_value = [interface_info]
         self.get_router.return_value = self.fake_router_with_ext_gw
@@ -2189,24 +2189,24 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
     # test cases.
     def test_floatingip_update(
             self, expected_status=constants.FLOATINGIP_STATUS_DOWN):
-        super(OVNL3ExtrarouteTests, self).test_floatingip_update(
+        super().test_floatingip_update(
             expected_status)
 
     def test_floatingip_update_to_same_port_id_twice(
             self, expected_status=constants.FLOATINGIP_STATUS_DOWN):
-        super(OVNL3ExtrarouteTests, self).\
+        super().\
             test_floatingip_update_to_same_port_id_twice(expected_status)
 
     def test_floatingip_update_subnet_gateway_disabled(
             self, expected_status=constants.FLOATINGIP_STATUS_DOWN):
-        super(OVNL3ExtrarouteTests, self).\
+        super().\
             test_floatingip_update_subnet_gateway_disabled(expected_status)
 
     # Test function _subnet_update of L3 OVN plugin.
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')
     def test_update_subnet_gateway_for_external_net(self, gr):
         gr.return_value = {'flavor_id': None}
-        super(OVNL3ExtrarouteTests, self). \
+        super(). \
             test_update_subnet_gateway_for_external_net()
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-fake_device', ip_prefix=constants.IPv4_ANY,
@@ -2216,7 +2216,7 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             'neutron-fake_device', [(constants.IPv4_ANY, '120.0.0.1')])
 
     def test_router_update_gateway_upon_subnet_create_max_ips_ipv6(self):
-        super(OVNL3ExtrarouteTests, self). \
+        super(). \
             test_router_update_gateway_upon_subnet_create_max_ips_ipv6()
         expected_ext_ids = {
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
@@ -2227,7 +2227,7 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
                       nexthop='10.0.0.1', maintain_bfd=False,
                       external_ids=expected_ext_ids),
             mock.call(mock.ANY, ip_prefix='::/0', nexthop='2001:db8::',
-                maintain_bfd=False, external_ids=expected_ext_ids)]
+                      maintain_bfd=False, external_ids=expected_ext_ids)]
         self.l3_inst._nb_ovn.add_static_route.assert_has_calls(
             add_static_route_calls, any_order=True)
 

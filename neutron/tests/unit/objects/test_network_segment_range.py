@@ -51,7 +51,7 @@ class NetworkSegmentRangeIfaceObjectTestCase(
             return_value={})
         self.mock_get_used_allocation_mapping = (
             self._mock_get_used_allocation_mapping.start())
-        super(NetworkSegmentRangeIfaceObjectTestCase, self).setUp()
+        super().setUp()
         # `project_id` and `physical_network` attributes in
         # network_segment_range are nullable, depending on the value of
         # `shared` and `network_type` respectively.
@@ -251,7 +251,7 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         allocated = []
         for allocation in random.sample(
                 allocations, k=(num_of_allocations or NUM_ALLOCATIONS)):
-            segment = dict((k, allocation[k]) for k in primary_keys)
+            segment = {k: allocation[k] for k in primary_keys}
             allocated.append(segment)
             self.assertEqual(1, subclass.allocate(self.context, **segment))
         return allocated

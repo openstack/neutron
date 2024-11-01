@@ -28,7 +28,7 @@ class RouterL3AgentBindingDbObjTestCase(test_base.BaseDbObjectTestCase,
     _test_class = l3agent.RouterL3AgentBinding
 
     def setUp(self):
-        super(RouterL3AgentBindingDbObjTestCase, self).setUp()
+        super().setUp()
         router_id = self._create_test_router_id()
 
         index = iter(range(1, len(self.objs) + 2))

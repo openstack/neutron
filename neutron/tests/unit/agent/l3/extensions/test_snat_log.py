@@ -27,7 +27,7 @@ from neutron.tests.unit.services.logapi.agent.l3 import test_base
 class SnatLogExtensionInitializeTestCase(test_base.L3LoggingExtBaseTestCase):
 
     def setUp(self):
-        super(SnatLogExtensionInitializeTestCase, self).setUp()
+        super().setUp()
         self.snat_log_ext = snat_log.SNATLoggingExtension()
         self.snat_log_ext.consume_api(self.agent_api)
 

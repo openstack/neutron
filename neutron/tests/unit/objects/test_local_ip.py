@@ -32,7 +32,7 @@ class LocalIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = local_ip.LocalIP
 
     def setUp(self):
-        super(LocalIPDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'local_port_id': lambda: self._create_test_port_id(),
              'network_id': lambda: self._create_test_network_id()})
@@ -44,7 +44,7 @@ class LocalIPAssociationIfaceObjectTestCase(
     _test_class = local_ip.LocalIPAssociation
 
     def setUp(self):
-        super(LocalIPAssociationIfaceObjectTestCase, self).setUp()
+        super().setUp()
         mock.patch.object(obj_base.NeutronDbObject,
                           'load_synthetic_db_fields').start()
 
@@ -55,7 +55,7 @@ class LocalIPAssociationDbObjectTestCase(
     _test_class = local_ip.LocalIPAssociation
 
     def setUp(self):
-        super(LocalIPAssociationDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {
                 'local_ip_id':

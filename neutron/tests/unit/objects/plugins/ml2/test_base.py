@@ -14,7 +14,7 @@
 # under the License.
 
 
-class SegmentAllocationDbObjTestCase(object):
+class SegmentAllocationDbObjTestCase:
 
     def test_get_random_unallocated_segment(self):
         self.assertIsNone(

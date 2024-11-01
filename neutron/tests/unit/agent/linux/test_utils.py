@@ -34,7 +34,7 @@ _marker = object()
 
 class AgentUtilsExecuteTest(base.BaseTestCase):
     def setUp(self):
-        super(AgentUtilsExecuteTest, self).setUp()
+        super().setUp()
         self.test_file = self.get_temp_file_path('test_execute.tmp')
         open(self.test_file, 'w').close()
         self.process = mock.patch('eventlet.green.subprocess.Popen').start()
@@ -177,7 +177,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
 
 class AgentUtilsExecuteEncodeTest(base.BaseTestCase):
     def setUp(self):
-        super(AgentUtilsExecuteEncodeTest, self).setUp()
+        super().setUp()
         self.test_file = self.get_temp_file_path('test_execute.tmp')
         open(self.test_file, 'w').close()
 
@@ -263,7 +263,7 @@ class TestKillProcess(base.BaseTestCase):
 class TestGetCmdlineFromPid(base.BaseTestCase):
 
     def setUp(self):
-        super(TestGetCmdlineFromPid, self).setUp()
+        super().setUp()
         self.pid = 34
         self.process_is_running_mock = mock.patch.object(
             utils, "process_is_running").start()
@@ -395,12 +395,12 @@ class TestPathUtilities(base.BaseTestCase):
             ['/bar/../foo', 'input_param'], 'proc_name'))
 
 
-class FakeUser(object):
+class FakeUser:
     def __init__(self, name):
         self.pw_name = name
 
 
-class FakeGroup(object):
+class FakeGroup:
     def __init__(self, name):
         self.gr_name = name
 
@@ -488,7 +488,7 @@ class TestUnixDomainHttpConnection(base.BaseTestCase):
 
 class TestUnixDomainHttpProtocol(base.BaseTestCase):
     def setUp(self):
-        super(TestUnixDomainHttpProtocol, self).setUp()
+        super().setUp()
         self.ewhi = mock.patch('eventlet.wsgi.HttpProtocol.__init__').start()
 
     def test_init_empty_client(self):
@@ -522,7 +522,7 @@ class TestUnixDomainHttpProtocol(base.BaseTestCase):
 
 class TestUnixDomainWSGIServer(base.BaseTestCase):
     def setUp(self):
-        super(TestUnixDomainWSGIServer, self).setUp()
+        super().setUp()
         self.eventlet_p = mock.patch.object(utils, 'eventlet')
         self.eventlet = self.eventlet_p.start()
 

@@ -32,7 +32,7 @@ from neutron.objects.qos import policy
 from neutron.tests.unit.extensions import test_l3
 
 
-class GatewayIPQoSTestExtensionManager(object):
+class GatewayIPQoSTestExtensionManager:
 
     def get_resources(self):
         l3_apidef.RESOURCE_ATTRIBUTE_MAP['routers'].update(
@@ -63,7 +63,7 @@ class TestGatewayIPQoSL3NatServicePlugin(
                                    qos_gateway_ip.ALIAS]
 
 
-class GatewayIPQoSDBTestCaseBase(object):
+class GatewayIPQoSDBTestCaseBase:
 
     def test_create_router_gateway_with_qos_policy(self):
         ctx = context.get_admin_context()

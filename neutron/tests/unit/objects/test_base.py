@@ -189,7 +189,7 @@ class NeutronObjectRegistryFixture(fixtures.Fixture):
     """
 
     def setUp(self):
-        super(NeutronObjectRegistryFixture, self).setUp()
+        super().setUp()
         self._base_test_obj_backup = copy.deepcopy(
             base.NeutronObjectRegistry._registry._obj_classes)
         self.addCleanup(self._restore_obj_registry)
@@ -591,12 +591,12 @@ def get_non_synthetic_fields(objclass, obj_fields):
             if not objclass.is_synthetic(field)}
 
 
-class _BaseObjectTestCase(object):
+class _BaseObjectTestCase:
 
     _test_class = FakeNeutronDbObject
 
     def setUp(self):
-        super(_BaseObjectTestCase, self).setUp()
+        super().setUp()
         # make sure all objects are loaded and registered in the registry
         objects.register_objects()
         self.context = context.get_admin_context()
@@ -744,7 +744,7 @@ class _BaseObjectTestCase(object):
 class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
 
     def setUp(self):
-        super(BaseObjectIfaceTestCase, self).setUp()
+        super().setUp()
         self.model_map = collections.defaultdict(list)
         self.model_map[self._test_class.db_model] = self.db_objs
         self.pager_map = collections.defaultdict(lambda: None)
@@ -1109,8 +1109,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                           self._test_class)
         expected = 10
         with mock.patch.object(obj_db_api, 'count', return_value=expected):
-            self.assertEqual(expected, self._test_class.count(self.context,
-                validate_filters=False, fake_field='xxx'))
+            self.assertEqual(
+                expected,
+                self._test_class.count(
+                    self.context, validate_filters=False, fake_field='xxx'))
 
     # Adding delete_objects mock because some objects are using delete_objects
     # while calling create(), Port for example
@@ -1119,7 +1121,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         with mock.patch.object(obj_db_api, 'create_object',
                                return_value=self.db_objs[0]) as create_mock:
             with mock.patch.object(obj_db_api, 'get_objects',
-                  side_effect=self.fake_get_objects):
+                                   side_effect=self.fake_get_objects):
                 obj = self._test_class(self.context, **self.obj_fields[0])
                 self._check_equal(self.objs[0], obj)
                 obj.create()
@@ -1136,7 +1138,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         with mock.patch.object(obj_db_api, 'create_object',
                                return_value=self.db_objs[0]):
             with mock.patch.object(obj_db_api, 'get_objects',
-                  side_effect=self.fake_get_objects):
+                                   side_effect=self.fake_get_objects):
                 self.objs[1].create()
                 self._check_equal(self.objs[0], self.objs[1])
 
@@ -1266,7 +1268,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         with mock.patch.object(obj_db_api, 'update_object',
                                return_value=self.db_objs[0]):
             with mock.patch.object(obj_db_api, 'get_objects',
-                  side_effect=self.fake_get_objects):
+                                   side_effect=self.fake_get_objects):
                 obj = self._test_class(self.context, **self.obj_fields[1])
                 fields_to_update = self.get_updatable_fields(
                     self.obj_fields[1])
@@ -1431,7 +1433,7 @@ class BaseObjectIfaceWithProjectIdTestCase(BaseObjectIfaceTestCase):
         new_obj_fields['field2'] = uuidutils.generate_uuid()
 
         obj.update_fields(new_obj_fields)
-        self.assertEqual(set(['field2']), obj.obj_what_changed())
+        self.assertEqual({'field2'}, obj.obj_what_changed())
         self.assertEqual(project_id, obj.project_id)
 
     def test_project_id_filter_added_when_project_id_present(self):
@@ -1531,7 +1533,7 @@ class BaseObjectIfaceListDictMiscValuesTestCase(_BaseObjectTestCase,
 class BaseDbObjectTestCase(_BaseObjectTestCase,
                            test_db_base_plugin_v2.DbOperationBoundMixin):
     def setUp(self):
-        super(BaseDbObjectTestCase, self).setUp()
+        super().setUp()
         synthetic_fields = self._get_object_synthetic_fields(self._test_class)
         for synth_field in synthetic_fields:
             objclass = self._get_ovo_object_class(self._test_class,
@@ -1570,7 +1572,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         test_network_id = self._create_test_network_id(
             qos_policy_id=qos_policy_id)
         ext_net = net_obj.ExternalNetwork(self.context,
-            network_id=test_network_id)
+                                          network_id=test_network_id)
         ext_net.create()
         return ext_net.network_id
 
@@ -2034,8 +2036,9 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         for fields in self.obj_fields:
             self._make_object(fields).create()
         self.assertEqual(
-            len(self.obj_fields), self._test_class.count(self.context,
-                validate_filters=False, fake_filter='xxx'))
+            len(self.obj_fields),
+            self._test_class.count(
+                self.context, validate_filters=False, fake_filter='xxx'))
 
     def test_count_invalid_filters(self):
         for fields in self.obj_fields:
@@ -2189,7 +2192,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
 
 class UniqueObjectBase(test_base.BaseTestCase):
     def setUp(self):
-        super(UniqueObjectBase, self).setUp()
+        super().setUp()
         obj_registry = self.useFixture(
             NeutronObjectRegistryFixture())
         self.db_model = FakeModel
@@ -2203,7 +2206,7 @@ class UniqueObjectBase(test_base.BaseTestCase):
 
 class GetObjectClassByModelTestCase(UniqueObjectBase):
     def setUp(self):
-        super(GetObjectClassByModelTestCase, self).setUp()
+        super().setUp()
         self.not_registered_object = FakeSmallNeutronObject
 
     def test_object_found_by_model(self):

@@ -256,7 +256,7 @@ class TcFiltersTestCase(functional_base.BaseSudoTestCase):
             self.vxlan_id, namespace=self.ns[0])
 
         tc_classes = tc_lib.list_tc_policy_class(self.device[0],
-                                              namespace=self.ns[0])
+                                                 namespace=self.ns[0])
         for tc_class in (c for c in tc_classes if
                          c['classid'] == chosen_class_id):
             bytes = tc_class['stats']['bytes']

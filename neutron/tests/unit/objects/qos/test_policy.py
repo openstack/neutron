@@ -38,10 +38,10 @@ RULE_OBJ_CLS = {
 }
 
 
-class _QosPolicyRBACBase(object):
+class _QosPolicyRBACBase:
 
     def get_random_object_fields(self, obj_cls=None):
-        fields = (super(_QosPolicyRBACBase, self).
+        fields = (super().
                   get_random_object_fields(obj_cls))
         rnd_actions = self._test_class.db_model.get_valid_actions()
         idx = random.randint(0, len(rnd_actions) - 1)
@@ -56,7 +56,7 @@ class QosPolicyRBACDbObjectTestCase(_QosPolicyRBACBase,
     _test_class = policy.QosPolicyRBAC
 
     def setUp(self):
-        super(QosPolicyRBACDbObjectTestCase, self).setUp()
+        super().setUp()
         for obj in self.db_objs:
             policy_obj = policy.QosPolicy(self.context,
                                           id=obj['object_id'],
@@ -85,7 +85,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
     _test_class = policy.QosPolicy
 
     def setUp(self):
-        super(QosPolicyObjectTestCase, self).setUp()
+        super().setUp()
         mock.patch.object(policy.QosPolicy, 'get_default').start()
 
         # qos_policy_ids will be incorrect, but we don't care in this test
@@ -127,7 +127,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             [test_base.get_obj_persistent_fields(obj) for obj in objs])
 
     def test_get_objects_valid_fields(self):
-        with mock.patch.object(db_api, 'get_objects',
+        with mock.patch.object(
+                db_api, 'get_objects',
                 return_value=[self.db_objs[0]]) as get_objects_mock:
             objs = self._test_class.get_objects(
                 self.context,
@@ -138,7 +139,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
         self._check_equal(self.objs[0], objs[0])
 
     def test_get_object(self):
-        with mock.patch.object(db_api, 'get_object',
+        with mock.patch.object(
+                db_api, 'get_object',
                 return_value=self.db_objs[0]) as get_object_mock:
             obj = self._test_class.get_object(self.context, id='fake_id')
             self.assertTrue(self._is_test_class(obj))
@@ -150,7 +152,7 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
         # is_shared_with_project requires DB
         with mock.patch.object(self._test_class, 'is_shared_with_project',
                                return_value=False):
-            (super(QosPolicyObjectTestCase, self).
+            (super().
              test_to_dict_makes_primitive_field_value())
 
     def test_get_policy_obj_not_found(self):
@@ -166,7 +168,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = policy.QosPolicy
 
     def setUp(self):
-        super(QosPolicyDbObjectTestCase, self).setUp()
+        super().setUp()
         self._network_id = self._create_test_network_id()
         self._port = self._create_test_port(network_id=self._network_id)
 
@@ -288,13 +290,13 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         port1_id = self._port['id']
         port2 = db_api.create_object(port_obj.Port, self.context,
                                      {'tenant_id': 'fake_tenant_id',
-                                     'name': 'test-port2',
-                                     'network_id': self._network_id,
-                                     'mac_address': 'fake_mac2',
-                                     'admin_state_up': True,
-                                     'status': 'ACTIVE',
-                                     'device_id': 'fake_device',
-                                     'device_owner': 'fake_owner'})
+                                      'name': 'test-port2',
+                                      'network_id': self._network_id,
+                                      'mac_address': 'fake_mac2',
+                                      'admin_state_up': True,
+                                      'status': 'ACTIVE',
+                                      'device_id': 'fake_device',
+                                      'device_owner': 'fake_owner'})
         port2_id = port2['id']
 
         obj = self._create_test_policy()

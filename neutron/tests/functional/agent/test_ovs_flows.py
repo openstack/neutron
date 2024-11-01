@@ -48,7 +48,7 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
                        l2_base.OVSOFControllerHelper):
 
     def setUp(self):
-        super(OVSAgentTestBase, self).setUp()
+        super().setUp()
         self.br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.start_of_controller(cfg.CONF)
         self.br_int = self.br_int_cls(self.br.br_name)
@@ -70,7 +70,7 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
                 trace[l] = r
         for k in required_keys:
             if k not in trace:
-                self.fail("%s not found in trace %s" % (k, trace_lines))
+                self.fail("{} not found in trace {}".format(k, trace_lines))
 
         return trace
 
@@ -80,7 +80,7 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         # NOTE(kevinbenton): it would be way cooler to use scapy for
         # these but scapy requires the python process to be running as
         # root to bind to the ports.
-        super(ARPSpoofTestCase, self).setUp()
+        super().setUp()
         self.skip_without_arp_support()
         self.src_addr = '192.168.0.1'
         self.dst_addr = '192.168.0.2'
@@ -97,10 +97,10 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         self.addOnException(self.collect_flows_and_ports)
 
     def collect_flows_and_ports(self, exc_info):
-        nicevif = lambda x: ['%s=%s' % (k, getattr(x, k))
+        nicevif = lambda x: ['{}={}'.format(k, getattr(x, k))
                              for k in ['ofport', 'port_name', 'switch',
                                        'vif_id', 'vif_mac']]
-        nicedev = lambda x: ['%s=%s' % (k, getattr(x, k))
+        nicedev = lambda x: ['{}={}'.format(k, getattr(x, k))
                              for k in ['name', 'namespace']] + x.addr.list()
         details = {'flows': self.br.dump_all_flows(),
                    'vifs': map(nicevif, self.br.get_vif_ports()),
@@ -321,7 +321,7 @@ class OVSFlowTestCase(OVSAgentTestBase):
         cfg.CONF.set_override('enable_distributed_routing',
                               dvr_enabled,
                               group='AGENT')
-        super(OVSFlowTestCase, self).setUp()
+        super().setUp()
         self.phys_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.br_phys = self.br_phys_cls(self.phys_br.br_name)
         self.br_phys.set_secure_mode()

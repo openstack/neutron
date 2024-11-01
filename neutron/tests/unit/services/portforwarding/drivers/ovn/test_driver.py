@@ -37,7 +37,7 @@ from neutron.tests.unit import fake_resources
 
 class TestOVNPortForwardingBase(base.BaseTestCase):
     def setUp(self):
-        super(TestOVNPortForwardingBase, self).setUp()
+        super().setUp()
         self.context = mock.Mock()
         self.l3_plugin = mock.Mock()
         self.l3_plugin._nb_ovn = fake_resources.FakeOvsdbNbOvnIdl()
@@ -82,7 +82,7 @@ class TestOVNPortForwardingBase(base.BaseTestCase):
 
 class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
     def setUp(self):
-        super(TestOVNPortForwardingHandler, self).setUp()
+        super().setUp()
         self.handler = port_forwarding.OVNPortForwardingHandler()
 
     def test_get_lb_protocol(self):
@@ -495,7 +495,7 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
 
 class TestOVNPortForwarding(TestOVNPortForwardingBase):
     def setUp(self):
-        super(TestOVNPortForwarding, self).setUp()
+        super().setUp()
         ovn_conf.register_opts()
         self.pf_plugin = mock.Mock()
         self.handler = mock.Mock()

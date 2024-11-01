@@ -100,9 +100,9 @@ class Foxinsocks(api_extensions.ExtensionDescriptor):
         return request_exts
 
     def _add_tweedle_handler(self, input_dict, req, id):
-        return "Tweedle {0} Added.".format(
+        return "Tweedle {} Added.".format(
             input_dict['FOXNSOX:add_tweedle']['name'])
 
     def _delete_tweedle_handler(self, input_dict, req, id):
-        return "Tweedle {0} Deleted.".format(
+        return "Tweedle {} Deleted.".format(
             input_dict['FOXNSOX:delete_tweedle']['name'])

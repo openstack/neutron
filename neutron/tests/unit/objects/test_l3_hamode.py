@@ -29,8 +29,7 @@ class L3HARouterAgentPortBindingDbObjectTestCase(base.BaseDbObjectTestCase,
     _test_class = l3_hamode.L3HARouterAgentPortBinding
 
     def setUp(self):
-        super(L3HARouterAgentPortBindingDbObjectTestCase,
-              self).setUp()
+        super().setUp()
         _network_id = self._create_test_network_id()
 
         def get_port():
@@ -52,7 +51,7 @@ class L3HARouterNetworkDbObjectTestCase(base.BaseDbObjectTestCase,
     _test_class = l3_hamode.L3HARouterNetwork
 
     def setUp(self):
-        super(L3HARouterNetworkDbObjectTestCase, self).setUp()
+        super().setUp()
         network = self._create_test_network()
         self.update_obj_fields({'network_id': network.id})
 
@@ -69,6 +68,6 @@ class L3HARouterVRIdAllocationDbObjectTestCase(base.BaseDbObjectTestCase,
     _test_class = l3_hamode.L3HARouterVRIdAllocation
 
     def setUp(self):
-        super(L3HARouterVRIdAllocationDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'network_id': lambda: self._create_test_network().id})

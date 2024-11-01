@@ -33,11 +33,11 @@ def _kill_process_if_exists(command: str) -> None:
 
 class DaemonProcessFixture(fixtures.Fixture):
     def __init__(self, temp_dir):
-        super(DaemonProcessFixture, self).__init__()
+        super().__init__()
         self.temp_dir = temp_dir
 
     def _get_pid_from_pidfile(self, pidfile):
-        with open(os.path.join(self.temp_dir, pidfile), 'r') as pidfile_f:
+        with open(os.path.join(self.temp_dir, pidfile)) as pidfile_f:
             pid = pidfile_f.read().strip()
             try:
                 return int(pid)
@@ -52,7 +52,7 @@ class OvnNorthd(DaemonProcessFixture):
 
     def __init__(self, temp_dir, ovn_nb_db, ovn_sb_db, protocol='unix',
                  debug=True):
-        super(OvnNorthd, self).__init__(temp_dir)
+        super().__init__(temp_dir)
         self.ovn_nb_db = ovn_nb_db
         self.ovn_sb_db = ovn_sb_db
         self.protocol = protocol
@@ -101,7 +101,7 @@ class OvsdbServer(DaemonProcessFixture):
 
     def __init__(self, temp_dir, ovs_dir, ovn_nb_db=True, ovn_sb_db=False,
                  protocol='unix', debug=True):
-        super(OvsdbServer, self).__init__(temp_dir)
+        super().__init__(temp_dir)
         self.ovs_dir = ovs_dir
         self.ovn_nb_db = ovn_nb_db
         self.ovn_sb_db = ovn_sb_db
@@ -201,9 +201,9 @@ class OvsdbServer(DaemonProcessFixture):
             conn_cmd = [shutil.which(ovsdb_process['ctl_cmd']),
                         '--db=unix:%s' % ovsdb_process['remote_path'],
                         'set-connection',
-                        'p%s:%s:%s' % (ovsdb_process['protocol'],
-                                       ovsdb_process['remote_port'],
-                                       ovsdb_process['remote_ip']),
+                        'p{}:{}:{}'.format(ovsdb_process['protocol'],
+                                           ovsdb_process['remote_port'],
+                                           ovsdb_process['remote_ip']),
                         '--', 'set', 'connection', '.',
                         'inactivity_probe=60000']
 
@@ -244,6 +244,6 @@ class OvsdbServer(DaemonProcessFixture):
                 if ovsdb_process['protocol'] == 'unix':
                     return 'unix:' + ovsdb_process['remote_path']
                 else:
-                    return '%s:%s:%s' % (ovsdb_process['protocol'],
-                                         ovsdb_process['remote_ip'],
-                                         ovsdb_process['remote_port'])
+                    return '{}:{}:{}'.format(ovsdb_process['protocol'],
+                                             ovsdb_process['remote_ip'],
+                                             ovsdb_process['remote_port'])

@@ -26,7 +26,7 @@ from neutron.tests import base
 class TestOvsdbMonitor(base.BaseTestCase):
 
     def setUp(self):
-        super(TestOvsdbMonitor, self).setUp()
+        super().setUp()
         mock.patch.object(helpers, 'enable_connection_uri').start()
 
     def test___init__(self):
@@ -62,7 +62,7 @@ class TestOvsdbMonitor(base.BaseTestCase):
 class TestSimpleInterfaceMonitor(base.BaseTestCase):
 
     def setUp(self):
-        super(TestSimpleInterfaceMonitor, self).setUp()
+        super().setUp()
         self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
 
     def test_has_updates_is_false_if_active_with_no_output(self):

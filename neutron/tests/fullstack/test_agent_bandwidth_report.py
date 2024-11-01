@@ -44,12 +44,12 @@ def _add_new_device_to_agent_config(l2_agent_config, mapping_key_name,
         return
 
     new_mappings = 'physnetnew:%s' % new_dev
-    new_bw = '%s:%s:%s' % (new_dev,
-                           f_const.MINIMUM_BANDWIDTH_EGRESS_KBPS,
-                           f_const.MINIMUM_BANDWIDTH_INGRESS_KBPS)
-    l2_agent_config[mapping_key_name] = '%s,%s' % (
+    new_bw = '{}:{}:{}'.format(new_dev,
+                               f_const.MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                               f_const.MINIMUM_BANDWIDTH_INGRESS_KBPS)
+    l2_agent_config[mapping_key_name] = '{},{}'.format(
         old_mappings, new_mappings)
-    l2_agent_config[constants.RP_BANDWIDTHS] = '%s,%s' % (
+    l2_agent_config[constants.RP_BANDWIDTHS] = '{},{}'.format(
         old_bw, new_bw)
 
 
@@ -105,7 +105,7 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
             )
             env = environment.Environment(env_desc, host_desc)
 
-        super(TestAgentBandwidthReport, self).setUp(env)
+        super().setUp(env)
 
     def _check_agent_configurations(self, agent_id, expected_physnets):
         agent = self.client.show_agent(agent_id)['agent']
@@ -209,7 +209,7 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
             placement_port=self.placement_port
         )
         env = environment.Environment(env_desc, host_desc)
-        super(TestPlacementBandwidthReport, self).setUp(env)
+        super().setUp(env)
 
     def _check_agent_not_synced(self):
         return not self._check_agent_synced()

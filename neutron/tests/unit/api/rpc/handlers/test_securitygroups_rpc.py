@@ -49,7 +49,7 @@ class SecurityGroupServerRpcApiTestCase(base.BaseTestCase):
 class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(SGAgentRpcCallBackMixinTestCase, self).setUp()
+        super().setUp()
         self.rpc = securitygroups_rpc.SecurityGroupAgentRpcCallbackMixin()
         self.rpc.sg_agent = mock.Mock()
 
@@ -69,7 +69,7 @@ class SGAgentRpcCallBackMixinTestCase(base.BaseTestCase):
 class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(SecurityGroupServerAPIShimTestCase, self).setUp()
+        super().setUp()
         objects.register_objects()
         resource_types = [resources.PORT, resources.SECURITYGROUP,
                           resources.SECURITYGROUPRULE, resources.ADDRESSGROUP]
@@ -316,7 +316,7 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         sg2 = self._make_security_group_ovo(remote_address_group_id=ag.id)
         sg3 = self._make_security_group_ovo()
         sec_group_ids = self.shim.get_secgroup_ids_for_address_group(ag.id)
-        self.assertEqual(set([sg1.id, sg2.id]), set(sec_group_ids))
+        self.assertEqual({sg1.id, sg2.id}, set(sec_group_ids))
         self.assertEqual(2, len(sec_group_ids))
         self.assertNotIn(sg3.id, sec_group_ids)
 
@@ -325,5 +325,5 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         self.sg_agent.address_group_updated.assert_called_with(ag.id)
         self.sg_agent.address_group_updated.reset_mock()
         self.rcache.record_resource_delete(self.ctx, resources.ADDRESSGROUP,
-            ag.id)
+                                           ag.id)
         self.sg_agent.address_group_deleted.assert_called_with(ag.id)

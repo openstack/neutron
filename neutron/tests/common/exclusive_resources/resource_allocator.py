@@ -35,7 +35,7 @@ class ExclusiveResource(fixtures.Fixture):
         self.addCleanup(self.ra.release, self.resource)
 
 
-class ResourceAllocator(object):
+class ResourceAllocator:
     """ResourceAllocator persists cross-process allocations of a resource.
 
     Allocations are persisted to a file determined by the 'resource_name',
@@ -103,9 +103,9 @@ class ResourceAllocator(object):
         fileutils.ensure_tree(TMP_DIR, mode=0o755)
 
         try:
-            with open(self._state_file_path, 'r') as allocations_file:
+            with open(self._state_file_path) as allocations_file:
                 contents = allocations_file.read()
-        except IOError:
+        except OSError:
             contents = None
 
         # If the file was empty, we want to return an empty set, not {''}

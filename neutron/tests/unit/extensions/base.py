@@ -88,7 +88,7 @@ class ExtensionTestCase(testlib_api.WebTestCase):
                                   group='QUOTAS')
         setattr(instance, 'path_prefix', resource_prefix)
 
-        class ExtensionTestExtensionManager(object):
+        class ExtensionTestExtensionManager:
             def get_resources(self):
                 return extension_class.get_resources()
 

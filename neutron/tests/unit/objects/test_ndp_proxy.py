@@ -30,7 +30,7 @@ class NDPProxyDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = ndp_proxy.NDPProxy
 
     def setUp(self):
-        super(NDPProxyDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id(),
              'port_id': lambda: self._create_test_port_id()})
@@ -48,6 +48,6 @@ class RouterNDPProxyStateDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = ndp_proxy.RouterNDPProxyState
 
     def setUp(self):
-        super(RouterNDPProxyStateDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id()})

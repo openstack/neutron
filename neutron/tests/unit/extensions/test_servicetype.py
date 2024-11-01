@@ -47,7 +47,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
     def setUp(self):
         self.service_providers = mock.patch.object(
             provconf.NeutronModule, 'service_providers').start()
-        super(ServiceTypeManagerTestCase, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         config.register_common_config_options()
         self.setup_coreplugin(PLUGIN_NAME)
@@ -100,9 +100,9 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
             n_exc.Invalid,
             self._set_override,
             [constants.FIREWALL +
-            ':fwaas1:driver_path:default',
-            constants.FIREWALL +
-            ':fwaas2:driver_path:default'])
+             ':fwaas1:driver_path:default',
+             constants.FIREWALL +
+             ':fwaas2:driver_path:default'])
 
     def test_get_default_provider(self):
         self._set_override([constants.FIREWALL +
@@ -175,7 +175,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
                           ctx, 'BLABLA_svc', 'name', '123-123')
 
 
-class TestServiceTypeExtensionManager(object):
+class TestServiceTypeExtensionManager:
     """Mock extensions manager."""
     def get_resources(self):
         return (servicetype.Servicetype.get_resources() +
@@ -198,15 +198,15 @@ class ServiceTypeExtensionTestCaseBase(testlib_api.WebTestCase):
         self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
 
         cfg.CONF.set_override('service_plugins',
-                              ["%s.%s" % (dp.__name__,
-                                          dp.DummyServicePlugin.__name__)])
+                              ["{}.{}".format(dp.__name__,
+                                              dp.DummyServicePlugin.__name__)])
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
         ext_mgr = TestServiceTypeExtensionManager()
         self.ext_mdw = test_extensions.setup_extensions_middleware(ext_mgr)
         self.api = webtest.TestApp(self.ext_mdw)
         self.resource_name = svctype_apidef.RESOURCE_NAME.replace('-', '_')
-        super(ServiceTypeExtensionTestCaseBase, self).setUp()
+        super().setUp()
 
 
 class ServiceTypeExtensionTestCase(ServiceTypeExtensionTestCaseBase):
@@ -217,7 +217,7 @@ class ServiceTypeExtensionTestCase(ServiceTypeExtensionTestCaseBase):
             autospec=True)
         self.mock_mgr = self._patcher.start()
         self.mock_mgr.get_instance.return_value = self.mock_mgr.return_value
-        super(ServiceTypeExtensionTestCase, self).setUp()
+        super().setUp()
 
     def test_service_provider_list(self):
         instance = self.mock_mgr.return_value
@@ -248,7 +248,7 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
             self.manager.add_provider_configuration(
                 service_type, provconf.ProviderConfiguration(
                     svc_type=service_type))
-        super(ServiceTypeManagerExtTestCase, self).setUp()
+        super().setUp()
 
     def _list_service_providers(self):
         return self.api.get(_get_path('service-providers', fmt=self.fmt),

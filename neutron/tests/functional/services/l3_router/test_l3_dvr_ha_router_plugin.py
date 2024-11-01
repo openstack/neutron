@@ -29,13 +29,13 @@ DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 
 class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
     def setUp(self):
-        super(L3DvrHATestCase, self).setUp()
+        super().setUp()
         self.l3_agent_2 = helpers.register_l3_agent(
             host="standby",
             agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
 
     def _create_router(self, distributed=True, ha=True, admin_state_up=True):
-        return (super(L3DvrHATestCase, self).
+        return (super().
                 _create_router(distributed=distributed, ha=ha,
                                admin_state_up=admin_state_up))
 

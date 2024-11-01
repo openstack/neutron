@@ -31,7 +31,7 @@ class PortNumaAffinityPolicyDbObjectTestCase(
     _test_class = port_numa_affinity_policy.PortNumaAffinityPolicy
 
     def setUp(self):
-        super(PortNumaAffinityPolicyDbObjectTestCase, self).setUp()
+        super().setUp()
         numa = test_tools.get_random_port_numa_affinity_policy()
         self.update_obj_fields(
             {'port_id': lambda: self._create_test_port_id(),

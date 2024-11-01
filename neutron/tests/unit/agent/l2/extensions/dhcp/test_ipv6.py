@@ -35,7 +35,7 @@ ONE_SEC_AFTER_2000 = dhcp_ipv6.TIME_FIRST_DAY_2000 + 1
 class DHCPIPv6ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
 
     def setUp(self):
-        super(DHCPIPv6ResponderTestCase, self).setUp()
+        super().setUp()
         self.dhcp6_responer = dhcp_ipv6.DHCPIPv6Responder(self.agent_api,
                                                           self.ext_api)
         self.dhcp6_responer.int_br = self.int_br
@@ -133,8 +133,8 @@ class DHCPIPv6ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
                 data=b'\x00\x01\x00\x01\x00\x00\x00\x01\xfa\x16>\x00\x00\x00',
                 length=14),
             dhcp6.option(code=13,
-                data=b'\x00\x00success',
-                length=9),
+                         data=b'\x00\x00success',
+                         length=9),
             dhcp6.option(
                 code=23,
                 data=(b'\xfd\xa7\xa5\xcc4`\x00\x01\x00'
@@ -149,19 +149,23 @@ class DHCPIPv6ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
                 data=b'\x03(host-fda7-a5cc-3460-1--bf.openstacklocal',
                 length=42)]
         if zero_time:
-            option_list.append(dhcp6.option(code=3,
-                data=(b'\x00\x00\x00\x01\x00\x01Q\x80\x00\x01Q'
-                      b'\x80\x00\x05\x00\x18\xfd\xa7\xa5\xcc4`'
-                      b'\x00\x01\x00\x00\x00\x00\x00\x00\x00'
-                      b'\xbf\x00\x01Q\x80\x00\x01Q\x80'),
-                length=40))
+            option_list.append(
+                dhcp6.option(
+                    code=3,
+                    data=(b'\x00\x00\x00\x01\x00\x01Q\x80\x00\x01Q'
+                          b'\x80\x00\x05\x00\x18\xfd\xa7\xa5\xcc4`'
+                          b'\x00\x01\x00\x00\x00\x00\x00\x00\x00'
+                          b'\xbf\x00\x01Q\x80\x00\x01Q\x80'),
+                    length=40))
         else:
-            option_list.append(dhcp6.option(code=3,
-                data=(b'\x01\x02\x03\x04\x05\x06\x07\x08\n\x0b\x0c\r'
-                      b'\x00\x05\x00\x18\xfd\xa7\xa5\xcc4`'
-                      b'\x00\x01\x00\x00\x00\x00\x00\x00\x00'
-                      b'\xbf\x05\x06\x07\x08\n\x0b\x0c\r'),
-                length=40))
+            option_list.append(
+                dhcp6.option(
+                    code=3,
+                    data=(b'\x01\x02\x03\x04\x05\x06\x07\x08\n\x0b\x0c\r'
+                          b'\x00\x05\x00\x18\xfd\xa7\xa5\xcc4`'
+                          b'\x00\x01\x00\x00\x00\x00\x00\x00\x00'
+                          b'\xbf\x05\x06\x07\x08\n\x0b\x0c\r'),
+                    length=40))
 
         test_options = dhcp6.options(
             option_list=option_list,

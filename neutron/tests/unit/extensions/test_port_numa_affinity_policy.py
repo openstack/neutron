@@ -38,17 +38,13 @@ class PortNumaAffinityPolicyExtensionTestPlugin(
 
     def create_port(self, context, port):
         with db_api.CONTEXT_WRITER.using(context):
-            new_port = super(
-                PortNumaAffinityPolicyExtensionTestPlugin,
-                self).create_port(context, port)
+            new_port = super().create_port(context, port)
             self._process_create_port(context, port['port'], new_port)
         return new_port
 
     def update_port(self, context, id, port):
         with db_api.CONTEXT_WRITER.using(context):
-            updated_port = super(
-                PortNumaAffinityPolicyExtensionTestPlugin,
-                self).update_port(context, id, port)
+            updated_port = super().update_port(context, id, port)
             updated_port[portbindings.VIF_TYPE] = portbindings.VIF_TYPE_UNBOUND
             self._process_update_port(context, port['port'], updated_port)
         return updated_port
@@ -62,8 +58,7 @@ class PortNumaAffinityPolicyExtensionTestCase(
     def setUp(self, *args):
         plugin = ('neutron.tests.unit.extensions.test_port_numa_affinity_'
                   'policy.PortNumaAffinityPolicyExtensionTestPlugin')
-        super(PortNumaAffinityPolicyExtensionTestCase,
-              self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
 
     def _create_and_check_port_nap(self, numa_affinity_policy):
         name = 'numa_affinity_policy'

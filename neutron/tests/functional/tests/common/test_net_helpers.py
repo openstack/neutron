@@ -28,7 +28,7 @@ from neutron.tests.functional import base
 class NetcatTesterTestCase(base.BaseSudoTestCase):
 
     def setUp(self):
-        super(NetcatTesterTestCase, self).setUp()
+        super().setUp()
         self.ns1 = self.useFixture(net_helpers.NamespaceFixture('nc-')).name
         self.ns2 = self.useFixture(net_helpers.NamespaceFixture('nc-')).name
         self.nc = net_helpers.NetcatTester(self.ns1, self.ns2, '10.30.0.2',

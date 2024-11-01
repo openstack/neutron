@@ -56,7 +56,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('network_vlan_ranges',
                               ['physnet1:1000:1099'],
                               group='ml2_type_vlan')
-        super(PortBindingTestCase, self).setUp('ml2')
+        super().setUp('ml2')
         self.port_create_status = 'DOWN'
         self.plugin = directory.get_plugin()
         self.plugin.start_rpc_listeners()
@@ -195,7 +195,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             # Since the port is DOWN at first
             # It's necessary to make its status ACTIVE for this test
             plugin.update_port_status(ctx, port['port']['id'],
-                const.PORT_STATUS_ACTIVE)
+                                      const.PORT_STATUS_ACTIVE)
 
             attrs = port['port']
             attrs['status'] = const.PORT_STATUS_ACTIVE
@@ -232,9 +232,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual('DOWN', port['port']['status'])
 
             # Update port to bind for a host.
-            self.plugin.update_distributed_port_binding(ctx, port_id, {'port':
-                {portbindings.HOST_ID: 'host-ovs-no_filter',
-                 'device_id': 'router1'}})
+            self.plugin.update_distributed_port_binding(
+                ctx, port_id, {'port':
+                               {portbindings.HOST_ID: 'host-ovs-no_filter',
+                                'device_id': 'router1'}})
 
             # Get port and verify VIF type and status unchanged.
             port = self._show('ports', port_id, as_admin=True)
@@ -282,9 +283,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             port_id = port['port']['id']
 
             # Update port to bind for 1st host.
-            self.plugin.update_distributed_port_binding(ctx, port_id, {'port':
-                {portbindings.HOST_ID: 'host-ovs-no_filter',
-                 'device_id': 'router1'}})
+            self.plugin.update_distributed_port_binding(
+                ctx, port_id, {'port':
+                               {portbindings.HOST_ID: 'host-ovs-no_filter',
+                                'device_id': 'router1'}})
 
             # Mark 1st device up.
             self.plugin.endpoints[0].update_device_up(
@@ -296,9 +298,10 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual('ACTIVE', port['port']['status'])
 
             # Update port to bind for a 2nd host.
-            self.plugin.update_distributed_port_binding(ctx, port_id, {'port':
-                {portbindings.HOST_ID: 'host-bridge-filter',
-                 'device_id': 'router1'}})
+            self.plugin.update_distributed_port_binding(
+                ctx, port_id, {'port':
+                               {portbindings.HOST_ID: 'host-bridge-filter',
+                                'device_id': 'router1'}})
 
             # Mark 2nd device up.
             self.plugin.endpoints[0].update_device_up(
@@ -360,7 +363,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('network_vlan_ranges',
                               ['physnet1:1000:1099'],
                               group='ml2_type_vlan')
-        super(ExtendedPortBindingTestCase, self).setUp('ml2')
+        super().setUp('ml2')
         self.port_create_status = 'DOWN'
         self.plugin = directory.get_plugin()
         self.plugin.start_rpc_listeners()
@@ -432,7 +435,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
     # todo(slaweq): here I can add trusted to be checked too
     def _create_port_and_binding(self, trusted=None, **kwargs):
         port_kwargs = {
-            'device_owner': '%s%s' % (
+            'device_owner': '{}{}'.format(
                 const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')}
         if trusted is not None:
             port_kwargs['trusted'] = trusted
@@ -467,7 +470,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.assertEqual({"key1": "value1"}, binding[pbe_ext.PROFILE])
 
     def test_create_duplicate_port_binding(self):
-        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        device_owner = '{}{}'.format(const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
         host_arg = {portbindings.HOST_ID: self.host}
         with self.port(is_admin=True,
                        device_owner=device_owner,
@@ -479,7 +482,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                              response.status_int)
 
     def test_create_port_binding_failure(self):
-        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        device_owner = '{}{}'.format(const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
         with self.port(device_owner=device_owner) as port:
             port_id = port['port']['id']
             response = self._create_port_binding(self.fmt, port_id,
@@ -506,7 +509,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.assertEqual({"key1": "value1"}, binding[pbe_ext.PROFILE])
 
     def test_update_non_existing_binding(self):
-        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        device_owner = '{}{}'.format(const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
         with self.port(device_owner=device_owner) as port:
             port_id = port['port']['id']
             profile = {'key1': 'value1'}
@@ -526,10 +529,10 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                              response.status_int)
 
     def test_update_port_binding_failure(self):
-        class FakeBinding(object):
+        class FakeBinding:
             vif_type = portbindings.VIF_TYPE_BINDING_FAILED
 
-        class FakePortContext(object):
+        class FakePortContext:
             _binding = FakeBinding()
 
         port, binding = self._create_port_and_binding()
@@ -547,7 +550,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
     def test_activate_port_binding(self):
         port, new_binding = self._create_port_and_binding()
         with mock.patch.object(mechanism_test.TestMechanismDriver,
-                '_check_port_context'):
+                               '_check_port_context'):
             active_binding = self._activate_port_binding(
                 port['id'], self.host, raw_response=False)
         self._assert_bound_port_binding(active_binding)
@@ -556,15 +559,15 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             portbindings.VIF_DETAILS_BOUND_DRIVERS)
         self.assertEqual({'0': 'test'}, updated_bound_drivers)
         self.assertEqual(new_binding[pbe_ext.HOST],
-            updated_port[portbindings.HOST_ID])
+                         updated_port[portbindings.HOST_ID])
         self.assertEqual(new_binding[pbe_ext.PROFILE],
-                updated_port[portbindings.PROFILE])
+                         updated_port[portbindings.PROFILE])
         self.assertEqual(new_binding[pbe_ext.VNIC_TYPE],
-                updated_port[portbindings.VNIC_TYPE])
+                         updated_port[portbindings.VNIC_TYPE])
         self.assertEqual(new_binding[pbe_ext.VIF_TYPE],
-                updated_port[portbindings.VIF_TYPE])
+                         updated_port[portbindings.VIF_TYPE])
         self.assertEqual(new_binding[pbe_ext.VIF_DETAILS],
-                updated_port[portbindings.VIF_DETAILS])
+                         updated_port[portbindings.VIF_DETAILS])
         retrieved_bindings = self._list_port_bindings(
             port['id'], raw_response=False)['bindings']
         retrieved_active_binding = utils.get_port_binding_by_status_and_host(
@@ -603,7 +606,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
     def test_activate_port_binding_already_active(self):
         port, new_binding = self._create_port_and_binding()
         with mock.patch.object(mechanism_test.TestMechanismDriver,
-                '_check_port_context'):
+                               '_check_port_context'):
             self._activate_port_binding(port['id'], self.host)
         response = self._activate_port_binding(port['id'], self.host)
         self.assertEqual(webob.exc.HTTPConflict.code,
@@ -640,7 +643,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def test_list_port_bindings_with_query_parameters(self):
         port, new_binding = self._create_port_and_binding()
-        params = '%s=%s' % (pbe_ext.STATUS, const.INACTIVE)
+        params = '{}={}'.format(pbe_ext.STATUS, const.INACTIVE)
         retrieved_bindings = self._list_port_bindings(
             port['id'], params=params, raw_response=False)['bindings']
         self.assertEqual(1, len(retrieved_bindings))
@@ -700,7 +703,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         # as a resource provider UUID.
         profile = {'allocation': 'ccccbb4c-2adf-11e9-91bc-db7063775d06'}
         kwargs = {pbe_ext.PROFILE: profile}
-        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
+        device_owner = '{}{}'.format(const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
 
         with self.port(device_owner=device_owner) as port:
             port_id = port['port']['id']

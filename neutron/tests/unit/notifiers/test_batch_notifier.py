@@ -24,7 +24,7 @@ from neutron.tests import base
 
 class TestBatchNotifier(base.BaseTestCase):
     def setUp(self):
-        super(TestBatchNotifier, self).setUp()
+        super().setUp()
         self._received_events = eventlet.Queue()
         self.notifier = batch_notifier.BatchNotifier(2, self._queue_events)
         self.spawn_n_p = mock.patch.object(eventlet, 'spawn_n')

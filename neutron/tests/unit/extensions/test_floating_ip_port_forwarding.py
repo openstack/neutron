@@ -35,7 +35,7 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
         svc_plugins = (test_fip_pf.PF_PLUGIN_NAME, test_fip_pf.L3_PLUGIN,
                        'neutron.services.qos.qos_plugin.QoSPlugin')
         ext_mgr = test_fip_pf.ExtendFipPortForwardingExtensionManager()
-        super(FloatingIPPorForwardingTestCase, self).setUp(
+        super().setUp(
             ext_mgr=ext_mgr, service_plugins=svc_plugins)
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 

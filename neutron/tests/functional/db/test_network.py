@@ -31,7 +31,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
     """Base class to test network RBAC policies"""
 
     def setUp(self):
-        super(NetworkRBACTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
         DB_PLUGIN_KLASS = 'neutron.plugins.ml2.plugin.Ml2Plugin'
         self.setup_coreplugin(DB_PLUGIN_KLASS)

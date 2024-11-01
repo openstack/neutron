@@ -358,7 +358,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
     }
 
     def setUp(self):
-        super(TestNBImplIdlOvn, self).setUp()
+        super().setUp()
 
         self.lswitch_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
         self.lsp_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
@@ -943,7 +943,7 @@ class TestSBImplIdlOvnBase(TestDBImplIdlOvn):
     fake_associations = {}
 
     def setUp(self):
-        super(TestSBImplIdlOvnBase, self).setUp()
+        super().setUp()
 
         self.chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
 

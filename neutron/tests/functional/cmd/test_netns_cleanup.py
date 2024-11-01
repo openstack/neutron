@@ -39,7 +39,7 @@ NUM_SUBPROCESSES = 6
 
 class NetnsCleanupTest(base.BaseSudoTestCase):
     def setUp(self):
-        super(NetnsCleanupTest, self).setUp()
+        super().setUp()
 
         self.get_namespaces_p = mock.patch(GET_NAMESPACES)
         self.get_namespaces = self.get_namespaces_p.start()
@@ -79,7 +79,7 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
                 timeout=15)
         except eventlet.Timeout:
             num_spawned_procs = self._get_num_spawned_procs()
-            err_str = ("Expected number/spawned number: {0}/{1}\nProcess "
+            err_str = ("Expected number/spawned number: {}/{}\nProcess "
                        "information:\n".format(num_spawned_procs,
                                                procs_launched))
             cmd = ['ps', '-f', '-u', 'root']
@@ -159,7 +159,7 @@ class TestNETNSCLIConfig(basetest.BaseTestCase):
 
     def setup_config(self, args=None):
         self.conf = netns_cleanup.setup_conf()
-        super(TestNETNSCLIConfig, self).setup_config(args=args)
+        super().setup_config(args=args)
 
     def test_netns_opts_registration(self):
         self.assertFalse(self.conf.force)

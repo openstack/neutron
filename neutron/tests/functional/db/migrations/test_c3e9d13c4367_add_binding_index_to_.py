@@ -21,7 +21,7 @@ from oslo_utils import uuidutils
 from neutron.tests.functional.db import test_migrations
 
 
-class NetworkDhcpAgentBindingMigrationMixin(object):
+class NetworkDhcpAgentBindingMigrationMixin:
     """Validates binding_index for NetworkDhcpAgentBinding migration."""
 
     def _create_so(self, o_type, values):

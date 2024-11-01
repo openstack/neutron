@@ -20,7 +20,7 @@ from neutron.tests.unit import testlib_api
 
 class BaseQosTestCase(testlib_api.SqlTestCase):
     def setUp(self):
-        super(BaseQosTestCase, self).setUp()
+        super().setUp()
 
         with mock.patch.object(
                 resource_manager.ResourceCallbacksManager, '_singleton',

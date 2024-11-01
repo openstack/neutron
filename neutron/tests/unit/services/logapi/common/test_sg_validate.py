@@ -26,7 +26,7 @@ from neutron.services.logapi.common import validators
 from neutron.tests import base
 
 
-class FakePlugin(object):
+class FakePlugin:
 
     def __init__(self):
         self.validator_mgr = validators.ResourceValidateRequest.get_instance()
@@ -38,7 +38,7 @@ class TestSGLogRequestValidations(base.BaseTestCase):
     def setUp(self):
         self.log_plugin = FakePlugin()
         importutils.import_module('neutron.services.logapi.common.sg_validate')
-        super(TestSGLogRequestValidations, self).setUp()
+        super().setUp()
 
     def test_validate_request_resource_id_not_exists(self):
         log_data = {'resource_type': 'security_group',
@@ -90,11 +90,11 @@ class TestSGLogRequestValidations(base.BaseTestCase):
                     'resource_id': 'fake_sg_id',
                     'target_id': 'fake_port_id'}
 
-        class FakeFiltered(object):
+        class FakeFiltered:
             def one(self):
                 raise orm_exc.NoResultFound
 
-        class FakeSGPortBinding(object):
+        class FakeSGPortBinding:
             def filter_by(self, security_group_id, port_id):
                 return FakeFiltered()
 
