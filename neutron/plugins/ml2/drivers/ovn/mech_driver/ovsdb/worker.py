@@ -31,11 +31,11 @@ class MaintenanceWorker(worker.BaseWorker):
 
     def stop(self):
         """Stop service."""
-        super().stop()
+        pass
 
     def wait(self):
         """Wait for service to complete."""
-        super().wait()
+        pass
 
     @staticmethod
     def reset():
