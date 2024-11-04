@@ -76,6 +76,13 @@ the internal DNS. To enable this functionality, do the following:
 After re-starting the ``neutron-server``, users will be able to assign a
 ``dns_name`` attribute to their ports.
 
+Valid ``extension_drivers`` values related to the DNS integration are:
+
+* ``dns``
+* ``dns_domain_ports``
+* ``subnet_dns_publish_fixed_ip``
+* ``dns_domain_keywords``
+
 .. note::
    The enablement of this functionality is prerequisite for the enablement of
    the Networking service integration with an external DNS service, which is
