@@ -575,9 +575,7 @@ def remove_macs_from_lsp_addresses(addresses):
     """
     ip_list = []
     for addr in addresses:
-        ip_list.extend([x for x in addr.split() if
-                        (netutils.is_valid_ipv4(x) or
-                         netutils.is_valid_ipv6(x))])
+        ip_list.extend([x for x in addr.split() if netutils.is_valid_ip(x)])
     return ip_list
 
 
