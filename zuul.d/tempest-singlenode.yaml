@@ -60,6 +60,7 @@
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: &openvswitch-irrelevant-files
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -127,6 +128,7 @@
             experimental:
               linuxbridge: true
     irrelevant-files:
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -257,6 +259,7 @@
         '/var/log/openvswitch': 'logs'
         '/var/lib/ovn': 'logs'
     irrelevant-files: &tempest-db-irrelevant-files
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -350,6 +353,7 @@
         s-object: false
         s-proxy: false
     irrelevant-files:
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -495,6 +499,7 @@
         '/var/log/openvswitch': 'logs'
         '/var/lib/ovn': 'logs'
     irrelevant-files: &irrelevant-files
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -626,6 +631,7 @@
         c-vol: false
         cinder: false
     irrelevant-files: &ovn-irrelevant-files
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$

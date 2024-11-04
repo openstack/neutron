@@ -30,6 +30,7 @@
         - neutron-ovn-rally-task
         - tempest-integrated-networking:
             irrelevant-files: &ovn-irrelevant-files
+              - ^\.pre-commit-config\.yaml$
               - ^\.pylintrc$
               - ^test-requirements.txt$
               - ^releasenotes/.*$

@@ -52,6 +52,7 @@
       - openstack/rally-openstack
       - openstack/osprofiler
     irrelevant-files:
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
@@ -97,6 +98,7 @@
       - name: openstack/rally
       - name: openstack/rally-openstack
     irrelevant-files:
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
