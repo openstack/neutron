@@ -37,7 +37,6 @@ disable=
  expression-not-assigned,
  fixme,
  global-statement,
- non-parent-init-called,
  not-callable,
  protected-access,
  redefined-builtin,
@@ -89,8 +88,6 @@ disable=
  too-many-return-statements,
  too-many-statements,
  consider-using-set-comprehension,
- useless-object-inheritance,
- super-with-arguments,
  use-dict-literal
 
 [BASIC]
