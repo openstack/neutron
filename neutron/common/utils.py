@@ -22,6 +22,7 @@ import functools
 import hashlib
 import hmac
 import importlib
+import math
 import os
 import os.path
 import re
@@ -31,6 +32,7 @@ import socket
 import sys
 import threading
 import time
+import typing
 import uuid
 
 import eventlet
@@ -844,9 +846,13 @@ def bytes_to_bits(value):
     return value * 8
 
 
-def bits_to_kilobits(value, base):
-    # NOTE(slaweq): round up that even 1 bit will give 1 kbit as a result
-    return int((value + (base - 1)) / base)
+def bits_to_kilobits(
+        value: typing.Union[int, float],
+        base: int
+) -> int:
+    # NOTE(slaweq): round up that even 1 bit will give 1 kbit as a result, but
+    # zero will return zero too.
+    return math.ceil(value / base)
 
 
 def disable_extension_by_service_plugin(core_plugin, service_plugin):

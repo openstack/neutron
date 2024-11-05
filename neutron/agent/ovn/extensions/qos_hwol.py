@@ -108,8 +108,8 @@ class QoSBandwidthLimitEvent(row_event.RowEvent):
         self.ovn_agent[EXT_NAME].update_egress(port_id, max_kbps, min_kbps)
 
 
-class QoSMinimumBandwidthEvent(row_event.RowEvent):
-    LOG_MSG = 'Port ID %s, min_kbps: %s (event: %s)'
+class QoSLogicalSwitchPortEvent(row_event.RowEvent):
+    LOG_MSG = 'Port ID %s, max_kbps, %s, min_kbps: %s (event: %s)'
 
     def __init__(self, ovn_agent):
         self.ovn_agent = ovn_agent
@@ -121,11 +121,14 @@ class QoSMinimumBandwidthEvent(row_event.RowEvent):
         if not self.ovn_agent.sb_post_fork_event.is_set():
             return False
 
-        # The "qos_min_rate" set on the LSP has always egress direction.
-        # Check if "options:qos_min_rate" has changed.
+        # The "qos_xxx_rate" keys are set on the LSP are always egress
+        # direction. Check if "options:qos_max_rate" or "options:qos_min_rate"
+        # have changed.
         try:
-            ovn_min_rate = ovn_const.LSP_OPTIONS_QOS_MIN_RATE
-            if row.options.get(ovn_min_rate) == old.options.get(ovn_min_rate):
+            _min_rate = ovn_const.LSP_OPTIONS_QOS_MIN_RATE
+            _max_rate = ovn_const.LSP_OPTIONS_QOS_MAX_RATE
+            if (row.options.get(_min_rate) == old.options.get(_min_rate) and
+                    row.options.get(_max_rate) == old.options.get(_max_rate)):
                 return False
         except (KeyError, AttributeError):
             return False
@@ -138,7 +141,7 @@ class QoSMinimumBandwidthEvent(row_event.RowEvent):
     def run(self, event, row, old):
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.ovn_agent.nb_idl,
                                                       row.name)
-        LOG.debug(self.LOG_MSG, row.name, min_kbps, event)
+        LOG.debug(self.LOG_MSG, row.name, max_kbps, min_kbps, event)
         self.ovn_agent[EXT_NAME].update_egress(row.name, max_kbps, min_kbps)
 
 
@@ -204,7 +207,7 @@ class QoSHardwareOffloadExtension(extension_manager.OVNAgentExtension):
     @property
     def nb_idl_events(self):
         return [QoSBandwidthLimitEvent,
-                QoSMinimumBandwidthEvent,
+                QoSLogicalSwitchPortEvent,
                 ]
 
     @property

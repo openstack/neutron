@@ -15,18 +15,16 @@
 import copy
 from unittest import mock
 
+import ddt
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_constants
-from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
 from neutron.db import l3_db
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
-    import qos as qos_extension
 from neutron.tests.functional import base
 
 
@@ -65,33 +63,36 @@ QOS_RULES_3 = {
 }
 
 
-class TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
+class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
+    def setUp(self, maintenance_worker=False):
+        super().setUp(maintenance_worker=maintenance_worker)
+        self.qos_driver = self.l3_plugin._ovn_client._qos_driver
 
-    def _check_rules(self, rules, port_id, network_id, fip_id=None,
-                     ip_address=None, check_min_rate=True,
-                     expected_ext_ids=None):
+    def _check_rules_qos(self, rules, port_id, network_id, network_type,
+                         fip_id=None, ip_address=None, expected_ext_ids=None):
+        qos_rules = copy.deepcopy(rules)
+        if network_type in (constants.TYPE_VLAN, constants.TYPE_FLAT):
+            # Remove the egress max-rate and min-rate rules.
+            try:
+                qos_rules[constants.EGRESS_DIRECTION].pop(
+                    qos_constants.RULE_TYPE_BANDWIDTH_LIMIT, None)
+                qos_rules[constants.EGRESS_DIRECTION].pop(
+                    qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH, None)
+            except KeyError:
+                pass
         egress_ovn_rule = self.qos_driver._ovn_qos_rule(
-            constants.EGRESS_DIRECTION, rules.get(constants.EGRESS_DIRECTION),
+            constants.EGRESS_DIRECTION,
+            qos_rules.get(constants.EGRESS_DIRECTION),
             port_id, network_id, fip_id=fip_id, ip_address=ip_address)
         ingress_ovn_rule = self.qos_driver._ovn_qos_rule(
             constants.INGRESS_DIRECTION,
-            rules.get(constants.INGRESS_DIRECTION), port_id, network_id,
+            qos_rules.get(constants.INGRESS_DIRECTION), port_id, network_id,
             fip_id=fip_id, ip_address=ip_address)
 
         with self.nb_api.transaction(check_error=True):
             ls = self.qos_driver.nb_idl.lookup(
                 'Logical_Switch', ovn_utils.ovn_name(network_id))
-            try:
-                lsp = self.qos_driver.nb_idl.lsp_get(port_id).execute(
-                    check_error=True)
-            except idlutils.RowNotFound:
-                # A LSP is created only in the tests that apply QoS rules to
-                # an internal port. Any L3 QoS test (router gateway port or
-                # floating IP), won't have a LSP associated and won't check
-                # min-rate rules.
-                pass
-
-            self.assertEqual(len(rules), len(ls.qos_rules))
+            self.assertEqual(len(qos_rules), len(ls.qos_rules))
             for rule in ls.qos_rules:
                 if expected_ext_ids:
                     self.assertDictEqual(expected_ext_ids, rule.external_ids)
@@ -108,21 +109,31 @@ class TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
                 self.assertIn(port_id, rule.match)
                 self.assertEqual(action, rule.action)
                 self.assertEqual(bandwidth, rule.bandwidth)
-            min_rate = rules.get(constants.EGRESS_DIRECTION, {}).get(
-                qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
-            if min_rate is not None and check_min_rate:
-                min_ovn = lsp.options.get(ovn_const.LSP_OPTIONS_QOS_MIN_RATE)
-                self.assertEqual(str(min_rate['min_kbps']), min_ovn)
+
+    def _check_rules_lsp(self, rules, port_id, network_type):
+        if network_type not in (constants.TYPE_VLAN, constants.TYPE_FLAT):
+            return
+
+        # If there are no egress rules, it is checked that there are no
+        # QoS parameters in the LSP.options dictionary.
+        egress_rules = rules.get(constants.EGRESS_DIRECTION, {})
+        qos_rule_lsp = self.qos_driver._ovn_lsp_rule(egress_rules)
+        lsp = self.qos_driver.nb_idl.lsp_get(port_id).execute(
+            check_error=True)
+        for param in ('qos_max_rate', 'qos_burst', 'qos_min_rate'):
+            if qos_rule_lsp[param] is None:
+                self.assertNotIn(param, lsp.options)
+            else:
+                self.assertEqual(qos_rule_lsp[param], lsp.options[param])
 
 
-class TestOVNClientQosExtension(TestOVNClientQosExtensionBase):
+@ddt.ddt
+class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
 
     def setUp(self, maintenance_worker=False):
         super().setUp(
             maintenance_worker=maintenance_worker)
         self._add_logical_switch()
-        self.qos_driver = qos_extension.OVNClientQosExtension(
-            nb_idl=self.nb_api)
         self.gw_port_id = 'gw_port_id'
         self._mock_get_router = mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
                                                   '_get_router')
@@ -146,7 +157,8 @@ class TestOVNClientQosExtension(TestOVNClientQosExtensionBase):
                 ovn_utils.ovn_name(self.network_1), port_id,
                 options={'requested-chassis': 'compute1'}))
 
-    def test__update_port_qos_rules(self):
+    @ddt.data(constants.TYPE_VLAN, constants.TYPE_GENEVE)
+    def test__update_port_qos_rules(self, network_type):
         port = 'port1'
         self._add_logical_switch_port(port)
 
@@ -157,8 +169,10 @@ class TestOVNClientQosExtension(TestOVNClientQosExtensionBase):
                     _qos_rules[direction] = _qos_rules.get(direction, {})
                 self.mock_qos_rules.return_value = _qos_rules
                 self.qos_driver._update_port_qos_rules(
-                    txn, port, self.network_1, 'qos1', None)
-            self._check_rules(qos_rules, port, self.network_1)
+                    txn, port, self.network_1, network_type, 'qos1', None)
+            self._check_rules_qos(qos_rules, port, self.network_1,
+                                  network_type)
+            self._check_rules_lsp(qos_rules, port, network_type)
 
         update_and_check(QOS_RULES_0)
         update_and_check(QOS_RULES_1)
@@ -173,8 +187,8 @@ class TestOVNClientQosExtension(TestOVNClientQosExtensionBase):
                 _qos_rules[direction] = _qos_rules.get(direction, {})
             self.mock_qos_rules.return_value = _qos_rules
             self.qos_driver.update_floatingip(txn, fip)
-        self._check_rules(qos_rules, self.gw_port_id, self.network_1,
-                          fip_id='fip_id', ip_address='1.2.3.4')
+        self._check_rules_qos(qos_rules, self.gw_port_id, self.network_1,
+                              '', fip_id='fip_id', ip_address='1.2.3.4')
 
     def test_create_floatingip(self):
         self._update_fip_and_check(self.fip, QOS_RULES_1)
@@ -194,12 +208,11 @@ class TestOVNClientQosExtension(TestOVNClientQosExtensionBase):
         self._update_fip_and_check(fip_dict, {})
 
 
-class TestOVNClientQosExtensionEndToEnd(TestOVNClientQosExtensionBase):
+class TestOVNClientQosExtensionEndToEnd(_TestOVNClientQosExtensionBase):
 
     def setUp(self, maintenance_worker=False):
         super().setUp(
             maintenance_worker=maintenance_worker)
-        self.qos_driver = self.l3_plugin._ovn_client._qos_driver
         self._mock_qos_rules = mock.patch.object(self.qos_driver, '_qos_rules')
         self.mock_qos_rules = self._mock_qos_rules.start()
 
@@ -245,10 +258,8 @@ class TestOVNClientQosExtensionEndToEnd(TestOVNClientQosExtensionBase):
         gw_info = {'network_id': network['network']['id']}
         router = self._create_router(utils.get_rand_name(), gw_info=gw_info)
 
-        self._check_rules(
-            _qos_rules, router['gw_port_id'],
-            network['network']['id'],
-            check_min_rate=False,
+        self._check_rules_qos(
+            _qos_rules, router['gw_port_id'], network['network']['id'], '',
             expected_ext_ids={
                 ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router['id']})
         self.l3_plugin.delete_router(self.context, router['id'])
@@ -265,10 +276,8 @@ class TestOVNClientQosExtensionEndToEnd(TestOVNClientQosExtensionBase):
         gw_info = {'network_id': network['network']['id']}
         router = self._create_router(utils.get_rand_name(), gw_info=gw_info)
 
-        self._check_rules(
-            _qos_rules, router['gw_port_id'],
-            network['network']['id'],
-            check_min_rate=False,
+        self._check_rules_qos(
+            _qos_rules, router['gw_port_id'], network['network']['id'], '',
             expected_ext_ids={
                 ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router['id']})
         ls = self.qos_driver.nb_idl.lookup(
@@ -306,9 +315,8 @@ class TestOVNClientQosExtensionEndToEnd(TestOVNClientQosExtensionBase):
             self.l3_plugin.update_router(
                 self.context, router['id'],
                 {'router': {'admin_state_up': True}})
-            self._check_rules(
-                qos_rules, router['gw_port_id'], network['network']['id'],
-                check_min_rate=False,
+            self._check_rules_qos(
+                qos_rules, router['gw_port_id'], network['network']['id'], '',
                 expected_ext_ids={
                     ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router['id']})
 

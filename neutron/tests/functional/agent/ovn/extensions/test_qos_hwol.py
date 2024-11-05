@@ -15,6 +15,7 @@
 
 from unittest import mock
 
+from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent.ovn.agent import ovsdb as agent_ovsdb
@@ -120,7 +121,7 @@ class QoSBandwidthLimitEventTestCase(base.TestOVNFunctionalBase):
             lambda: check_update_egress_called(ovn_rule['rate']), timeout=5)
 
 
-class QoSMinimumBandwidthEventTestCase(base.TestOVNFunctionalBase):
+class QoSLogicalSwitchPortEventTestCase(base.TestOVNFunctionalBase):
 
     def setUp(self, **kwargs):
         super().setUp(**kwargs)
@@ -130,7 +131,7 @@ class QoSMinimumBandwidthEventTestCase(base.TestOVNFunctionalBase):
         res = self._create_port(self.fmt, self.net['id'])
         self.port = self.deserialize(self.fmt, res)['port']
 
-    def test_qos_min_bw_created_and_updated(self):
+    def test_qos_created_and_updated(self):
         def check_update_egress_called(max_kbps, min_kbps):
             try:
                 mock_agent[qos_hwol.EXT_NAME].update_egress.assert_has_calls(
@@ -140,17 +141,20 @@ class QoSMinimumBandwidthEventTestCase(base.TestOVNFunctionalBase):
                 return False
 
         mock_agent = mock.MagicMock(nb_idl=self.nb_api)
-        events = [qos_hwol.QoSMinimumBandwidthEvent(mock_agent)]
+        events = [qos_hwol.QoSLogicalSwitchPortEvent(mock_agent)]
         agent_ovsdb.MonitorAgentOvnNbIdl(qos_hwol.NB_IDL_TABLES,
                                          events).start()
         port_id = self.port['id']
-        min_kbps = 5000
+        max_kbps, min_kbps = 9000, 5000
+        max_bps, min_bps = (max_kbps * constants.SI_BASE,
+                            min_kbps * constants.SI_BASE)
         lsp = self.nb_api.lsp_get(port_id).execute(check_error=True)
-        options = {ovn_const.LSP_OPTIONS_QOS_MIN_RATE: str(min_kbps)}
+        options = {ovn_const.LSP_OPTIONS_QOS_MAX_RATE: str(max_bps),
+                   ovn_const.LSP_OPTIONS_QOS_MIN_RATE: str(min_bps)}
         self.nb_api.update_lswitch_qos_options(lsp, **options).execute(
             check_error=True)
         n_utils.wait_until_true(
-            lambda: check_update_egress_called(0, min_kbps), timeout=5)
+            lambda: check_update_egress_called(max_kbps, min_kbps), timeout=5)
 
 
 class PortBindingChassisCreatedEventTestCase(base.TestOVNFunctionalBase):

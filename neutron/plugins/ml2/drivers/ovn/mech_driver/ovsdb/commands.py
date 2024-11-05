@@ -259,6 +259,8 @@ class UpdateLSwitchPortQosOptionsCommand(command.BaseCommand):
             raise RuntimeError(_('Logical Switch Port %s does not exist') %
                                port_id)
 
+        # TODO(ralonsoh): add a check to only modify the QoS related keys:
+        # qos_max_rate, qos_burst and qos_min_rate.
         for key, value in self.qos.items():
             if value is None:
                 port.delkey('options', key)

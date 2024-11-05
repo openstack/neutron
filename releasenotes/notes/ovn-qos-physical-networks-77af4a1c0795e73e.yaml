@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Since OVN 23.06.0 the QoS enforcement for maximum bandwidth and minimum
+    bandwidth rules on Logical_Switch_Ports connected to Logical_Switch with
+    localnet ports (that means ports connected to provider type networks) is
+    done in this localnet port connected to the physical bridge, via TC
+    commands. To meet that goal it is needed to define the maximum bandwidth
+    and minimum bandwidth rules in the Logical_Switch_Port ``options``
+    dictionary field, using the keys ``qos_min_rate``, ``qos_max_rate`` and
+    ``qos_burst``.
