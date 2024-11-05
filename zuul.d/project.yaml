@@ -18,7 +18,6 @@
       - neutron-skip-level-jobs
     check:
       jobs:
-        - neutron-tox-mypy
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-grenade-multinode
