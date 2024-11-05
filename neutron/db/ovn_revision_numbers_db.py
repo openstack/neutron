@@ -24,7 +24,9 @@ from oslo_utils import timeutils
 import sqlalchemy as sa
 from sqlalchemy.orm import exc
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
+from neutron.db.models import address_group  # noqa
 from neutron.db.models import l3  # noqa
 from neutron.db.models import ovn as ovn_models
 from neutron.db.models import securitygroup  # noqa
@@ -35,40 +37,19 @@ CONF = cfg.CONF
 
 STD_ATTR_MAP = standard_attr.get_standard_attr_resource_model_map()
 
-# NOTE(ralonsoh): to be moved to neutron-lib
-TYPE_NETWORKS = 'networks'
-TYPE_PORTS = 'ports'
-TYPE_SECURITY_GROUP_RULES = 'security_group_rules'
-TYPE_ROUTERS = 'routers'
-TYPE_ROUTER_PORTS = 'router_ports'
-TYPE_SECURITY_GROUPS = 'security_groups'
-TYPE_FLOATINGIPS = 'floatingips'
-TYPE_SUBNETS = 'subnets'
-TYPE_ADDRESS_GROUPS = 'address_groups'
-
-_TYPES_PRIORITY_ORDER = (
-    TYPE_NETWORKS,
-    TYPE_SECURITY_GROUPS,
-    TYPE_SUBNETS,
-    TYPE_ROUTERS,
-    TYPE_PORTS,
-    TYPE_ROUTER_PORTS,
-    TYPE_FLOATINGIPS,
-    TYPE_ADDRESS_GROUPS,
-    TYPE_SECURITY_GROUP_RULES)
-
 # The order in which the resources should be created or updated by the
 # maintenance task: Root ones first and leafs at the end.
 MAINTENANCE_CREATE_UPDATE_TYPE_ORDER = [
     (ovn_models.OVNRevisionNumbers.resource_type == resource_type, idx)
-    for idx, resource_type in enumerate(_TYPES_PRIORITY_ORDER, 1)
+    for idx, resource_type in enumerate(ovn_const.TYPES_PRIORITY_ORDER, 1)
 ]
 
 # The order in which the resources should be deleted by the maintenance
 # task: Leaf ones first and roots at the end.
 MAINTENANCE_DELETE_TYPE_ORDER = [
     (ovn_models.OVNRevisionNumbers.resource_type == resource_type, idx)
-    for idx, resource_type in enumerate(reversed(_TYPES_PRIORITY_ORDER), 1)
+    for idx, resource_type in
+    enumerate(reversed(ovn_const.TYPES_PRIORITY_ORDER), 1)
 ]
 
 INITIAL_REV_NUM = -1
@@ -81,7 +62,8 @@ INCONSISTENCIES_OLDER_THAN = 60
 # 1:2 mapping for OVN, neutron router ports are simple ports, but
 # for OVN we handle LSP & LRP objects
 if STD_ATTR_MAP:
-    STD_ATTR_MAP[TYPE_ROUTER_PORTS] = STD_ATTR_MAP[TYPE_PORTS]
+    STD_ATTR_MAP[ovn_const.TYPE_ROUTER_PORTS] = (
+        STD_ATTR_MAP[ovn_const.TYPE_PORTS])
 
 
 # NOTE(ralonsoh): to be moved to neutron-lib
