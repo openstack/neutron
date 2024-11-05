@@ -69,10 +69,12 @@ def _sync_lock(f):
     return wrapped
 
 
+# TODO(jlibosva): Remove the decorator after we depend on OVN version that has
+# the schema containing the additional_chassis column
 def _match_only_if_additional_chassis_is_supported(f):
     @functools.wraps(f)
     def wrapped(self, row, old):
-        if not ovn_utils.is_additional_chassis_supported(self.agent.sb_idl):
+        if not hasattr(row, 'additional_chassis'):
             return False
         return f(self, row, old)
     return wrapped
@@ -206,7 +208,9 @@ class PortBindingUpdatedEvent(PortBindingEvent):
     def _is_new_chassis_set(self, row, old):
         self._log_msg = "Port %s in datapath %s bound to our chassis"
         try:
-            if ovn_utils.is_additional_chassis_supported(self.agent.sb_idl):
+            # TODO(jlibosva): Remove the check after we depend on OVN version
+            # that has the schema containing the additional_chassis column
+            if hasattr(row, 'additional_chassis'):
                 try:
                     # If the additional chassis used to be in the old version
                     # the resources are already provisioned
