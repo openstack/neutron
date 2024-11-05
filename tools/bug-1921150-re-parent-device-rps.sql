@@ -15,8 +15,6 @@
 /*
 Fix wrongly parented physical NIC resource providers due to bug
 https://bugs.launchpad.net/neutron/+bug/1921150
-
-Compatible with MySQL.
 */
 
 USE placement;

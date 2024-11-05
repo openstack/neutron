@@ -57,12 +57,11 @@ class SubPort(base.NeutronDbObject):
                 super().create()
         except o_db_exc.DBReferenceError as ex:
             if ex.key_table is None:
-                # NOTE(ivc): 'key_table' is provided by 'oslo.db' [1]
-                # only for a limited set of database backends (i.e.
-                # MySQL and PostgreSQL). Other database backends
-                # (including SQLite) would have 'key_table' set to None.
-                # We emulate the 'key_table' support for such database
-                # backends.
+                # NOTE(ivc): 'key_table' is provided by 'oslo.db' [1] only for
+                # a limited set of database backends (i.e. MySQL). Other
+                # database backends (including SQLite) would have 'key_table'
+                # set to None. We emulate the 'key_table' support for such
+                # database backends.
                 #
                 # [1] https://github.com/openstack/oslo.db/blob/3fadd5a
                 #     /oslo_db/sqlalchemy/exc_filters.py#L190-L203

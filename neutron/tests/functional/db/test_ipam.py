@@ -35,7 +35,7 @@ load_tests = testlib_api.module_load_tests
 # load_tests = test_base.optimize_db_test_loader(__file__)
 
 
-class IpamTestCase(testlib_api.SqlTestCase):
+class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
     """Base class for tests that aim to test ip allocation."""
     def setUp(self):
         super().setUp()
@@ -138,11 +138,3 @@ class IpamTestCase(testlib_api.SqlTestCase):
         self.assert_ip_alloc_pool_matches(ip_alloc_pool_expected)
         with testtools.ExpectedException(n_exc.IpAddressGenerationFailure):
             self._create_port(self.port_id)
-
-
-class TestIpamMySQL(testlib_api.MySQLTestCaseMixin, IpamTestCase):
-    pass
-
-
-class TestIpamPostgreSQL(testlib_api.PostgreSQLTestCaseMixin, IpamTestCase):
-    pass

@@ -24,8 +24,8 @@ from neutron.objects import quota
 from neutron.tests.unit import testlib_api
 
 
-class _ReservationSql(testlib_api.SqlTestCase):
-
+class TestReservationSql(testlib_api.SqlTestCase,
+                         testlib_api.MySQLTestCaseMixin):
     def setUp(self):
         super().setUp()
         self.context = context.Context(user_id=None, tenant_id=None,
@@ -63,13 +63,3 @@ class _ReservationSql(testlib_api.SqlTestCase):
                 res.project_id, resources, True)
         self.assertEqual({'port': 100}, res_map)
         self.assertIsInstance(res_map['port'], int)
-
-
-class TestReservationMySQL(testlib_api.MySQLTestCaseMixin,
-                           _ReservationSql):
-    pass
-
-
-class TestReservationPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
-                                _ReservationSql):
-    pass

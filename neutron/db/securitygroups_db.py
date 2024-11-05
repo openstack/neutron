@@ -706,10 +706,10 @@ class SecurityGroupDbMixin(
     def _get_ip_proto_number(self, protocol):
         if protocol in const.SG_RULE_PROTO_ANY:
             return
-        # According to bug 1381379, protocol is always set to string to avoid
-        # problems with comparing int and string in PostgreSQL. Here this
-        # string is converted to int to give an opportunity to use it as
-        # before.
+        # According to bug 1381379, protocol is always set to string. This was
+        # done to avoid problems with comparing int and string in PostgreSQL.
+        # (Since then, the backend is no longer supported.) Here this string is
+        # converted to int to give an opportunity to use it as before.
         if protocol in constants.IP_PROTOCOL_NAME_ALIASES:
             protocol = constants.IP_PROTOCOL_NAME_ALIASES[protocol]
         return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))

@@ -17,10 +17,5 @@ from neutron.objects.plugins.ml2 import greallocation
 from neutron.tests.functional.objects.plugins.ml2 import test_base
 
 
-class TestGreSegmentAllocationMySQL(test_base._SegmentAllocationMySQL):
-    segment_allocation_class = greallocation.GreAllocation
-
-
-class TestGreSegmentAllocationPostgreSQL(
-        test_base._SegmentAllocationPostgreSQL):
+class TestGreSegmentAllocation(test_base.SegmentAllocation):
     segment_allocation_class = greallocation.GreAllocation

@@ -41,9 +41,6 @@ direction_enum = sa.Enum(
 
 
 def upgrade():
-    if op.get_context().bind.dialect.name == 'postgresql':
-        direction_enum.create(op.get_bind(), checkfirst=True)
-
     with migration.remove_fks_from_table(bw_limit_table_name,
                                          remove_unique_constraints=True):
         op.add_column(bw_limit_table_name,
@@ -62,21 +59,12 @@ def expand_drop_exceptions():
 
     Drop the existing QoS policy foreign key uniq constraint and then replace
     it with new unique constraint for pair (policy_id, direction).
-
-    As names of constraints are different in MySQL and PGSQL there is need to
-    add both variants to drop exceptions.
     """
 
     # TODO(slaweq): replace hardcoded constaints names with names get directly
     # from database model after bug
     # https://bugs.launchpad.net/neutron/+bug/1685352 will be closed
     return {
-        sa.ForeignKeyConstraint: [
-            "qos_bandwidth_limit_rules_ibfk_1",  # MySQL name
-            "qos_bandwidth_limit_rules_qos_policy_id_fkey"  # PGSQL name
-        ],
-        sa.UniqueConstraint: [
-            "qos_policy_id",  # MySQL name
-            "qos_bandwidth_limit_rules_qos_policy_id_key"  # PGSQL name
-        ]
+        sa.ForeignKeyConstraint: ["qos_bandwidth_limit_rules_ibfk_1"],
+        sa.UniqueConstraint: ["qos_policy_id"]
     }

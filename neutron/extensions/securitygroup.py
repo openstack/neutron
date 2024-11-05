@@ -14,6 +14,7 @@
 #    under the License.
 
 import abc
+import typing
 
 import netaddr
 from neutron_lib.api import converters
@@ -148,15 +149,12 @@ class SecurityGroupRuleInvalidEtherType(exceptions.InvalidInput):
                 "supported. Allowed values are %(values)s.")
 
 
-def convert_protocol(value):
+def convert_protocol(value) -> typing.Optional[str]:
     if value in _constants.SG_RULE_PROTO_ANY:
-        return
+        return None
     try:
         val = int(value)
         if 0 <= val <= 255:
-            # Set value of protocol number to string due to bug 1381379,
-            # PostgreSQL fails when it tries to compare integer with string,
-            # that exists in db.
             return str(value)
         raise SecurityGroupRuleInvalidProtocol(
             protocol=value, values=sg_supported_protocols)
