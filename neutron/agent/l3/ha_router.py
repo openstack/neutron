@@ -149,10 +149,7 @@ class HaRouter(router.RouterInfo):
         """this method is normally called before the ha_router object is fully
         initialized
         """
-        if self.router.get('_ha_state') == 'active':
-            return True
-        else:
-            return False
+        return bool(self.router.get('_ha_state') == 'active')
 
     def initialize(self, process_monitor):
         ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)

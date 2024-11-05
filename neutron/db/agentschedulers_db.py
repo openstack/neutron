@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import datetime
 import secrets
 import time
@@ -501,9 +502,10 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         network_ids = {s.network_id for s in subnets}
 
         # pre-compute net-id per segments.
-        netsegs = {}
-        [netsegs.setdefault(s['network_id'], []).append(s)
-         for s in segments if 'network_id' in s]
+        netsegs = collections.defaultdict(list)
+        for s in segments:
+            if 'network_id' in s:
+                netsegs[s['network_id']].append(s)
         for network_id in network_ids:
             for segment in netsegs.get(network_id, []):
                 self._schedule_network(
