@@ -20,7 +20,7 @@ from neutron_lib.plugins import directory
 from oslo_config import cfg
 
 from neutron.api.rpc.handlers import l3_rpc
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 
 

@@ -26,7 +26,7 @@ from neutron.extensions import timestamp
 from neutron import manager
 from neutron.objects import network as net_obj
 from neutron.objects import tag as tag_obj
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 class TimeStampExtensionManager:

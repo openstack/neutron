@@ -22,7 +22,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import vlantransparent_db as vlt_db
 from neutron.extensions import vlantransparent as vlt
 from neutron import quota
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 
 

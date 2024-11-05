@@ -32,8 +32,8 @@ from neutron.objects import flavor as flavor_obj
 from neutron.services.flavors import flavors_plugin
 from neutron.services import provider_configuration as provconf
 from neutron.tests import base
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.api.v2 import test_base
-from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit.extensions import base as extension
 

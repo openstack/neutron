@@ -29,7 +29,7 @@ from neutron.objects import subnet as subnet_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.segments import db as segments_db
 from neutron.tests import base
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 class TestIpamBackendMixin(base.BaseTestCase):

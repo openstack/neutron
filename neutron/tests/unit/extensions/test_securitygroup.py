@@ -43,7 +43,7 @@ from neutron.extensions import security_groups_default_rules as \
 from neutron.extensions import securitygroup as ext_sg
 from neutron.extensions import standardattrdescription
 from neutron.tests import base
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_address_group
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_securitygroup.'

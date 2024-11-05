@@ -29,8 +29,8 @@ from neutron.objects import network as net_obj
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.l3_router import l3_router_plugin
 from neutron.tests.common import helpers
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.functional import base
-from neutron.tests.unit.db import test_db_base_plugin_v2
 
 _uuid = uuidutils.generate_uuid
 

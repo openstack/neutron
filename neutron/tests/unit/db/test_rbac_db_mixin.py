@@ -26,7 +26,7 @@ from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
 from neutron.objects import network as network_obj
 from neutron.objects.qos import policy as qos_policy_obj
-from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
+from neutron.tests.common import test_db_base_plugin_v2 as test_plugin
 
 
 class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):

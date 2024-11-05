@@ -20,7 +20,7 @@ from neutron_lib.db import api as db_api
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import port_numa_affinity_policy_db as pnap_db
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 TESTED_POLICIES = (constants.PORT_NUMA_POLICY_REQUIRED,

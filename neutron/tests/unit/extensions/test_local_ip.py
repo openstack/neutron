@@ -22,7 +22,7 @@ from neutron_lib import constants
 import webob.exc
 
 from neutron.extensions import local_ip as lip_ext
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 class LocalIPTestExtensionManager:

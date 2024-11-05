@@ -39,7 +39,7 @@ from neutron.objects import agent as agent_obj
 from neutron.objects import l3agent as rb_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import router as router_obj
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 
 _uuid = uuidutils.generate_uuid

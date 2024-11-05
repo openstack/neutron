@@ -18,7 +18,7 @@ from neutron_lib.db import api as db_api
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import port_device_profile_db as pdp_db
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 class PortDeviceProfileExtensionTestPlugin(

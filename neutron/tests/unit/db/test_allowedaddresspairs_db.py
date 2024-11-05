@@ -25,7 +25,7 @@ from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.extensions import securitygroup as secgroup
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.db.test_allowedaddresspairs_db.'

@@ -28,7 +28,7 @@ import webob.exc
 from neutron.db import address_scope_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import address_scope as ext_address_scope
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_address_scope.'
                    'AddressScopeTestPlugin')

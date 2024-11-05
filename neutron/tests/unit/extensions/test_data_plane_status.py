@@ -24,7 +24,7 @@ from neutron_lib.tests.unit import fake_notifier
 from neutron.db import data_plane_status_db as dps_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import data_plane_status as dps_ext
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 class DataPlaneStatusTestExtensionManager:

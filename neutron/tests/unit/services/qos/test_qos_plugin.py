@@ -43,7 +43,7 @@ from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
 from neutron.services.qos import qos_plugin
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.services.qos import base
 
 

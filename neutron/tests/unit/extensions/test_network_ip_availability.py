@@ -20,7 +20,7 @@ from neutron.api import extensions as api_ext
 from neutron.common import config
 from neutron import extensions
 from neutron.services.network_ip_availability import plugin as plugin_module
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 API_RESOURCE = 'network-ip-availabilities'
 IP_AVAIL_KEY = 'network_ip_availability'

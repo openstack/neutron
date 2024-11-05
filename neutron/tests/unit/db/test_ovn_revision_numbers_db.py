@@ -29,7 +29,7 @@ from neutron.db.models import ovn as ovn_models
 from neutron.db import ovn_revision_numbers_db as ovn_rn_db
 import neutron.extensions
 from neutron.services.revisions import revision_plugin
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_address_group
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup

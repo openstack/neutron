@@ -22,7 +22,7 @@ import webob.exc
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import extradhcpopt_db as edo_db
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 DB_PLUGIN_KLASS = (
