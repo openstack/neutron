@@ -94,6 +94,12 @@ class UnknownResourceType(n_exc.NeutronException):
     message = 'Uknown resource type: %(resource_type)s'
 
 
+# NOTE(ralonsoh): to be moved to neutron-lib
+class RevisionNumberNotDefined(n_exc.NeutronException):
+    message = ('Unique revision number not found for %(resource_uuid)s, '
+               'the resource type is required in query')
+
+
 def _get_standard_attr_id(context, resource_uuid, resource_type):
     try:
         row = context.session.query(STD_ATTR_MAP[resource_type]).filter_by(
@@ -157,14 +163,26 @@ def _ensure_revision_row_exist(context, resource, resource_type, std_attr_id):
 
 
 @db_api.retry_if_session_inactive()
-def get_revision_row(context, resource_uuid):
+@db_api.CONTEXT_READER
+def get_revision_row(context, resource_uuid, resource_type=None):
+    """Retrieve the resource revision number
+
+    Only the Neutron ports can have two revision number registers, one for the
+    Logical_Switch_Port and another for the Logical_Router_Port, if this port
+    is a router interface. It is not strictly needed to filter by resource_type
+    if the resource is not a port.
+    """
     try:
-        with db_api.CONTEXT_READER.using(context):
-            return context.session.query(
-                ovn_models.OVNRevisionNumbers).filter_by(
-                    resource_uuid=resource_uuid).one()
+        filters = {'resource_uuid': resource_uuid}
+        if resource_type:
+            filters['resource_type'] = resource_type
+        return context.session.query(
+            ovn_models.OVNRevisionNumbers).filter_by(
+            **filters).one()
     except exc.NoResultFound:
         pass
+    except exc.MultipleResultsFound:
+        raise RevisionNumberNotDefined(resource_uuid=resource_uuid)
 
 
 @db_api.retry_if_session_inactive()
