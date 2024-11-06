@@ -50,7 +50,6 @@ from neutron.privileged.agent.linux import dhcp as priv_dhcp
 LOG = logging.getLogger(__name__)
 SIGTERM_TIMEOUT = 5
 
-DNS_PORT = 53
 WIN2k3_STATIC_DNS = 249
 NS_PREFIX = 'qdhcp-'
 DNSMASQ_SERVICE_NAME = 'dnsmasq'
@@ -247,8 +246,6 @@ class DhcpBase(metaclass=abc.ABCMeta):
 
 
 class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
-    PORTS = []
-
     # Track running interfaces, indexed by network ID, for example,
     # {net-id-1: set(intf_1, intf_2), net-id-2: set(intf_3, intf_4), ...}
     _interfaces = collections.defaultdict(set)
@@ -434,19 +431,6 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
 
 
 class Dnsmasq(DhcpLocalProcess):
-    # The ports that need to be opened when security policies are active
-    # on the Neutron port used for DHCP.  These are provided as a convenience
-    # for users of this class.
-    PORTS = {constants.IP_VERSION_4:
-             [(constants.PROTO_NAME_UDP, DNS_PORT),
-              (constants.PROTO_NAME_TCP, DNS_PORT),
-              (constants.PROTO_NAME_UDP, constants.DHCP_RESPONSE_PORT)],
-             constants.IP_VERSION_6:
-             [(constants.PROTO_NAME_UDP, DNS_PORT),
-              (constants.PROTO_NAME_TCP, DNS_PORT),
-              (constants.PROTO_NAME_UDP, constants.DHCPV6_RESPONSE_PORT)],
-             }
-
     _SUBNET_TAG_PREFIX = 'subnet-%s'
     _PORT_TAG_PREFIX = 'port-%s'
 
