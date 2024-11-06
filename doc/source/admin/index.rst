@@ -20,4 +20,3 @@ manage OpenStack Networking (neutron).
    migration
    misc
    ovn/index
-   archives/index

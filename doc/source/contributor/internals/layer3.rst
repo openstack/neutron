@@ -246,7 +246,7 @@ For example::
 Provider Networking
 -------------------
 
-Neutron can also be configured to create `provider networks <../../admin/archives/adv-features.html#provider-networks>`_.
+Neutron can also be configured to create provider networks.
 
 L3 agent extensions
 -------------------
