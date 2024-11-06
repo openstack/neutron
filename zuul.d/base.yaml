@@ -117,35 +117,6 @@
       - ^zuul.d/tempest-singlenode.yaml
 
 - job:
-    name: neutron-tox-mypy
-    parent: openstack-tox
-    vars:
-      tox_envlist: mypy
-    irrelevant-files:
-      - ^\.pre-commit-config\.yaml$
-      - ^\.pylintrc$
-      - ^releasenotes/.*$
-      - ^doc/.*$
-      - ^setup.cfg$
-      - ^plugin.spec$
-      - ^tools/ovn_migration/.*$
-      - ^.*\.conf\.sample$
-      - ^.*\.rst$
-      - ^neutron/locale/.*$
-      - ^vagrant/.*$
-      - ^devstack/.*$
-      - ^playbooks/.*$
-      - ^roles/.*$
-      - ^rally-jobs/.*$
-      # Ignore everything except for zuul.d/project.yaml
-      - ^zuul.d/base.yaml
-      - ^zuul.d/grenade.yaml
-      - ^zuul.d/job-templates.yaml
-      - ^zuul.d/rally.yaml
-      - ^zuul.d/tempest-multinode.yaml
-      - ^zuul.d/tempest-singlenode.yaml
-
-- job:
     name: neutron-fullstack-with-uwsgi
     parent: neutron-fullstack
     vars:
