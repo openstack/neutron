@@ -181,8 +181,7 @@ class NeutronManager(metaclass=profiler.TracedMeta):
         core_plugin = directory.get_plugin()
         if core_plugin.has_native_datastore():
             return constants.DEFAULT_SERVICE_PLUGINS.keys()
-        else:
-            return []
+        return []
 
     def _load_service_plugins(self):
         """Loads service plugins.

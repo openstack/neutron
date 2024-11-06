@@ -305,12 +305,11 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
 
     @staticmethod
     def _get_expected_burst_value(limit, direction):
+        if direction != constants.EGRESS_DIRECTION:
+            return 0
         # For egress bandwidth limit this value should be calculated as
         # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
-        if direction == constants.EGRESS_DIRECTION:
-            return TestBwLimitQoSOvs._get_expected_egress_burst_value(limit)
-        else:
-            return 0
+        return TestBwLimitQoSOvs._get_expected_egress_burst_value(limit)
 
     def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
         if direction == constants.EGRESS_DIRECTION:

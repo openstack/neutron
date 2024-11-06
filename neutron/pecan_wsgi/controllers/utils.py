@@ -307,12 +307,11 @@ class ShimItemController(NeutronPecanController):
             result = method(shim_request, **kwargs)
             self._set_response_code(result, self.item)
             return result
-        elif not self.controller_show:
-            pecan.abort(405)
-        else:
+        if self.controller_show:
             result = self.controller_show(shim_request, self.item, **kwargs)
             self._set_response_code(result, 'show')
             return result
+        pecan.abort(405)
 
     @when_delete(index)
     def delete(self):

@@ -105,9 +105,9 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         if 'bridge_mappings' in agent['configurations']:
             return {k: [v] for k, v in
                     agent['configurations']['bridge_mappings'].items()}
-        else:
-            raise ValueError(_('Cannot standardize bridge mappings of agent '
-                               'type: %s'), agent['agent_type'])
+        raise ValueError(
+            _('Cannot standardize bridge mappings of agent type: %s'),
+            agent['agent_type'])
 
     def check_vlan_transparency(self, context):
         """Currently Openvswitch driver doesn't support vlan transparency."""

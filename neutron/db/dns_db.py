@@ -134,21 +134,20 @@ class DNSDbMixin:
             self._get_requested_state_for_external_dns_service_update(
                 context, floatingip_data))
         if dns_data_db:
-            if (dns_data_db['published_dns_name'] != current_dns_name or
-                    dns_data_db['published_dns_domain'] != current_dns_domain):
-                dns_actions_data = DNSActionsData(
-                    previous_dns_name=dns_data_db['published_dns_name'],
-                    previous_dns_domain=dns_data_db['published_dns_domain'])
-                if current_dns_name and current_dns_domain:
-                    dns_data_db['published_dns_name'] = current_dns_name
-                    dns_data_db['published_dns_domain'] = current_dns_domain
-                    dns_actions_data.current_dns_name = current_dns_name
-                    dns_actions_data.current_dns_domain = current_dns_domain
-                else:
-                    dns_data_db.delete()
-                return dns_actions_data
-            else:
+            if (dns_data_db['published_dns_name'] == current_dns_name and
+                    dns_data_db['published_dns_domain'] == current_dns_domain):
                 return
+            dns_actions_data = DNSActionsData(
+                previous_dns_name=dns_data_db['published_dns_name'],
+                previous_dns_domain=dns_data_db['published_dns_domain'])
+            if current_dns_name and current_dns_domain:
+                dns_data_db['published_dns_name'] = current_dns_name
+                dns_data_db['published_dns_domain'] = current_dns_domain
+                dns_actions_data.current_dns_name = current_dns_name
+                dns_actions_data.current_dns_domain = current_dns_domain
+            else:
+                dns_data_db.delete()
+            return dns_actions_data
         if current_dns_name and current_dns_domain:
             fip_obj.FloatingIPDNS(
                 context,

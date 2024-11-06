@@ -190,8 +190,7 @@ def ovn_context(txn_var_name='txn', idl_var_name='idl'):
                     else:
                         kwargs[txn_var_name] = new_txn
                     return f(*args, **kwargs)
-            else:
-                return f(*args, **kwargs)
+            return f(*args, **kwargs)
         return wrapped
     return decorator
 
@@ -561,8 +560,7 @@ def get_revision_number(resource, resource_type):
                          constants.TYPE_ADDRESS_GROUPS,
                          constants.TYPE_FLOATINGIPS, constants.TYPE_SUBNETS):
         return resource['revision_number']
-    else:
-        raise ovn_exc.UnknownResourceType(resource_type=resource_type)
+    raise ovn_exc.UnknownResourceType(resource_type=resource_type)
 
 
 def remove_macs_from_lsp_addresses(addresses):
@@ -635,7 +633,7 @@ def sort_ips_by_version(addresses):
 def is_lsp_router_port(neutron_port=None, lsp=None):
     if neutron_port:
         return neutron_port.get('device_owner') in const.ROUTER_PORT_OWNERS
-    elif lsp:
+    if lsp:
         return (lsp.external_ids.get(constants.OVN_DEVICE_OWNER_EXT_ID_KEY) in
                 const.ROUTER_PORT_OWNERS)
     return False
@@ -760,11 +758,11 @@ def is_gateway_chassis_invalid(chassis_name, gw_chassis,
     """
     if chassis_name not in chassis_physnets:
         return True
-    elif physnet and physnet not in chassis_physnets.get(chassis_name):
+    if physnet and physnet not in chassis_physnets.get(chassis_name):
         return True
-    elif gw_chassis and chassis_name not in gw_chassis:
+    if gw_chassis and chassis_name not in gw_chassis:
         return True
-    elif az_hints and not set(az_hints) & set(chassis_with_azs.get(
+    if az_hints and not set(az_hints) & set(chassis_with_azs.get(
             chassis_name, [])):
         return True
     return False

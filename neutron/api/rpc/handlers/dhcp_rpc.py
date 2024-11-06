@@ -116,11 +116,9 @@ class DhcpRpcCallback:
         try:
             if action == 'create_port':
                 return p_utils.create_port(plugin, context, port)
-            elif action == 'update_port':
+            if action == 'update_port':
                 return plugin.update_port(context, port['id'], port)
-            else:
-                msg = _('Unrecognized action')
-                raise exceptions.Invalid(message=msg)
+            raise exceptions.Invalid(message=_('Unrecognized action'))
         except (db_exc.DBReferenceError,
                 exceptions.NetworkNotFound,
                 exceptions.SubnetNotFound,
@@ -134,10 +132,9 @@ class DhcpRpcCallback:
                     try:
                         subnet_id = port['port']['fixed_ips'][0]['subnet_id']
                         plugin.get_subnet(context, subnet_id)
+                        ctxt.reraise = True
                     except exceptions.SubnetNotFound:
                         pass
-                    else:
-                        ctxt.reraise = True
                 if ctxt.reraise:
                     net_id = port['port']['network_id']
                     LOG.warning("Action %(action)s for network %(net_id)s "

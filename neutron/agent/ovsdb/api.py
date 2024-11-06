@@ -21,8 +21,8 @@ def val_to_py(val):
     if isinstance(val, abc.Sequence) and len(val) == 2:
         if val[0] == "uuid":
             return uuid.UUID(val[1])
-        elif val[0] == "set":
+        if val[0] == "set":
             return [val_to_py(x) for x in val[1]]
-        elif val[0] == "map":
+        if val[0] == "map":
             return {val_to_py(x): val_to_py(y) for x, y in val[1]}
     return val

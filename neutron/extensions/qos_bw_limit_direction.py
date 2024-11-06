@@ -76,5 +76,4 @@ class Qos_bw_limit_direction(api_extensions.ExtensionDescriptor):
     def get_extended_resources(self, version):
         if version == "2.0":
             return SUB_RESOURCE_ATTRIBUTE_MAP
-        else:
-            return {}
+        return {}

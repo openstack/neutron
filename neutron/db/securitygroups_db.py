@@ -101,13 +101,13 @@ class SecurityGroupDbMixin(
         tenant_id = s['tenant_id']
         stateful = s.get('stateful', True)
 
-        if not default_sg:
-            self._ensure_default_security_group(context, tenant_id)
-        else:
+        if default_sg:
             existing_def_sg_id = self._get_default_sg_id(context, tenant_id)
             if existing_def_sg_id is not None:
                 # default already exists, return it
                 return self.get_security_group(context, existing_def_sg_id)
+        else:
+            self._ensure_default_security_group(context, tenant_id)
 
         with db_api.CONTEXT_WRITER.using(context):
             if default_sg:
@@ -727,7 +727,7 @@ class SecurityGroupDbMixin(
                 protocol = str(constants.PROTO_NUM_IPV6_ICMP)
         if protocol in constants.IP_PROTOCOL_MAP:
             return [protocol, str(constants.IP_PROTOCOL_MAP.get(protocol))]
-        elif protocol in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
+        if protocol in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
             return [constants.IP_PROTOCOL_NUM_TO_NAME_MAP.get(protocol),
                     protocol]
         return [protocol, protocol]
@@ -754,13 +754,11 @@ class SecurityGroupDbMixin(
                 ip_proto in const.SG_PORT_PROTO_NAMES):
             if rule['port_range_min'] == 0 or rule['port_range_max'] == 0:
                 raise ext_sg.SecurityGroupInvalidPortValue(port=0)
-            if (rule['port_range_min'] is not None and
+            if not (rule['port_range_min'] is not None and
                     rule['port_range_max'] is not None and
                     rule['port_range_min'] <= rule['port_range_max']):
-                # When min/max are the same it is just a single port
-                pass
-            else:
                 raise ext_sg.SecurityGroupInvalidPortRange()
+            # When min/max are the same it is just a single port
         elif ip_proto in [constants.PROTO_NUM_ICMP,
                           constants.PROTO_NUM_IPV6_ICMP]:
             for attr, field in [('port_range_min', 'type'),

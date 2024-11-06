@@ -120,15 +120,15 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
                 raw_headers = machine.execute(cmd)
                 break
             except RuntimeError as e:
-                if 'Connection refused' in str(e):
-                    time.sleep(METADATA_REQUEST_SLEEP)
-                    i += METADATA_REQUEST_SLEEP
-                else:
+                if 'Connection refused' not in str(e):
                     if router:
                         self._log_router_interfaces_configuration(router)
 
-                    self.fail('metadata proxy unreachable '
-                              'on %s before timeout' % cmd[-1])
+                    self.fail(
+                        'metadata proxy unreachable on %s before timeout' %
+                        cmd[-1])
+                time.sleep(METADATA_REQUEST_SLEEP)
+                i += METADATA_REQUEST_SLEEP
 
         if i > CONNECTION_REFUSED_TIMEOUT:
             self.fail('Timed out waiting metadata proxy to become available')

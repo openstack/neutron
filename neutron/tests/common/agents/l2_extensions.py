@@ -114,8 +114,7 @@ def wait_until_pkt_meter_rule_applied_ovs(bridge, port_vif, port_id,
                                           dl_dst=str(mac))
         if mac:
             return bool(flows) and meter_id
-        else:
-            return not bool(flows) and not meter_id
+        return not bool(flows) and not meter_id
 
     common_utils.wait_until_true(_pkt_rate_limit_rule_applied)
 

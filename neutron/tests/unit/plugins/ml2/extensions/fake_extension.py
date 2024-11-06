@@ -62,5 +62,4 @@ class Fake_extension(extensions.ExtensionDescriptor):
     def get_extended_resources(self, version):
         if version == "2.0":
             return EXTENDED_ATTRIBUTES_2_0
-        else:
-            return {}
+        return {}

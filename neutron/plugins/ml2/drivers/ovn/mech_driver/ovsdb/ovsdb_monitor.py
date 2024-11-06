@@ -151,7 +151,7 @@ class ChassisEvent(row_event.RowEvent):
                             self.driver.nb_ovn.ha_chassis_group_del_chassis(
                                 hcg.name, row.name, if_exists=True))
                 return
-            elif not is_gw_chassis and is_old_gw:
+            if not is_gw_chassis and is_old_gw:
                 # Chassis is not a gateway anymore, treat it as deletion
                 event = self.ROW_DELETE
             elif is_gw_chassis and not is_old_gw:

@@ -40,8 +40,7 @@ def get_inspector():
     if _INSPECTOR:
         return _INSPECTOR
 
-    else:
-        _INSPECTOR = sa.inspect(op.get_bind())
+    _INSPECTOR = sa.inspect(op.get_bind())
 
     return _INSPECTOR
 

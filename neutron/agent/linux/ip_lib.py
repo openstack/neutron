@@ -125,12 +125,11 @@ class SubProcessBase:
     def _run(self, options, command, args):
         if self.namespace:
             return self._as_root(options, command, args)
-        elif self.force_root:
+        if self.force_root:
             # Force use of the root helper to ensure that commands
             # will execute in dom0 when running under XenServer/XCP.
             return self._execute(options, command, args, run_as_root=True)
-        else:
-            return self._execute(options, command, args)
+        return self._execute(options, command, args)
 
     def _as_root(self, options, command, args, use_root_namespace=False):
         namespace = self.namespace if not use_root_namespace else None
@@ -580,7 +579,7 @@ class IpAddrCommand(IpDeviceCommandBase):
             for filter in filters:
                 if filter == 'permanent' and device['dynamic']:
                     return False
-                elif not device[filter]:
+                if not device[filter]:
                     return False
             return True
 
@@ -803,7 +802,8 @@ def device_exists(device_name, namespace=None):
     return IPDevice(device_name, namespace=namespace).exists()
 
 
-def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
+def device_exists_with_ips_and_mac(device_name, ip_cidrs,
+                                   mac, namespace=None) -> bool:
     """Return True if the device with the given IP addresses and MAC address
     exists in the namespace.
     """
@@ -811,14 +811,10 @@ def device_exists_with_ips_and_mac(device_name, ip_cidrs, mac, namespace=None):
         device = IPDevice(device_name, namespace=namespace)
         if mac and mac != device.link.address:
             return False
-        device_ip_cidrs = [ip['cidr'] for ip in device.addr.list()]
-        for ip_cidr in ip_cidrs:
-            if ip_cidr not in device_ip_cidrs:
-                return False
+        device_ip_cidrs = {ip['cidr'] for ip in device.addr.list()}
     except RuntimeError:
         return False
-    else:
-        return True
+    return not bool(set(ip_cidrs) - device_ip_cidrs)
 
 
 def get_device_mac(device_name, namespace=None):
@@ -986,8 +982,7 @@ def list_network_namespaces(**kwargs):
     """
     if cfg.CONF.AGENT.use_helper_for_ns_read:
         return privileged.list_netns(**kwargs)
-    else:
-        return netns.listnetns(**kwargs)
+    return netns.listnetns(**kwargs)
 
 
 def network_namespace_exists(namespace, try_is_ready=False, **kwargs):
@@ -1006,8 +1001,7 @@ def network_namespace_exists(namespace, try_is_ready=False, **kwargs):
         nspath += '/' + namespace
         if cfg.CONF.AGENT.use_helper_for_ns_read:
             return priv_utils.path_exists(nspath)
-        else:
-            return path.exists(nspath)
+        return path.exists(nspath)
 
     try:
         privileged.open_namespace(namespace)
@@ -1601,9 +1595,9 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
     def get_proto(proto_number):
         if isinstance(proto_number, int) and proto_number in rtnl.rt_proto:
             return rtnl.rt_proto[proto_number]
-        elif isinstance(proto_number, str) and proto_number.isnumeric():
+        if isinstance(proto_number, str) and proto_number.isnumeric():
             return rtnl.rt_proto[int(proto_number)]
-        elif str(proto_number) in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
+        if str(proto_number) in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
             return constants.IP_PROTOCOL_NUM_TO_NAME_MAP[str(proto_number)]
 
     table = table if table else 'main'

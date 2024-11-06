@@ -35,8 +35,7 @@ def context_if_transaction(context, transaction, writer=True):
     if transaction:
         return (db_api.CONTEXT_WRITER.using(context) if writer else
                 db_api.CONTEXT_READER.using(context))
-    else:
-        return _noop_context_manager()
+    return _noop_context_manager()
 
 
 def safe_creation(context, create_fn, delete_fn, create_bindings,

@@ -1379,7 +1379,7 @@ class OVNClient:
             route_bfd = getattr(route, 'bfd', [])
             if router_default_route_bfd and not route_bfd:
                 return True
-            elif route_bfd and not router_default_route_bfd:
+            if route_bfd and not router_default_route_bfd:
                 return True
 
         return False

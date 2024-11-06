@@ -225,8 +225,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
     def _dvr_dst_mac_table_id(network_type):
         if network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             return constants.ARP_DVR_MAC_TO_DST_MAC_PHYSICAL
-        else:
-            return constants.ARP_DVR_MAC_TO_DST_MAC
+        return constants.ARP_DVR_MAC_TO_DST_MAC
 
     def install_dvr_dst_mac_for_arp(self, network_type,
                                     vlan_tag, gateway_mac, dvr_mac, rtr_port):
@@ -262,8 +261,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
     def _dvr_to_src_mac_table_id(network_type):
         if network_type in constants.DVR_PHYSICAL_NETWORK_TYPES:
             return constants.DVR_TO_SRC_MAC_PHYSICAL
-        else:
-            return constants.DVR_TO_SRC_MAC
+        return constants.DVR_TO_SRC_MAC
 
     def install_dvr_to_src_mac(self, network_type,
                                vlan_tag, gateway_mac, dst_mac, dst_port):

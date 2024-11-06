@@ -114,11 +114,11 @@ class ResourceValidateRequest:
         log_plugin = directory.get_plugin(alias=plugin_const.LOG_API)
         supported_logging_types = log_plugin.supported_logging_types
 
-        if resource_type in supported_logging_types:
-            method = self.get_validated_method(resource_type)
-            method(context, log_data)
-        else:
+        if resource_type not in supported_logging_types:
             raise log_exc.InvalidLogResourceType(resource_type=resource_type)
+
+        method = self.get_validated_method(resource_type)
+        method(context, log_data)
 
     def get_validated_method(self, resource_type):
         """Get the validated method for resource_type"""

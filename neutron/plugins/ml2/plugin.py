@@ -490,8 +490,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 orig_port['device_id'] != ''):
             port['mac_address'] = self._generate_macs()[0]
             return True
-        else:
-            return False
+        return False
 
     @registry.receives(resources.AGENT, [events.AFTER_UPDATE])
     def _retry_binding_revived_agents(self, resource, event, trigger,
@@ -2507,13 +2506,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     return port
             LOG.debug("No binding found for DVR port %s", port['id'])
             return
-        else:
-            port_host = db.get_port_binding_host(context, port_id)
-            ret_val = port if (port_host == host) else None
-            if not ret_val:
-                LOG.debug('The host %s is not matching for port %s host %s!',
-                          host, port_id, port_host)
-            return ret_val
+        port_host = db.get_port_binding_host(context, port_id)
+        if port_host == host:
+            return port
+        LOG.debug('The host %s is not matching for port %s host %s!',
+                  host, port_id, port_host)
 
     @db_api.retry_if_session_inactive()
     def get_ports_from_devices(self, context, devices):

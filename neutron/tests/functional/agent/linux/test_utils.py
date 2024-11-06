@@ -197,8 +197,7 @@ line 4
         content = cls.FILE.encode('ascii')
         if run_as_root:
             return priv_utils.write_to_tempfile(content, _path=path)
-        else:
-            return fileutils.write_to_tempfile(content, path=path)
+        return fileutils.write_to_tempfile(content, path=path)
 
     def test_read_if_exists(self):
         test_file_path = self._write_file(run_as_root=self.run_as_root)

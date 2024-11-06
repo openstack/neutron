@@ -134,8 +134,7 @@ class TrunkPortValidator:
             raise trunk_exc.TrunkPluginDriverConflict()
         if len(drivers) == 1:
             return drivers[0].can_trunk_bound_port
-        else:
-            return False
+        return False
 
     def check_not_in_use(self, context):
         """Raises PortInUse for ports assigned for device purposes."""
@@ -167,13 +166,13 @@ class SubPortsValidator:
             if msg:
                 raise n_exc.InvalidInput(error_message=msg)
 
-        if trunk_validation:
-            trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
-            subport_mtus = self._prepare_subports(context)
-            return [self._validate(context, s, trunk_port_mtu, subport_mtus)
-                    for s in self.subports]
-        else:
+        if not trunk_validation:
             return self.subports
+
+        trunk_port_mtu = self._get_port_mtu(context, self.trunk_port_id)
+        subport_mtus = self._prepare_subports(context)
+        return [self._validate(context, s, trunk_port_mtu, subport_mtus)
+                for s in self.subports]
 
     def _prepare_subports(self, context):
         """Utility method to parse subports in the request

@@ -730,8 +730,7 @@ class Controller:
             LOG.debug("%(url)s returned with HTTP %(status)d",
                       dict(url=req.url, status=response.status_int))
             return response
-        else:
-            return result
+        return result
 
     def _serialize(self, data, content_type):
         """Serialize the given dict to the provided content_type.

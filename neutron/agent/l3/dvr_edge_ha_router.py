@@ -31,8 +31,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
     """
 
     def __init__(self, host, *args, **kwargs):
-        super().__init__(host,
-                         *args, **kwargs)
+        super().__init__(host, *args, **kwargs)
         self.enable_snat = None
 
     @property
@@ -85,16 +84,13 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         self.set_ha_port()
         if (self.is_router_primary() and self.ha_port and
                 self.ha_port['status'] == constants.PORT_STATUS_ACTIVE):
-            return super().add_centralized_floatingip(
-                fip, fip_cidr)
-        else:
-            return constants.FLOATINGIP_STATUS_ACTIVE
+            return super().add_centralized_floatingip(fip, fip_cidr)
+        return constants.FLOATINGIP_STATUS_ACTIVE
 
     def remove_centralized_floatingip(self, fip_cidr):
         self._remove_vip(fip_cidr)
         if self.is_router_primary():
-            super().remove_centralized_floatingip(
-                fip_cidr)
+            super().remove_centralized_floatingip(fip_cidr)
 
     def get_centralized_fip_cidr_set(self):
         ex_gw_port = self.get_ex_gw_port()
@@ -105,8 +101,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         return set(self._get_cidrs_from_keepalived(interface_name))
 
     def external_gateway_added(self, ex_gw_port, interface_name):
-        super().external_gateway_added(
-            ex_gw_port, interface_name)
+        super().external_gateway_added(ex_gw_port, interface_name)
         for port in self.get_snat_interfaces():
             snat_interface_name = self._get_snat_int_device_name(port['id'])
             self._disable_ipv6_addressing_on_interface(snat_interface_name)
@@ -124,8 +119,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
                                namespace=self.ha_namespace,
                                prefix=constants.SNAT_INT_DEV_PREFIX)
             self._clear_vips(snat_interface)
-        super()._external_gateway_removed(
-            ex_gw_port, interface_name)
+        super()._external_gateway_removed(ex_gw_port, interface_name)
         self._clear_vips(interface_name)
 
     def external_gateway_updated(self, ex_gw_port, interface_name):

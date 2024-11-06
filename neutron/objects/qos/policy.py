@@ -97,7 +97,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     def obj_load_attr(self, attrname):
         if attrname == 'rules':
             return self._reload_rules()
-        elif attrname == 'is_default':
+        if attrname == 'is_default':
             return self._reload_is_default()
         return super().obj_load_attr(attrname)
 

@@ -816,9 +816,8 @@ class OVSBridge(BaseOVS):
         address = ip_lib.IPDevice(self.br_name).link.address
         if address:
             return address
-        else:
-            msg = _('Unable to determine mac address for %s') % self.br_name
-            raise Exception(msg)
+        msg = _('Unable to determine mac address for %s') % self.br_name
+        raise Exception(msg)
 
     def set_controllers_inactivity_probe(self, interval):
         """Set bridge controllers inactivity probe interval.
@@ -1264,7 +1263,7 @@ class OVSBridge(BaseOVS):
                                           if_exists=True) or []
         if port_type is None:
             return ports
-        elif not isinstance(port_type, list):
+        if not isinstance(port_type, list):
             port_type = [port_type]
         return [port['name'] for port in ports if port['type'] in port_type]
 
@@ -1438,9 +1437,8 @@ def generate_random_cookie():
 def check_cookie_mask(cookie):
     cookie = str(cookie)
     if '/' not in cookie:
-        return cookie + '/-1'
-    else:
-        return cookie
+        cookie += '/-1'
+    return cookie
 
 
 def is_a_flow_line(line):

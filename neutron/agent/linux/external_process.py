@@ -157,10 +157,8 @@ class ProcessManager(MonitoredProcess):
         """Returns the file name for a given kind of config file."""
         if self.pid_file:
             return self.pid_file
-        else:
-            return utils.get_conf_file_name(self.pids_path,
-                                            self.uuid,
-                                            self.service_pid_fname)
+        return utils.get_conf_file_name(
+            self.pids_path, self.uuid, self.service_pid_fname)
 
     @property
     def pid(self):

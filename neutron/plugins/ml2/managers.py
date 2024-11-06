@@ -76,12 +76,11 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def _check_tenant_network_types(self, types):
         self.tenant_network_types = []
         for network_type in types:
-            if network_type in self.drivers:
-                self.tenant_network_types.append(network_type)
-            else:
+            if network_type not in self.drivers:
                 LOG.error("No type driver for tenant network_type: %s. "
                           "Service terminated!", network_type)
                 raise SystemExit(1)
+            self.tenant_network_types.append(network_type)
         LOG.info("Tenant network_types: %s", self.tenant_network_types)
 
     def _check_external_network_type(self, ext_network_type):
@@ -114,11 +113,11 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 raise mpnet_exc.SegmentsSetInConjunctionWithProviders()
             segment = self._get_provider_segment(network)
             return [self._process_provider_segment(segment)]
-        elif validators.is_attr_set(network.get(mpnet_apidef.SEGMENTS)):
+        if validators.is_attr_set(network.get(mpnet_apidef.SEGMENTS)):
             segments = [self._process_provider_segment(s)
                         for s in network[mpnet_apidef.SEGMENTS]]
-            mpnet_apidef.check_duplicate_segments(
-                segments, self.is_partial_segment)
+            mpnet_apidef.check_duplicate_segments(segments,
+                                                  self.is_partial_segment)
             return segments
 
     def _match_segment(self, segment, filters):
@@ -290,20 +289,18 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def is_partial_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]
         driver = self.drivers.get(network_type)
-        if driver:
-            return driver.obj.is_partial_segment(segment)
-        else:
+        if not driver:
             msg = _("network_type value '%s' not supported") % network_type
             raise exc.InvalidInput(error_message=msg)
+        return driver.obj.is_partial_segment(segment)
 
     def validate_provider_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]
         driver = self.drivers.get(network_type)
-        if driver:
-            driver.obj.validate_provider_segment(segment)
-        else:
+        if not driver:
             msg = _("network_type value '%s' not supported") % network_type
             raise exc.InvalidInput(error_message=msg)
+        driver.obj.validate_provider_segment(segment)
 
     def reserve_provider_segment(self, context, segment, filters=None):
         network_type = segment.get(api.NETWORK_TYPE)
@@ -311,16 +308,13 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         if isinstance(driver.obj, api.TypeDriver):
             return driver.obj.reserve_provider_segment(context.session,
                                                        segment, filters)
-        else:
-            return driver.obj.reserve_provider_segment(context,
-                                                       segment, filters)
+        return driver.obj.reserve_provider_segment(context, segment, filters)
 
     def _allocate_segment(self, context, network_type, filters=None):
         driver = self.drivers.get(network_type)
         if isinstance(driver.obj, api.TypeDriver):
             return driver.obj.allocate_tenant_segment(context.session, filters)
-        else:
-            return driver.obj.allocate_tenant_segment(context, filters)
+        return driver.obj.allocate_tenant_segment(context, filters)
 
     def _allocate_tenant_net_segment(self, context, filters=None):
         for network_type in self.tenant_network_types:
@@ -887,13 +881,12 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                         if self._bind_port_level(context, level + 1,
                                                  next_segments):
                             return True
-                        else:
-                            LOG.warning("Failed to bind port %(port)s on "
-                                        "host %(host)s at level %(lvl)s",
-                                        {'port': context.current['id'],
-                                         'host': context.host,
-                                         'lvl': level + 1})
-                            context._pop_binding_level()
+                        LOG.warning("Failed to bind port %(port)s on "
+                                    "host %(host)s at level %(lvl)s",
+                                    {'port': context.current['id'],
+                                     'host': context.host,
+                                     'lvl': level + 1})
+                        context._pop_binding_level()
                     else:
                         # NOTE(bence romsics): Consider: "In case of
                         # hierarchical port binding binding_profile.allocation

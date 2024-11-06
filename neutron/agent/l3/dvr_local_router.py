@@ -326,15 +326,14 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 elif operation == 'delete':
                     device.neigh.delete(ip, mac)
                 return True
-            else:
-                if operation == 'add':
-                    LOG.warning("Device %s does not exist so ARP entry "
-                                "cannot be updated, will cache "
-                                "information to be applied later "
-                                "when the device exists",
-                                device)
-                    self._cache_arp_entry(ip, mac, subnet_id, operation)
-                return False
+            if operation == 'add':
+                LOG.warning("Device %s does not exist so ARP entry "
+                            "cannot be updated, will cache "
+                            "information to be applied later "
+                            "when the device exists",
+                            device)
+                self._cache_arp_entry(ip, mac, subnet_id, operation)
+            return False
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.exception("DVR: Failed updating arp entry")
@@ -493,8 +492,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if is_add:
                 exc = 'DVR: error adding redirection logic'
             else:
-                exc = ('DVR: snat remove failed to clear the rule '
-                       'and device')
+                exc = 'DVR: snat remove failed to clear the rule and device'
             LOG.exception(exc)
 
     def _snat_redirect_add(self, gateway, sn_port, sn_int):

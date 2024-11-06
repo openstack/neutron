@@ -180,8 +180,7 @@ class Notifier:
         if port and self._is_compute_port(port):
             if action == 'delete_port':
                 return self._get_port_delete_event(port)
-            else:
-                return self._get_network_changed_event(port)
+            return self._get_network_changed_event(port)
 
     def _can_notify(self, port):
         if getattr(_notifier_store, 'enable', None) is None:

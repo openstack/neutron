@@ -81,12 +81,9 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             # SNAT might be rescheduled to this agent; need to process like
             # newly created gateway
             return self.external_gateway_added(ex_gw_port, interface_name)
-        else:
-            preserve_ips = self._list_centralized_floating_ip_cidrs()
-            self._external_gateway_added(ex_gw_port,
-                                         interface_name,
-                                         self.snat_namespace.name,
-                                         preserve_ips)
+        preserve_ips = self._list_centralized_floating_ip_cidrs()
+        self._external_gateway_added(
+            ex_gw_port, interface_name, self.snat_namespace.name, preserve_ips)
 
     def _external_gateway_removed(self, ex_gw_port, interface_name):
         super().external_gateway_removed(ex_gw_port,
@@ -250,9 +247,8 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             # namespace and Router Namespace, to reduce the complexity.
             if self.snat_namespace.exists():
                 return True
-            else:
-                LOG.error("The SNAT namespace %s does not exist for "
-                          "the router.", self.snat_namespace.name)
+            LOG.error("The SNAT namespace %s does not exist for the router.",
+                      self.snat_namespace.name)
         return False
 
     def update_routing_table(self, operation, route):

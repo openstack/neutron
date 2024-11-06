@@ -55,7 +55,6 @@ class NetworkIPAvailabilityPlugin(ip_availability_db.IpAvailabilityMixin,
         """Return ip availability data for a specific network id."""
         filters = {'network_id': [id]}
         result = self.get_network_ip_availabilities(context, filters)
-        if result:
-            return db_utils.resource_fields(result[0], fields)
-        else:
+        if not result:
             raise exceptions.NetworkNotFound(net_id=id)
+        return db_utils.resource_fields(result[0], fields)

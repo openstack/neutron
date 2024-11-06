@@ -271,9 +271,8 @@ class PortContext(MechanismDriverContext, api.PortContext):
         # resolving bug 1367391?
         if self._port['device_owner'] == constants.DEVICE_OWNER_DVR_INTERFACE:
             return self._original_port and self._binding.host
-        else:
-            return (self._original_port and
-                    self._original_port.get(portbindings.HOST_ID))
+        return (self._original_port and
+                self._original_port.get(portbindings.HOST_ID))
 
     @property
     def vif_type(self):

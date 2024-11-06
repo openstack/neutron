@@ -108,8 +108,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
     def _api_for_resource(self, resource):
         if resource in ['security-groups']:
             return self._sg_api
-        else:
-            return super()._api_for_resource(resource)
+        return super()._api_for_resource(resource)
 
     def _create_resources(self, restart_ovsdb_processes=False):
         net_kwargs = {dns_apidef.DNSDOMAIN: 'ovn.test.'}

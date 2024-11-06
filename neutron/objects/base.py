@@ -733,13 +733,11 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
         if cls.has_standard_attributes():
             return super().update_object(
                 context, values, validate_filters=False, **kwargs)
-        else:
-            with cls.db_context_writer(context):
-                db_obj = obj_db_api.update_object(
-                    cls, context,
-                    cls.modify_fields_to_db(values),
-                    **cls.modify_fields_to_db(kwargs))
-                return cls._load_object(context, db_obj)
+        with cls.db_context_writer(context):
+            db_obj = obj_db_api.update_object(
+                cls, context, cls.modify_fields_to_db(values),
+                **cls.modify_fields_to_db(kwargs))
+            return cls._load_object(context, db_obj)
 
     @classmethod
     def update_objects(cls, context, values, validate_filters=True, **kwargs):

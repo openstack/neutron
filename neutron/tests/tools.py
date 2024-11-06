@@ -221,12 +221,9 @@ def get_random_ip_address(version=4):
                                      random.randint(3, 254),
                                      random.randint(3, 254))
         return netaddr.IPAddress(ip_string)
-    else:
-        ip = netutils.get_ipv6_addr_by_EUI64(
-            '2001:db8::/64',
-            net.get_random_mac(['fe', '16', '3e', '00', '00', '00'])
-        )
-        return ip
+    return netutils.get_ipv6_addr_by_EUI64(
+        '2001:db8::/64',
+        net.get_random_mac(['fe', '16', '3e', '00', '00', '00']))
 
 
 def get_random_router_status():

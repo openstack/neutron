@@ -210,9 +210,8 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
     def get_vxlan_device_name(segmentation_id):
         if 0 <= int(segmentation_id) <= constants.MAX_VXLAN_VNI:
             return VXLAN_INTERFACE_PREFIX + str(segmentation_id)
-        else:
-            LOG.warning("Invalid Segmentation ID: %s, will lead to "
-                        "incorrect vxlan device name", segmentation_id)
+        LOG.warning("Invalid Segmentation ID: %s, will lead to "
+                    "incorrect vxlan device name", segmentation_id)
 
     @staticmethod
     def _match_multicast_range(segmentation_id):
@@ -249,10 +248,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         interface = self.ensure_vlan(physical_interface, vlan_id)
         if phy_bridge_name:
             return self.ensure_bridge(phy_bridge_name)
-        else:
-            bridge_name = self.get_bridge_name(network_id)
-            if self.ensure_bridge(bridge_name, interface):
-                return interface
+        bridge_name = self.get_bridge_name(network_id)
+        if self.ensure_bridge(bridge_name, interface):
+            return interface
 
     def ensure_vxlan_bridge(self, network_id, segmentation_id, mtu):
         """Create a vxlan and bridge unless they already exist."""
@@ -281,10 +279,9 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         """Create a non-vlan bridge unless it already exists."""
         if phy_bridge_name:
             return self.ensure_bridge(phy_bridge_name)
-        else:
-            bridge_name = self.get_bridge_name(network_id)
-            if self.ensure_bridge(bridge_name, physical_interface):
-                return physical_interface
+        bridge_name = self.get_bridge_name(network_id)
+        if self.ensure_bridge(bridge_name, physical_interface):
+            return physical_interface
 
     def ensure_local_bridge(self, network_id, phy_bridge_name):
         """Create a local bridge unless it already exists."""
@@ -494,14 +491,13 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         if network_type == constants.TYPE_FLAT:
             return self.ensure_flat_bridge(network_id, physical_bridge,
                                            physical_interface)
-        elif network_type == constants.TYPE_VLAN:
+        if network_type == constants.TYPE_VLAN:
             return self.ensure_vlan_bridge(network_id, physical_bridge,
                                            physical_interface,
                                            segmentation_id)
-        else:
-            LOG.error("Unknown network_type %(network_type)s for network "
-                      "%(network_id)s.", {network_type: network_type,
-                                          network_id: network_id})
+        LOG.error("Unknown network_type %(network_type)s for network "
+                  "%(network_id)s.", {network_type: network_type,
+                                      network_id: network_id})
 
     def add_tap_interface(self, network_id, network_type, physical_network,
                           segmentation_id, tap_device_name, device_owner, mtu):
@@ -642,23 +638,21 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                           {'interface_name': interface_name,
                            'bridge_name': bridge_name})
                 return True
-            else:
-                if not bridge_device.owns_interface(interface_name):
-                    LOG.debug("Cannot remove %(interface_name)s from "
-                              "%(bridge_name)s. It is not on the bridge.",
-                              {'interface_name': interface_name,
-                               'bridge_name': bridge_name})
-                    return False
-                msg = _("Error deleting %(interface_name)s from bridge "
-                        "%(bridge_name)s") % {'interface_name': interface_name,
-                                              'bridge_name': bridge_name}
-                raise RuntimeError(msg)
-        else:
-            LOG.debug("Cannot remove device %(interface_name)s bridge "
-                      "%(bridge_name)s does not exist",
-                      {'interface_name': interface_name,
-                       'bridge_name': bridge_name})
-            return False
+            if not bridge_device.owns_interface(interface_name):
+                LOG.debug("Cannot remove %(interface_name)s from "
+                          "%(bridge_name)s. It is not on the bridge.",
+                          {'interface_name': interface_name,
+                           'bridge_name': bridge_name})
+                return False
+            msg = _("Error deleting %(interface_name)s from bridge "
+                    "%(bridge_name)s") % {'interface_name': interface_name,
+                                          'bridge_name': bridge_name}
+            raise RuntimeError(msg)
+        LOG.debug("Cannot remove device %(interface_name)s bridge "
+                  "%(bridge_name)s does not exist",
+                  {'interface_name': interface_name,
+                   'bridge_name': bridge_name})
+        return False
 
     def delete_interface(self, interface):
         device = self.ip.device(interface)

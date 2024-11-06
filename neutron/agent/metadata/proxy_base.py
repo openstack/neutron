@@ -82,8 +82,7 @@ class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
                     if instance_id:
                         res = self._proxy_request(instance_id, project_id, req)
                 return res
-            else:
-                return webob.exc.HTTPNotFound()
+            return webob.exc.HTTPNotFound()
 
         except Exception:
             LOG.exception("Unexpected error.")
@@ -175,25 +174,23 @@ class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
             req.response.body = resp.content
             LOG.debug(str(resp))
             return req.response
-        elif resp.status_code == 403:
+        if resp.status_code == 403:
             LOG.warning(
                 'The remote metadata server responded with Forbidden. This '
                 'response usually occurs when shared secrets do not match.'
             )
             return webob.exc.HTTPForbidden()
-        elif resp.status_code == 500:
+        if resp.status_code == 500:
             msg = _(
                 'Remote metadata server experienced an internal server error.'
             )
             LOG.warning(msg)
             explanation = str(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
-        elif resp.status_code in (400, 404, 409, 502, 503, 504):
+        if resp.status_code in (400, 404, 409, 502, 503, 504):
             webob_exc_cls = webob.exc.status_map.get(resp.status_code)
             return webob_exc_cls()
-        else:
-            raise Exception(_('Unexpected response code: %s') %
-                            resp.status_code)
+        raise Exception(_('Unexpected response code: %s') % resp.status_code)
 
 
 class UnixDomainMetadataProxyBase(metaclass=abc.ABCMeta):

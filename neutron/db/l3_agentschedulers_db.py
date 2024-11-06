@@ -290,10 +290,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if router_ids:
             return {'routers':
                     self.get_routers(context, filters={'id': router_ids})}
-        else:
-            # Exception will be thrown if the requested agent does not exist.
-            self._get_agent(context, agent_id)
-            return {'routers': []}
+        # Exception will be thrown if the requested agent does not exist.
+        self._get_agent(context, agent_id)
+        return {'routers': []}
 
     def _get_active_l3_agent_routers_sync_data(self, context, host, agent,
                                                router_ids):

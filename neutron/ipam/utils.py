@@ -23,15 +23,14 @@ def check_subnet_ip(cidr, ip_address, port_owner=''):
     net = netaddr.IPNetwork(cidr)
     # Check that the IP is valid on subnet. In IPv4 this cannot be the
     # network or the broadcast address
-    if net.version == constants.IP_VERSION_6:
-        # NOTE(njohnston): In some cases the code cannot know the owner of the
-        # port. In these cases port_owner should an empty string, and we pass
-        # it through here.
-        return ((port_owner in (constants.ROUTER_PORT_OWNERS + ('', )) or
-                 ip != net.network) and
-                ip in net)
-    else:
+    if net.version == constants.IP_VERSION_4:
         return ip != net.network and ip != net.broadcast and ip in net
+    # NOTE(njohnston): In some cases the code cannot know the owner of the
+    # port. In these cases port_owner should an empty string, and we pass it
+    # through here.
+    return (
+        (port_owner in (constants.ROUTER_PORT_OWNERS + ('', )) or
+         ip != net.network) and ip in net)
 
 
 def check_gateway_invalid_in_subnet(cidr, gateway):

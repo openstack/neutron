@@ -76,14 +76,13 @@ class StaticSqlFixtureNoSchema(lib_fixtures.SqlFixture):
     def _init_resources(cls):
         if cls._GLOBAL_RESOURCES:
             return
-        else:
-            cls._GLOBAL_RESOURCES = True
-            cls.database_resource = provision.DatabaseResource(
-                "sqlite", db_api.get_context_manager())
-            dependency_resources = {}
-            for name, resource in cls.database_resource.resources:
-                dependency_resources[name] = resource.getResource()
-            cls.engine = dependency_resources['backend'].engine
+        cls._GLOBAL_RESOURCES = True
+        cls.database_resource = provision.DatabaseResource(
+            "sqlite", db_api.get_context_manager())
+        dependency_resources = {}
+        for name, resource in cls.database_resource.resources:
+            dependency_resources[name] = resource.getResource()
+        cls.engine = dependency_resources['backend'].engine
 
     def _delete_from_schema(self, engine):
         pass
@@ -173,10 +172,7 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
                 ('schema', schema_resource),
                 ('db', database_resource)
             ]
-        else:
-            return [
-                ('db', database_resource)
-            ]
+        return [('db', database_resource)]
 
 
 class BaseSqlTestCase:
@@ -223,8 +219,7 @@ class OpportunisticDBTestMixin:
             msg = "backend '%s' unavailable" % self.DRIVER
             if self.SKIP_ON_UNAVAILABLE_DB:
                 self.skipTest(msg)
-            else:
-                self.fail(msg)
+            self.fail(msg)
 
     _schema_resources = {}
     _database_resources = {}

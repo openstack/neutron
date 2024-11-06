@@ -76,8 +76,7 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         if port_profile and port_profile.get('migrating_to', None):
             LOG.debug("Live migration with profile %s detected.", port_profile)
             return True
-        else:
-            return False
+        return False
 
     def try_to_bind_segment_for_agent(self, context, segment, agent):
         if self.check_segment_for_agent(segment, agent):

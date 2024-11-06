@@ -409,8 +409,7 @@ def read_if_exists(path: str, run_as_root=False) -> str:
     """
     if run_as_root:
         return priv_utils.read_file(path)
-    else:
-        return utils.read_file(path)
+    return utils.read_file(path)
 
 
 class UnixDomainHTTPConnection(httplib.HTTPConnection):

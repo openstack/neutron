@@ -62,11 +62,9 @@ def fetch_resource(method, neutron_context, controller,
         if parent_id:
             getter_args.append(parent_id)
         return getter(*getter_args, fields=field_list)
-    else:
-        # Some legit resources, like quota, do not have a plugin yet.
-        # Retrieving the original object is nevertheless important
-        # for policy checks.
-        return _custom_getter(resource, resource_id)
+    # Some legit resources, like quota, do not have a plugin yet. Retrieving
+    # the original object is nevertheless important for policy checks.
+    return _custom_getter(resource, resource_id)
 
 
 class PolicyHook(hooks.PecanHook):

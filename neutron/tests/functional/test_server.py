@@ -113,9 +113,8 @@ class TestNeutronServer(base.BaseLoggingTestCase):
             if self.workers > 1:
                 return [proc.pid for proc in psutil.process_iter()
                         if safe_ppid(proc) == self.service_pid]
-            else:
-                return [proc.pid for proc in psutil.process_iter()
-                        if proc.pid == self.service_pid]
+            return [proc.pid for proc in psutil.process_iter()
+                    if proc.pid == self.service_pid]
 
         exception = RuntimeError('Failed to start %d workers.' % self.workers)
 

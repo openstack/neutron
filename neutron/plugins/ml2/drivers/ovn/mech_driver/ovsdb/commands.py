@@ -77,31 +77,27 @@ def get_lsp_dhcp_options_uuids(lsp, lsp_name):
 
 def _add_gateway_chassis(api, txn, lrp_name, val):
     gateway_chassis = api._tables.get('Gateway_Chassis')
-    if gateway_chassis:
-        prio = len(val)
-        uuid_list = []
-        for chassis in val:
-            gwc_name = '{}_{}'.format(lrp_name, chassis)
-            try:
-                gwc = idlutils.row_by_value(api.idl,
-                                            'Gateway_Chassis',
-                                            'name', gwc_name)
-            except idlutils.RowNotFound:
-                gwc = txn.insert(gateway_chassis)
-                gwc.name = gwc_name
-            gwc.chassis_name = chassis
-            gwc.priority = prio
-            LOG.info(
-                "Schedule LRP %(lrp)s on gateway %(gtw)s with priority"
-                " %(prio)s",
-                {"lrp": lrp_name, "gtw": chassis, "prio": prio},
-            )
-            prio = prio - 1
-            uuid_list.append(gwc.uuid)
-        return 'gateway_chassis', uuid_list
-    else:
+    if not gateway_chassis:
         chassis = {ovn_const.OVN_GATEWAY_CHASSIS_KEY: val[0]}
         return 'options', chassis
+    prio = len(val)
+    uuid_list = []
+    for chassis in val:
+        gwc_name = '{}_{}'.format(lrp_name, chassis)
+        try:
+            gwc = idlutils.row_by_value(
+                api.idl, 'Gateway_Chassis', 'name', gwc_name)
+        except idlutils.RowNotFound:
+            gwc = txn.insert(gateway_chassis)
+            gwc.name = gwc_name
+        gwc.chassis_name = chassis
+        gwc.priority = prio
+        LOG.info(
+            "Schedule LRP %(lrp)s on gateway %(gtw)s with priority %(prio)s",
+            {"lrp": lrp_name, "gtw": chassis, "prio": prio})
+        prio = prio - 1
+        uuid_list.append(gwc.uuid)
+    return 'gateway_chassis', uuid_list
 
 
 class CheckLivenessCommand(command.BaseCommand):

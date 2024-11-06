@@ -471,10 +471,9 @@ class ESwitchManager:
                 LOG.info("Device %s has 0 VFs configured. Skipping "
                          "for now to let the device initialize", dev_name)
                 return
-            else:
-                # looks like device indeed has 0 VFs configured
-                # it is probably used just as direct-physical
-                LOG.info("Device %s has 0 VFs configured", dev_name)
+            # looks like device indeed has 0 VFs configured it is probably used
+            # just as direct-physical
+            LOG.info("Device %s has 0 VFs configured", dev_name)
 
         numvfs_cur = len(embedded_switch.scanned_pci_list)
         if numvfs >= 0 and numvfs > numvfs_cur:

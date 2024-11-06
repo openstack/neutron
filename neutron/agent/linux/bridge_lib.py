@@ -54,8 +54,7 @@ def catch_exceptions(function):
 def is_bridged_interface(interface):
     if not interface:
         return False
-    else:
-        return os.path.exists(BRIDGE_PORT_FS_FOR_DEVICE % interface)
+    return os.path.exists(BRIDGE_PORT_FS_FOR_DEVICE % interface)
 
 
 def get_interface_ifindex(interface):
@@ -87,9 +86,8 @@ class BridgeDevice(ip_lib.IPDevice):
             path = os.readlink(BRIDGE_PATH_FOR_DEVICE % interface)
         except OSError:
             return None
-        else:
-            name = path.rpartition('/')[-1]
-            return cls(name)
+        name = path.rpartition('/')[-1]
+        return cls(name)
 
     def delbr(self):
         return self.link.delete()

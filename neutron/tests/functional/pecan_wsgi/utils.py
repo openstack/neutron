@@ -49,8 +49,7 @@ class FakeSingularCollectionExtension(api_extensions.ExtensionDescriptor):
     def get_extended_resources(self, version):
         if version == "2.0":
             return self.RAM
-        else:
-            return {}
+        return {}
 
     def get_pecan_controllers(self):
         ctrllr = controllers.CollectionsController(
@@ -200,8 +199,7 @@ class FakeExtension(api_extensions.ExtensionDescriptor):
     def get_extended_resources(self, version):
         if version == "2.0":
             return self.RESOURCE_ATTRIBUTE_MAP
-        else:
-            return {}
+        return {}
 
 
 class FakePlugin:

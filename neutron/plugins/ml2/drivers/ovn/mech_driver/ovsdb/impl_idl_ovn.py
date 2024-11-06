@@ -294,9 +294,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         if lport_name is not None:
             return cmd.DelLSwitchPortCommand(self, lport_name,
                                              lswitch_name, if_exists)
-        else:
-            raise RuntimeError(_("Currently only supports "
-                                 "delete by lport-name"))
+        raise RuntimeError(_("Currently only supports delete by lport-name"))
 
     def get_all_logical_switches_with_ports(self):
         result = []
@@ -1045,9 +1043,8 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
             return [r for r in rows
                     if r.chassis and r.chassis[0].name == chassis or
                     chassis in [ch.name for ch in r.additional_chassis]]
-        else:
-            return [r for r in rows
-                    if r.chassis and r.chassis[0].name == chassis]
+        return [r for r in rows
+                if r.chassis and r.chassis[0].name == chassis]
 
     def get_chassis_host_for_port(self, port_id):
         chassis = set()

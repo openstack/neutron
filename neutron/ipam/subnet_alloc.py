@@ -175,11 +175,10 @@ class SubnetAllocator(driver.Pool):
 
         if isinstance(request, ipam_req.AnySubnetRequest):
             return self._allocate_any_subnet(request)
-        elif isinstance(request, ipam_req.SpecificSubnetRequest):
+        if isinstance(request, ipam_req.SpecificSubnetRequest):
             return self._allocate_specific_subnet(request)
-        else:
-            msg = _("Unsupported request type")
-            raise exceptions.SubnetAllocationError(reason=msg)
+        msg = _("Unsupported request type")
+        raise exceptions.SubnetAllocationError(reason=msg)
 
     def get_subnet(self, subnet_id):
         raise NotImplementedError()

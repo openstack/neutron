@@ -110,9 +110,9 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         """
         if 'device_mappings' in agent['configurations']:
             return agent['configurations']['device_mappings']
-        else:
-            raise ValueError(_('Cannot standardize device mappings of agent '
-                               'type: %s'), agent['agent_type'])
+        raise ValueError(
+            _('Cannot standardize device mappings of agent type: %s'),
+            agent['agent_type'])
 
     def bind_port(self, context):
         LOG.debug("Attempting to bind port %(port)s on "

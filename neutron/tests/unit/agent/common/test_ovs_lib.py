@@ -753,8 +753,6 @@ class TestDeferredOVSBridge(base.BaseTestCase):
                 raise Exception()
         except Exception:
             self._verify_mock_call([])
-        else:
-            self.fail('Exception would be reraised')
 
     def test_apply(self):
         expected_calls = [

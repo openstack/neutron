@@ -173,13 +173,11 @@ class ResourceRegistry:
             return resource.CountableResource(
                 resource_name, resource._count_resource,
                 'quota_%s' % resource_name)
-        else:
-            LOG.info("Creating instance of TrackedResource for "
-                     "resource:%s", resource_name)
-            return resource.TrackedResource(
-                resource_name,
-                self._tracked_resource_mappings[resource_name],
-                'quota_%s' % resource_name)
+        LOG.info("Creating instance of TrackedResource for resource:%s",
+                 resource_name)
+        return resource.TrackedResource(
+            resource_name, self._tracked_resource_mappings[resource_name],
+            'quota_%s' % resource_name)
 
     def set_tracked_resource(self, resource_name, model_class, override=False):
         # Do not do anything if tracking is disabled by config

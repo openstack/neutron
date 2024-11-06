@@ -137,7 +137,7 @@ class AutoAllocatedTopologyMixin:
             # requests can be fulfilled based on a set of requirements
             # such as existence of default networks, pools, etc.
             return self._check_requirements(context, tenant_id)
-        elif fields:
+        if fields:
             raise n_exc.BadRequest(resource='auto_allocate',
                                    msg=_("Unrecognized field"))
 

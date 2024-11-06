@@ -785,7 +785,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self.remove_port_filter(port)
             self._initialize_egress_no_port_security(port['device'])
             return
-        elif not self.is_port_managed(port):
+        if not self.is_port_managed(port):
             try:
                 self._remove_egress_no_port_security(port['device'])
             except exceptions.OVSFWPortNotHandled as e:
