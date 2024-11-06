@@ -234,9 +234,6 @@ def get_ovn_idls(driver, trigger):
 
 
 class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
-    def __init__(self, connection):
-        super().__init__(connection)
-
     @n_utils.classproperty
     def connection_string(cls):
         return cfg.get_ovn_nb_connection()
@@ -913,9 +910,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
-    def __init__(self, connection):
-        super().__init__(connection)
-
     @n_utils.classproperty
     def connection_string(cls):
         return cfg.get_ovn_sb_connection()

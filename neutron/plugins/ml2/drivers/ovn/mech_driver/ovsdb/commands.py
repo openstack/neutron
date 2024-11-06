@@ -103,9 +103,6 @@ def _add_gateway_chassis(api, txn, lrp_name, val):
 
 
 class CheckLivenessCommand(command.BaseCommand):
-    def __init__(self, api):
-        super().__init__(api)
-
     def run_idl(self, txn):
         # txn.pre_commit responsible for updating nb_global.nb_cfg, but
         # python-ovs will not update nb_cfg if no other changes are made
