@@ -152,10 +152,8 @@ function _install_rpc_backend {
 }
 
 
-# _install_databases [install_pg]
-function _install_databases {
-    local install_pg=${1:-True}
-
+# _install_database
+function _install_database {
     echo_summary "Installing databases"
 
     # Avoid attempting to configure the db if it appears to already
@@ -175,13 +173,6 @@ function _install_databases {
     install_database
     configure_database_mysql
 
-    if [[ "$install_pg" == "True" ]]; then
-        enable_service postgresql
-        initialize_database_backends
-        install_database
-        configure_database_postgresql
-    fi
-
     # Set up the '${DATABASE_USER}' user and '${DATABASE_NAME}' database in each backend
     tmp_dir=$(mktemp -d)
     trap "rm -rf $tmp_dir" EXIT
@@ -193,17 +184,6 @@ GRANT ALL PRIVILEGES ON *.* TO '${DATABASE_USER}'@'localhost';
 FLUSH PRIVILEGES;
 EOF
     /usr/bin/mysql -u $MYSQL_USER -p"$MYSQL_PASSWORD" < $tmp_dir/mysql.sql
-
-    if [[ "$install_pg" == "True" ]]; then
-        cat << EOF > $tmp_dir/postgresql.sql
-CREATE USER ${DATABASE_USER} WITH CREATEDB LOGIN PASSWORD '${DATABASE_PASSWORD}';
-CREATE DATABASE ${DATABASE_NAME} WITH OWNER ${DATABASE_USER};
-EOF
-
-        # User/group postgres needs to be given access to tmp_dir
-        setfacl -m g:postgres:rwx $tmp_dir
-        sudo -u root sudo -u postgres /usr/bin/psql --file=$tmp_dir/postgresql.sql
-    fi
 }
 
 
@@ -263,7 +243,7 @@ EOF
 function _install_post_devstack {
     echo_summary "Performing post-devstack installation"
 
-    _install_databases
+    _install_database
     _install_rootwrap_sudoers
 
     if is_ubuntu; then
@@ -342,7 +322,7 @@ _init
 
 if [[ "$IS_GATE" != "True" ]]; then
     if [[ "$INSTALL_MYSQL_ONLY" == "True" ]]; then
-        _install_databases nopg
+        _install_database
     else
         configure_host_for_func_testing
     fi

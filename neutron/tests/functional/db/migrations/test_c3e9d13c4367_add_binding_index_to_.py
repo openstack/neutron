@@ -21,7 +21,7 @@ from oslo_utils import uuidutils
 from neutron.tests.functional.db import test_migrations
 
 
-class NetworkDhcpAgentBindingMigrationMixin:
+class TestNetworkDhcpAgentBindingMigration(test_migrations.TestWalkMigrations):
     """Validates binding_index for NetworkDhcpAgentBinding migration."""
 
     def _create_so(self, o_type, values):
@@ -79,15 +79,3 @@ class NetworkDhcpAgentBindingMigrationMixin:
 
             for binding_indices in networks_to_bindings.values():
                 self.assertEqual(list(range(1, 3)), sorted(binding_indices))
-
-
-class TestNetworkDhcpAgentBindingMigrationMySQL(
-                                    NetworkDhcpAgentBindingMigrationMixin,
-                                    test_migrations.TestWalkMigrationsMySQL):
-    pass
-
-
-class TestNetworkDhcpAgentBindingMigrationPostgreSQL(
-        NetworkDhcpAgentBindingMigrationMixin,
-        test_migrations.TestWalkMigrationsPostgreSQL):
-    pass

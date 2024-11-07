@@ -260,15 +260,6 @@ class MySQLTestCaseMixin(OpportunisticDBTestMixin):
     DRIVER = "mysql"
 
 
-class PostgreSQLTestCaseMixin(OpportunisticDBTestMixin):
-    """Mixin that turns any BaseSqlTestCase into a PostgresSQL test suite.
-
-    If the PostgreSQL db is unavailable then this test is skipped, unless
-    OS_FAIL_ON_MISSING_DEPS is enabled.
-    """
-    DRIVER = "postgresql"
-
-
 def module_load_tests(loader, found_tests, pattern):
     """Apply OptimisingTestSuite on a per-module basis.
 

@@ -4,5 +4,4 @@
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
 
-psycopg2
 PyMySQL>=0.6.2  # MIT License

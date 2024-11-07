@@ -34,8 +34,7 @@ TABLES = ['networkrbacs', 'qospolicyrbacs', 'securitygrouprbacs',
           'addressscoperbacs', 'subnetpoolrbacs', 'addressgrouprbacs']
 DROPPED_UNIQUE_CONSTRAINTS = [
     'uniq_networkrbacs0tenant_target0object_id0action',
-    'qospolicyrbacs_target_tenant_object_id_action_key',  # PSQL
-    'target_tenant',  # MySQL, name provided by mistake
+    'target_tenant',  # name provided by mistake
     'uniq_securitygrouprbacs0target_tenant0object_id0action',
     'uniq_address_scopes_rbacs0target_tenant0object_id0action',
     'uniq_subnetpools_rbacs0target_tenant0object_id0action',

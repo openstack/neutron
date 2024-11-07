@@ -36,8 +36,6 @@ down_revision = 'd8bdf05313f4'
 #   https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-16.html
 # - MariaDB: since version 10.2.1 (July 2016)
 #   https://mariadb.com/kb/en/mariadb-1021-release-notes/
-# - PostgreSQL: since version 9.4 (December 2014)
-#   https://www.postgresql.org/docs/9.4/ddl-constraints.html
 #
 # If the DB engine does not support yet this feature, it will be ignored. The
 # VLAN tag constraint is enforced in the Neutron API. This extra enforcement

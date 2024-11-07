@@ -17,10 +17,5 @@ from neutron.objects.plugins.ml2 import vxlanallocation
 from neutron.tests.functional.objects.plugins.ml2 import test_base
 
 
-class TestVxlanSegmentAllocationMySQL(test_base._SegmentAllocationMySQL):
-    segment_allocation_class = vxlanallocation.VxlanAllocation
-
-
-class TestVxlanSegmentAllocationPostgreSQL(
-        test_base._SegmentAllocationPostgreSQL):
+class TestVxlanSegmentAllocation(test_base.SegmentAllocation):
     segment_allocation_class = vxlanallocation.VxlanAllocation

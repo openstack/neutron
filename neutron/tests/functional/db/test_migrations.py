@@ -81,21 +81,16 @@ def upgrade(engine, alembic_config, branch_name='heads'):
                                  branch_name)
 
 
-class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
+class TestModelsMigrations(test_migrations.ModelsMigrationsSync,
+                           testlib_api.MySQLTestCaseMixin,
+                           testlib_api.SqlTestCaseLight,
+                           functional_base.BaseLoggingTestCase):
     '''Test for checking of equality models state and migrations.
 
     For the opportunistic testing you need to set up a db named
     'openstack_citest' with user 'openstack_citest' and password
     'openstack_citest' on localhost.
     The test will then use that db and user/password combo to run the tests.
-
-    For PostgreSQL on Ubuntu this can be done with the following commands::
-
-        sudo -u postgres psql
-        postgres=# create user openstack_citest with createdb login password
-                  'openstack_citest';
-        postgres=# create database openstack_citest with owner
-                   openstack_citest;
 
     For MySQL on Ubuntu this can be done with the following commands::
 
@@ -210,13 +205,13 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def test_upgrade_expand_branch(self):
         # Verify that "command neutron-db-manage upgrade --expand" works
-        #  without errors. Check this for both MySQL and PostgreSQL.
+        # without errors.
         upgrade(self.engine, self.alembic_config,
                 branch_name='%s@head' % migration.EXPAND_BRANCH)
 
     def test_upgrade_contract_branch(self):
         # Verify that "command neutron-db-manage upgrade --contract" works
-        # without errors. Check this for both MySQL and PostgreSQL.
+        # without errors.
         upgrade(self.engine, self.alembic_config,
                 branch_name='%s@head' % migration.CONTRACT_BRANCH)
 
@@ -353,12 +348,6 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
             self.alembic_config, 'unused'),
             msg='Offline contract migration scripts are forbidden for Ocata+')
 
-
-class TestModelsMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
-                                _TestModelsMigrations,
-                                testlib_api.SqlTestCaseLight,
-                                functional_base.BaseLoggingTestCase):
-
     def test_check_mysql_engine(self):
         engine = self.get_engine()
         url_str = render_url_str(engine.url)
@@ -380,12 +369,6 @@ class TestModelsMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
 
     def test_models_sync(self):
         super().test_models_sync()
-
-
-class TestModelsMigrationsPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
-                                     _TestModelsMigrations,
-                                     testlib_api.SqlTestCaseLight):
-    pass
 
 
 class TestSanityCheck(testlib_api.SqlTestCaseLight):
@@ -525,7 +508,8 @@ class TestWalkDowngrade(oslotest_base.BaseTestCase):
             return True
 
 
-class _TestWalkMigrations:
+class TestWalkMigrations(testlib_api.MySQLTestCaseMixin,
+                         testlib_api.SqlTestCaseLight):
     '''This will add framework for testing schema migration
        for different backends.
 
@@ -575,6 +559,13 @@ class _TestWalkMigrations:
             migration.do_alembic_command(config, 'upgrade', dest)
             check(engine, data)
 
+    # NOTE(slaweq): this workaround is taken from Manila patch:
+    # https://review.opendev.org/#/c/291397/
+    # Set 5 minutes timeout for case of running it on very slow nodes/VMs.
+    # Note, that this test becomes slower with each addition of new DB
+    # migration. On fast nodes it can take about 5-10 secs having Mitaka set of
+    # migrations.
+    @test_base.set_timeout(600)
     def test_walk_versions(self):
         """Test migrations ability to upgrade and downgrade.
 
@@ -590,26 +581,3 @@ class _TestWalkMigrations:
 
         if upgrade_dest:
             migration.do_alembic_command(config, 'upgrade', upgrade_dest)
-
-
-class TestWalkMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
-                              _TestWalkMigrations,
-                              testlib_api.SqlTestCaseLight):
-
-    # NOTE(slaweq): this workaround is taken from Manila patch:
-    # https://review.opendev.org/#/c/291397/
-    # Set 5 minutes timeout for case of running it on
-    # very slow nodes/VMs. Note, that this test becomes slower with each
-    # addition of new DB migration. On fast nodes it can take about 5-10
-    # secs having Mitaka set of migrations. 'pymysql' works much slower
-    # on slow nodes than 'psycopg2' and because of that this increased
-    # timeout is required only when for testing with 'mysql' backend.
-    @test_base.set_timeout(600)
-    def test_walk_versions(self):
-        super().test_walk_versions()
-
-
-class TestWalkMigrationsPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
-                                   _TestWalkMigrations,
-                                   testlib_api.SqlTestCaseLight):
-    pass

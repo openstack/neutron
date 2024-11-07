@@ -38,7 +38,7 @@ This test compares models with the result of existing migrations. It is based on
 which is provided by oslo.db and was adapted for Neutron. It compares core
 Neutron models and vendor specific models with migrations from Neutron core and
 migrations from the driver/plugin repo. This test is functional - it runs
-against MySQL and PostgreSQL dialects. The detailed description of this test
+against the MySQL dialect. The detailed description of this test
 can be found in Neutron Database Layer
 section - :ref:`testing-database-migrations`.
 
@@ -107,7 +107,9 @@ with the following content: ::
  EXTERNAL_TABLES = set(external.TABLES) - set(external.REPO_FOO_TABLES)
 
 
- class _TestModelsMigrationsFoo(test_migrations._TestModelsMigrations):
+ class TestModelsMigrations(testlib_api.MySQLTestCaseMixin,
+                            testlib_api.SqlTestCaseLight,
+                            test_migrations.TestModelsMigrations):
 
    def db_sync(self, engine):
        cfg.CONF.set_override('connection', engine.url, group='database')
@@ -128,18 +130,6 @@ with the following content: ::
            return True
 
 
- class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
-                                 _TestModelsMigrationsFoo,
-                                 testlib_api.SqlTestCaseLight):
-    pass
-
-
- class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
-                                _TestModelsMigrationsFoo,
-                                testlib_api.SqlTestCaseLight):
-    pass
-
-
 3. Add functional requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -150,7 +140,6 @@ test execution.
 ::
 
  psutil>=3.2.2 # BSD
- psycopg2
  PyMySQL>=0.6.2  # MIT License
 
 

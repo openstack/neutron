@@ -20,7 +20,8 @@ from neutron_lib import context
 from neutron.tests.unit import testlib_api
 
 
-class _SegmentAllocation(testlib_api.SqlTestCase):
+class SegmentAllocation(testlib_api.SqlTestCase,
+                        testlib_api.MySQLTestCaseMixin):
 
     PHYSNETS = ('phys1', 'phys2')
     NUM_SEGIDS = 10
@@ -78,13 +79,3 @@ class _SegmentAllocation(testlib_api.SqlTestCase):
 
         self.assertEqual(0, len(self.segments))
         self.assertIsNone(m_get(self.context))
-
-
-class _SegmentAllocationMySQL(_SegmentAllocation,
-                              testlib_api.MySQLTestCaseMixin):
-    pass
-
-
-class _SegmentAllocationPostgreSQL(_SegmentAllocation,
-                                   testlib_api.PostgreSQLTestCaseMixin):
-    pass

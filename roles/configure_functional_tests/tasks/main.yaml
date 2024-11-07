@@ -22,7 +22,7 @@
         Q_BUILD_OVS_FROM_GIT={{ Q_BUILD_OVS_FROM_GIT }}
         MEMORY_TRACKER={{ MEMORY_TRACKER }}
         INSTALL_OVN={{ INSTALL_OVN }}
-        # This is DB USER used in e.g. pgsql db
+        # This is DB USER used in mysql db
         DATABASE_USER=openstack_citest
         MYSQL_GATHER_PERFORMANCE={{ MYSQL_GATHER_PERFORMANCE | default(true) }}
 

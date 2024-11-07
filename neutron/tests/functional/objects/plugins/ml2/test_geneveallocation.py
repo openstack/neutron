@@ -17,10 +17,5 @@ from neutron.objects.plugins.ml2 import geneveallocation
 from neutron.tests.functional.objects.plugins.ml2 import test_base
 
 
-class TestGeneveSegmentAllocationMySQL(test_base._SegmentAllocationMySQL):
-    segment_allocation_class = geneveallocation.GeneveAllocation
-
-
-class TestGeneveSegmentAllocationPostgreSQL(
-        test_base._SegmentAllocationPostgreSQL):
+class TestGeneveSegmentAllocation(test_base.SegmentAllocation):
     segment_allocation_class = geneveallocation.GeneveAllocation

@@ -55,8 +55,5 @@ def expand_drop_exceptions():
     it is needed first to drop it, modify it and readd it again.
     """
     return {
-        sa.ForeignKeyConstraint: [
-            'securitygroupportbindings_ibfk_2',  # MySQL name
-            'securitygroupportbindings_security_group_id_fkey',  # PGSQL name
-        ],
+        sa.ForeignKeyConstraint: ['securitygroupportbindings_ibfk_2']
     }

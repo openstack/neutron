@@ -96,22 +96,6 @@ development.
   update revision numbers of parent objects. For more details on all of the
   things that can go wrong using bulk delete operations, see the "Warning"
   sections in the link above.
-* For PostgreSQL if you're using GROUP BY everything in the SELECT list must be
-  an aggregate SUM(...), COUNT(...), etc or used in the GROUP BY.
-
-  The incorrect variant:
-
-  .. code:: python
-
-     q = query(Object.id, Object.name,
-               func.count(Object.number)).group_by(Object.name)
-
-  The correct variant:
-
-  .. code:: python
-
-     q = query(Object.id, Object.name,
-               func.count(Object.number)).group_by(Object.id, Object.name)
 * Beware of the `InvalidRequestError <http://docs.sqlalchemy.org/en/latest/faq/sessions.html#this-session-s-transaction-has-been-rolled-back-due-to-a-previous-exception-during-flush-or-similar>`_ exception.
   There is even a `Neutron bug <https://bugs.launchpad.net/neutron/+bug/1409774>`_
   registered for it. Bear in mind that this error may also occur when nesting
@@ -151,24 +135,6 @@ development.
 
      result = session.execute(mymodel.insert().values(**values))
      # result.inserted_primary_key is a list even if we inserted a unique row!
-
-* Beware of pymysql which can silently unwrap a list with an element (and hide
-  a wrong use of ResultProxy.inserted_primary_key for example):
-
-  .. code:: python
-
-     e.execute("create table if not exists foo (bar integer)")
-     e.execute(foo.insert().values(bar=1))
-     e.execute(foo.insert().values(bar=[2]))
-
-  The 2nd insert should crash (list provided, integer expected). It crashes at
-  least with mysql and postgresql backends, but succeeds with pymysql because
-  it transforms them into:
-
-  .. code:: sql
-
-     INSERT INTO foo (bar) VALUES (1)
-     INSERT INTO foo (bar) VALUES ((2))
 
 
 System development

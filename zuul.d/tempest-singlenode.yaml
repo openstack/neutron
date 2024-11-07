@@ -224,69 +224,6 @@
     parent: neutron-ovs-tempest-iptables_hybrid
 
 - job:
-    name: neutron-ovn-tempest-postgres-full
-    parent: tempest-integrated-networking
-    timeout: 10800
-    required-projects:
-      - openstack/neutron
-      - openstack/tempest
-    vars:
-      devstack_plugins:
-        neutron: https://opendev.org/openstack/neutron.git
-      devstack_localrc:
-        CIRROS_VERSION: 0.6.2
-        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: true
-      devstack_services:
-        postgresql: true
-        mysql: false
-        br-ex-tcpdump: true
-        br-int-flows: true
-        # Cinder services
-        c-api: false
-        c-bak: false
-        c-sch: false
-        c-vol: false
-        cinder: false
-        # Swift services
-        s-account: false
-        s-container: false
-        s-object: false
-        s-proxy: false
-      zuul_copy_output:
-        '/var/log/ovn': 'logs'
-        '/var/log/openvswitch': 'logs'
-        '/var/lib/ovn': 'logs'
-    irrelevant-files: &tempest-db-irrelevant-files
-      - ^\.pre-commit-config\.yaml$
-      - ^\.pylintrc$
-      - ^test-requirements.txt$
-      - ^.*\.conf\.sample$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
-      - ^plugin.spec$
-      - ^tools/ovn_migration/.*$
-      - ^vagrant/.*$
-      - ^neutron/agent/.*$
-      - ^neutron/plugins/ml2/drivers/.*$
-      - ^roles/.*functional.*$
-      - ^playbooks/.*functional.*$
-      # Ignore everything except for zuul.d/project.yaml
-      - ^zuul.d/base.yaml
-      - ^zuul.d/grenade.yaml
-      - ^zuul.d/job-templates.yaml
-      - ^zuul.d/rally.yaml
-      - ^zuul.d/tempest-multinode.yaml
-      - ^zuul.d/tempest-singlenode.yaml
-
-- job:
     name: neutron-ovn-tempest-mariadb-full
     parent: tempest-integrated-networking
     timeout: 10800
@@ -324,7 +261,33 @@
     # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
     # >10.1, this workaround can be removed (bug 1855912)
     pre-run: playbooks/add_mariadb_repo.yaml
-    irrelevant-files: *tempest-db-irrelevant-files
+    irrelevant-files: &tempest-db-irrelevant-files
+      - ^\.pre-commit-config\.yaml$
+      - ^\.pylintrc$
+      - ^test-requirements.txt$
+      - ^.*\.conf\.sample$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^plugin.spec$
+      - ^tools/ovn_migration/.*$
+      - ^vagrant/.*$
+      - ^neutron/agent/.*$
+      - ^neutron/plugins/ml2/drivers/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
+      # Ignore everything except for zuul.d/project.yaml
+      - ^zuul.d/base.yaml
+      - ^zuul.d/grenade.yaml
+      - ^zuul.d/job-templates.yaml
+      - ^zuul.d/rally.yaml
+      - ^zuul.d/tempest-multinode.yaml
+      - ^zuul.d/tempest-singlenode.yaml
 
 - job:
     name: neutron-ovs-tempest-with-os-ken-master

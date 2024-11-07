@@ -29,8 +29,8 @@ class TestWaitUntilTrue(base.BaseLoggingTestCase):
             utils.wait_until_true(lambda: False, 2)
 
 
-class _TestIsSessionActive(testlib_api.SqlTestCase):
-
+class TestIsSessionActive(testlib_api.SqlTestCase,
+                          testlib_api.MySQLTestCaseMixin):
     DRIVER = None
 
     def setUp(self):
@@ -47,13 +47,3 @@ class _TestIsSessionActive(testlib_api.SqlTestCase):
             self.assertTrue(db_api.is_session_active(context.session))
 
         self.assertFalse(db_api.is_session_active(context.session))
-
-
-class TestIsSessionActivePostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
-                                    _TestIsSessionActive):
-    pass
-
-
-class TestIsSessionActiveMySQL(testlib_api.MySQLTestCaseMixin,
-                               _TestIsSessionActive):
-    pass

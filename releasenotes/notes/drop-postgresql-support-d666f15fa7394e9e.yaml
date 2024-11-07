@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    PostgreSQL is no longer supported. You are advised to migrate to a
+    supported database backend (one of MySQL derivatives).

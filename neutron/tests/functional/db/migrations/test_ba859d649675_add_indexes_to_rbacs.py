@@ -20,7 +20,7 @@ from neutron.db.migration.alembic_migrations.versions.yoga.expand import \
 from neutron.tests.functional.db import test_migrations
 
 
-class TestAddIndexesToRbacsMixin:
+class TestAddIndexesToRbacs(test_migrations.TestWalkMigrations):
     """Validates binding_index for NetworkDhcpAgentBinding migration."""
 
     @staticmethod
@@ -41,15 +41,3 @@ class TestAddIndexesToRbacsMixin:
             table_indexes = db_utils.get_indexes(engine, table + 'rbacs')
             for column in _migration.COLUMNS:
                 self.assertTrue(self.get_index(table_indexes, column))
-
-
-class TestAddIndexesToRbacsMySQL(
-        TestAddIndexesToRbacsMixin,
-        test_migrations.TestWalkMigrationsMySQL):
-    pass
-
-
-class TestAddIndexesToRbacsPostgreSQL(
-        TestAddIndexesToRbacsMixin,
-        test_migrations.TestWalkMigrationsPostgreSQL):
-    pass
