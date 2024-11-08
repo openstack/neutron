@@ -294,7 +294,14 @@ class OVNClient(object):
             # NOTE(ralonsoh): OVN subports don't have host ID information.
             return
 
+        port_up = self._nb_idl.lsp_get_up(db_port.id).execute(
+            check_error=True)
         if up:
+            if not port_up:
+                LOG.warning('Logical_Switch_Port %s host information not '
+                            'updated, the port state is down')
+                return
+
             if not db_port.port_bindings:
                 return
 
@@ -316,6 +323,11 @@ class OVNClient(object):
                 self._nb_idl.db_set(
                     'Logical_Switch_Port', db_port.id, ext_ids))
         else:
+            if port_up:
+                LOG.warning('Logical_Switch_Port %s host information not '
+                            'removed, the port state is up')
+                return
+
             cmd.append(
                 self._nb_idl.db_remove(
                     'Logical_Switch_Port', db_port.id, 'external_ids',

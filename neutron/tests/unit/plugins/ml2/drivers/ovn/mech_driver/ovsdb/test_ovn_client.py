@@ -164,6 +164,7 @@ class TestOVNClient(TestOVNClientBase):
         context = mock.MagicMock()
         port_id = 'fake-port-id'
         db_port = mock.Mock(id=port_id)
+        self.nb_idl.lsp_get_up.return_value.execute.return_value = False
 
         self.ovn_client.update_lsp_host_info(context, db_port, up=False)
 
