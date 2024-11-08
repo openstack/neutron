@@ -61,6 +61,7 @@ from neutron_lib.api.definitions import port_numa_affinity_policy
 from neutron_lib.api.definitions import port_numa_affinity_policy_socket
 from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import port_security
+from neutron_lib.api.definitions import port_trusted_vif
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import project_id
@@ -97,7 +98,6 @@ from neutron_lib.api.definitions import vpn
 from neutron_lib.api.definitions import vpn_endpoint_groups
 from neutron_lib import constants
 
-from neutron.extensions import port_trusted_vif
 from neutron.extensions import quota_check_limit_default
 from neutron.extensions import quotasv2_detail
 from neutron.extensions import security_groups_default_rules

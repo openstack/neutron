@@ -13,12 +13,12 @@
 #    under the License.
 
 import ddt
+from neutron_lib.api.definitions import port_trusted_vif as apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
 from oslo_config import cfg
 
 from neutron.db import port_trusted_db
-from neutron.extensions import port_trusted_vif as apidef
 from neutron.plugins.ml2 import plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
