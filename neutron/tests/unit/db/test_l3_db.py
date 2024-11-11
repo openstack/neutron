@@ -32,7 +32,6 @@ from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
 from oslo_utils import uuidutils
 import testtools
-import webob.exc
 
 from neutron.db import extraroute_db
 from neutron.db import l3_db
@@ -971,8 +970,7 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.fmt, name, True,
                 arg_list=(extnet_apidef.EXTERNAL,),
                 as_admin=True, **kwargs)
-            if res.status_int >= webob.exc.HTTPClientError.code:
-                raise webob.exc.HTTPClientError(code=res.status_int)
+            self._check_http_response(res)
             return self.deserialize(self.fmt, res)
 
     def test_update_router_gw_notify(self):

@@ -123,10 +123,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _make_segment(self, fmt, **kwargs):
         res = self._create_segment(fmt, **kwargs)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            res.charset = 'utf8'
-            raise webob.exc.HTTPClientError(
-                code=res.status_int, explanation=str(res))
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     def segment(self, **kwargs):
