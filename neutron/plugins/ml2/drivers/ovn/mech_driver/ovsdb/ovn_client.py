@@ -2433,6 +2433,9 @@ class OVNClient(object):
                 self.is_allow_stateless_supported())
         db_rev.bump_revision(
             context, security_group, ovn_const.TYPE_SECURITY_GROUPS)
+        for sg_rule in security_group['security_group_rules']:
+            db_rev.bump_revision(
+                context, sg_rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
     def _add_port_to_drop_port_group(self, port, txn):
         txn.add(self._nb_idl.pg_add_ports(ovn_const.OVN_DROP_PORT_GROUP_NAME,
