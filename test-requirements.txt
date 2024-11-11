@@ -1,4 +1,4 @@
-hacking>=6.1.0,<6.2.0 # Apache-2.0
+hacking>=7.0.0,<7.1.0 # Apache-2.0
 coverage>=4.4.1 # Apache-2.0
 fixtures>=3.0.0 # Apache-2.0/BSD
 python-subunit>=1.0.0 # Apache-2.0/BSD
