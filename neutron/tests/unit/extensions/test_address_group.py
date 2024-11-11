@@ -52,8 +52,7 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                                          self._tenant_id))
         req.environ['neutron.context'] = neutron_context
         res = req.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return res
 
     def _test_create_address_group(self, expected=None, **kwargs):

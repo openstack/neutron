@@ -71,8 +71,7 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _make_address_scope(self, fmt, ip_version, admin=False, **kwargs):
         res = self._create_address_scope(fmt, ip_version,
                                          admin=admin, **kwargs)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     @contextlib.contextmanager
