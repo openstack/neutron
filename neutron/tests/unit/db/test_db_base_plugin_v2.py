@@ -660,6 +660,22 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self._check_http_response(res)
         return self.deserialize(fmt, res)
 
+    def _make_security_group(self, fmt, name=None, expected_res_status=None,
+                             project_id=None, is_admin=False):
+        name = name or 'sg-{}'.format(uuidutils.generate_uuid())
+        project_id = project_id or self._tenant_id
+        data = {'security_group': {'name': name,
+                                   'description': name,
+                                   'project_id': project_id}}
+        sg_req = self.new_create_request('security-groups', data, fmt,
+                                         tenant_id=project_id,
+                                         as_admin=is_admin)
+        sg_res = sg_req.get_response(self.api)
+        if expected_res_status:
+            self.assertEqual(expected_res_status, sg_res.status_int)
+        self._check_http_response(sg_res)
+        return self.deserialize(fmt, sg_res)
+
     def _create_qos_rule(self, fmt, qos_policy_id, rule_type, max_kbps=None,
                          max_burst_kbps=None, dscp_mark=None, min_kbps=None,
                          direction=constants.EGRESS_DIRECTION,
