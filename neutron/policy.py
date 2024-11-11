@@ -28,7 +28,6 @@ from neutron_lib.services import constants as service_const
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
-from oslo_policy import opts
 from oslo_policy import policy
 from oslo_utils import excutils
 import stevedore
@@ -50,14 +49,6 @@ _RESOURCE_FOREIGN_KEYS = {
     # securitygroups api def will be moved to neutron-lib
     'security_groups': 'security_group_id'
 }
-
-# TODO(slaweq): Remove overriding the default value of config options
-# 'policy_file' once oslo_policy change its default value to what
-# is overridden here.
-DEFAULT_POLICY_FILE = 'policy.yaml'
-opts.set_defaults(
-    cfg.CONF,
-    DEFAULT_POLICY_FILE)
 
 
 def reset():
