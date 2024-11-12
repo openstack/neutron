@@ -12,6 +12,7 @@
 
 import collections
 import copy
+from dataclasses import dataclass
 import pprint
 import time
 
@@ -39,9 +40,13 @@ def _import_agents_db():
     return importutils.import_module('neutron.db.agents_db')
 
 
-AgentConsumer = collections.namedtuple('AgentConsumer', ['agent_type',
-                                                         'host'])
-AgentConsumer.__repr__ = lambda self: '%s@%s' % self
+@dataclass(frozen=True)
+class AgentConsumer:
+    agent_type: str
+    host: str
+
+    def __repr__(self):
+        return f'{self.agent_type}@{self.host}'
 
 
 class ResourceConsumerTracker:

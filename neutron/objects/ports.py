@@ -213,7 +213,7 @@ class IPAllocation(base.NeutronDbObject):
         'ip_address': obj_fields.IPAddressField(),
     }
 
-    fields_no_update = fields.keys()
+    fields_no_update = list(fields.keys())
 
     primary_keys = ['subnet_id', 'network_id', 'ip_address']
 

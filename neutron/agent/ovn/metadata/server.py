@@ -30,6 +30,7 @@ LOG = logging.getLogger(__name__)
 
 class MetadataProxyHandler(proxy_base.MetadataProxyHandlerBase):
     NETWORK_ID_HEADER = 'X-OVN-Network-ID'
+    ROUTER_ID_HEADER = ''
 
     def __init__(self, conf, chassis, sb_idl):
         super().__init__(conf)

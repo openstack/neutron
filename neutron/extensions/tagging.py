@@ -14,6 +14,7 @@
 import abc
 import copy
 import functools
+import typing
 
 from neutron_lib.api.definitions import port
 from neutron_lib.api import extensions as api_extensions
@@ -51,6 +52,8 @@ TAG_ATTRIBUTE_MAP = {
     NOT_TAGS_ANY: {'allow_post': False, 'allow_put': False,
                    'is_visible': False, 'is_filter': True},
 }
+
+TAG_ATTRIBUTE_MAP_PORTS: dict[str, typing.Any]
 TAG_ATTRIBUTE_MAP_PORTS = copy.deepcopy(TAG_ATTRIBUTE_MAP)
 TAG_ATTRIBUTE_MAP_PORTS[TAGS] = {
         'allow_post': True, 'allow_put': False,

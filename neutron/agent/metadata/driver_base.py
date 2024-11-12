@@ -47,8 +47,8 @@ listen listener
 
 
 class HaproxyConfiguratorBase(metaclass=abc.ABCMeta):
-    PROXY_CONFIG_DIR = None
-    HEADER_CONFIG_TEMPLATE = None
+    PROXY_CONFIG_DIR: str
+    HEADER_CONFIG_TEMPLATE: str
 
     def __init__(self, network_id, router_id, unix_socket_path, host, port,
                  user, group, state_path, pid_file, rate_limiting_config,

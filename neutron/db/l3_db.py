@@ -89,7 +89,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                           st_attr.StandardAttrDescriptionMixin):
     """Mixin class to add L3/NAT router methods to db_base_plugin_v2."""
 
-    router_device_owners = (
+    router_device_owners: tuple[str, ...] = (
         DEVICE_OWNER_HA_REPLICATED_INT,
         DEVICE_OWNER_ROUTER_INTF,
         DEVICE_OWNER_ROUTER_GW,

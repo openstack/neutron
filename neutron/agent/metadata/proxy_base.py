@@ -40,8 +40,8 @@ MODE_MAP = {
 
 
 class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
-    NETWORK_ID_HEADER = None
-    ROUTER_ID_HEADER = None
+    NETWORK_ID_HEADER: str
+    ROUTER_ID_HEADER: str
 
     def __init__(self, conf, has_cache=False):
         self.conf = conf

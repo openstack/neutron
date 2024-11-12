@@ -95,9 +95,9 @@ OvnPortInfo = collections.namedtuple(
 )
 
 
-GW_INFO = collections.namedtuple('GatewayInfo', ['network_id', 'subnet_id',
-                                                 'router_ip', 'gateway_ip',
-                                                 'ip_version', 'ip_prefix'])
+GW_INFO = collections.namedtuple('GW_INFO', ['network_id', 'subnet_id',
+                                             'router_ip', 'gateway_ip',
+                                             'ip_version', 'ip_prefix'])
 
 
 class OVNClient:

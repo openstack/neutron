@@ -36,7 +36,7 @@ MYSQL_ENGINE = None
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-neutron_config = config.neutron_config
+neutron_config = config.neutron_config  # type:ignore[attr-defined]
 
 # set the target for 'autogenerate' support
 target_metadata = model_base.BASEV2.metadata

@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib import exceptions
 from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_log import log as logging
@@ -221,9 +222,16 @@ def _delete_mac_spoofing_protection(vifs, current_rules, table, chain):
 NAMESPACE = None
 
 
+def _is_retriable_failure(e):
+    if isinstance(e, exceptions.ProcessExecutionError):
+        if e.returncode in [255, 4]:
+            return True
+    return False
+
+
 @tenacity.retry(
     wait=tenacity.wait_exponential(multiplier=0.02),
-    retry=tenacity.retry_if_exception(lambda e: e.returncode in [255, 4]),
+    retry=tenacity.retry_if_exception(_is_retriable_failure),
     reraise=True
 )
 def ebtables(comm, table='nat'):

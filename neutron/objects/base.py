@@ -18,8 +18,10 @@ import functools
 import itertools
 import sys
 import traceback
+import typing
 
 from neutron_lib.db import api as db_api
+from neutron_lib.db import model_base
 from neutron_lib.db import standard_attr
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
@@ -434,11 +436,11 @@ class DeclarativeObject(abc.ABCMeta):
 
 class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
 
-    # should be overridden for all persistent objects
-    db_model = None
+    # should be set for all persistent objects
+    db_model: typing.Optional[model_base.BASEV2] = None
 
-    # should be overridden for all rbac aware objects
-    rbac_db_cls = None
+    # should be set for all rbac aware objects
+    rbac_db_cls: typing.Optional[model_base.BASEV2] = None
 
     primary_keys = ['id']
 
@@ -456,7 +458,7 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
     # E.g. all the port extension will use 'port_id' as key.
     foreign_keys = {}
 
-    fields_no_update = []
+    fields_no_update: list[str] = []
 
     # dict with name mapping: {'field_name_in_object': 'field_name_in_db'}
     # It can be used also as DB relationship mapping to synthetic fields name.
