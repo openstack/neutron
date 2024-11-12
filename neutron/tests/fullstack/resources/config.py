@@ -426,6 +426,7 @@ class L3ConfigFixture(ConfigFixture):
         self.config['DEFAULT'].update({
             'debug': 'True',
             'test_namespace_suffix': self._generate_namespace_suffix(),
+            'ha_keepalived_state_change_server_threads': '1',
         })
         self.config.update({
             'agent': {'use_helper_for_ns_read': 'False'}
