@@ -51,7 +51,6 @@ class DriverBase(api_base.LoggingApiBase):
     # the log driver.
     @registry.receives(log_const.LOGGING_PLUGIN, [events.AFTER_INIT])
     def _register(self, resource, event, trigger, payload=None):
-        # pylint: disable=using-constant-test
         if self.is_loaded:
             # trigger is the LoggingServiceDriverManager
             trigger.register_driver(self)
@@ -59,6 +58,7 @@ class DriverBase(api_base.LoggingApiBase):
     def register_rpc_methods(self, resource_type, rpc_methods):
         server_rpc.register_rpc_methods(resource_type, rpc_methods)
 
+    @property
     def is_loaded(self):
         """True if the driver is active for the Neutron Server.
 
