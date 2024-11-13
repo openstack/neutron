@@ -17,9 +17,11 @@ import collections
 import os.path
 
 import eventlet
+from neutron_lib import exceptions as n_exc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
 
@@ -116,6 +118,20 @@ class ProcessManager(MonitoredProcess):
         else:
             self.disable('HUP', delete_pid_file=False)
 
+    def _kill_process(self, cmd, pid):
+        try:
+            ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
+            ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
+                                     run_as_root=self.run_as_root,
+                                     privsep_exec=True)
+        except n_exc.ProcessExecutionError as exc:
+            with excutils.save_and_reraise_exception() as ctxt:
+                if ('No such process' in str(exc) or
+                        'Cannot open network namespace' in str(exc)):
+                    LOG.debug('Process %s not present when "kill" command '
+                              'sent', pid)
+                    ctxt.reraise = False
+
     def disable(self, sig='9', get_stop_command=None, delete_pid_file=True):
         pid = self.pid
         delete_pid_file = delete_pid_file or sig == '9'
@@ -123,15 +139,9 @@ class ProcessManager(MonitoredProcess):
         if self.active:
             if get_stop_command:
                 cmd = get_stop_command(self.get_pid_file_name())
-                ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
-                ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
-                                         run_as_root=self.run_as_root,
-                                         privsep_exec=True)
             else:
                 cmd = self.get_kill_cmd(sig, pid)
-                utils.execute(cmd, addl_env=self.cmd_addl_env,
-                              run_as_root=self.run_as_root,
-                              privsep_exec=True)
+            self._kill_process(cmd, pid)
 
             if delete_pid_file:
                 utils.delete_if_exists(self.get_pid_file_name(),
@@ -150,7 +160,7 @@ class ProcessManager(MonitoredProcess):
             kill_file = "%s-kill" % self.service
             kill_file_path = os.path.join(self.kill_scripts_path, kill_file)
             if os.path.isfile(kill_file_path):
-                return [kill_file_path, sig, pid]
+                return [kill_file_path, str(sig), pid]
         return ['kill', '-%s' % (sig), pid]
 
     def get_pid_file_name(self):
