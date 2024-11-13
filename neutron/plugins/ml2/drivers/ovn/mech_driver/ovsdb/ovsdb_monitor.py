@@ -787,11 +787,7 @@ class BaseOvnSbIdl(Ml2OvnIdlBase):
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
         helper.register_table('Datapath_Binding')
-        try:
-            return cls(connection_string, helper, leader_only=False)
-        except TypeError:
-            # TODO(twilson) We can remove this when we require ovs>=2.12.0
-            return cls(connection_string, helper)
+        return cls(connection_string, helper, leader_only=False)
 
 
 class OvnIdl(BaseOvnIdl):
@@ -933,11 +929,7 @@ class OvnSbIdl(OvnIdlDistributedLock):
         helper.register_table('Port_Binding')
         helper.register_table('Datapath_Binding')
         helper.register_columns('SB_Global', ['external_ids'])
-        try:
-            return cls(driver, connection_string, helper, leader_only=False)
-        except TypeError:
-            # TODO(twilson) We can remove this when we require ovs>=2.12.0
-            return cls(driver, connection_string, helper)
+        return cls(driver, connection_string, helper, leader_only=False)
 
     def post_connect(self):
         """Watch Chassis events.
