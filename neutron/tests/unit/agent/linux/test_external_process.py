@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 import psutil
 
 from neutron.agent.linux import external_process as ep
+from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.tests import base
 
@@ -269,10 +270,11 @@ class TestProcessManager(base.BaseTestCase):
                 active.__get__ = mock.Mock(return_value=True)
                 manager = ep.ProcessManager(self.conf, 'uuid')
 
-                with mock.patch.object(ep, 'utils') as utils:
+                with mock.patch.object(ip_lib.IpNetnsCommand, 'execute') as \
+                        mock_execute:
                     manager.disable()
                     env = {ep.PROCESS_TAG: ep.DEFAULT_SERVICE_NAME + '-uuid'}
-                    utils.assert_has_calls([
+                    mock_execute.assert_has_calls([
                         mock.call.execute(['kill', '-9', 4],
                                           addl_env=env,
                                           run_as_root=False,
@@ -286,10 +288,11 @@ class TestProcessManager(base.BaseTestCase):
 
                 manager = ep.ProcessManager(self.conf, 'uuid', namespace='ns')
 
-                with mock.patch.object(ep, 'utils') as utils:
+                with mock.patch.object(ip_lib.IpNetnsCommand, 'execute') as \
+                        mock_execute:
                     manager.disable()
                     env = {ep.PROCESS_TAG: ep.DEFAULT_SERVICE_NAME + '-uuid'}
-                    utils.assert_has_calls([
+                    mock_execute.assert_has_calls([
                         mock.call.execute(
                             ['kill', '-9', 4], addl_env=env, run_as_root=True,
                             privsep_exec=True)])
@@ -331,12 +334,12 @@ class TestProcessManager(base.BaseTestCase):
                 manager = ep.ProcessManager(
                     self.conf, 'uuid', namespace=namespace,
                     service=service_name)
-                with mock.patch.object(ep, 'utils') as utils, \
-                        mock.patch.object(os.path, 'isfile',
-                                          return_value=kill_script_exists):
+                with mock.patch.object(ip_lib.IpNetnsCommand, 'execute') as \
+                        execute_mock, mock.patch.object(
+                        os.path, 'isfile', return_value=kill_script_exists):
                     manager.disable()
                     addl_env = {ep.PROCESS_TAG: service_name + '-uuid'}
-                    utils.execute.assert_called_with(
+                    execute_mock.assert_called_with(
                         expected_cmd, addl_env=addl_env,
                         run_as_root=bool(namespace), privsep_exec=True)
 
