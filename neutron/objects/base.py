@@ -229,8 +229,9 @@ class NeutronObject(obj_base.VersionedObject,
 
     @classmethod
     def is_object_field(cls, field):
-        return (isinstance(cls.fields[field], obj_fields.ListOfObjectsField) or
-                isinstance(cls.fields[field], obj_fields.ObjectField))
+        return isinstance(
+                   cls.fields[field],
+                   (obj_fields.ListOfObjectsField, obj_fields.ObjectField))
 
     @classmethod
     def obj_class_from_name(cls, objname, objver):

@@ -20,8 +20,6 @@ disable=
 # "F" Fatal errors that prevent further processing
  import-error,
 # "I" Informational noise
- c-extension-no-member,
- locally-disabled,
 # "E" Error for important programming issues (likely bugs)
  access-member-before-definition,
  no-member,
@@ -34,7 +32,6 @@ disable=
  arguments-differ,
  attribute-defined-outside-init,
  broad-except,
- expression-not-assigned,
  fixme,
  global-statement,
  not-callable,
@@ -52,13 +49,11 @@ disable=
  arguments-renamed,
  broad-exception-raised,
  unspecified-encoding,
- redundant-u-string-prefix,
  unused-private-member,
 # "C" Coding convention violations
  consider-iterating-dictionary,
  consider-using-enumerate,
  invalid-name,
- len-as-condition,
  missing-docstring,
  singleton-comparison,
  superfluous-parens,
@@ -67,14 +62,11 @@ disable=
  consider-using-f-string,
  consider-using-dict-items,
 # "R" Refactor recommendations
- consider-merging-isinstance,
- consider-using-ternary,
  duplicate-code,
  inconsistent-return-statements,
  no-else-return,
  no-self-use,
  redefined-argument-from-local,
- simplifiable-if-statement,
  too-few-public-methods,
  too-many-ancestors,
  too-many-arguments,
@@ -86,7 +78,6 @@ disable=
  too-many-public-methods,
  too-many-return-statements,
  too-many-statements,
- consider-using-set-comprehension,
  use-dict-literal
 
 [BASIC]
