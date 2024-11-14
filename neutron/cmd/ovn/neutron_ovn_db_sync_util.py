@@ -168,7 +168,7 @@ def main():
         conf(project='neutron')
     except TypeError:
         LOG.error('Error parsing the configuration values. Please verify.')
-        return
+        raise SystemExit(1)
 
     logging.setup(conf, 'neutron_ovn_db_sync_util', fix_eventlet=False)
     LOG.info('Neutron OVN DB sync started')
@@ -181,7 +181,7 @@ def main():
     if mode not in [ovn_db_sync.SYNC_MODE_LOG, ovn_db_sync.SYNC_MODE_REPAIR]:
         LOG.error(
             'Invalid sync mode: ["%s"]. Should be "log" or "repair"', mode)
-        return
+        raise SystemExit(1)
 
     # Validate and modify core plugin and ML2 mechanism drivers for syncing.
     if (cfg.CONF.core_plugin.endswith('.Ml2Plugin') or
@@ -191,11 +191,11 @@ def main():
         if not cfg.CONF.ml2.mechanism_drivers:
             LOG.error('Please use --config-file to specify '
                       'neutron and ml2 configuration file.')
-            return
+            raise SystemExit(1)
         if 'ovn' not in cfg.CONF.ml2.mechanism_drivers:
             LOG.error('No "ovn" mechanism driver found: "%s".',
                       cfg.CONF.ml2.mechanism_drivers)
-            return
+            raise SystemExit(1)
         cfg.CONF.set_override('mechanism_drivers', ['ovn-sync'], 'ml2')
         conf.service_plugins = [
             'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin',
@@ -208,20 +208,20 @@ def main():
 
     else:
         LOG.error('Invalid core plugin: ["%s"].', cfg.CONF.core_plugin)
-        return
+        raise SystemExit(1)
 
     mech_worker = worker.MaintenanceWorker
     try:
         ovn_api = impl_idl_ovn.OvsdbNbOvnIdl.from_worker(mech_worker)
     except RuntimeError:
         LOG.error('Invalid --ovn-ovn_nb_connection parameter provided.')
-        return
+        raise SystemExit(1)
 
     try:
         ovn_sb_api = impl_idl_ovn.OvsdbSbOvnIdl.from_worker(mech_worker)
     except RuntimeError:
         LOG.error('Invalid --ovn-ovn_sb_connection parameter provided.')
-        return
+        raise SystemExit(1)
 
     manager.init()
     core_plugin = directory.get_plugin()
