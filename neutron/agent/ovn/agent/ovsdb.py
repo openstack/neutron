@@ -38,12 +38,7 @@ class MonitorAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
         helper = self._get_ovsdb_helper(connection_string)
         for table in tables:
             helper.register_table(table)
-        try:
-            super().__init__(None, connection_string, helper,
-                             leader_only=False)
-        except TypeError:
-            # TODO(twilson) We can remove this when we require ovs>=2.12.0
-            super().__init__(None, connection_string, helper)
+        super().__init__(None, connection_string, helper, leader_only=False)
         if chassis:
             for table in set(tables).intersection({'Chassis',
                                                    'Chassis_Private'}):
@@ -76,12 +71,7 @@ class MonitorAgentOvnNbIdl(ovsdb_monitor.OvnIdl):
         helper = self._get_ovsdb_helper(connection_string)
         for table in tables:
             helper.register_table(table)
-        try:
-            super().__init__(None, connection_string, helper,
-                             leader_only=False)
-        except TypeError:
-            # TODO(twilson) We can remove this when we require ovs>=2.12.0
-            super().__init__(None, connection_string, helper)
+        super().__init__(None, connection_string, helper, leader_only=False)
         if events:
             self.notify_handler.watch_events(events)
 
