@@ -3100,8 +3100,11 @@ class OVNMechanismDriverTestCase(MechDriverSetupBase,
                                  test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['logger', 'ovn']
 
-    def setUp(self):
+    def setUp(self, enable_metadata=False):
         ovn_conf.register_opts()
+        if enable_metadata:
+            ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', True,
+                                           group='ovn')
         cfg.CONF.set_override('tenant_network_types',
                               ['geneve'],
                               group='ml2')
