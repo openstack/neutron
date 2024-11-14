@@ -499,8 +499,10 @@ class TestHAL3Agent(TestL3Agent):
         # Test one last time:
         active_hosts = get_active_hosts()
         if len(active_hosts) != 1:
-            self.fail('Number of active hosts for router: %s' %
-                      len(active_hosts))
+            self.fail('Number of active hosts for router: {}\n'
+                      'Hosts: {}\n'
+                      'Router: {}'.format(
+                          len(active_hosts), active_hosts, router_id))
         active_host = active_hosts[0]
         backup_host = next(
             h for h in self.environment.hosts if h != active_host)
