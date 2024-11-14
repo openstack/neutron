@@ -25,7 +25,7 @@ from neutron.api import extensions
 from neutron.common import config
 import neutron.extensions
 from neutron.services.metering import metering_plugin
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 DB_METERING_PLUGIN_KLASS = (
     "neutron.services.metering."

@@ -46,7 +46,7 @@ from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.tests import base
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 @ddt.ddt

@@ -30,7 +30,7 @@ from neutron.db import l3_fip_qos
 from neutron.extensions import floating_ip_port_forwarding as pf_ext
 from neutron.extensions import l3
 from neutron.objects.qos import policy
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 
 

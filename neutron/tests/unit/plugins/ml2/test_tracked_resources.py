@@ -20,8 +20,8 @@ from oslo_utils import uuidutils
 from neutron.conf import quota as quota_conf
 from neutron.db.quota import api as quota_db_api
 from neutron import quota
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.api import test_extensions
-from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup
 from neutron.tests.unit.plugins.ml2 import base as ml2_base

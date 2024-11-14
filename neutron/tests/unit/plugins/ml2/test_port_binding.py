@@ -34,7 +34,7 @@ from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import models as ml2_models
 from neutron.plugins.ml2 import plugin as ml2_plugin
-from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
+from neutron.tests.common import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.plugins.ml2.drivers import mechanism_test
 
 

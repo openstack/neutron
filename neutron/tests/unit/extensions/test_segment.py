@@ -52,7 +52,7 @@ from neutron.services.segments import db
 from neutron.services.segments import exceptions as segment_exc
 from neutron.services.segments import plugin as seg_plugin
 from neutron.tests.common import helpers
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 SERVICE_PLUGIN_KLASS = 'neutron.services.segments.plugin.Plugin'
 TEST_PLUGIN_KLASS = (

@@ -35,7 +35,7 @@ from neutron.ipam import requests as ipam_req
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as obj_subnet
-from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_base
+from neutron.tests.common import test_db_base_plugin_v2 as test_db_base
 
 
 class UseIpamMixin:

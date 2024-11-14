@@ -30,9 +30,9 @@ from neutron.db import servicetype_db as st_db
 from neutron.extensions import servicetype
 from neutron.objects import servicetype as servicetype_obj
 from neutron.services import provider_configuration as provconf
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
-from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit import dummy_plugin as dp
 from neutron.tests.unit import testlib_api
 

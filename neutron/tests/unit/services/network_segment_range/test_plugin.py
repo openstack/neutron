@@ -22,7 +22,7 @@ from oslo_config import cfg
 
 from neutron.db import segments_db
 from neutron.services.network_segment_range import plugin as range_plugin
-from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
+from neutron.tests.common import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit import testlib_api
 
 SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'

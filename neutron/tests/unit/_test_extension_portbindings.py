@@ -20,7 +20,7 @@ from neutron_lib import context
 from neutron_lib.plugins import directory
 from webob import exc
 
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit import dummy_plugin
 
 

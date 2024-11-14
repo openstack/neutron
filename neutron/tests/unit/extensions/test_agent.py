@@ -26,8 +26,8 @@ from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import agent
 from neutron.tests.common import helpers
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.api.v2 import test_base
-from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
 _uuid = uuidutils.generate_uuid

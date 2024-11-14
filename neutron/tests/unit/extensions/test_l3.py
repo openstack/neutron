@@ -61,9 +61,9 @@ from neutron.extensions import l3
 from neutron.objects import network as network_obj
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.api.v2 import test_base
-from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import base as test_extensions_base
 from neutron.tests.unit.extensions import test_agent
 from neutron.tests.unit.plugins.ml2 import base as ml2_base

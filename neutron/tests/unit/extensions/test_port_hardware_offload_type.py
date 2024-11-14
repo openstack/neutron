@@ -21,7 +21,7 @@ from oslo_config import cfg
 from neutron.db import port_hardware_offload_type_db as phot_db
 from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2 import plugin
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 class PortHardwareOffloadTypeExtensionTestPlugin(

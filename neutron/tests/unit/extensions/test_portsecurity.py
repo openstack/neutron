@@ -30,7 +30,7 @@ from neutron.db import portsecurity_db
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
 from neutron import quota
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_securitygroup
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_portsecurity.'

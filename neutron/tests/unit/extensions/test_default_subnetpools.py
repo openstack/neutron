@@ -18,7 +18,7 @@ import webob.exc
 
 from neutron.db import db_base_plugin_v2
 from neutron.extensions import default_subnetpools
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 
 class DefaultSubnetpoolsExtensionManager:

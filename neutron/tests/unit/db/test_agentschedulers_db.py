@@ -49,8 +49,8 @@ from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
 from neutron import policy
 from neutron.tests.common import helpers
+from neutron.tests.common import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.api import test_extensions
-from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.extensions import test_agent
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit import testlib_api

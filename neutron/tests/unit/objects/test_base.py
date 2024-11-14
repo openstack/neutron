@@ -58,8 +58,8 @@ from neutron.objects import stdattrs
 from neutron.objects import subnet
 from neutron.objects import subnetpool
 from neutron.tests import base as test_base
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests import tools
-from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
 SQLALCHEMY_COMMIT = 'sqlalchemy.engine.Connection._commit_impl'

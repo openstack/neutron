@@ -20,7 +20,7 @@ from neutron_lib.plugins import directory
 
 from neutron.db import ovn_l3_hamode_db
 from neutron.objects import router as router_obj
-from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
+from neutron.tests.common import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.db import test_l3_dvr_db
 
 

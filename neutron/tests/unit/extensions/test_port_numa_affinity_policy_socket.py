@@ -17,7 +17,7 @@ from neutron_lib.api.definitions import port_numa_affinity_policy_socket as \
     apidef
 from neutron_lib import constants
 
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_port_numa_affinity_policy
 
 

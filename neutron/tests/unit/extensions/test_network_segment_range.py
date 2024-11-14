@@ -24,7 +24,7 @@ from neutron.db import db_base_plugin_v2
 from neutron.db import segments_db
 from neutron.extensions import network_segment_range as ext_range
 from neutron.services.network_segment_range import plugin as plugin_range
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 
 SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
                         'NetworkSegmentRangePlugin')

@@ -38,7 +38,7 @@ from neutron.tests.unit.api.v2 import test_base
 rname = subnet_apidef.COLLECTION_NAME
 attributes.RESOURCES[rname].update(
     extsnet_apidef.RESOURCE_ATTRIBUTE_MAP[rname])
-from neutron.tests.unit.db import test_db_base_plugin_v2  # noqa: E402
+from neutron.tests.common import test_db_base_plugin_v2  # noqa: E402
 
 
 _uuid = uuidutils.generate_uuid

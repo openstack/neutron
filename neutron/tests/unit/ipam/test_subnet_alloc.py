@@ -26,7 +26,7 @@ from oslo_utils import uuidutils
 
 from neutron.ipam import requests as ipam_req
 from neutron.ipam import subnet_alloc
-from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit import testlib_api
 
 
