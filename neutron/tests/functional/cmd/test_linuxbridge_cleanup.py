@@ -13,7 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
+import shutil
 from unittest import mock
 
 import fixtures
@@ -41,8 +41,7 @@ class LinuxbridgeCleanupTest(base.BaseSudoTestCase):
         # NOTE(slaweq): use of oslo.privsep inside neutron-linuxbridge-cleanup
         # script requires rootwrap helper to be configured in this script's
         # config
-        privsep_helper = os.path.join(
-            os.getenv('VIRTUAL_ENV'), 'bin', 'privsep-helper')
+        privsep_helper = shutil.which('privsep-helper')
         config.update({
             'AGENT': {
                 'root_helper': tests_base.get_rootwrap_cmd(),
