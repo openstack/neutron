@@ -346,7 +346,9 @@ class SubnetRequestFactory:
             gw_ip_net = netaddr.IPNetwork('%s/%s' % (gateway_ip, prefixlen))
             cidr = gw_ip_net.cidr
 
-        return SpecificSubnetRequest(subnet['tenant_id'],
+        # TODO(ralonsoh): "tenant_id" reference should be removed.
+        project_id = subnet.get('project_id') or subnet['tenant_id']
+        return SpecificSubnetRequest(project_id,
                                      subnet_id,
                                      cidr,
                                      gateway_ip=gateway_ip,

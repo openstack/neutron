@@ -252,11 +252,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             tenant_to_check = policy['target_project']
 
         if tenant_to_check:
-            self.ensure_no_tenant_ports_on_network(
+            self.ensure_no_project_ports_on_network(
                 context, net['id'], net['tenant_id'], tenant_to_check)
 
-    def ensure_no_tenant_ports_on_network(self, context, network_id,
-                                          net_tenant_id, tenant_id):
+    def ensure_no_project_ports_on_network(self, context, network_id,
+                                           net_tenant_id, tenant_id):
         elevated = context.elevated()
         with db_api.CONTEXT_READER.using(elevated):
             ports = model_query.query_with_hooks(
