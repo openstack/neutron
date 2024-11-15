@@ -276,6 +276,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 allowed_tenants.append(net_tenant_id)
                 ports = ports.filter(
                     ~models_v2.Port.tenant_id.in_(allowed_tenants))
+                # Filter any port with project_id=''. These ports are related
+                # to floating IPs, router ports (gateway, SNAT, FIP agent, HA
+                # interface).
+                ports = ports.filter(models_v2.Port.project_id.notin_(['']))
             else:
                 # if there is a wildcard rule, we can return early because it
                 # allows any ports
