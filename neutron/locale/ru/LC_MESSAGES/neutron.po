@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2023-05-15 17:54+0000\n"
+"POT-Creation-Date: 2024-11-14 19:41+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -193,11 +193,6 @@ msgstr ""
 
 msgid "Async process didn't respawn"
 msgstr "Асинхронный процесс не перезапустился"
-
-msgid "Authorization URL for connecting to designate in admin context"
-msgstr ""
-"URL авторизации для подключения к назначенному объекту в административном "
-"контексте"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "Автоматически удалять сети из отключенных агентов DHCP."
@@ -572,13 +567,6 @@ msgid ""
 msgstr ""
 "ОШИБКА: Не удалось найти файл конфигурации с использованием путей поиска по "
 "умолчанию (~/.neutron/, ~/, /etc/neutron/, /etc/) и опция '--config-file'!"
-
-msgid ""
-"Either one of parameter network_id or router_id must be passed to _get_ports "
-"method."
-msgstr ""
-"Либо один из параметров network_id, либо router_id должен быть передан в "
-"метод _get_ports."
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "Необходимо указать или subnet_id, или port_id"
@@ -999,9 +987,6 @@ msgstr ""
 "автоматически вычитает байты, необходимые для протокола перекрытия, из этого "
 "значения. Значение по умолчанию: 1500, стандартное для Ethernet."
 
-msgid "MTU size of veth interfaces"
-msgstr "Размер MTU интерфейсов veth"
-
 msgid "Make the l2 agent run in DVR mode."
 msgstr "Создать агент L2, выполняемый в режиме DVR."
 
@@ -1087,9 +1072,6 @@ msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 "Необходимо указать одно или несколько действий добавления или изменения "
 "потока"
-
-msgid "Name of Open vSwitch bridge to use"
-msgstr "Имя используемого моста Open vSwitch"
 
 msgid "Namespace of the router"
 msgstr "Пространство имен маршрутизатора"
@@ -1265,10 +1247,6 @@ msgstr "Пакет %s не установлен"
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "Синтаксический анализ bridge_mappings не выполнен: %s."
-
-msgid "Password for connecting to designate in admin context"
-msgstr ""
-"Пароль для подключения к назначенному объекту в административном контексте"
 
 msgid "Path to PID file for this process"
 msgstr "Путь к файлу PID для этого процесса"
@@ -1534,16 +1512,6 @@ msgstr ""
 "Арендатору %(tenant_id)s не разрешено создание ресурса %(resource)s в этой "
 "сети"
 
-msgid "Tenant id for connecting to designate in admin context"
-msgstr ""
-"ИД арендатора для подключения к назначенному объекту в административном "
-"контексте"
-
-msgid "Tenant name for connecting to designate in admin context"
-msgstr ""
-"Имя арендатора для подключения к назначенному объекту в административном "
-"контексте"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "Порт UDP, применяемый для туннелей VXLAN."
 
@@ -1777,11 +1745,6 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "Пользователь (uid или имя) запускает этот процесс после инициализации"
-
-msgid "Username for connecting to designate in admin context"
-msgstr ""
-"Имя пользователя для подключения к назначенному объекту в административном "
-"контексте"
 
 msgid "VRRP authentication password"
 msgstr "Пароль идентификации VRRP"

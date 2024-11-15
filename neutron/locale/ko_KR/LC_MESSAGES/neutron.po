@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2023-05-15 17:54+0000\n"
+"POT-Creation-Date: 2024-11-14 19:41+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -197,9 +197,6 @@ msgstr "알 수 없는 오류가 발생했습니다. 요청을 다시 시도하�
 
 msgid "Async process didn't respawn"
 msgstr "비동기 프로세스가 다시 파생되지 않음"
-
-msgid "Authorization URL for connecting to designate in admin context"
-msgstr "관리 컨텍스트에서 지정하기 위해 연결할 인증 URL"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "오프라인 DHCP 에이전트에서 네트워크를 자동으로 제거합니다."
@@ -560,13 +557,6 @@ msgid ""
 msgstr ""
 "오류: 기본 검색 경로(~/.quantum/, ~/, /etc/quantum/, /etc/) 및 '--config-"
 "file' (~/.neutron/, ~/, /etc/neutron/, /etc/) 및 '--config-file' 옵션!"
-
-msgid ""
-"Either one of parameter network_id or router_id must be passed to _get_ports "
-"method."
-msgstr ""
-"매개변수 network_id 및 router_id 중 하나를 _get_ports 메소드에 전달해야 합니"
-"다."
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "subnet_id 또는 port_id 중 하나를 지정해야 함"
@@ -977,9 +967,6 @@ msgstr ""
 "neutron이 이 값에서 오버레이 프로토콜 오버헤드를 자동으로 제거합니다. 이더넷"
 "의 표준 값인 1500으로 기본값이 지정됩니다."
 
-msgid "MTU size of veth interfaces"
-msgstr "veth 인터페이스의 MTU 크기"
-
 msgid "Make the l2 agent run in DVR mode."
 msgstr "l2 에이전트를 DVR 모드에서 실행하십시오."
 
@@ -1058,9 +1045,6 @@ msgstr "포트 범위가 제공되는 경우 프로토콜도 지정해야 합니
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "플로우 추가 또는 수정 시 하나 이상의 조치를 지정해야 함"
-
-msgid "Name of Open vSwitch bridge to use"
-msgstr "사용할 열린 vSwitch 브릿지의 이름"
 
 msgid "Namespace of the router"
 msgstr "라우터의 네임스페이스"
@@ -1220,9 +1204,6 @@ msgstr "패키지 %s이(가) 설치되지 않음"
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "bridge_mappings 구문 분석 실패: %s."
-
-msgid "Password for connecting to designate in admin context"
-msgstr "관리 컨텍스트에서 지정하기 위해 연결할 암호"
 
 msgid "Path to PID file for this process"
 msgstr "이 프로세스에 대한 PID 파일의 경로"
@@ -1482,12 +1463,6 @@ msgstr ""
 "%(tenant_id)s 테넌트는 이 네트워크에 %(resource)s을(를) 작성하도록 허용되지 "
 "않음"
 
-msgid "Tenant id for connecting to designate in admin context"
-msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 ID"
-
-msgid "Tenant name for connecting to designate in admin context"
-msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 이름"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "VXLAN 터널에 사용하는 UDP 포트"
 
@@ -1718,9 +1693,6 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "초기화 이후 이 프로세스를 실행하는 사용자(uid 또는 이름)"
-
-msgid "Username for connecting to designate in admin context"
-msgstr "관리 컨텍스트에서 지정하기 위해 연결할 사용자 이름"
 
 msgid "VRRP authentication password"
 msgstr "VRRP 인증 비밀번호"

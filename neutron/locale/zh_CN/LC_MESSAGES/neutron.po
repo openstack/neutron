@@ -18,7 +18,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2023-05-15 17:54+0000\n"
+"POT-Creation-Date: 2024-11-14 19:41+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -190,9 +190,6 @@ msgstr "发生未知错误。请再次尝试您的请求。"
 
 msgid "Async process didn't respawn"
 msgstr "同步进程未重新衍生"
-
-msgid "Authorization URL for connecting to designate in admin context"
-msgstr "管理员上下文中要指定的连接授权 URL"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "自动从脱机 DHCP 代理移除网络。"
@@ -543,11 +540,6 @@ msgid ""
 msgstr ""
 "错误：无法通过缺省搜索路径（~/.neutron/、~/、/etc/neutron/ 和 /etc/）以及“--"
 "config-file”选项找到配置文件！"
-
-msgid ""
-"Either one of parameter network_id or router_id must be passed to _get_ports "
-"method."
-msgstr "参数 network_id 或 router_id 的其中之一必须传递至_get_ports 方法。"
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "必须指定 subnet_id 或 port_id"
@@ -928,9 +920,6 @@ msgstr ""
 "和 VLAN 网络，neutron 使用此值而不做修改。对于 VXLAN 之类的覆盖网络，neutron "
 "自动从此值减去覆盖协议开销。缺省为 1500（这是以太网的标准值）。"
 
-msgid "MTU size of veth interfaces"
-msgstr "veth 接口的 MTU 大小"
-
 msgid "Make the l2 agent run in DVR mode."
 msgstr "使 l2 代理在 DVR 方式下运行。"
 
@@ -1008,9 +997,6 @@ msgstr "如果指定了端口范围，那么还必须指定协议。"
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "必须在添加或删除流时指定一个或多个操作"
-
-msgid "Name of Open vSwitch bridge to use"
-msgstr "要使用的已打开 vSwitch 网桥的名称"
 
 msgid "Namespace of the router"
 msgstr "路由器名字空间"
@@ -1165,9 +1151,6 @@ msgstr "未安装软件包 %s"
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "解析 bridge_mappings 失败：%s。"
-
-msgid "Password for connecting to designate in admin context"
-msgstr "管理员上下文中要指定的连接密码"
 
 msgid "Path to PID file for this process"
 msgstr "此进程的 PID 文件的路径"
@@ -1413,12 +1396,6 @@ msgstr "找不到标记 %(tag)s。"
 msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr "不允许租户 %(tenant_id)s 在此网络上创建 %(resource)s"
 
-msgid "Tenant id for connecting to designate in admin context"
-msgstr "管理员上下文中要指定的连接租户标识"
-
-msgid "Tenant name for connecting to designate in admin context"
-msgstr "管理员上下文中要指定的连接租户名"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "UDP端口用于VXLAN隧道"
 
@@ -1639,9 +1616,6 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "在此进程的初始化之后，运行此进程的用户（uid 或名称）"
-
-msgid "Username for connecting to designate in admin context"
-msgstr "管理员上下文中要指定的连接用户名"
 
 msgid "VRRP authentication password"
 msgstr "VRRP认证密码"

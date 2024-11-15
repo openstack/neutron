@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2023-05-15 17:54+0000\n"
+"POT-Creation-Date: 2024-11-14 19:41+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -193,9 +193,6 @@ msgstr "Si è verificato un errore sconosciuto. Ritentare la richiesta."
 
 msgid "Async process didn't respawn"
 msgstr "Il processo async non ha eseguito la nuova generazione"
-
-msgid "Authorization URL for connecting to designate in admin context"
-msgstr "URL autorizzazione per la connessione da designare nel contesto admin"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "Rimuove automaticamente le reti dagli agent DHCP offline."
@@ -576,13 +573,6 @@ msgstr ""
 "ERRORE: Impossibile trovare il file di configurazione utilizzando i percorsi "
 "di ricerca predefiniti (~/.neutron/, ~/, /etc/neutron/, /etc/) e l'opzione "
 "'--config-file'!"
-
-msgid ""
-"Either one of parameter network_id or router_id must be passed to _get_ports "
-"method."
-msgstr ""
-"Uno dei parametri network_id o router_id deve essere passato al metodo "
-"_get_ports."
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "È necessario specificare subnet_id o port_id"
@@ -1009,9 +999,6 @@ msgstr ""
 "protocollo di sovrapposizione  da questo valore. Il valore predefinito è "
 "impostato su 1500, il valore standard per Ethernet."
 
-msgid "MTU size of veth interfaces"
-msgstr "Dimensione MTU delle interfacce veth"
-
 msgid "Make the l2 agent run in DVR mode."
 msgstr "Eseguire l'agent L2 in modalità DVR."
 
@@ -1096,9 +1083,6 @@ msgstr ""
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr ""
 "È necessario specificare una o più azioni nell'aggiunta o modifica del flusso"
-
-msgid "Name of Open vSwitch bridge to use"
-msgstr "Nome del bridge Open vSwitch da utilizzare"
 
 msgid "Namespace of the router"
 msgstr "Spazio dei nomi del router"
@@ -1280,9 +1264,6 @@ msgstr "Pacchetto %s non installato"
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "Analisi bridge_mappings non riuscita: %s."
-
-msgid "Password for connecting to designate in admin context"
-msgstr "Password per la connessione da designare nel contesto admin"
 
 msgid "Path to PID file for this process"
 msgstr "Percorso per il file PID per questo processo"
@@ -1552,12 +1533,6 @@ msgid "Tenant %(tenant_id)s not allowed to create %(resource)s on this network"
 msgstr ""
 "Tenant %(tenant_id)s non consentito per creare %(resource)s su questa rete"
 
-msgid "Tenant id for connecting to designate in admin context"
-msgstr "ID tenant per la connessione da designare nel contesto admin"
-
-msgid "Tenant name for connecting to designate in admin context"
-msgstr "Nome tenant per la connessione da designare nel contesto admin"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "La porta UDP da utilizzare per i tunnel VXLAN."
 
@@ -1798,9 +1773,6 @@ msgid "User (uid or name) running this process after its initialization"
 msgstr ""
 "Utente (uid o name) che esegue questo processo dopo la relativa "
 "inizializzazione"
-
-msgid "Username for connecting to designate in admin context"
-msgstr "Nome utente per la connessione da designare nel contesto admin"
 
 msgid "VRRP authentication password"
 msgstr "Password di autenticazione VRRP"
