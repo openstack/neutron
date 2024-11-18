@@ -555,11 +555,9 @@
         br-int-flows: true
         dstat: true
         g-api: true
-        g-reg: true
         keystone: true
         n-api-meta: true
         n-api: true
-        n-cauth: true
         n-cond-cell1: true
         n-cpu: true
         n-novnc-cell1: true
