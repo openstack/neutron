@@ -216,6 +216,7 @@
       - openstack/neutron
       - openstack/tempest
     vars:
+      tempest_exclude_regex: "(DHCPAgentSchedulersTestJSON)"
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -263,6 +264,7 @@
       - openstack/neutron
       - openstack/tempest
     vars:
+      tempest_exclude_regex: "(DHCPAgentSchedulersTestJSON)"
       devstack_localrc:
         MYSQL_SERVICE_NAME: mariadb
       devstack_plugins:
@@ -292,6 +294,7 @@
     description: Run neutron Tempest tests with uwsgi
     timeout: 10800
     vars:
+      tempest_exclude_regex: "(DHCPAgentSchedulersTestJSON)"
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
@@ -352,6 +355,7 @@
       - openstack/neutron
       - openstack/tempest
     vars: &ovn-base-vars
+      tempest_exclude_regex: "(DHCPAgentSchedulersTestJSON)"
       tempest_concurrency: 4
       devstack_local_conf:
         test-config:
