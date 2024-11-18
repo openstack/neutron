@@ -24,7 +24,6 @@ from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
@@ -46,7 +45,7 @@ from neutron.common import utils
 from neutron import manager
 
 LOG = logging.getLogger(__name__)
-_SYNC_STATE_LOCK = lockutils.ReaderWriterLock()
+_SYNC_STATE_LOCK = threading.RLock()
 
 DEFAULT_PRIORITY = 255
 
@@ -59,7 +58,7 @@ def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        with _SYNC_STATE_LOCK.write_lock():
+        with _SYNC_STATE_LOCK:
             return f(*args, **kwargs)
     return wrapped
 
@@ -68,7 +67,7 @@ def _wait_if_syncing(f):
     """Decorator to wait if any sync operations are in progress."""
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        with _SYNC_STATE_LOCK.read_lock():
+        with _SYNC_STATE_LOCK:
             return f(*args, **kwargs)
     return wrapped
 
