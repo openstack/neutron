@@ -24,7 +24,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
-from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
@@ -42,7 +41,6 @@ from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.objects import network as network_obj
 from neutron.objects import ports as ports_obj
 from neutron.objects import router as router_obj
-from neutron.objects import servicetype as servicetype_obj
 from neutron import service
 from neutron.services.logapi.drivers.ovn import driver as log_driver
 
@@ -960,28 +958,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
                     txn.add(cmd)
-        raise periodics.NeverAgain()
-
-    # TODO(ralonsoh): Remove this method in the C+2 cycle (next SLURP release)
-    @has_lock_periodic(
-        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
-        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
-        run_immediately=True)
-    def add_provider_resource_association_to_routers(self):
-        """Add the ``ProviderResourceAssociation`` register to all routers"""
-        provider_name = 'ovn'
-        context = n_context.get_admin_context()
-        pra_list = servicetype_obj.ProviderResourceAssociation.get_objects(
-            context, provider_name=provider_name)
-        pra_res_ids = {pra.resource_id for pra in pra_list}
-        with db_api.CONTEXT_WRITER.using(context):
-            for lr in self._nb_idl.lr_list().execute(check_error=True):
-                router_id = lr.name.replace('neutron-', '')
-                if router_id not in pra_res_ids:
-                    servicetype_obj.ProviderResourceAssociation(
-                        context, provider_name=provider_name,
-                        resource_id=router_id).create()
-
         raise periodics.NeverAgain()
 
     # TODO(ralonsoh): Remove this method in the C+2 cycle (next SLURP release)
