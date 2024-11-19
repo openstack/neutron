@@ -120,7 +120,7 @@ Currently we have in that queue jobs like listed below.
     | Job name                                     | Run tests                        | nodes | Operating system | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
     |                                              |                                  |       |                  |             | driver          | mode     |       |        |            | queue       |
     +==============================================+==================================+=======+==================+=============+=================+==========+=======+========+============+=============+
-    |neutron-ovn-tempest-with-uwsgi-loki           |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |neutron-ovn-tempest-loki                      |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
     |(non-voting)                                  |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
