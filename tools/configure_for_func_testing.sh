@@ -126,7 +126,7 @@ function _install_base_deps {
             compile_ovn /usr/local /var
         fi
     else
-        PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch)
+        PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch,ovn)
         PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
         install_package $PACKAGES
     fi
