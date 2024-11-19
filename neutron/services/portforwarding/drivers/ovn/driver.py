@@ -149,7 +149,7 @@ class OVNPortForwardingHandler:
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
             if not ovn_network_name:
                 continue
-            network_id = ovn_network_name.replace('neutron-', '')
+            network_id = ovn_utils.get_neutron_name(ovn_network_name)
             if not network_id:
                 continue
             if ovn_utils.is_provider_network(network_id):

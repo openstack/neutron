@@ -359,7 +359,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                 elif nat.type == 'snat':
                     snat.append(columns)
 
-            result.append({'name': lrouter.name.replace('neutron-', ''),
+            result.append({'name': utils.get_neutron_name(lrouter.name),
                            'static_routes': sroutes,
                            'ports': lrports,
                            'snats': snat,
@@ -378,7 +378,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY not in
                     lrouter.external_ids):
                 continue
-            result.append({'name': lrouter.name.replace('neutron-', ''),
+            result.append({'name': utils.get_neutron_name(lrouter.name),
                            'static_routes': getattr(lrouter, 'static_routes',
                                                     [])})
 

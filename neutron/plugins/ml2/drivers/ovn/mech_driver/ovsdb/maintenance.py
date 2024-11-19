@@ -1000,7 +1000,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         cmds = []
         for ls in self._nb_idl.ls_list().execute(check_error=True):
             if ovn_const.OVN_NETTYPE_EXT_ID_KEY not in ls.external_ids:
-                net_id = ls.name.replace('neutron-', '')
+                net_id = utils.get_neutron_name(ls.name)
                 external_ids = {
                     ovn_const.OVN_NETTYPE_EXT_ID_KEY: net_segments[net_id]}
                 cmds.append(self._nb_idl.db_set(

@@ -921,12 +921,12 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # Get the list of lswitch ids stored in the OVN plugin IDL
         _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_lswitch_ids = [
-            row.name.replace('neutron-', '') for row in (
+            utils.get_neutron_name(row.name) for row in (
                 _plugin_nb_ovn._tables['Logical_Switch'].rows.values())]
 
         # Get the list of lswitch ids stored in the monitor IDL connection
         monitor_lswitch_ids = [
-            row.name.replace('neutron-', '') for row in (
+            utils.get_neutron_name(row.name) for row in (
                 self.nb_api.tables['Logical_Switch'].rows.values())]
 
         # Get the list of provnet ports stored in the OVN plugin IDL
@@ -1239,11 +1239,11 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         _plugin_nb_ovn = self.mech_driver.nb_ovn
         plugin_lrouter_ids = [
-            row.name.replace('neutron-', '') for row in (
+            utils.get_neutron_name(row.name) for row in (
                 _plugin_nb_ovn._tables['Logical_Router'].rows.values())]
 
         monitor_lrouter_ids = [
-            row.name.replace('neutron-', '') for row in (
+            utils.get_neutron_name(row.name) for row in (
                 self.nb_api.tables['Logical_Router'].rows.values())]
 
         if should_match:

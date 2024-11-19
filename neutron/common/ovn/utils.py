@@ -924,8 +924,12 @@ def parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs):
     return result
 
 
+def get_neutron_name(ovn_name):
+    return ovn_name.replace('neutron-', '', 1)
+
+
 def get_network_name_from_datapath(datapath):
-    return datapath.external_ids['name'].replace('neutron-', '')
+    return get_neutron_name(datapath.external_ids['name'])
 
 
 def is_port_external(port):
