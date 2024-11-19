@@ -19,6 +19,7 @@ import datetime
 import functools
 
 import netaddr
+
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import l3_ext_gw_multihoming
 from neutron_lib.api.definitions import port_security as psec
@@ -679,6 +680,13 @@ class OVNClient:
             port['id'], port, ovn_const.TYPE_PORTS)
         with self._nb_idl.transaction(check_error=True,
                                       revision_mismatch_raise=True) as txn:
+            ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port['id'],
+                                           default=None)
+            if not ovn_port:
+                LOG.warning('Logical_Switch_Port deleted concurrently: %s',
+                            port['id'])
+                return
+
             txn.add(check_rev_cmd)
             columns_dict = {}
             if utils.is_lsp_router_port(port):
@@ -735,7 +743,6 @@ class OVNClient:
                     # Clear the ha_chassis_group field
                     columns_dict['ha_chassis_group'] = []
 
-            ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port['id'])
             addr_pairs_diff = utils.compute_address_pairs_diff(ovn_port, port)
 
             if port_info.type != ovn_const.LSP_TYPE_VIRTUAL:
