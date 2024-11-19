@@ -49,6 +49,7 @@
           Q_AGENT: openvswitch
           Q_ML2_TENANT_NETWORK_TYPE: vxlan
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
+          NEUTRON_DEPLOY_MOD_WSGI: True
       devstack_services:
         etcd: false
         br-ex-tcpdump: true
@@ -299,6 +300,7 @@
           OVN_L3_CREATE_PUBLIC_NETWORK: true
           OVN_DBS_LOG_LEVEL: dbg
           OVN_IGMP_SNOOPING_ENABLE: True
+          NEUTRON_DEPLOY_MOD_WSGI: True
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
         neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
@@ -397,6 +399,9 @@
       grenade_from_branch: stable/2024.1
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
+      grenade_devstack_localrc:
+        shared:
+          NEUTRON_DEPLOY_MOD_WSGI: False
 
 - job:
     name: neutron-ovn-grenade-multinode-skip-level
@@ -413,3 +418,6 @@
       grenade_from_branch: stable/2024.1
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
+      grenade_devstack_localrc:
+        shared:
+          NEUTRON_DEPLOY_MOD_WSGI: False
