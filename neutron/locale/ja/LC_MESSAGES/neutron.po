@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2023-05-15 17:54+0000\n"
+"POT-Creation-Date: 2024-11-14 19:41+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -201,9 +201,6 @@ msgstr "不明なエラーが発生しました。要求を再試行してくだ
 
 msgid "Async process didn't respawn"
 msgstr "非同期プロセスが再生成されませんでした"
-
-msgid "Authorization URL for connecting to designate in admin context"
-msgstr "管理者のコンテキストにおける designate への接続用認証 URL"
 
 msgid "Automatically remove networks from offline DHCP agents."
 msgstr "ネットワークをオフライン DHCP エージェントから自動的に削除します。"
@@ -577,13 +574,6 @@ msgid ""
 msgstr ""
 "エラー: デフォルトの検索パス (~/.neutron/, ~/, /etc/neutron/, /etc/) および "
 "'--config-file' オプションを使用して、構成ファイルが見つかりません。"
-
-msgid ""
-"Either one of parameter network_id or router_id must be passed to _get_ports "
-"method."
-msgstr ""
-"パラメーター network_id または router_id のいずれかを _get_ports メソッドに渡"
-"す必要があります。"
 
 msgid "Either subnet_id or port_id must be specified"
 msgstr "subnet_id または port_id のいずれかを指定する必要があります"
@@ -1005,9 +995,6 @@ msgstr ""
 "レイプロトコルオーバーヘッドの値を自動的に減算します。デフォルト値は "
 "Ethernet の標準値である 1500 です。"
 
-msgid "MTU size of veth interfaces"
-msgstr "veth インターフェースの MTU サイズ"
-
 msgid "Make the l2 agent run in DVR mode."
 msgstr "L2 エージェントを DVR モードで実行します。"
 
@@ -1090,9 +1077,6 @@ msgstr ""
 
 msgid "Must specify one or more actions on flow addition or modification"
 msgstr "フローの追加または変更について、1 つ以上のアクションを指定してください"
-
-msgid "Name of Open vSwitch bridge to use"
-msgstr "使用する Open vSwitch ブリッジの名前"
 
 msgid "Namespace of the router"
 msgstr "ルーターの名前空間"
@@ -1260,9 +1244,6 @@ msgstr "パッケージ %s はインストールされていません"
 #, python-format
 msgid "Parsing bridge_mappings failed: %s."
 msgstr "bridge_mappings の解析に失敗しました: %s。"
-
-msgid "Password for connecting to designate in admin context"
-msgstr "管理者のコンテキストにおける designate への接続用パスワード"
 
 msgid "Path to PID file for this process"
 msgstr "このプロセスの PID ファイルのパス"
@@ -1530,12 +1511,6 @@ msgstr ""
 "テナント %(tenant_id)s は、このネットワークでの %(resource)s の作成を許可され"
 "ていません"
 
-msgid "Tenant id for connecting to designate in admin context"
-msgstr "管理者のコンテキストにおける designate への接続用テナント ID"
-
-msgid "Tenant name for connecting to designate in admin context"
-msgstr "管理者のコンテキストにおける designate への接続用テナント名"
-
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "VXLAN トンネルで使用する UDP ポート。"
 
@@ -1771,9 +1746,6 @@ msgstr ""
 
 msgid "User (uid or name) running this process after its initialization"
 msgstr "初期化後にこのプロセスを実行するユーザー (uid または名前)"
-
-msgid "Username for connecting to designate in admin context"
-msgstr "管理者のコンテキストにおける designate への接続用ユーザー名"
 
 msgid "VRRP authentication password"
 msgstr "VRRP 認証パスワード"
