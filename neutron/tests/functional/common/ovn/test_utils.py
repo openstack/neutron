@@ -15,6 +15,7 @@
 import ddt
 from neutron_lib.api.definitions import portbindings
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -22,7 +23,27 @@ from neutron.common.ovn import utils
 from neutron.tests.functional import base
 
 
+class WaitForPortGroupDropEvent(event.WaitEvent):
+    event_name = 'WaitForPortGroupDropEvent'
+
+    def __init__(self):
+        table = 'Port_Group'
+        events = (self.ROW_CREATE, self.ROW_UPDATE)
+        conditions = (('name', '=', ovn_const.OVN_DROP_PORT_GROUP_NAME),)
+        super().__init__(events, table, conditions, timeout=5)
+
+
 class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
+    def _create_and_check_pg_drop(self, wait_event=True):
+        pg_event = WaitForPortGroupDropEvent()
+        self.mech_driver.nb_ovn.idl.notify_handler.watch_event(pg_event)
+        utils.create_neutron_pg_drop()
+        if wait_event:
+            self.assertTrue(pg_event.wait())
+        pg = self.nb_api.pg_get(ovn_const.OVN_DROP_PORT_GROUP_NAME).execute()
+        self.assertIsNotNone(pg)
+        return pg
+
     def test_already_existing(self):
         # Make sure pre-fork initialize created the table
         existing_pg = self.nb_api.pg_get(
@@ -30,9 +51,7 @@ class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
         self.assertIsNotNone(existing_pg)
 
         # make an attempt to create it again
-        utils.create_neutron_pg_drop()
-
-        pg = self.nb_api.pg_get(ovn_const.OVN_DROP_PORT_GROUP_NAME).execute()
+        pg = self._create_and_check_pg_drop(wait_event=False)
         self.assertEqual(existing_pg.uuid, pg.uuid)
 
     def test_non_existing(self):
@@ -41,10 +60,7 @@ class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
         pg = self.nb_api.pg_get(ovn_const.OVN_DROP_PORT_GROUP_NAME).execute()
         self.assertIsNone(pg)
 
-        utils.create_neutron_pg_drop()
-
-        pg = self.nb_api.pg_get(ovn_const.OVN_DROP_PORT_GROUP_NAME).execute()
-        self.assertIsNotNone(pg)
+        pg = self._create_and_check_pg_drop()
 
         directions = ['to-lport', 'from-lport']
         matches = ['outport == @neutron_pg_drop && ip',
