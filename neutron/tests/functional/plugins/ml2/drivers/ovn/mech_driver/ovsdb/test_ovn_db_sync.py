@@ -42,9 +42,11 @@ from neutron.tests.functional import base
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_extraroute
 from neutron.tests.unit.extensions import test_securitygroup
+from neutron.tests.unit import testlib_api
 
 
-class TestOvnNbSync(base.TestOVNFunctionalBase):
+class TestOvnNbSync(base.TestOVNFunctionalBase,
+                    testlib_api.MySQLTestCaseMixin):
 
     _extension_drivers = ['port_security', 'dns', 'qos', 'revision_plugin']
 
