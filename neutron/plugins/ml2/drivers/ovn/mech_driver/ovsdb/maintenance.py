@@ -986,7 +986,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    # TODO(ralonsoh): Remove this method in the E cycle (SLURP release)
+    # TODO(ralonsoh): Remove this method in the E+2 cycle (SLURP release)
     @has_lock_periodic(
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
