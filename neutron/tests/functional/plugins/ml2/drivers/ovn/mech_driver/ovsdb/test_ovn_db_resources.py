@@ -933,13 +933,19 @@ class TestSecurityGroups(base.TestOVNFunctionalBase):
             rev_num = rev_db.get_revision_row(self.context, sg_rule['id'])
             self.assertEqual(0, rev_num.revision_number)
 
+        # Retrieve the ACL UUIDs before deleting the Port_Group; this operation
+        # will also delete the associated ACLs.
+        pg_name = utils.ovn_port_group_name(sg['id'])
+        pg = self.nb_api.pg_get(pg_name).execute(check_errors=True)
+        acl_uuids = [acl.uuid for acl in pg.acls]
         self._delete('security-groups', sg['id'])
         self.assertIsNone(rev_db.get_revision_row(self.context, sg['id']))
-        # NOTE(ralonsoh): the deletion of the revision numbers of the SG rules
-        # will be fixed in a follow-up patch.
-        # for sg_rule in sg['security_group_rules']:
-        #     self.assertIsNone(rev_db.get_revision_row(self.context,
-        #                                               sg_rule['id']))
+        for sg_rule in sg['security_group_rules']:
+            self.assertIsNone(rev_db.get_revision_row(self.context,
+                                                      sg_rule['id']))
+        for acl_uuid in acl_uuids:
+            self.assertIsNone(
+                self.nb_api.lookup('ACL', acl_uuid, default=None))
 
 
 class TestDNSRecords(base.TestOVNFunctionalBase):

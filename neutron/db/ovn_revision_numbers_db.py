@@ -118,6 +118,18 @@ def delete_revision(context, resource_uuid, resource_type):
             context.session.delete(row)
 
 
+@db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
+def delete_revisions(context, resource_uuids, resource_type):
+    if not resource_uuids:
+        return
+
+    LOG.debug('delete_revisions(%s)', resource_uuids)
+    return context.session.query(ovn_models.OVNRevisionNumbers).filter(
+        ovn_models.OVNRevisionNumbers.resource_uuid.in_(resource_uuids),
+        ovn_models.OVNRevisionNumbers.resource_type == resource_type).delete()
+
+
 def _ensure_revision_row_exist(context, resource, resource_type, std_attr_id):
     """Ensure the revision row exists.
 
