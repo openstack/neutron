@@ -163,8 +163,7 @@ class FakePortContext(api.PortContext):
     def host_agents(self, agent_type):
         if agent_type == self._agent_type:
             return self._agents
-        else:
-            return []
+        return []
 
     def set_binding(self, segment_id, vif_type, vif_details):
         self._bound_segment_id = segment_id

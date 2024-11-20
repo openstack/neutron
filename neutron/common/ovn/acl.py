@@ -194,33 +194,29 @@ def add_sg_rule_acl_for_port_group(port_group, r, stateful, match):
 def _get_subnet_from_cache(plugin, admin_context, subnet_cache, subnet_id):
     if subnet_id in subnet_cache:
         return subnet_cache[subnet_id]
-    else:
-        subnet = plugin.get_subnet(admin_context, subnet_id)
-        if subnet:
-            subnet_cache[subnet_id] = subnet
-        return subnet
+    subnet = plugin.get_subnet(admin_context, subnet_id)
+    if subnet:
+        subnet_cache[subnet_id] = subnet
+    return subnet
 
 
 def _get_sg_ports_from_cache(plugin, admin_context, sg_ports_cache, sg_id):
     if sg_id in sg_ports_cache:
         return sg_ports_cache[sg_id]
-    else:
-        filters = {'security_group_id': [sg_id]}
-        sg_ports = plugin._get_port_security_group_bindings(
-            admin_context, filters)
-        if sg_ports:
-            sg_ports_cache[sg_id] = sg_ports
-        return sg_ports
+    filters = {'security_group_id': [sg_id]}
+    sg_ports = plugin._get_port_security_group_bindings(admin_context, filters)
+    if sg_ports:
+        sg_ports_cache[sg_id] = sg_ports
+    return sg_ports
 
 
 def _get_sg_from_cache(plugin, admin_context, sg_cache, sg_id):
     if sg_id in sg_cache:
         return sg_cache[sg_id]
-    else:
-        sg = plugin.get_security_group(admin_context, sg_id)
-        if sg:
-            sg_cache[sg_id] = sg
-        return sg
+    sg = plugin.get_security_group(admin_context, sg_id)
+    if sg:
+        sg_cache[sg_id] = sg
+    return sg
 
 
 def acl_remote_group_id(r, ip_version):

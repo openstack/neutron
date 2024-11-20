@@ -1431,7 +1431,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                 LOG.debug('Chassis %s is reponsible of the resource provider '
                           '%s', ch_name, ch_rp)
                 return True
-            elif len(states) > 1:
+            if len(states) > 1:
                 rps = {state[0]: placement_ext.dict_chassis_config(state[1])
                        for state in states}
                 LOG.error('Several chassis reported the requested resource '
@@ -1464,17 +1464,13 @@ def update_agent(self, context, id, agent, _driver=None):
     # and we can just fall through to raising in the case that admin_state_up
     # is being set to False, otherwise the end-state will be fine
     if not agent.get('admin_state_up', True):
-        pass
-    elif 'description' in agent:
+        raise n_exc.BadRequest(resource='agent',
+                               msg='OVN agent status cannot be updated')
+    if 'description' in agent:
         _driver.sb_ovn.set_chassis_neutron_description(
             chassis_name, agent['description'],
             agent_type).execute(check_error=True)
-        return agent
-    else:
-        # admin_state_up=True w/o description
-        return agent
-    raise n_exc.BadRequest(resource='agent',
-                           msg='OVN agent status cannot be updated')
+    return agent
 
 
 def delete_agent(self, context, id, _driver=None):

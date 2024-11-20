@@ -110,7 +110,7 @@ class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
                 # Get request Valid Lifetime for IA_NA.
                 # Get request IAID for IA_NA.
                 return opt.data[start:end]
-            elif iaid:
+            if iaid:
                 # default IAID
                 return struct.pack('!I', 1)
             # default time or interval
@@ -243,7 +243,7 @@ class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
     def get_ret_type(self, req_type):
         if req_type == 'SOLICIT':
             return dhcp6.DHCPV6_ADVERTISE
-        elif req_type in REQ_TYPES_FOR_REPLY:
+        if req_type in REQ_TYPES_FOR_REPLY:
             return dhcp6.DHCPV6_REPLY
         return REQ_TYPE_UNKNOWN
 

@@ -222,7 +222,7 @@ class L3Scheduler(metaclass=abc.ABCMeta):
             plugin, context, sync_router)
         if not candidates:
             return
-        elif sync_router.get('ha', False):
+        if sync_router.get('ha', False):
             chosen_agents = self._bind_ha_router(plugin, context,
                                                  router_id,
                                                  sync_router.get('tenant_id'),

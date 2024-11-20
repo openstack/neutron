@@ -429,64 +429,62 @@ class TunnelRpcCallbackMixin:
             raise exc.InvalidInput(error_message=msg)
 
         driver = self._type_manager.drivers.get(tunnel_type)
-        if driver:
-            # The given conditional statements will verify the following
-            # things:
-            # 1. If host is not passed from an agent, it is a legacy mode.
-            # 2. If passed host and tunnel_ip are not found in the DB,
-            #    it is a new endpoint.
-            # 3. If host is passed from an agent and it is not found in DB
-            #    but the passed tunnel_ip is found, delete the endpoint
-            #    from DB and add the endpoint with (tunnel_ip, host),
-            #    it is an upgrade case.
-            # 4. If passed host is found in DB and passed tunnel ip is not
-            #    found, delete the endpoint belonging to that host and
-            #    add endpoint with latest (tunnel_ip, host), it is a case
-            #    where local_ip of an agent got changed.
-            # 5. If the passed host had another ip in the DB the host-id has
-            #    roamed to a different IP then delete any reference to the new
-            #    local_ip or the host id. Don't notify tunnel_delete for the
-            #    old IP since that one could have been taken by a different
-            #    agent host-id (neutron-ovs-cleanup should be used to clean up
-            #    the stale endpoints).
-            #    Finally create a new endpoint for the (tunnel_ip, host).
-            if host:
-                host_endpoint = driver.obj.get_endpoint_by_host(host)
-                ip_endpoint = driver.obj.get_endpoint_by_ip(tunnel_ip)
-
-                if (ip_endpoint and ip_endpoint.host is None and
-                        host_endpoint is None):
-                    driver.obj.delete_endpoint(ip_endpoint.ip_address)
-                elif (ip_endpoint and ip_endpoint.host != host):
-                    LOG.info(
-                        "Tunnel IP %(ip)s was used by host %(host)s and "
-                        "will be assigned to %(new_host)s",
-                        {'ip': ip_endpoint.ip_address,
-                         'host': ip_endpoint.host,
-                         'new_host': host})
-                    driver.obj.delete_endpoint_by_host_or_ip(
-                        host, ip_endpoint.ip_address)
-                elif (host_endpoint and host_endpoint.ip_address != tunnel_ip):
-                    # Notify all other listening agents to delete stale tunnels
-                    self._notifier.tunnel_delete(
-                        rpc_context, host_endpoint.ip_address, tunnel_type)
-                    driver.obj.delete_endpoint(host_endpoint.ip_address)
-
-            tunnel = driver.obj.add_endpoint(tunnel_ip, host)
-            tunnels = driver.obj.get_endpoints()
-            entry = {'tunnels': tunnels}
-            # Notify all other listening agents
-            self._notifier.tunnel_update(rpc_context, tunnel.ip_address,
-                                         tunnel_type)
-            # Return the list of tunnels IP's to the agent
-            return entry
-        else:
+        if not driver:
             msg = (_("Network type value %(type)s not supported, "
                      "host: %(host)s with tunnel IP: %(ip)s") %
                    {'type': tunnel_type,
                     'host': host or 'legacy mode (no host provided by agent)',
                     'ip': tunnel_ip})
             raise exc.InvalidInput(error_message=msg)
+
+        # The given conditional statements will verify the following things:
+        # 1. If host is not passed from an agent, it is a legacy mode.
+        # 2. If passed host and tunnel_ip are not found in the DB, it is a new
+        #    endpoint.
+        # 3. If host is passed from an agent and it is not found in DB but the
+        #    passed tunnel_ip is found, delete the endpoint from DB and add the
+        #    endpoint with (tunnel_ip, host), it is an upgrade case.
+        # 4. If passed host is found in DB and passed tunnel ip is not found,
+        #    delete the endpoint belonging to that host and add endpoint with
+        #    latest (tunnel_ip, host), it is a case where local_ip of an agent
+        #    got changed.
+        # 5. If the passed host had another ip in the DB the host-id has roamed
+        #    to a different IP then delete any reference to the new local_ip or
+        #    the host id. Don't notify tunnel_delete for the old IP since that
+        #    one could have been taken by a different agent host-id
+        #    (neutron-ovs-cleanup should be used to clean up the stale
+        #    endpoints). Finally create a new endpoint for the (tunnel_ip,
+        #    host).
+        if host:
+            host_endpoint = driver.obj.get_endpoint_by_host(host)
+            ip_endpoint = driver.obj.get_endpoint_by_ip(tunnel_ip)
+
+            if (ip_endpoint and ip_endpoint.host is None and
+                    host_endpoint is None):
+                driver.obj.delete_endpoint(ip_endpoint.ip_address)
+            elif (ip_endpoint and ip_endpoint.host != host):
+                LOG.info(
+                    "Tunnel IP %(ip)s was used by host %(host)s and "
+                    "will be assigned to %(new_host)s",
+                    {'ip': ip_endpoint.ip_address,
+                     'host': ip_endpoint.host,
+                     'new_host': host})
+                driver.obj.delete_endpoint_by_host_or_ip(
+                    host, ip_endpoint.ip_address)
+            elif (host_endpoint and host_endpoint.ip_address != tunnel_ip):
+                # Notify all other listening agents to delete stale tunnels
+                self._notifier.tunnel_delete(
+                    rpc_context, host_endpoint.ip_address, tunnel_type)
+                driver.obj.delete_endpoint(host_endpoint.ip_address)
+
+        tunnel = driver.obj.add_endpoint(tunnel_ip, host)
+        tunnels = driver.obj.get_endpoints()
+        entry = {'tunnels': tunnels}
+        # Notify all other listening agents
+        self._notifier.tunnel_update(rpc_context, tunnel.ip_address,
+                                     tunnel_type)
+        # Return the list of tunnels IP's to the agent
+        return entry
 
 
 class TunnelAgentRpcApiMixin:

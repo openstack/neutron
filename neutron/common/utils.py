@@ -1021,7 +1021,7 @@ def get_sql_random_method(sql_dialect_name):
     if sql_dialect_name == sqlite_dialect.name:
         return sql_func.random
     # https://dev.mysql.com/doc/refman/8.0/en/mathematical-functions.html
-    elif sql_dialect_name == mysql_dialect.name:
+    if sql_dialect_name == mysql_dialect.name:
         return sql_func.rand
 
 

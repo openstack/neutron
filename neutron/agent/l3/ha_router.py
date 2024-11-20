@@ -326,12 +326,11 @@ class HaRouter(router.RouterInfo):
         """
         manager = self.keepalived_manager
         if manager.get_process().active:
-            if self.ha_state != 'primary':
-                conf = manager.get_conf_on_disk()
-                managed_by_keepalived = conf and ipv6_lladdr in conf
-                if managed_by_keepalived:
-                    return False
-            else:
+            if self.ha_state == 'primary':
+                return False
+            conf = manager.get_conf_on_disk()
+            managed_by_keepalived = conf and ipv6_lladdr in conf
+            if managed_by_keepalived:
                 return False
         return True
 
@@ -510,8 +509,7 @@ class HaRouter(router.RouterInfo):
         self._clear_vips(interface_name)
 
         if self.ha_state == 'primary':
-            super().external_gateway_removed(ex_gw_port,
-                                             interface_name)
+            super().external_gateway_removed(ex_gw_port, interface_name)
         else:
             # We are not the primary node, so no need to delete ip addresses.
             self.driver.unplug(interface_name,

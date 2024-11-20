@@ -223,10 +223,8 @@ class DhcpAgent(manager.Manager):
                     action, network, segment=sid_segment.get(seg_id),
                     **action_kwargs))
             return all(ret)
-        else:
-            # In case subnets are not attached to segments. default behavior.
-            return self._call_driver(
-                action, network, **action_kwargs)
+        # In case subnets are not attached to segments. default behavior.
+        return self._call_driver(action, network, **action_kwargs)
 
     def _call_driver(self, action, network, segment=None, **action_kwargs):
         """Invoke an action on a DHCP driver instance."""
@@ -248,11 +246,12 @@ class DhcpAgent(manager.Manager):
                                           self.dhcp_version,
                                           self.plugin_rpc,
                                           segment)
+            # NOTE(ihrachys) It's important that we always call the action
+            # before deciding what to return!
             rv = getattr(driver, action)(**action_kwargs)
             if action == 'get_metadata_bind_interface':
                 return rv
-            else:
-                return True
+            return True
         except exceptions.Conflict:
             # No need to resync here, the agent will receive the event related
             # to a status update for the network
@@ -635,7 +634,7 @@ class DhcpAgent(manager.Manager):
                 self.schedule_resync("Agent port was modified",
                                      port.network_id)
                 return
-            elif old_ips != new_ips:
+            if old_ips != new_ips:
                 LOG.debug("Agent IPs on network %s changed from %s to %s",
                           network.id, old_ips, new_ips)
                 driver_action = 'restart'

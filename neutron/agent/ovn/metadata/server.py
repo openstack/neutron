@@ -76,7 +76,7 @@ class MetadataProxyHandler(proxy_base.MetadataProxyHandlerBase):
             external_ids = ports[0].external_ids
             return (external_ids[ovn_const.OVN_DEVID_EXT_ID_KEY],
                     external_ids[ovn_const.OVN_PROJID_EXT_ID_KEY])
-        elif num_ports == 0:
+        if num_ports == 0:
             LOG.error("No port found in network %s with IP address %s",
                       network_id, remote_address)
         elif num_ports > 1:

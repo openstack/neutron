@@ -183,14 +183,13 @@ def parse_service_provider_opt(service_module='neutron', service_type=None):
         name = normalize_provider_name(name)
         default = False
         if len(split) == 4 and split[3]:
-            if split[3] == 'default':
-                default = True
-            else:
+            if split[3] != 'default':
                 msg = (_("Invalid provider format. "
                          "Last part should be 'default' or empty: %s") %
                        prov_def)
                 LOG.error(msg)
                 raise n_exc.Invalid(msg)
+            default = True
 
         driver = get_provider_driver_class(driver)
         res.append({'service_type': svc_type,

@@ -251,10 +251,9 @@ class QoSHardwareOffloadExtension(extension_manager.OVNAgentExtension):
     def _kbps_2_mbps(rate_kbps):
         if rate_kbps == 0:  # Delete the BW setting.
             return 0
-        elif 0 < rate_kbps < 1000:  # Any value under 1000kbps --> 1Mbps
+        if 0 < rate_kbps < 1000:  # Any value under 1000kbps --> 1Mbps
             return 1
-        else:
-            return int(rate_kbps / 1000.0)
+        return int(rate_kbps / 1000.0)
 
     def _get_port_representor(self, port_id):
         port_name = self.get_port(port_id)

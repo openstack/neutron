@@ -331,8 +331,7 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
                                 self.get_vif_type(context, agent, segment),
                                 self.get_vif_details(context, agent, segment))
             return True
-        else:
-            return False
+        return False
 
     def get_vif_details(self, context, agent, segment):
         return self.vif_details

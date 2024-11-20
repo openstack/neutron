@@ -55,8 +55,7 @@ class L3AgentExtensionAPI:
         if project_id:
             return [ri for ri in self._router_info.values()
                     if ri.router['project_id'] == project_id]
-        else:
-            return []
+        return []
 
     def is_router_in_namespace(self, router_id):
         """Given a router_id, make sure that the router is in a local

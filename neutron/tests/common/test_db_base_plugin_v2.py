@@ -107,8 +107,7 @@ def _get_create_db_method(resource):
     ml2_method = '_create_%s_db' % resource
     if hasattr(directory.get_plugin(), ml2_method):
         return ml2_method
-    else:
-        return 'create_%s' % resource
+    return 'create_%s' % resource
 
 
 def _set_temporary_quota(resource, default_value):
@@ -732,8 +731,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if resource in ['networks', 'subnets', 'ports', 'subnetpools',
                         'security-groups']:
             return self.api
-        else:
-            return self.ext_api
+        return self.ext_api
 
     def _delete(self, collection, id,
                 expected_code=webob.exc.HTTPNoContent.code,

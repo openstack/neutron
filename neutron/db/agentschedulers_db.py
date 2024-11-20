@@ -66,19 +66,18 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         if active is None:
             # filtering by activeness is disabled, all agents are eligible
             return True
-        else:
-            # note(rpodolyaka): original behaviour is saved here: if active
-            #                   filter is set, only agents which are 'up'
-            #                   (i.e. have a recent heartbeat timestamp)
-            #                   are eligible, even if active is False
-            if agent_utils.is_agent_down(agent['heartbeat_timestamp']):
-                LOG.warning('Agent %(agent)s is down. Type: %(type)s, host: '
-                            '%(host)s, heartbeat: %(heartbeat)s',
-                            {'agent': agent['id'], 'type': agent['agent_type'],
-                             'host': agent['host'],
-                             'heartbeat': agent['heartbeat_timestamp']})
-                return False
-            return True
+        # note(rpodolyaka): original behaviour is saved here: if active
+        #                   filter is set, only agents which are 'up'
+        #                   (i.e. have a recent heartbeat timestamp)
+        #                   are eligible, even if active is False
+        if agent_utils.is_agent_down(agent['heartbeat_timestamp']):
+            LOG.warning('Agent %(agent)s is down. Type: %(type)s, host: '
+                        '%(host)s, heartbeat: %(heartbeat)s',
+                        {'agent': agent['id'], 'type': agent['agent_type'],
+                         'host': agent['host'],
+                         'heartbeat': agent['heartbeat_timestamp']})
+            return False
+        return True
 
     def update_agent(self, context, id, agent):
         original_agent = self.get_agent(context, id)
@@ -442,10 +441,9 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         if net_ids:
             return {'networks':
                     self.get_networks(context, filters={'id': net_ids})}
-        else:
-            # Exception will be thrown if the requested agent does not exist.
-            self._get_agent(context, id)
-            return {'networks': []}
+        # Exception will be thrown if the requested agent does not exist.
+        self._get_agent(context, id)
+        return {'networks': []}
 
     def list_active_networks_on_active_dhcp_agent(self, context, host):
         try:
@@ -465,8 +463,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         if net_ids:
             return network.Network.get_objects(context, id=net_ids,
                                                admin_state_up=[True])
-        else:
-            return []
+        return []
 
     def list_dhcp_agents_hosting_network(self, context, network_id):
         dhcp_agents = self.get_dhcp_agents_hosting_networks(
@@ -475,8 +472,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         if agent_ids:
             return {
                 'agents': self.get_agents(context, filters={'id': agent_ids})}
-        else:
-            return {'agents': []}
+        return {'agents': []}
 
     def schedule_network(self, context, created_network):
         if self.network_scheduler and cfg.CONF.network_auto_schedule:

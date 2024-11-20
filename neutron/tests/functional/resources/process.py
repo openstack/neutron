@@ -243,7 +243,6 @@ class OvsdbServer(DaemonProcessFixture):
             if ovsdb_process['db_type'] == db_type:
                 if ovsdb_process['protocol'] == 'unix':
                     return 'unix:' + ovsdb_process['remote_path']
-                else:
-                    return '{}:{}:{}'.format(ovsdb_process['protocol'],
-                                             ovsdb_process['remote_ip'],
-                                             ovsdb_process['remote_port'])
+                return '{}:{}:{}'.format(ovsdb_process['protocol'],
+                                         ovsdb_process['remote_ip'],
+                                         ovsdb_process['remote_port'])

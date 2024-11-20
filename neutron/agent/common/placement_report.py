@@ -212,14 +212,13 @@ class PlacementState:
                 # That means the RP for tunnelled networks is not associated
                 # to a physical bridge interface.
                 return [n_const.TRAIT_NETWORK_TUNNEL]
-            elif device == self._rp_tun_name and device in physical_bridges:
+            if device == self._rp_tun_name and device in physical_bridges:
                 # The physical network and the tunnelled networks share the
                 # same physical interface.
                 return [n_const.TRAIT_NETWORK_TUNNEL,
                         physnet_trait_mappings[device]]
-            else:
-                # Just the physical interface.
-                return [physnet_trait_mappings.get(device)]
+            # Just the physical interface.
+            return [physnet_trait_mappings.get(device)]
 
         rp_traits = []
         physical_bridges = {br for brs in self._device_mappings.values() for

@@ -183,8 +183,7 @@ def convert_validate_port_value(port):
 
     if netutils.is_valid_port(port):
         return int(port)
-    else:
-        raise SecurityGroupInvalidPortValue(port=port)
+    raise SecurityGroupInvalidPortValue(port=port)
 
 
 def convert_ip_prefix_to_cidr(ip_prefix):
@@ -349,8 +348,7 @@ class Securitygroup(api_extensions.ExtensionDescriptor):
         if version == "2.0":
             return dict(list(EXTENDED_ATTRIBUTES_2_0.items()) +
                         list(RESOURCE_ATTRIBUTE_MAP.items()))
-        else:
-            return {}
+        return {}
 
     def get_required_extensions(self):
         return [stdattr_ext.Standardattrdescription.get_alias()]

@@ -53,9 +53,8 @@ class PortNumaAffinityPolicyDbMixin:
             obj.update_fields(
                 {pnap.NUMA_AFFINITY_POLICY: data[pnap.NUMA_AFFINITY_POLICY]})
             obj.update()
-        else:
-            if obj:
-                obj.delete()
+        elif obj:
+            obj.delete()
 
         result[pnap.NUMA_AFFINITY_POLICY] = data[pnap.NUMA_AFFINITY_POLICY]
 

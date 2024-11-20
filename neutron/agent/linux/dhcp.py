@@ -97,8 +97,7 @@ class DictModel(collections.abc.MutableMapping):
             """Upgrade item if it needs to be upgraded."""
             if needs_upgrade(item):
                 return DictModel(item)
-            else:
-                return item
+            return item
 
         for key, value in itertools.chain(temp_dict.items(), kwargs.items()):
             if isinstance(value, (list, tuple)):

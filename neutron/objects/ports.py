@@ -281,8 +281,7 @@ class IPAllocation(base.NeutronDbObject):
 
         if first:
             return alloc_qry.first()
-        else:
-            return alloc_qry.all()
+        return alloc_qry.all()
 
 
 @base.NeutronObjectRegistry.register
@@ -785,13 +784,12 @@ class Port(base.NeutronDbObject):
 
         if not ports:
             return
-        elif not pci_slot:
+        if not pci_slot:
             return ports.pop()
-        else:
-            for port in ports:
-                for _binding in port.bindings:
-                    if _binding.get('profile', {}).get('pci_slot') == pci_slot:
-                        return port
+        for port in ports:
+            for _binding in port.bindings:
+                if _binding.get('profile', {}).get('pci_slot') == pci_slot:
+                    return port
 
     @classmethod
     @db_api.CONTEXT_READER

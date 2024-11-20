@@ -472,8 +472,7 @@ class OVSDBHandler:
         # can be exceptions (e.g. unwire_subports_for_trunk).
         if len(expected_subports) != len(actual_subports):
             return constants.TRUNK_DEGRADED_STATUS
-        else:
-            return constants.TRUNK_ACTIVE_STATUS
+        return constants.TRUNK_ACTIVE_STATUS
 
     def _is_vm_connected(self, bridge):
         """True if an instance is connected to bridge, False otherwise."""

@@ -256,7 +256,7 @@ class QoSPlugin(qos.QoSPluginBase):
         first_segment = segments[0]
         if not first_segment:
             return []
-        elif not first_segment.physical_network:
+        if not first_segment.physical_network:
             # If there is no physical network this is because this is an
             # overlay network (tunnelled network).
             net_trait = n_const.TRAIT_NETWORK_TUNNEL
@@ -382,11 +382,9 @@ class QoSPlugin(qos.QoSPluginBase):
             # TODO(lajoskatona): move this to neutron-lib, see similar
             # dict @l125.
             if dir == 'egress':
-                drctn = orc.NET_BW_EGR_KILOBIT_PER_SEC
-            else:
-                drctn = orc.NET_BW_IGR_KILOBIT_PER_SEC
-            return {drctn: value}
-        elif isinstance(rule, rule_object.QosMinimumPacketRateRule):
+                return {orc.NET_BW_EGR_KILOBIT_PER_SEC: value}
+            return {orc.NET_BW_IGR_KILOBIT_PER_SEC: value}
+        if isinstance(rule, rule_object.QosMinimumPacketRateRule):
             value = rule.get('min_kpps')
             # TODO(przszc): move this to neutron-lib, see similar
             # dict @l268.

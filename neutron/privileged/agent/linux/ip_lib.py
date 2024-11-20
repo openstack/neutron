@@ -147,8 +147,7 @@ def get_iproute(namespace):
     if namespace:
         # do not try and create the namespace
         return nslink.NetNS(namespace, flags=0, libc=priv_linux.get_cdll())
-    else:
-        return iproute.IPRoute()
+    return iproute.IPRoute()
 
 
 @privileged.default.entrypoint
@@ -338,9 +337,7 @@ def delete_ip_addresses(cidrs, device, namespace):
             # NetlinkError with code EADDRNOTAVAIL (99, 'Cannot assign
             # requested address')
             # this shouldn't raise an error
-            if e.code == errno.EADDRNOTAVAIL:
-                pass
-            else:
+            if e.code != errno.EADDRNOTAVAIL:
                 raise
 
 
@@ -588,9 +585,8 @@ def create_netns(name, **kwargs):
         except Exception:
             os._exit(1)
         os._exit(0)
-    else:
-        if os.waitpid(pid, 0)[1]:
-            raise RuntimeError(_('Error creating namespace %s' % name))
+    if os.waitpid(pid, 0)[1]:
+        raise RuntimeError(_('Error creating namespace %s' % name))
 
 
 @privileged.namespace_cmd.entrypoint

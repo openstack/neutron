@@ -111,14 +111,11 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         if self.bridge_name is None:
             return self.host.get_bridge(self.network_id)
         agent_type = self.host.host_desc.l2_agent_type
-        if agent_type == constants.AGENT_TYPE_OVS:
-            new_bridge = self.useFixture(
-                net_helpers.OVSTrunkBridgeFixture(self.bridge_name)).bridge
-        else:
+        if agent_type != constants.AGENT_TYPE_OVS:
             raise NotImplementedError(
                 "Support for %s agent is not implemented." % agent_type)
-
-        return new_bridge
+        return self.useFixture(
+            net_helpers.OVSTrunkBridgeFixture(self.bridge_name)).bridge
 
     def _configure_ipaddress(self, port_id, fixed_ip):
         subnet_id = fixed_ip['subnet_id']

@@ -132,9 +132,9 @@ class ChassisBandwidthConfigEvent(row_event.RowEvent):
         if (not self.placement_extension or
                 not self.placement_extension.enabled):
             return False
-        elif event == self.ROW_CREATE:
+        if event == self.ROW_CREATE:
             return True
-        elif event == self.ROW_UPDATE and old and hasattr(old, 'other_config'):
+        if event == self.ROW_UPDATE and old and hasattr(old, 'other_config'):
             row_bw = _parse_ovn_cms_options(row)
             old_bw = _parse_ovn_cms_options(old)
             if row_bw != old_bw:

@@ -302,26 +302,25 @@ class TrunkPlugin(service_base.ServicePluginBase):
             trunk = self._get_trunk(context, trunk_id)
             rules.trunk_can_be_managed(context, trunk)
             trunk_port_validator = rules.TrunkPortValidator(trunk.port_id)
-            if trunk_port_validator.can_be_trunked_or_untrunked(context):
-                # NOTE(status_police): when a trunk is deleted, the logical
-                # object disappears from the datastore, therefore there is no
-                # status transition involved. If PRECOMMIT failures occur,
-                # the trunk remains in the status where it was.
-                try:
-                    trunk.delete()
-                except Exception as e:
-                    with excutils.save_and_reraise_exception():
-                        LOG.warning('Trunk driver raised exception when '
-                                    'deleting trunk port %s: %s', trunk_id,
-                                    str(e))
-                payload = events.DBEventPayload(context, resource_id=trunk_id,
-                                                states=(trunk,))
-                registry.publish(resources.TRUNK, events.PRECOMMIT_DELETE,
-                                 self, payload=payload)
-            else:
+            if not trunk_port_validator.can_be_trunked_or_untrunked(context):
                 LOG.info('Trunk driver does not consider trunk %s '
                          'untrunkable', trunk_id)
                 raise trunk_exc.TrunkInUse(trunk_id=trunk_id)
+            # NOTE(status_police): when a trunk is deleted, the logical object
+            # disappears from the datastore, therefore there is no status
+            # transition involved. If PRECOMMIT failures occur, the trunk
+            # remains in the status where it was.
+            try:
+                trunk.delete()
+            except Exception as e:
+                with excutils.save_and_reraise_exception():
+                    LOG.warning('Trunk driver raised exception when '
+                                'deleting trunk port %s: %s', trunk_id,
+                                str(e))
+            payload = events.DBEventPayload(context, resource_id=trunk_id,
+                                            states=(trunk,))
+            registry.publish(resources.TRUNK, events.PRECOMMIT_DELETE,
+                             self, payload=payload)
         registry.publish(resources.TRUNK, events.AFTER_DELETE, self,
                          payload=events.DBEventPayload(
                              context, resource_id=trunk_id,

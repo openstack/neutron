@@ -40,20 +40,18 @@ class MeteringRpcCallbacks:
         if not extensions.is_extension_supported(
                 l3_plugin, consts.L3_AGENT_SCHEDULER_EXT_ALIAS) or not host:
             return metering_data
-        else:
-            agents = l3_plugin.get_l3_agents(context, filters={'host': [host]})
-            if not agents:
-                LOG.error('Unable to find agent on host %s.', host)
-                return
+        agents = l3_plugin.get_l3_agents(context, filters={'host': [host]})
+        if not agents:
+            LOG.error('Unable to find agent on host %s.', host)
+            return
 
-            router_ids = []
-            for agent in agents:
-                routers = l3_plugin.list_routers_on_l3_agent(context, agent.id)
-                router_ids += [router['id'] for router in routers['routers']]
-            if not router_ids:
-                return
-            else:
-                return [
-                    router for router in metering_data
-                    if router['id'] in router_ids
-                ]
+        router_ids = []
+        for agent in agents:
+            routers = l3_plugin.list_routers_on_l3_agent(context, agent.id)
+            router_ids += [router['id'] for router in routers['routers']]
+        if not router_ids:
+            return
+        return [
+            router for router in metering_data
+            if router['id'] in router_ids
+        ]

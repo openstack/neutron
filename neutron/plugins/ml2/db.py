@@ -240,7 +240,7 @@ def generate_distributed_port_status(context, port_id):
     for bind in query.filter(models.DistributedPortBinding.port_id == port_id):
         if bind.status == n_const.PORT_STATUS_ACTIVE:
             return bind.status
-        elif bind.status == n_const.PORT_STATUS_DOWN:
+        if bind.status == n_const.PORT_STATUS_DOWN:
             final_status = bind.status
     return final_status
 

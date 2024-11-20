@@ -262,14 +262,13 @@ class Controller:
                 return ret_value
 
             return _handle_action
-        else:
-            raise AttributeError()
+        raise AttributeError()
 
     def _get_pagination_helper(self, request):
         if self._allow_pagination and self._native_pagination:
             return api_common.PaginationNativeHelper(request,
                                                      self._primary_key)
-        elif self._allow_pagination:
+        if self._allow_pagination:
             return api_common.PaginationEmulatedHelper(request,
                                                        self._primary_key)
         return api_common.NoPaginationHelper(request, self._primary_key)
@@ -277,7 +276,7 @@ class Controller:
     def _get_sorting_helper(self, request):
         if self._allow_sorting and self._native_sorting:
             return api_common.SortingNativeHelper(request, self._attr_info)
-        elif self._allow_sorting:
+        if self._allow_sorting:
             return api_common.SortingEmulatedHelper(request, self._attr_info)
         return api_common.NoSortingHelper(request, self._attr_info)
 
@@ -530,14 +529,13 @@ class Controller:
                 if emulated:
                     return self._emulate_bulk_create(obj_creator, request,
                                                      body, parent_id)
+                if self._collection in body:
+                    # This is weird but fixing it requires changes to the
+                    # plugin interface
+                    kwargs.update({self._collection: body})
                 else:
-                    if self._collection in body:
-                        # This is weird but fixing it requires changes to the
-                        # plugin interface
-                        kwargs.update({self._collection: body})
-                    else:
-                        kwargs.update({self._resource: body})
-                    return obj_creator(request.context, **kwargs)
+                    kwargs.update({self._resource: body})
+                return obj_creator(request.context, **kwargs)
             except Exception:
                 # In case of failure the plugin will always raise an
                 # exception. Cancel the reservation
@@ -557,15 +555,12 @@ class Controller:
                            [self._filter_attributes(
                                obj, fields_to_strip=fields_to_strip)
                             for obj in objs]})
-        else:
-            if self._collection in body:
-                # Emulate atomic bulk behavior
-                objs = do_create(body, bulk=True, emulated=True)
-                return notify({self._collection: objs})
-            else:
-                obj = do_create(body)
-                return notify({self._resource: self._view(request.context,
-                                                          obj)})
+        if self._collection in body:
+            # Emulate atomic bulk behavior
+            objs = do_create(body, bulk=True, emulated=True)
+            return notify({self._collection: objs})
+        obj = do_create(body)
+        return notify({self._resource: self._view(request.context, obj)})
 
     def delete(self, request, id, **kwargs):
         """Deletes the specified entity."""

@@ -1179,7 +1179,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 self._core_plugin.update_port(
                     context, p['id'], {'port': {'fixed_ips': fixed_ips}})
                 return (p, [subnet])
-            elif subnet_id in port_subnets:
+            if subnet_id in port_subnets:
                 # only one subnet on port - delete the port
                 self._core_plugin.delete_port(context, p['id'],
                                               l3_port_check=False)
@@ -1874,11 +1874,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _get_floatingips_by_port_id(self, context, port_id):
         """Helper function to retrieve the fips associated with a port_id."""
-        if l3_obj.FloatingIP.objects_exist(context, fixed_port_id=port_id):
-            return l3_obj.FloatingIP.get_objects(
-                context, fixed_port_id=port_id)
-        else:
+        if not l3_obj.FloatingIP.objects_exist(context, fixed_port_id=port_id):
             return []
+        return l3_obj.FloatingIP.get_objects(context, fixed_port_id=port_id)
 
     def _build_routers_list(self, context, routers, gw_ports):
         """Subclasses can override this to add extra gateway info"""

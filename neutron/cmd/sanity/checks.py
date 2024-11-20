@@ -182,8 +182,7 @@ def ofctl_arg_supported(cmd, **kwargs):
             LOG.exception("Unexpected exception while checking supported"
                           " feature via command: %s", full_args)
             return False
-        else:
-            return True
+        return True
 
 
 def arp_responder_supported():
@@ -258,7 +257,7 @@ def dnsmasq_local_service_supported():
         LOG.debug("Exception while checking dnsmasq version. "
                   "dnsmasq: No such file or directory")
         return False
-    elif returncode == 1:
+    if returncode == 1:
         return False
     return True
 

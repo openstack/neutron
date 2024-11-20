@@ -1520,9 +1520,8 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
                     with self.port(subnet=subnet1,
                                    device_owner=owner) as port:
                         return [net1, subnet1, port]
-                else:
-                    with self.port(subnet=subnet1) as port:
-                        return [net1, subnet1, port]
+                with self.port(subnet=subnet1) as port:
+                    return [net1, subnet1, port]
 
     def _network_port_create(self, *args, **kwargs):
         net, sub, port = self._api_network_port_create(*args, **kwargs)

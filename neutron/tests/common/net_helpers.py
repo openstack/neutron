@@ -472,12 +472,11 @@ class Pinger:
             self._parse_stats()
 
     def wait(self):
-        if self.count:
-            self._wait_for_death()
-            self._parse_stats()
-        else:
+        if not self.count:
             raise RuntimeError("Pinger is running infinitely, use stop() "
                                "first")
+        self._wait_for_death()
+        self._parse_stats()
 
 
 class NetcatTester:
@@ -699,10 +698,9 @@ class VethFixture(fixtures.Fixture):
     def get_peer_name(name):
         if name.startswith(VETH0_PREFIX):
             return name.replace(VETH0_PREFIX, VETH1_PREFIX)
-        elif name.startswith(VETH1_PREFIX):
+        if name.startswith(VETH1_PREFIX):
             return name.replace(VETH1_PREFIX, VETH0_PREFIX)
-        else:
-            tools.fail('%s is not a valid VethFixture veth endpoint' % name)
+        tools.fail('%s is not a valid VethFixture veth endpoint' % name)
 
 
 class NamedVethFixture(VethFixture):
@@ -990,15 +988,11 @@ class LinuxBridgeFixture(fixtures.Fixture):
 
     def _create_bridge(self):
         if self.prefix_is_full_name:
-            return bridge_lib.BridgeDevice.addbr(
-                name=self.prefix,
-                namespace=self.namespace
-            )
-        else:
-            return common_base.create_resource(
-                self.prefix,
-                bridge_lib.BridgeDevice.addbr,
-                namespace=self.namespace)
+            return bridge_lib.BridgeDevice.addbr(name=self.prefix,
+                                                 namespace=self.namespace)
+        return common_base.create_resource(self.prefix,
+                                           bridge_lib.BridgeDevice.addbr,
+                                           namespace=self.namespace)
 
 
 class LinuxBridgePortFixture(PortFixture):

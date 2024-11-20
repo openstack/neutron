@@ -33,8 +33,7 @@ def get_cache(conf):
     """Used to get cache client"""
     if conf.cache.enabled:
         return _get_cache_region(conf)
-    else:
-        return False
+    return False
 
 
 def _get_cache_region(conf):

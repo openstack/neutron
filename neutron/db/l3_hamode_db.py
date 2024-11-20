@@ -826,8 +826,7 @@ def is_ha_router(router):
 def is_ha_router_port(context, device_owner, router_id):
     if device_owner == constants.DEVICE_OWNER_HA_REPLICATED_INT:
         return True
-    elif device_owner == constants.DEVICE_OWNER_ROUTER_SNAT:
+    if device_owner == constants.DEVICE_OWNER_ROUTER_SNAT:
         return l3_obj.RouterExtraAttributes.objects_exist(
             context, router_id=router_id, ha=True)
-    else:
-        return False
+    return False

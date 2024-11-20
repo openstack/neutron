@@ -589,10 +589,9 @@ class Timeout(fixtures.Fixture):
         except ValueError:
             # If timeout value is invalid do not set a timeout.
             self.test_timeout = 0
-        if scaling >= 1:
-            self.test_timeout *= scaling
-        else:
+        if scaling < 1:
             raise ValueError('scaling value must be >= 1')
+        self.test_timeout *= scaling
 
     def setUp(self):
         super().setUp()

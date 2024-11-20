@@ -1412,14 +1412,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         except vlanmanager.VifIdNotFound:
             LOG.info('net_uuid %s not managed by VLAN manager',
                      net_uuid)
-            if net_uuid:
-                # TODO(sahid); This needs to be fixed. It supposes a segment
-                # per network per host. Basically this code is to avoid
-                # changing logic which is not the aim of this commit.
-                segs = self.vlan_manager.get_segments(net_uuid)
-                lvm = self.vlan_manager.get(net_uuid, list(segs.keys())[0])
-            else:
+            if not net_uuid:
                 return None, None, None
+            # TODO(sahid); This needs to be fixed. It supposes a segment per
+            # network per host. Basically this code is to avoid changing logic
+            # which is not the aim of this commit.
+            segs = self.vlan_manager.get_segments(net_uuid)
+            lvm = self.vlan_manager.get(net_uuid, list(segs.keys())[0])
 
         if vif_id in lvm.vif_ports:
             vif_port = lvm.vif_ports[vif_id]
@@ -2443,11 +2442,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 # We cannot change this from 8, since it could break
                 # backwards-compatibility
                 return '%08x' % addr
-            else:
-                # Create 32-bit Base32 encoded hash
-                blake2b = hashlib.blake2b(ip_address.encode(), digest_size=20)
-                iphash = base64.b32encode(blake2b.digest())
-                return iphash[:hashlen].decode().lower()
+            # Create 32-bit Base32 encoded hash
+            blake2b = hashlib.blake2b(ip_address.encode(), digest_size=20)
+            iphash = base64.b32encode(blake2b.digest())
+            return iphash[:hashlen].decode().lower()
         except Exception:
             LOG.warning("Invalid remote IP: %s", ip_address)
             return

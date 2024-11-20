@@ -171,7 +171,7 @@ def flow_priority_offset(rule, conjunction=False):
     if protocol in [n_consts.PROTO_NUM_ICMP, n_consts.PROTO_NUM_IPV6_ICMP]:
         if 'port_range_min' not in rule:
             return conj_offset + 1
-        elif 'port_range_max' not in rule:
+        if 'port_range_max' not in rule:
             return conj_offset + 2
     return conj_offset + 3
 

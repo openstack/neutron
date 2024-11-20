@@ -50,10 +50,9 @@ def convert_result_to_dict(f):
 
         if result is None:
             return None
-        elif isinstance(result, list):
+        if isinstance(result, list):
             return [r.to_dict() for r in result]
-        else:
-            return result.to_dict()
+        return result.to_dict()
     return inner
 
 
@@ -74,8 +73,7 @@ def filter_fields(f):
 
         if isinstance(result, list):
             return [_do_filter(obj) for obj in result]
-        else:
-            return _do_filter(result)
+        return _do_filter(result)
     return inner_filter
 
 
@@ -86,10 +84,9 @@ def make_result_with_fields(f):
         result = f(*args, **kwargs)
         if fields is None:
             return result
-        elif isinstance(result, list):
+        if isinstance(result, list):
             return [db_utils.resource_fields(r, fields) for r in result]
-        else:
-            return db_utils.resource_fields(result, fields)
+        return db_utils.resource_fields(result, fields)
 
     return inner
 

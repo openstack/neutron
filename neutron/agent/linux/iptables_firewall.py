@@ -735,8 +735,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         remote_gid = self._get_any_remote_group_id_in_rule(sg_rule)
         if self.enable_ipset and remote_gid:
             return self._generate_ipset_rule_args(sg_rule, remote_gid)
-        else:
-            return self._generate_plain_rule_args(sg_rule)
+        return self._generate_plain_rule_args(sg_rule)
 
     def _convert_sgr_to_iptables_rules(self, security_group_rules):
         iptables_rules = []

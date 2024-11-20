@@ -99,14 +99,13 @@ class LocalIPDbMixin(lip_ext.LocalIPPluginBase):
                 raise lip_exc.LocalIPRequestedIPNotFound(
                     port_id=port.id, ip=requested_ip)
             return fixed_ip
-        elif validators.is_attr_set(requested_ip):
+        if validators.is_attr_set(requested_ip):
             for fixed_ip in fixed_ips:
                 if str(fixed_ip.ip_address) == requested_ip:
                     return requested_ip
             raise lip_exc.LocalIPRequestedIPNotFound(
                 port_id=port.id, ip=requested_ip)
-        else:
-            raise lip_exc.LocalIPNoRequestedIP(port_id=port.id)
+        raise lip_exc.LocalIPNoRequestedIP(port_id=port.id)
 
     @db_api.retry_if_session_inactive()
     def create_local_ip(self, context, local_ip):

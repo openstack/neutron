@@ -128,8 +128,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                 if request.address == netaddr.IPAddress(fail_ip):
                     raise exception
                 return str(request.address), subnet_id
-            else:
-                return auto_ip, subnet_id
+            return auto_ip, subnet_id
 
         return allocate_mock
 

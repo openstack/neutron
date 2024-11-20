@@ -461,8 +461,7 @@ def _filter_by_subnet(context, fixed_ips):
             subnet_filtered.append(str(ip['ip_address']))
     if filter_fixed_ips:
         return subnet_filtered
-    else:
-        return [str(ip['ip_address']) for ip in fixed_ips]
+    return [str(ip['ip_address']) for ip in fixed_ips]
 
 
 def _create_port_in_external_dns_service(resource, event,

@@ -88,8 +88,7 @@ def comment_rule(rule, comment):
 def get_chain_name(chain_name, wrap=True):
     if wrap:
         return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
-    else:
-        return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_NOWRAP]
+    return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_NOWRAP]
 
 
 class IptablesRule:
@@ -162,8 +161,7 @@ class IptablesTable:
     def _select_chain_set(self, wrap):
         if wrap:
             return self.chains
-        else:
-            return self.unwrapped_chains
+        return self.unwrapped_chains
 
     def remove_chain(self, name, wrap=True):
         """Remove named chain.

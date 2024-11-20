@@ -81,28 +81,25 @@ class SegmentTypeDriver(BaseTypeDriver):
                     if alloc.allocated:
                         # Segment already allocated
                         return
-                    else:
-                        # Segment not allocated
-                        LOG.debug("%(type)s segment %(segment)s allocate "
-                                  "started ",
-                                  {"type": network_type,
-                                   "segment": raw_segment})
-                        count = (context.session.query(self.model).
-                                 filter_by(allocated=False, **raw_segment).
-                                 update({"allocated": True}))
-                        if count:
-                            LOG.debug("%(type)s segment %(segment)s allocate "
-                                      "done ",
-                                      {"type": network_type,
-                                       "segment": raw_segment})
-                            return alloc
+                    # Segment not allocated
+                    LOG.debug("%(type)s segment %(segment)s allocate started ",
+                              {"type": network_type,
+                               "segment": raw_segment})
+                    count = (context.session.query(self.model).
+                             filter_by(allocated=False, **raw_segment).
+                             update({"allocated": True}))
+                    if count:
+                        LOG.debug(
+                            "%(type)s segment %(segment)s allocate done ",
+                            {"type": network_type, "segment": raw_segment})
+                        return alloc
 
-                        # Segment allocated or deleted since select
-                        LOG.debug("%(type)s segment %(segment)s allocate "
-                                  "failed: segment has been allocated or "
-                                  "deleted",
-                                  {"type": network_type,
-                                   "segment": raw_segment})
+                    # Segment allocated or deleted since select
+                    LOG.debug("%(type)s segment %(segment)s allocate "
+                              "failed: segment has been allocated or "
+                              "deleted",
+                              {"type": network_type,
+                               "segment": raw_segment})
 
                 # Segment to create or already allocated
                 LOG.debug("%(type)s segment %(segment)s create started",

@@ -45,8 +45,8 @@ def get_inspector():
     global _INSPECTOR
     if _INSPECTOR:
         return _INSPECTOR
-    else:
-        _INSPECTOR = sa.inspect(op.get_bind())
+
+    _INSPECTOR = sa.inspect(op.get_bind())
 
     return _INSPECTOR
 

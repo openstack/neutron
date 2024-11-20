@@ -147,10 +147,10 @@ class ProcessFixture(fixtures.Fixture):
 
         LOG.debug("Restarting process: %s", self.process_name)
 
-        if executor is None:
-            _restart()
-        else:
+        if executor is not None:
             return executor.submit(_restart)
+
+        _restart()
 
     @property
     def service_state(self):

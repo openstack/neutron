@@ -45,13 +45,13 @@ def make_serializable(value):
 
     if isinstance(value, list):
         return [make_serializable(item) for item in value]
-    elif isinstance(value, netlink.nla_slot):
+    if isinstance(value, netlink.nla_slot):
         return [_ensure_string(value[0]), make_serializable(value[1])]
-    elif isinstance(value, netlink.nla_base):
+    if isinstance(value, netlink.nla_base):
         return make_serializable(value.dump())
-    elif isinstance(value, dict):
+    if isinstance(value, dict):
         return {_ensure_string(key): make_serializable(data)
                 for key, data in value.items()}
-    elif isinstance(value, tuple):
+    if isinstance(value, tuple):
         return tuple(make_serializable(item) for item in value)
     return _ensure_string(value)

@@ -53,14 +53,11 @@ class FakePlacement:
 
     def get_resource_providers(self, **kwargs):
         id = kwargs.get('id', None)
-        if not id:
-            return jsonutils.dumps(
-                {
-                    'resource_providers':
-                        [self.resource_providers[self.host_rp_uuid]]
-                })
-        else:
+        if id:
             return jsonutils.dumps(self.resource_providers[id])
+        return jsonutils.dumps({
+            'resource_providers': [self.resource_providers[self.host_rp_uuid]]
+        })
 
     def put_traits(self, **kwargs):
         # Return empty sting otherwise wsgiref goes mad

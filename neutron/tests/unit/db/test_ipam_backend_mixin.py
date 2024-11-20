@@ -79,11 +79,8 @@ class TestIpamBackendMixin(base.BaseTestCase):
                     self.ctx,
                     ipv6_address_mode=constants.IPV6_SLAAC,
                     ipv6_ra_mode=constants.IPV6_SLAAC)
-            else:
-                return subnet_obj.Subnet(
-                    self.ctx,
-                    ipv6_address_mode=None,
-                    ipv6_ra_mode=None)
+            return subnet_obj.Subnet(
+                self.ctx, ipv6_address_mode=None, ipv6_ra_mode=None)
 
         self.mixin._get_subnet_object = mock.Mock(
             side_effect=_get_subnet_object)

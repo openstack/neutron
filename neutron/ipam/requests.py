@@ -304,15 +304,14 @@ class AddressRequestFactory:
         """
         if ip_dict.get('ip_address'):
             return SpecificAddressRequest(ip_dict['ip_address'])
-        elif ip_dict.get('eui64_address'):
+        if ip_dict.get('eui64_address'):
             return AutomaticAddressRequest(prefix=ip_dict['subnet_cidr'],
                                            mac=ip_dict['mac'])
-        elif (port['device_owner'] == constants.DEVICE_OWNER_DHCP or
-              port['device_owner'] == constants.DEVICE_OWNER_DISTRIBUTED):
+        if (port['device_owner'] == constants.DEVICE_OWNER_DHCP or
+                port['device_owner'] == constants.DEVICE_OWNER_DISTRIBUTED):
             # preserve previous behavior of DHCP ports choosing start of pool
             return PreferNextAddressRequest()
-        else:
-            return AnyAddressRequest()
+        return AnyAddressRequest()
 
 
 class SubnetRequestFactory:
@@ -337,21 +336,18 @@ class SubnetRequestFactory:
                 subnet_id,
                 common_utils.ip_version_from_int(subnetpool['ip_version']),
                 prefixlen)
-        else:
-            alloc_pools = subnet.get('allocation_pools')
-            alloc_pools = (alloc_pools if validators.is_attr_set(alloc_pools)
-                           else None)
-            if not cidr and gateway_ip:
-                prefixlen = subnet['prefixlen']
-                if not validators.is_attr_set(prefixlen):
-                    prefixlen = int(subnetpool['default_prefixlen'])
-                gw_ip_net = netaddr.IPNetwork('%s/%s' %
-                                              (gateway_ip, prefixlen))
-                cidr = gw_ip_net.cidr
+        alloc_pools = subnet.get('allocation_pools')
+        alloc_pools = (
+            alloc_pools if validators.is_attr_set(alloc_pools) else None)
+        if not cidr and gateway_ip:
+            prefixlen = subnet['prefixlen']
+            if not validators.is_attr_set(prefixlen):
+                prefixlen = int(subnetpool['default_prefixlen'])
+            gw_ip_net = netaddr.IPNetwork('%s/%s' % (gateway_ip, prefixlen))
+            cidr = gw_ip_net.cidr
 
-            return SpecificSubnetRequest(
-                subnet['tenant_id'],
-                subnet_id,
-                cidr,
-                gateway_ip=gateway_ip,
-                allocation_pools=alloc_pools)
+        return SpecificSubnetRequest(subnet['tenant_id'],
+                                     subnet_id,
+                                     cidr,
+                                     gateway_ip=gateway_ip,
+                                     allocation_pools=alloc_pools)

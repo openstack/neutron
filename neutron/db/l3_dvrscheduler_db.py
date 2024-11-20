@@ -669,7 +669,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, payload):
                     _dvr_handle_unbound_allowed_addr_pair_add(
                         l3plugin, context, new_port, address_pair)
                 return
-            elif original_port_state:
+            if original_port_state:
                 # Case were we deactivate the port from active state.
                 for address_pair in allowed_address_pairs_list:
                     _dvr_handle_unbound_allowed_addr_pair_del(

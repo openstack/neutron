@@ -794,15 +794,14 @@ class L3NATAgent(ha.AgentMixin,
                 routers = [r for r in routers if r['id'] == update.id]
 
         if not routers:
-            removed = self._safe_router_removed(update.id)
-            if not removed:
-                self._resync_router(update)
-            else:
+            if self._safe_router_removed(update.id):
                 # need to update timestamp of removed router in case
                 # there are older events for the same router in the
                 # processing queue (like events from fullsync) in order to
                 # prevent deleted router re-creation
                 rp.fetched_and_processed(update.timestamp)
+            else:
+                self._resync_router(update)
             LOG.info("Finished a router delete for %s, update_id %s. "
                      "Time elapsed: %.3f",
                      update.id, update.update_id,

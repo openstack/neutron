@@ -241,8 +241,7 @@ class OVNClientQosExtension:
 
         if port.get('qos_policy_id'):
             return port['qos_policy_id'], 'port'
-        else:
-            return port['qos_network_policy_id'], 'network'
+        return port['qos_network_policy_id'], 'network'
 
     def _delete_port_qos_rules(self, txn, port_id, network_id, lsp=None,
                                port_deleted=False):

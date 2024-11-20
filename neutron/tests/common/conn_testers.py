@@ -223,26 +223,23 @@ class ConnectionTester(fixtures.Fixture):
                                       dst_port=None):
         nc_params = (direction, protocol, src_port, dst_port)
         nc_tester = self._nc_testers.get(nc_params)
-        if nc_tester:
-            if nc_tester.is_established:
-                try:
-                    nc_tester.test_connectivity()
-                except RuntimeError:
-                    raise ConnectionTesterException(
-                        "Established %s connection with protocol %s, source "
-                        "port %s and destination port %s can no longer "
-                        "communicate")
-            else:
-                nc_tester.stop_processes()
-                raise ConnectionTesterException(
-                    '%s connection with protocol %s, source port %s and '
-                    'destination port %s is not established' % nc_params)
-        else:
+        if not nc_tester:
             raise ConnectionTesterException(
                 "Attempting to test established %s connection with protocol %s"
                 ", source port %s and destination port %s that hasn't been "
                 "established yet by calling establish_connection()"
                 % nc_params)
+        if not nc_tester.is_established:
+            nc_tester.stop_processes()
+            raise ConnectionTesterException(
+                '%s connection with protocol %s, source port %s and '
+                'destination port %s is not established' % nc_params)
+        try:
+            nc_tester.test_connectivity()
+        except RuntimeError:
+            raise ConnectionTesterException(
+                "Established %s connection with protocol %s, source port %s "
+                "and destination port %s can no longer communicate")
 
     def assert_no_established_connection(self, direction, protocol,
                                          src_port=None, dst_port=None):
