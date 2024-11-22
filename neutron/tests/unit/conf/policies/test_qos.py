@@ -44,6 +44,14 @@ class SystemAdminQosPolicyTests(QosPolicyAPITestCase):
             base_policy.InvalidScope,
             policy.enforce, self.context, 'get_policy', self.alt_target)
 
+    def test_get_policies_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'get_policies_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'get_policies_tags', self.alt_target)
+
     def test_create_policy(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -51,6 +59,15 @@ class SystemAdminQosPolicyTests(QosPolicyAPITestCase):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce, self.context, 'create_policy', self.alt_target)
+
+    def test_create_policies_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'create_policies_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'create_policies_tags',
+            self.alt_target)
 
     def test_update_policy(self):
         self.assertRaises(
@@ -60,6 +77,15 @@ class SystemAdminQosPolicyTests(QosPolicyAPITestCase):
             base_policy.InvalidScope,
             policy.enforce, self.context, 'update_policy', self.alt_target)
 
+    def test_update_policies_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'update_policies_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'update_policies_tags',
+            self.alt_target)
+
     def test_delete_policy(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -67,6 +93,15 @@ class SystemAdminQosPolicyTests(QosPolicyAPITestCase):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce, self.context, 'delete_policy', self.alt_target)
+
+    def test_delete_policies_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'delete_policies_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'delete_policies_tags',
+            self.alt_target)
 
 
 class SystemMemberQosPolicyTests(SystemAdminQosPolicyTests):
@@ -95,11 +130,24 @@ class AdminQosPolicyTests(QosPolicyAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'get_policy', self.alt_target))
 
+    def test_get_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_policies_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_policies_tags', self.alt_target))
+
     def test_create_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'create_policy', self.target))
         self.assertTrue(
             policy.enforce(self.context, 'create_policy', self.alt_target))
+
+    def test_create_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_policies_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'create_policies_tags',
+                           self.alt_target))
 
     def test_update_policy(self):
         self.assertTrue(
@@ -107,11 +155,25 @@ class AdminQosPolicyTests(QosPolicyAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'update_policy', self.alt_target))
 
+    def test_update_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_policies_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'update_policies_tags',
+                           self.alt_target))
+
     def test_delete_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_policy', self.target))
         self.assertTrue(
             policy.enforce(self.context, 'delete_policy', self.alt_target))
+
+    def test_delete_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_policies_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_policies_tags',
+                           self.alt_target))
 
 
 class ProjectManagerQosPolicyTests(AdminQosPolicyTests):
@@ -127,12 +189,28 @@ class ProjectManagerQosPolicyTests(AdminQosPolicyTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'get_policy', self.alt_target)
 
+    def test_get_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_policies_tags', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_policies_tags',
+            self.alt_target)
+
     def test_create_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'create_policy', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'create_policy', self.alt_target)
+
+    def test_create_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_policies_tags', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_policies_tags',
+            self.alt_target)
 
     def test_update_policy(self):
         self.assertTrue(
@@ -141,12 +219,28 @@ class ProjectManagerQosPolicyTests(AdminQosPolicyTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'update_policy', self.alt_target)
 
+    def test_update_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_policies_tags', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_policies_tags',
+            self.alt_target)
+
     def test_delete_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_policy', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'delete_policy', self.alt_target)
+
+    def test_delete_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_policies_tags', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_policies_tags',
+            self.alt_target)
 
 
 class ProjectMemberQosPolicyTests(ProjectManagerQosPolicyTests):
@@ -162,6 +256,14 @@ class ProjectMemberQosPolicyTests(ProjectManagerQosPolicyTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'get_policy', self.alt_target)
 
+    def test_get_policies_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_policies_tags', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_policies_tags',
+            self.alt_target)
+
     def test_create_policy(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -169,6 +271,15 @@ class ProjectMemberQosPolicyTests(ProjectManagerQosPolicyTests):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'create_policy', self.alt_target)
+
+    def test_create_policies_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_policies_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_policies_tags',
+            self.alt_target)
 
     def test_update_policy(self):
         self.assertRaises(
@@ -178,6 +289,15 @@ class ProjectMemberQosPolicyTests(ProjectManagerQosPolicyTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'update_policy', self.alt_target)
 
+    def test_update_policies_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_policies_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_policies_tags',
+            self.alt_target)
+
     def test_delete_policy(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -185,6 +305,15 @@ class ProjectMemberQosPolicyTests(ProjectManagerQosPolicyTests):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'delete_policy', self.alt_target)
+
+    def test_delete_policies_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_policies_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_policies_tags',
+            self.alt_target)
 
 
 class ProjectReaderQosPolicyTests(ProjectMemberQosPolicyTests):
@@ -205,20 +334,40 @@ class ServiceRoleQosPolicyTests(QosPolicyAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'get_policy', self.target)
 
+    def test_get_policies_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_policies_tags', self.target)
+
     def test_create_policy(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'create_policy', self.target)
+
+    def test_create_policies_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_policies_tags', self.target)
 
     def test_update_policy(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'update_policy', self.target)
 
+    def test_update_policies_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_policies_tags', self.target)
+
     def test_delete_policy(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'delete_policy', self.target)
+
+    def test_delete_policies_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_policies_tags', self.target)
 
 
 class QosRuleTypeAPITestCase(base.PolicyBaseTestCase):
