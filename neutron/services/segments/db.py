@@ -235,6 +235,17 @@ def update_segment_host_mapping(context, host, current_segment_ids):
         for segment_id in segment_ids:
             network.SegmentHostMapping(
                 context, segment_id=segment_id, host=host).create()
+        if segment_ids:
+            registry.publish(
+                resources.SEGMENT_HOST_MAPPING,
+                events.AFTER_CREATE,
+                update_segment_host_mapping,
+                payload=events.DBEventPayload(
+                    context,
+                    metadata={
+                        'host': host,
+                        'current_segment_ids': segment_ids}))
+
         LOG.debug('Segments %s mapped to the host %s', segment_ids, host)
         stale_segment_ids = previous_segment_ids - current_segment_ids
         if stale_segment_ids:
@@ -243,6 +254,15 @@ def update_segment_host_mapping(context, host, current_segment_ids):
                     entry.delete()
                     LOG.debug('Segment %s unmapped from host %s',
                               entry.segment_id, entry.host)
+            registry.publish(
+                resources.SEGMENT_HOST_MAPPING,
+                events.AFTER_DELETE,
+                update_segment_host_mapping,
+                payload=events.DBEventPayload(
+                    context,
+                    metadata={
+                        'host': host,
+                        'deleted_segment_ids': stale_segment_ids}))
 
 
 def get_hosts_mapped_with_segments(context, include_agent_types=None,
@@ -352,12 +372,6 @@ def _update_segment_host_mapping_for_agent(resource, event, trigger,
         segment['id'] for segment in segments
         if check_segment_for_agent(segment, agent)}
     update_segment_host_mapping(context, host, current_segment_ids)
-    registry.publish(resources.SEGMENT_HOST_MAPPING, events.AFTER_CREATE,
-                     plugin, payload=events.DBEventPayload(
-                         context,
-                         metadata={
-                             'host': host,
-                             'current_segment_ids': current_segment_ids}))
 
 
 def _add_segment_host_mapping_for_segment(resource, event, trigger,
