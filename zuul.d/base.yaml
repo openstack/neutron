@@ -55,7 +55,7 @@
       devstack_localrc:
         INSTALL_TESTONLY_PACKAGES: true
         DATABASE_PASSWORD: stackdb
-        NEUTRON_DEPLOY_MOD_WSGI: false
+        NEUTRON_DEPLOY_MOD_WSGI: true
       tox_envlist: dsvm-functional-gate
       tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/openstack/requirements/upper-constraints.txt'
       zuul_copy_output:
@@ -63,6 +63,12 @@
         # /opt/stack/logs is default logs directory defined in neutron's
         # tox.ini file
         '/opt/stack/logs/dsvm-functional-logs.tar.gz': logs
+      # Because this job uses neutron defined tox env (defined in base job),
+      # we need to set zuul_work_dir to neutron so that it can be used by
+      # other projects. Currently devstack run this job. Not setting this
+      # in base neutron-functional job as that is being used by neutron
+      # stadium projects where they need to use stadium project as working dir.
+      zuul_work_dir: src/opendev.org/openstack/neutron
 
 - job:
     name: neutron-fullstack
@@ -117,22 +123,9 @@
       - ^zuul.d/tempest-singlenode.yaml
 
 - job:
-    name: neutron-fullstack-with-uwsgi
-    parent: neutron-fullstack
-    vars:
-      devstack_localrc:
-        NEUTRON_DEPLOY_MOD_WSGI: true
-      # Because this job uses neutron defined tox env (defined in base job),
-      # we need to set zuul_work_dir to neutron so that it can be used by
-      # other projects. Currently devstack run this job. Not setting this
-      # in base neutron-functional job as that is being used by neutron
-      # stadium projects where they need to use stadium project as working dir.
-      zuul_work_dir: src/opendev.org/openstack/neutron
-
-- job:
-    name: neutron-fullstack-with-uwsgi-with-neutron-lib-master
+    name: neutron-fullstack-with-neutron-lib-master
     branches: ^master$
-    parent: neutron-fullstack-with-uwsgi
+    parent: neutron-fullstack
     required-projects:
       - openstack/neutron-lib
 
@@ -144,28 +137,15 @@
       - name: github.com/svinota/pyroute2
 
 - job:
-    name: neutron-functional-with-uwsgi
-    parent: neutron-functional
-    vars:
-      devstack_localrc:
-        NEUTRON_DEPLOY_MOD_WSGI: true
-      # Because this job uses neutron defined tox env (defined in base job),
-      # we need to set zuul_work_dir to neutron so that it can be used by
-      # other projects. Currently devstack run this job. Not setting this
-      # in base neutron-functional job as that is being used by neutron
-      # stadium projects where they need to use stadium project as working dir.
-      zuul_work_dir: src/opendev.org/openstack/neutron
-
-- job:
-    name: neutron-functional-with-uwsgi-with-neutron-lib-master
+    name: neutron-functional-with-neutron-lib-master
     branches: ^master$
-    parent: neutron-functional-with-uwsgi
+    parent: neutron-functional
     required-projects:
       - openstack/neutron-lib
 
 - job:
-    name: neutron-functional-with-uwsgi-fips
-    parent: neutron-functional-with-uwsgi
+    name: neutron-functional-fips
+    parent: neutron-functional
     nodeset: devstack-single-node-centos-9-stream
     description: |
       Functional testing for a FIPS enabled Centos 9 system
@@ -249,8 +229,8 @@
         override-checkout: main
 
 - job:
-    name: neutron-fullstack-with-uwsgi-fips
-    parent: neutron-fullstack-with-uwsgi
+    name: neutron-fullstack-fips
+    parent: neutron-fullstack
     nodeset: devstack-single-node-centos-9-stream
     description: |
       Functional testing for a FIPS enabled Centos 9 system

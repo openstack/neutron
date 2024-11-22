@@ -16,7 +16,7 @@
         CIRROS_VERSION: 0.6.2
         DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: false
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -58,7 +58,6 @@
       devstack_localrc:
         Q_AGENT: openvswitch
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
-        NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: &openvswitch-irrelevant-files
       - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
@@ -425,7 +424,7 @@
       - openstack/pbr
 
 - job:
-    name: neutron-ovn-tempest-with-uwsgi
+    name: neutron-ovn-tempest
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
     timeout: 10800
@@ -488,8 +487,8 @@
       - ^zuul.d/tempest-singlenode.yaml
 
 - job:
-    name: neutron-ovn-tempest-with-uwsgi-loki
-    parent: neutron-ovn-tempest-with-uwsgi
+    name: neutron-ovn-tempest-loki
+    parent: neutron-ovn-tempest
     timeout: 10800
     vars:
       devstack_services:

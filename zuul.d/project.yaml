@@ -18,8 +18,8 @@
       - neutron-skip-level-jobs
     check:
       jobs:
-        - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
+        - neutron-functional
+        - neutron-fullstack
         - neutron-ovs-grenade-multinode
         - neutron-ovn-grenade-multinode
         - neutron-ovs-tempest-multinode-full
@@ -72,8 +72,8 @@
 
     gate:
       jobs:
-        - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
+        - neutron-functional
+        - neutron-fullstack
         - neutron-ovs-tempest-multinode-full
         - neutron-ovn-grenade-multinode
         - neutron-ovs-grenade-multinode

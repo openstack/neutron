@@ -68,11 +68,11 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
-        - neutron-functional-with-uwsgi-with-neutron-lib-master
-        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
+        - neutron-functional-with-neutron-lib-master
+        - neutron-fullstack-with-neutron-lib-master
         - neutron-ovn-tempest-ovs-release
         - neutron-ovs-tempest-with-neutron-lib-master
-        - neutron-ovn-tempest-with-uwsgi-loki
+        - neutron-ovn-tempest-loki
         # Jobs added to the periodic queue by templates defined in
         # https://opendev.org/openstack/openstack-zuul-jobs/src/branch/master/zuul.d/project-templates.yaml
         - openstack-tox-py312-with-neutron-lib-master:
@@ -90,11 +90,11 @@
     periodic:
       jobs: &neutron-periodic-jobs
         - neutron-functional
-        - neutron-functional-with-uwsgi-fips
+        - neutron-functional-fips
         - neutron-functional-with-pyroute2-master
         - neutron-functional-with-sqlalchemy-master
         - neutron-fullstack
-        - neutron-fullstack-with-uwsgi-fips
+        - neutron-fullstack-fips
         - neutron-fullstack-with-pyroute2-master
         - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-slow
@@ -131,8 +131,6 @@
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
         - neutron-tempest-plugin-linuxbridge
-        - neutron-tempest-plugin-api-ovs-eventlet
-        - neutron-tempest-plugin-api-ovn-eventlet
     experimental:
       jobs: *neutron-periodic-jobs
 
