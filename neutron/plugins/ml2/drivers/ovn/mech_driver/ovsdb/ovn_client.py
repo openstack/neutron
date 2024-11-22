@@ -814,7 +814,7 @@ class OVNClient:
         ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port_id)
         ovn_network_name = ovn_port.external_ids.get(
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
-        network_id = ovn_network_name.replace('neutron-', '')
+        network_id = utils.get_neutron_name(ovn_network_name)
 
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(self._nb_idl.delete_lswitch_port(
