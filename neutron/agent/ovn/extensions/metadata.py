@@ -15,8 +15,8 @@
 import collections
 import functools
 import re
+import threading
 
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log
 from ovsdbapp.backend.ovs_idl import vlog
@@ -35,7 +35,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 LOG = log.getLogger(__name__)
 EXT_NAME = 'metadata'
 agents_db.register_db_agents_opts()
-_SYNC_STATE_LOCK = lockutils.ReaderWriterLock()
+_SYNC_STATE_LOCK = threading.RLock()
 CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
 SB_IDL_TABLES = ['Encap',
@@ -60,7 +60,7 @@ def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        with _SYNC_STATE_LOCK.write_lock():
+        with _SYNC_STATE_LOCK:
             return f(*args, **kwargs)
     return wrapped
 

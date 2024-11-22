@@ -22,7 +22,6 @@ import uuid
 
 import netaddr
 from neutron_lib import constants as n_const
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import netutils
@@ -45,7 +44,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 
 LOG = log.getLogger(__name__)
 agents_db.register_db_agents_opts()
-_SYNC_STATE_LOCK = lockutils.ReaderWriterLock()
+_SYNC_STATE_LOCK = threading.RLock()
 CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
 NS_PREFIX = ovn_const.OVN_METADATA_PREFIX
@@ -64,7 +63,7 @@ def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
     @functools.wraps(f)
     def wrapped(*args, **kwargs):
-        with _SYNC_STATE_LOCK.write_lock():
+        with _SYNC_STATE_LOCK:
             return f(*args, **kwargs)
     return wrapped
 
@@ -139,7 +138,7 @@ class PortBindingEvent(_OVNExtensionEvent, row_event.RowEvent):
         # the metadata namespace accordingly.
         resync = False
 
-        with _SYNC_STATE_LOCK.read_lock():
+        with _SYNC_STATE_LOCK:
             self.log_row(row)
             try:
                 self.agent.provision_datapath(row)
