@@ -14,6 +14,7 @@
 #    under the License.
 
 import functools
+import random
 from unittest import mock
 
 from neutron_lib import constants as p_const
@@ -32,7 +33,7 @@ from neutron.tests.functional import base
 MIN_RATE_DEFAULT = 1000000
 MAX_RATE_DEFAULT = 3000000
 BURST_DEFAULT = 2000000
-QUEUE_NUM_DEFAULT = 'queue_num'
+QUEUE_NUM_DEFAULT = 1
 OTHER_CONFIG_DEFAULT = {'max-rate': str(MAX_RATE_DEFAULT),
                         'burst': str(BURST_DEFAULT),
                         'min-rate': str(MIN_RATE_DEFAULT)}
@@ -95,7 +96,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                       neutron_port_id=None, queue_num=None):
         neutron_port_id = (('port-' + uuidutils.generate_uuid())[:13]
                            if not neutron_port_id else neutron_port_id)
-        queue_num = QUEUE_NUM_DEFAULT if not queue_num else queue_num
+        queue_num = str(queue_num) if queue_num else str(QUEUE_NUM_DEFAULT)
         queue_id = self.ovs._update_queue(neutron_port_id, queue_num,
                                           queue_type,
                                           max_kbps=max_kbps,
@@ -189,10 +190,11 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.fail(msg)
 
     def test__update_queue_new(self):
-        queue_id, neutron_port_id = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id, neutron_port_id = self._create_queue(queue_num=queue_num)
         self.assertIsNotNone(queue_id)
         external_ids = {'port': str(neutron_port_id),
-                        'queue-num': 'queue_num',
+                        'queue-num': str(queue_num),
                         'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH}
 
         expected = {'_uuid': queue_id,
@@ -201,13 +203,14 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._check_value(expected, self._list_queues, queue_id)
 
     def test__update_queue_update(self):
-        queue_id, neutron_port_id = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id, neutron_port_id = self._create_queue(queue_num=queue_num)
         self.assertIsNotNone(queue_id)
         other_config = {'max-rate': '6000000',
                         'burst': '5000000',
                         'min-rate': '4000000'}
         external_ids = {'port': str(neutron_port_id),
-                        'queue-num': 'queue_num',
+                        'queue-num': str(queue_num),
                         'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH}
         queue = self._list_queues(queue_id)
         self.assertIsNotNone(queue)
@@ -222,10 +225,11 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._check_value(expected, self._list_queues, queue_id)
 
     def test__find_queue(self):
-        queue_id, neutron_port_id = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id, neutron_port_id = self._create_queue(queue_num=queue_num)
         external_ids = {'port': str(neutron_port_id),
                         'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
-                        'queue-num': 'queue_num'}
+                        'queue-num': str(queue_num)}
         expected = {'_uuid': queue_id,
                     'external_ids': external_ids,
                     'other_config': OTHER_CONFIG_DEFAULT}
@@ -242,7 +246,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         for idx, port in enumerate(ports):
             external_ids = {'port': str(port),
                             'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
-                            'queue-num': 'queue_num'}
+                            'queue-num': str(QUEUE_NUM_DEFAULT)}
             expected = {'_uuid': queue_ids[idx],
                         'external_ids': external_ids,
                         'other_config': OTHER_CONFIG_DEFAULT}
@@ -252,10 +256,11 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                               _type='other_type')
 
     def test__delete_queue(self):
-        queue_id, port_id = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id, port_id = self._create_queue(queue_num=queue_num)
         external_ids = {'port': str(port_id),
                         'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
-                        'queue-num': 'queue_num'}
+                        'queue-num': str(queue_num)}
         expected = {'_uuid': queue_id,
                     'external_ids': external_ids,
                     'other_config': OTHER_CONFIG_DEFAULT}
@@ -265,7 +270,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._check_value(None, self._list_queues, queue_id=queue_id)
 
     def test__delete_queue_still_used_in_a_qos(self):
-        queue_id, port_id = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id, port_id = self._create_queue(queue_num=queue_num)
         queues = {1: queue_id}
         qos_id_1 = self._create_qos(
             queues=queues,
@@ -285,7 +291,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
             msg, {'queue': str(queue_id), 'qoses': qoses})
 
     def test__update_qos_new(self):
-        queue_id, port_id = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id, port_id = self._create_queue(queue_num=queue_num)
         queues = {1: queue_id}
 
         qos_id = self._create_qos(
@@ -302,7 +309,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertEqual(queues[1], qos['queues'][1].uuid)
 
     def test__update_qos_update(self):
-        queue_id_1, _ = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id_1, _ = self._create_queue(queue_num=queue_num)
         queues = {1: queue_id_1}
 
         qos_id = self._create_qos(
@@ -318,7 +326,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         qos = self._list_qos(qos_id)
         self.assertEqual(queues[1], qos['queues'][1].uuid)
 
-        queue_id_2, _ = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id_2, _ = self._create_queue(queue_num=queue_num)
         queues[2] = queue_id_2
 
         self._create_qos(
@@ -333,7 +342,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertEqual(queues[2], qos['queues'][2].uuid)
 
     def test__find_qos(self):
-        queue_id, _ = self._create_queue()
+        queue_num = random.randint(1000, 10000)
+        queue_id, _ = self._create_queue(queue_num=queue_num)
         queues = {1: queue_id}
         qos_id = self._create_qos(
             queues=queues,
@@ -474,8 +484,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         port_name = ('port-' + uuidutils.generate_uuid())[:8]
         self._create_bridge()
         self._create_port(port_name)
-        queue_num = 1
-        queue_id, port_id = self._create_queue(neutron_port_id=self.port_id)
+        queue_num = random.randint(1000, 10000)
+        queue_id, port_id = self._create_queue(neutron_port_id=self.port_id,
+                                               queue_num=queue_num)
         queues = {queue_num: queue_id}
         qos_id = self._create_qos(
             queues=queues,
@@ -485,7 +496,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._check_value(qos_id, self._find_port_qos, port_name)
         external_ids = {'port': str(port_id),
                         'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
-                        'queue-num': 'queue_num'}
+                        'queue-num': str(queue_num)}
         other_config = {'max-rate': str(MAX_RATE_DEFAULT),
                         'burst': str(BURST_DEFAULT),
                         'min-rate': '1800000'}
@@ -557,7 +568,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertEqual(0, len(ports_with_qos))
 
     def test_delete_minimum_bandwidth_queue_no_qos_found(self):
-        queue_id, neutron_port_id = self._create_queue(queue_num=1)
+        queue_num = random.randint(1000, 10000)
+        queue_id, neutron_port_id = self._create_queue(queue_num=queue_num)
         self.addCleanup(self.ovs._delete_queue, queue_id)
 
         # Check that it will not raise any exception even if there is no
@@ -589,7 +601,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._check_value(None, self._list_queues, queue_id=queue_id_2)
         external_ids = {'port': str(port_id_3),
                         'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
-                        'queue-num': 'queue_num'}
+                        'queue-num': str(QUEUE_NUM_DEFAULT)}
         expected = {'_uuid': queue_id_3,
                     'external_ids': external_ids,
                     'other_config': OTHER_CONFIG_DEFAULT}
