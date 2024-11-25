@@ -15,7 +15,6 @@
       - neutron-experimental-jobs
       - neutron-periodic-jobs
       - neutron-tox-override-jobs
-      - neutron-skip-level-jobs
     check:
       jobs:
         - neutron-functional-with-uwsgi
