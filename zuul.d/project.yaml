@@ -15,13 +15,10 @@
       - neutron-experimental-jobs
       - neutron-periodic-jobs
       - neutron-tox-override-jobs
-      - neutron-skip-level-jobs
     check:
       jobs:
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
-        - neutron-ovs-grenade-multinode
-        - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
         - neutron-ovn-tempest-ipv6-only-ovs-release
@@ -75,8 +72,6 @@
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-tempest-multinode-full
-        - neutron-ovs-grenade-multinode
-        - neutron-ovs-grenade-dvr-multinode
         - neutron-ovn-tempest-ipv6-only-ovs-release
         - tempest-integrated-networking:
             irrelevant-files: *ovn-irrelevant-files

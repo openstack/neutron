@@ -87,23 +87,6 @@ Below is a summary of those jobs.
     |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
-Grenade jobs running in Neutron CI
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In upstream Neutron CI there are various Grenade jobs running.
-Each of those jobs runs on slightly different configuration of Neutron services.
-Below is summary of those jobs.
-::
-
-    +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | Job name                           | nodes | Operating system | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
-    |                                    |       |                  |             | driver      | mode     |       |        |            | queue       |
-    +====================================+=======+==================+=============+=============+==========+=======+========+============+=============+
-    | neutron-ovs-grenade-multinode      |   2   | Ubuntu Jammy     | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
-    +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | neutron-ovs-grenade-dvr-multinode  |   2   | Ubuntu Jammy     | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
-    |                                    |       |                  |             |             | dvr_snat |       |        |            |             |
-    +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
 
 Tempest jobs running in Neutron experimental CI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
