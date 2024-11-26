@@ -202,6 +202,17 @@ class RemoteResourceCache:
                              resource_id=resource.id,
                              states=(existing, resource)))
 
+    def record_resource_remove(self, rtype, resource_id):
+        filters = {'id': (resource_id, )}
+        for i in self._get_query_ids(rtype, filters):
+            try:
+                self._satisfied_server_queries.remove(i)
+            except KeyError:
+                continue
+        LOG.debug("Remove resource cache for resource %s: %s",
+                  rtype, resource_id)
+        self._type_cache(rtype).pop(resource_id, None)
+
     def record_resource_delete(self, context, rtype, resource_id):
         # deletions are final, record them so we never
         # accept new data for the same ID.

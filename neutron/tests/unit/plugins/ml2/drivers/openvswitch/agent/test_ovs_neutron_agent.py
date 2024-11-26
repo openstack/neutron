@@ -1095,6 +1095,23 @@ class TestOvsNeutronAgent:
                 self.assertEqual({dev_mock},
                                  failed_devices.get('removed'))
 
+    def test_treat_devices_removed_rcache_removed(self):
+        device_id = 'dev_id'
+        rcache = self.agent.plugin_rpc.remote_resource_cache
+        rcache._cache_by_type_and_id['Port'][device_id] = 1
+        with mock.patch.object(self.agent.plugin_rpc,
+                               'update_device_list',
+                               return_value={'devices_up': [],
+                                             'devices_down': [],
+                                             'failed_devices_up': [],
+                                             'failed_devices_down': []}):
+            with mock.patch.object(self.agent.int_br,
+                                   'get_vif_port_by_id',
+                                   return_value=None):
+                self.agent.treat_devices_removed([device_id])
+                self.assertNotIn(device_id,
+                                 rcache._cache_by_type_and_id['Port'])
+
     def test_treat_devices_removed_ext_delete_port(self):
         port_id = 'fake-id'
 
@@ -1560,6 +1577,19 @@ class TestOvsNeutronAgent:
                 'Port', vif.port_name, 'tag', ovs_constants.DEAD_VLAN_TAG,
                 log_errors=False)
             int_br.drop_port.assert_called_once_with(in_port=vif.ofport)
+
+    def test_port_delete_rcache_removed(self):
+        vif = FakeVif()
+        port_id = 'id'
+        rcache = self.agent.plugin_rpc.remote_resource_cache
+        rcache._cache_by_type_and_id['Port'][port_id] = 1
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            int_br.get_vif_by_port_id.return_value = vif.port_name
+            int_br.get_vif_port_by_id.return_value = vif
+            self.agent.port_delete("unused_context",
+                                   port_id=port_id)
+            self.agent.process_deleted_ports(port_info={})
+            self.assertNotIn(port_id, rcache._cache_by_type_and_id['Port'])
 
     def test_port_delete_removed_port(self):
         with mock.patch.object(self.agent, 'int_br') as int_br:
