@@ -206,6 +206,7 @@ class DhcpRpcCallback:
         seg_subnets = [subnet for subnet in subnets if
                        subnet.get('segment_id')]
         nonlocal_subnets = []
+        network_segments = []
         # If there are no subnets with segments, then this is not a routed
         # network and no filtering should take place.
         if seg_plug and seg_subnets:
@@ -223,6 +224,17 @@ class DhcpRpcCallback:
                                 if subnet.get('segment_id') not in segment_ids]
             subnets = [subnet for subnet in seg_subnets
                        if subnet.get('segment_id') in segment_ids]
+            network_segments = [{
+                'id': segment.id,
+                'network_id': segment.network_id,
+                'name': segment.name,
+                'network_type': segment.network_type,
+                'physical_network': segment.physical_network,
+                'segmentation_id': segment.segmentation_id,
+                'is_dynamic': segment.is_dynamic,
+                'segment_index': segment.segment_index,
+                'hosts': segment.hosts} for segment in network.segments]
+
         # NOTE(kevinbenton): we sort these because the agent builds tags
         # based on position in the list and has to restart the process if
         # the order changes.
@@ -237,17 +249,8 @@ class DhcpRpcCallback:
                                            key=operator.itemgetter('id')),
                'ports': ports,
                'mtu': network.mtu}
-        if seg_plug:
-            ret['segments'] = [{
-                'id': segment.id,
-                'network_id': segment.network_id,
-                'name': segment.name,
-                'network_type': segment.network_type,
-                'physical_network': segment.physical_network,
-                'segmentation_id': segment.segmentation_id,
-                'is_dynamic': segment.is_dynamic,
-                'segment_index': segment.segment_index,
-                'hosts': segment.hosts} for segment in network.segments]
+        if network_segments:
+            ret['segments'] = network_segments
         return ret
 
     @db_api.retry_db_errors
