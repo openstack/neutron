@@ -162,29 +162,6 @@ class HackingTestCase(base.BaseTestCase):
                         pass_code2 % ec,
                         "neutron/tests/test_assert.py"))))
 
-    def test_assertisinstance(self):
-        fail_code = """
-               self.assertTrue(isinstance(observed, ANY_TYPE))
-               """
-        pass_code1 = """
-               self.assertEqual(ANY_TYPE, type(observed))
-               """
-        pass_code2 = """
-               self.assertIsInstance(observed, ANY_TYPE)
-               """
-        self.assertEqual(
-            1, len(list(
-                checks.check_assertisinstance(
-                    fail_code, "neutron/tests/test_assert.py"))))
-        self.assertEqual(
-            0, len(list(
-                checks.check_assertisinstance(
-                    pass_code1, "neutron/tests/test_assert.py"))))
-        self.assertEqual(
-            0, len(list(
-                checks.check_assertisinstance(
-                    pass_code2, "neutron/tests/test_assert.py"))))
-
     def test_assertequal_for_httpcode(self):
         fail_code = """
                 self.assertEqual(res.status_int, webob.exc.HTTPNoContent.code)
