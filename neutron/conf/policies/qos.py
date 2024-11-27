@@ -19,6 +19,25 @@ from neutron.conf.policies import base
 DEPRECATED_REASON = """
 The QoS API now supports project scope and default roles.
 """
+RESOURCE_PATH = '/qos/policies/{id}'
+TAGS_PATH = RESOURCE_PATH + '/tags'
+TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
+
+ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': TAGS_PATH},
+    {'method': 'GET', 'path': TAG_PATH},
+]
+ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': TAGS_PATH},
+    {'method': 'PUT', 'path': TAG_PATH},
+]
+ACTION_POST_TAGS = [
+    {'method': 'POST', 'path': TAGS_PATH},
+]
+ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': TAGS_PATH},
+    {'method': 'DELETE', 'path': TAG_PATH},
+]
 
 
 rules = [
@@ -51,6 +70,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_policies_tags',
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_READER,
+            'rule:shared_qos_policy'
+        ),
+        scope_types=['project'],
+        description='Get QoS policy tags',
+        operations=ACTION_GET_TAGS
+    ),
+    policy.DocumentedRuleDefault(
         name='create_policy',
         check_str=base.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
@@ -66,6 +95,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_policies_tags',
+        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        scope_types=['project'],
+        description='Create the QoS policy tags',
+        operations=ACTION_POST_TAGS,
     ),
     policy.DocumentedRuleDefault(
         name='update_policy',
@@ -85,6 +121,13 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_policies_tags',
+        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        scope_types=['project'],
+        description='Update the QoS policy tags',
+        operations=ACTION_PUT_TAGS,
+    ),
+    policy.DocumentedRuleDefault(
         name='delete_policy',
         check_str=base.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
@@ -100,6 +143,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_policies_tags',
+        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        scope_types=['project'],
+        description='Delete the QoS policy tags',
+        operations=ACTION_DELETE_TAGS
     ),
 
     policy.DocumentedRuleDefault(
