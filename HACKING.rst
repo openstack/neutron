@@ -19,7 +19,6 @@ Below you can find a list of checks specific to this repository.
 - [N329] Use assertCountEqual() instead of assertItemsEqual()
 - [N330] Use assertEqual(*empty*, observed) instead of
          assertEqual(observed, *empty*)
-- [N331] Detect wrong usage with assertTrue(isinstance()).
 - [N332] Use assertEqual(expected_http_code, observed_http_code) instead of
          assertEqual(observed_http_code, expected_http_code).
 - [N340] Check usage of <module>.i18n (and neutron.i18n)
