@@ -228,7 +228,7 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
 
         with mock.patch.object(db_plugin_v2, '_get_network') as get_net,\
             mock.patch.object(db_plugin_v2,
-                              'ensure_no_tenant_ports_on_network') as ensure:
+                              'ensure_no_project_ports_on_network') as ensure:
             get_net.return_value = net['network']
             payload = events.DBEventPayload(
                 self.context, states=(policy,),
@@ -250,7 +250,7 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
 
         with mock.patch.object(db_plugin_v2, '_get_network') as get_net,\
             mock.patch.object(db_plugin_v2,
-                              'ensure_no_tenant_ports_on_network') as ensure:
+                              'ensure_no_project_ports_on_network') as ensure:
             get_net.return_value = net['network']
             payload = events.DBEventPayload(
                 self.context, states=(policy,),

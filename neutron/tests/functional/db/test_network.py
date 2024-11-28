@@ -44,8 +44,8 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                                    tenant_id=None,
                                    is_admin=True,
                                    overwrite=False)
-        self.tenant_1 = uuidutils.generate_uuid()
-        self.tenant_2 = uuidutils.generate_uuid()
+        self.project_1 = uuidutils.generate_uuid()
+        self.project_2 = uuidutils.generate_uuid()
         self.network_id = uuidutils.generate_uuid()
         self.subnet_1_id = uuidutils.generate_uuid()
         self.subnet_2_id = uuidutils.generate_uuid()
@@ -53,8 +53,8 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         quota_check = mock.patch.object(quota.QuotaEngine, 'quota_limit_check')
         self.mock_quota_check = quota_check.start()
 
-    def _create_network(self, tenant_id, network_id, shared, external=False):
-        network = {'tenant_id': tenant_id,
+    def _create_network(self, project_id, network_id, shared, external=False):
+        network = {'project_id': project_id,
                    'id': network_id,
                    'name': 'test-net',
                    'admin_state_up': True,
@@ -67,9 +67,9 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         return self.plugin.update_network(self.ctx, network_id,
                                           {'network': network})
 
-    def _create_subnet(self, tenant_id, subnet_id, shared, cidr=None):
+    def _create_subnet(self, project_id, subnet_id, shared, cidr=None):
         cidr = cidr if cidr else '10.10.10.0/24'
-        subnet = {'tenant_id': tenant_id,
+        subnet = {'project_id': project_id,
                   'id': subnet_id,
                   'name': 'test_sub',
                   'network_id': self.network_id,
@@ -83,8 +83,8 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                   'host_routes': constants.ATTR_NOT_SPECIFIED}
         return self.plugin.create_subnet(self.ctx, {'subnet': subnet})
 
-    def _create_port(self, tenant_id, network_id, port_id):
-        port = {'tenant_id': tenant_id,
+    def _create_port(self, project_id, network_id, port_id):
+        port = {'project_id': project_id,
                 'name': 'test_port',
                 'id': port_id,
                 'network_id': network_id,
@@ -96,8 +96,8 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                 'fixed_ips': constants.ATTR_NOT_SPECIFIED}
         return self.plugin.create_port(self.ctx, {'port': port})
 
-    def _create_floating_ip(self, tenant_id, network_id):
-        fip = {'tenant_id': tenant_id,
+    def _create_floating_ip(self, project_id, network_id):
+        fip = {'project_id': project_id,
                'floating_network_id': network_id}
         return self.plugin_l3.create_floatingip(self.ctx, {'floatingip': fip})
 
@@ -124,61 +124,61 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
             self.assertIsNotNone(rbac)
 
     def test_network_owner(self):
-        tenant_1 = {
+        project_1 = {
             'net-not-shared': (uuidutils.generate_uuid(), False),
             'net-shared': (uuidutils.generate_uuid(), True)}
-        tenant_2 = {
+        project_2 = {
             'net-not-shared': (uuidutils.generate_uuid(), False),
             'net-shared': (uuidutils.generate_uuid(), True)}
-        for uuid, shared in tenant_1.values():
-            self._create_network(self.tenant_1, uuid, shared)
+        for uuid, shared in project_1.values():
+            self._create_network(self.project_1, uuid, shared)
             self._check_rbac(uuid, is_none=(not shared),
                              action=constants.ACCESS_SHARED)
-        for uuid, shared in tenant_2.values():
-            self._create_network(self.tenant_2, uuid, shared)
+        for uuid, shared in project_2.values():
+            self._create_network(self.project_2, uuid, shared)
             self._check_rbac(uuid, is_none=(not shared),
                              action=constants.ACCESS_SHARED)
 
         ctx_1 = context.Context(user_id=None,
-                                tenant_id=self.tenant_1,
+                                tenant_id=self.project_1,
                                 is_admin=False,
                                 overwrite=False)
         ctx_2 = context.Context(user_id=None,
-                                tenant_id=self.tenant_2,
+                                tenant_id=self.project_2,
                                 is_admin=False,
                                 overwrite=False)
 
         nets_1 = [net['id'] for net in self._list_networks(ctx_1)]
         self.assertEqual(3, len(nets_1))
-        self.assertIn(tenant_1['net-shared'][0], nets_1)
-        self.assertIn(tenant_1['net-not-shared'][0], nets_1)
-        self.assertIn(tenant_2['net-shared'][0], nets_1)
+        self.assertIn(project_1['net-shared'][0], nets_1)
+        self.assertIn(project_1['net-not-shared'][0], nets_1)
+        self.assertIn(project_2['net-shared'][0], nets_1)
 
         nets_2 = [net['id'] for net in self._list_networks(ctx_2)]
         self.assertEqual(3, len(nets_2))
-        self.assertIn(tenant_2['net-shared'][0], nets_2)
-        self.assertIn(tenant_2['net-not-shared'][0], nets_2)
-        self.assertIn(tenant_1['net-shared'][0], nets_2)
+        self.assertIn(project_2['net-shared'][0], nets_2)
+        self.assertIn(project_2['net-not-shared'][0], nets_2)
+        self.assertIn(project_1['net-shared'][0], nets_2)
 
     def test_create_network_shared(self):
-        self._create_network(self.tenant_1, self.network_id, True)
+        self._create_network(self.project_1, self.network_id, True)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_SHARED)
 
     def test_create_network_not_shared(self):
-        self._create_network(self.tenant_1, self.network_id, False)
+        self._create_network(self.project_1, self.network_id, False)
         self._check_rbac(self.network_id, is_none=True,
                          action=constants.ACCESS_SHARED)
 
     def test_create_network_not_shared_external(self):
         with mock.patch.object(resource_extend, 'apply_funcs'):
-            self._create_network(self.tenant_1, self.network_id, False,
+            self._create_network(self.project_1, self.network_id, False,
                                  external=True)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_EXTERNAL)
 
     def test_update_network_to_shared(self):
-        self._create_network(self.tenant_1, self.network_id, False)
+        self._create_network(self.project_1, self.network_id, False)
         self._check_rbac(self.network_id, is_none=True,
                          action=constants.ACCESS_SHARED)
         network_data = {'shared': True}
@@ -187,7 +187,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                          action=constants.ACCESS_SHARED)
 
     def test_update_network_to_no_shared_no_subnets(self):
-        self._create_network(self.tenant_1, self.network_id, True)
+        self._create_network(self.project_1, self.network_id, True)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_SHARED)
 
@@ -197,7 +197,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                          action=constants.ACCESS_SHARED)
 
     def test_update_network_shared_to_external(self):
-        self._create_network(self.tenant_1, self.network_id, True)
+        self._create_network(self.project_1, self.network_id, True)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_SHARED)
         self._check_rbac(self.network_id, is_none=True,
@@ -211,7 +211,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                          action=constants.ACCESS_EXTERNAL)
 
     def test_update_network_shared_to_internal(self):
-        self._create_network(self.tenant_1, self.network_id, True,
+        self._create_network(self.project_1, self.network_id, True,
                              external=True)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_SHARED)
@@ -225,23 +225,23 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         self._check_rbac(self.network_id, is_none=True,
                          action=constants.ACCESS_EXTERNAL)
 
-    def test_update_network_to_no_shared_tenant_subnet(self):
-        self._create_network(self.tenant_1, self.network_id, True)
+    def test_update_network_to_no_shared_project_subnet(self):
+        self._create_network(self.project_1, self.network_id, True)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_SHARED)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, True)
+        self._create_subnet(self.project_1, self.subnet_1_id, True)
 
         network_data = {'shared': False}
         self._update_network(self.network_id, network_data)
         self._check_rbac(self.network_id, is_none=True,
                          action=constants.ACCESS_SHARED)
 
-    def test_update_network_to_no_shared_no_tenant_subnet(self):
-        self._create_network(self.tenant_1, self.network_id, True)
+    def test_update_network_to_no_shared_no_project_subnet(self):
+        self._create_network(self.project_1, self.network_id, True)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_SHARED)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, True)
-        self._create_subnet(self.tenant_2, self.subnet_2_id, True,
+        self._create_subnet(self.project_1, self.subnet_1_id, True)
+        self._create_subnet(self.project_2, self.subnet_2_id, True,
                             cidr='10.10.20.0/24')
 
         network_data = {'shared': False}
@@ -249,62 +249,62 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                           self.network_id, network_data)
 
     def test_ensure_no_port_in_asterisk(self):
-        self._create_network(self.tenant_1, self.network_id, True)
-        self.plugin.ensure_no_tenant_ports_on_network(
-            self.ctx, self.network_id, self.tenant_1, '*')
+        self._create_network(self.project_1, self.network_id, True)
+        self.plugin.ensure_no_project_ports_on_network(
+            self.ctx, self.network_id, self.project_1, '*')
 
-    def test_ensure_no_port_in_tenant_1(self):
-        self._create_network(self.tenant_1, self.network_id, True)
-        self.plugin.ensure_no_tenant_ports_on_network(
-            self.ctx, self.network_id, self.tenant_1, self.tenant_1)
+    def test_ensure_no_port_in_project_1(self):
+        self._create_network(self.project_1, self.network_id, True)
+        self.plugin.ensure_no_project_ports_on_network(
+            self.ctx, self.network_id, self.project_1, self.project_1)
 
-    def test_ensure_no_port_in_tenant_2(self):
-        self._create_network(self.tenant_1, self.network_id, True)
-        self.plugin.ensure_no_tenant_ports_on_network(
-            self.ctx, self.network_id, self.tenant_1, self.tenant_2)
+    def test_ensure_no_port_in_project_2(self):
+        self._create_network(self.project_1, self.network_id, True)
+        self.plugin.ensure_no_project_ports_on_network(
+            self.ctx, self.network_id, self.project_1, self.project_2)
 
-    def test_ensure_port_tenant_1_in_asterisk(self):
-        self._create_network(self.tenant_1, self.network_id, True)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, True)
-        self._create_port(self.tenant_1, self.network_id, self.port_id)
-        self.plugin.ensure_no_tenant_ports_on_network(
-            self.ctx, self.network_id, self.tenant_1, '*')
+    def test_ensure_port_project_1_in_asterisk(self):
+        self._create_network(self.project_1, self.network_id, True)
+        self._create_subnet(self.project_1, self.subnet_1_id, True)
+        self._create_port(self.project_1, self.network_id, self.port_id)
+        self.plugin.ensure_no_project_ports_on_network(
+            self.ctx, self.network_id, self.project_1, '*')
 
-    def test_ensure_port_tenant_2_in_asterisk(self):
-        self._create_network(self.tenant_1, self.network_id, True)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, True)
-        self._create_port(self.tenant_2, self.network_id, self.port_id)
+    def test_ensure_port_project_2_in_asterisk(self):
+        self._create_network(self.project_1, self.network_id, True)
+        self._create_subnet(self.project_1, self.subnet_1_id, True)
+        self._create_port(self.project_2, self.network_id, self.port_id)
         self.assertRaises(n_exc.InvalidSharedSetting,
-                          self.plugin.ensure_no_tenant_ports_on_network,
-                          self.ctx, self.network_id, self.tenant_1, '*')
+                          self.plugin.ensure_no_project_ports_on_network,
+                          self.ctx, self.network_id, self.project_1, '*')
 
-    def test_ensure_port_tenant_1_in_tenant_1(self):
-        self._create_network(self.tenant_1, self.network_id, True)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, True)
-        self._create_port(self.tenant_1, self.network_id, self.port_id)
-        self.plugin.ensure_no_tenant_ports_on_network(
-            self.ctx, self.network_id, self.tenant_1, self.tenant_1)
+    def test_ensure_port_project_1_in_project_1(self):
+        self._create_network(self.project_1, self.network_id, True)
+        self._create_subnet(self.project_1, self.subnet_1_id, True)
+        self._create_port(self.project_1, self.network_id, self.port_id)
+        self.plugin.ensure_no_project_ports_on_network(
+            self.ctx, self.network_id, self.project_1, self.project_1)
 
-    def test_ensure_no_share_port_tenant_2_in_tenant_1(self):
-        self._create_network(self.tenant_1, self.network_id, False)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, True)
-        self._create_port(self.tenant_2, self.network_id, self.port_id)
-        self.plugin.ensure_no_tenant_ports_on_network(
-            self.ctx, self.network_id, self.tenant_1, self.tenant_1)
+    def test_ensure_no_share_port_project_2_in_project_1(self):
+        self._create_network(self.project_1, self.network_id, False)
+        self._create_subnet(self.project_1, self.subnet_1_id, True)
+        self._create_port(self.project_2, self.network_id, self.port_id)
+        self.plugin.ensure_no_project_ports_on_network(
+            self.ctx, self.network_id, self.project_1, self.project_1)
 
-    def test_ensure_no_share_port_tenant_2_in_tenant_2(self):
-        self._create_network(self.tenant_1, self.network_id, False)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, True)
-        self._create_port(self.tenant_2, self.network_id, self.port_id)
+    def test_ensure_no_share_port_project_2_in_project_2(self):
+        self._create_network(self.project_1, self.network_id, False)
+        self._create_subnet(self.project_1, self.subnet_1_id, True)
+        self._create_port(self.project_2, self.network_id, self.port_id)
         self.assertRaises(n_exc.InvalidSharedSetting,
-                          self.plugin.ensure_no_tenant_ports_on_network,
-                          self.ctx, self.network_id, self.tenant_1,
-                          self.tenant_2)
+                          self.plugin.ensure_no_project_ports_on_network,
+                          self.ctx, self.network_id, self.project_1,
+                          self.project_2)
 
     def _external_and_shared_network(self, project_id):
-        self._create_network(self.tenant_1, self.network_id, False,
+        self._create_network(self.project_1, self.network_id, False,
                              external=True)
-        self._create_subnet(self.tenant_1, self.subnet_1_id, False)
+        self._create_subnet(self.project_1, self.subnet_1_id, False)
         self._create_floating_ip(project_id, self.network_id)
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_EXTERNAL)
@@ -313,7 +313,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
 
         # Add a RBAC with action=access_as_shared
         rbac_shared = self._create_rbac(
-            self.tenant_1, self.network_id, action=constants.ACCESS_SHARED,
+            self.project_1, self.network_id, action=constants.ACCESS_SHARED,
             target_project='*')
         self._check_rbac(self.network_id, is_none=False,
                          action=constants.ACCESS_SHARED)
@@ -330,7 +330,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                          action=constants.ACCESS_EXTERNAL)
 
     def test_external_network_update_shared_flag_own_project_fip(self):
-        self._external_and_shared_network(self.tenant_1)
+        self._external_and_shared_network(self.project_1)
 
     def test_external_network_update_shared_flag_other_project_fip(self):
-        self._external_and_shared_network(self.tenant_2)
+        self._external_and_shared_network(self.project_2)

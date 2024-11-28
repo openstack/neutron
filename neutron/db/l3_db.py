@@ -1529,10 +1529,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floating_ip_address = floating_fixed_ip['ip_address']
             qos_policy_id = (fip.get(qos_const.QOS_POLICY_ID)
                              if self._is_fip_qos_supported else None)
+            # TODO(ralonsoh): "tenant_id" reference should be removed.
+            project_id = fip.get('project_id') or fip['tenant_id']
             floatingip_obj = l3_obj.FloatingIP(
                 context,
                 id=fip_id,
-                project_id=fip['tenant_id'],
+                project_id=project_id,
                 status=initial_status,
                 floating_network_id=fip['floating_network_id'],
                 floating_ip_address=floating_ip_address,
