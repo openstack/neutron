@@ -23,8 +23,10 @@ import netaddr
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.exceptions import agent as agent_exc
 from oslo_config import cfg
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 
@@ -32,6 +34,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests import base as tests_base
@@ -55,6 +58,40 @@ VHOSTUSER_VIF_DETAILS = {
     portbindings.VIF_DETAILS_BRIDGE_NAME: 'br-int',
     portbindings.OVS_DATAPATH_TYPE: 'netdev',
 }
+
+
+class TestOVNMechanismDriver(base.TestOVNFunctionalBase):
+
+    def test__setup_hash_ring_start_time(self):
+        # Create a differentiated OVN hash ring name.
+        ring_group = uuidutils.generate_uuid()
+        self.mech_driver.hash_ring_group = ring_group
+
+        # Create several OVN hash registers left by a previous execution.
+        created_at = timeutils.utcnow() - datetime.timedelta(1)
+        with db_api.CONTEXT_WRITER.using(self.context):
+            for _ in range(3):
+                self.node_uuid = ovn_hash_ring_db.add_node(
+                    self.context, ring_group, created_at=created_at)
+
+        # Check the existing OVN hash ring registers.
+        ovn_hrs = ovn_hash_ring_db.get_nodes(self.context, ring_group)
+        self.assertEqual(3, len(ovn_hrs))
+
+        start_time = timeutils.utcnow()
+        self.mech_driver._start_time = int(start_time.timestamp())
+        with mock.patch.object(self.mech_driver,
+                               '_register_hash_ring_maintenance') as \
+                mock_register_maintenance:
+            for _ in range(3):
+                self.mech_driver._setup_hash_ring_start_time()
+
+        ovn_hrs = ovn_hash_ring_db.get_nodes(self.context, ring_group)
+        self.assertEqual(3, len(ovn_hrs))
+        for ovn_hr in ovn_hrs:
+            self.assertEqual(int(start_time.timestamp()),
+                             ovn_hr.created_at.timestamp())
+        mock_register_maintenance.assert_called_once()
 
 
 class TestPortBinding(base.TestOVNFunctionalBase):

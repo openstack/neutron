@@ -30,26 +30,48 @@ LOG = log.getLogger(__name__)
 # NOTE(ralonsoh): this was migrated from networking-ovn to neutron and should
 #                 be refactored to be integrated in a OVO.
 @db_api.retry_if_session_inactive()
-def add_node(context, group_name, node_uuid=None):
+def add_node(context, group_name, node_uuid=None, created_at=None):
     if node_uuid is None:
         node_uuid = uuidutils.generate_uuid()
 
     with db_api.CONTEXT_WRITER.using(context):
-        context.session.add(ovn_models.OVNHashRing(
-            node_uuid=node_uuid, hostname=CONF.host, group_name=group_name))
+        kwargs = {'node_uuid': node_uuid,
+                  'hostname': CONF.host,
+                  'group_name': group_name}
+        if created_at:
+            kwargs['created_at'] = created_at
+        context.session.add(ovn_models.OVNHashRing(**kwargs))
     LOG.info('Node %s from host "%s" and group "%s" added to the Hash Ring',
              node_uuid, CONF.host, group_name)
     return node_uuid
 
 
 @db_api.retry_if_session_inactive()
-def remove_nodes_from_host(context, group_name):
-    with db_api.CONTEXT_WRITER.using(context):
-        context.session.query(ovn_models.OVNHashRing).filter(
+@db_api.CONTEXT_READER
+def get_nodes(context, group_name, created_at=None):
+    query = context.session.query(ovn_models.OVNHashRing).filter(
+        ovn_models.OVNHashRing.group_name == group_name)
+    if created_at:
+        query = query.filter(
+            ovn_models.OVNHashRing.created_at == created_at)
+    return query.all()
+
+
+@db_api.retry_if_session_inactive()
+def remove_nodes_from_host(context, group_name, created_at=None):
+    with (db_api.CONTEXT_WRITER.using(context)):
+        query = context.session.query(ovn_models.OVNHashRing).filter(
             ovn_models.OVNHashRing.hostname == CONF.host,
-            ovn_models.OVNHashRing.group_name == group_name).delete()
-    LOG.info('Nodes from host "%s" and group "%s" removed from the Hash Ring',
-             CONF.host, group_name)
+            ovn_models.OVNHashRing.group_name == group_name)
+        if created_at:
+            query = query.filter(
+                ovn_models.OVNHashRing.created_at != created_at)
+        query.delete()
+    msg = ('Nodes from host "%s" and group "%s" removed from the Hash Ring' %
+           (CONF.host, group_name))
+    if created_at:
+        msg += ' created at %s' % str(created_at)
+    LOG.info(msg)
 
 
 @db_api.retry_if_session_inactive()
