@@ -46,6 +46,7 @@ Create a ``/etc/neutron/neutron-api-uwsgi.ini`` file with the content below:
     master = true
     processes = 2
     wsgi-file = <path-to-neutron-bin-dir>/neutron-api
+    start-time = %t
 
 .. end
 
@@ -160,3 +161,9 @@ in processing agents heartbeats.
    If OVN ML2 plugin is used without any additional agents, neutron requires
    no worker for RPC message processing. Set both rpc_workers and
    rpc_state_report_workers to 0, to disable RPC workers.
+
+.. note::
+   ML2/OVN uses the ``[uwsgi]start-time = %t`` parameter to create the OVN hash
+   ring registers during the initialization process. This value is populated
+   by the uWSGi process with the start time. For more information, check
+   `Configuring uWSGI <https://uwsgi-docs.readthedocs.io/en/latest/Configuration.html>_`.

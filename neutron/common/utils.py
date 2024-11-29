@@ -17,7 +17,7 @@
 # when needed.
 
 """Utilities and helper functions."""
-
+import datetime
 import functools
 import hashlib
 import hmac
@@ -1114,3 +1114,8 @@ def read_file(path: str) -> str:
             return file.read()
     except FileNotFoundError:
         return ''
+
+
+def ts_to_datetime(timestamp):
+    """Converts timestamp (in seconds) to datetime"""
+    return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
