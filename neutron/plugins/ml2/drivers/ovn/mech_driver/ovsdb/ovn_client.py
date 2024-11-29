@@ -1684,13 +1684,13 @@ class OVNClient:
                         for net in networks) else 'false'
         return reside_redir_ch
 
-    def _gen_router_port_options(self, port):
+    def _gen_router_port_options(self, port, network_mtu=None):
         options = {}
         admin_context = n_context.get_admin_context()
         ls_name = utils.ovn_name(port['network_id'])
         ls = self._nb_idl.ls_get(ls_name).execute(check_error=True)
         network_type = ls.external_ids[ovn_const.OVN_NETTYPE_EXT_ID_KEY]
-        network_mtu = int(
+        network_mtu = network_mtu or int(
             ls.external_ids[ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY])
         # For provider networks (VLAN, FLAT types) we need to set the
         # "reside-on-redirect-chassis" option so the routing for this
@@ -2131,7 +2131,8 @@ class OVNClient:
         commands = []
         for port in ports:
             lrp_name = utils.ovn_lrouter_port_name(port['id'])
-            options = self._gen_router_port_options(port)
+            options = self._gen_router_port_options(
+                port, network_mtu=prov_net['mtu'])
             # Do not fail for cases where logical router port get deleted
             commands.append(self._nb_idl.lrp_set_options(lrp_name,
                                                          if_exists=True,
