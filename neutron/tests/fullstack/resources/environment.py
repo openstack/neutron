@@ -84,6 +84,9 @@ class EnvironmentDescription:
     def tunneling_enabled(self):
         return self.network_type in ('vxlan', 'gre')
 
+    def __str__(self):
+        return '{}'.format(vars(self))
+
 
 class HostDescription:
     """A set of characteristics of an environment Host.
@@ -103,6 +106,9 @@ class HostDescription:
         self.availability_zone = availability_zone
         self.l3_agent_mode = l3_agent_mode
         self.l3_agent_extensions = l3_agent_extensions
+
+    def __str__(self):
+        return '{}'.format(vars(self))
 
 
 class Host(fixtures.Fixture):
@@ -157,6 +163,10 @@ class Host(fixtures.Fixture):
                     self.neutron_config,
                     self.dhcp_agent_cfg_fixture,
                     namespace=self.host_namespace))
+
+    def __repr__(self) -> str:
+        return 'Host description {}, environment description: {}'.format(
+            self.host_desc, self.env_desc)
 
     def setup_host_with_ovs_agent(self):
         agent_cfg_fixture = config.OVSConfigFixture(
