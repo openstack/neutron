@@ -564,10 +564,10 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
 
     def _create_environment(self):
         self.sg = copy.deepcopy(FAKE_SECGROUP)
-        self.user_ctx = context.Context(user_id='user1', tenant_id='tenant_1',
-                                        is_admin=False, overwrite=False)
-        self.admin_ctx = context.Context(user_id='user2', tenant_id='tenant_2',
-                                         is_admin=True, overwrite=False)
+        self.user_ctx = context.Context(user_id='user1',
+            project_id='tenant_1', is_admin=False, overwrite=False)
+        self.admin_ctx = context.Context(user_id='user2',
+            project_id='tenant_2', is_admin=True, overwrite=False)
         self.sg_user = self.mixin.create_security_group(
             self.user_ctx, {'security_group': {'name': 'name',
                                                'tenant_id': 'tenant_1',

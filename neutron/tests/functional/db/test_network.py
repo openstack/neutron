@@ -41,7 +41,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
             l3_dvrscheduler_db, '_notify_l3_agent_new_port').start()
         self.plugin_l3 = l3_router_plugin.L3RouterPlugin()
         self.ctx = context.Context(user_id=None,
-                                   tenant_id=None,
+                                   project_id=None,
                                    is_admin=True,
                                    overwrite=False)
         self.project_1 = uuidutils.generate_uuid()
@@ -140,11 +140,11 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                              action=constants.ACCESS_SHARED)
 
         ctx_1 = context.Context(user_id=None,
-                                tenant_id=self.project_1,
+                                project_id=self.project_1,
                                 is_admin=False,
                                 overwrite=False)
         ctx_2 = context.Context(user_id=None,
-                                tenant_id=self.project_2,
+                                project_id=self.project_2,
                                 is_admin=False,
                                 overwrite=False)
 

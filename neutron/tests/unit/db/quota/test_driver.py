@@ -126,20 +126,20 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
 
     def test_get_default_quotas(self):
         defaults = {RESOURCE: TestResource(RESOURCE, 4)}
-        user_ctx = context.Context(user_id=PROJECT, tenant_id=PROJECT)
+        user_ctx = context.Context(user_id=PROJECT, project_id=PROJECT)
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
         quotas = self.plugin.get_default_quotas(user_ctx, defaults, PROJECT)
         self.assertEqual(4, quotas[RESOURCE])
 
     def test_get_project_quotas(self):
-        user_ctx = context.Context(user_id=PROJECT, tenant_id=PROJECT)
+        user_ctx = context.Context(user_id=PROJECT, project_id=PROJECT)
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
         quotas = self.plugin.get_project_quotas(user_ctx, {}, PROJECT)
         self.assertEqual(2, quotas[RESOURCE])
 
     def test_get_project_quotas_different_project(self):
         user_ctx = context.Context(user_id=PROJECT,
-                                   tenant_id='another_project')
+                                   project_id='another_project')
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
         # It is appropriate to use assertFalse here as the expected return
         # value is an empty dict (the defaults passed in the statement below

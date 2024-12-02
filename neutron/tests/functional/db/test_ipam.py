@@ -44,7 +44,7 @@ class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.plugin = base_plugin.NeutronDbPluginV2()
         self.cxt = context.Context(user_id=None,
-                                   tenant_id=None,
+                                   project_id=None,
                                    is_admin=True,
                                    overwrite=False)
         self.tenant_id = uuidutils.generate_uuid()

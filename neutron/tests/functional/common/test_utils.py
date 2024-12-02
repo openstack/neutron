@@ -39,7 +39,7 @@ class TestIsSessionActive(testlib_api.SqlTestCase,
         super().setUp()
 
     def test_is_session_active(self):
-        context = n_context.Context(user_id=None, tenant_id=None,
+        context = n_context.Context(user_id=None, project_id=None,
                                     is_admin=True, overwrite=False)
         self.assertFalse(db_api.is_session_active(context.session))
         with db_api.CONTEXT_WRITER.using(context):

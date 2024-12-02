@@ -1338,7 +1338,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
     def test_get_ports_count(self):
         with self.port(), self.port(), self.port(), self.port() as p:
             tenid = p['port']['tenant_id']
-            ctx = context.Context(user_id=None, tenant_id=tenid,
+            ctx = context.Context(user_id=None, project_id=tenid,
                                   is_admin=False)
             pl = directory.get_plugin()
             count = pl.get_ports_count(ctx, filters={'tenant_id': [tenid]})
@@ -3369,7 +3369,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_with_network_different_tenant(self):
         with self.network(shared=False, tenant_id='tenant1') as network:
             ctx = context.Context(user_id='non_admin',
-                                  tenant_id='tenant2',
+                                  project_id='tenant2',
                                   is_admin=False)
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '10.0.2.0/24',
@@ -5364,7 +5364,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 gateway_ip='10.0.2.1',
                                 cidr='10.0.2.0/24'):
                 project_id = network['network']['project_id']
-                ctx = context.Context(user_id=None, tenant_id=project_id,
+                ctx = context.Context(user_id=None, project_id=project_id,
                                       is_admin=False)
                 pl = directory.get_plugin()
                 count = pl.get_subnets_count(
@@ -5385,7 +5385,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     self.subnet(network=network,
                                 gateway_ip='10.0.2.1',
                                 cidr='10.0.2.0/24'):
-                ctx = context.Context(user_id=None, tenant_id=project_id,
+                ctx = context.Context(user_id=None, project_id=project_id,
                                       is_admin=True)
                 pl = directory.get_plugin()
                 count = pl.get_subnets_count(
@@ -5409,7 +5409,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 gateway_ip='10.0.2.1',
                                 cidr='10.0.2.0/24'):
                 project_id = network['network']['project_id']
-                ctx = context.Context(user_id=None, tenant_id=project_id,
+                ctx = context.Context(user_id=None, project_id=project_id,
                                       is_admin=False)
                 pl = directory.get_plugin()
                 count = pl.get_subnets_count(ctx,
