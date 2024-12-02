@@ -48,6 +48,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 import tenacity
 
 from neutron._i18n import _
+from neutron.common import _constants as n_const
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -379,6 +380,7 @@ class OVNClient:
         address6_scope_id = ""
         dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
         dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
+        device_owner = port.get('device_owner', '')
         mtu = ''
         if vtep_physical_switch:
             vtep_logical_switch = bp_info.bp_param.get('vtep-logical-switch')
@@ -446,12 +448,13 @@ class OVNClient:
             addresses = []
             port_security, new_macs = (
                 self._get_allowed_addresses_from_port(port))
+            is_vpn_gw_port = device_owner == n_const.DEVICE_OWNER_VPN_ROUTER_GW
             # TODO(egarciar): OVN supports MAC learning from v21.03. This
             # if-else block is stated so as to keep compatibility with older
             # OVN versions and should be removed in the future.
             if self._sb_idl.is_table_present('FDB'):
                 if (port_security or port_type or dhcpv4_options or
-                        dhcpv6_options):
+                        dhcpv6_options or is_vpn_gw_port):
                     addresses.append(address)
                     addresses.extend(new_macs)
             else:
@@ -511,7 +514,6 @@ class OVNClient:
                 'vtep', ovn_const.LSP_TYPE_LOCALPORT, 'router'):
             options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
 
-        device_owner = port.get('device_owner', '')
         sg_ids = ' '.join(utils.get_lsp_security_groups(port))
         return OvnPortInfo(port_type, options, addresses, port_security,
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
