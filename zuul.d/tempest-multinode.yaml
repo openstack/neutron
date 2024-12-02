@@ -86,9 +86,9 @@
       tox_envlist: integrated-network
       devstack_localrc:
         MYSQL_REDUCE_MEMORY: true
-        CIRROS_VERSION: 0.6.2
-        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.6.3
+        DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
         Q_AGENT: openvswitch
@@ -214,9 +214,9 @@
       tox_envlist: integrated-network
       devstack_localrc:
         MYSQL_REDUCE_MEMORY: true
-        CIRROS_VERSION: 0.6.2
-        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.6.3
+        DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_AGENT: openvswitch
@@ -304,9 +304,9 @@
         neutron: https://opendev.org/openstack/neutron.git
       devstack_localrc:
         MYSQL_REDUCE_MEMORY: true
-        CIRROS_VERSION: 0.6.2
-        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.6.3
+        DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_AGENT: openvswitch
@@ -440,9 +440,9 @@
               enable_distributed_floating_ip: True
       devstack_localrc:
         MYSQL_REDUCE_MEMORY: true
-        CIRROS_VERSION: 0.6.2
-        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.6.3
+        DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         Q_AGENT: ovn
         ML2_L3_PLUGIN: ovn-router,trunk
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
