@@ -127,7 +127,9 @@ class TunnelTypeTestMixin:
         with mock.patch.object(
                 type_tunnel, 'chunks', side_effect=verify_no_chunk) as chunks:
             self.driver.sync_allocations()
-            self.assertEqual(2, len(chunks.mock_calls))
+            # No writing operation is done, fast exit: current allocations
+            # already present.
+            self.assertEqual(0, len(chunks.mock_calls))
 
     def test_partial_segment_is_partial_segment(self):
         segment = {api.NETWORK_TYPE: self.TYPE,

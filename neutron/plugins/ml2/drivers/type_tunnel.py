@@ -199,6 +199,17 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
         tunnel_col = getattr(self.model, self.segmentation_key)
         ctx = context.get_admin_context()
         with db_api.CONTEXT_WRITER.using(ctx):
+            # Check if the allocations are updated: if the total number of
+            # allocations for this tunnel type matches the allocations of the
+            # specific IDs, fast exit in that case.
+            # If another worker handled that before or the table was updated
+            # in a previous Neutron API restart, this section will end here.
+            num_allocs = ctx.session.query(self.model).filter(
+                tunnel_col.in_(tunnel_ids)).count()
+            num_allocs_total = ctx.session.query(self.model).count()
+            if len(tunnel_ids) == num_allocs == num_allocs_total:
+                return
+
             # remove from table unallocated tunnels not currently allocatable
             # fetch results as list via all() because we'll be iterating
             # through them twice
