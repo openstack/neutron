@@ -89,7 +89,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         self.assertIsNotNone(self._get_node_row(another_host_node))
 
     def test_touch_nodes_from_host(self):
-        nodes = self._add_nodes_and_assert_exists(count=3)
+        node_uuids = self._add_nodes_and_assert_exists(count=3)
 
         # Add another node from a different host
         with mock.patch.object(ovn_hash_ring_db, 'CONF') as mock_conf:
@@ -97,8 +97,8 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
             another_host_node = self._add_nodes_and_assert_exists()[0]
 
         # Assert that updated_at isn't updated yet
-        for node in nodes:
-            node_db = self._get_node_row(node)
+        for node_uuid in node_uuids:
+            node_db = self._get_node_row(node_uuid)
             self.assertEqual(node_db.created_at, node_db.updated_at)
 
         # Assert the same for the node from another host
@@ -107,12 +107,12 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
 
         # Touch the nodes from our host
         time.sleep(1)
-        ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
-                                               HASH_RING_TEST_GROUP)
+        for node_uuid in node_uuids:
+            ovn_hash_ring_db.touch_node(self.admin_ctx, node_uuid)
 
         # Assert that updated_at is now updated
-        for node in nodes:
-            node_db = self._get_node_row(node)
+        for node_uuid in node_uuids:
+            node_db = self._get_node_row(node_uuid)
             self.assertGreater(node_db.updated_at, node_db.created_at)
 
         # Assert that the node from another host hasn't been touched
@@ -121,7 +121,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         self.assertEqual(node_db.created_at, node_db.updated_at)
 
     def test_active_nodes(self):
-        self._add_nodes_and_assert_exists(count=3)
+        node_uuids = self._add_nodes_and_assert_exists(count=3)
 
         # Add another node from a different host
         with mock.patch.object(ovn_hash_ring_db, 'CONF') as mock_conf:
@@ -137,8 +137,8 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         fake_utcnow = timeutils.utcnow() - datetime.timedelta(seconds=60)
         with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
             mock_utcnow.return_value = fake_utcnow
-            ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
-                                                   HASH_RING_TEST_GROUP)
+            for node_uuid in node_uuids:
+                ovn_hash_ring_db.touch_node(self.admin_ctx, node_uuid)
 
         # Now assert that all nodes from our host are seeing as offline.
         # Only the node from another host should be active
@@ -230,8 +230,8 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
 
         # Touch the nodes from group1
         time.sleep(1)
-        ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
-                                               HASH_RING_TEST_GROUP)
+        for node_uuid in group1:
+            ovn_hash_ring_db.touch_node(self.admin_ctx, node_uuid)
 
         # Assert that updated_at was updated for group1
         for node in group1:
@@ -244,7 +244,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
             self.assertEqual(node_db.created_at, node_db.updated_at)
 
     def test_count_offline_nodes(self):
-        self._add_nodes_and_assert_exists(count=3)
+        node_uuids = self._add_nodes_and_assert_exists(count=3)
 
         # Assert no nodes are considered offline
         self.assertEqual(0, ovn_hash_ring_db.count_offline_nodes(
@@ -255,16 +255,16 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         fake_utcnow = timeutils.utcnow() - datetime.timedelta(seconds=60)
         with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
             mock_utcnow.return_value = fake_utcnow
-            ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
-                                                   HASH_RING_TEST_GROUP)
+            for node_uuid in node_uuids:
+                ovn_hash_ring_db.touch_node(self.admin_ctx, node_uuid)
 
         # Now assert that all nodes from our host are seeing as offline
         self.assertEqual(3, ovn_hash_ring_db.count_offline_nodes(
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP))
 
         # Touch the nodes again without faking utcnow()
-        ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
-                                               HASH_RING_TEST_GROUP)
+        for node_uuid in node_uuids:
+            ovn_hash_ring_db.touch_node(self.admin_ctx, node_uuid)
 
         # Assert no nodes are considered offline
         self.assertEqual(0, ovn_hash_ring_db.count_offline_nodes(
@@ -288,15 +288,15 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
 
     def test_cleanup_old_nodes(self):
         # Add 2 new nodes
-        self._add_nodes_and_assert_exists(count=2)
+        node_uuids = self._add_nodes_and_assert_exists(count=2)
 
         # Subtract 5 days from utcnow() and touch the nodes to make
         # them to appear stale
         fake_utcnow = timeutils.utcnow() - datetime.timedelta(days=5)
         with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
             mock_utcnow.return_value = fake_utcnow
-            ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
-                                                   HASH_RING_TEST_GROUP)
+            for node_uuid in node_uuids:
+                ovn_hash_ring_db.touch_node(self.admin_ctx, node_uuid)
 
         # Add 3 new nodes
         self._add_nodes_and_assert_exists(count=3)

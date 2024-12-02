@@ -32,6 +32,7 @@ class HashRingManager(object):
 
     def __init__(self, group_name):
         self._hash_ring = None
+        self._node_last_touch = {}
         self._last_time_loaded = None
         self._check_hashring_startup = True
         self._group = group_name
@@ -92,6 +93,8 @@ class HashRingManager(object):
                 constants.HASH_RING_NODES_TIMEOUT, self._group)
             self._hash_ring = hashring.HashRing({node.node_uuid
                                                  for node in nodes})
+            self._node_last_touch = {node.node_uuid: node.updated_at
+                                     for node in nodes}
             self._last_time_loaded = timeutils.utcnow()
             self._offline_node_count = db_hash_ring.count_offline_nodes(
                 self.admin_ctx, constants.HASH_RING_NODES_TIMEOUT,
@@ -112,7 +115,8 @@ class HashRingManager(object):
         try:
             # We need to pop the value from the set. If empty,
             # KeyError is raised
-            return self._hash_ring[key].pop()
+            node_uuid = self._hash_ring[key].pop()
+            return node_uuid, self._node_last_touch[node_uuid]
         except KeyError:
             raise exceptions.HashRingIsEmpty(
                 key=key, node_count=self._offline_node_count)

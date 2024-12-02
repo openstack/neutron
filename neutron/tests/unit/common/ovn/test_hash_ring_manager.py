@@ -38,19 +38,23 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         self.admin_ctx = context.get_admin_context()
 
     def _verify_hashes(self, hash_dict):
-        for uuid_, target_node in hash_dict.items():
-            self.assertEqual(target_node,
-                             self.hash_ring_manager.get_node(uuid_))
+        for node, target_node in hash_dict.items():
+            self.assertEqual(target_node.node_uuid,
+                             self.hash_ring_manager.get_node(node)[0])
+            self.assertEqual(target_node.updated_at,
+                             self.hash_ring_manager.get_node(node)[1])
 
     def test_get_node(self):
         # Use pre-defined UUIDs to make the hashes predictable
-        node_1_uuid = db_hash_ring.add_node(
-            self.admin_ctx, HASH_RING_TEST_GROUP, 'node-1')
-        node_2_uuid = db_hash_ring.add_node(
-            self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
+        db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-1')
+        node1 = db_hash_ring.get_node(self.admin_ctx, HASH_RING_TEST_GROUP,
+                                      'node-1')
+        db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
+        node2 = db_hash_ring.get_node(self.admin_ctx, HASH_RING_TEST_GROUP,
+                                      'node-2')
 
-        hash_dict_before = {'fake-uuid': node_1_uuid,
-                            'fake-uuid-0': node_2_uuid}
+        hash_dict_before = {'fake-uuid': node1,
+                            'fake-uuid-0': node2}
         self._verify_hashes(hash_dict_before)
 
     def test_get_node_no_active_nodes(self):
@@ -60,15 +64,19 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
 
     def test_ring_rebalance(self):
         # Use pre-defined UUIDs to make the hashes predictable
-        node_1_uuid = db_hash_ring.add_node(
-            self.admin_ctx, HASH_RING_TEST_GROUP, 'node-1')
-        node_2_uuid = db_hash_ring.add_node(
-            self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
+        db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-1')
+        node1 = db_hash_ring.get_node(self.admin_ctx, HASH_RING_TEST_GROUP,
+                                      'node-1')
+        db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
+        node2 = db_hash_ring.get_node(self.admin_ctx, HASH_RING_TEST_GROUP,
+                                      'node-2')
 
         # Add another node from a different host
         with mock.patch.object(db_hash_ring, 'CONF') as mock_conf:
             mock_conf.host = 'another-host-52359446-c366'
-            another_host_node = db_hash_ring.add_node(
+            db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP,
+                                  'another-host')
+            node_other = db_hash_ring.get_node(
                 self.admin_ctx, HASH_RING_TEST_GROUP, 'another-host')
 
         # Assert all nodes are alive in the ring
@@ -76,9 +84,9 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         self.assertEqual(3, len(self.hash_ring_manager._hash_ring.nodes))
 
         # Hash certain values against the nodes
-        hash_dict_before = {'fake-uuid': node_1_uuid,
-                            'fake-uuid-0': node_2_uuid,
-                            'fake-uuid-ABCDE': another_host_node}
+        hash_dict_before = {'fake-uuid': node1,
+                            'fake-uuid-0': node2,
+                            'fake-uuid-ABCDE': node_other}
         self._verify_hashes(hash_dict_before)
 
         # Mock utcnow() as the HASH_RING_NODES_TIMEOUT have expired
@@ -87,27 +95,34 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
             seconds=constants.HASH_RING_NODES_TIMEOUT)
         with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
             mock_utcnow.return_value = fake_utcnow
-            db_hash_ring.touch_nodes_from_host(
-                self.admin_ctx, HASH_RING_TEST_GROUP)
+            for _node in [node1, node2]:
+                db_hash_ring.touch_node(self.admin_ctx, _node.node_uuid)
 
         # Now assert that the ring was re-balanced and only the node from
         # another host is marked as alive
         self.hash_ring_manager.refresh()
-        self.assertEqual([another_host_node],
+        self.assertEqual([node_other.node_uuid],
                          list(self.hash_ring_manager._hash_ring.nodes.keys()))
 
         # Now only "another_host_node" is alive, all values should hash to it
-        hash_dict_after_rebalance = {'fake-uuid': another_host_node,
-                                     'fake-uuid-0': another_host_node,
-                                     'fake-uuid-ABCDE': another_host_node}
+        hash_dict_after_rebalance = {'fake-uuid': node_other,
+                                     'fake-uuid-0': node_other,
+                                     'fake-uuid-ABCDE': node_other}
         self._verify_hashes(hash_dict_after_rebalance)
 
         # Now touch the nodes so they appear active again
-        db_hash_ring.touch_nodes_from_host(
-            self.admin_ctx, HASH_RING_TEST_GROUP)
+        for _node in [node1, node2]:
+            db_hash_ring.touch_node(self.admin_ctx, _node.node_uuid)
         self.hash_ring_manager.refresh()
 
         # The ring should re-balance and as it was before
+        node1 = db_hash_ring.get_node(self.admin_ctx, HASH_RING_TEST_GROUP,
+                                      'node-1')
+        node2 = db_hash_ring.get_node(self.admin_ctx, HASH_RING_TEST_GROUP,
+                                      'node-2')
+        hash_dict_before = {'fake-uuid': node1,
+                            'fake-uuid-0': node2,
+                            'fake-uuid-ABCDE': node_other}
         self._verify_hashes(hash_dict_before)
 
     @mock.patch.object(hash_ring_manager.LOG, 'debug')

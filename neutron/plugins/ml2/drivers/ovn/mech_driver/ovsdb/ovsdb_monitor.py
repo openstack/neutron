@@ -723,7 +723,8 @@ class OvnIdlDistributedLock(BaseOvnIdl):
         try:
             self.notify_handler.notify(event, row, updates, global_=True)
             try:
-                target_node = self._hash_ring.get_node(str(row.uuid))
+                target_node, node_last_touch = self._hash_ring.get_node(
+                    str(row.uuid))
             except exceptions.HashRingIsEmpty as e:
                 LOG.error('HashRing is empty, error: %s', e)
                 return
@@ -732,6 +733,7 @@ class OvnIdlDistributedLock(BaseOvnIdl):
 
             # If the worker hasn't been health checked by the maintenance
             # thread (see bug #1834498), indicate that it's alive here
+            self._last_touch = node_last_touch
             time_now = timeutils.utcnow()
             touch_timeout = time_now - datetime.timedelta(
                 seconds=ovn_const.HASH_RING_TOUCH_INTERVAL)
@@ -742,7 +744,6 @@ class OvnIdlDistributedLock(BaseOvnIdl):
                 try:
                     ctx = neutron_context.get_admin_context()
                     ovn_hash_ring_db.touch_node(ctx, self._node_uuid)
-                    self._last_touch = time_now
                 except Exception:
                     LOG.exception('Hash Ring node %s failed to heartbeat',
                                   self._node_uuid)

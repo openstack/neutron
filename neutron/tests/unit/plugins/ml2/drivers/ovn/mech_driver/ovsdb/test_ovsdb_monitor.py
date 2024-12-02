@@ -220,7 +220,8 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
         self.mock_get_node = mock.patch.object(
             hash_ring_manager.HashRingManager,
-            'get_node', return_value=self.node_uuid).start()
+            'get_node',
+            return_value=(self.node_uuid, timeutils.utcnow())).start()
         self.mock_update_tables = mock.patch.object(
             self.idl, 'update_tables').start()
 
@@ -231,9 +232,17 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
         self.assertEqual(2, len(self.idl.notify_handler.mock_calls))
 
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
-    def test_notify(self, mock_touch_node):
+    def test_notify_updated_node(self, mock_touch_node):
         self.idl.notify(self.fake_event, self.fake_row)
+        mock_touch_node.assert_not_called()
+        self._assert_has_notify_calls()
 
+    @mock.patch.object(ovn_hash_ring_db, 'touch_node')
+    def test_notify_not_updated_node(self, mock_touch_node):
+        updated_at = timeutils.utcnow() - datetime.timedelta(
+            seconds=ovn_const.HASH_RING_CACHE_TIMEOUT + 10)
+        self.mock_get_node.return_value = (self.node_uuid, updated_at)
+        self.idl.notify(self.fake_event, self.fake_row)
         mock_touch_node.assert_called_once_with(mock.ANY, self.node_uuid)
         self._assert_has_notify_calls()
 
@@ -266,6 +275,9 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
     @mock.patch.object(ovsdb_monitor.LOG, 'exception')
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
     def test_notify_touch_node_exception(self, mock_touch_node, mock_log):
+        updated_at = timeutils.utcnow() - datetime.timedelta(
+            seconds=ovn_const.HASH_RING_CACHE_TIMEOUT + 10)
+        self.mock_get_node.return_value = (self.node_uuid, updated_at)
         mock_touch_node.side_effect = Exception('BoOooOmmMmmMm')
         self.idl.notify(self.fake_event, self.fake_row)
 
@@ -277,7 +289,8 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
         self._assert_has_notify_calls()
 
     def test_notify_different_node(self):
-        self.mock_get_node.return_value = 'different-node-uuid'
+        self.mock_get_node.return_value = ('different-node-uuid',
+                                           timeutils.utcnow())
         self.idl.notify('fake-event', self.fake_row)
         # Assert that notify() wasn't called for a different node uuid
         self.idl.notify_handler.notify.assert_called_once_with(
@@ -399,7 +412,8 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.mech_driver.set_port_status_up = mock.Mock()
         self.mech_driver.set_port_status_down = mock.Mock()
         self._mock_hash_ring = mock.patch.object(
-            self.idl._hash_ring, 'get_node', return_value=self.idl._node_uuid)
+            self.idl._hash_ring, 'get_node',
+            return_value=(self.idl._node_uuid, timeutils.utcnow()))
         self._mock_hash_ring.start()
 
     def _test_lsp_helper(self, event, new_row_json, old_row_json=None,
@@ -559,7 +573,7 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         }
         self._mock_hash_ring = mock.patch.object(
             self.sb_idl._hash_ring, 'get_node',
-            return_value=self.sb_idl._node_uuid)
+            return_value=(self.sb_idl._node_uuid, timeutils.utcnow()))
         self._mock_hash_ring.start()
 
     def _test_chassis_helper(self, event, new_row_json, old_row_json=None):

@@ -1344,16 +1344,17 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
 class HashRingHealthCheckPeriodics(object):
 
-    def __init__(self, group):
+    def __init__(self, group, node_uuid):
         self._group = group
+        self._node_uuid = node_uuid
         self.ctx = n_context.get_admin_context()
 
     @periodics.periodic(spacing=ovn_const.HASH_RING_TOUCH_INTERVAL)
-    def touch_hash_ring_nodes(self):
+    def touch_hash_ring_node(self):
         # NOTE(lucasagomes): Note that we do not rely on the OVSDB lock
         # here because we want the maintenance tasks from each instance to
         # execute this task.
-        hash_ring_db.touch_nodes_from_host(self.ctx, self._group)
+        hash_ring_db.touch_node(self.ctx, self._node_uuid)
 
         # Check the number of the nodes in the ring and log a message in
         # case they are out of sync. See LP #2024205 for more information
