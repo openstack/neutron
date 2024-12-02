@@ -57,6 +57,8 @@
         DATABASE_PASSWORD: stackdb
         NEUTRON_DEPLOY_MOD_WSGI: true
       tox_envlist: dsvm-functional-gate
+      tox_environment:
+        PYTHONPATH: /opt/stack/data/venv/lib/python3.12/site-packages
       tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/openstack/requirements/upper-constraints.txt'
       zuul_copy_output:
         # We need to copy archive with logs to have it in job artifacts also,
