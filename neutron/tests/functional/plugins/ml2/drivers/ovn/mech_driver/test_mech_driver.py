@@ -80,18 +80,14 @@ class TestOVNMechanismDriver(base.TestOVNFunctionalBase):
 
         start_time = timeutils.utcnow()
         self.mech_driver._start_time = int(start_time.timestamp())
-        with mock.patch.object(self.mech_driver,
-                               '_register_hash_ring_maintenance') as \
-                mock_register_maintenance:
-            for _ in range(3):
-                self.mech_driver._setup_hash_ring_start_time()
+        for _ in range(3):
+            self.mech_driver._setup_hash_ring_start_time(self.context)
 
         ovn_hrs = ovn_hash_ring_db.get_nodes(self.context, ring_group)
         self.assertEqual(3, len(ovn_hrs))
         for ovn_hr in ovn_hrs:
             self.assertEqual(int(start_time.timestamp()),
                              ovn_hr.created_at.timestamp())
-        mock_register_maintenance.assert_called_once()
 
 
 class TestPortBinding(base.TestOVNFunctionalBase):
