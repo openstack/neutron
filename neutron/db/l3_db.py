@@ -47,6 +47,7 @@ from sqlalchemy.orm import exc
 from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import ipv6_utils
+from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
 from neutron.db import _utils as db_utils
 from neutron.db import l3_attrs_db
@@ -865,6 +866,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 return True
 
     def _validate_one_router_ipv6_port_per_network(self, router, port):
+        l3plugin = directory.get_plugin(plugin_constants.L3)
+        if ovn_utils.is_ovn_l3(l3plugin):
+            return
         if self._port_has_ipv6_address(port):
             for existing_port in (rp.port for rp in router.attached_ports):
                 if (existing_port["id"] != port["id"] and
