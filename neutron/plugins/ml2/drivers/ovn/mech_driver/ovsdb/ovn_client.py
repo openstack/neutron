@@ -1715,9 +1715,10 @@ class OVNClient:
                 LOG.debug("Router %s not found", port['device_id'])
             else:
                 network_ids = {port['network_id'] for port in router_ports}
-                networks = self._plugin.get_networks(
-                    admin_context, filters={'id': network_ids})
+                networks = None
                 if ovn_conf.is_ovn_emit_need_to_frag_enabled():
+                    networks = self._plugin.get_networks(
+                        admin_context, filters={'id': network_ids})
                     for net in networks:
                         if net['mtu'] > network_mtu:
                             options[
@@ -1732,6 +1733,8 @@ class OVNClient:
                     # If there are no VLAN type networks attached we need to
                     # still make it centralized.
                     enable_redirect = False
+                    networks = networks or self._plugin.get_networks(
+                        admin_context, filters={'id': network_ids})
                     if networks:
                         enable_redirect = all(
                             net.get(pnet.NETWORK_TYPE) in [const.TYPE_VLAN,
