@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Now if the configuration option ``[ovn]ovn_emit_need_to_frag`` is set,
+    OVN will always set the "gateway_mtu" option in the gateway
+    ``Logical_Router_Port``. The value defined will be the lowest MTU of all
+    networks connected to this router.
