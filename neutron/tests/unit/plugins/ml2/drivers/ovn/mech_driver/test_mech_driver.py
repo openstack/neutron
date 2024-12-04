@@ -61,6 +61,7 @@ from neutron.db import ovn_revision_numbers_db
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db
 from neutron.db import segments_db
+from neutron.objects import network as network_obj
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -2621,6 +2622,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with self.subnet(network=network) as subnet:
             with self.port(subnet=subnet,
                            device_owner=const.DEVICE_OWNER_ROUTER_GW) as port:
+                # Manually set the network DB register MTU without calling
+                # the network update API.
+                net_obj = network_obj.Network.get_object(
+                    self.context, id=network['network']['id'])
+                net_obj.mtu = new_mtu
+                net_obj.update()
 
                 grps.return_value = [{'port_id': port['port']['id'],
                                       'network_id':network['network']['id']}]

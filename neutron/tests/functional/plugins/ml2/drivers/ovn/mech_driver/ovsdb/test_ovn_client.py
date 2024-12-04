@@ -223,21 +223,21 @@ class TestOVNClient(base.TestOVNFunctionalBase,
         ovn_client.delete_address_group(self.context, ag['id'])
         self.assertEqual((None, None), _find_address_set_for_ag())
 
+    def _check_gw_lrp_mtu(self, router_id, mtu):
+        # Find gateway LRP and check the MTU value.
+        lr = self.nb_api.lookup('Logical_Router',
+                                ovn_utils.ovn_name(router_id))
+        for lrp in lr.ports:
+            if strutils.bool_from_string(
+                    lrp.external_ids[
+                        ovn_const.OVN_ROUTER_IS_EXT_GW]):
+                self.assertEqual(mtu, int(lrp.options['gateway_mtu']))
+                return
+
+        self.fail('Gateway Logical_Router_Port not found for '
+                  'router %s' % router_id)
+
     def test_update_network_lrp_mtu_updated(self):
-        def check_gw_lrp_mtu(router_id, mtu):
-            # Find gateway LRP and check the MTU value.
-            lr = self.nb_api.lookup('Logical_Router',
-                                    ovn_utils.ovn_name(router_id))
-            for lrp in lr.ports:
-                if strutils.bool_from_string(
-                        lrp.external_ids[
-                            ovn_const.OVN_ROUTER_IS_EXT_GW]):
-                    self.assertEqual(mtu, int(lrp.options['gateway_mtu']))
-                    return
-
-            self.fail('Gateway Logical_Router_Port not found for '
-                      'router %s' % router_id)
-
         self.add_fake_chassis('host1', enable_chassis_as_gw=True, azs=[])
         net_ext_args = {provider_net.NETWORK_TYPE: 'geneve',
                         external_net.EXTERNAL: True,
@@ -260,11 +260,52 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                         'add', router_id, snet_int['subnet']['id'],
                         None)
 
-                    check_gw_lrp_mtu(router_id, 1300)
+                    self._check_gw_lrp_mtu(router_id, 1300)
 
                     # Update external network MTU.
                     net_ext_args = {'network': {mtu_def.MTU: 1350}}
                     req = self.new_update_request('networks', net_ext_args,
                                                   net_ext['network']['id'])
                     req.get_response(self.api)
-                    check_gw_lrp_mtu(router_id, 1350)
+                    self._check_gw_lrp_mtu(router_id, 1350)
+
+    def test_add_new_router_interfaces_lrp_mtu_updated(self):
+        mtu_ext = 1350
+        internal_interfaces = [{'cidr': '10.2.0.0/24', 'mtu': mtu_ext - 10},
+                               {'cidr': '10.3.0.0/24', 'mtu': mtu_ext + 10},
+                               {'cidr': '10.4.0.0/24', 'mtu': mtu_ext - 20}]
+        self.add_fake_chassis('host1', enable_chassis_as_gw=True, azs=[])
+        net_ext_args = {provider_net.NETWORK_TYPE: 'geneve',
+                        external_net.EXTERNAL: True,
+                        mtu_def.MTU: mtu_ext}
+        # Store the network's MTUs connected to the router.
+        router_attached_net_mtus = {mtu_ext}
+        with self.network(
+                'test-ext-net', as_admin=True,
+                arg_list=tuple(net_ext_args.keys()), **net_ext_args) as \
+                net_ext:
+            ext_gw = {'network_id': net_ext['network']['id']}
+            with self.subnet(net_ext, cidr='10.1.0.0/24'), \
+                    self.router(external_gateway_info=ext_gw) as router:
+                router_id = router['router']['id']
+                for _int in internal_interfaces:
+                    # Attach a new internal interface to the router. If the new
+                    # network MTU is lower than the minimum MTU connected, the
+                    # GW LRP.options.gateway_mtu will be updated.
+                    net_int_args = {provider_net.NETWORK_TYPE: 'geneve',
+                                    mtu_def.MTU: _int['mtu']}
+                    router_attached_net_mtus.add(_int['mtu'])
+                    net_int = self._make_network(
+                        self.fmt, name='nettest', admin_state_up=True,
+                        **net_int_args)
+                    snet_int = self._make_subnet(
+                        self.fmt, net_int, constants.ATTR_NOT_SPECIFIED,
+                        _int['cidr'])
+                    self._router_interface_action(
+                        'add', router_id, snet_int['subnet']['id'],
+                        None)
+
+                    # The GW LRP "gateway_mtu" value should be the minimum
+                    # MTU connected to the router.
+                    self._check_gw_lrp_mtu(router_id,
+                                           min(router_attached_net_mtus))
