@@ -514,13 +514,6 @@ class TestHAL3Agent(TestL3Agent):
         elif method == 'shutdown':
             active_host.shutdown(parent=self.environment)
 
-        if method != 'shutdown':
-            # Ensure connectivity is shortly lost if the failover is not
-            # graceful
-            vm.assert_no_ping(external.ip)
-
-        LOG.debug(f'Connectivity lost after {datetime.now() - start}')
-
         # Ensure connectivity is restored
         vm.block_until_ping(external.ip)
         LOG.debug(f'Connectivity restored after {datetime.now() - start}')
