@@ -103,6 +103,7 @@ function _init {
     sudo mkdir -p /opt/stack/data
     sudo chown -R $STACK_USER /opt/stack/data
     source $DEVSTACK_PATH/inc/python
+    install_python
     setup_devstack_virtualenv
 
     GetDistro
