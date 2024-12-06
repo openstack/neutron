@@ -6,7 +6,7 @@ OVN information
 
 The original OVN project announcement can be found here:
 
-* https://networkheresy.com/2015/01/13/ovn-bringing-native-virtual-networking-to-ovs/
+* https://networkheresy.wordpress.com/2015/01/13/ovn-bringing-native-virtual-networking-to-ovs/
 
 The OVN architecture is described here:
 
