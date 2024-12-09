@@ -66,7 +66,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         self.driver = type_vlan.VlanTypeDriver()
         self.driver._sync_vlan_allocations()
         self.context = context.Context()
-        self.driver.physnet_mtus = []
+        self.driver.physnet_mtus = {}
         self.setup_coreplugin(CORE_PLUGIN)
 
     def test_parse_network_exception_handling(self):
@@ -328,7 +328,7 @@ class VlanTypeAllocationTest(testlib_api.SqlTestCase):
                               ranges,
                               group='ml2_type_vlan')
         driver = type_vlan.VlanTypeDriver()
-        driver.physnet_mtus = []
+        driver.physnet_mtus = {}
         driver._sync_vlan_allocations()
         # swap config order from DB order after sync has happened to
         # ensure config order is followed and not DB order

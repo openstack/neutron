@@ -22,7 +22,6 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as p_utils
-from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
@@ -37,13 +36,7 @@ class BaseTypeDriver(api.ML2TypeDriver):
     """BaseTypeDriver for functions common to Segment and flat."""
 
     def __init__(self):
-        try:
-            self.physnet_mtus = helpers.parse_mappings(
-                cfg.CONF.ml2.physical_network_mtus, unique_values=False
-            )
-        except Exception as e:
-            LOG.error("Failed to parse physical_network_mtus: %s", e)
-            self.physnet_mtus = []
+        self.physnet_mtus = cfg.CONF.ml2.physical_network_mtus
 
     def get_mtu(self, physical_network=None):
         return p_utils.get_deployment_physnet_mtu()
