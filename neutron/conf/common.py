@@ -128,6 +128,10 @@ core_opts = [
     cfg.BoolOpt('vlan_transparent', default=False,
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
+    cfg.BoolOpt('vlan_qinq', default=False,
+                help=_('If True, then allow plugins that support it to '
+                       'create VLAN transparent networks using 0x8a88 '
+                       'ethertype.')),
     cfg.BoolOpt('filter_validation', default=True,
                 help=_('If True, then allow plugins to decide '
                        'whether to perform validations on filter parameters. '

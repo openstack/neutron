@@ -60,6 +60,10 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         """Macvtap driver vlan transparency support."""
         return False
 
+    def check_vlan_qinq(self, context):
+        """Currently Macvtap driver doesn't support QinQ vlan."""
+        return False
+
     def _is_live_migration(self, context):
         # We cannot just check if
         # context.original['host_id'] != context.current['host_id']

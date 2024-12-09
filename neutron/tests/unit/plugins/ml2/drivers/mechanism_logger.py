@@ -96,6 +96,11 @@ class LoggerMechanismDriver(api.MechanismDriver):
         self._log_diff_call("check_vlan_transparency", context)
         return True
 
+    def check_vlan_qinq(self, context):
+        self._log_network_call("check_vlan_qinq", context)
+        self._log_diff_call("check_vlan_qinq", context)
+        return True
+
     def _log_subnet_call(self, method_name, context):
         LOG.info("%(method)s called with subnet settings %(current)s "
                  "(original settings %(original)s)",

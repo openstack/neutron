@@ -52,6 +52,7 @@ from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import provider_net
+from neutron_lib.api.definitions import qinq as qinq_apidef
 from neutron_lib.api.definitions import quota_check_limit
 from neutron_lib.api.definitions import rbac_address_groups as rbac_ag_apidef
 from neutron_lib.api.definitions import rbac_address_scope
@@ -128,12 +129,14 @@ from neutron.db import extradhcpopt_db
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks
+from neutron.db import qinq_db
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
 from neutron.extensions import dhcpagentscheduler as dhcp_ext
 from neutron.extensions import filter_validation
+from neutron.extensions import qinq
 from neutron.extensions import quota_check_limit_default
 from neutron.extensions import security_groups_default_rules as \
         sg_default_rules_ext
@@ -186,7 +189,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 extradhcpopt_db.ExtraDhcpOptMixin,
                 address_scope_db.AddressScopeDbMixin,
                 subnet_service_type_mixin.SubnetServiceTypeMixin,
-                address_group_db.AddressGroupDbMixin):
+                address_group_db.AddressGroupDbMixin,
+                qinq_db.Vlanqinq_db_mixin):
 
     """Implement the Neutron L2 abstractions using modules.
 
@@ -253,6 +257,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     sg_default_rules_ext.ALIAS,
                                     sg_rules_default_sg.ALIAS,
                                     subnet_ext_net_def.ALIAS,
+                                    qinq_apidef.ALIAS,
                                     ]
 
     # List of agent types for which all binding_failed ports should try to be
@@ -268,6 +273,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             vlantransparent._disable_extension_by_config(aliases)
             filter_validation._disable_extension_by_config(aliases)
             dhcp_ext.disable_extension_by_config(aliases)
+            qinq._disable_extension_by_config(aliases)
             self._aliases = self._filter_extensions_by_mech_driver(aliases)
         return self._aliases
 
@@ -1212,10 +1218,23 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.type_manager.extend_network_dict_provider(context, result)
 
             # Update the transparent vlan if configured
+            is_vlan_transparent = None
             if extensions.is_extension_supported(self, 'vlan-transparent'):
-                vlt = vlan_apidef.get_vlan_transparent(net_data)
-                net_db['vlan_transparent'] = vlt
-                result['vlan_transparent'] = vlt
+                is_vlan_transparent = vlan_apidef.get_vlan_transparent(
+                    net_data)
+                net_db['vlan_transparent'] = is_vlan_transparent
+                result['vlan_transparent'] = is_vlan_transparent
+            # Update the vlan QinQ if configured
+            qinq_value = None
+            if extensions.is_extension_supported(self, qinq_apidef.ALIAS):
+                qinq_value = qinq.get_qinq(net_data)
+                net_db['qinq'] = qinq_value
+                result['qinq'] = qinq_value
+            # QinQ and vlan_transparent can't be both set to True
+            if is_vlan_transparent and qinq_value:
+                msg = _("Attributes 'vlan_transparent' and 'qinq' can not be "
+                        "set to True for the same network.")
+                raise exc.BadRequest(resource='network', msg=msg)
             az_hints = utils.get_az_hints(net_data)
             if az_hints:
                 self.validate_availability_zones(context, 'network', az_hints)

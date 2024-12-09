@@ -321,6 +321,7 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     status = sa.Column(sa.String(16))
     admin_state_up = sa.Column(sa.Boolean)
     vlan_transparent = sa.Column(sa.Boolean, nullable=True)
+    qinq = sa.Column(sa.Boolean, nullable=True)
     rbac_entries = orm.relationship(rbac_db_models.NetworkRBAC,
                                     backref=orm.backref('network',
                                                         load_on_pending=True),

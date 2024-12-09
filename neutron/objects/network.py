@@ -200,7 +200,8 @@ class ExternalNetwork(base.NeutronDbObject):
 class Network(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     # Version 1.1: Changed 'mtu' to be not nullable
-    VERSION = '1.1'
+    # Version 1.2: Added 'qinq' field
+    VERSION = '1.2'
 
     rbac_db_cls = NetworkRBAC
     db_model = models_v2.Network
@@ -212,6 +213,7 @@ class Network(rbac_db.NeutronRbacObject):
         'status': obj_fields.StringField(nullable=True),
         'admin_state_up': obj_fields.BooleanField(nullable=True),
         'vlan_transparent': obj_fields.BooleanField(nullable=True),
+        'qinq': obj_fields.BooleanField(nullable=True),
         # TODO(ihrachys): consider converting to a field of stricter type
         'availability_zone_hints': obj_fields.ListOfStringsField(
             nullable=True),
@@ -337,6 +339,8 @@ class Network(rbac_db.NeutronRbacObject):
                 # mtu will not be nullable after
                 raise exception.IncompatibleObjectVersion(
                     objver=target_version, objname=self.__class__.__name__)
+        if _target_version < (1, 2):
+            primitive.pop('qinq', None)
 
 
 @base.NeutronObjectRegistry.register

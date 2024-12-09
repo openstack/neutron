@@ -60,6 +60,10 @@ class L2populationMechanismDriver(api.MechanismDriver):
         """L2population driver vlan transparency support."""
         return True
 
+    def check_vlan_qinq(self, context):
+        """L2population driver doesn't support vlan transparency."""
+        return False
+
     def _get_ha_port_agents_fdb(
             self, context, network_id, router_id):
         other_fdb_ports = {}

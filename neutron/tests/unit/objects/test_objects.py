@@ -65,7 +65,7 @@ object_data = {
     'MeteringLabelRule': '2.0-0ad09894c62e1ce6e868f725158959ba',
     'Log': '1.0-6391351c0f34ed34375a19202f361d24',
     'NDPProxy': '1.0-a6597d9caac3bb0d63f943f82e4dda8c',
-    'Network': '1.1-c3e9ecc0618ee934181d91b143a48901',
+    'Network': '1.2-0221c921b40f11b237e6a274984f238a',
     'NetworkDhcpAgentBinding': '1.1-d9443c88809ffa4c45a0a5a48134b54a',
     'NetworkDNSDomain': '1.0-420db7910294608534c1e2e30d6d8319',
     'NetworkPortSecurity': '1.0-b30802391a87945ee9c07582b4ff95e3',
