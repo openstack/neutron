@@ -149,6 +149,22 @@ class SegmentTypeDriver(BaseTypeDriver):
             raise db_exc.RetryRequest(
                 exceptions.NoNetworkFoundInMaximumAllowedAttempts())
 
+        # NOTE(ralonsoh): this debug message is added to debug LP#2086602.
+        # Once fixed, it won't be needed. This debug message should not be
+        # released.
+        LOG.debug('Partial segment allocation fail:')
+        LOG.debug('  - Filters: %s', filters)
+        LOG.debug('  - Non allocated segments:')
+        for non_allocated_segment in (
+                self.segmentation_obj.get_all_unallocated_segments(context,
+                    **filters)):
+            LOG.debug('    - %s', non_allocated_segment)
+        if directory.get_plugin(plugin_constants.NETWORK_SEGMENT_RANGE):
+            LOG.debug('  - Network segment ranges:')
+            for srange in ns_range.NetworkSegmentRange.get_objects(
+                    context.elevated()):
+                LOG.debug('    - %s', srange)
+
     @db_api.retry_db_errors
     def _delete_expired_default_network_segment_ranges(self):
         ctx = context.get_admin_context()

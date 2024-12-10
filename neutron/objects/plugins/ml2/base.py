@@ -56,6 +56,15 @@ class SegmentAllocation(metaclass=abc.ABCMeta):
             return query.first()
 
     @classmethod
+    def get_all_unallocated_segments(cls, context, **filters):
+        with cls.db_context_reader(context):
+            columns = set(dict(cls.db_model.__table__.columns))
+            model_filters = {k: filters[k]
+                             for k in columns & set(filters.keys())}
+            return context.session.query(cls.db_model).filter_by(
+                allocated=False, **model_filters).all()
+
+    @classmethod
     def allocate(cls, context, **segment):
         with cls.db_context_writer(context):
             return context.session.query(cls.db_model).filter_by(
