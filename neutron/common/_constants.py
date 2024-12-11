@@ -96,3 +96,7 @@ LOWEST_AGENT_BINDING_INDEX = 1
 
 # TODO(ralonsoh): move this constant to neutron_lib.plugins.ml2.ovs_constants
 DEFAULT_BR_INT = 'br-int'
+
+# TODO(bpetermann): Remove here after neutron-lib is bumped
+DEVICE_OWNER_VPN_ROUTER_GW = (constants.DEVICE_OWNER_NETWORK_PREFIX +
+                              "vpn_router_gateway")
