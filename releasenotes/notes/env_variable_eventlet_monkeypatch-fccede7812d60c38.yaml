@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Since eventlet 0.39.0, a new environment variable
+    ``EVENTLET_MONKEYPATCH=1`` can be defined to get patching as early as
+    possible in Python startup.
+upgrade:
+  - |
+    Neutron can read the environment variable ``EVENTLET_MONKEYPATCH=1`` in
+    order to not monkey patch the system libraries. If this environment
+    variable is set and the eventlet version is lower, the process won't be
+    patched.
