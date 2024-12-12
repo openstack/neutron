@@ -26,6 +26,17 @@ class UplinkStatusPropagationMixin:
         obj.create()
         res[usp.PROPAGATE_UPLINK_STATUS] = data[usp.PROPAGATE_UPLINK_STATUS]
 
+    def _process_update_port(self, context, data, res):
+        obj = usp_obj.PortUplinkStatusPropagation.get_object(
+            context, port_id=res['id'])
+        if obj:
+            obj.propagate_uplink_status = data[usp.PROPAGATE_UPLINK_STATUS]
+            obj.update()
+            res[usp.PROPAGATE_UPLINK_STATUS] = data[
+                usp.PROPAGATE_UPLINK_STATUS]
+        else:
+            self._process_create_port(context, data, res)
+
     @staticmethod
     def _extend_port_dict(port_res, port_db):
         # NOTE(ralonsoh): the default value is "True". Ports created before

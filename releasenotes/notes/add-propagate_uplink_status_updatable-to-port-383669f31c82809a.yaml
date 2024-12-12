@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Added a new API extension ``uplink_status_propagation_updatable``. Now the
+    port attribute `propagate_uplink_status`` can be updated once the port is
+    created. The backend (ML2/SR-IOV) will receive the update and update the
+    VF state.

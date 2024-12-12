@@ -1,3 +1,4 @@
 function configure_uplink_status_propagation_extension {
     neutron_ml2_extension_driver_add "uplink_status_propagation"
+    neutron_ml2_extension_driver_add "uplink_status_propagation_updatable"
 }
