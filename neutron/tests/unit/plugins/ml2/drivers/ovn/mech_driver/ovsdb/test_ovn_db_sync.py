@@ -630,7 +630,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             mock.call(
                 network['id'],
                 self.segments_map[network['id']],
-                txn=mock.ANY)
+                txn=mock.ANY,
+                network=network)
             for network in create_provnet_port_list
             if network.get('provider:physical_network')]
         self.assertEqual(

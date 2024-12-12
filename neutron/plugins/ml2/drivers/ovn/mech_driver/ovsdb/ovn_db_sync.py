@@ -1213,7 +1213,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                                 'OVN NB DB',
                                 utils.ovn_provnet_port_name(segment['id']))
                     self._ovn_client.create_provnet_port(
-                        network['id'], segment, txn=txn)
+                        network['id'], segment, txn=txn, network=network)
 
             for provnet_port_info in del_provnet_ports_list:
                 network = provnet_port_info['network']

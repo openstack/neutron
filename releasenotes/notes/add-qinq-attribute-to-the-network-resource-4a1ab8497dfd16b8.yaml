@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    There is a new attribute ``qinq`` added to the ``network`` resource. This
+    new attribute can be used to enable for the network VLAN transparency using
+    ``802.1ad`` standard where outer tag (``S-Tag``) frame has ``0x8a88`` as
+    ethertype and the inner tag (``C-Tag``) has ``0x8100`` ethertype.
+    The behavior of this is very similar to the existing ``vlan_transparent``
+    extension, with the difference in the standard and ethtypes used for the
+    outer tag.
+    The ``qinq`` parameter can be set only for the ``vlan`` networks and is
+    mutually exclusive with the ``vlan_transparent`` attribute as same network
+    can't have both of them enabled.
+    The ``qinq`` extension is currently supported only by the ``ML2/OVN``
+    backend.
