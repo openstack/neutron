@@ -26,6 +26,7 @@ from neutron_lib.services.qos import constants as qos_const
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
+from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 
 from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
@@ -45,13 +46,14 @@ from neutron.tests.unit.extensions import test_securitygroup
 from neutron.tests.unit import testlib_api
 
 
-class TestOvnNbSync(base.TestOVNFunctionalBase,
-                    testlib_api.MySQLTestCaseMixin):
+class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
+                    base.TestOVNFunctionalBase):
 
     _extension_drivers = ['port_security', 'dns', 'qos', 'revision_plugin']
 
     def setUp(self, *args):
         super(TestOvnNbSync, self).setUp(maintenance_worker=True)
+        self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
