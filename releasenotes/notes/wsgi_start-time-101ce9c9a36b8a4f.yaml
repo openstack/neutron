@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    The Neutron API using the WSGI module requires a new configuration
+    parameter: ``[uwsgi]start-time=%t``. The uWSGI process will populate this
+    value when executed, defining the start time of the Neutron API. This value
+    will be used by Neutron ML2/OVN to create the OVN hash ring registers per
+    worker.
