@@ -14,11 +14,18 @@
 # under the License.
 
 import eventlet
-from oslo_utils import importutils
+
+
+IS_MONKEY_PATCHED = False
 
 
 def monkey_patch():
-    eventlet.monkey_patch()
+    global IS_MONKEY_PATCHED
+    if not IS_MONKEY_PATCHED:
+        eventlet.monkey_patch()
 
-    p_c_e = importutils.import_module('pyroute2.config.asyncio')
-    p_c_e.asyncio_config()
+        # pylint: disable=import-outside-toplevel
+        from oslo_utils import importutils
+        p_c_e = importutils.import_module('pyroute2.config.asyncio')
+        p_c_e.asyncio_config()
+        IS_MONKEY_PATCHED = True
