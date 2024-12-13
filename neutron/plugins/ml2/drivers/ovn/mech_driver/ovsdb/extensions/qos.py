@@ -263,7 +263,7 @@ class OVNClientQosExtension:
                              the LSP.options. If the values are None, the keys
                              are removed.
         """
-        lsp = lsp or self.nb_idl.lsp_get(port_id).execute()
+        lsp = lsp or port_id
         if lsp:
             txn.add(self.nb_idl.update_lswitch_qos_options(lsp,
                                                            **ovn_rule_lsp))

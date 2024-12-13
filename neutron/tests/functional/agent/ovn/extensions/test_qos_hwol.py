@@ -151,7 +151,7 @@ class QoSLogicalSwitchPortEventTestCase(base.TestOVNFunctionalBase):
         lsp = self.nb_api.lsp_get(port_id).execute(check_error=True)
         options = {ovn_const.LSP_OPTIONS_QOS_MAX_RATE: str(max_bps),
                    ovn_const.LSP_OPTIONS_QOS_MIN_RATE: str(min_bps)}
-        self.nb_api.update_lswitch_qos_options(lsp, **options).execute(
+        self.nb_api.update_lswitch_qos_options(lsp.uuid, **options).execute(
             check_error=True)
         n_utils.wait_until_true(
             lambda: check_update_egress_called(max_kbps, min_kbps), timeout=5)
