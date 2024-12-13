@@ -694,7 +694,11 @@ class TestMl2NetworksWithVlanTransparency(
             network_req = self.new_create_request(
                 'networks', self.data, as_admin=True)
             res = network_req.get_response(self.api)
-            self.assertEqual(500, res.status_int)
+            # NOTE(slaweq): if neutron-lib <= 3.16.0 is used it will return
+            #   errot 500 but starting from 3.17 it returns error
+            #   code 400 (Bad request). This was changed with patch
+            #   https://review.opendev.org/c/openstack/neutron-lib/+/937605
+            self.assertIn(res.status_int, [400, 500])
             error_result = self.deserialize(self.fmt, res)['NeutronError']
             self.assertEqual("VlanTransparencyDriverError",
                              error_result['type'])
