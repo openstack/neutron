@@ -17,9 +17,6 @@ import os
 import threading
 
 import eventlet
-from neutron_lib.callbacks import events
-from neutron_lib.callbacks import registry
-from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from oslo_log import log as logging
 from oslo_utils import fileutils
@@ -79,7 +76,6 @@ class L3AgentKeepalivedStateChangeServer(object):
         server.wait()
 
 
-@registry.has_registry_receivers
 class AgentMixin(object):
     def __init__(self, host):
         self._init_ha_conf_path()
@@ -91,13 +87,6 @@ class AgentMixin(object):
         eventlet.spawn(self._start_keepalived_notifications_server)
         self._transition_states = {}
         self._transition_state_mutex = threading.Lock()
-        self._initial_state_change_per_router = set()
-
-    def initial_state_change(self, router_id):
-        initial_state = router_id not in self._initial_state_change_per_router
-        if initial_state:
-            self._initial_state_change_per_router.add(router_id)
-        return initial_state
 
     def _get_router_info(self, router_id):
         try:
@@ -105,13 +94,6 @@ class AgentMixin(object):
         except KeyError:
             LOG.info('Router %s is not managed by this agent. It was '
                      'possibly deleted concurrently.', router_id)
-
-    @registry.receives(resources.ROUTER, [events.AFTER_DELETE])
-    def _delete_router(self, resource, event, trigger, payload):
-        try:
-            self._initial_state_change_per_router.remove(payload.resource_id)
-        except KeyError:
-            pass
 
     def check_ha_state_for_router(self, router_id, current_state):
         ri = self._get_router_info(router_id)
@@ -166,7 +148,7 @@ class AgentMixin(object):
 
     def _enqueue_state_change(self, router_id, state):
         # NOTE(ralonsoh): move 'primary' and 'backup' constants to n-lib
-        if state == 'primary' and not self.initial_state_change(router_id):
+        if state == 'primary':
             eventlet.sleep(self.conf.ha_vrrp_advert_int)
         transition_state = self._update_transition_state(router_id)
         if transition_state != state:
