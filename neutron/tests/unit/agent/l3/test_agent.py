@@ -273,15 +273,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self._enqueue_state_change_transitions(['backup'], 1)
 
     def test_enqueue_state_change_from_none_to_primary_to_backup(self):
-        # First transition (to primary), won't have a delay.
-        self._enqueue_state_change_transitions(['primary', 'backup'], 2)
-
-    def test_enqueue_state_change_from_none_to_primary_to_backup_twice(self):
-        # Second transition to primary will have a delay and will be overridden
-        # by the second transition to backup; that means the transition from
-        # backup (second state) to primary (third state) is dismissed.
-        self._enqueue_state_change_transitions(
-            ['primary', 'backup', 'primary', 'backup'], 2)
+        self._enqueue_state_change_transitions(['primary', 'backup'], 0)
 
     def test_enqueue_state_change_from_none_to_backup_to_primary(self):
         self._enqueue_state_change_transitions(['backup', 'primary'], 2)
@@ -2623,21 +2615,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._queue = mock.Mock()
         agent.router_removed_from_agent(None, {'router_id': FAKE_ID})
         self.assertEqual(1, agent._queue.add.call_count)
-
-    @mock.patch.object(metadata_driver.MetadataDriver,
-                       'destroy_monitored_metadata_proxy')
-    def test__router_removed(self, *args):
-        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        ri = mock.Mock(router={'id': 'router_id'})
-        agent._initial_state_change_per_router.add('router_id')
-        self.assertEqual({'router_id'}, agent._initial_state_change_per_router)
-        for _ in range(2):
-            # The second call will trigger a KeyError exception in
-            # AgentMixin._delete_router that should be dismissed.
-            agent.router_info['router_id'] = mock.ANY
-            agent.pd = mock.Mock(routers={'router_id': {'subnets': []}})
-            agent._router_removed(ri, 'router_id')
-            self.assertEqual(set([]), agent._initial_state_change_per_router)
 
     def test_added_to_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
