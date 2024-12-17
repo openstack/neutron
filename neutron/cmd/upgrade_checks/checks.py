@@ -40,8 +40,10 @@ from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3ha as l3ha_models
 from neutron.db.models.plugins.ml2 import vlanallocation
 from neutron.db.models import segment
+from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
 from neutron.db.qos import models as qos_models
+from neutron.extensions import tagging
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -180,6 +182,18 @@ def get_duplicated_ha_networks_per_project():
         return query.all()
 
 
+def is_tags_limit_reached_for_any_resource():
+    """Return True if any resource has more tags then defined limit."""
+    ctx = context.get_admin_context()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = ctx.session.query(
+            tag_model.Tag,
+            func.count(tag_model.Tag.tag))
+        query = query.group_by(tag_model.Tag.standard_attr_id)
+        query = query.having(func.count() > tagging.MAX_TAGS_COUNT)
+        return bool(query.one_or_none())
+
+
 def get_ovn_client():
     global _OVN_CLIENT
     if _OVN_CLIENT is None:
@@ -227,6 +241,8 @@ class CoreChecks(base.BaseChecks):
              self.ml2_ovs_igmp_flood_check),
             (_('Floating IP Port forwarding and OVN L3 plugin configuration'),
              self.ovn_port_forwarding_configuration_check),
+            (_('Existing tags exceeds limit per resource'),
+             self.tags_over_limit_check)
         ]
 
     @staticmethod
@@ -620,3 +636,25 @@ class CoreChecks(base.BaseChecks):
                   'can not be used with ML2/OVN backend, distributed '
                   'floating IPs and provider network type(s) used as '
                   'tenant networks.'))
+
+    @staticmethod
+    def tags_over_limit_check(checker):
+
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for "
+                  "extra_dhcp_opts can't be done."))
+        if is_tags_limit_reached_for_any_resource():
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('Some resources have already more than %(limit)d tags '
+                  'created. There is a limit of %(limit)d tags per '
+                  'resource and because of that limit creation of new '
+                  'tags for the resources that exceed the limit will '
+                  'not be possible until some of the tags are removed.' %
+                    {'limit': tagging.MAX_TAGS_COUNT}))
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _('Number of tags for each resource is below the limit of %d. ' %
+              tagging.MAX_TAGS_COUNT))

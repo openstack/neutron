@@ -1,0 +1,13 @@
+---
+upgrade:
+  - |
+    A limit on the number of tags per resource has been added. In case when
+    there are any resources with more than ``50`` tags created, it will not be
+    possible to create or modify existing tags for such resource until some of
+    them are deleted.
+fixes:
+  - |
+    Fix bug `2091410 <https://bugs.launchpad.net/neutron/+bug/2091410>`_ which
+    could cause potential Denial of Service by adding a lot of tags to a single
+    resource, like, for example ``network``. Now there is a limit of ``50`` tags
+    for every resource.

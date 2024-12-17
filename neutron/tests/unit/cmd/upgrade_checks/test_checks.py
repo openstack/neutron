@@ -330,3 +330,21 @@ class TestChecks(base.BaseTestCase):
                 mock.ANY)
             self.assertEqual(Code.WARNING, result.code)
             validate_mock.assert_called_once_with()
+
+    def test_tags_over_limit_check_success(self):
+        with mock.patch.object(
+            checks, 'is_tags_limit_reached_for_any_resource',
+            return_value=False
+        ) as is_tags_limit_reached_for_any_resource:
+            result = checks.CoreChecks.tags_over_limit_check(mock.ANY)
+            self.assertEqual(Code.SUCCESS, result.code)
+            is_tags_limit_reached_for_any_resource.assert_called_once_with()
+
+    def test_tags_over_limit_check_failure(self):
+        with mock.patch.object(
+            checks, 'is_tags_limit_reached_for_any_resource',
+            return_value=True
+        ) as is_tags_limit_reached_for_any_resource:
+            result = checks.CoreChecks.tags_over_limit_check(mock.ANY)
+            self.assertEqual(Code.WARNING, result.code)
+            is_tags_limit_reached_for_any_resource.assert_called_once_with()
