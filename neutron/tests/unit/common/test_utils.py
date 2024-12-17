@@ -170,6 +170,16 @@ class TestExceptionLogger(base.BaseTestCase):
                                any_order=True)
         self.assertTrue(logger.called)
 
+    def test_wait_until_true(self):
+
+        class FalseException(Exception):
+            pass
+
+        self.assertRaises(
+            FalseException,
+            utils.wait_until_true,
+            lambda: False, timeout=1, exception=FalseException)
+
 
 class TestDvrServices(base.BaseTestCase):
 
@@ -407,13 +417,13 @@ class TestThrottler(base.BaseTestCase):
 
         throttled_func()
 
-        sleep = utils.eventlet.sleep
+        sleep = utils.time.sleep
 
         def sleep_mock(amount_to_sleep):
             sleep(amount_to_sleep)
             self.assertGreaterEqual(threshold, amount_to_sleep)
 
-        with mock.patch.object(utils.eventlet, "sleep",
+        with mock.patch.object(utils.time, "sleep",
                                side_effect=sleep_mock):
             throttled_func()
 
