@@ -138,15 +138,15 @@ class SystemAdminTests(RouterAPITestCase):
             self.context, 'create_router:enable_default_route_ecmp',
             self.alt_target)
 
-    def test_create_routers_tags(self):
+    def test_create_router_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'create_routers_tags', self.target)
+            self.context, 'create_router:tags', self.target)
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'create_routers_tags', self.alt_target)
+            self.context, 'create_router:tags', self.alt_target)
 
     def test_get_router(self):
         self.assertRaises(
@@ -178,15 +178,15 @@ class SystemAdminTests(RouterAPITestCase):
             policy.enforce,
             self.context, 'get_router:ha', self.alt_target)
 
-    def test_get_routers_tags(self):
+    def test_get_router_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'get_routers_tags', self.target)
+            self.context, 'get_router:tags', self.target)
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'get_routers_tags', self.alt_target)
+            self.context, 'get_router:tags', self.alt_target)
 
     def test_update_router(self):
         self.assertRaises(
@@ -292,15 +292,15 @@ class SystemAdminTests(RouterAPITestCase):
             self.context, 'update_router:enable_default_route_ecmp',
             self.alt_target)
 
-    def test_update_routers_tags(self):
+    def test_update_router_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'update_routers_tags', self.target)
+            self.context, 'update_router:tags', self.target)
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'update_routers_tags', self.alt_target)
+            self.context, 'update_router:tags', self.alt_target)
 
     def test_delete_router(self):
         self.assertRaises(
@@ -312,15 +312,15 @@ class SystemAdminTests(RouterAPITestCase):
             policy.enforce,
             self.context, 'delete_router', self.alt_target)
 
-    def test_delete_routers_tags(self):
+    def test_delete_router_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'delete_routers_tags', self.target)
+            self.context, 'delete_router:tags', self.target)
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'delete_routers_tags', self.alt_target)
+            self.context, 'delete_router:tags', self.alt_target)
 
     def test_add_router_interface(self):
         self.assertRaises(
@@ -425,11 +425,11 @@ class AdminTests(RouterAPITestCase):
                 'create_router:external_gateway_info:external_fixed_ips',
                 self.alt_target))
 
-    def test_create_routers_tags(self):
+    def test_create_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_routers_tags', self.target))
+            policy.enforce(self.context, 'create_router:tags', self.target))
         self.assertTrue(
-            policy.enforce(self.context, 'create_routers_tags',
+            policy.enforce(self.context, 'create_router:tags',
                            self.alt_target))
 
     def test_update_router_enable_default_route_bfd(self):
@@ -476,11 +476,11 @@ class AdminTests(RouterAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'get_router:ha', self.alt_target))
 
-    def test_get_routers_tags(self):
+    def test_get_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'get_routers_tags', self.target))
+            policy.enforce(self.context, 'get_router:tags', self.target))
         self.assertTrue(
-            policy.enforce(self.context, 'get_routers_tags', self.alt_target))
+            policy.enforce(self.context, 'get_router:tags', self.alt_target))
 
     def test_update_router(self):
         self.assertTrue(
@@ -544,11 +544,11 @@ class AdminTests(RouterAPITestCase):
                 'update_router:external_gateway_info:external_fixed_ips',
                 self.alt_target))
 
-    def test_update_routers_tags(self):
+    def test_update_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'update_routers_tags', self.target))
+            policy.enforce(self.context, 'update_router:tags', self.target))
         self.assertTrue(
-            policy.enforce(self.context, 'update_routers_tags',
+            policy.enforce(self.context, 'update_router:tags',
                            self.alt_target))
 
     def test_delete_router(self):
@@ -557,11 +557,11 @@ class AdminTests(RouterAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'delete_router', self.alt_target))
 
-    def test_delete_routers_tags(self):
+    def test_delete_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'delete_routers_tags', self.target))
+            policy.enforce(self.context, 'delete_router:tags', self.target))
         self.assertTrue(
-            policy.enforce(self.context, 'delete_routers_tags',
+            policy.enforce(self.context, 'delete_router:tags',
                            self.alt_target))
 
     def test_add_router_interface(self):
@@ -663,13 +663,13 @@ class ProjectManagerTests(AdminTests):
             'create_router:external_gateway_info:external_fixed_ips',
             self.alt_target)
 
-    def test_create_routers_tags(self):
+    def test_create_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_routers_tags', self.target))
+            policy.enforce(self.context, 'create_router:tags', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'create_routers_tags', self.alt_target)
+            self.context, 'create_router:tags', self.alt_target)
 
     def test_update_router_enable_default_route_bfd(self):
         self.assertRaises(
@@ -727,13 +727,13 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'get_router:ha', self.alt_target)
 
-    def test_get_routers_tags(self):
+    def test_get_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'get_routers_tags', self.target))
+            policy.enforce(self.context, 'get_router:tags', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'get_routers_tags', self.alt_target)
+            self.context, 'get_router:tags', self.alt_target)
 
     def test_update_router(self):
         self.assertTrue(
@@ -811,13 +811,13 @@ class ProjectManagerTests(AdminTests):
             'update_router:external_gateway_info:external_fixed_ips',
             self.alt_target)
 
-    def test_update_routers_tags(self):
+    def test_update_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'update_routers_tags', self.target))
+            policy.enforce(self.context, 'update_router:tags', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'update_routers_tags', self.alt_target)
+            self.context, 'update_router:tags', self.alt_target)
 
     def test_delete_router(self):
         self.assertTrue(
@@ -827,13 +827,13 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'delete_router', self.alt_target)
 
-    def test_delete_routers_tags(self):
+    def test_delete_router_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'delete_routers_tags', self.target))
+            policy.enforce(self.context, 'delete_router:tags', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'delete_routers_tags', self.alt_target)
+            self.context, 'delete_router:tags', self.alt_target)
 
     def test_add_router_interface(self):
         self.assertTrue(
@@ -901,15 +901,15 @@ class ProjectReaderTests(ProjectMemberTests):
             self.context, 'create_router:external_gateway_info:network_id',
             self.alt_target)
 
-    def test_create_routers_tags(self):
+    def test_create_router_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'create_routers_tags', self.target)
+            self.context, 'create_router:tags', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'create_routers_tags', self.alt_target)
+            self.context, 'create_router:tags', self.alt_target)
 
     def test_update_router(self):
         self.assertRaises(
@@ -945,15 +945,15 @@ class ProjectReaderTests(ProjectMemberTests):
             self.context, 'update_router:external_gateway_info:network_id',
             self.alt_target)
 
-    def test_update_routers_tags(self):
+    def test_update_router_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'update_routers_tags', self.target)
+            self.context, 'update_router:tags', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'update_routers_tags', self.alt_target)
+            self.context, 'update_router:tags', self.alt_target)
 
     def test_delete_router(self):
         self.assertRaises(
@@ -965,15 +965,15 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce,
             self.context, 'delete_router', self.alt_target)
 
-    def test_delete_routers_tags(self):
+    def test_delete_router_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'delete_routers_tags', self.target)
+            self.context, 'delete_router:tags', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'delete_routers_tags', self.alt_target)
+            self.context, 'delete_router:tags', self.alt_target)
 
     def test_add_router_interface(self):
         self.assertRaises(
@@ -1178,11 +1178,11 @@ class ServiceRoleTests(RouterAPITestCase):
             'create_router:external_gateway_info:external_fixed_ips',
             self.target)
 
-    def test_create_routers_tags(self):
+    def test_create_router_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'create_routers_tags', self.target)
+            self.context, 'create_router:tags', self.target)
 
     def test_get_router(self):
         self.assertRaises(

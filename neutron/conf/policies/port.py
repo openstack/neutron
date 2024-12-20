@@ -310,7 +310,7 @@ rules = [
         operations=ACTION_POST,
     ),
     policy.DocumentedRuleDefault(
-        name='create_ports_tags',
+        name='create_port:tags',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_MEMBER,
             neutron_policy.RULE_ADVSVC
@@ -318,6 +318,14 @@ rules = [
         scope_types=['project'],
         description='Create the port tags',
         operations=ACTION_POST_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_ports_tags',
+            check_str=neutron_policy.policy_or(
+                base.ADMIN_OR_PROJECT_MEMBER,
+                neutron_policy.RULE_ADVSVC
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
@@ -413,7 +421,7 @@ rules = [
         operations=ACTION_GET,
     ),
     policy.DocumentedRuleDefault(
-        name='get_ports_tags',
+        name='get_port:tags',
         check_str=neutron_policy.policy_or(
             neutron_policy.RULE_ADVSVC,
             base.ADMIN_OR_NET_OWNER_READER,
@@ -422,6 +430,15 @@ rules = [
         scope_types=['project'],
         description='Get the port tags',
         operations=ACTION_GET_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_ports_tags',
+            check_str=neutron_policy.policy_or(
+                neutron_policy.RULE_ADVSVC,
+                base.ADMIN_OR_NET_OWNER_READER,
+                base.PROJECT_READER
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     # TODO(amotoki): Add get_port:binding:vnic_type
     # TODO(amotoki): Add get_port:binding:data_plane_status
@@ -678,7 +695,7 @@ rules = [
         operations=ACTION_PUT,
     ),
     policy.DocumentedRuleDefault(
-        name='update_ports_tags',
+        name='update_port:tags',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_MEMBER,
             neutron_policy.RULE_ADVSVC
@@ -686,6 +703,14 @@ rules = [
         scope_types=['project'],
         description='Update the port tags',
         operations=ACTION_PUT_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_ports_tags',
+            check_str=neutron_policy.policy_or(
+                base.ADMIN_OR_PROJECT_MEMBER,
+                neutron_policy.RULE_ADVSVC
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
@@ -707,7 +732,7 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_ports_tags',
+        name='delete_port:tags',
         check_str=neutron_policy.policy_or(
             neutron_policy.RULE_ADVSVC,
             base.PROJECT_MEMBER,
@@ -716,6 +741,15 @@ rules = [
         scope_types=['project'],
         description='Delete the port tags',
         operations=ACTION_DELETE_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_ports_tags',
+            check_str=neutron_policy.policy_or(
+                neutron_policy.RULE_ADVSVC,
+                base.PROJECT_MEMBER,
+                base.ADMIN_OR_NET_OWNER_MEMBER
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     )
 ]
 

@@ -61,11 +61,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='create_trunks_tags',
+        name='create_trunk:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create the trunk tags',
-        operations=ACTION_POST_TAGS
+        operations=ACTION_POST_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_trunks_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_trunk',
@@ -89,11 +94,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='get_trunks_tags',
+        name='get_trunk:tags',
         check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get the trunk tags',
-        operations=ACTION_GET_TAGS
+        operations=ACTION_GET_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_trunks_tags',
+            check_str=base.ADMIN_OR_PROJECT_READER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='update_trunk',
@@ -113,11 +123,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='update_trunks_tags',
+        name='update_trunk:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update the trunk tags',
-        operations=ACTION_PUT_TAGS
+        operations=ACTION_PUT_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_trunks_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='delete_trunk',
@@ -137,11 +152,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_trunks_tags',
+        name='delete_trunk:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a trunk',
-        operations=ACTION_DELETE_TAGS
+        operations=ACTION_DELETE_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_trunks_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_subports',

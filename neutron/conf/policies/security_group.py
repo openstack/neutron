@@ -96,11 +96,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='create_security_groups_tags',
+        name='create_security_group:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create the security group tags',
         operations=SG_ACTION_POST_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_security_groups_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group',
@@ -127,7 +132,7 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='get_security_groups_tags',
+        name='get_security_group:tags',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
             'rule:shared_security_group'
@@ -135,6 +140,14 @@ rules = [
         scope_types=['project'],
         description='Get the security group tags',
         operations=SG_ACTION_GET_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_security_groups_tags',
+            check_str=neutron_policy.policy_or(
+                base.ADMIN_OR_PROJECT_READER,
+                'rule:shared_security_group'
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='update_security_group',
@@ -154,11 +167,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='update_security_groups_tags',
+        name='update_security_group:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update the security group tags',
         operations=SG_ACTION_PUT_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_security_groups_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group',
@@ -178,11 +196,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_security_groups_tags',
+        name='delete_security_group:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete the security group tags',
         operations=SG_ACTION_DELETE_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_security_groups_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     # TODO(amotoki): admin_or_owner is the right rule?

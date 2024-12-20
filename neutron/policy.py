@@ -99,7 +99,10 @@ def get_resource_and_action(action, pluralized=None):
        resource and action extracted from api operation.
     """
     data = action.split(':', 1)[0].split('_', 1)
-    resource = pluralized or ("%ss" % data[-1])
+    if "tags" in data[-1]:
+        resource = data[-1].replace("_tags", "")
+    else:
+        resource = pluralized or ("%ss" % data[-1])
     enforce_attr_based_check = data[0] not in ('get', 'delete')
     return (resource, enforce_attr_based_check)
 
