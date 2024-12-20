@@ -129,7 +129,7 @@ class OVNClientQosExtension:
 
     def _ovn_qos_rule(self, rules_direction, rules, port_id, network_id,
                       fip_id=None, ip_address=None, resident_port=None,
-                      router_id=None, delete=False):
+                      router_id=None):
         """Generate an OVN QoS register based on several Neutron QoS rules
 
         A OVN QoS register can contain "bandwidth" and "action" parameters.
@@ -156,15 +156,9 @@ class OVNClientQosExtension:
                               where the floating IP traffic is NATed.
         :param router_id: (string) router ID, for L3 router gateway port
                           bandwidth limit.
-        :param delete: (bool) defines if this rule if going to be a partial
-                       one (without any bandwidth or DSCP information) to be
-                       used only as deletion rule.
         :return: (dict) OVN QoS rule register to be used with QoSAddCommand
                  and QoSDelCommand.
         """
-        if not delete and not rules:
-            return
-
         lswitch_name = utils.ovn_name(network_id)
         direction = (
             'from-lport' if rules_direction == constants.EGRESS_DIRECTION else
@@ -176,7 +170,7 @@ class OVNClientQosExtension:
                         'priority': OVN_QOS_DEFAULT_RULE_PRIORITY,
                         'match': match}
 
-        if delete:
+        if not rules:
             # Any specific rule parameter is left undefined.
             return ovn_qos_rule
 
@@ -288,7 +282,7 @@ class OVNClientQosExtension:
         # Generate generic deletion rules for both directions. In case of
         # creating deletion rules, the rule content is irrelevant.
         for ovn_rule_qos in (self._ovn_qos_rule(direction, {}, port_id,
-                                                network_id, delete=True)
+                                                network_id)
                              for direction in constants.VALID_DIRECTIONS):
             txn.add(self.nb_idl.qos_del(**ovn_rule_qos))
 
@@ -315,11 +309,8 @@ class OVNClientQosExtension:
                 rules.pop(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, None)
                 rules.pop(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH, None)
 
-            # "delete=not rules": that means, when we don't have rules, we
-            # generate an "ovn_rule_qos" to be used as input in a "qos_del"
-            # method.
             ovn_rule_qos = self._ovn_qos_rule(direction, rules, port_id,
-                                              network_id, delete=not rules)
+                                              network_id)
             if rules:
                 # NOTE(ralonsoh): with "may_exist=True", the "qos_add" will
                 # create the QoS OVN rule or update the existing one.
@@ -454,14 +445,11 @@ class OVNClientQosExtension:
 
         qos_rules = self._qos_rules(admin_context, qos_policy_id)
         for direction, rules in qos_rules.items():
-            # "delete=not rules": that means, when we don't have rules, we
-            # generate an "ovn_rule_qos" to be used as input in a "qos_del"
-            # method.
             ovn_rule_qos = self._ovn_qos_rule(
                 direction, rules, gw_port_id,
                 floatingip['floating_network_id'], fip_id=floatingip['id'],
                 ip_address=floatingip['floating_ip_address'],
-                resident_port=resident_port, delete=not rules)
+                resident_port=resident_port)
             if rules:
                 # NOTE(ralonsoh): with "may_exist=True", the "qos_add" will
                 # create the QoS OVN rule or update the existing one.
@@ -496,12 +484,9 @@ class OVNClientQosExtension:
         admin_context = n_context.get_admin_context()
         qos_rules = self._qos_rules(admin_context, qos_policy_id)
         for direction, rules in qos_rules.items():
-            # "delete=not rule": that means, when we don't have rules, we
-            # generate an "ovn_rule_qos" to be used as input in a "qos_del"
-            # method.
             ovn_rule_qos = self._ovn_qos_rule(
                 direction, rules, gw_port_id, gw_network_id,
-                router_id=router_id, delete=not rules)
+                router_id=router_id)
             if rules:
                 # NOTE(ralonsoh): with "may_exist=True", the "qos_add" will
                 # create the QoS OVN rule or update the existing one.

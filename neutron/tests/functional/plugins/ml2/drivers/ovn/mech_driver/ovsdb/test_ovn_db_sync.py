@@ -1665,8 +1665,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         with self.nb_api.transaction(check_error=True) as txn:
             for port in (port_1, port_2):
                 for ovn_rule in [self.qos_driver._ovn_qos_rule(
-                        direction, {}, port['id'], port['network_id'],
-                        delete=True)
+                        direction, {}, port['id'], port['network_id'])
                         for direction in constants.VALID_DIRECTIONS]:
                     txn.add(self.nb_api.qos_del(**ovn_rule))
         self._validate_qos_records(should_match=False)
