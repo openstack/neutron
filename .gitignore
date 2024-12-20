@@ -39,6 +39,7 @@ nosetests.xml
 .testrepository
 .stestr
 .venv
+.mypy_cache
 
 # Translations
 *.mo
