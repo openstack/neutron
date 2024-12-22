@@ -218,7 +218,7 @@ class OvsdbServer(DaemonProcessFixture):
                 reraise=True)
             def get_ovsdb_remote_port_retry(pid):
                 process = psutil.Process(pid)
-                for connect in process.connections():
+                for connect in process.net_connections():
                     if connect.status == 'LISTEN':
                         return connect.laddr[1]
                 raise Exception(_("Could not find LISTEN port."))
