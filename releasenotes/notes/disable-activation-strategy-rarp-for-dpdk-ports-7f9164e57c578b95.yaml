@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    For OVN DPDK ports, live migration activation strategy that expects a RARP
+    frame sent by QEMU is no longer used. This is because for DPDK ports, QEMU
+    does not send a RARP frame, which affects the time to recover network
+    connectivity for DPDK ports after live migration is complete. Note that
+    because of the change, some low number of duplicate packets from these
+    ports may be observed during live migration.
