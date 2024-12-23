@@ -58,6 +58,14 @@ def get_nodes(context, group_name, created_at=None):
 
 
 @db_api.retry_if_session_inactive()
+@db_api.CONTEXT_READER
+def get_node(context, group_name, node_uuid):
+    return context.session.query(ovn_models.OVNHashRing).filter(
+        ovn_models.OVNHashRing.group_name == group_name,
+        ovn_models.OVNHashRing.node_uuid == node_uuid).one()
+
+
+@db_api.retry_if_session_inactive()
 def remove_nodes_from_host(context, group_name, created_at=None):
     with (db_api.CONTEXT_WRITER.using(context)):
         query = context.session.query(ovn_models.OVNHashRing).filter(
@@ -91,21 +99,17 @@ def cleanup_old_nodes(context, days):
     LOG.info('Cleaned up Hash Ring nodes older than %d days', days)
 
 
-@db_api.retry_if_session_inactive()
-def _touch(context, updated_at=None, **filter_args):
+@db_api.CONTEXT_WRITER
+def touch_node(context, node_uuid, updated_at=None):
+    # NOTE(ralonsoh): there are several mechanisms to update the node OVN hash
+    # ring register. This method does not retry the DB operation in case of
+    # failure but relies on the success of later calls. That will prevent from
+    # blocking the DB needlessly.
     if updated_at is None:
         updated_at = timeutils.utcnow()
-    with db_api.CONTEXT_WRITER.using(context):
-        context.session.query(ovn_models.OVNHashRing).filter_by(
-            **filter_args).update({'updated_at': updated_at})
-
-
-def touch_nodes_from_host(context, group_name):
-    _touch(context, hostname=CONF.host, group_name=group_name)
-
-
-def touch_node(context, node_uuid):
-    _touch(context, node_uuid=node_uuid)
+    context.session.query(ovn_models.OVNHashRing).filter(
+        ovn_models.OVNHashRing.node_uuid == node_uuid).update(
+        {'updated_at': updated_at})
 
 
 def _get_nodes_query(context, interval, group_name, offline=False,

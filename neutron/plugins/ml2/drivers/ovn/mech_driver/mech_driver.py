@@ -326,52 +326,52 @@ class OVNMechanismDriver(api.MechanismDriver):
         atexit.register(self._remove_node_from_hash_ring)
         sh.add_handler("SIGTERM", self._remove_node_from_hash_ring)
 
+        admin_context = n_context.get_admin_context()
         if self._start_time:
-            self._setup_hash_ring_start_time()
+            self._setup_hash_ring_start_time(admin_context)
         else:
-            self._setup_hash_ring_event()
+            self._setup_hash_ring_event(admin_context)
+        self._register_hash_ring_maintenance()
 
     def _register_hash_ring_maintenance(self):
+        """Maintenance method for the node OVN hash ring register
+
+        The ``self.node_uuid`` value must be set before calling this method.
+        """
         self._hash_ring_thread = maintenance.MaintenanceThread()
         self._hash_ring_thread.add_periodics(
             maintenance.HashRingHealthCheckPeriodics(
-                self.hash_ring_group))
+                self.hash_ring_group, self.node_uuid))
         self._hash_ring_thread.start()
-        LOG.info('Hash Ring probing thread has started')
+        LOG.info('Hash Ring probing thread for node %s has started',
+                 self.node_uuid)
 
-    def _setup_hash_ring_event(self):
+    def _setup_hash_ring_event(self, context):
         LOG.debug('Hash Ring setup using multiprocess event lock')
-        admin_context = n_context.get_admin_context()
         if not self._hash_ring_probe_event.is_set():
             # Clear existing entries. This code section should be executed
             # only once per node (chassis); the multiprocess event should be
             # set just after the ``is_set`` check.
             self._hash_ring_probe_event.set()
-            ovn_hash_ring_db.remove_nodes_from_host(admin_context,
+            ovn_hash_ring_db.remove_nodes_from_host(context,
                                                     self.hash_ring_group)
-            self._register_hash_ring_maintenance()
-        self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
+        self.node_uuid = ovn_hash_ring_db.add_node(context,
                                                    self.hash_ring_group)
 
-    def _setup_hash_ring_start_time(self):
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
+    def _setup_hash_ring_start_time(self, context):
         LOG.debug('Hash Ring setup using WSGI start time')
-        admin_context = n_context.get_admin_context()
-        with db_api.CONTEXT_WRITER.using(admin_context):
-            # Delete all node registers without created_at=self._start_time
-            created_at = n_utils.ts_to_datetime(self._start_time)
-            ovn_hash_ring_db.remove_nodes_from_host(
-                admin_context, self.hash_ring_group, created_at=created_at)
-            self.node_uuid = ovn_hash_ring_db.add_node(
-                admin_context, self.hash_ring_group, created_at=created_at)
-            newer_nodes = ovn_hash_ring_db.get_nodes(
-                admin_context, self.hash_ring_group, created_at=created_at)
-            LOG.debug('Hash Ring setup, this worker has detected %s OVN hash'
-                      'ring registers in the database', len(newer_nodes))
-
-        if len(newer_nodes) == 1:
-            # If only one register per host is present, that means this worker
-            # is the first one to register itself.
-            self._register_hash_ring_maintenance()
+        # Delete all node registers without created_at=self._start_time
+        created_at = n_utils.ts_to_datetime(self._start_time)
+        ovn_hash_ring_db.remove_nodes_from_host(
+            context, self.hash_ring_group, created_at=created_at)
+        self.node_uuid = ovn_hash_ring_db.add_node(
+            context, self.hash_ring_group, created_at=created_at)
+        newer_nodes = ovn_hash_ring_db.get_nodes(
+            context, self.hash_ring_group, created_at=created_at)
+        LOG.debug('Hash Ring setup, this worker has detected %s OVN hash '
+                  'ring registers in the database', len(newer_nodes))
 
     def post_fork_initialize(self, resource, event, trigger, payload=None):
         # Initialize API/Maintenance workers with OVN IDL connections
