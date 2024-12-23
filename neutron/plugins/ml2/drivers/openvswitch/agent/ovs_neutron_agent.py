@@ -773,6 +773,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self._deferred_delete_direct_flows(self.deleted_ports)
 
+        rcache_rpc = self.plugin_rpc.remote_resource_cache
         while self.deleted_ports:
             port_id = self.deleted_ports.pop()
             port = self.int_br.get_vif_port_by_id(port_id)
@@ -788,6 +789,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 # removing the port from the bridge at the same time
                 self.port_dead(port, log_errors=False)
             self.port_unbound(port_id)
+            rcache_rpc.record_resource_remove(resources.PORT, port_id)
 
         # Flush firewall rules after ports are put on dead VLAN to be
         # more secure
@@ -2142,9 +2144,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         failed_devices = set(devices_down.get('failed_devices_down'))
         LOG.debug("Port removal failed for %s", failed_devices)
         self._deferred_delete_direct_flows(devices)
+        rcache_rpc = self.plugin_rpc.remote_resource_cache
         for device in devices:
             self.ext_manager.delete_port(self.context, {'port_id': device})
             self.port_unbound(device)
+            if device:
+                rcache_rpc.record_resource_remove(resources.PORT, device)
+
         return failed_devices
 
     def treat_ancillary_devices_removed(self, devices):
