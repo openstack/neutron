@@ -2027,13 +2027,35 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             portbindings.HOST_ID: 'fake-src',
             portbindings.PROFILE: {
                 ovn_const.MIGRATING_ATTR: 'fake-dest',
-            }
+            },
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
         }
         with mock.patch.object(
                 self.mech_driver._ovn_client._sb_idl, 'is_col_present',
                 return_value=True):
             options = self.mech_driver._ovn_client._get_port_options(port)
         self.assertEqual('rarp', options.options['activation-strategy'])
+        self.assertEqual('fake-src,fake-dest',
+                         options.options['requested-chassis'])
+
+    def test__get_port_options_migrating_vhostuser(self):
+        port = {
+            'id': 'virt-port',
+            'mac_address': '00:00:00:00:00:00',
+            'device_owner': 'device_owner',
+            'network_id': 'foo',
+            'fixed_ips': [],
+            portbindings.HOST_ID: 'fake-src',
+            portbindings.PROFILE: {
+                ovn_const.MIGRATING_ATTR: 'fake-dest',
+            },
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_VHOST_USER,
+        }
+        with mock.patch.object(
+                self.mech_driver._ovn_client._sb_idl, 'is_col_present',
+                return_value=True):
+            options = self.mech_driver._ovn_client._get_port_options(port)
+        self.assertNotIn('activation-strategy', options.options)
         self.assertEqual('fake-src,fake-dest',
                          options.options['requested-chassis'])
 

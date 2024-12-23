@@ -484,7 +484,11 @@ class OVNClient(object):
                         # Block traffic on destination host until libvirt sends
                         # a RARP packet from it to inform network about the new
                         # location of the port
-                        options['activation-strategy'] = 'rarp'
+                        # TODO(ihrachys) Remove this once OVN properly supports
+                        # activation of DPDK ports (bug 2092407)
+                        if (port[portbindings.VIF_TYPE] !=
+                                portbindings.VIF_TYPE_VHOST_USER):
+                            options['activation-strategy'] = 'rarp'
 
             # Virtual ports can not be bound by using the
             # requested-chassis mechanism, ovn-controller will create the
