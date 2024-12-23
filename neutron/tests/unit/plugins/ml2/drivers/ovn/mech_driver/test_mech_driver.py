@@ -163,7 +163,7 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
                               ['geneve'],
                               group='ml2')
         cfg.CONF.set_override('vni_ranges',
-                              ['1:65536'],
+                              ['1:500'],
                               group='ml2_type_geneve')
         # ensure viable minimum is set for OVN's Geneve
         cfg.CONF.set_override('max_header_size', 38,
@@ -3113,7 +3113,7 @@ class OVNMechanismDriverTestCase(MechDriverSetupBase,
                               ['geneve'],
                               group='ml2')
         cfg.CONF.set_override('vni_ranges',
-                              ['1:65536'],
+                              ['1:500'],
                               group='ml2_type_geneve')
         # ensure viable minimum is set for OVN's Geneve
         cfg.CONF.set_override('max_header_size', 38,
