@@ -17,13 +17,13 @@ import socket
 import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging
+import pyroute2
 from pyroute2 import iproute
 from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import netns
-from pyroute2.nslink import nslink
 import tenacity
 
 from neutron._i18n import _
@@ -146,14 +146,14 @@ def get_iproute(namespace):
     # `NetNS` -- RTNL API to another network namespace
     if namespace:
         # do not try and create the namespace
-        return nslink.NetNS(namespace, flags=0, libc=priv_linux.get_cdll())
+        return pyroute2.NetNS(namespace, flags=0, libc=priv_linux.get_cdll())
     return iproute.IPRoute()
 
 
 @privileged.default.entrypoint
 def open_namespace(namespace):
     """Open namespace to test if the namespace is ready to be manipulated"""
-    with nslink.NetNS(namespace, flags=0):
+    with pyroute2.NetNS(namespace, flags=0):
         pass
 
 

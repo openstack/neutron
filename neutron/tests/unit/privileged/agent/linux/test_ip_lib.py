@@ -15,10 +15,10 @@
 import errno
 from unittest import mock
 
+import pyroute2
 from pyroute2 import iproute
 from pyroute2 import netlink
 from pyroute2.netlink import exceptions as netlink_exceptions
-from pyroute2.nslink import nslink
 
 from neutron.privileged.agent.linux import ip_lib as priv_lib
 from neutron.tests import base
@@ -28,7 +28,7 @@ class IpLibTestCase(base.BaseTestCase):
 
     def _test_run_iproute_link(self, namespace=None):
         ip_obj = "NetNS" if namespace else "IPRoute"
-        _mod = nslink if namespace else iproute
+        _mod = pyroute2 if namespace else iproute
         with mock.patch.object(_mod, ip_obj) as ip_mock_cls:
             ip_mock = ip_mock_cls()
             ip_mock.__enter__().link_lookup.return_value = [2]
@@ -112,7 +112,7 @@ class IpLibTestCase(base.BaseTestCase):
 
     def _test_run_iproute_neigh(self, namespace=None):
         ip_obj = "NetNS" if namespace else "IPRoute"
-        _mod = nslink if namespace else iproute
+        _mod = pyroute2 if namespace else iproute
         with mock.patch.object(_mod, ip_obj) as ip_mock_cls:
             ip_mock = ip_mock_cls()
             ip_mock.__enter__().link_lookup.return_value = [2]
@@ -183,7 +183,7 @@ class IpLibTestCase(base.BaseTestCase):
 
     def _test_run_iproute_addr(self, namespace=None):
         ip_obj = "NetNS" if namespace else "IPRoute"
-        _mod = nslink if namespace else iproute
+        _mod = pyroute2 if namespace else iproute
         with mock.patch.object(_mod, ip_obj) as ip_mock_cls:
             ip_mock = ip_mock_cls()
             ip_mock.__enter__().link_lookup.return_value = [2]
