@@ -23,11 +23,11 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_utils import netutils
 from oslo_utils import uuidutils
+import pyroute2
 from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import netns
-from pyroute2.nslink import nslink
 import testtools
 
 from neutron.agent.common import utils  # noqa
@@ -36,6 +36,7 @@ from neutron.common import utils as common_utils
 from neutron import privileged
 from neutron.privileged.agent.linux import ip_lib as priv_lib
 from neutron.tests import base
+
 
 NETNS_SAMPLE = [
     '12345678-1234-5678-abcd-1234567890ab',
@@ -1003,7 +1004,7 @@ class TestIpNeighCommand(TestIPCmdBase):
         self.addCleanup(privileged.default.set_client_mode, True)
         privileged.default.set_client_mode(False)
 
-    @mock.patch.object(nslink, 'NetNS')
+    @mock.patch.object(pyroute2, 'NetNS')
     def test_add_entry(self, mock_netns):
         mock_netns_instance = mock_netns.return_value
         mock_netns_enter = mock_netns_instance.__enter__.return_value
@@ -1018,20 +1019,20 @@ class TestIpNeighCommand(TestIPCmdBase):
             ifindex=1,
             state=ndmsg.states['permanent'])
 
-    @mock.patch.object(nslink, 'NetNS')
+    @mock.patch.object(pyroute2, 'NetNS')
     def test_add_entry_nonexistent_namespace(self, mock_netns):
         mock_netns.side_effect = OSError(errno.ENOENT, None)
         with testtools.ExpectedException(ip_lib.NetworkNamespaceNotFound):
             self.neigh_cmd.add('192.168.45.100', 'cc:dd:ee:ff:ab:cd')
 
-    @mock.patch.object(nslink, 'NetNS')
+    @mock.patch.object(pyroute2, 'NetNS')
     def test_add_entry_other_error(self, mock_netns):
         expected_exception = OSError(errno.EACCES, None)
         mock_netns.side_effect = expected_exception
         with testtools.ExpectedException(expected_exception.__class__):
             self.neigh_cmd.add('192.168.45.100', 'cc:dd:ee:ff:ab:cd')
 
-    @mock.patch.object(nslink, 'NetNS')
+    @mock.patch.object(pyroute2, 'NetNS')
     def test_delete_entry(self, mock_netns):
         mock_netns_instance = mock_netns.return_value
         mock_netns_enter = mock_netns_instance.__enter__.return_value
@@ -1052,7 +1053,7 @@ class TestIpNeighCommand(TestIPCmdBase):
             errno.ENOENT, None)
         self.neigh_cmd.delete('192.168.45.100', 'cc:dd:ee:ff:ab:cd')
 
-    @mock.patch.object(nslink, 'NetNS')
+    @mock.patch.object(pyroute2, 'NetNS')
     def test_dump_entries(self, mock_netns):
         mock_netns_instance = mock_netns.return_value
         mock_netns_enter = mock_netns_instance.__enter__.return_value

@@ -20,7 +20,6 @@ from unittest import mock
 import netaddr
 from neutron_lib import constants as n_cons
 from oslo_utils import uuidutils
-from pyroute2.ipdb import routes as ipdb_routes
 from pyroute2.iproute import linux as iproute_linux
 from pyroute2.netlink import exceptions as netlink_exc
 from pyroute2.netlink import rtnl
@@ -551,7 +550,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
         for cidr in cidrs:
             ip_version = common_utils.get_ip_version(cidr)
             if ip_version == n_cons.IP_VERSION_6 and not metric:
-                metric = ipdb_routes.IP6_RT_PRIO_USER
+                metric = rtnl.rtmsg.IP6_RT_PRIO_USER
             if ip_version == n_cons.IP_VERSION_6:
                 scope = 0
             routes = priv_ip_lib.list_ip_routes(self.namespace, ip_version)
@@ -578,7 +577,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
         table = table or iproute_linux.DEFAULT_TABLE
         ip_version = common_utils.get_ip_version(gateway)
         if ip_version == n_cons.IP_VERSION_6 and not metric:
-            metric = ipdb_routes.IP6_RT_PRIO_USER
+            metric = rtnl.rtmsg.IP6_RT_PRIO_USER
         scope = 0
         routes = priv_ip_lib.list_ip_routes(self.namespace, ip_version)
         for route in routes:
