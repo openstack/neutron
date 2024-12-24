@@ -475,10 +475,27 @@ class TestHAL3Agent(TestL3Agent):
 
         # Test external connectivity, failover, test again
         pinger = net_helpers.Pinger(vm.namespace, external.ip, interval=0.1)
+        netcat_tcp = net_helpers.NetcatTester(
+            vm.namespace,
+            external.namespace,
+            external.ip,
+            3333,
+            net_helpers.NetcatTester.TCP,
+        )
+        netcat_udp = net_helpers.NetcatTester(
+            vm.namespace,
+            external.namespace,
+            external.ip,
+            3334,
+            net_helpers.NetcatTester.UDP,
+        )
+
         pinger.start()
 
         # Ensure connectivity before disconnect
         vm.block_until_ping(external.ip)
+        netcat_tcp.establish_connection()
+        netcat_udp.establish_connection()
 
         get_active_hosts = functools.partial(
             self._get_hosts_with_ha_state,
@@ -520,6 +537,11 @@ class TestHAL3Agent(TestL3Agent):
         vm.block_until_ping(external.ip)
         LOG.debug(f'Connectivity restored after {datetime.now() - start}')
 
+        # Ensure connection tracking states are synced to now active router
+        netcat_tcp.test_connectivity()
+        netcat_udp.test_connectivity()
+        LOG.debug(f'Connections restored after {datetime.now() - start}')
+
         # Assert the backup host got active
         timeout = self.environment.env_desc.agent_down_time * 1.2
         common_utils.wait_until_true(
@@ -540,6 +562,8 @@ class TestHAL3Agent(TestL3Agent):
 
         # Stop probing processes
         pinger.stop()
+        netcat_tcp.stop_processes()
+        netcat_udp.stop_processes()
 
         # With the default advert_int of 2s the keepalived master timeout is
         # about 6s. Assert less than 90 lost packets (9 seconds)
@@ -567,7 +591,8 @@ class TestHAL3Agent(TestL3Agent):
     def _get_state_file_for_primary_agent(self, router_id):
         for host in self.environment.hosts:
             keepalived_state_file = os.path.join(
-                host.neutron_config.state_path, "ha_confs", router_id, "state")
+                host.neutron_config.config.DEFAULT.state_path,
+                "ha_confs", router_id, "state")
 
             if self._get_keepalived_state(keepalived_state_file) == "primary":
                 return keepalived_state_file

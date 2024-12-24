@@ -98,6 +98,9 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.conf.set_override('state_path', cfg.CONF.state_path)
         self.conf.set_override('pd_dhcp_driver', '')
 
+        # Enable conntrackd support for tests for it to get full test coverage
+        self.conf.set_override('ha_conntrackd_enabled', True)
+
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
         self.device_exists = self.device_exists_p.start()

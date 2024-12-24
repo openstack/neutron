@@ -69,7 +69,12 @@ class NeutronConfigFixture(ConfigFixture):
         self.config.update({
             'DEFAULT': {
                 'host': self._generate_host(),
-                'state_path': self._generate_state_path(self.temp_dir),
+                # Enable conntrackd for tests to get full test coverage
+                'ha_conntrackd_enabled': 'True',
+                # Conntrackd only supports 107 characters for it's control
+                # socket path. Thus the "state_path" should not be nested in
+                # a temporary directory to avoid the final path being too long.
+                'state_path': self.temp_dir,
                 'core_plugin': 'ml2',
                 'service_plugins': env_desc.service_plugins,
                 'auth_strategy': 'noauth',
@@ -154,11 +159,6 @@ class NeutronConfigFixture(ConfigFixture):
 
     def _generate_host(self):
         return utils.get_rand_name(prefix='host-')
-
-    def _generate_state_path(self, temp_dir):
-        # Assume that temp_dir will be removed by the caller
-        self.state_path = tempfile.mkdtemp(prefix='state_path', dir=temp_dir)
-        return self.state_path
 
     def _generate_api_paste(self):
         return c_helpers.find_sample_file('api-paste.ini')

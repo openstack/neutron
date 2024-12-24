@@ -57,12 +57,17 @@ class ProcessManager(MonitoredProcess):
     def __init__(self, conf, uuid, namespace=None, service=None,
                  pids_path=None, default_cmd_callback=None,
                  cmd_addl_env=None, pid_file=None, run_as_root=False,
-                 custom_reload_callback=None):
+                 custom_reload_callback=None,
+                 default_pre_cmd_callback=None,
+                 default_post_cmd_callback=None):
 
         self.conf = conf
         self.uuid = uuid
         self.namespace = namespace
         self.default_cmd_callback = default_cmd_callback
+        self.default_pre_cmd_callback = default_pre_cmd_callback
+        self.default_post_cmd_callback = default_post_cmd_callback
+        self.cmd_addl_env = cmd_addl_env
         self.pids_path = pids_path or self.conf.external_pids
         self.pid_file = pid_file
         self.run_as_root = run_as_root or self.namespace is not None
@@ -83,8 +88,15 @@ class ProcessManager(MonitoredProcess):
         fileutils.ensure_tree(os.path.dirname(self.get_pid_file_name()),
                               mode=0o755)
 
-    def enable(self, cmd_callback=None, reload_cfg=False, ensure_active=False):
+    def enable(self, cmd_callback=None, reload_cfg=False, ensure_active=False,
+               pre_cmd_callback=None, post_cmd_callback=None):
+
         if not self.active:
+            pre_cmd_callback = (pre_cmd_callback or
+                                self.default_pre_cmd_callback)
+            if pre_cmd_callback:
+                pre_cmd_callback()
+
             if not cmd_callback:
                 cmd_callback = self.default_cmd_callback
             # Always try and remove the pid file, as it's existence could
@@ -104,6 +116,12 @@ class ProcessManager(MonitoredProcess):
             ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
             ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
                                      run_as_root=self.run_as_root)
+
+            post_cmd_callback = (post_cmd_callback or
+                                 self.default_post_cmd_callback)
+            if post_cmd_callback:
+                post_cmd_callback()
+
         elif reload_cfg:
             self.reload_cfg()
         if ensure_active:

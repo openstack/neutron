@@ -206,6 +206,22 @@ class L3HATestCase(framework.L3AgentTestFramework):
                       (new_external_device_ip, external_device_name),
                       new_config)
 
+    def _is_conntrackd_running(self, router):
+        return router.conntrackd_manager.get_process().active
+
+    def test_conntrackd_running(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router = self.manage_router(self.agent, router_info)
+        self.assertTrue(self._is_conntrackd_running(router))
+
+    def test_conntrackd_not_enabled(self):
+        # Disable conntrackd support
+        self.agent.conf.set_override('ha_conntrackd_enabled', False)
+
+        router_info = self.generate_router_info(enable_ha=True)
+        router = self.manage_router(self.agent, router_info)
+        self.assertFalse(self._is_conntrackd_running(router))
+
     def test_ha_router_conf_on_restarted_agent(self):
         router_info = self.generate_router_info(enable_ha=True)
         router1 = self.manage_router(self.agent, router_info)
