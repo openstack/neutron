@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random
 from unittest import mock
 
 from neutron_lib import constants as p_const
@@ -371,6 +372,7 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
         self.driver._sync_vlan_allocations()
         self.context = context.Context()
         self.setup_coreplugin(CORE_PLUGIN)
+        self.start_time = random.randint(10**5, 10**6)
 
     def test__populate_new_default_network_segment_ranges(self):
         # _populate_new_default_network_segment_ranges will be called when
@@ -397,7 +399,8 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
         self.assertEqual(VLAN_MAX, network_segment_range.maximum)
 
     def test__delete_expired_default_network_segment_ranges(self):
-        self.driver._delete_expired_default_network_segment_ranges()
+        self.driver._delete_expired_default_network_segment_ranges(
+            self.start_time)
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
-            self.context)
+            self.context, network_type=self.driver.get_type())
         self.assertEqual(0, len(ret))

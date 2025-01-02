@@ -203,12 +203,12 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             LOG.info("Initializing driver for type '%s'", network_type)
             driver.obj.initialize()
 
-    def initialize_network_segment_range_support(self):
+    def initialize_network_segment_range_support(self, start_time):
         for network_type, driver in self.drivers.items():
             if network_type in constants.NETWORK_SEGMENT_RANGE_TYPES:
                 LOG.info("Initializing driver network segment range support "
                          "for type '%s'", network_type)
-                driver.obj.initialize_network_segment_range_support()
+                driver.obj.initialize_network_segment_range_support(start_time)
 
     def _add_network_segment(self, context, network_id, segment,
                              segment_index=0):

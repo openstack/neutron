@@ -21,6 +21,7 @@ from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import common_types
+from oslo_utils import uuidutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_
 from sqlalchemy import not_
@@ -29,6 +30,7 @@ from sqlalchemy import sql
 
 from neutron._i18n import _
 from neutron.common import _constants as common_constants
+from neutron.common import utils as n_utils
 from neutron.db.models import network_segment_range as range_model
 from neutron.db.models.plugins.ml2 import geneveallocation as \
     geneve_alloc_model
@@ -229,3 +231,46 @@ class NetworkSegmentRange(base.NeutronDbObject):
                        for _range in segment_ranges]
             query = query.filter(or_(*clauses))
             return query.limit(common_constants.IDPOOL_SELECT_SIZE).all()
+
+    @classmethod
+    def delete_expired_default_network_segment_ranges(
+            cls, context, network_type, start_time):
+        model = models_map.get(network_type)
+        if not model:
+            msg = (_("network_type '%s' unknown for getting allocation "
+                     "information") % network_type)
+            raise n_exc.InvalidInput(error_message=msg)
+        created_at = n_utils.ts_to_datetime(start_time)
+        with cls.db_context_writer(context):
+            nsr_ids = context.session.query(cls.db_model.id).filter(
+                cls.db_model.default == sql.expression.true(),
+                cls.db_model.network_type == network_type,
+                cls.db_model.created_at != created_at).all()
+            nsr_ids = [nsr_id[0] for nsr_id in nsr_ids]
+            if nsr_ids:
+                NetworkSegmentRange.delete_objects(context, id=nsr_ids)
+
+    @classmethod
+    def new_default(cls, context, network_type, physical_network,
+                    minimum, maximum, start_time):
+        model = models_map.get(network_type)
+        if not model:
+            msg = (_("network_type '%s' unknown for getting allocation "
+                     "information") % network_type)
+            raise n_exc.InvalidInput(error_message=msg)
+        created_at = n_utils.ts_to_datetime(start_time)
+        with cls.db_context_writer(context):
+            if context.session.query(cls.db_model).filter(
+                cls.db_model.default == sql.expression.true(),
+                cls.db_model.shared == sql.expression.true(),
+                cls.db_model.network_type == network_type,
+                cls.db_model.physical_network == physical_network,
+                cls.db_model.minimum == minimum,
+                cls.db_model.maximum == maximum,
+                cls.db_model.created_at == created_at,
+            ).count():
+                return
+
+        cls(context, id=uuidutils.generate_uuid(), default=True, shared=True,
+            network_type=network_type, physical_network=physical_network,
+            minimum=minimum, maximum=maximum, created_at=created_at).create()

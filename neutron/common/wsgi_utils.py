@@ -13,20 +13,34 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+from oslo_utils import timeutils
 
-def get_start_time():
+from neutron.common import utils
+
+
+def get_start_time(default=None, current_time=False):
     """Return the 'start-time=%t' config varible in the WSGI config
 
     This variable contains the start time of the WSGI server. Check
     https://uwsgi-docs.readthedocs.io/en/latest/Configuration.html
     #magic-variables
+
+    :param default: (int or float) in case the uwsgi option 'start-time' is not
+                    available or the uwsgi module cannot be loaded, the method
+                    will return this value.
+    :param current_time: (bool) if ``default`` is None and this flag is set,
+                         the method will return the current time.
+    :return: (int) start time in seconds.
     """
+    if not default and current_time:
+        default = utils.datetime_to_ts(timeutils.utcnow())
+    default = int(default) if default else None
     try:
         # pylint: disable=import-outside-toplevel
         import uwsgi
         start_time = uwsgi.opt.get('start-time')
         if not start_time:
-            return
+            return default
         return int(start_time.decode(encoding='utf-8'))
     except ImportError:
-        return
+        return default

@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    The ``network_segment_ranges`` registers are now initialized based on the
+    Neutron API start time. The type driver class cleans up the database
+    for those registers not matching the network type and the "created_at"
+    timestamp and uses the process-safe method
+    ``NetworkSegmentRange.new_default`` to create the new registers.

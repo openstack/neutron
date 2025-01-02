@@ -19,8 +19,10 @@ from unittest import mock
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
+from neutron.common import utils as n_utils
 from neutron.objects import network as net_obj
 from neutron.objects import network_segment_range
 from neutron.objects.plugins.ml2 import base as ml2_base
@@ -107,15 +109,19 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def _create_network_segment_range(
             self, minimum, maximum, network_type=None, physical_network=None,
-            project_id=None, default=False, shared=False):
+            project_id=None, default=False, shared=False, start_time=None):
         kwargs = self.get_random_db_fields()
+        created_at = (n_utils.ts_to_datetime(start_time) if start_time else
+                      timeutils.utcnow())
         kwargs.update({'network_type': network_type or constants.TYPE_VLAN,
                        'physical_network': physical_network or 'foo',
                        'minimum': minimum,
                        'maximum': maximum,
                        'default': default,
                        'shared': shared,
-                       'project_id': project_id})
+                       'project_id': project_id,
+                       'created_at': created_at,
+                       })
         db_obj = self._test_class.db_model(**kwargs)
         obj_fields = self._test_class.modify_fields_from_db(db_obj)
         obj = self._test_class(self.context, **obj_fields)
@@ -398,3 +404,45 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             self.assertEqual(len(available_ids), len(allocations))
             for alloc in allocations:
                 self.assertIn(alloc.segmentation_id, available_ids)
+
+    def test_delete_expired_default_network_segment_ranges(self):
+        start_time = n_utils.datetime_to_ts(timeutils.utcnow())
+        num_ranges = 5
+        for network_type in network_segment_range.models_map.keys():
+            for idx in range(num_ranges):
+                obj = self._create_network_segment_range(
+                    1, 10, network_type=network_type, default=True,
+                    shared=True, start_time=start_time - idx)
+                obj.create()
+            ranges = network_segment_range.NetworkSegmentRange.get_objects(
+                self.context, default=True, shared=True,
+                network_type=network_type)
+            self.assertEqual(num_ranges, len(ranges))
+
+            network_segment_range.NetworkSegmentRange.\
+                delete_expired_default_network_segment_ranges(
+                    self.context, network_type, start_time)
+            # NOTE(ralonsoh): there should be just one that has the same
+            # "created_at" value as "start_time".
+            ranges = network_segment_range.NetworkSegmentRange.get_objects(
+                self.context, default=True, shared=True,
+                network_type=network_type)
+            self.assertEqual(1, len(ranges))
+
+    def test_new_default(self):
+        start_time = n_utils.datetime_to_ts(timeutils.utcnow())
+        for network_type in network_segment_range.models_map.keys():
+            physical_network = ('foo' if network_type == constants.TYPE_VLAN
+                                else None)
+            ranges = network_segment_range.NetworkSegmentRange.get_objects(
+                self.context, network_type=network_type)
+            self.assertEqual(0, len(ranges))
+
+            # The method "new_default" is idempotent, call it twice.
+            for _ in range(2):
+                network_segment_range.NetworkSegmentRange.new_default(
+                    self.context, network_type, physical_network,
+                    1, 10, start_time)
+                ranges = network_segment_range.NetworkSegmentRange.get_objects(
+                    self.context, network_type=network_type)
+                self.assertEqual(1, len(ranges))

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import random
 from unittest import mock
 
 from neutron_lib import constants as p_const
@@ -477,13 +478,14 @@ class TunnelTypeNetworkSegmentRangeTestMixin:
         cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
         self.context = context.Context()
         self.driver = self.DRIVER_CLASS()
+        self.start_time = random.randint(10**5, 10**6)
 
     def test__populate_new_default_network_segment_ranges(self):
         # _populate_new_default_network_segment_ranges will be called when
         # the type driver initializes with `network_segment_range` loaded as
         # one of the `service_plugins`
         self.driver._initialize(RAW_TUNNEL_RANGES)
-        self.driver.initialize_network_segment_range_support()
+        self.driver.initialize_network_segment_range_support(self.start_time)
         self.driver.sync_allocations()
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
             self.context)
@@ -501,7 +503,8 @@ class TunnelTypeNetworkSegmentRangeTestMixin:
     def test__delete_expired_default_network_segment_ranges(self):
         self.driver.tunnel_ranges = TUNNEL_RANGES
         self.driver.sync_allocations()
-        self.driver._delete_expired_default_network_segment_ranges()
+        self.driver._delete_expired_default_network_segment_ranges(
+            self.start_time)
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
-            self.context)
+            self.context, network_type=self.driver.get_type())
         self.assertEqual(0, len(ret))

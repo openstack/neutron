@@ -25,6 +25,7 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log
 
 from neutron._i18n import _
+from neutron.common import wsgi_utils
 from neutron.db import segments_db
 from neutron.extensions import network_segment_range as ext_range
 from neutron.objects import base as base_obj
@@ -65,8 +66,10 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
 
     def __init__(self):
         super().__init__()
+        self._start_time = wsgi_utils.get_start_time(current_time=True)
         self.type_manager = directory.get_plugin().type_manager
-        self.type_manager.initialize_network_segment_range_support()
+        self.type_manager.initialize_network_segment_range_support(
+            self._start_time)
 
     def _get_network_segment_range(self, context, id):
         obj = obj_network_segment_range.NetworkSegmentRange.get_object(

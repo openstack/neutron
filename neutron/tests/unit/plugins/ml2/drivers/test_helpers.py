@@ -19,8 +19,10 @@ from neutron_lib import context
 from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from oslo_db import exception as exc
+from oslo_utils import timeutils
 from sqlalchemy.orm import query
 
+from neutron.common import utils as n_utils
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 
@@ -152,5 +154,6 @@ class HelpersTestWithNetworkSegmentRange(HelpersTest):
             NETWORK_VLAN_RANGES_CFG_ENTRIES)
         self.context = context.get_admin_context()
         self.driver = type_vlan.VlanTypeDriver()
-        self.driver.initialize_network_segment_range_support()
+        start_time = n_utils.datetime_to_ts(timeutils.utcnow())
+        self.driver.initialize_network_segment_range_support(start_time)
         self.driver._sync_vlan_allocations()

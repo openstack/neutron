@@ -29,7 +29,6 @@ from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log
-from oslo_utils import uuidutils
 from sqlalchemy import or_
 
 from neutron._i18n import _
@@ -146,21 +145,12 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
                  {'type': self.get_type(), 'range': current_range})
 
     @db_api.retry_db_errors
-    def _populate_new_default_network_segment_ranges(self):
+    def _populate_new_default_network_segment_ranges(self, start_time):
         ctx = context.get_admin_context()
-        for tun_min, tun_max in self.tunnel_ranges:
-            res = {
-                'id': uuidutils.generate_uuid(),
-                'name': '',
-                'default': True,
-                'shared': True,
-                'network_type': self.get_type(),
-                'minimum': tun_min,
-                'maximum': tun_max}
-            with db_api.CONTEXT_WRITER.using(ctx):
-                new_default_range_obj = (
-                    range_obj.NetworkSegmentRange(ctx, **res))
-                new_default_range_obj.create()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            for tun_min, tun_max in self.tunnel_ranges:
+                range_obj.NetworkSegmentRange.new_default(
+                    ctx, self.get_type(), None, tun_min, tun_max, start_time)
 
     @db_api.retry_db_errors
     def _get_network_segment_ranges_from_db(self):
@@ -174,9 +164,9 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
 
         return ranges
 
-    def initialize_network_segment_range_support(self):
-        self._delete_expired_default_network_segment_ranges()
-        self._populate_new_default_network_segment_ranges()
+    def initialize_network_segment_range_support(self, start_time):
+        self._delete_expired_default_network_segment_ranges(start_time)
+        self._populate_new_default_network_segment_ranges(start_time)
         # Override self.tunnel_ranges with the network segment range
         # information from DB and then do a sync_allocations since the
         # segment range service plugin has not yet been loaded at this
