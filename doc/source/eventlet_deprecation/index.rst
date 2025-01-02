@@ -26,3 +26,39 @@ Eventlet Deprecation Reference
 This document contains the information related to the ``eventlet`` library
 deprecation. Each section describes how each module has been migrated, the
 caveats, the pending technical debt and the missing parts.
+
+
+OVN Agent
+---------
+
+Launch process
+~~~~~~~~~~~~~~
+
+The execution of the OVN agent has been replaced. Instead of using
+``oslo_services.launch``, that is still using eventlet, the agent creates
+a ``threading.Event`` instance and holds the main thread execution by waiting
+for this event.
+
+.. note::
+
+  Once the ``oslo_services`` library removes the usage of
+  eventlet, the previous implementation will be restored. The
+  ``oslo_services.service.ProcessLauncher`` service launcher implements a
+  signal handler.
+
+
+Metadata proxy
+~~~~~~~~~~~~~~
+
+The ``UnixDomainWSGIServer`` class has been replaced with a new implementation.
+This implementation does not rely on ``neutron.api.wsgi.Server`` nor
+``eventlet.wsgi.server``. It inherits from the built-in library class
+``socketserver.StreamRequestHandler``.
+
+.. note::
+
+  This implementation doesn't use ``oslo_services`` to spawn the
+  processes or the local threads depending on the ``metadata_workers``
+  configuration variable. Right now only the embedded form (local thread)
+  is implemented (``metadata_workers=0``, the default value). Future
+  implementations will enable again this configuration variable.

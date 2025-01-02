@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import threading
 import uuid
 
 from oslo_log import log as logging
@@ -159,6 +160,13 @@ class OVNNeutronAgent(service.Service):
         self.ext_manager_api.nb_idl = self._load_nb_idl()
         self.ext_manager.start()
         LOG.info('OVN Neutron Agent started')
+        self.wait()
+
+    def wait(self):
+        # TODO(ralonsoh): remove this forced wait when the oslo_service.service
+        # implementation is restored in the OVN agent main method.
+        event = threading.Event()
+        event.wait()
 
     def stop(self, graceful=True):
         LOG.info('Stopping OVN Neutron Agent')
