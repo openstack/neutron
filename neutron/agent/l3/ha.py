@@ -13,12 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import io
 import os
+import socketserver
 import threading
 import time
 
 from neutron_lib import constants
 from oslo_log import log as logging
+from oslo_utils import encodeutils
 from oslo_utils import fileutils
 from oslo_utils import netutils
 import webob
@@ -35,29 +38,41 @@ TRANSLATION_MAP = {'primary': constants.HA_ROUTER_STATE_ACTIVE,
                    'fault': constants.HA_ROUTER_STATE_STANDBY,
                    'unknown': constants.HA_ROUTER_STATE_UNKNOWN}
 
+REPLY = """HTTP/1.1 200 OK
+Content-Type: text/plain; charset=UTF-8
+Connection: close
+Content-Location': http://127.0.0.1/"""
 
-class KeepalivedStateChangeHandler:
-    def __init__(self, agent):
-        self.agent = agent
 
-    @webob.dec.wsgify(RequestClass=webob.Request)
-    def __call__(self, req):
-        router_id = req.headers['X-Neutron-Router-Id']
-        state = req.headers['X-Neutron-State']
-        self.enqueue(router_id, state)
+class KeepalivedStateChangeHandler(socketserver.StreamRequestHandler):
+    _agent = None
+
+    def handle(self):
+        try:
+            request = self.request.recv(4096)
+            f_request = io.BytesIO(request)
+            req = webob.Request.from_file(f_request)
+            router_id = req.headers.get('X-Neutron-Router-Id')
+            state = req.headers.get('X-Neutron-State')
+            self.enqueue(router_id, state)
+            reply = encodeutils.to_utf8(REPLY)
+            self.wfile.write(reply)
+        except Exception as exc:
+            LOG.exception('Error while receiving data.')
+            raise exc
 
     def enqueue(self, router_id, state):
         LOG.debug('Handling notification for router '
                   '%(router_id)s, state %(state)s', {'router_id': router_id,
                                                      'state': state})
-        self.agent.enqueue_state_change(router_id, state)
+        self._agent.enqueue_state_change(router_id, state)
 
 
 class L3AgentKeepalivedStateChangeServer:
     def __init__(self, agent, conf):
         self.agent = agent
         self.conf = conf
-
+        self._server = None
         agent_utils.ensure_directory_exists_without_file(
             self.get_keepalived_state_change_socket_path(self.conf))
 
@@ -66,14 +81,16 @@ class L3AgentKeepalivedStateChangeServer:
         return os.path.join(conf.state_path, 'keepalived-state-change')
 
     def run(self):
-        server = agent_utils.UnixDomainWSGIServer(
+        KeepalivedStateChangeHandler._agent = self.agent
+        self._server = agent_utils.UnixDomainWSGIThreadServer(
             'neutron-keepalived-state-change',
-            num_threads=self.conf.ha_keepalived_state_change_server_threads)
-        server.start(KeepalivedStateChangeHandler(self.agent),
-                     self.get_keepalived_state_change_socket_path(self.conf),
-                     workers=0,
-                     backlog=KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG)
-        server.wait()
+            KeepalivedStateChangeHandler,
+            self.get_keepalived_state_change_socket_path(self.conf),
+        )
+        self._server.run()
+
+    def wait(self):
+        self._server.wait()
 
 
 class AgentMixin:
@@ -115,6 +132,7 @@ class AgentMixin:
         state_change_server = (
             L3AgentKeepalivedStateChangeServer(self, self.conf))
         state_change_server.run()
+        state_change_server.wait()
 
     def _calculate_batch_duration(self):
         # Set the BatchNotifier interval to ha_vrrp_advert_int,

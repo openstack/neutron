@@ -20,6 +20,7 @@ import os
 import pwd
 import shlex
 import socket
+import socketserver
 import threading
 import time
 
@@ -35,7 +36,6 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
 
-from neutron.api import wsgi
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.privileged.agent.linux import utils as priv_utils
@@ -476,32 +476,19 @@ class UnixDomainHttpProtocol(eventlet.wsgi.HttpProtocol):
             eventlet.wsgi.HttpProtocol.__init__(self, *args)
 
 
-class UnixDomainWSGIServer(wsgi.Server):
-    def __init__(self, name, num_threads=None):
-        self._socket = None
-        self._launcher = None
+class UnixDomainWSGIThreadServer:
+    def __init__(self, name, application, file_socket):
+        self._name = name
+        self._application = application
+        self._file_socket = file_socket
         self._server = None
-        super().__init__(name, disable_ssl=True,
-                         num_threads=num_threads)
 
-    def start(self, application, file_socket, workers, backlog, mode=None):
-        self._socket = eventlet.listen(file_socket,
-                                       family=socket.AF_UNIX,
-                                       backlog=backlog)
-        if mode is not None:
-            os.chmod(file_socket, mode)
+    def run(self):
+        self._server = socketserver.ThreadingUnixStreamServer(
+            self._file_socket, self._application)
 
-        self._launch(application, workers=workers)
-
-    def _run(self, application, socket):
-        """Start a WSGI service in a new green thread."""
-        logger = logging.getLogger('eventlet.wsgi.server')
-        eventlet.wsgi.server(socket,
-                             application,
-                             max_size=self.num_threads,
-                             protocol=UnixDomainHttpProtocol,
-                             log=logger,
-                             log_format=cfg.CONF.wsgi_log_format)
+    def wait(self):
+        self._server.serve_forever()
 
 
 def get_attr(pyroute2_obj, attr_name):

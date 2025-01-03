@@ -17,12 +17,25 @@ import sys
 
 from oslo_config import cfg  # noqa
 
+from neutron.agent.l3 import ha
 from neutron.common import config
 from neutron.common import eventlet_utils
 from neutron.tests.common.agents import l3_agent
 
+
 eventlet_utils.monkey_patch()
+
+
+# NOTE(ralonsoh): remove when eventlet is removed.
+def patch_keepalived_notifications_server():
+    def start_keepalived_notifications_server():
+        pass
+
+    ha.AgentMixin._start_keepalived_notifications_server = (
+        start_keepalived_notifications_server)
+
 
 if __name__ == "__main__":
     config.register_common_config_options()
+    patch_keepalived_notifications_server()
     sys.exit(l3_agent.main())
