@@ -129,6 +129,7 @@
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
+        - neutron-tempest-plugin-ovn-with-ovn-metadata-agent
     experimental:
       jobs: *neutron-periodic-jobs
 

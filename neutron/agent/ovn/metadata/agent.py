@@ -34,7 +34,7 @@ from neutron.agent.linux import iptables_manager
 from neutron.agent.ovn.agent import ovn_neutron_agent
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.agent.ovn.metadata import ovsdb
-from neutron.agent.ovn.metadata import server as metadata_server
+from neutron.agent.ovn.metadata import server_socket as metadata_server
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
