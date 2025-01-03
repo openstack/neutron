@@ -77,6 +77,14 @@ Contributor Guide
 
    contributor/index
 
+Eventlet deprecation
+--------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   eventlet_deprecation/index
+
 API Reference
 -------------
 
