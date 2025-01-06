@@ -14,7 +14,7 @@ Install the components
 
 .. code-block:: console
 
-   # yum install openstack-neutron-openvswitch
+   # dnf install openstack-neutron-openvswitch
 
 .. end
 

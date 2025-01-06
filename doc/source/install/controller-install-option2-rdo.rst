@@ -10,7 +10,7 @@ Install the components
 
 .. code-block:: console
 
-   # yum install openstack-neutron openstack-neutron-ml2 \
+   # dnf install openstack-neutron openstack-neutron-ml2 \
      openstack-neutron-openvswitch ebtables
 
 .. end
