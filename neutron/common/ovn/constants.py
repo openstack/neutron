@@ -405,6 +405,8 @@ LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY = 'vif-plug:representor:vf-num'
 LSP_OPTIONS_REQUESTED_CHASSIS_KEY = 'requested-chassis'
 LSP_OPTIONS_MCAST_FLOOD_REPORTS = 'mcast_flood_reports'
 LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
+LSP_OPTIONS_QOS_MAX_RATE = 'qos_max_rate'
+LSP_OPTIONS_QOS_BURST = 'qos_burst'
 LSP_OPTIONS_QOS_MIN_RATE = 'qos_min_rate'
 LSP_OPTIONS_LOCALNET_LEARN_FDB = 'localnet_learn_fdb'
 

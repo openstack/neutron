@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from neutron_lib import constants
 from oslo_log import log
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
@@ -20,6 +21,7 @@ from ovsdbapp.schema.open_vswitch import impl_idl as impl_idl_ovs
 from neutron.agent.ovsdb.native import connection as ovsdb_conn
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
+from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
@@ -146,6 +148,10 @@ def get_ovs_port_name(ovs_idl, port_id):
 def get_port_qos(nb_idl, port_id):
     """Retrieve the QoS egress max-bw and min-bw values (in kbps) of a LSP
 
+    Depending on the network type (tunnelled or not), the max-bw value can be
+    defined in a QoS register (tunnelled network) or in the LSP.options
+    (physical network).
+
     There could be max-bw rules ingress (to-lport) and egress (from-lport);
     this method is only returning the egress one. The min-bw rule is only
     implemented for egress traffic.
@@ -167,7 +173,12 @@ def get_port_qos(nb_idl, port_id):
         max_kbps = int(qos_rule.bandwidth.get('rate', 0))
         break
     else:
-        max_kbps = 0
-
-    min_kbps = int(lsp.options.get(ovn_const.LSP_OPTIONS_QOS_MIN_RATE, 0))
+        # The "qos_max_rate" is stored in bits/s
+        max_kbps = n_utils.bits_to_kilobits(
+            int(lsp.options.get(ovn_const.LSP_OPTIONS_QOS_MAX_RATE, 0)),
+            constants.SI_BASE)
+    # The "qos_min_rate" is stored in bits/s
+    min_kbps = n_utils.bits_to_kilobits(
+            int(lsp.options.get(ovn_const.LSP_OPTIONS_QOS_MIN_RATE, 0)),
+            constants.SI_BASE)
     return max_kbps, min_kbps

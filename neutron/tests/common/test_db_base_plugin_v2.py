@@ -22,6 +22,7 @@ from unittest import mock
 
 import eventlet
 import netaddr
+from neutron_lib.api.definitions import external_net as enet_api
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
@@ -456,7 +457,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                             'admin_state_up': admin_state_up,
                             'tenant_id': tenant_id}}
         for arg in (('admin_state_up', 'tenant_id', 'shared',
-                     'vlan_transparent', 'mtu',
+                     'vlan_transparent', 'mtu', enet_api.EXTERNAL,
                      'availability_zone_hints') + (arg_list or ())):
             # Arg must be present
             if arg in kwargs:

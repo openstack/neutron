@@ -15,9 +15,12 @@
 import random
 from unittest import mock
 
+import ddt
 import netaddr
+from neutron_lib.api.definitions import external_net as enet_api
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings as portbindings_api
+from neutron_lib.api.definitions import provider_net as pnet_api
 from neutron_lib.api.definitions import qos as qos_api
 from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
 from neutron_lib import constants
@@ -28,12 +31,13 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.api import extensions
+from neutron.common import config as common_config
 from neutron.common.ovn import constants as ovn_const
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.core_extensions import qos as core_qos
 from neutron.db import l3_fip_qos
 from neutron.db import l3_gateway_ip_qos
-from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects.qos import policy as policy_obj
 from neutron.objects.qos import rule as rule_obj
@@ -69,6 +73,7 @@ class TestFloatingIPQoSL3NatServicePlugin(
                                    qos_fip_apidef.ALIAS]
 
 
+@ddt.ddt
 class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
 
     CORE_PLUGIN_CLASS = 'neutron.plugins.ml2.plugin.Ml2Plugin'
@@ -78,11 +83,20 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                  'test_qos.TestFloatingIPQoSL3NatServicePlugin')
 
     def setUp(self):
+        common_config.register_common_config_options()
         ovn_conf.register_opts()
+        driver_type.register_ml2_drivers_geneve_opts()
+        self.tenant_type = constants.TYPE_GENEVE
         cfg.CONF.set_override('extension_drivers', self._extension_drivers,
                               group='ml2')
         cfg.CONF.set_override('enable_distributed_floating_ip', 'False',
                               group='ovn')
+        cfg.CONF.set_override('external_network_type', 'vlan',
+                              group='ml2')
+        cfg.CONF.set_override('tenant_network_types', [self.tenant_type],
+                              group='ml2')
+        cfg.CONF.set_override('vni_ranges', ['1:200'], group='ml2_type_geneve')
+        cfg.CONF.set_override('max_header_size', 38, group='ml2_type_geneve')
         extensions.register_custom_supported_check(qos_api.ALIAS, lambda: True,
                                                    plugin_agnostic=True)
         super().setUp()
@@ -98,6 +112,10 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self._mock_rules = mock.patch.object(self.qos_driver,
                                              '_update_port_qos_rules')
         self.mock_rules = self._mock_rules.start()
+        self.mock_lsp_get = mock.patch.object(self.qos_driver._driver._nb_idl,
+                                              'ls_get').start()
+        self.mock_lsp_get.return_value.execute.return_value = mock.Mock(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: mock.ANY})
         self.addCleanup(self._mock_rules.stop)
         self.ctx = context.get_admin_context()
         self.project_id = uuidutils.generate_uuid()
@@ -107,6 +125,11 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         obj_cls = obj_cls or self._test_class
         return obj_cls.modify_fields_to_db(
             self.get_random_object_fields(obj_cls))
+
+    def _update_network(self, network_id, qos_policy_id):
+        data = {'network': {'qos_policy_id': qos_policy_id}}
+        return self._update('networks', network_id, data,
+                            as_admin=True)['network']
 
     def _create_one_port(self, mac_address_int, network_id):
         mac_address = netaddr.EUI(mac_address_int)
@@ -119,11 +142,11 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         return port
 
     def _create_one_router(self):
-        network = network_obj.Network(
-            self.ctx, id=uuidutils.generate_uuid(), project_id=self.project_id)
-        network.create()
+        kwargs = {enet_api.EXTERNAL: True}
+        network = self._make_network(self.fmt, 'fip_net', True, as_admin=True,
+                                     **kwargs)['network']
         router_gw_port = self._create_one_port(random.randint(10**6, 10**7),
-                                               network.id)
+                                               network['id'])
         router = router_obj.Router(self.ctx, id=uuidutils.generate_uuid(),
                                    gw_port_id=router_gw_port.id)
         router.create()
@@ -169,26 +192,26 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                 qos_policy_id=qos_policy.id)
             qos_rule.create()
 
-            self.fips_ports.append(self._create_one_port(1000 + net_idx,
-                                                         self.fips_network.id))
+            self.fips_ports.append(self._create_one_port(
+                1000 + net_idx, self.fips_network['id']))
             fip_ip = str(netaddr.IPAddress(fip_cidr.ip + net_idx + 1))
             fip = router_obj.FloatingIP(
                 self.ctx, id=uuidutils.generate_uuid(),
                 project_id=self.project_id, floating_ip_address=fip_ip,
-                floating_network_id=self.fips_network.id,
+                floating_network_id=self.fips_network['id'],
                 floating_port_id=self.fips_ports[-1].id)
             fip.create()
             self.fips.append(fip)
 
-            network = network_obj.Network(
-                self.ctx, id=uuidutils.generate_uuid(),
-                project_id=self.project_id)
-            network.create()
+            network = self._make_network(
+                self.fmt, 'net_{}'.format(net_idx), True,
+                as_admin=True)['network']
             self.networks.append(network)
 
             for port_idx in range(3):
                 self.ports.append(
-                    self._create_one_port(net_idx * 16 + port_idx, network.id))
+                    self._create_one_port(net_idx * 16 + port_idx,
+                                          network['id']))
 
             router, router_network = self._create_one_router()
             self.routers.append(router)
@@ -325,16 +348,15 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         original_port.qos_policy_id = self.qos_policies[0].id
         self.qos_driver.update_port(mock.ANY, port, original_port)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, None, None, lsp=None,
-            port_deleted=False)
+            mock.ANY, port.id, mock.ANY, port.network_id, None, None, lsp=None)
 
         # Change from port policy (qos_policy0) to network policy (qos_policy1)
         self.mock_rules.reset_mock()
         port.qos_network_policy_id = self.qos_policies[1].id
         self.qos_driver.update_port(mock.ANY, port, original_port)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, self.qos_policies[1].id, None,
-            lsp=None, port_deleted=False)
+            mock.ANY, port.id, port.network_id, mock.ANY,
+            self.qos_policies[1].id, None, lsp=None)
 
         # No change (qos_policy0)
         self.mock_rules.reset_mock()
@@ -355,8 +377,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         # Reset (no policy)
         self.qos_driver.update_port(mock.ANY, port, original_port, reset=True)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, None, None, lsp=None,
-            port_deleted=False)
+            mock.ANY, port.id, port.network_id, mock.ANY, None, None, lsp=None)
 
         # Reset (qos_policy0, regardless of being the same a in the previous
         # state)
@@ -365,8 +386,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         original_port.qos_policy_id = self.qos_policies[1].id
         self.qos_driver.update_port(mock.ANY, port, original_port, reset=True)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, self.qos_policies[0].id, None,
-            lsp=None, port_deleted=False)
+            mock.ANY, port.id, port.network_id, mock.ANY,
+            self.qos_policies[0].id, None, lsp=None)
 
         # External port, OVN QoS extension does not apply.
         self.mock_rules.reset_mock()
@@ -380,14 +401,17 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_port(mock.ANY, port, original_port)
         self.mock_rules.assert_not_called()
 
-    def test_delete_port(self):
+    @ddt.data(constants.TYPE_VLAN, constants.TYPE_GENEVE)
+    def test_delete_port(self, network_type):
         self.mock_rules.reset_mock()
+        self.mock_lsp_get.return_value.execute.return_value = mock.Mock(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: network_type})
         self.qos_driver.delete_port(mock.ANY, self.ports[1])
 
         # Assert that rules are deleted
         self.mock_rules.assert_called_once_with(
-            mock.ANY, self.ports[1].id, self.ports[1].network_id, None, None,
-            lsp=None, port_deleted=True)
+            mock.ANY, self.ports[1].id, self.ports[1].network_id, network_type,
+            None, None, lsp=None)
 
     def test_update_network(self):
         """Test update network (internal ports).
@@ -407,15 +431,17 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.ports[2].qos_policy_id = self.qos_policies[1].id
         self.ports[2].update()
         for qos_policy_id, reference_ports in policies_ports:
-            self.networks[0].qos_policy_id = qos_policy_id
-            self.networks[0].update()
-            original_network = {'qos_policy_id': self.qos_policies[0]}
+            self.networks[0] = self._update_network(self.networks[0]['id'],
+                                                    qos_policy_id)
+            original_network = {'qos_policy_id': self.qos_policies[0],
+                                pnet_api.NETWORK_TYPE: mock.ANY,
+                                }
             reviewed_port_ids, _, _ = self.qos_driver.update_network(
                 mock.ANY, self.networks[0], original_network)
             self.assertEqual(reference_ports, reviewed_port_ids)
             calls = [mock.call(mock.ANY, self.ports[0].id,
-                               self.ports[0].network_id, qos_policy_id,
-                               None)]
+                               self.ports[0].network_id, self.tenant_type,
+                               qos_policy_id, None)]
             self.mock_rules.assert_has_calls(calls)
             self.mock_rules.reset_mock()
 
@@ -436,9 +462,11 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.fips[0].qos_policy_id = self.qos_policies[0].id
         self.fips[0].update()
         for qos_policy_id, ref_fips, ref_routers in network_policies:
-            self.fips_network.qos_policy_id = qos_policy_id
-            self.fips_network.update()
-            original_network = {'qos_policy_id': self.qos_policies[0]}
+            self.fips_network = self._update_network(self.fips_network['id'],
+                                                     qos_policy_id)
+            original_network = {'qos_policy_id': self.qos_policies[0],
+                                pnet_api.NETWORK_TYPE: mock.ANY,
+                                }
             _, reviewed_fips_ids, reviewed_router_ids = (
                 self.qos_driver.update_network(
                     mock.Mock(), self.fips_network, original_network))
@@ -452,8 +480,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                (2) from no QoS policy to no QoS policy]
         """
         for qos_policy_id in (self.qos_policies[0].id, None):
-            self.networks[0].qos_policy_id = qos_policy_id
-            self.networks[0].update()
+            self.networks[0] = self._update_network(
+                self.networks[0]['id'], qos_policy_id)
             original_network = {'qos_policy_id': qos_policy_id}
             port_ids, fip_ids, router_ids = self.qos_driver.update_network(
                 mock.ANY, self.networks[0], original_network)
@@ -480,14 +508,15 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.ports[2].qos_policy_id = self.qos_policies[1].id
         self.ports[2].update()
         for qos_policy_id, reference_ports in policies_ports:
-            self.networks[0].qos_policy_id = qos_policy_id
-            self.networks[0].update()
+            self.networks[0] = self._update_network(
+                self.networks[0]['id'], qos_policy_id)
             original_network = {'qos_policy_id': self.qos_policies[0]}
             reviewed_port_ids, _, _ = self.qos_driver.update_network(
                 mock.ANY, self.networks[0], original_network, reset=True)
             self.assertEqual(reference_ports, reviewed_port_ids)
             calls = [mock.call(mock.ANY, self.ports[0].id,
-                               self.ports[0].network_id, qos_policy_id, None)]
+                               self.ports[0].network_id, self.tenant_type,
+                               qos_policy_id, None)]
             self.mock_rules.assert_has_calls(calls)
             self.mock_rules.reset_mock()
 
@@ -510,15 +539,15 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                 mock.Mock(type=ovn_const.LSP_TYPE_LOCALNET),
                 mock.Mock(type=ovn_const.LSP_TYPE_EXTERNAL)]
             for qos_policy_id, reference_ports in policies_ports:
-                self.networks[0].qos_policy_id = qos_policy_id
-                self.networks[0].update()
+                self.networks[0] = self._update_network(self.networks[0]['id'],
+                                                        qos_policy_id)
                 original_network = {'qos_policy_id': self.qos_policies[0]}
                 reviewed_port_ids, _, _ = self.qos_driver.update_network(
                     mock.ANY, self.networks[0], original_network, reset=True)
                 self.assertEqual(reference_ports, reviewed_port_ids)
                 calls = [mock.call(
                     mock.ANY, self.ports[0].id, self.ports[0].network_id,
-                    qos_policy_id, None)]
+                    self.tenant_type, qos_policy_id, None)]
                 self.mock_rules.assert_has_calls(calls)
                 self.mock_rules.reset_mock()
 
@@ -549,8 +578,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.ports[4].update()
         self.ports[5].qos_policy_id = self.qos_policies[1].id
         self.ports[5].update()
-        self.networks[1].qos_policy_id = self.qos_policies[0].id
-        self.networks[1].update()
+        self.networks[1] = self._update_network(
+            self.networks[1]['id'], self.qos_policies[0].id)
         self.fips[0].qos_policy_id = self.qos_policies[0].id
         self.fips[0].update()
         self.fips[1].qos_policy_id = self.qos_policies[1].id
@@ -570,12 +599,12 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         # Ports updated from "update_port": self.ports[1], self.ports[4]
         updated_ports = [self.ports[1], self.ports[4]]
         calls = [mock.call(self.txn, port.id, port.network_id,
-                           self.qos_policies[0].id, mock_qos_rules,
-                           lsp=None, port_deleted=False)
+                           self.tenant_type, self.qos_policies[0].id,
+                           mock_qos_rules, lsp=None)
                  for port in updated_ports]
         # Port updated from "update_network": self.ports[3]
         calls.append(mock.call(self.txn, self.ports[3].id,
-                               self.ports[3].network_id,
+                               self.ports[3].network_id, self.tenant_type,
                                self.qos_policies[0].id, mock_qos_rules))
 
         # We can't ensure the call order because we are not enforcing any order
@@ -715,8 +744,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
 
         # Add network QoS policy
         ext_net = self.router_networks[0]
-        ext_net.qos_policy_id = self.qos_policies[1].id
-        ext_net.update()
+        self.networks[1] = self._update_network(ext_net['id'],
+                                                self.qos_policies[1].id)
         router = self._get_router(self.routers[0].id)
         self.qos_driver.update_router(txn, router)
         nb_idl.qos_add.assert_called_once()
