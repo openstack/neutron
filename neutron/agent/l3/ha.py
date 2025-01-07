@@ -15,8 +15,8 @@
 
 import os
 import threading
+import time
 
-import eventlet
 from neutron_lib import constants
 from oslo_log import log as logging
 from oslo_utils import fileutils
@@ -84,7 +84,9 @@ class AgentMixin:
         # state change sequence is under the proper order.
         self.state_change_notifier = batch_notifier.BatchNotifier(
             self._calculate_batch_duration(), self.notify_server)
-        eventlet.spawn(self._start_keepalived_notifications_server)
+        notifications_server = threading.Thread(
+            target=self._start_keepalived_notifications_server)
+        notifications_server.start()
         self._transition_states = {}
         self._transition_state_mutex = threading.Lock()
 
@@ -143,13 +145,16 @@ class AgentMixin:
         if not self._update_transition_state(router_id, state):
             LOG.debug("Enqueueing router's %s state change to %s",
                       router_id, state)
-            eventlet.spawn_n(self._enqueue_state_change, router_id, state)
-            eventlet.sleep(0)
+            state_change = threading.Thread(target=self._enqueue_state_change,
+                             args=(router_id, state))
+            state_change.start()
+            # TODO(ralonsoh): remove once the eventlet deprecation is finished.
+            time.sleep(0)
 
     def _enqueue_state_change(self, router_id, state):
         # NOTE(ralonsoh): move 'primary' and 'backup' constants to n-lib
         if state == 'primary':
-            eventlet.sleep(self.conf.ha_vrrp_advert_int)
+            time.sleep(self.conf.ha_vrrp_advert_int)
         transition_state = self._update_transition_state(router_id)
         if transition_state != state:
             # If the current "transition state" is not the initial "state" sent
