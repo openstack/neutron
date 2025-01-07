@@ -65,6 +65,13 @@ class DVRServerRpcApi:
         return cctxt.call(
             context, 'get_subnet_for_dvr', subnet=subnet, fixed_ips=fixed_ips)
 
+    @log_helpers.log_method_call
+    def get_ports(self, context, filters):
+        # NOTE(mtomaska): The MetadataRpcCallback (server side) API version 1.0
+        # exposes get_ports, under the PLUGIN topic and None namespace.
+        cctxt = self.client.prepare()
+        return cctxt.call(context, 'get_ports', filters=filters)
+
 
 class DVRServerRpcCallback:
     """Plugin-side RPC (implementation) for agent-to-plugin interaction.
