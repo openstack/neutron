@@ -15,7 +15,6 @@
 
 import contextlib
 
-from eventlet.green import threading
 from keystoneauth1 import exceptions as ks_exceptions
 from keystoneauth1 import loading as ks_loading
 from neutron_lib.callbacks import events
@@ -35,6 +34,7 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 import tenacity
 
+from neutron.common import eventlet_utils
 from neutron.notifiers import batch_notifier
 
 
@@ -53,7 +53,7 @@ NOTIFIER_ENABLE_DEFAULT = True
 # callbacks from the agents (DHCP, L2), trying to update the provisioning
 # status of a port. In order to handle each context notifier enable flag, a
 # thread local variable is used.
-_notifier_store = threading.local()
+_notifier_store = eventlet_utils.get_threading_local()
 
 
 @registry.has_registry_receivers

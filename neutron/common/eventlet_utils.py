@@ -14,8 +14,11 @@
 # under the License.
 
 import os
+import threading
 
 import eventlet
+from eventlet.green import threading as threading_eventlet
+from oslo_utils import eventletutils
 
 
 IS_MONKEY_PATCHED = False
@@ -38,3 +41,9 @@ def monkey_patch():
         p_c_e = importutils.import_module('pyroute2.config.asyncio')
         p_c_e.asyncio_config()
         IS_MONKEY_PATCHED = True
+
+
+def get_threading_local():
+    if eventletutils.is_monkey_patched('thread'):
+        return threading_eventlet.local()
+    return threading.local()
