@@ -10,16 +10,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import queue
 import threading
-
-import eventlet
+import time
 
 from neutron.common import utils
 
 
 class BatchNotifier:
     def __init__(self, batch_interval, callback):
-        self._pending_events = eventlet.Queue()
+        self._pending_events = queue.Queue()
         self.callback = callback
         self.batch_interval = batch_interval
         self._mutex = threading.Lock()
@@ -58,7 +58,7 @@ class BatchNotifier:
                         self._notify()
                         # sleeping after send while holding the lock allows
                         # subsequent events to batch up
-                        eventlet.sleep(self.batch_interval)
+                        time.sleep(self.batch_interval)
 
         utils.spawn_n(synced_send)
 
