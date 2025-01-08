@@ -482,6 +482,7 @@ def check(context, action, target, plugin=None, might_not_exist=False,
     # personas will be supported
     if not cfg.CONF.oslo_policy.enforce_new_defaults and context.is_admin:
         return True
+    init()
     if might_not_exist and not (_ENFORCER.rules and action in _ENFORCER.rules):
         return True
     match_rule, target, credentials = _prepare_check(context,
@@ -518,6 +519,7 @@ def enforce(context, action, target, plugin=None, pluralized=None):
     # personas will be supported
     if not cfg.CONF.oslo_policy.enforce_new_defaults and context.is_admin:
         return True
+    init()
     rule, target, context = _prepare_check(context, action, target, pluralized)
     try:
         result = _ENFORCER.enforce(rule, target, context, action=action,

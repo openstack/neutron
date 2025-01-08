@@ -48,7 +48,6 @@ LOG = logging.getLogger(__name__)
 
 
 def validate_policy(context, policy_name):
-    policy.init()
     policy.enforce(context,
                    policy_name,
                    target={'project_id': context.project_id},
