@@ -89,7 +89,6 @@ class PolicyHook(hooks.PecanHook):
             return
         collection = state.request.context.get('collection')
         needs_prefetch = state.request.method in ('PUT', 'DELETE')
-        policy.init()
 
         action = controller.plugin_handlers[
             pecan_constants.ACTION_MAP[state.request.method]]
@@ -164,7 +163,6 @@ class PolicyHook(hooks.PecanHook):
             return
         if not data or (resource not in data and collection not in data):
             return
-        policy.init()
         is_single = resource in data
         action_type = pecan_constants.ACTION_MAP[state.request.method]
         if action_type == 'get':
