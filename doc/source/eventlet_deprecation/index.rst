@@ -62,3 +62,30 @@ This implementation does not rely on ``neutron.api.wsgi.Server`` nor
   configuration variable. Right now only the embedded form (local thread)
   is implemented (``metadata_workers=0``, the default value). Future
   implementations will enable again this configuration variable.
+
+
+Neutron API
+-----------
+
+The Neutron API currently can be executed only with the uWSGI module; the
+eventlet executor has been deprecated, although the code has not been removed
+from the repository yet.
+
+The Neutron API consists of the following executables:
+
+* The API server: is a multiprocess worker; each process is created by the
+  ``uWSGI`` server.
+
+* The periodic worker: a mult process worker that spawns several threads to
+  execute the periodic workers.
+
+* The RPC worker: a multiprocess process worker that attends the requests from
+  the RPC clients, for example the Neutron agents.
+
+* The ML2/OVN maintenance worker: single process worker, needed by the ML2/OVN
+  mechanism driver.
+
+
+.. note::
+
+  Right now, only the API server is running without eventlet.

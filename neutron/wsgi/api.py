@@ -22,10 +22,10 @@ eventlet_utils.monkey_patch()
 import threading  # noqa:E402
 
 from neutron import server  # noqa:E402
-from neutron.server import api_eventlet  # noqa:E402
+from neutron.server import api  # noqa:E402
 
 application = None
 lock = threading.Lock()
 with lock:
     if application is None:
-        application = server.boot_server(api_eventlet.eventlet_api_server)
+        application = server.boot_server(api.api_server)
