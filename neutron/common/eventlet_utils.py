@@ -13,6 +13,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import os
+
 import eventlet
 
 
@@ -22,6 +24,13 @@ IS_MONKEY_PATCHED = False
 def monkey_patch():
     global IS_MONKEY_PATCHED
     if not IS_MONKEY_PATCHED:
+        # This environment variable will be used in eventlet 0.39.0
+        # https://github.com/eventlet/eventlet/commit/
+        # b754135b045306022a537b5797f2cb2cf47ba49b
+        if os.getenv('EVENTLET_MONKEYPATCH') == '1':
+            IS_MONKEY_PATCHED = True
+            return
+
         eventlet.monkey_patch()
 
         # pylint: disable=import-outside-toplevel
