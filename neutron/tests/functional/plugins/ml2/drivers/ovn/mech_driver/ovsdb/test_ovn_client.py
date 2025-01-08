@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import network_mtu as mtu_def
 from neutron_lib.api.definitions import provider_net
 from neutron_lib import constants
 from oslo_config import cfg
@@ -180,3 +181,50 @@ class TestOVNClient(base.TestOVNFunctionalBase,
 
     def test_router_reside_chassis_redirect_non_dvr_geneve_net(self):
         self._test_router_reside_chassis_redirect(False, 'geneve')
+
+    def test_update_network_lrp_mtu_updated(self):
+        def check_gw_lrp_mtu(router_id, mtu):
+            # Find gateway LRP and check the MTU value.
+            lr = self.nb_api.lookup('Logical_Router',
+                                    ovn_utils.ovn_name(router_id))
+            for lrp in lr.ports:
+                if strutils.bool_from_string(
+                        lrp.external_ids[
+                            ovn_const.OVN_ROUTER_IS_EXT_GW]):
+                    self.assertEqual(mtu, int(lrp.options['gateway_mtu']))
+                    return
+
+            self.fail('Gateway Logical_Router_Port not found for '
+                      'router %s' % router_id)
+
+        cfg.CONF.set_override('ovn_emit_need_to_frag', True, group='ovn')
+        self.add_fake_chassis('host1', enable_chassis_as_gw=True, azs=[])
+        net_ext_args = {provider_net.NETWORK_TYPE: 'geneve',
+                        external_net.EXTERNAL: True,
+                        mtu_def.MTU: 1300}
+        net_int_args = {provider_net.NETWORK_TYPE: 'geneve',
+                        mtu_def.MTU: 1400}
+        with self.network(
+                'test-ext-net', as_admin=True,
+                arg_list=tuple(net_ext_args.keys()), **net_ext_args) as \
+                net_ext, self.network(
+                'test-int-net', as_admin=True,
+                arg_list=tuple(net_int_args.keys()), **net_int_args) as \
+                net_int:
+            with self.subnet(net_ext, cidr='10.1.0.0/24'), \
+                    self.subnet(net_int, cidr='10.2.0.0/24') as snet_int:
+                ext_gw = {'network_id': net_ext['network']['id']}
+                with self.router(external_gateway_info=ext_gw) as router:
+                    router_id = router['router']['id']
+                    self._router_interface_action(
+                        'add', router_id, snet_int['subnet']['id'],
+                        None)
+
+                    check_gw_lrp_mtu(router_id, 1300)
+
+                    # Update external network MTU.
+                    net_ext_args = {'network': {mtu_def.MTU: 1350}}
+                    req = self.new_update_request('networks', net_ext_args,
+                                                  net_ext['network']['id'])
+                    req.get_response(self.api)
+                    check_gw_lrp_mtu(router_id, 1350)
