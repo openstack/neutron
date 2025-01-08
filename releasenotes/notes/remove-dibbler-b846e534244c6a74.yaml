@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    IPv6 Prefix Delegation implementation based on ``dibbler`` was removed from
+    the L3 agent. No in-tree drivers support the feature at the moment. To
+    continue using the feature, you will have to switch to a different plugin
+    that supports it.

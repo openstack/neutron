@@ -13,24 +13,18 @@ at [1]_.
   ML2/OVN integration with the Nova placement API to provide guaranteed
   minimum bandwidth for ports [2]_. Work in progress, see [3]_
 
-* IPv6 Prefix Delegation
-
-  Currently ML2/OVN doesn't implement IPv6 prefix delegation. OVN logical
-  routers have this capability implemented in [4]_ and we have an open RFE to
-  fill this gap [5]_.
-
 * DHCP service for instances
 
   ML2/OVS adds packet filtering rules to every instance that allow DHCP queries
   from instances to reach the DHCP agent. For OVN this traffic has to be
   explicitly allowed by security group rules attached to the instance. Note
   that the default security group does allow all outgoing traffic, so this only
-  becomes relevant when using custom security groups [6]_. Proposed patch is
-  [7]_ but it needs to be revived and updated.
+  becomes relevant when using custom security groups [4]_. Proposed patch is
+  [5]_ but it needs to be revived and updated.
 
 * DNS resolution for instances
 
-  OVN cannot use the host's networking for DNS resolution, so Case 2b in [8]_
+  OVN cannot use the host's networking for DNS resolution, so Case 2b in [6]_
   can only be used when additional DHCP agents are deployed. For Case 2a a
   different configuration option has to be used in ``ml2_conf.ini``::
 
@@ -56,7 +50,7 @@ at [1]_.
 
   The core OVN implementation does not support fragmentation of East/West
   traffic using an OVN router between two private networks. This is being
-  tracked in [9]_ and [10]_.
+  tracked in [7]_ and [8]_.
 
 * North/South Fragmentation and path MTU discovery
 
@@ -70,13 +64,13 @@ at [1]_.
     [ovn]
     ovn_emit_need_to_frag = true
 
-  This makes path MTU discovery fail, and is being tracked in [9]_ and [11]_.
+  This makes path MTU discovery fail, and is being tracked in [7]_ and [9]_.
 
 * Traffic metering
 
   Currently ``neutron-metering-agent`` can only work with the Neutron L3 agent.
   It is not supported by the ``ovn-router`` service plugin nor by the
-  ``neutron-ovn-agent``. This is being reported and tracked in [12]_.
+  ``neutron-ovn-agent``. This is being reported and tracked in [10]_.
 
 * Floating IP Port Forwarding in provider networks and with distributed routing
 
@@ -87,7 +81,7 @@ at [1]_.
   Due to an incompatible setting of the router to make traffic in the vlan/flat
   networks to be distributed but port forwardings are always centralized in
   ML2/OVN backend.
-  This is being reported in [13]_.
+  This is being reported in [11]_.
 
 References
 ----------
@@ -95,13 +89,11 @@ References
 .. [1] https://github.com/ovn-org/ovn/blob/master/TODO.rst
 .. [2] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
 .. [3] https://review.opendev.org/c/openstack/neutron/+/786478
-.. [4] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
-.. [5] https://bugs.launchpad.net/neutron/+bug/1895972
-.. [6] https://bugs.launchpad.net/neutron/+bug/1926515
-.. [7] https://review.opendev.org/c/openstack/neutron/+/788594
-.. [8] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
-.. [9] https://bugs.launchpad.net/neutron/+bug/2032817
-.. [10] https://bugzilla.redhat.com/show_bug.cgi?id=2238494
-.. [11] https://bugzilla.redhat.com/show_bug.cgi?id=2238969
-.. [12] https://bugs.launchpad.net/neutron/+bug/2048773
-.. [13] https://bugs.launchpad.net/neutron/+bug/2028846
+.. [4] https://bugs.launchpad.net/neutron/+bug/1926515
+.. [5] https://review.opendev.org/c/openstack/neutron/+/788594
+.. [6] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
+.. [7] https://bugs.launchpad.net/neutron/+bug/2032817
+.. [8] https://bugzilla.redhat.com/show_bug.cgi?id=2238494
+.. [9] https://bugzilla.redhat.com/show_bug.cgi?id=2238969
+.. [10] https://bugs.launchpad.net/neutron/+bug/2048773
+.. [11] https://bugs.launchpad.net/neutron/+bug/2028846

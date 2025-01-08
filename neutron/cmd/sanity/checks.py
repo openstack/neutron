@@ -57,7 +57,6 @@ DNSMASQ_VERSION_DHCP_RELEASE6 = '2.76'
 DNSMASQ_VERSION_HOST_ADDR6_LIST = '2.81'
 DNSMASQ_VERSION_SEGFAULT_ISSUE = '2.86'
 DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
-MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
 OVN_NB_DB_SCHEMA_GATEWAY_CHASSIS = '5.7.0'
 OVN_NB_DB_SCHEMA_PORT_GROUP = '5.11.0'
@@ -535,22 +534,6 @@ def conntrack_supported():
         return True
     except (OSError, RuntimeError, IndexError, ValueError) as e:
         LOG.debug("Exception while checking for installed conntrack. "
-                  "Exception: %s", e)
-        return False
-
-
-def get_minimal_dibbler_version_supported():
-    return MINIMUM_DIBBLER_VERSION
-
-
-def dibbler_version_supported():
-    try:
-        cmd = ['dibbler-client',
-               'help']
-        out = agent_utils.execute(cmd)
-        return '-w' in out
-    except (OSError, RuntimeError, IndexError, ValueError) as e:
-        LOG.debug("Exception while checking minimal dibbler version. "
                   "Exception: %s", e)
         return False
 

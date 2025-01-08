@@ -21,7 +21,7 @@ experimental_opts = [
     cfg.BoolOpt(EXPERIMENTAL_IPV6_PD,
                 default=False,
                 help=_('Enable execution of the experimental IPv6 Prefix '
-                       'Delegation functionality in the L3 agent.')),
+                       'Delegation functionality in the plugin.')),
 ]
 
 

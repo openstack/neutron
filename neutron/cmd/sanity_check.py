@@ -163,15 +163,6 @@ def check_keepalived_garp_on_sighup_support():
     return result
 
 
-def check_dibbler_version():
-    result = checks.dibbler_version_supported()
-    if not result:
-        LOG.error('The installed version of dibbler-client is too old. '
-                  'Please update to at least version %s.',
-                  checks.get_minimal_dibbler_version_supported())
-    return result
-
-
 def check_nova_notify():
     result = checks.nova_notify_supported()
     if not result:
@@ -406,10 +397,6 @@ OPTS = [
                     check_keepalived_garp_on_sighup_support,
                     help=_('Check keepalived support sending garp on '
                            'SIGHUP.')),
-    BoolOptCallback('dibbler_version', check_dibbler_version,
-                    help=_('Check minimal dibbler version'),
-                    deprecated_for_removal=True,
-                    deprecated_since='Pike'),
     BoolOptCallback('ipset_installed', check_ipset,
                     help=_('Check ipset installation')),
     BoolOptCallback('ip6tables_installed', check_ip6tables,

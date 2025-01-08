@@ -48,7 +48,8 @@ class L3RpcCallback:
     # 1.10 Added update_all_ha_network_port_statuses
     # 1.11 Added get_host_ha_router_count
     # 1.12 Added get_networks
-    target = oslo_messaging.Target(version='1.12')
+    # 1.13 Removed process_prefix_update
+    target = oslo_messaging.Target(version='1.13')
 
     @property
     def plugin(self):
@@ -326,17 +327,6 @@ class L3RpcCallback:
 
         LOG.debug('Updating HA routers states on host %s: %s', host, states)
         self.l3plugin.update_routers_states(context, states, host)
-
-    def process_prefix_update(self, context, **kwargs):
-        subnets = kwargs.get('subnets')
-
-        updated_subnets = []
-        for subnet_id, prefix in subnets.items():
-            updated_subnets.append(
-                self.plugin.update_subnet(context,
-                                          subnet_id,
-                                          {'subnet': {'cidr': prefix}}))
-        return updated_subnets
 
     @db_api.retry_db_errors
     def delete_agent_gateway_port(self, context, **kwargs):

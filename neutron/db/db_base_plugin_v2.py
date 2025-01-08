@@ -1004,7 +1004,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if new_cidr and ipv6_utils.is_ipv6_pd_enabled(s):
             # This is an ipv6 prefix delegation-enabled subnet being given an
-            # updated cidr by the process_prefix_update RPC
+            # updated cidr by the plugin.
             s['cidr'] = netaddr.IPNetwork(new_cidr, s['ip_version'])
             # Update gateway_ip and allocation pools based on new cidr
             s['gateway_ip'] = utils.get_first_host_ip(

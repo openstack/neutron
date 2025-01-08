@@ -128,14 +128,14 @@ class AgentMixin:
     def enqueue_state_change(self, router_id, state):
         """Inform the server about the new router state
 
-        This function will also update the metadata proxy, the radvd daemon,
-        process the prefix delegation and inform to the L3 extensions. If the
-        HA router changes to "primary", this transition will be delayed for at
-        least "ha_vrrp_advert_int" seconds. When the "primary" router
-        transitions to "backup", "keepalived" will set the rest of HA routers
-        to "primary" until it decides which one should be the only "primary".
-        The transition from "backup" to "primary" and then to "backup" again,
-        should not be registered in the Neutron server.
+        This function will also update the metadata proxy, the radvd daemon and
+        inform to the L3 extensions. If the HA router changes to "primary",
+        this transition will be delayed for at least "ha_vrrp_advert_int"
+        seconds. When the "primary" router transitions to "backup",
+        "keepalived" will set the rest of HA routers to "primary" until it
+        decides which one should be the only "primary". The transition from
+        "backup" to "primary" and then to "backup" again, should not be
+        registered in the Neutron server.
 
         :param router_id: router ID
         :param state: ['primary', 'backup']
@@ -180,7 +180,6 @@ class AgentMixin:
         if self.conf.enable_metadata_proxy:
             self._update_metadata_proxy(ri, router_id, state)
         self._update_radvd_daemon(ri, state)
-        self.pd.process_ha_state(router_id, state == 'primary')
         self.state_change_notifier.queue_event((router_id, state))
         self.l3_ext_manager.ha_state_change(self.context, state_change_data)
 

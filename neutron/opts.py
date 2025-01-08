@@ -248,7 +248,6 @@ def list_l3_agent_opts():
              neutron.conf.agent.l3.config.OPTS,
              neutron.conf.service.SERVICE_OPTS,
              neutron.conf.agent.l3.ha.OPTS,
-             neutron.conf.agent.common.PD_DRIVER_OPTS,
              neutron.conf.agent.common.RA_OPTS)
          ),
         ('agent',
