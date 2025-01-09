@@ -2,7 +2,7 @@
 features:
   - |
     HA routers can now run "conntrackd" in addition to "keepalived" to
-    synchronize connection tracking states accross router instances. This
+    synchronize connection tracking states across router instances. This
     ensures that established connections survive a HA router failover. L3 agent
     hosts must have the "conntrackd" binary installed.
 

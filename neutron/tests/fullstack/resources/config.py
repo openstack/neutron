@@ -71,7 +71,7 @@ class NeutronConfigFixture(ConfigFixture):
                 'host': self._generate_host(),
                 # Enable conntrackd for tests to get full test coverage
                 'ha_conntrackd_enabled': 'True',
-                # Conntrackd only supports 107 characters for it's control
+                # Conntrackd only supports 107 characters for its control
                 # socket path. Thus the "state_path" should not be nested in
                 # a temporary directory to avoid the final path being too long.
                 'state_path': self.temp_dir,

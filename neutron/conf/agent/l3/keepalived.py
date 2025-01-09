@@ -25,6 +25,9 @@ CLI_OPTS = [
     cfg.StrOpt('monitor_interface', help=_('Interface to monitor')),
     cfg.StrOpt('monitor_cidr', help=_('CIDR to monitor')),
     cfg.StrOpt('pid_file', help=_('Path to PID file for this process')),
+    cfg.BoolOpt('enable_conntrackd',
+                help=_('Enable conntrackd support'),
+                default=False),
     cfg.StrOpt('user', help=_('User (uid or name) running this process '
                               'after its initialization')),
     cfg.StrOpt('group', help=_('Group (gid or name) running this process '

@@ -29,6 +29,7 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_config
+from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf.agent.l3 import keepalived
 from neutron import privileged
 
@@ -49,12 +50,13 @@ class KeepalivedUnixDomainConnection(agent_utils.UnixDomainHTTPConnection):
 
 class MonitorDaemon(daemon.Daemon):
     def __init__(self, pidfile, router_id, user, group, namespace, conf_dir,
-                 interface, cidr):
+                 interface, cidr, ha_conntrackd_enabled):
         self.router_id = router_id
         self.namespace = namespace
         self.conf_dir = conf_dir
         self.interface = interface
         self.cidr = cidr
+        self.ha_conntrackd_enabled = ha_conntrackd_enabled
         self.monitor = None
         self.event_stop = threading.Event()
         self.event_started = threading.Event()
@@ -85,8 +87,6 @@ class MonitorDaemon(daemon.Daemon):
             target=self.read_queue,
             args=(self.queue, self.event_stop, self.event_started))
         self._thread_initial_state.start()
-        self._thread_ip_monitor.start()
-        self._thread_read_queue.start()
 
         # NOTE(ralonsoh): if the initial status is not read in a defined
         # timeout, "backup" state is set.
@@ -95,8 +95,14 @@ class MonitorDaemon(daemon.Daemon):
             LOG.warning('Timeout reading the initial status of router %s, '
                         'state is set to "backup".', self.router_id)
             self.write_state_change('backup')
+            if self.ha_conntrackd_enabled:
+                self.sync_conntrack('backup')
             self.notify_agent('backup')
 
+        # NOTE(gaudenz): Only starte these threads after the initial status is
+        # set because otherwise the initial status thread sometimes hangs.
+        self._thread_ip_monitor.start()
+        self._thread_read_queue.start()
         self._thread_read_queue.join()
 
     def read_queue(self, _queue, event_stop, event_started):
@@ -115,6 +121,8 @@ class MonitorDaemon(daemon.Daemon):
                 else:
                     new_state = 'backup'
                 self.write_state_change(new_state)
+                if self.ha_conntrackd_enabled:
+                    self.sync_conntrack(new_state)
                 self.notify_agent(new_state)
 
     def handle_initial_state(self):
@@ -132,6 +140,8 @@ class MonitorDaemon(daemon.Daemon):
 
             if not self.initial_state:
                 self.write_state_change(state)
+                if self.ha_conntrackd_enabled:
+                    self.sync_conntrack(state)
                 self.notify_agent(state)
         except Exception:
             if not self.initial_state:
@@ -160,6 +170,53 @@ class MonitorDaemon(daemon.Daemon):
 
         LOG.debug('Notified agent router %s, state %s', self.router_id, state)
 
+    def conntrackd(self, option):
+        execute = ip_lib.IPWrapper(namespace=self.namespace).netns.execute
+        cmd = ['conntrackd', '-C', f'{self.conf_dir}/conntrackd.conf', option]
+
+        LOG.debug('Executing "%s" on router %s', ' '.join(cmd), self.router_id)
+        execute(
+            cmd,
+            run_as_root=True,
+            # Errors are still logged, but should not crash the daemon
+            check_exit_code=False,
+        )
+
+    def sync_conntrack(self, state):
+        if state == 'primary':
+            self.sync_conntrack_primary()
+        elif state == 'backup':
+            self.sync_conntrack_backup()
+        else:
+            LOG.error(f'Unknown state "{state}".')
+
+    def sync_conntrack_primary(self):
+
+        # commit the external cache into the kernel table
+        self.conntrackd('-c')
+
+        # flush the internal and the external caches
+        self.conntrackd('-f')
+
+        # resynchronize my internal cache to the kernel table
+        self.conntrackd('-R')
+
+        # send a bulk update to backups
+        self.conntrackd('-B')
+
+        LOG.debug('Synced connection tracking state on primary for router %s',
+                  self.router_id)
+
+    def sync_conntrack_backup(self):
+        # shorten kernel conntrack timers to remove the zombie entries.
+        self.conntrackd('-t')
+
+        # request resynchronization with primary firewall replica (if any)
+        self.conntrackd('-n')
+
+        LOG.debug('Synced connection tracking state on backup for router %s',
+                  self.router_id)
+
     def handle_sigterm(self, signum, frame):
         self.event_stop.set()
         self._thread_read_queue.join(timeout=5)
@@ -178,6 +235,7 @@ def configure(conf):
 def main():
     keepalived.register_cli_l3_agent_keepalived_opts()
     keepalived.register_l3_agent_keepalived_opts()
+    ha_conf.register_l3_agent_ha_opts()
     agent_config.register_root_helper()
     configure(cfg.CONF)
     MonitorDaemon(cfg.CONF.pid_file,
@@ -187,4 +245,5 @@ def main():
                   cfg.CONF.namespace,
                   cfg.CONF.conf_dir,
                   cfg.CONF.monitor_interface,
-                  cfg.CONF.monitor_cidr).start()
+                  cfg.CONF.monitor_cidr,
+                  cfg.CONF.enable_conntrackd).start()

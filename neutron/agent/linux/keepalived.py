@@ -189,7 +189,7 @@ class KeepalivedInstance:
                  advert_int=None, mcast_src_ip=None, nopreempt=False,
                  garp_primary_delay=GARP_PRIMARY_DELAY,
                  vrrp_health_check_interval=0,
-                 ha_conf_dir=None, notify_script=None):
+                 ha_conf_dir=None):
         self.name = 'VR_%s' % vrouter_id
 
         if state not in VALID_STATES:
@@ -201,7 +201,6 @@ class KeepalivedInstance:
         self.priority = priority
         self.nopreempt = nopreempt
         self.advert_int = advert_int
-        self.notify_script = notify_script
         self.mcast_src_ip = mcast_src_ip
         self.garp_primary_delay = garp_primary_delay
         self.track_interfaces = []
@@ -317,13 +316,6 @@ class KeepalivedInstance:
                        '    virtual_router_id %s' % self.vrouter_id,
                        '    priority %s' % self.priority,
                        '    garp_master_delay %s' % self.garp_primary_delay])
-
-        if self.notify_script:
-            config.extend([
-                       '    notify_master "%s primary"' % self.notify_script,
-                       '    notify_backup "%s backup"' % self.notify_script,
-                       '    notify_fault "%s fault"' % self.notify_script,
-            ])
 
         if self.nopreempt:
             config.append('    nopreempt')

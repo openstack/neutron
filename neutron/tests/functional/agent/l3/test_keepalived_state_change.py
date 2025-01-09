@@ -71,7 +71,8 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
     def _callback(self, *args):
         return self.cmd_opts
 
-    def _generate_cmd_opts(self, monitor_interface=None, cidr=None):
+    def _generate_cmd_opts(self, monitor_interface=None, cidr=None,
+                           conntrackd=True):
         monitor_interface = monitor_interface or self.router.port.name
         cidr = cidr or self.cidr
         self.cmd_opts = [
@@ -88,6 +89,9 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
             '--group=%s' % os.getegid(),
             '--debug',
         ]
+
+        if conntrackd:
+            self.cmd_opts.append('--enable_conntrackd')
 
     def _search_in_file(self, file_name, text):
         def text_in_file():
@@ -113,25 +117,44 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
 
     def test_read_queue_change_state(self):
         self._run_monitor()
-        msg = 'Wrote router %s state %s'
+        msg_state = 'Wrote router %s state %s'
+        msg_conntrack = 'Synced connection tracking state on %s for router %s'
+
         self.router.port.addr.add(self.cidr)
-        self._search_in_file(self.log_file, msg % (self.router_id, 'primary'))
+        self._search_in_file(self.log_file,
+                             msg_state % (self.router_id, 'primary'))
+        self._search_in_file(self.log_file,
+                             msg_conntrack % ('primary', self.router_id))
+
         self.router.port.addr.delete(self.cidr)
-        self._search_in_file(self.log_file, msg % (self.router_id, 'backup'))
+        self._search_in_file(self.log_file,
+                             msg_state % (self.router_id, 'backup'))
+        self._search_in_file(self.log_file,
+                             msg_conntrack % ('backup', self.router_id))
 
     def test_handle_initial_state_backup(self):
         # No tracked IP (self.cidr) is configured in the monitored interface
         # (self.router.port)
         self._run_monitor()
+
         msg = 'Initial status of router {} is {}'.format(
             self.router_id, 'backup')
+        self._search_in_file(self.log_file, msg)
+
+        msg = ('Synced connection tracking state on backup for router %s' %
+               self.router_id)
         self._search_in_file(self.log_file, msg)
 
     def test_handle_initial_state_primary(self):
         self.router.port.addr.add(self.cidr)
         self._run_monitor()
+
         msg = 'Initial status of router {} is {}'.format(
             self.router_id, 'primary')
+        self._search_in_file(self.log_file, msg)
+
+        msg = ('Synced connection tracking state on primary for router %s' %
+               self.router_id)
         self._search_in_file(self.log_file, msg)
 
     def test_handle_initial_state_backup_error_reading_initial_status(self):
@@ -153,3 +176,14 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         msg = 'Initial status of router {} is {}'.format(
             self.router_id, 'backup')
         self._search_in_file(self.log_file, msg)
+
+    def test_conntrackd_disabled(self):
+        self._generate_cmd_opts(conntrackd=False)
+        self._run_monitor()
+
+        # Wait for initial notification. This ensures the first update cycle is
+        # completed
+        self._search_in_file(self.log_file, 'Notified agent router')
+
+        # Check there are no conntrack messages
+        self.assertNotIn('conntrack', open(self.log_file).read())

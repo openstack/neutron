@@ -15,7 +15,6 @@
 
 import os
 import signal
-import stat
 
 import jinja2
 
@@ -32,6 +31,9 @@ from neutron.common import utils as common_utils
 CONNTRACKD_SERVICE_NAME = 'conntrackd'
 SIGTERM_TIMEOUT = 5
 
+# Unix socket path length is limited to 107 characters in the
+# conntrackd source code. See UNIX_PATH_MAX constant in include/local.h
+UNIX_PATH_MAX = 107
 
 LOG = logging.getLogger(__name__)
 
@@ -77,135 +79,6 @@ Sync {
 }
 """)
 
-HA_SCRIPT_TEMPLATE = jinja2.Template(
-    """#!/usr/bin/env sh
-#
-# (C) 2006-2011 by Pablo Neira Ayuso <pablo@netfilter.org>
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# Description:
-#
-# This is the script for primary-backup setups for keepalived
-# (http://www.keepalived.org). You may adapt it to make it work with other
-# high-availability managers.
-#
-# Do not forget to include the required modifications to your keepalived.conf
-# file to invoke this script during keepalived's state transitions.
-#
-# Contributions to improve this script are welcome :).
-#
-
-CONNTRACKD_BIN=/usr/sbin/conntrackd
-CONNTRACKD_LOCK={{ lock }}
-CONNTRACKD_CONFIG={{ config }}
-
-case "$1" in
-  primary)
-    #
-    # commit the external cache into the kernel table
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -c
-    if [ $? -eq 1 ]
-    then
-      logger "ERROR: failed to invoke conntrackd -c"
-    fi
-
-    #
-    # flush the internal and the external caches
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -f
-    if [ $? -eq 1 ]
-    then
-      logger "ERROR: failed to invoke conntrackd -f"
-    fi
-
-    #
-    # resynchronize my internal cache to the kernel table
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -R
-    if [ $? -eq 1 ]
-    then
-      logger "ERROR: failed to invoke conntrackd -R"
-    fi
-
-    #
-    # send a bulk update to backups
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -B
-    if [ $? -eq 1 ]
-    then
-      logger "ERROR: failed to invoke conntrackd -B"
-    fi
-    ;;
-  backup)
-    #
-    # is conntrackd running? request some statistics to check it
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -s
-    if [ $? -eq 1 ]
-    then
-      #
-      # something's wrong, do we have a lock file?
-      #
-      if [ -f $CONNTRACKD_LOCK ]
-      then
-        logger "WARNING: conntrackd was not cleanly stopped."
-        logger "If you suspect that it has crashed:"
-        logger "1) Enable coredumps"
-        logger "2) Try to reproduce the problem"
-        logger "3) Post the coredump to netfilter-devel@vger.kernel.org"
-        rm -f $CONNTRACKD_LOCK
-      fi
-      $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -d
-      if [ $? -eq 1 ]
-      then
-        logger "ERROR: cannot launch conntrackd"
-        exit 1
-      fi
-    fi
-    #
-    # shorten kernel conntrack timers to remove the zombie entries.
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -t
-    if [ $? -eq 1 ]
-    then
-      logger "ERROR: failed to invoke conntrackd -t"
-    fi
-
-    #
-    # request resynchronization with master firewall replica (if any)
-    # Note: this does nothing in the alarm approach.
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -n
-    if [ $? -eq 1 ]
-    then
-      logger "ERROR: failed to invoke conntrackd -n"
-    fi
-    ;;
-  fault)
-    #
-    # shorten kernel conntrack timers to remove the zombie entries.
-    #
-    $CONNTRACKD_BIN -C $CONNTRACKD_CONFIG -t
-    if [ $? -eq 1 ]
-    then
-      logger "ERROR: failed to invoke conntrackd -t"
-    fi
-    ;;
-  *)
-    logger "ERROR: unknown state transition"
-    echo "Usage: primary-backup.sh {primary|backup|fault}"
-    exit 1
-    ;;
-esac
-
-exit 0
-""")
-
 
 class ConntrackdManager:
     """Wrapper for conntrackd.
@@ -225,18 +98,8 @@ class ConntrackdManager:
         self.ha_iface = ha_iface
         self.namespace = namespace
 
-    def build_ha_script(self):
-        ha_script_content = HA_SCRIPT_TEMPLATE.render(
-            lock=self.get_lockfile_path(),
-            config=self.get_conffile_path(),
-        )
-        ha_script_path = self.get_ha_script_path()
-
-        file_utils.replace_file(ha_script_path, ha_script_content)
-        os.chmod(ha_script_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-
     def get_full_config_file_path(self, filename, maxlen=255):
-        # Maximum PATH lenght for most paths in conntrackd is limited to
+        # Maximum PATH length for most paths in conntrackd is limited to
         # 255 characters.
         conf_dir = self.get_conf_dir()
         ensure_tree(conf_dir, 0o755)
@@ -254,11 +117,7 @@ class ConntrackdManager:
         confs_dir = os.path.abspath(
             os.path.normpath(self.agent_conf.ha_confs_path))
 
-        conf_dir = os.path.join(confs_dir, self.resource_id)
-        return conf_dir
-
-    def get_ha_script_path(self):
-        return self.get_full_config_file_path('primary-backup.sh')
+        return os.path.join(confs_dir, self.resource_id)
 
     def get_pid_file_path(self):
         return self.get_full_config_file_path('conntrackd.pid')
@@ -267,9 +126,10 @@ class ConntrackdManager:
         return self.get_full_config_file_path('conntrackd.lock')
 
     def get_ctlfile_path(self):
-        # Unix socket path length is limited to 107 characters in the
-        # conntrackd source code. See UNIX_PATH_MAX constant in include/local.h
-        return self.get_full_config_file_path('conntrackd.ctl', maxlen=107)
+        return self.get_full_config_file_path(
+            'conntrackd.ctl',
+            maxlen=UNIX_PATH_MAX,
+        )
 
     def get_conffile_path(self):
         return self.get_full_config_file_path('conntrackd.conf')
@@ -279,13 +139,15 @@ class ConntrackdManager:
         pid_file = self.get_pid_file_path()
 
         cmd = 'conntrackd -d -C %s' % config_path
-        pid = utils.find_pid_by_cmd(cmd)
+        pid = utils.pgrep(cmd)
+
+        if not pid:
+            raise RuntimeError(_('No process for "%s" found.' % cmd))
 
         file_utils.replace_file(pid_file, pid)
 
     def spawn(self):
         config_path = self.output_config_file()
-        self.build_ha_script()
 
         def callback(pidfile):
             cmd = ['conntrackd', '-d',
@@ -335,7 +197,7 @@ class ConntrackdManager:
         if not pm.active:
             return
 
-        # First try to stop conntrackd by using it's own control command
+        # First try to stop conntrackd by using its own control command
         config_path = self.get_conffile_path()
         cmd = ['conntrackd', '-C', config_path, '-k']
         utils.execute(cmd, run_as_root=True)

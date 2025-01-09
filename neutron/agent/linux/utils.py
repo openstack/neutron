@@ -22,6 +22,7 @@ import shlex
 import socket
 import threading
 import time
+import typing
 
 import eventlet
 from eventlet.green import subprocess
@@ -35,7 +36,6 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
 
-from neutron._i18n import _
 from neutron.api import wsgi
 from neutron.common import utils
 from neutron.conf.agent import common as config
@@ -182,18 +182,20 @@ def find_child_pids(pid, recursive=False):
     return child_pids
 
 
-def find_pid_by_cmd(cmd):
-    """Retrieve a list of the pids by their cmd."""
-    pids = execute(['pgrep', '-f', cmd], log_fail_as_error=False).split()
+def pgrep(
+        command: str,
+        entire_command_line: bool = True
+) -> typing.Optional[str]:
+    cmd = ['pgrep']
+    if entire_command_line:
+        cmd += ['-f']
+    cmd += [command]
+    try:
+        result = execute(cmd).strip()
+    except exceptions.ProcessExecutionError:
+        return None
 
-    if len(pids) > 1:
-        raise RuntimeError(
-            _('%i processes for "%s" found.' % (len(pids), cmd))
-        )
-    if pids == []:
-        raise RuntimeError(_('No process for "%s" found.' % cmd))
-
-    return pids[0]
+    return result if result else None
 
 
 def find_parent_pid(pid):
