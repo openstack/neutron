@@ -33,7 +33,7 @@ Testing
    testing
    fullstack
    ml2_ovs_devstack
-   ci_scenario_jobs
+   ci_jobs
    ml2_ovn_devstack
    tempest
    template_model_sync_test
