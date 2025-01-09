@@ -33,7 +33,6 @@ from neutron_lib import exceptions as lib_exc
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_const
-from neutron_lib.tests import tools
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
 from oslo_concurrency import lockutils
@@ -4078,7 +4077,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  ipv6_ra_mode=constants.IPV6_SLAAC,
                                  ipv6_address_mode=constants.IPV6_SLAAC)
 
-    @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
     def test_create_subnet_ipv6_pd_gw_values(self):
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         subnetpool_id = constants.IPV6_PD_POOL_ID
@@ -4219,7 +4217,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  cidr=cidr, ip_version=constants.IP_VERSION_6,
                                  allocation_pools=allocation_pools)
 
-    @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
     def test_create_subnet_with_v6_pd_allocation_pool_returns_400(self):
         gateway_ip = '::1'
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
