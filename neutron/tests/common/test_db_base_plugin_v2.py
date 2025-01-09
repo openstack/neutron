@@ -311,7 +311,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             return self._admin_req(
                 'POST', resource, data, fmt, id=id,
                 subresource=subresource, ctx=context, tenant_id=tenant_id)
-        elif as_service:
+        if as_service:
             return self._service_req(
                 'POST', resource, data, fmt, id=id,
                 subresource=subresource, ctx=context, tenant_id=tenant_id)
@@ -372,7 +372,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 sub_id=sub_id, ctx=context, headers=headers,
                 tenant_id=tenant_id
             )
-        elif as_service:
+        if as_service:
             return self._service_req(
                 'PUT', resource, data, fmt, id=id,
                 subresource=subresource, ctx=context, tenant_id=tenant_id)

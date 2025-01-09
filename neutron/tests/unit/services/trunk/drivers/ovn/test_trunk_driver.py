@@ -431,9 +431,6 @@ class TestTrunkHandler(base.BaseTestCase):
 
 
 class TestTrunkDriver(base.BaseTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_is_loaded(self):
         driver = trunk_driver.OVNTrunkDriver.create(mock.Mock())
         cfg.CONF.set_override('mechanism_drivers',

@@ -336,9 +336,6 @@ class SRIOVConfigFixture(ConfigFixture):
             }
         })
 
-    def _setUp(self):
-        super()._setUp()
-
 
 class PlacementConfigFixture(ConfigFixture):
 
@@ -351,9 +348,6 @@ class PlacementConfigFixture(ConfigFixture):
                 'placement_port': self.env_desc.placement_port
             }
         })
-
-    def _setUp(self):
-        super()._setUp()
 
 
 class LinuxBridgeConfigFixture(ConfigFixture):

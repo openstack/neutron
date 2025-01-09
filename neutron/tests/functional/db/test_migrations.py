@@ -367,9 +367,6 @@ class TestModelsMigrations(test_migrations.ModelsMigrationsSync,
                    table != 'alembic_version']
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
-    def test_models_sync(self):
-        super().test_models_sync()
-
 
 class TestSanityCheck(testlib_api.SqlTestCaseLight):
     BUILD_SCHEMA = False
@@ -518,11 +515,11 @@ class TestWalkMigrations(testlib_api.MySQLTestCaseMixin,
     BUILD_SCHEMA = False
 
     def execute_cmd(self, cmd=None):
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT, shell=True)
-        output = proc.communicate()[0]
-        self.assertEqual(0, proc.returncode, 'Command failed with '
-                         'output:\n%s' % output)
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, shell=True) as proc:
+            output = proc.communicate()[0]
+            self.assertEqual(0, proc.returncode, 'Command failed with '
+                             'output:\n%s' % output)
 
     def _get_alembic_config(self, uri):
         db_config = migration.get_neutron_config()

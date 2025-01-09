@@ -35,7 +35,7 @@ from neutron_lib.exceptions import ProcessExecutionError
 class ConntrackdManagerTestCase(base.BaseSudoTestCase):
 
     def setUp(self):
-        super(ConntrackdManagerTestCase, self).setUp()
+        super().setUp()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         ha_config.register_l3_agent_ha_opts()
         self.config(check_child_processes_interval=1, group='AGENT')

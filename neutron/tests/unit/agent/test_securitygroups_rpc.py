@@ -3342,10 +3342,6 @@ class TestSecurityGroupAgentWithOVSIptables(
 
     FIREWALL_DRIVER = FIREWALL_HYBRID_DRIVER
 
-    def setUp(self, defer_refresh_firewall=False):
-        super().setUp(
-            defer_refresh_firewall)
-
     def _init_agent(self, defer_refresh_firewall):
         self.agent = sg_rpc.SecurityGroupAgentRpc(
             context=None, plugin_rpc=self.rpc,

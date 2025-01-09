@@ -50,7 +50,7 @@ class BaseQoSRuleTestCase:
     def reverse_direction(self):
         if self.direction == constants.INGRESS_DIRECTION:
             return constants.EGRESS_DIRECTION
-        elif self.direction == constants.EGRESS_DIRECTION:
+        if self.direction == constants.EGRESS_DIRECTION:
             return constants.INGRESS_DIRECTION
 
     def setUp(self):
