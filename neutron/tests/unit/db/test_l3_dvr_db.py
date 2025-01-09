@@ -1337,8 +1337,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             mock.call(self.ctx, "router_1", expected_arp_table),
             mock.call(self.ctx, "router_2", expected_arp_table)])
 
-    def _test_update_arp_entry_for_dvr_service_port(
-            self, device_owner, action):
+    def _test_arp_entry_for_dvr_service_port_no_aap(self, action):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}
         router = self._create_router(router_dict)
@@ -1355,7 +1354,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 {'subnet_id': '48534187-f077-4e81-93ff-81ec4cc0ad3b',
                  'ip_address': 'fd45:1515:7e0:0:f816:3eff:fe1a:1111'}],
             'mac_address': 'my_mac',
-            'device_owner': device_owner
+            'device_owner': 'nova:compute',
+            'allowed_address_pairs': []
         }
         dvr_port = {
             'id': 'dvr_port_id',
@@ -1364,14 +1364,105 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             'device_id': router['id']
         }
         plugin.get_ports.return_value = [dvr_port]
-        if action == 'add':
+        if action == 'update':
             self.mixin.update_arp_entry_for_dvr_service_port(
                 self.ctx, port)
-            self.assertEqual(3, l3_notify.add_arp_entry.call_count)
-        elif action == 'del':
+        elif action == 'delete':
             self.mixin.delete_arp_entry_for_dvr_service_port(
                 self.ctx, port)
-            self.assertEqual(3, l3_notify.del_arp_entry.call_count)
+        expected_calls = [
+            mock.call(self.ctx, router.id, {
+                'ip_address': '10.0.0.11',
+                'mac_address': 'my_mac',
+                'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323'}),
+            mock.call(self.ctx, router.id, {
+                'ip_address': '10.0.0.21',
+                'mac_address': 'my_mac',
+                'subnet_id': '2b7c8a07-6f8e-4937-8701-f1d5da1a807c'}),
+            mock.call(self.ctx, router.id, {
+                'ip_address': 'fd45:1515:7e0:0:f816:3eff:fe1a:1111',
+                'mac_address': 'my_mac',
+                'subnet_id': '48534187-f077-4e81-93ff-81ec4cc0ad3b'})]
+        if action == 'update':
+            l3_notify.add_arp_entry.assert_has_calls(expected_calls)
+        elif action == 'delete':
+            l3_notify.del_arp_entry.assert_has_calls(expected_calls)
+
+    def test_update_arp_entry_for_dvr_service_port_no_aap(self):
+        self._test_arp_entry_for_dvr_service_port_no_aap(action='update')
+
+    def test_delete_arp_entry_for_dvr_service_port_no_aap(self):
+        self._test_arp_entry_for_dvr_service_port_no_aap(action='delete')
+
+    def _test_arp_entry_for_dvr_service_port_aap(self, action):
+        router_dict = {'name': 'test_router', 'admin_state_up': True,
+                       'distributed': True}
+        router = self._create_router(router_dict)
+        plugin = mock.Mock()
+        directory.add_plugin(plugin_constants.CORE, plugin)
+        l3_notify = self.mixin.l3_rpc_notifier = mock.Mock()
+        port = {
+            'id': 'my_port_id',
+            'network_id': 'my_network_id',
+            'fixed_ips': [
+                {'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323',
+                 'ip_address': '10.0.0.11'}],
+            'mac_address': 'my_mac',
+            'device_owner': 'nova:compute',
+            'allowed_address_pairs': [
+                {'ip_address': '10.0.0.12',
+                 'mac_address': 'aa:bb:cc:dd:ee:ff'},
+                {'ip_address': '10.0.0.13'},
+                {'ip_address': '10.0.0.0/24'},
+                {'ip_address': '10.0.0.14/32',
+                 'mac_address': 'aa:bb:cc:dd:ee:ff'}
+            ]
+        }
+        dvr_port = {
+            'id': 'dvr_port_id',
+            'fixed_ips': mock.ANY,
+            'device_owner': const.DEVICE_OWNER_DVR_INTERFACE,
+            'device_id': router['id']
+        }
+        plugin.get_ports.return_value = [dvr_port]
+        subnet = {'id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323',
+                  'cidr': '10.0.0.0/24'}
+        with mock.patch.object(self.mixin._core_plugin, 'get_subnets',
+                               return_value=[subnet]):
+            if action == 'update':
+                self.mixin.update_arp_entry_for_dvr_service_port(
+                    self.ctx, port)
+            elif action == 'delete':
+                self.mixin.delete_arp_entry_for_dvr_service_port(
+                    self.ctx, port)
+        expected_calls = [
+            mock.call(self.ctx, router.id, {
+                'ip_address': '10.0.0.11',
+                'mac_address': 'my_mac',
+                'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323'}
+            ),
+            mock.call(self.ctx, router.id, {
+                'ip_address': '10.0.0.12',
+                'mac_address': 'aa:bb:cc:dd:ee:ff',
+                'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323'}),
+            mock.call(self.ctx, router.id, {
+                'ip_address': '10.0.0.13',
+                'mac_address': 'my_mac',
+                'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323'}),
+            mock.call(self.ctx, router.id, {
+                'ip_address': '10.0.0.14',
+                'mac_address': 'aa:bb:cc:dd:ee:ff',
+                'subnet_id': '51edc9e0-24f9-47f2-8e1e-2a41cb691323'})]
+        if action == 'update':
+            l3_notify.add_arp_entry.assert_has_calls(expected_calls)
+        elif action == 'delete':
+            l3_notify.del_arp_entry.assert_has_calls(expected_calls)
+
+    def test_update_arp_entry_for_dvr_service_port_aap(self):
+        self._test_arp_entry_for_dvr_service_port_aap(action='update')
+
+    def test_delete_arp_entry_for_dvr_service_port_aap(self):
+        self._test_arp_entry_for_dvr_service_port_aap(action='delete')
 
     def test_add_router_interface_csnat_ports_failure(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,

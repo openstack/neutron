@@ -319,6 +319,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             device_exists=True):
         """Add or delete arp entry into router namespace for the subnet."""
 
+        LOG.debug("Handling ARP entry operation %s for ip: %s mac: %s "
+                  "device: %s", operation, ip, mac, device)
         try:
             if device_exists:
                 if operation == 'add':

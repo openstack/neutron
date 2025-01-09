@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    An issue when arp entry in DVR router for allowed address pairs (AAP) is
+    configured for parent port MAC address even when AAP has different MAC address.
+    Ensure we use MAC address from AAP if it is set and fallback to parent
+    port mac address.
+

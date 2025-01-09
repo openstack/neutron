@@ -1260,13 +1260,16 @@ class _DVRAgentInterfaceMixin:
         aa_pair_fixed_ips = []
         if port_dict.get('allowed_address_pairs'):
             for address_pair in port_dict['allowed_address_pairs']:
+                aap_mac_address = address_pair.get("mac_address",
+                                                   port_dict["mac_address"])
                 aap_ip_cidr = address_pair['ip_address'].split("/")
                 if len(aap_ip_cidr) == 1 or int(aap_ip_cidr[1]) == 32:
                     subnet_id = self._get_subnet_id_for_given_fixed_ip(
                         context, aap_ip_cidr[0], port_dict)
                     if subnet_id is not None:
                         fixed_ip = {'subnet_id': subnet_id,
-                                    'ip_address': aap_ip_cidr[0]}
+                                    'ip_address': aap_ip_cidr[0],
+                                    'mac_address': aap_mac_address}
                         aa_pair_fixed_ips.append(fixed_ip)
                     else:
                         LOG.debug("Subnet does not match for the given "
@@ -1289,8 +1292,9 @@ class _DVRAgentInterfaceMixin:
             self._get_allowed_address_pair_fixed_ips(context, port_dict))
         changed_fixed_ips = fixed_ips + allowed_address_pair_fixed_ips
         for fixed_ip in changed_fixed_ips:
+            mac_address = fixed_ip.get("mac_address", port_dict['mac_address'])
             self._generate_arp_table_and_notify_agent(
-                context, fixed_ip, port_dict['mac_address'],
+                context, fixed_ip, mac_address,
                 self.l3_rpc_notifier.add_arp_entry)
 
     def delete_arp_entry_for_dvr_service_port(self, context, port_dict,
@@ -1311,8 +1315,9 @@ class _DVRAgentInterfaceMixin:
                 self._get_allowed_address_pair_fixed_ips(context, port_dict))
             fixed_ips_to_delete = fixed_ips + allowed_address_pair_fixed_ips
         for fixed_ip in fixed_ips_to_delete:
+            mac_address = fixed_ip.get("mac_address", port_dict['mac_address'])
             self._generate_arp_table_and_notify_agent(
-                context, fixed_ip, port_dict['mac_address'],
+                context, fixed_ip, mac_address,
                 self.l3_rpc_notifier.del_arp_entry)
 
     def _get_address_pair_active_port_with_fip(

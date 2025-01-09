@@ -1183,7 +1183,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 vrrp_port_subnet_id = vrrp_port_fixed_ips[0]['subnet_id']
                 vrrp_arp_table1 = {
                     'ip_address': vrrp_port_fixed_ips[0]['ip_address'],
-                    'mac_address': vm_port_mac,
+                    'mac_address': vrrp_port['port']['mac_address'],
                     'subnet_id': vrrp_port_subnet_id}
 
                 expected_calls = [
@@ -1335,7 +1335,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 vrrp_port_subnet_id = vrrp_port_fixed_ips[0]['subnet_id']
                 vrrp_arp_table1 = {
                     'ip_address': vrrp_port_fixed_ips[0]['ip_address'],
-                    'mac_address': vm_port_mac,
+                    'mac_address': vrrp_port['port']['mac_address'],
                     'subnet_id': vrrp_port_subnet_id}
 
                 expected_calls = [
