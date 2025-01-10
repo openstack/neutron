@@ -700,7 +700,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     rp['device_id']))
             lrp_name = utils.ovn_lrouter_port_name(rp['id'])
             lrp = self._nb_idl.get_lrouter_port(lrp_name)
-            if lrp.options.get(
+            if lrp and lrp.options.get(
                     ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH) != expected_value:
                 opt = {ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH: expected_value}
                 cmds.append(self._nb_idl.db_set(

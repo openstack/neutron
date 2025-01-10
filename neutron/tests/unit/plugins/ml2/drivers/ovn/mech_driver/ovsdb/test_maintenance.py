@@ -682,7 +682,8 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self._test_check_redirect_type_router_gateway_ports(
             networks, False, flavored_router=True)
 
-    def _test_check_provider_distributed_ports(self, opt_value=None):
+    def _test_check_provider_distributed_ports(self, opt_value=None,
+                                               flavor_router=False):
         fake_net0 = {'id': 'net0'}
         fake_net1 = {'id': 'net1'}
         fake_port0 = {'id': 'port0', 'device_id': 'device0'}
@@ -695,10 +696,13 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         (self.fake_ovn_client._get_reside_redir_for_gateway_port
              .return_value) = 'true'
 
-        fake_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={
-                'name': 'lrp',
-                'options': {constants.LRP_OPTIONS_RESIDE_REDIR_CH: opt_value}})
+        if flavor_router:
+            fake_lrp = None
+        else:
+            fake_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+                attrs={'name': 'lrp',
+                       'options': {
+                           constants.LRP_OPTIONS_RESIDE_REDIR_CH: opt_value}})
         self.fake_ovn_client._nb_idl.get_lrouter_port.return_value = fake_lrp
 
         # Invoke the periodic method, it meant to run only once at startup
@@ -725,6 +729,12 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             mock.call('Logical_Router_Port', 'lrp-port1', ('options', opt))]
         self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
             expected_calls)
+
+    def test_check_provider_distributed_ports_flavor_router(self):
+        self._test_check_provider_distributed_ports(opt_value=mock.ANY,
+                                                    flavor_router=True)
+        # No LRPs are created, not LRP ``db_set`` can be done.
+        self.fake_ovn_client._nb_idl.db_set.assert_not_called()
 
     def _test_check_baremetal_ports_dhcp_options(self, dhcp_disabled=False):
         cfg.CONF.set_override('disable_ovn_dhcp_for_baremetal_ports',
