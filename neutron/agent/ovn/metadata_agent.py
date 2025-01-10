@@ -37,6 +37,7 @@ def main():
     ovn_meta.register_meta_conf_opts(ovn_meta.OVS_OPTS, group='ovs')
     config.init(sys.argv[1:])
     config.setup_logging()
+    config.setup_gmr()
     ovn_meta.setup_privsep()
     utils.log_opt_values(LOG)
 

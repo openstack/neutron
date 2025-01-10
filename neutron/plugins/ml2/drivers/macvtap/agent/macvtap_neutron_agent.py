@@ -210,6 +210,7 @@ def main():
     common_config.init(sys.argv[1:])
 
     common_config.setup_logging()
+    common_config.setup_gmr()
     agent_config.setup_privsep()
 
     validate_firewall_driver()

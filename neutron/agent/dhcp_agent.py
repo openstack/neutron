@@ -45,6 +45,7 @@ def main():
     register_options(cfg.CONF)
     common_config.init(sys.argv[1:])
     config.setup_logging()
+    common_config.setup_gmr()
     config.setup_privsep()
     server = neutron_service.Service.create(
         binary=constants.AGENT_PROCESS_DHCP,

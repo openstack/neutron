@@ -39,6 +39,7 @@ def main():
 
     config.init(sys.argv[1:])
     config.setup_logging()
+    config.setup_gmr()
     utils.log_opt_values(LOG)
     proxy = agent.UnixDomainMetadataProxy(cfg.CONF)
     proxy.run()

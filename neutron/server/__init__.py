@@ -21,12 +21,9 @@ import os
 import sys
 
 from oslo_config import cfg
-from oslo_reports import guru_meditation_report as gmr
-from oslo_reports import opts as gmr_opts
 
 from neutron._i18n import _
 from neutron.common import config
-from neutron import version
 
 # NOTE(annp): These environment variables are required for deploying
 # neutron-api under mod_wsgi. Currently, these variables are set as DevStack's
@@ -77,11 +74,8 @@ def boot_server(server_func):
     if not logger.handlers:
         logger.addHandler(sys_logging.StreamHandler())
 
-    _version_string = version.version_info.release_string()
     _init_configuration()
-    gmr_opts.set_defaults(cfg.CONF)
-    gmr.TextGuruMeditation.setup_autorun(version=_version_string,
-                                         conf=cfg.CONF)
+    config.setup_gmr()
     try:
         return server_func()
     except KeyboardInterrupt:
