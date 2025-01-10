@@ -74,7 +74,8 @@ class BaseTestOVNL3RouterPluginMixin():
         revision_plugin.RevisionPlugin()
         # MTU needs to be 1442 instead of 1500 because GENEVE headers size
         # must be at least 38 when using OVN
-        network_attrs = {external_net.EXTERNAL: True, 'mtu': 1442}
+        default_mtu = 1442
+        network_attrs = {external_net.EXTERNAL: True, 'mtu': default_mtu}
         self.fake_network = \
             fake_resources.FakeNetwork.create_one_network(
                 attrs=network_attrs).info()
@@ -173,7 +174,10 @@ class BaseTestOVNL3RouterPluginMixin():
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'True',
                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router-id',
             },
-            'options': {}}
+            'options': {
+                ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION: str(default_mtu)
+            }
+        }
         self.fake_floating_ip_attrs = {'floating_ip_address': '192.168.0.10',
                                        'fixed_ip_address': '10.0.0.10'}
         self.fake_floating_ip = fake_resources.FakeFloatingIp.create_one_fip(
@@ -2063,7 +2067,7 @@ class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
         self.fake_router_port['device_owner'] = (
             constants.DEVICE_OWNER_ROUTER_GW)
         gn.return_value = prov_net
-        gns.return_value = [self.fake_network]
+        gns.return_value = [self.fake_network, prov_net]
         ext_ids = {
             ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_GENEVE,
             ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: mtu,
@@ -2109,6 +2113,7 @@ class TestOVNL3RouterPluginEmitNeedToFrag(
         super().setUp()
         config.cfg.CONF.set_override(
             'ovn_emit_need_to_frag', False, group='ovn')
+        self.fake_ext_gw_port_assert['options'] = {}
 
 
 class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,

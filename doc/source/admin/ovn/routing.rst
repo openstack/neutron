@@ -181,3 +181,21 @@ encapsulation) it's been included for completeness.
 Traffic goes directly from instance to instance through br-int in the case
 of both instances living in the same host (VM1 and VM2), or via
 encapsulation when living on different hosts (VM3 and VM4).
+
+
+Packet fragmentation
+~~~~~~~~~~~~~~~~~~~~
+
+The Neutron configuration variable ``[ovn]ovn_emit_need_to_frag`` configures
+OVN to emit the "need to frag" packets in case of MTU mismatches. This
+configuration option allows Neutron to set, in the router gateway
+``Logical_Router_Port``, the option "gateway_mtu". If a packet from any
+network reaches the gateway ``Logical_Router_Port``, OVN will send the "need
+for frag" message.
+
+In order to allow any E/W or N/S traffic to cross the router, the value of
+"gateway_mtu" will have the lowest MTU value off all networks connected to the
+router. This could impact the performance of the traffic using the networks
+connected to the router if the MTU defined is low. But the user can unset the
+Neutron configuration flag in order to avoid the fragmentation, at the cost
+of limiting the communication between networks with different MTUs.

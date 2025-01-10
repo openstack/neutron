@@ -1686,14 +1686,12 @@ class OVNClient:
                         for net in networks) else 'false'
         return reside_redir_ch
 
-    def _gen_router_port_options(self, port, network_mtu=None):
+    def _gen_router_port_options(self, port):
         options = {}
         admin_context = n_context.get_admin_context()
         ls_name = utils.ovn_name(port['network_id'])
         ls = self._nb_idl.ls_get(ls_name).execute(check_error=True)
         network_type = ls.external_ids[ovn_const.OVN_NETTYPE_EXT_ID_KEY]
-        network_mtu = network_mtu or int(
-            ls.external_ids[ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY])
         # For provider networks (VLAN, FLAT types) we need to set the
         # "reside-on-redirect-chassis" option so the routing for this
         # logical router port is centralized in the chassis hosting the
@@ -1717,16 +1715,16 @@ class OVNClient:
                 LOG.debug("Router %s not found", port['device_id'])
             else:
                 network_ids = {port['network_id'] for port in router_ports}
+                # If this method is called during a port creation, the port
+                # won't be present yet in the router ports list.
+                network_ids.add(port['network_id'])
                 networks = None
                 if ovn_conf.is_ovn_emit_need_to_frag_enabled():
                     networks = self._plugin.get_networks(
                         admin_context, filters={'id': network_ids})
-                    for net in networks:
-                        if net['mtu'] > network_mtu:
-                            options[
-                                ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
-                                    network_mtu)
-                            break
+                    # Set the lower MTU of all networks connected to the router
+                    min_mtu = str(min(net['mtu'] for net in networks))
+                    options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = min_mtu
                 if ovn_conf.is_ovn_distributed_floating_ip():
                     # NOTE(ltomasbo): For VLAN type networks connected through
                     # the gateway port there is a need to set the redirect-type
@@ -2136,8 +2134,7 @@ class OVNClient:
         commands = []
         for port in ports:
             lrp_name = utils.ovn_lrouter_port_name(port['id'])
-            options = self._gen_router_port_options(
-                port, network_mtu=prov_net['mtu'])
+            options = self._gen_router_port_options(port)
             # Do not fail for cases where logical router port get deleted
             commands.append(self._nb_idl.lrp_set_options(lrp_name,
                                                          if_exists=True,
