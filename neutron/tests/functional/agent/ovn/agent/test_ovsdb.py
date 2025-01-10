@@ -35,7 +35,7 @@ class GetPortQosTestCase(base.TestOVNFunctionalBase):
         else:
             options = {qos_param: None}
         lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
-        self.nb_api.update_lswitch_qos_options(lsp, **options).execute(
+        self.nb_api.update_lswitch_qos_options(lsp.uuid, **options).execute(
             check_error=True)
         if qos_value is not None:
             self.assertEqual(qos_value,

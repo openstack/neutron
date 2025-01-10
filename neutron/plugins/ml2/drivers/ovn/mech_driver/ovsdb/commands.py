@@ -246,10 +246,13 @@ class UpdateLSwitchPortQosOptionsCommand(command.BaseCommand):
         self.qos = qos
 
     def run_idl(self, txn):
+        # NOTE(ralonsoh): this command can be called from inside a transaction
+        # where the LSP is being created. If this is not the case, the value
+        # provided in the Neutron port ID (== LSP.name).
         if isinstance(self.lport, command.BaseCommand):
             port_id = self.lport.result
         else:
-            port_id = self.lport.uuid
+            port_id = self.lport
 
         try:
             port = self.api.lookup('Logical_Switch_Port', port_id)
