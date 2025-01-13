@@ -15,8 +15,9 @@
 import abc
 import collections
 import os.path
+import threading
+import time
 
-import eventlet
 from neutron_lib import exceptions as n_exc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -227,8 +228,9 @@ class ProcessMonitor:
 
         self._monitored_processes = {}
 
+        self._checking_thread = None
         if self._config.AGENT.check_child_processes_interval:
-            self._spawn_checking_thread()
+            self._checking_thread = self._spawn_checking_thread()
 
     def register(self, uuid, service_name, monitored_process):
         """Start monitoring a process.
@@ -277,10 +279,15 @@ class ProcessMonitor:
         process will be stopped.
         """
         self._monitor_processes = False
+        if self._checking_thread:
+            self._checking_thread.join()
 
     def _spawn_checking_thread(self):
         self._monitor_processes = True
-        eventlet.spawn(self._periodic_checking_thread)
+        checking_thread = threading.Thread(
+            target=self._periodic_checking_thread)
+        checking_thread.start()
+        return checking_thread
 
     @lockutils.synchronized("_check_child_processes")
     def _check_child_processes(self):
@@ -301,8 +308,10 @@ class ProcessMonitor:
 
     def _periodic_checking_thread(self):
         while self._monitor_processes:
-            eventlet.sleep(self._config.AGENT.check_child_processes_interval)
-            eventlet.spawn(self._check_child_processes)
+            time.sleep(self._config.AGENT.check_child_processes_interval)
+            check_thread = threading.Thread(target=self._check_child_processes)
+            check_thread.start()
+            check_thread.join()
 
     def _execute_action(self, service_id):
         action = self._config.AGENT.check_child_processes_action
