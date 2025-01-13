@@ -154,9 +154,6 @@ class TestMetadataProxyHandlerBase(base.BaseTestCase):
 
 
 class FakeUnixDomainMetadataProxy(proxy_base.UnixDomainMetadataProxyBase):
-    def __init__(self, conf):
-        super().__init__(conf)
-
     def run(self):
         # This is an abstractmethod so must be defined
         pass

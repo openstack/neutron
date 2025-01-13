@@ -54,7 +54,8 @@ class FakeSingularCollectionExtension(api_extensions.ExtensionDescriptor):
     def get_pecan_controllers(self):
         ctrllr = controllers.CollectionsController(
             self.RESOURCE, self.RESOURCE)
-        return [pecan_utils.PecanResourceExtension(self.RESOURCE, ctrllr)]
+        return [
+            pecan_utils.PecanResourceExtension(self.RESOURCE, ctrllr, None)]
 
 
 class FakeSingularCollectionPlugin:

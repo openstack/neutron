@@ -69,8 +69,9 @@ class TestExtensionDriver(TestExtensionDriverBase):
         assert(isinstance(result, dict))
         assert(result['id'] is not None)
         if expected_obj_entry_class:
-            assert(isinstance(entry, expected_db_entry_class) or
-                   isinstance(entry, expected_obj_entry_class))
+            assert(isinstance(entry,
+                              (expected_db_entry_class,
+                               expected_obj_entry_class)))
         else:
             assert(isinstance(entry, expected_db_entry_class))
         assert(entry.id == result['id'])

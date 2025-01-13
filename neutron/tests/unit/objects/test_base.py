@@ -1172,7 +1172,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             self.assertFalse(obj.obj_reset_changes.called)
 
     def test_extra_fields(self):
-        if not len(self._test_class.obj_extra_fields):
+        if not self._test_class.obj_extra_fields:
             self.skipTest(
                 'Test class %r has no obj_extra_fields' % self._test_class)
         obj = self._test_class(self.context, **self.obj_fields[0])

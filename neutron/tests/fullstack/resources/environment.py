@@ -299,7 +299,7 @@ class Host(fixtures.Fixture):
     def get_bridge(self, network_id):
         if "ovs" in self.agents.keys():
             return self.ovs_agent.br_int
-        elif "linuxbridge" in self.agents.keys():
+        if "linuxbridge" in self.agents.keys():
             bridge = self.network_bridges.get(network_id, None)
             if not bridge:
                 br_prefix = lb_agent.LinuxBridgeManager.get_bridge_name(
@@ -386,9 +386,9 @@ class Host(fixtures.Fixture):
     def l2_agent(self):
         if self.host_desc.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
             return self.linuxbridge_agent
-        elif self.host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
+        if self.host_desc.l2_agent_type == constants.AGENT_TYPE_OVS:
             return self.ovs_agent
-        elif self.host_desc.l2_agent_type == constants.AGENT_TYPE_NIC_SWITCH:
+        if self.host_desc.l2_agent_type == constants.AGENT_TYPE_NIC_SWITCH:
             return self.sriov_agent
 
 

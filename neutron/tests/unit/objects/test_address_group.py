@@ -27,9 +27,6 @@ class AddressGroupDbObjectTestCase(
 
     _test_class = address_group.AddressGroup
 
-    def setUp(self):
-        super().setUp()
-
     def _create_test_address_group(self):
         self.objs[0].create()
         return self.objs[0]
