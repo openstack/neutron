@@ -84,12 +84,10 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         self.mock_plugin_api = mock.patch(
             'neutron.agent.dhcp.agent.DhcpPluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+        self.conf.set_override('check_child_processes_interval', 1, 'AGENT')
         self.agent = agent.DhcpAgentWithStateReport('localhost')
 
         self.ovs_driver = interface.OVSInterfaceDriver(self.conf)
-
-        self.conf.set_override('check_child_processes_interval', 1, 'AGENT')
-
         mock.patch('neutron.agent.common.ovs_lib.'
                    'OVSBridge._set_port_dead').start()
 
