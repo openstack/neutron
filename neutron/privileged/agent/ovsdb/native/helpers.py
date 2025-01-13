@@ -13,9 +13,13 @@
 #    under the License.
 
 from oslo_concurrency import processutils
+from oslo_log import log as logging
 from oslo_utils import netutils
 
 from neutron import privileged
+
+
+LOG = logging.getLogger(__name__)
 
 
 def _connection_to_manager_uri(conn_uri):
@@ -45,5 +49,30 @@ def enable_connection_uri(conn_uri, log_fail_as_error=False,
            '--', 'add', 'Open_vSwitch', '.', 'manager_options', '@manager']
     if probe is not None:
         cmd += ['--', 'set', 'Manager', man_uri, 'inactivity_probe=%s' % probe]
-    return processutils.execute(*cmd, log_errors=log_fail_as_error,
-                                check_exit_code=check_exit_code)
+    try:
+        processutils.execute(*cmd, log_errors=log_fail_as_error,
+                             check_exit_code=check_exit_code)
+    except processutils.ProcessExecutionError as pe:
+        LOG.warning("OVS Manager creation failed, it might already "
+                    "exist (stderr: %s).", pe.stderr)
+        if probe is None:
+            LOG.debug("No new value for inactivity_probe, re-creation of "
+                      "OVS Manager is not necessary")
+            return
+
+        # Try to fetch Manager table as it is already exists and see if
+        # inactivity_probe is already the desired value
+        cmd = ['ovs-vsctl', '--timeout=%d' % timeout, '--id=@manager',
+               '--', 'get', 'Manager', man_uri, 'inactivity_probe']
+        in_probe = processutils.execute(*cmd, log_errors=log_fail_as_error,
+                                        check_exit_code=True)
+        if in_probe[0].strip() == str(probe):
+            LOG.info("OVS Manager is already created and inactivity_probe "
+                     "is set to %s.", in_probe[0].strip())
+            return in_probe
+        cmd = ['ovs-vsctl', '--timeout=%d' % timeout, '--', 'set',
+               'Manager', man_uri, 'inactivity_probe=%s' % probe]
+        processutils.execute(*cmd, log_errors=log_fail_as_error,
+                             check_exit_code=True)
+        LOG.info("OVS Manager was set with new inactivity_probe "
+                 "value %s.", probe)
