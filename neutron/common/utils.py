@@ -111,7 +111,7 @@ def throttler(threshold=DEFAULT_THROTTLER_VALUE):
                         LOG.debug("Call of function %s scheduled, sleeping "
                                   "%.1f seconds", fname, time_to_wait)
                         # Decorated function has been called recently, wait.
-                        eventlet.sleep(time_to_wait)
+                        time.sleep(time_to_wait)
                     lock_with_timer.timestamp = time.time()
                 finally:
                     lock_with_timer.release()
@@ -932,7 +932,11 @@ def spawn_n(func, *args, **kwargs):
             profiler.init(**profiler_info)
         return func(*args, **kwargs)
 
-    return eventlet.spawn_n(wrapper, *args, **kwargs)
+    # NOTE(ralonsoh): the thread started and returned here is not tracked;
+    # the consumer should join() the thread in order to check that it finishes.
+    _thread = threading.Thread(target=wrapper, args=args, kwargs=kwargs)
+    _thread.start()
+    return _thread
 
 
 def timecost(f):

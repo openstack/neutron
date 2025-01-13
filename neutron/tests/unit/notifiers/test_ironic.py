@@ -15,13 +15,13 @@
 
 from unittest import mock
 
-import eventlet
 from neutron_lib.api.definitions import portbindings as portbindings_def
 from neutron_lib.callbacks import events
 from neutron_lib import constants as n_const
 from openstack import connection
 from openstack import exceptions as os_exc
 
+from neutron.common import utils as n_utils
 from neutron.notifiers import batch_notifier
 from neutron.notifiers import ironic
 from neutron.tests import base
@@ -167,7 +167,7 @@ class TestIronicNotifier(base.BaseTestCase):
              'mac_address': 'de:ad:ca:fe:ba:be',
              'status': 'DELETED'})
 
-    @mock.patch.object(eventlet, 'spawn_n', autospec=True)
+    @mock.patch.object(n_utils, 'spawn_n')
     def test_queue_events(self, mock_spawn_n):
         port = get_fake_port()
         original_port = None

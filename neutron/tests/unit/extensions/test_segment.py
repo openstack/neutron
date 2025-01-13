@@ -13,6 +13,7 @@
 #    under the License.
 
 import copy
+import time
 from unittest import mock
 
 import netaddr
@@ -2051,6 +2052,9 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                               ['physnet:200:209', 'physnet0:200:209',
                                'physnet1:200:209', 'physnet2:200:209'],
                               group='ml2_type_vlan')
+        self.send_events_interval = 1
+        cfg.CONF.set_override('send_events_interval',
+                              self.send_events_interval)
         super().setUp(plugin='ml2')
         # Need notifier here
         self.patch_notifier.stop()
@@ -2687,6 +2691,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.mock_n_client.aggregates.get_details.return_value = aggregate
         network, segment = self._test_create_network_and_segment('physnet')
         self._delete('networks', network['id'])
+        time.sleep(self.send_events_interval)
         self.mock_n_client.aggregates.remove_host.assert_has_calls(
             [mock.call(aggregate.id, 'fakehost1')])
         self.mock_n_client.aggregates.delete.assert_has_calls(
