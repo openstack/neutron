@@ -970,15 +970,6 @@ class L3NATAgent(ha.AgentMixin,
         self._context.request_id = common_context.generate_request_id()
         return self._context
 
-    def after_start(self):
-        # Note: the FWaaS' vArmourL3NATAgent is a subclass of L3NATAgent. It
-        # calls this method here. So Removing this after_start() would break
-        # vArmourL3NATAgent. We need to find out whether vArmourL3NATAgent
-        # can have L3NATAgentWithStateReport as its base class instead of
-        # L3NATAgent.
-        eventlet.spawn_n(self._process_routers_loop)
-        LOG.info("L3 agent started")
-
     def stop(self):
         LOG.info("Stopping L3 agent")
         if self.conf.cleanup_on_shutdown:
