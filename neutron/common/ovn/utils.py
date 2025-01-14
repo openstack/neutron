@@ -394,8 +394,8 @@ def get_lsp_security_groups(port, skip_trusted_port=True):
 def is_lsp_enabled(lsp):
     """Return if a Logical Switch Port is enabled
 
-    This method mimics the OVN northd method ``lsp_is_enabled``
-    https://shorturl.at/rBSZ7. The "enabled" field can have three values:
+    This method mimics the OVN northd method ``lsp_is_enabled``. The "enabled"
+    field can have three values:
     * []: from older OVN versions, in this case the LSP is enabled by default.
     * [True]: the LSP is enabled.
     * [False]: the LSP is disabled.
@@ -409,8 +409,7 @@ def is_lsp_enabled(lsp):
 def is_lsp_up(lsp):
     """Return if a Logical Switch Port is UP
 
-    This method mimics the OVN northd method ``lsp_is_up``
-    https://shorturl.at/aoKR6
+    This method mimics the OVN northd method ``lsp_is_up``.
 
     :param lsp: ``ovs.db.Row`` with a Logical Switch Port register.
     :return: True if the port is UP, False if not.
