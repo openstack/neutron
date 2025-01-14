@@ -26,14 +26,11 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
-import testscenarios
 import testtools
 
 from neutron.common import utils
 from neutron.tests import base
 from neutron.tests.unit import tests
-
-load_tests = testscenarios.load_tests_apply_scenarios
 
 
 class _PortRange:
@@ -524,13 +521,7 @@ class TestRpBandwidthValidator(base.BaseTestCase):
                           self.not_valid_rp_bandwidth, self.device_name_set)
 
 
-class SpawnWithOrWithoutProfilerTestCase(
-        testscenarios.WithScenarios, base.BaseTestCase):
-
-    scenarios = [
-        ('spawn', {'spawn_variant': utils.spawn}),
-        ('spawn_n', {'spawn_variant': utils.spawn_n}),
-    ]
+class SpawnWithOrWithoutProfilerTestCase(base.BaseTestCase):
 
     def _compare_profilers_in_parent_and_in_child(self, init_profiler):
 
@@ -546,8 +537,7 @@ class SpawnWithOrWithoutProfilerTestCase(
             if init_profiler:
                 profiler.init(hmac_key='fake secret')
 
-            self.spawn_variant(
-                lambda: q.put(is_profiler_initialized('in-child')))
+            utils.spawn_n(lambda: q.put(is_profiler_initialized('in-child')))
             q.put(is_profiler_initialized('in-parent'))
 
         # Make sure in parent we start with an uninitialized profiler by

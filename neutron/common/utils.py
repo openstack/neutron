@@ -921,26 +921,6 @@ def collect_profiler_info():
         }
 
 
-def spawn(func, *args, **kwargs):
-    """As eventlet.spawn() but with osprofiler initialized in the new threads
-
-    osprofiler stores the profiler instance in thread local storage, therefore
-    in new threads (including eventlet threads) osprofiler comes uninitialized
-    by default. This spawn() is a stand-in replacement for eventlet.spawn()
-    but we re-initialize osprofiler in threads spawn()-ed.
-    """
-
-    profiler_info = collect_profiler_info()
-
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        if profiler_info:
-            profiler.init(**profiler_info)
-        return func(*args, **kwargs)
-
-    return eventlet.spawn(wrapper, *args, **kwargs)
-
-
 def spawn_n(func, *args, **kwargs):
     """See spawn() above"""
 
