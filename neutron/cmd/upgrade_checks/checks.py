@@ -24,6 +24,7 @@ from sqlalchemy import and_
 from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import or_
+from sqlalchemy import text
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
@@ -96,7 +97,7 @@ def get_networks():
 def table_exists(table_name):
     ctx = context.get_admin_context()
     with db_api.CONTEXT_READER.using(ctx):
-        tables = [t[0] for t in ctx.session.execute("SHOW TABLES;")]
+        tables = [t[0] for t in ctx.session.execute(text("SHOW TABLES;"))]
         return table_name in tables
 
 
