@@ -97,7 +97,7 @@ class OVSOFControllerHelper:
         self.main_ev.set()
         self._main_thread.join()
 
-    def _agent_main(self, bridge_classes):
+    def _agent_main(self, bridge_classes, register_signal=None):
         self.br_int_cls = bridge_classes['br_int']
         self.br_phys_cls = bridge_classes['br_phys']
         self.br_tun_cls = bridge_classes['br_tun']
