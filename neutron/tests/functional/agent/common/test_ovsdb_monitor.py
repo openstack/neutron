@@ -65,10 +65,20 @@ class SimpleInterfaceMonitorTestCase(base.BaseSudoTestCase):
         p2 = self.useFixture(net_helpers.OVSPortFixture(br_2))
 
         ports_expected = {p1.port.name, p2.port.name}
+
+        def process_new_events(mon, ports_expected):
+            remaining = self._check_port_events(
+                mon, ports_expected=ports_expected)
+
+            # Next time check only the ports not seen yet
+            ports_expected.clear()  # Python doesn't support {:} syntax
+            ports_expected.update(remaining)
+
+            return bool(ports_expected)  # True if there are remaining ports
+
         try:
             common_utils.wait_until_true(
-                lambda: not self._check_port_events(
-                    mon_no_filter, ports_expected=ports_expected),
+                lambda: not process_new_events(mon_no_filter, ports_expected),
                 timeout=5)
         except common_utils.WaitTimeout:
             self.fail('Interface monitor not filtered did not received an '
