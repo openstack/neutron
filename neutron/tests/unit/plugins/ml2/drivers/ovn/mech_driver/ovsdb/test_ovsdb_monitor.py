@@ -251,8 +251,6 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
     def test_notify_skip_touch_node(self, mock_touch_node):
-        # Set a time for last touch
-        self.idl._last_touch = timeutils.utcnow()
         self.idl.notify(self.fake_event, self.fake_row)
 
         # Assert that touch_node() wasn't called
@@ -261,15 +259,12 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
     @mock.patch.object(ovn_hash_ring_db, 'touch_node')
     def test_notify_last_touch_expired(self, mock_touch_node):
-        # Set a time for last touch
-        self.idl._last_touch = timeutils.utcnow()
+        # make the node old enough to require a touch
+        updated_at = timeutils.utcnow() - datetime.timedelta(
+            seconds=ovn_const.HASH_RING_TOUCH_INTERVAL + 1)
+        self.mock_get_node.return_value = (self.node_uuid, updated_at)
 
-        # Let's expire the touch node interval for the next utcnow()
-        with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
-            mock_utcnow.return_value = (
-                self.idl._last_touch + datetime.timedelta(
-                    seconds=ovn_const.HASH_RING_TOUCH_INTERVAL + 1))
-            self.idl.notify(self.fake_event, self.fake_row)
+        self.idl.notify(self.fake_event, self.fake_row)
 
         # Assert that touch_node() was invoked
         mock_touch_node.assert_called_once_with(mock.ANY, self.node_uuid)
