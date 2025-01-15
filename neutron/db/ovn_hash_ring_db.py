@@ -100,16 +100,14 @@ def cleanup_old_nodes(context, days):
 
 
 @db_api.CONTEXT_WRITER
-def touch_node(context, node_uuid, updated_at=None):
+def touch_node(context, node_uuid):
     # NOTE(ralonsoh): there are several mechanisms to update the node OVN hash
     # ring register. This method does not retry the DB operation in case of
     # failure but relies on the success of later calls. That will prevent from
     # blocking the DB needlessly.
-    if updated_at is None:
-        updated_at = timeutils.utcnow()
     context.session.query(ovn_models.OVNHashRing).filter(
         ovn_models.OVNHashRing.node_uuid == node_uuid).update(
-        {'updated_at': updated_at})
+        {'updated_at': timeutils.utcnow()})
 
 
 def _get_nodes_query(context, interval, group_name, offline=False,
