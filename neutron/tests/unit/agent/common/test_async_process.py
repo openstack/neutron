@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import queue as python_queue
 import signal
+import subprocess  # nosec
 import sys
+import threading
 from unittest import mock
 
-import eventlet.event
-from eventlet.green import subprocess
-import eventlet.queue
 import testtools
 
 from neutron.agent.common import async_process
@@ -42,21 +42,25 @@ class TestAsyncProcess(base.BaseTestCase):
         proc = self.proc
         with mock.patch.object(utils, 'create_process') as mock_create_process:
             mock_create_process.return_value = [expected_process, None]
-            with mock.patch('eventlet.spawn') as mock_spawn:
+            with mock.patch('threading.Thread') as mock_thread:
                 proc._spawn()
 
         self.assertTrue(self.proc._is_running)
-        self.assertIsInstance(proc._kill_event, eventlet.event.Event)
+        self.assertIsInstance(proc._kill_event, threading.Event)
         self.assertEqual(proc._process, expected_process)
-        mock_spawn.assert_has_calls([
-            mock.call(proc._watch_process,
-                      proc._read_stdout,
-                      proc._kill_event,
-                      mock.ANY),
-            mock.call(proc._watch_process,
-                      proc._read_stderr,
-                      proc._kill_event,
-                      mock.ANY),
+        mock_thread.assert_has_calls([
+            mock.call(target=proc._watch_process,
+                      args=(proc._read_stdout,
+                            proc._kill_event,
+                            mock.ANY),
+                      daemon=False),
+            mock.call().start(),
+            mock.call(target=proc._watch_process,
+                      args=(proc._read_stderr,
+                            proc._kill_event,
+                            mock.ANY),
+                      daemon=False),
+            mock.call().start()
         ])
         self.assertEqual(len(proc._watchers), 2)
 
@@ -86,7 +90,7 @@ class TestAsyncProcess(base.BaseTestCase):
             self.proc._is_started = is_started
             with mock.patch.object(self.proc, '_kill') as kill:
                 with mock.patch.object(self.proc, '_spawn') as spawn:
-                    with mock.patch('eventlet.sleep') as sleep:
+                    with mock.patch('time.sleep') as sleep:
                         self.proc._handle_process_error()
 
             kill.assert_has_calls([mock.call(signal.SIGKILL)])
@@ -110,7 +114,7 @@ class TestAsyncProcess(base.BaseTestCase):
         self.proc._is_running = True
         self.proc._kill_event = kill_event
 
-        thread_exit_event = eventlet.event.Event()
+        thread_exit_event = threading.Event()
 
         # Ensure the test times out eventually if the watcher loops endlessly
         with self.assert_max_execution_time():
@@ -119,16 +123,16 @@ class TestAsyncProcess(base.BaseTestCase):
                 self.proc._watch_process(
                     callback, kill_event, thread_exit_event)
 
-        if not kill_event.ready():
+        if not kill_event.is_set():
             func.assert_called_once_with()
 
     def test__watch_process_exits_on_callback_failure(self):
-        self._test__watch_process(lambda: None, eventlet.event.Event())
+        self._test__watch_process(lambda: None, threading.Event())
 
     def test__watch_process_exits_on_exception(self):
         self._test__watch_process(self._watch_process_exception,
-                                  eventlet.event.Event())
-        thread_exit_event = eventlet.event.Event()
+                                  threading.Event())
+        thread_exit_event = threading.Event()
         with mock.patch.object(self.proc,
                                '_handle_process_error') as func:
             self.proc._watch_process(self._watch_process_exception,
@@ -137,12 +141,12 @@ class TestAsyncProcess(base.BaseTestCase):
             func.assert_not_called()
 
     def test__watch_process_exits_on_sent_kill_event(self):
-        kill_event = eventlet.event.Event()
-        kill_event.send()
+        kill_event = threading.Event()
+        kill_event.set()
         self._test__watch_process(None, kill_event)
 
     def _test_read_output_queues_and_returns_result(self, output):
-        queue = eventlet.queue.LightQueue()
+        queue = python_queue.Queue()
         mock_stream = mock.Mock()
         with mock.patch.object(mock_stream, 'readline') as mock_readline:
             mock_readline.return_value = output
@@ -173,12 +177,12 @@ class TestAsyncProcess(base.BaseTestCase):
         mock_start.assert_called_once_with()
 
     def test__iter_queue_returns_empty_list_for_empty_queue(self):
-        result = list(self.proc._iter_queue(eventlet.queue.LightQueue(),
+        result = list(self.proc._iter_queue(python_queue.Queue(),
                                             False))
         self.assertEqual([], result)
 
     def test__iter_queue_returns_queued_data(self):
-        queue = eventlet.queue.LightQueue()
+        queue = python_queue.Queue()
         queue.put('foo')
         result = list(self.proc._iter_queue(queue, False))
         self.assertEqual(result, ['foo'])
@@ -216,7 +220,7 @@ class TestAsyncProcess(base.BaseTestCase):
             self.assertFalse(self.proc._is_running)
             self.assertIsNone(self.proc._pid)
 
-        mock_kill_event.send.assert_called_once_with()
+        mock_kill_event.set.assert_called_once_with()
         if pid:
             mock_kill_process_and_wait.assert_called_once_with(
                 pid, signal.SIGKILL, None)
@@ -340,5 +344,5 @@ class TestFailingAsyncProcess(base.BaseTestCase):
             self.process._process.wait()
             # Wait for the monitor process to complete
             for thread in self.process._watchers:
-                thread.wait()
+                thread.join()
             self.assertEqual(1, handle_error_mock.call_count)
