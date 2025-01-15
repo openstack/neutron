@@ -11,6 +11,7 @@
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_AGENT: openvswitch
         KEYSTONE_ADMIN_ENDPOINT: true
+        NEUTRON_DEPLOY_MOD_WSGI: true
       rally_task: rally-jobs/task-neutron.yaml
       devstack_plugins:
         osprofiler: https://opendev.org/openstack/osprofiler
@@ -187,6 +188,7 @@
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: "branch-24.03"
         OVS_BRANCH: "branch-3.3"
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_local_conf:
         post-config:
           "${RALLY_CONF_DIR}/${RALLY_CONF_FILE}":
