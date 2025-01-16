@@ -86,6 +86,8 @@ DEVICE_NAME_PATTERN = re.compile(r"(\d+?): (\S+?):.*")
 IP_ROUTE_METRIC_DEFAULT = {constants.IP_VERSION_4: 0,
                            constants.IP_VERSION_6: 1024}
 
+ARPING_SLEEP = 2
+
 
 def remove_interface_suffix(interface):
     """Remove a possible "<if>@<endpoint>" suffix from an interface' name.
@@ -1060,7 +1062,7 @@ def _arping(ns_name, iface_name, address, count, log_exception):
     for i in range(count):
         if not first:
             # hopefully enough for kernel to get out of locktime loop
-            time.sleep(2)
+            time.sleep(ARPING_SLEEP)
             # On the second (and subsequent) arping calls, we can get a
             # "bind: Cannot assign requested address" error since
             # the IP address might have been deleted concurrently.
