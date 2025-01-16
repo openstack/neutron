@@ -1121,6 +1121,9 @@ class HashRingHealthCheckPeriodics:
         # NOTE(lucasagomes): Note that we do not rely on the OVSDB lock
         # here because we want the maintenance tasks from each instance to
         # execute this task.
+        LOG.debug(
+            'Touching Hash Ring node "%s" from periodic health check thread',
+            self._node_uuid)
         hash_ring_db.touch_node(self.ctx, self._node_uuid)
 
         # Check the number of the nodes in the ring and log a message in
