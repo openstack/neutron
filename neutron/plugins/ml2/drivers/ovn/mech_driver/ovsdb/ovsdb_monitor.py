@@ -844,6 +844,9 @@ class OvnIdlDistributedLock(BaseOvnIdl):
                 # the error and continue with processing the event
                 try:
                     ctx = neutron_context.get_admin_context()
+                    LOG.debug(
+                        'Touching Hash Ring node "%s" from IDL notify handler',
+                        self._node_uuid)
                     ovn_hash_ring_db.touch_node(ctx, self._node_uuid)
                 except Exception:
                     LOG.exception('Hash Ring node %s failed to heartbeat',
