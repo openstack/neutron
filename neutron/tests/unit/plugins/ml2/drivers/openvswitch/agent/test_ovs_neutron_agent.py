@@ -3403,6 +3403,9 @@ class TestOvsDvrNeutronAgent:
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports',
+                                  return_value=[]),\
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),\
@@ -3474,14 +3477,36 @@ class TestOvsDvrNeutronAgent:
             phys_br.assert_not_called()
 
     def _test_port_bound_for_dvr_on_vxlan_network(
-            self, device_owner, ip_version=n_const.IP_VERSION_4):
+            self, device_owner, ip_version=n_const.IP_VERSION_4, aaps=False):
         self._setup_for_dvr_test()
+        port_obj = {"id": "fake-port-uuid"}
+        aap_mac = 'aa:bb:cc:dd:ee:ff'
+        aap_mac2 = 'aa:bb:cc:dd:ee:fe'
+        aap_mac3 = 'aa:bb:cc:dd:ee:fd'
         if ip_version == n_const.IP_VERSION_4:
             gateway_ip = '1.1.1.1'
             cidr = '1.1.1.0/24'
+            if aaps:
+                port_obj["allowed_address_pairs"] = [
+                    {'ip_address': '1.1.1.10/32',
+                     'mac_address': aap_mac},
+                    {'ip_address': '1.1.1.11',
+                     'mac_address': aap_mac2},
+                    {'ip_address': '0.0.0.0/0',
+                     'mac_address': aap_mac3}
+                ]
         else:
             gateway_ip = '2001:100::1'
             cidr = '2001:100::0/64'
+            if aaps:
+                port_obj["allowed_address_pairs"] = [
+                    {'ip_address': '2001:100::10/128',
+                     'mac_address': aap_mac},
+                    {'ip_address': '2001:100::11',
+                     'mac_address': aap_mac2},
+                    {'ip_address': '2001:100::0/64',
+                     'mac_address': aap_mac3},
+                ]
         network_type = n_const.TYPE_VXLAN
         self._port.vif_mac = gateway_mac = 'aa:bb:cc:11:22:33'
         self._port.dvr_mac = self.agent.dvr_agent.dvr_mac_address
@@ -3503,6 +3528,9 @@ class TestOvsDvrNeutronAgent:
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports',
+                                  return_value=[port_obj]),\
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),\
@@ -3549,6 +3577,7 @@ class TestOvsDvrNeutronAgent:
                                   segmentation_id,
                                   self._compute_fixed_ips,
                                   device_owner, False)
+
             expected_on_int_br = [
                 mock.call.install_dvr_to_src_mac(
                     network_type=network_type,
@@ -3556,9 +3585,24 @@ class TestOvsDvrNeutronAgent:
                     dst_mac=self._compute_port.vif_mac,
                     dst_port=self._compute_port.ofport,
                     vlan_tag=lvid,
-                ),
-            ] + self._expected_port_bound(self._compute_port, lvid, False,
-                                          network_type)
+                )]
+            if aaps:
+                expected_on_int_br += [
+                    mock.call.install_dvr_to_src_mac(
+                        network_type=network_type,
+                        gateway_mac=gateway_mac,
+                        dst_mac=aap_mac,
+                        dst_port=self._compute_port.ofport,
+                        vlan_tag=lvid),
+                    mock.call.install_dvr_to_src_mac(
+                        network_type=network_type,
+                        gateway_mac=gateway_mac,
+                        dst_mac=aap_mac2,
+                        dst_port=self._compute_port.ofport,
+                        vlan_tag=lvid),
+                ]
+            expected_on_int_br += self._expected_port_bound(
+                self._compute_port, lvid, False, network_type)
             int_br.assert_has_calls(expected_on_int_br)
             tun_br.assert_not_called()
             phys_br.assert_not_called()
@@ -3583,6 +3627,11 @@ class TestOvsDvrNeutronAgent:
         self._test_port_bound_for_dvr_on_vxlan_network(
             device_owner=DEVICE_OWNER_COMPUTE,
             ip_version=n_const.IP_VERSION_6)
+        self._test_port_bound_for_dvr_on_vxlan_network(
+            device_owner=DEVICE_OWNER_COMPUTE, aaps=True)
+        self._test_port_bound_for_dvr_on_vxlan_network(
+            device_owner=DEVICE_OWNER_COMPUTE,
+            ip_version=n_const.IP_VERSION_6, aaps=True)
 
     def test_port_bound_for_dvr_with_dhcp_ports(self):
         self._test_port_bound_for_dvr_on_physical_network(
@@ -3780,6 +3829,9 @@ class TestOvsDvrNeutronAgent:
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports',
+                                  return_value=[]),\
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),\
@@ -3928,6 +3980,9 @@ class TestOvsDvrNeutronAgent:
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports_on_host_by_subnet',
                                   return_value=[]),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports',
+                                  return_value=[]),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent, 'tun_br', new=tun_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
@@ -4024,15 +4079,37 @@ class TestOvsDvrNeutronAgent:
                 tun_br.assert_has_calls(expected)
                 phys_br.assert_not_called()
 
-    def _test_treat_devices_removed_for_dvr(self, device_owner,
-                                            ip_version=n_const.IP_VERSION_4):
+    def _test_treat_devices_removed_for_dvr(
+            self, device_owner, ip_version=n_const.IP_VERSION_4, aaps=False):
         self._setup_for_dvr_test()
+        port_obj = {"id": "fake-port-uuid"}
+        aap_mac = 'aa:bb:cc:dd:ee:ff'
+        aap_mac2 = 'aa:bb:cc:dd:ee:fe'
+        aap_mac3 = 'aa:bb:cc:dd:ee:fd'
         if ip_version == n_const.IP_VERSION_4:
             gateway_ip = '1.1.1.1'
             cidr = '1.1.1.0/24'
+            if aaps:
+                port_obj["allowed_address_pairs"] = [
+                    {'ip_address': '1.1.1.10/32',
+                     'mac_address': aap_mac},
+                    {'ip_address': '1.1.1.11',
+                     'mac_address': aap_mac2},
+                    {'ip_address': '0.0.0.0/0',
+                     'mac_address': aap_mac3}
+                ]
         else:
             gateway_ip = '2001:100::1'
             cidr = '2001:100::0/64'
+            if aaps:
+                port_obj["allowed_address_pairs"] = [
+                    {'ip_address': '2001:100::10/128',
+                     'mac_address': aap_mac},
+                    {'ip_address': '2001:100::11',
+                     'mac_address': aap_mac2},
+                    {'ip_address': '2001:100::0/0',
+                     'mac_address': aap_mac3}
+                ]
         self._port.dvr_mac = self.agent.dvr_agent.dvr_mac_address
         gateway_mac = 'aa:bb:cc:11:22:33'
         int_br = mock.create_autospec(self.agent.int_br)
@@ -4051,6 +4128,9 @@ class TestOvsDvrNeutronAgent:
                 mock.patch.object(self.agent.dvr_agent.int_br,
                                   'get_vif_port_by_id',
                                   return_value=self._port),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports',
+                                  return_value=[]),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent, 'tun_br', new=tun_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
@@ -4105,6 +4185,9 @@ class TestOvsDvrNeutronAgent:
                                           self._compute_port.vif_id],
                                       'failed_devices_up': [],
                                       'failed_devices_down': []}),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports',
+                                  return_value=[port_obj]),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
                 mock.patch.object(self.agent, 'tun_br', new=tun_br),\
                 mock.patch.object(self.agent.dvr_agent, 'int_br', new=int_br),\
@@ -4112,13 +4195,27 @@ class TestOvsDvrNeutronAgent:
             failed_devices = {'added': set(), 'removed': set()}
             failed_devices['removed'] = self.agent.treat_devices_removed(
                 [self._compute_port.vif_id])
-            int_br.assert_has_calls([
+            expected_delete_dvr_src_mac = [
                 mock.call.delete_dvr_to_src_mac(
                     network_type='vxlan',
                     vlan_tag=lvid,
                     dst_mac=self._compute_port.vif_mac,
-                ),
-            ])
+                )
+            ]
+            if aaps:
+                expected_delete_dvr_src_mac += [
+                    mock.call.delete_dvr_to_src_mac(
+                        network_type='vxlan',
+                        vlan_tag=lvid,
+                        dst_mac=aap_mac,
+                    ),
+                    mock.call.delete_dvr_to_src_mac(
+                        network_type='vxlan',
+                        vlan_tag=lvid,
+                        dst_mac=aap_mac2,
+                    )
+                ]
+            int_br.assert_has_calls(expected_delete_dvr_src_mac)
             tun_br.assert_not_called()
 
     def test_treat_devices_removed_for_dvr_with_compute_ports(self):

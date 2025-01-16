@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fix connection issue to allowed address pair address that is located
+    behind a distributed virtual router by adding a missing flow.
+    For more information, see bug `2093248 <https://launchpad.net/bugs/2093248>`_.
