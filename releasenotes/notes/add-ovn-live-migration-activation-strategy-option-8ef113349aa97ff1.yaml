@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    For OVN, you can now select which port binding activation strategy to use
+    for migrated ports, by setting the new configuration option
+    ``[ovn]ovn_live_migration_activation_strategy``. If set to an empty string,
+    no activation strategy will be used, and the destination port binding will
+    be immediately activated after creation without waiting for migration to
+    complete.

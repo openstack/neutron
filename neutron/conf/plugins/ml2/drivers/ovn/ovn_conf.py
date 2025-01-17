@@ -230,6 +230,15 @@ ovn_opts = [
                        'connected to the router through any other routers, '
                        'similar to the default ML2/OVS behavior. Defaults to '
                        '"False".')),
+    cfg.StrOpt('live_migration_activation_strategy',
+               default="rarp",
+               choices=["rarp", ""],
+               help=_('Activation strategy to use for live migration. '
+                      'The default `rarp` strategy expects the hypervisor to '
+                      'send a Reverse ARP request through the migrated port '
+                      'after migration is complete. '
+                      'An empty value means a migrated port is immediately '
+                      'activated on the destination host.')),
 ]
 
 nb_global_opts = [
@@ -332,6 +341,10 @@ def get_ovn_l3_scheduler():
 
 def is_ovn_distributed_floating_ip():
     return cfg.CONF.ovn.enable_distributed_floating_ip
+
+
+def get_ovn_lm_activation_strategy():
+    return cfg.CONF.ovn.live_migration_activation_strategy
 
 
 def get_ovn_vhost_sock_dir():

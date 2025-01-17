@@ -485,34 +485,13 @@ class OVNClient:
                             ovn_const.VIF_DETAILS_PF_MAC_ADDRESS)),
                     ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY: str(
                         bp_info.bp_param.get(ovn_const.VIF_DETAILS_VF_NUM))})
-            chassis = utils.determine_bind_host(self._sb_idl, port)
-            if chassis:
-                # If OVN supports multi-chassis port bindings, use it for live
-                # migration to asynchronously configure destination port while
-                # VM is migrating
-                if utils.is_additional_chassis_supported(self._sb_idl):
-                    mdst = port.get(
-                        portbindings.PROFILE, {}).get(
-                            ovn_const.MIGRATING_ATTR)
-                    if mdst:
-                        # Let OVN know that the port should be configured on
-                        # destination too
-                        chassis += ',%s' % mdst
-                        # Block traffic on destination host until libvirt sends
-                        # a RARP packet from it to inform network about the new
-                        # location of the port
-                        # TODO(ihrachys) Remove this once OVN properly supports
-                        # activation of DPDK ports (bug 2092407)
-                        if (port[portbindings.VIF_TYPE] !=
-                                portbindings.VIF_TYPE_VHOST_USER):
-                            options['activation-strategy'] = 'rarp'
 
+            if port_type != ovn_const.LSP_TYPE_VIRTUAL:
                 # Virtual ports can not be bound by using the requested-chassis
                 # mechanism, ovn-controller will create the Port_Binding entry
                 # when it sees an ARP coming from the VIP
-                if port_type != ovn_const.LSP_TYPE_VIRTUAL:
-                    options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = \
-                        chassis
+                options = self._configure_requested_chassis_options(
+                    options, port)
 
         if self.is_mcast_flood_broken and port_type not in (
                 'vtep', ovn_const.LSP_TYPE_LOCALPORT, 'router'):
@@ -525,6 +504,33 @@ class OVNClient:
                            address4_scope_id, address6_scope_id,
                            bp_info.vnic_type, bp_info.capabilities, mtu
                            )
+
+    def _configure_requested_chassis_options(self, options, port):
+        options = copy.deepcopy(options)
+        chassis = utils.determine_bind_host(self._sb_idl, port)
+        if chassis:
+            # If OVN supports multi-chassis port bindings, use it for live
+            # migration to asynchronously configure destination port while
+            # VM is migrating
+            if utils.is_additional_chassis_supported(self._sb_idl):
+                mdst = port.get(
+                    portbindings.PROFILE, {}).get(ovn_const.MIGRATING_ATTR)
+                if mdst:
+                    # Let OVN know that the port should be configured on
+                    # destination too
+                    chassis += ',%s' % mdst
+                    # Block traffic on destination host until libvirt sends
+                    # a RARP packet from it to inform network about the new
+                    # location of the port
+                    # TODO(ihrachys) Remove this once OVN properly supports
+                    # activation of DPDK ports (bug 2092407)
+                    if (port[portbindings.VIF_TYPE] !=
+                            portbindings.VIF_TYPE_VHOST_USER):
+                        strategy = ovn_conf.get_ovn_lm_activation_strategy()
+                        if strategy:
+                            options['activation-strategy'] = strategy
+            options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = chassis
+        return options
 
     def update_port_dhcp_options(self, port_info, txn):
         dhcpv4_options = []
