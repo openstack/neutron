@@ -1078,6 +1078,7 @@ class TestIpNeighCommand(TestIPCmdBase):
 
 
 class TestArpPing(TestIPCmdBase):
+    @mock.patch.object(ip_lib, 'ARPING_SLEEP', 0)
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch('eventlet.spawn_n')
     def test_send_ipv4_addr_adv_notif(self, spawn_n, mIPWrapper):
