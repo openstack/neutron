@@ -78,7 +78,7 @@ class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
 
     def test_get_detailed_project_quotas_resource(self):
         user_ctx = context.Context(user_id=self.project_1,
-                                   tenant_id=self.project_1)
+                                   project_id=self.project_1)
         tracked_resource = quota_resource.TrackedResource(
             'network', models_v2.Network, 'quota_network')
         res = {'network': tracked_resource}
@@ -108,7 +108,7 @@ class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
         resources = self._create_tracked_resources()
         for project_id in self.projects:
             user_ctx = context.Context(user_id=project_id,
-                                       tenant_id=project_id)
+                                       project_id=project_id)
             self.plugin.update_quota_limit(
                 user_ctx, project_id, 'network', 101)
             self.plugin.update_quota_limit(user_ctx, project_id, 'subnet', 102)
@@ -134,7 +134,7 @@ class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
                      'port': {'limit': 103, 'used': 1, 'reserved': 0}}
         for project_id in self.projects:
             user_ctx = context.Context(user_id=project_id,
-                                       tenant_id=project_id)
+                                       project_id=project_id)
             returned = self.plugin.get_detailed_project_quotas(
                 user_ctx, resources, project_id)
             self.assertEqual(reference, returned)

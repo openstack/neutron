@@ -420,7 +420,7 @@ class FieldCheck(policy.Check):
                           {'field': self.field, 'target_dict': target_dict})
                 return
             project_id = target_dict.get('project_id')
-            ctx = (context.Context(tenant_id=project_id) if project_id
+            ctx = (context.Context(project_id=project_id) if project_id
                    else context.get_admin_context())
             plugin = directory.get_plugin()
             network = plugin.get_network(ctx, target_network_id)

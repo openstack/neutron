@@ -64,7 +64,7 @@ class TestRBACObjectMixin:
 
         for idx in range(3):
             project = 'project_%s' % idx
-            ctx_no_admin = context.Context(user_id='user', tenant_id=project,
+            ctx_no_admin = context.Context(user_id='user', project_id=project,
                                            is_admin=False)
             objects = self._parent_class.get_objects(ctx_no_admin)
             self.assertEqual([_obj_shared.id], [_obj.id for _obj in objects])

@@ -28,7 +28,7 @@ class TestReservationSql(testlib_api.SqlTestCase,
                          testlib_api.MySQLTestCaseMixin):
     def setUp(self):
         super().setUp()
-        self.context = context.Context(user_id=None, tenant_id=None,
+        self.context = context.Context(user_id=None, project_id=None,
                                        is_admin=True, overwrite=False)
 
     def _create_test_reservation(self, exp):
