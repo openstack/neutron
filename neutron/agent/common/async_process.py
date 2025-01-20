@@ -170,6 +170,13 @@ class AsyncProcess:
         self._process, cmd = utils.create_process(self._cmd,
                                                   run_as_root=self.run_as_root)
         self._watchers = []
+
+        # Event shared between watcher threads to ensure
+        # synchronization of their termination.  If one thread
+        # finishes, this event is triggered to signal the other thread
+        # to stop as well.
+        thread_exit_event = eventlet.event.Event()
+
         for reader in (self._read_stdout, self._read_stderr):
             # Pass the stop event directly to the greenthread to
             # ensure that assignment of a new event to the instance
@@ -177,7 +184,8 @@ class AsyncProcess:
             # the original event.
             watcher = eventlet.spawn(self._watch_process,
                                      reader,
-                                     self._kill_event)
+                                     self._kill_event,
+                                     thread_exit_event)
             self._watchers.append(watcher)
 
     @property
@@ -252,8 +260,8 @@ class AsyncProcess:
                 # Process was already respawned by someone else...
                 pass
 
-    def _watch_process(self, callback, kill_event):
-        while not kill_event.ready():
+    def _watch_process(self, callback, kill_event, thread_exit_event):
+        while not kill_event.ready() or not thread_exit_event.ready():
             try:
                 output = callback()
                 if not output and output != "":
@@ -265,12 +273,17 @@ class AsyncProcess:
             # Ensure that watching a process with lots of output does
             # not block execution of other greenthreads.
             eventlet.sleep()
-        # self._is_running being True indicates that the loop was
-        # broken out of due to an error in the watched process rather
-        # than the loop condition being satisfied.
-        if self._is_running:
-            self._is_running = False
-            self._handle_process_error()
+
+        if not thread_exit_event.ready():
+            # Indicates to the other watcher that the loop is broken.
+            thread_exit_event.send()
+
+            # self._is_running being True indicates that the loop was
+            # broken out of due to an error in the watched process
+            # rather than the loop condition being satisfied.
+            if self._is_running:
+                self._is_running = False
+                self._handle_process_error()
 
     def _read(self, stream, queue):
         data = stream.readline()
