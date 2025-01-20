@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 from neutron.agent.ovn.agent import ovn_neutron_agent
 from neutron.agent.ovn.agent import ovsdb as agent_ovsdb
 from neutron.agent.ovn.metadata import agent as metadata_agent
+from neutron.agent.ovn.metadata import server_socket
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
 from neutron.tests.common import net_helpers
@@ -69,7 +70,13 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
         agt.test_ovs_idl = []
         agt.test_ovn_sb_idl = []
         agt.test_ovn_nb_idl = []
-        agt.start()
+        # NOTE(ralonsoh): it is needed to ``UnixDomainMetadataProxy.wait``
+        # method in eventlet environments in order not to block the execution.
+        # Once eventlet is completely removed, this mock can be deleted.
+        with mock.patch.object(ovn_neutron_agent.OVNNeutronAgent, 'wait'), \
+                mock.patch.object(server_socket.UnixDomainMetadataProxy,
+                                  'wait'):
+            agt.start()
         self._check_loaded_and_started_extensions(agt)
 
         self.addCleanup(agt.ext_manager_api.ovs_idl.ovsdb_connection.stop)
@@ -127,4 +134,4 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
 
         # Check Unix proxy is running.
         metadata_extension = self.ovn_agent[METADATA_EXTENSION]
-        self.assertIsNotNone(metadata_extension._proxy.server)
+        self.assertIsNotNone(metadata_extension._proxy._server)

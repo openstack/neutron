@@ -24,7 +24,7 @@ from ovsdbapp.backend.ovs_idl import vlog
 from neutron.agent.linux import external_process
 from neutron.agent.ovn.extensions import extension_manager
 from neutron.agent.ovn.metadata import agent as metadata_agent
-from neutron.agent.ovn.metadata import server as metadata_server
+from neutron.agent.ovn.metadata import server_socket as metadata_server
 from neutron.common.ovn import constants as ovn_const
 from neutron.conf.agent.database import agents_db
 from neutron.conf.agent.metadata import config as meta_conf
@@ -177,6 +177,10 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
 
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
+
+        # Start the metadata server.
+        proxy_thread = threading.Thread(target=self._proxy.wait)
+        proxy_thread.start()
 
         # Raise the "is_started" flag.
         self._is_started = True

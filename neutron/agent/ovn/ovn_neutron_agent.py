@@ -20,7 +20,6 @@ from neutron.common import utils
 from neutron.conf import common as common_config
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_service import service
 
 from neutron.agent.ovn.agent import ovn_neutron_agent
 from neutron.conf.agent.ovn.ovn_neutron_agent import config as config_ovn_agent
@@ -44,5 +43,9 @@ def main():
     ovn_agent = ovn_neutron_agent.OVNNeutronAgent(cfg.CONF)
 
     LOG.info('OVN Neutron Agent initialized successfully, now running... ')
-    launcher = service.launch(cfg.CONF, ovn_agent, restart_method='mutate')
-    launcher.wait()
+    # NOTE(ralonsoh): restore the oslo_service.service implementation once
+    # the eventlet removal is done; it handles the system signals properly
+    # (TERM, HUP, INT).
+    # launcher = service.launch(cfg.CONF, ovn_agent, restart_method='mutate')
+    # launcher.wait()
+    ovn_agent.start()

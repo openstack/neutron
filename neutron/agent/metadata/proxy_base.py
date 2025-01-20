@@ -17,7 +17,6 @@ import abc
 import urllib
 
 import netaddr
-
 from neutron_lib import constants
 from oslo_log import log as logging
 from oslo_utils import netutils
@@ -43,9 +42,10 @@ class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
     NETWORK_ID_HEADER: str
     ROUTER_ID_HEADER: str
 
-    def __init__(self, conf, has_cache=False):
+    def __init__(self, conf, has_cache=False, **kwargs):
         self.conf = conf
         self._has_cache = has_cache
+        super().__init__(**kwargs)
 
     @abc.abstractmethod
     def get_port(self, remote_address, network_id=None, remote_mac=None,

@@ -14,15 +14,16 @@
 
 import threading
 
-from neutron.agent.linux import utils as agent_utils
-from neutron.agent.metadata import proxy_base
-from neutron.agent.ovn.metadata import ovsdb
-from neutron.common.ovn import constants as ovn_const
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from oslo_config import cfg
 from oslo_log import log as logging
+
+from neutron.agent.linux import utils as agent_utils
+from neutron.agent.metadata import proxy_base
+from neutron.agent.ovn.metadata import ovsdb
+from neutron.common.ovn import constants as ovn_const
 
 
 LOG = logging.getLogger(__name__)
