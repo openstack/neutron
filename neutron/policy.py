@@ -14,6 +14,7 @@
 #    under the License.
 
 from collections import abc
+import copy
 import itertools
 import re
 import sys
@@ -308,6 +309,7 @@ class OwnerCheck(policy.Check):
         return data[field]
 
     def __call__(self, target, creds, enforcer):
+        target_copy = copy.copy(target)
         if self.target_field not in target:
             # policy needs a plugin check
             # target field is in the form resource:field
@@ -353,10 +355,10 @@ class OwnerCheck(policy.Check):
                     policy="{}:{}".format(self.kind, self.match),
                     reason=err_reason)
 
-            target[self.target_field] = self._extract(
+            target_copy[self.target_field] = self._extract(
                 parent_res, target[parent_foreign_key], parent_field)
 
-        match = self.match % target
+        match = self.match % target_copy
         if self.kind in creds:
             return match == str(creds[self.kind])
         return False
