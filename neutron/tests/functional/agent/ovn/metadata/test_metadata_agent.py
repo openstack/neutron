@@ -366,10 +366,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         # disable DHCP on the subnet where the metadata's port is located.
         lswitch_name = 'ovn-' + uuidutils.generate_uuid()
         mdt_port_name = 'ovn-mdt-' + uuidutils.generate_uuid()
-        mac_ip = 'AA:AA:AA:AA:AA:AA 192.168.122.123'
 
-        mdt_pb_event = events.WaitForUpdatePortBindingEvent(
-            mdt_port_name, mac=[mac_ip])
+        mdt_pb_event = events.WaitForCreatePortBindingEvent(mdt_port_name)
         self.handler.watch_event(mdt_pb_event)
 
         with self.nb_api.transaction(
@@ -378,9 +376,10 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 self.nb_api.ls_add(lswitch_name))
             self._create_metadata_port(txn, lswitch_name, mdt_port_name)
 
-        external_ids = {ovn_const.OVN_CIDRS_EXT_ID_KEY: ""}
-        self.nb_api.set_lswitch_port(lport_name=mdt_port_name,
-                                     external_ids=external_ids).execute()
+            external_ids = {ovn_const.OVN_CIDRS_EXT_ID_KEY: ""}
+            txn.add(
+                self.nb_api.set_lswitch_port(lport_name=mdt_port_name,
+                                             external_ids=external_ids))
 
         self.assertTrue(mdt_pb_event.wait())
 
