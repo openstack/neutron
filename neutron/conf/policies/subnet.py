@@ -97,7 +97,7 @@ rules = [
         check_str=neutron_policy.policy_or(
             base.PROJECT_READER,
             'rule:shared',
-            base.ADMIN_OR_NET_OWNER_MEMBER,
+            base.ADMIN_OR_NET_OWNER_READER,
         ),
         scope_types=['project'],
         description='Get a subnet',
@@ -128,7 +128,8 @@ rules = [
         check_str=neutron_policy.policy_or(
             base.PROJECT_READER,
             'rule:shared',
-            base.ADMIN_OR_NET_OWNER_MEMBER,
+            'rule:external_network',
+            base.ADMIN_OR_NET_OWNER_READER,
         ),
         scope_types=['project'],
         description='Get the subnet tags',

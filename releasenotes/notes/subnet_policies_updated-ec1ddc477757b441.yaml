@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Subnet policies have been updated to allow other users to operate on them.
+    Network owners and readers can now retrieve the subnet and project members
+    can now update and delete the subnet. For more information, see bug
+    `2038646 <https://launchpad.net/bugs/2038646>`_.
