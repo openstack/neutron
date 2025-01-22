@@ -450,8 +450,13 @@ class OVSDBHandler:
         :param subport_ids: subports affecting the metadata.
         :param wire: if True subport_ids are added, otherwise removed.
         """
-        trunk_bridge = trunk_bridge or ovs_lib.OVSBridge(
-            utils.gen_trunk_br_name(trunk_id))
+        bridge_name = utils.gen_trunk_br_name(trunk_id)
+        trunk_bridge = trunk_bridge or ovs_lib.OVSBridge(bridge_name)
+        if not trunk_bridge.bridge_exists(bridge_name):
+            LOG.info(
+                "Could not update trunk metadata in a non-existent bridge "
+                "(likely already deleted by nova/os-vif): %s", bridge_name)
+            return
         port = port or self._get_parent_port(trunk_bridge)
         _port_id, _trunk_id, old_subports = self._get_trunk_metadata(port)
         if wire:
