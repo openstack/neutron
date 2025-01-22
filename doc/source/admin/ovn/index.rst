@@ -21,3 +21,4 @@ OVN Driver Administration Guide
    external_ports
    rpc
    l3_scheduler
+   maintenance_worker

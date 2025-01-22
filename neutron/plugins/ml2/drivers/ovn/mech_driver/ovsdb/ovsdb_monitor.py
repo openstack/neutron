@@ -805,6 +805,10 @@ class BaseOvnIdl(Ml2OvnIdlBase):
 
 
 class BaseOvnSbIdl(Ml2OvnIdlBase):
+    def __init__(self, remote, schema, **kwargs):
+        self.notify_handler = row_event.RowEventHandler()
+        super().__init__(remote, schema, **kwargs)
+
     @classmethod
     def from_server(cls, connection_string, helper):
         helper.register_table('Chassis_Private')
@@ -813,6 +817,9 @@ class BaseOvnSbIdl(Ml2OvnIdlBase):
         helper.register_table('Port_Binding')
         helper.register_table('Datapath_Binding')
         return cls(connection_string, helper, leader_only=False)
+
+    def notify(self, event, row, updates=None):
+        self.notify_handler.notify(event, row, updates)
 
 
 class OvnIdl(BaseOvnIdl):

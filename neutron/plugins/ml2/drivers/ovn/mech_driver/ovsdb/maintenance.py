@@ -53,6 +53,8 @@ LOG = log.getLogger(__name__)
 
 INCONSISTENCY_TYPE_CREATE_UPDATE = 'create/update'
 INCONSISTENCY_TYPE_DELETE = 'delete'
+# TODO(bpetermann): move MAINTENANCE_NB_IDL_LOCK_NAME to neutron-lib
+MAINTENANCE_NB_IDL_LOCK_NAME = "ovn_db_inconsistencies_periodics"
 
 
 def has_lock_periodic(*args, periodic_run_limit=0, **kwargs):
@@ -176,7 +178,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         self._nb_idl = self._ovn_client._nb_idl
         self._sb_idl = self._ovn_client._sb_idl
         self._idl = self._nb_idl.idl
-        self._idl.set_lock('ovn_db_inconsistencies_periodics')
+        self._idl.set_lock(MAINTENANCE_NB_IDL_LOCK_NAME)
         self._sync_timer = timeutils.StopWatch()
         super().__init__(ovn_client)
 

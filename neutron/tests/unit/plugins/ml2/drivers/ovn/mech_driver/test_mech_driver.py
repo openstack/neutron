@@ -67,6 +67,7 @@ from neutron.objects import network as network_obj
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron.plugins.ml2 import plugin as ml2_plugin
@@ -5109,3 +5110,51 @@ class TestOVNAvailabilityZone(OVNMechanismDriverTestCase):
 
         azs = self.mech_driver.list_availability_zones(mock.Mock())
         self.assertEqual({}, azs)
+
+
+class PluginWithMaintenancePeriodics:
+    def __init__(self):
+        self.periodics = mock.Mock()
+
+    @classmethod
+    def get_plugin_type(cls):
+        return 'with_periodics'
+
+    def get_plugin_description(self):
+        return 'A plugin that uses some OVN Maintenance Periodics'
+
+    def ovn_maintenance_periodics(self, ovn_client):
+        return [self.periodics]
+
+
+class TestOVNMechanismDriverMaintenanceThread(TestOVNMechanismDriverBase):
+    def get_additional_service_plugins(self):
+        p = super().get_additional_service_plugins()
+        plugin_class = (
+            'neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver.'
+            'test_mech_driver.PluginWithMaintenancePeriodics'
+        )
+        p.update({'with_periodics': plugin_class})
+        return p
+
+    @mock.patch.object(maintenance, 'MaintenanceThread')
+    @mock.patch.object(maintenance, 'DBInconsistenciesPeriodics')
+    def test__start_maintenance_thread(self,
+                                       mock_dbperiodics,
+                                       mock_thread):
+        plugin_with_periodics = directory.get_plugin('with_periodics')
+
+        self.mech_driver._start_maintenance_thread()
+
+        # Maintenance thread should be started with periodics being added
+        # from OVNMechanismDriver itself (DBInconsistenciesPeriodics)
+        # and with periodics found in plugins that implement
+        # ovn_maintenance_periodics, here PluginWithMaintenancePeriodics
+        expected_calls = [
+            mock.call(plugin_with_periodics.periodics),
+            mock.call(mock_dbperiodics()),
+        ]
+        mock_thread().add_periodics.assert_has_calls(expected_calls,
+                                                     any_order=True)
+
+        mock_thread().start.assert_called()
