@@ -198,6 +198,8 @@ def bump_revision(context, resource, resource_type):
                 {'res_type': resource_type, 'res_uuid': resource['id'],
                  'rev_num': revision_number, 'new_rev': row.revision_number})
             return
+        if revision_number == row.revision_number:  # do nothing
+            return
         row.revision_number = revision_number
         context.session.merge(row)
     LOG.info('Successfully bumped revision number for resource '
