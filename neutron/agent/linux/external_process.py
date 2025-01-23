@@ -70,7 +70,6 @@ class ProcessManager(MonitoredProcess):
         self.default_cmd_callback = default_cmd_callback
         self.default_pre_cmd_callback = default_pre_cmd_callback
         self.default_post_cmd_callback = default_post_cmd_callback
-        self.cmd_addl_env = cmd_addl_env
         self.pids_path = pids_path or self.conf.external_pids
         self.pid_file = pid_file
         self.run_as_root = run_as_root or self.namespace is not None

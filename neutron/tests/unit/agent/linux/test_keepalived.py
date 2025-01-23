@@ -92,22 +92,10 @@ class KeepalivedGetFreeRangeTestCase(KeepalivedBaseTestCase):
 
 class KeepalivedConfBaseMixin:
 
-    def _get_conntrackd_manager(self):
-        conntrackd_manager = mock.Mock()
-        conntrackd_manager.get_ha_script_path.return_value = '/tmp/ha.sh'
-        return conntrackd_manager
-
     def _get_config(self, track=True):
         config = keepalived.KeepalivedConf()
-        conntrackd_manager = self._get_conntrackd_manager()
-
-        notify_script = (cfg.CONF.ha_conntrackd_enabled and
-                         conntrackd_manager.get_ha_script_path() or
-                         None)
-
         instance1 = keepalived.KeepalivedInstance(
             'MASTER', 'eth0', 1, ['169.254.192.0/18'],
-            notify_script=notify_script,
             advert_int=5)
         instance1.set_authentication('AH', 'pass123')
         instance1.track_interfaces.append("eth0")
@@ -136,7 +124,6 @@ class KeepalivedConfBaseMixin:
 
         instance2 = keepalived.KeepalivedInstance(
             'MASTER', 'eth4', 2, ['169.254.192.0/18'],
-            notify_script=notify_script,
             mcast_src_ip='224.0.0.1')
         instance2.track_interfaces.append("eth4")
 
@@ -163,9 +150,6 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
             virtual_router_id 1
             priority 50
             garp_master_delay 60
-            notify_master "/tmp/ha.sh primary"
-            notify_backup "/tmp/ha.sh backup"
-            notify_fault "/tmp/ha.sh fault"
             advert_int 5
             authentication {
                 auth_type AH
@@ -193,9 +177,6 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
             virtual_router_id 2
             priority 50
             garp_master_delay 60
-            notify_master "/tmp/ha.sh primary"
-            notify_backup "/tmp/ha.sh backup"
-            notify_fault "/tmp/ha.sh fault"
             mcast_src_ip 224.0.0.1
             track_interface {
                 eth4
@@ -243,17 +224,6 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
         current_vips = sorted(instance.get_existing_vip_ip_addresses('eth2'))
         self.assertEqual(['192.168.2.0/24', '192.168.3.0/24'], current_vips)
 
-    def test_config_generation_no_conntrackd(self):
-        # Disable conntrackd support
-        self.config(ha_conntrackd_enabled=False)
-
-        config = self._get_config()
-
-        # Assert no notification scripts are configured
-        self.assertNotIn('notify_master', config.get_config_str())
-        self.assertNotIn('notify_backup', config.get_config_str())
-        self.assertNotIn('notify_fault', config.get_config_str())
-
 
 class KeepalivedStateExceptionTestCase(KeepalivedBaseTestCase):
     def test_state_exception(self):
@@ -261,11 +231,11 @@ class KeepalivedStateExceptionTestCase(KeepalivedBaseTestCase):
         self.assertRaises(keepalived.InvalidInstanceStateException,
                           keepalived.KeepalivedInstance,
                           invalid_vrrp_state, 'eth0', 33,
-                          ['169.254.192.0/18'], None)
+                          ['169.254.192.0/18'])
 
         invalid_auth_type = 'into a club'
         instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
-                                                 ['169.254.192.0/18'], None)
+                                                 ['169.254.192.0/18'])
         self.assertRaises(keepalived.InvalidAuthenticationTypeException,
                           instance.set_authentication,
                           invalid_auth_type, 'some_password')
@@ -350,8 +320,7 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                                  KeepalivedConfBaseMixin):
     def test_get_primary_vip(self):
         instance = keepalived.KeepalivedInstance('MASTER', 'ha0', 42,
-                                                 ['169.254.192.0/18'],
-                                                 None)
+                                                 ['169.254.192.0/18'])
         self.assertEqual('169.254.0.42/24', instance.get_primary_vip())
 
     def _test_remove_addresses_by_interface(self, track=True):
@@ -369,9 +338,6 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                 virtual_router_id 1
                 priority 50
                 garp_master_delay 60
-                notify_master "/tmp/ha.sh primary"
-                notify_backup "/tmp/ha.sh backup"
-                notify_fault "/tmp/ha.sh fault"
                 advert_int 5
                 authentication {{
                     auth_type AH
@@ -396,9 +362,6 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                 virtual_router_id 2
                 priority 50
                 garp_master_delay 60
-                notify_master "/tmp/ha.sh primary"
-                notify_backup "/tmp/ha.sh backup"
-                notify_fault "/tmp/ha.sh fault"
                 mcast_src_ip 224.0.0.1
                 track_interface {{
                     eth4
@@ -441,18 +404,13 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                 virtual_router_id 1
                 priority 50
                 garp_master_delay 60
-                notify_master "/tmp/ha.sh primary"
-                notify_backup "/tmp/ha.sh backup"
-                notify_fault "/tmp/ha.sh fault"
                 virtual_ipaddress {
                     169.254.0.1/24 dev eth0
                 }
             }""")
 
-        conntrackd_manager = self._get_conntrackd_manager()
         instance = keepalived.KeepalivedInstance(
             'MASTER', 'eth0', VRRP_ID, ['169.254.192.0/18'],
-            notify_script=conntrackd_manager.get_ha_script_path(),
         )
         self.assertEqual(expected, os.linesep.join(instance.build_config()))
 
@@ -472,18 +430,13 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                 virtual_router_id 1
                 priority 50
                 garp_master_delay 60
-                notify_master "/tmp/ha.sh primary"
-                notify_backup "/tmp/ha.sh backup"
-                notify_fault "/tmp/ha.sh fault"
                 virtual_ipaddress {
                     169.254.0.1/24 dev eth0
                 }
             }""")
 
-        conntrackd_manager = self._get_conntrackd_manager()
         instance = keepalived.KeepalivedInstance(
             'MASTER', 'eth0', VRRP_ID, ['169.254.192.0/18'],
-            notify_script=conntrackd_manager.get_ha_script_path(),
         )
         instance.track_script = keepalived.KeepalivedTrackScript(
             VRRP_INTERVAL, '/etc/ha_confs/qrouter-x', VRRP_ID)
@@ -500,7 +453,7 @@ class KeepalivedVipAddressTestCase(KeepalivedBaseTestCase):
 
     def test_add_vip_idempotent(self):
         instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
-                                                 ['169.254.192.0/18'], None)
+                                                 ['169.254.192.0/18'])
         instance.add_vip('192.168.222.1/32', 'eth11', None)
         instance.add_vip('192.168.222.1/32', 'eth12', 'link')
         self.assertEqual(1, len(instance.vips))

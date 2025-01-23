@@ -207,9 +207,6 @@ class HaRouter(router.RouterInfo):
         interface_name = self.get_ha_device_name()
         subnets = self.ha_port.get('subnets', [])
         ha_port_cidrs = [subnet['cidr'] for subnet in subnets]
-        notify_script = (self.agent_conf.ha_conntrackd_enabled and
-                         self.conntrackd_manager.get_ha_script_path() or
-                         None)
         instance = keepalived.KeepalivedInstance(
             'BACKUP',
             interface_name,
@@ -221,7 +218,6 @@ class HaRouter(router.RouterInfo):
             vrrp_health_check_interval=(
                 self.agent_conf.ha_vrrp_health_check_interval),
             ha_conf_dir=self.keepalived_manager.get_conf_dir(),
-            notify_script=notify_script,
         )
         instance.track_interfaces.append(interface_name)
 
@@ -475,6 +471,13 @@ class HaRouter(router.RouterInfo):
                 '--state_path=%s' % self.agent_conf.state_path,
                 '--user=%s' % os.geteuid(),
                 '--group=%s' % os.getegid()]
+
+            if self.agent_conf.ha_conntrackd_enabled:
+                cmd.append('--enable_conntrackd')
+
+            if self.agent_conf.debug:
+                cmd.append('--debug')
+
             return cmd
 
         return callback

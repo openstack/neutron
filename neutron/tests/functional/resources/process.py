@@ -22,11 +22,10 @@ import psutil
 import tenacity
 
 from neutron.agent.linux import utils
-from neutron.tests.common import helpers
 
 
 def _kill_process_if_exists(command: str) -> None:
-    _pid = helpers.pgrep(command)
+    _pid = utils.pgrep(command)
     if _pid:
         utils.kill_process(_pid, signal.SIGKILL)
 

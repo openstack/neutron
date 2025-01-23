@@ -62,9 +62,6 @@ vrrp_instance VR_1 {
     virtual_router_id 1
     priority 50
     garp_master_delay 60
-    notify_master "%(conf_dir)s/primary-backup.sh primary"
-    notify_backup "%(conf_dir)s/primary-backup.sh backup"
-    notify_fault "%(conf_dir)s/primary-backup.sh fault"
     nopreempt
     advert_int 2
     track_interface {
@@ -480,10 +477,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     def get_expected_keepalive_configuration(self, router):
         ha_device_name = router.get_ha_device_name()
-        conf_dir = os.path.join(
-            self.agent.conf.ha_confs_path,
-            router.router_id,
-        )
         external_port = router.get_ex_gw_port()
         ex_port_ipv6 = ip_lib.get_ipv6_lladdr(external_port['mac_address'])
         ex_device_name = router.get_external_device_name(
@@ -502,7 +495,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             'email_from': keepalived.KEEPALIVED_EMAIL_FROM,
             'router_id': keepalived.KEEPALIVED_ROUTER_ID,
             'ha_device_name': ha_device_name,
-            'conf_dir': conf_dir,
             'ex_device_name': ex_device_name,
             'external_device_cidr': external_device_cidr,
             'internal_device_name': internal_device_name,
