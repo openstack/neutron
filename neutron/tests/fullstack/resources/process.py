@@ -375,6 +375,8 @@ class LinuxBridgeAgentFixture(ServiceFixture):
 
 class NamespaceCleanupFixture(ServiceFixture):
 
+    namespace_pattern = None
+
     def _setUp(self):
         super()._setUp()
         self.addCleanup(self.clean_namespaces)
@@ -389,7 +391,7 @@ class NamespaceCleanupFixture(ServiceFixture):
         """
 
         for namespace in ip_lib.list_network_namespaces():
-            if (hasattr(self, 'namespace_pattern') and
+            if (self.namespace_pattern and
                     self.namespace_pattern.match(namespace)):
                 try:
                     ip_lib.delete_network_namespace(namespace)
