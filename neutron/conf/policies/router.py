@@ -161,11 +161,16 @@ rules = [
         operations=ACTION_POST,
     ),
     policy.DocumentedRuleDefault(
-        name='create_routers_tags',
+        name='create_router:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create the router tags',
         operations=ACTION_POST_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_routers_tags',
+            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
@@ -205,11 +210,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='get_routers_tags',
+        name='get_router:tags',
         check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get the router tags',
         operations=ACTION_GET_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_routers_tags',
+            check_str=base.ADMIN_OR_PROJECT_READER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
@@ -316,11 +326,16 @@ rules = [
         operations=ACTION_POST,
     ),
     policy.DocumentedRuleDefault(
-        name='update_routers_tags',
+        name='update_router:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update the router tags',
         operations=ACTION_PUT_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_routers_tags',
+            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
@@ -336,11 +351,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_routers_tags',
+        name='delete_router:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete the router tags',
         operations=ACTION_DELETE_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_routers_tags',
+            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(

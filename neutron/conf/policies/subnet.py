@@ -102,7 +102,7 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='create_subnets_tags',
+        name='create_subnet:tags',
         check_str=neutron_policy.policy_or(
             base.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER,
@@ -110,6 +110,14 @@ rules = [
         scope_types=['project'],
         description='Create the subnet tags',
         operations=ACTION_POST_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_subnets_tags',
+            check_str=neutron_policy.policy_or(
+                base.PROJECT_MEMBER,
+                base.ADMIN_OR_NET_OWNER_MEMBER,
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_subnet',
@@ -145,7 +153,7 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='get_subnets_tags',
+        name='get_subnet:tags',
         check_str=neutron_policy.policy_or(
             base.PROJECT_READER,
             'rule:shared',
@@ -155,6 +163,16 @@ rules = [
         scope_types=['project'],
         description='Get the subnet tags',
         operations=ACTION_GET_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_subnets_tags',
+            check_str=neutron_policy.policy_or(
+                base.PROJECT_READER,
+                'rule:shared',
+                'rule:external_network',
+                base.ADMIN_OR_NET_OWNER_READER,
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet',
@@ -195,7 +213,7 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='update_subnets_tags',
+        name='update_subnet:tags',
         check_str=neutron_policy.policy_or(
             base.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER,
@@ -203,6 +221,14 @@ rules = [
         scope_types=['project'],
         description='Update the subnet tags',
         operations=ACTION_PUT_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_subnets_tags',
+            check_str=neutron_policy.policy_or(
+                base.PROJECT_MEMBER,
+                base.ADMIN_OR_NET_OWNER_MEMBER,
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='delete_subnet',
@@ -220,7 +246,7 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_subnets_tags',
+        name='delete_subnet:tags',
         check_str=neutron_policy.policy_or(
             base.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER,
@@ -228,6 +254,14 @@ rules = [
         scope_types=['project'],
         description='Delete the subnet tags',
         operations=ACTION_DELETE_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_subnets_tags',
+            check_str=neutron_policy.policy_or(
+                base.PROJECT_MEMBER,
+                base.ADMIN_OR_NET_OWNER_MEMBER,
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 ]
 

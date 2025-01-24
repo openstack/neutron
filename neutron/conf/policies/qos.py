@@ -70,14 +70,22 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='get_policies_tags',
+        name='get_policy:tags',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
             'rule:shared_qos_policy'
         ),
         scope_types=['project'],
         description='Get QoS policy tags',
-        operations=ACTION_GET_TAGS
+        operations=ACTION_GET_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_policies_tags',
+            check_str=neutron_policy.policy_or(
+                base.ADMIN_OR_PROJECT_READER,
+                'rule:shared_qos_policy'
+            ),
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='create_policy',
@@ -97,11 +105,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='create_policies_tags',
+        name='create_policy:tags',
         check_str=base.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Create the QoS policy tags',
         operations=ACTION_POST_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_policies_tags',
+            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='update_policy',
@@ -121,11 +134,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='update_policies_tags',
+        name='update_policy:tags',
         check_str=base.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Update the QoS policy tags',
         operations=ACTION_PUT_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_policies_tags',
+            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy',
@@ -145,11 +163,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_policies_tags',
+        name='delete_policy:tags',
         check_str=base.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Delete the QoS policy tags',
-        operations=ACTION_DELETE_TAGS
+        operations=ACTION_DELETE_TAGS,
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_policies_tags',
+            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(

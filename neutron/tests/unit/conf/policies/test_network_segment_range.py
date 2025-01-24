@@ -38,11 +38,11 @@ class SystemAdminTests(NetworkSegmentRangeAPITestCase):
             policy.enforce,
             self.context, 'create_network_segment_range', self.target)
 
-    def test_create_network_segment_ranges_tags(self):
+    def test_create_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'create_network_segment_ranges_tags', self.target)
+            self.context, 'create_network_segment_range:tags', self.target)
 
     def test_get_network_segment_range(self):
         self.assertRaises(
@@ -50,11 +50,11 @@ class SystemAdminTests(NetworkSegmentRangeAPITestCase):
             policy.enforce,
             self.context, 'get_network_segment_range', self.target)
 
-    def test_get_network_segment_ranges_tags(self):
+    def test_get_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'get_network_segment_ranges_tags', self.target)
+            self.context, 'get_network_segment_range:tags', self.target)
 
     def test_update_network_segment_range(self):
         self.assertRaises(
@@ -62,11 +62,11 @@ class SystemAdminTests(NetworkSegmentRangeAPITestCase):
             policy.enforce,
             self.context, 'update_network_segment_range', self.target)
 
-    def test_update_network_segment_ranges_tags(self):
+    def test_update_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'update_network_segment_ranges_tags', self.target)
+            self.context, 'update_network_segment_range:tags', self.target)
 
     def test_delete_network_segment_range(self):
         self.assertRaises(
@@ -74,11 +74,11 @@ class SystemAdminTests(NetworkSegmentRangeAPITestCase):
             policy.enforce,
             self.context, 'delete_network_segment_range', self.target)
 
-    def test_delete_network_segment_ranges_tags(self):
+    def test_delete_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.context, 'delete_network_segment_ranges_tags', self.target)
+            self.context, 'delete_network_segment_range:tags', self.target)
 
 
 class SystemMemberTests(SystemAdminTests):
@@ -106,40 +106,40 @@ class AdminTests(NetworkSegmentRangeAPITestCase):
             policy.enforce(self.context,
                            'create_network_segment_range', self.target))
 
-    def test_create_network_segment_ranges_tags(self):
+    def test_create_network_segment_range_tags(self):
         self.assertTrue(
             policy.enforce(self.context,
-                           'create_network_segment_ranges_tags', self.target))
+                           'create_network_segment_range:tags', self.target))
 
     def test_get_network_segment_range(self):
         self.assertTrue(
             policy.enforce(self.context,
                            'get_network_segment_range', self.target))
 
-    def test_get_network_segment_ranges_tags(self):
+    def test_get_network_segment_range_tags(self):
         self.assertTrue(
             policy.enforce(self.context,
-                           'get_network_segment_ranges_tags', self.target))
+                           'get_network_segment_range:tags', self.target))
 
     def test_update_network_segment_range(self):
         self.assertTrue(
             policy.enforce(self.context,
                            'update_network_segment_range', self.target))
 
-    def test_update_network_segment_ranges_tags(self):
+    def test_update_network_segment_range_tags(self):
         self.assertTrue(
             policy.enforce(self.context,
-                           'update_network_segment_ranges_tags', self.target))
+                           'update_network_segment_range:tags', self.target))
 
     def test_delete_network_segment_range(self):
         self.assertTrue(
             policy.enforce(self.context,
                            'delete_network_segment_range', self.target))
 
-    def test_delete_network_segment_ranges_tags(self):
+    def test_delete_network_segment_range_tags(self):
         self.assertTrue(
             policy.enforce(self.context,
-                           'delete_network_segment_ranges_tags', self.target))
+                           'delete_network_segment_range:tags', self.target))
 
 
 class ProjectManagerTests(AdminTests):
@@ -154,11 +154,11 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'create_network_segment_range', self.target)
 
-    def test_create_network_segment_ranges_tags(self):
+    def test_create_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'create_network_segment_ranges_tags', self.target)
+            self.context, 'create_network_segment_range:tags', self.target)
 
     def test_get_network_segment_range(self):
         self.assertRaises(
@@ -166,11 +166,11 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'get_network_segment_range', self.target)
 
-    def test_get_network_segment_ranges_tags(self):
+    def test_get_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'get_network_segment_ranges_tags', self.target)
+            self.context, 'get_network_segment_range:tags', self.target)
 
     def test_update_network_segment_range(self):
         self.assertRaises(
@@ -178,11 +178,11 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'update_network_segment_range', self.target)
 
-    def test_update_network_segment_ranges_tags(self):
+    def test_update_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'update_network_segment_ranges_tags', self.target)
+            self.context, 'update_network_segment_range:tags', self.target)
 
     def test_delete_network_segment_range(self):
         self.assertRaises(
@@ -190,11 +190,11 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'delete_network_segment_range', self.target)
 
-    def test_delete_network_segment_ranges_tags(self):
+    def test_delete_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'delete_network_segment_ranges_tags', self.target)
+            self.context, 'delete_network_segment_range:tags', self.target)
 
 
 class ProjectMemberTests(ProjectManagerTests):
@@ -223,11 +223,11 @@ class ServiceRoleTests(NetworkSegmentRangeAPITestCase):
             policy.enforce,
             self.context, 'create_network_segment_range', self.target)
 
-    def test_create_network_segment_ranges_tags(self):
+    def test_create_network_segment_range_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'create_network_segment_ranges_tags', self.target)
+            self.context, 'create_network_segment_range:tags', self.target)
 
     def test_get_network_segment_range(self):
         self.assertRaises(

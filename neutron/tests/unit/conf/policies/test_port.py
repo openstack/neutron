@@ -188,13 +188,13 @@ class SystemAdminTests(PortAPITestCase):
             self.context, 'create_port:allowed_address_pairs:ip_address',
             self.alt_target)
 
-    def test_create_ports_tags(self):
+    def test_create_port_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
-            policy.enforce, self.context, 'create_ports_tags', self.target)
+            policy.enforce, self.context, 'create_port:tags', self.target)
         self.assertRaises(
             base_policy.InvalidScope,
-            policy.enforce, self.context, 'create_ports_tags', self.alt_target)
+            policy.enforce, self.context, 'create_port:tags', self.alt_target)
 
     def test_get_port(self):
         self.assertRaises(
@@ -254,13 +254,13 @@ class SystemAdminTests(PortAPITestCase):
             policy.enforce, self.context, 'get_port:resource_request',
             self.alt_target)
 
-    def test_get_ports_tags(self):
+    def test_get_port_tags(self):
         self.assertRaises(
             base_policy.InvalidScope,
-            policy.enforce, self.context, 'get_ports_tags', self.target)
+            policy.enforce, self.context, 'get_port:tags', self.target)
         self.assertRaises(
             base_policy.InvalidScope,
-            policy.enforce, self.context, 'get_ports_tags', self.alt_target)
+            policy.enforce, self.context, 'get_port:tags', self.alt_target)
 
     def test_update_port(self):
         self.assertRaises(
@@ -570,11 +570,11 @@ class AdminTests(PortAPITestCase):
                            'create_port:trusted',
                            self.alt_target))
 
-    def test_create_ports_tags(self):
+    def test_create_port_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_ports_tags', self.target))
+            policy.enforce(self.context, 'create_port:tags', self.target))
         self.assertTrue(
-            policy.enforce(self.context, 'create_ports_tags', self.alt_target))
+            policy.enforce(self.context, 'create_port:tags', self.alt_target))
 
     def test_get_port(self):
         self.assertTrue(
@@ -638,11 +638,11 @@ class AdminTests(PortAPITestCase):
             policy.enforce(
                 self.context, 'get_port:trusted', self.alt_target))
 
-    def test_get_ports_tags(self):
+    def test_get_port_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'get_ports_tags', self.target))
+            policy.enforce(self.context, 'get_port:tags', self.target))
         self.assertTrue(
-            policy.enforce(self.context, 'get_ports_tags', self.alt_target))
+            policy.enforce(self.context, 'get_port:tags', self.alt_target))
 
     def test_update_port(self):
         self.assertTrue(
@@ -953,12 +953,12 @@ class ProjectManagerTests(AdminTests):
             self.context, 'create_port:trusted',
             self.alt_target)
 
-    def test_create_ports_tags(self):
+    def test_create_port_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_ports_tags', self.target))
+            policy.enforce(self.context, 'create_port:tags', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_ports_tags', self.alt_target)
+            policy.enforce, self.context, 'create_port:tags', self.alt_target)
 
     def test_get_port(self):
         self.assertTrue(
@@ -1037,12 +1037,12 @@ class ProjectManagerTests(AdminTests):
             policy.enforce, self.context, 'get_port:trusted',
             self.alt_target)
 
-    def test_get_ports_tags(self):
+    def test_get_port_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'get_ports_tags', self.target))
+            policy.enforce(self.context, 'get_port:tags', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'get_ports_tags', self.alt_target)
+            policy.enforce, self.context, 'get_port:tags', self.alt_target)
 
     def test_update_port(self):
         self.assertTrue(
@@ -1201,12 +1201,12 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'update_port:trusted', self.alt_target)
 
-    def test_update_ports_tags(self):
+    def test_update_port_tags(self):
         self.assertTrue(
-            policy.enforce(self.context, 'update_ports_tags', self.target))
+            policy.enforce(self.context, 'update_port:tags', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'update_ports_tags', self.alt_target)
+            policy.enforce, self.context, 'update_port:tags', self.alt_target)
 
     def test_delete_port(self):
         self.assertTrue(
@@ -1447,13 +1447,13 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce, self.context, 'create_port:binding:vnic_type',
             self.alt_target)
 
-    def test_create_ports_tags(self):
+    def test_create_port_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_ports_tags', self.target)
+            policy.enforce, self.context, 'create_port:tags', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_ports_tags', self.alt_target)
+            policy.enforce, self.context, 'create_port:tags', self.alt_target)
 
     def test_update_port(self):
         self.assertRaises(
@@ -1473,13 +1473,13 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce, self.context, 'update_port:binding:vnic_type',
             self.alt_target)
 
-    def test_update_ports_tags(self):
+    def test_update_port_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'update_ports_tags', self.target)
+            policy.enforce, self.context, 'update_port:tags', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'update_ports_tags', self.alt_target)
+            policy.enforce, self.context, 'update_port:tags', self.alt_target)
 
     def test_delete_port(self):
         self.assertRaises(
@@ -1567,11 +1567,11 @@ class ServiceRoleTests(PortAPITestCase):
             self.context, 'create_port:allowed_address_pairs:ip_address',
             self.target)
 
-    def test_create_ports_tags(self):
+    def test_create_port_tags(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, 'create_ports_tags',
+            self.context, 'create_port:tags',
             self.target)
 
     def test_get_port(self):

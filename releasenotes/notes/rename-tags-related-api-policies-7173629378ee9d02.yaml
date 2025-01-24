@@ -1,0 +1,15 @@
+---
+upgrade:
+  - |
+    Names of the actions related to the ``tags`` attribute for various resources
+    in the API policy rules have changed. Old names like
+    "<action>_<resource_plural_name>_tags", for example, "update_networks_tags"
+    are changed to the new pattern "<action>_<resource_singular>:tags",
+    for example, "update_network:tags"
+deprecations:
+  - |
+    Old names of the API policy actions related to the ``tags`` attribute for
+    various resources with pattern like "<action>_<resource_plural_name>_tags"
+    are now deprecated. If there are custom rules defined for those actions in
+    the Neutron policy file, please update them to the new pattern which is
+    "<action>_<resource_singular>:tags".

@@ -77,11 +77,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='create_floatingips_tags',
+        name='create_floatingip:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Create the floating IP tags',
         operations=ACTION_POST_TAGS,
         scope_types=['project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_floatingips_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_floatingip',
@@ -105,11 +110,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='get_floatingips_tags',
+        name='get_floatingip:tags',
         check_str=base.ADMIN_OR_PROJECT_READER,
         description='Get the floating IP tags',
         operations=ACTION_GET_TAGS,
         scope_types=['project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_floatingips_tags',
+            check_str=base.ADMIN_OR_PROJECT_READER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
@@ -130,11 +140,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='update_floatingips_tags',
+        name='update_floatingip:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Update the floating IP tags',
         operations=ACTION_PUT_TAGS,
         scope_types=['project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_floatingips_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
@@ -155,11 +170,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_floatingips_tags',
+        name='delete_floatingips:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Delete the floating IP tags',
         operations=ACTION_DELETE_TAGS,
         scope_types=['project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_floatingips_tags',
+            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            deprecated_reason="Name of the rule is changed.",
+            deprecated_since="2025.1")
     ),
 ]
 

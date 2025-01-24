@@ -17,10 +17,12 @@ import copy
 import itertools
 import typing
 
+from neutron_lib.api import attributes
 from neutron_lib.api.definitions import port
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib.api import validators
+from neutron_lib import constants
 from neutron_lib.db import standard_attr
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
@@ -69,7 +71,7 @@ TAG_ATTRIBUTE_MAP_PORTS[TAGS] = {
         'validate': {'type:list_of_unique_strings': MAX_TAG_LEN},
         'default': [], 'is_visible': True, 'is_filter': True
 }
-PARENTS = {
+OVO_CLS = {
     'floatingips': router_obj.FloatingIP,
     'network_segment_ranges': network_segment_range_obj.NetworkSegmentRange,
     'networks': network_obj.Network,
@@ -77,18 +79,16 @@ PARENTS = {
     'ports': ports_obj.Port,
     'routers': router_obj.Router,
     'security_groups': securitygroup_obj.SecurityGroup,
-    'subnets': ('networks', subnet_obj.Subnet),
+    'subnets': subnet_obj.Subnet,
     'subnetpools': subnetpool_obj.SubnetPool,
     'trunks': trunk_obj.Trunk,
 }
 ResourceInfo = collections.namedtuple(
     'ResourceInfo', ['project_id',
-                     'parent_type',
-                     'parent_id',
-                     'upper_parent_type',
-                     'upper_parent_id',
+                     'obj_type',
+                     'obj',
                      ])
-EMPTY_RESOURCE_INFO = ResourceInfo(None, None, None, None, None)
+EMPTY_RESOURCE_INFO = ResourceInfo(None, None, None)
 
 
 class TagResourceNotFound(exceptions.NotFound):
@@ -113,12 +113,12 @@ def validate_tags(body):
         raise exceptions.InvalidInput(error_message=msg)
 
 
-def notify_tag_action(context, action, parent, parent_id, tags=None):
+def notify_tag_action(context, action, obj, obj_id, tags=None):
     notifier = n_rpc.get_notifier('network')
     tag_event = 'tag.%s' % action
     # TODO(hichihara): Add 'updated_at' into payload
-    payload = {'parent_resource': parent,
-               'parent_resource_id': parent_id}
+    payload = {'obj_resource': obj,
+               'obj_resource_id': obj_id}
     if tags is not None:
         payload['tags'] = tags
     notifier.info(context, tag_event, payload)
@@ -129,160 +129,161 @@ class TaggingController:
         self.plugin = directory.get_plugin(TAG_PLUGIN_TYPE)
         self.supported_resources = TAG_SUPPORTED_RESOURCES
 
-    def _get_target(self, res_info):
-        target = {'id': res_info.parent_id,
-                  'tenant_id': res_info.project_id,
-                  'project_id': res_info.project_id}
-        if res_info.upper_parent_type:
-            res_id = (self.supported_resources[res_info.upper_parent_type] +
-                      '_id')
-            target[res_id] = res_info.upper_parent_id
-        return target
+    def _get_resource_info(self, context, kwargs, tags=None):
+        """Return the information about the resource with the tag(s)
 
-    def _get_resource_info(self, context, kwargs):
-        """Return the tag parent resource information
-
-        Some parent resources, like the subnets, depend on other upper parent
-        resources (networks). In that case, it is needed to provide the upper
-        parent resource information.
-
-        :param kwargs: dictionary with the parent resource ID, along with other
-                       information not needed. It is formated as
+        :param kwargs: dictionary with the resource ID, along with other
+                       information. It is formated as
                        {"resource_id": "id", ...}
-        :return: ``ResourceInfo`` named tuple with the parent and upper parent
-                 information and the project ID (of the parent or upper
-                 parent).
+        :param tags: list of the tags which will be set for the resource
+        :return: ``ResourceInfo`` named tuple with the object's type,
+                 object's information in the dict and the project ID
         """
-        for key, parent_type in itertools.product(
+        for key, obj_type in itertools.product(
                 kwargs.keys(), self.supported_resources.keys()):
-            if key != self.supported_resources[parent_type] + '_id':
+            if key != self.supported_resources[obj_type] + '_id':
                 continue
 
-            parent_id = kwargs[key]
-            parent_obj = PARENTS[parent_type]
-            if isinstance(parent_obj, tuple):
-                upper_parent_type = parent_obj[0]
-                parent_obj = parent_obj[1]
-                res_id = (self.supported_resources[upper_parent_type] +
-                          '_id')
-                upper_parent_id = parent_obj.get_values(
-                    context.elevated(), res_id, id=parent_id)[0]
-            else:
-                upper_parent_type = upper_parent_id = None
-
+            obj_id = kwargs[key]
+            obj_class = OVO_CLS[obj_type]
             try:
-                project_id = parent_obj.get_values(
-                    context.elevated(), 'project_id', id=parent_id)[0]
+                field_list = []
+                for attr_name, attr_config in \
+                        attributes.RESOURCES[obj_type].items():
+                    if (attr_config.get('required_by_policy') or
+                            attr_config.get('primary_key') or
+                            'default' not in attr_config):
+                        field_list.append(attr_name)
+                obj_dict = {
+                    constants.ATTRIBUTES_TO_UPDATE: [TAGS]
+                }
+                if tags is not None:
+                    obj_dict[TAGS] = tags
+                obj = obj_class.get_object(context.elevated(), id=obj_id,
+                                           fields=field_list)
+                if not obj:
+                    return EMPTY_RESOURCE_INFO
+                for f_name, f_value in obj.to_dict().items():
+                    if f_name in field_list:
+                        obj_dict[f_name] = f_value
+                project_id = obj_dict.get('project_id')
+                if not project_id:
+                    project_id = obj_dict.get('tenant_id')
+                    obj_dict['project_id'] = project_id
             except IndexError:
                 return EMPTY_RESOURCE_INFO
 
-            return ResourceInfo(project_id, parent_type, parent_id,
-                                upper_parent_type, upper_parent_id)
+            return ResourceInfo(project_id, obj_type, obj_dict)
 
         # This should never be returned.
         return EMPTY_RESOURCE_INFO
 
+    def _get_policy_action(self, base_action, obj_type):
+        return "{}_{}:{}".format(
+            base_action,
+            self.supported_resources[obj_type],
+            TAGS)
+
     def index(self, request, **kwargs):
-        # GET /v2.0/{parent_resource}/{parent_resource_id}/tags
+        # GET /v2.0/{obj_resource}/{obj_resource_id}/tags
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs)
-        target = self._get_target(rinfo)
-        policy.enforce(ctx, 'get_{}_{}'.format(rinfo.parent_type, TAGS),
-                       target)
-        return self.plugin.get_tags(ctx, rinfo.parent_type, rinfo.parent_id)
+        policy.enforce(ctx, 'get_{}_{}'.format(rinfo.obj_type, TAGS),
+                       rinfo.obj)
+        return self.plugin.get_tags(ctx, rinfo.obj_type, rinfo.obj['id'])
 
     def show(self, request, id, **kwargs):
-        # GET /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
+        # GET /v2.0/{obj_resource}/{obj_resource_id}/tags/{tag}
         # id == tag
         validate_tag(id)
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs)
-        target = self._get_target(rinfo)
-        policy.enforce(ctx, 'get_{}_{}'.format(rinfo.parent_type, TAGS),
-                       target)
-        return self.plugin.get_tag(ctx, rinfo.parent_type, rinfo.parent_id, id)
+        policy.enforce(ctx, 'get_{}:{}'.format(rinfo.obj_type, TAGS),
+                       rinfo.obj)
+        return self.plugin.get_tag(ctx, rinfo.obj_type, rinfo.obj['id'], id)
 
     def create(self, request, body, **kwargs):
-        # POST /v2.0/{parent_resource}/{parent_resource_id}/tags
+        # POST /v2.0/{obj_resource}/{obj_resource_id}/tags
         # body: {"tags": ["aaa", "bbb"]}
         validate_tags(body)
         ctx = request.context
-        rinfo = self._get_resource_info(ctx, kwargs)
-        target = self._get_target(rinfo)
-        policy.enforce(ctx, 'create_{}_{}'.format(rinfo.parent_type, TAGS),
-                       target)
-        notify_tag_action(ctx, 'create.start', rinfo.parent_type,
-                          rinfo.parent_id, body['tags'])
-        result = self.plugin.create_tags(ctx, rinfo.parent_type,
-                                         rinfo.parent_id, body)
-        notify_tag_action(ctx, 'create.end', rinfo.parent_type,
-                          rinfo.parent_id, body['tags'])
+        rinfo = self._get_resource_info(ctx, kwargs, tags=body[TAGS])
+        policy.enforce(ctx, 'create_{}:{}'.format(rinfo.obj_type, TAGS),
+                       rinfo.obj)
+        notify_tag_action(ctx, 'create.start', rinfo.obj_type,
+                          rinfo.obj['id'], body['tags'])
+        result = self.plugin.create_tags(ctx, rinfo.obj_type,
+                                         rinfo.obj['id'], body)
+        notify_tag_action(ctx, 'create.end', rinfo.obj_type,
+                          rinfo.obj['id'], body['tags'])
         return result
 
     def update(self, request, id, **kwargs):
-        # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
+        # PUT /v2.0/{obj_resource}/{obj_resource_id}/tags/{tag}
         # id == tag
         validate_tag(id)
         ctx = request.context
-        rinfo = self._get_resource_info(ctx, kwargs)
-        target = self._get_target(rinfo)
-        policy.enforce(ctx, 'update_{}_{}'.format(rinfo.parent_type, TAGS),
-                       target)
-        notify_tag_action(ctx, 'create.start', rinfo.parent_type,
-                          rinfo.parent_id, [id])
-        result = self.plugin.update_tag(ctx, rinfo.parent_type,
-                                        rinfo.parent_id, id)
-        notify_tag_action(ctx, 'create.end', rinfo.parent_type,
-                          rinfo.parent_id, [id])
+        rinfo = self._get_resource_info(ctx, kwargs, tags=[id])
+        policy.enforce(ctx, 'update_{}:{}'.format(rinfo.obj_type, TAGS),
+                       rinfo.obj)
+        notify_tag_action(ctx, 'create.start', rinfo.obj_type,
+                          rinfo.obj['id'], [id])
+        result = self.plugin.update_tag(ctx, rinfo.obj_type,
+                                        rinfo.obj['id'], id)
+        notify_tag_action(ctx, 'create.end', rinfo.obj_type,
+                          rinfo.obj['id'], [id])
         return result
 
     def update_all(self, request, body, **kwargs):
-        # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags
+        # PUT /v2.0/{obj_resource}/{obj_resource_id}/tags
         # body: {"tags": ["aaa", "bbb"]}
         validate_tags(body)
         ctx = request.context
-        rinfo = self._get_resource_info(ctx, kwargs)
-        target = self._get_target(rinfo)
-        policy.enforce(ctx, 'update_{}_{}'.format(rinfo.parent_type, TAGS),
-                       target)
-        notify_tag_action(ctx, 'update.start', rinfo.parent_type,
-                          rinfo.parent_id, body['tags'])
-        result = self.plugin.update_tags(ctx, rinfo.parent_type,
-                                         rinfo.parent_id, body)
-        notify_tag_action(ctx, 'update.end', rinfo.parent_type,
-                          rinfo.parent_id, body['tags'])
+        rinfo = self._get_resource_info(ctx, kwargs, tags=body[TAGS])
+        policy.enforce(
+            ctx,
+            self._get_policy_action("update", rinfo.obj_type),
+            rinfo.obj)
+        notify_tag_action(ctx, 'update.start', rinfo.obj_type,
+                          rinfo.obj['id'], body['tags'])
+        result = self.plugin.update_tags(ctx, rinfo.obj_type,
+                                         rinfo.obj['id'], body)
+        notify_tag_action(ctx, 'update.end', rinfo.obj_type,
+                          rinfo.obj['id'], body['tags'])
         return result
 
     def delete(self, request, id, **kwargs):
-        # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
+        # DELETE /v2.0/{obj_resource}/{obj_resource_id}/tags/{tag}
         # id == tag
         validate_tag(id)
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs)
-        target = self._get_target(rinfo)
-        policy.enforce(ctx, 'delete_{}_{}'.format(rinfo.parent_type, TAGS),
-                       target)
-        notify_tag_action(ctx, 'delete.start', rinfo.parent_type,
-                          rinfo.parent_id, [id])
-        result = self.plugin.delete_tag(ctx, rinfo.parent_type,
-                                        rinfo.parent_id, id)
-        notify_tag_action(ctx, 'delete.end', rinfo.parent_type,
-                          rinfo.parent_id, [id])
+        policy.enforce(
+            ctx,
+            self._get_policy_action("delete", rinfo.obj_type),
+            rinfo.obj)
+        notify_tag_action(ctx, 'delete.start', rinfo.obj_type,
+                          rinfo.obj['id'], [id])
+        result = self.plugin.delete_tag(ctx, rinfo.obj_type,
+                                        rinfo.obj['id'], id)
+        notify_tag_action(ctx, 'delete.end', rinfo.obj_type,
+                          rinfo.obj['id'], [id])
         return result
 
     def delete_all(self, request, **kwargs):
-        # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags
+        # DELETE /v2.0/{obj_resource}/{obj_resource_id}/tags
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs)
-        target = self._get_target(rinfo)
-        policy.enforce(ctx, 'delete_{}_{}'.format(rinfo.parent_type, TAGS),
-                       target)
-        notify_tag_action(ctx, 'delete_all.start', rinfo.parent_type,
-                          rinfo.parent_id)
-        result = self.plugin.delete_tags(ctx, rinfo.parent_type,
-                                         rinfo.parent_id)
-        notify_tag_action(ctx, 'delete_all.end', rinfo.parent_type,
-                          rinfo.parent_id)
+        policy.enforce(
+            ctx,
+            self._get_policy_action("delete", rinfo.obj_type),
+            rinfo.obj)
+        notify_tag_action(ctx, 'delete_all.start', rinfo.obj_type,
+                          rinfo.obj['id'])
+        result = self.plugin.delete_tags(ctx, rinfo.obj_type,
+                                         rinfo.obj['id'])
+        notify_tag_action(ctx, 'delete_all.end', rinfo.obj_type,
+                          rinfo.obj['id'])
         return result
 
 
@@ -324,10 +325,10 @@ class Tagging(api_extensions.ExtensionDescriptor):
         for collection_name, member_name in TAG_SUPPORTED_RESOURCES.items():
             if 'security_group' in collection_name:
                 collection_name = collection_name.replace('_', '-')
-            parent = {'member_name': member_name,
-                      'collection_name': collection_name}
+            obj = {'member_name': member_name,
+                   'collection_name': collection_name}
             exts.append(extensions.ResourceExtension(
-                TAGS, controller, parent,
+                TAGS, controller, obj,
                 collection_methods=collection_methods))
         return exts
 

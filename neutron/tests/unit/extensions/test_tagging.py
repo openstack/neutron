@@ -14,7 +14,10 @@
 #    under the License.
 #
 
+from unittest import mock
+
 import netaddr
+from neutron_lib.api import attributes
 from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.utils import net as net_utils
@@ -42,19 +45,51 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
                                    tenant_id=self.project_id,
                                    is_admin=False)
         self.tc = tagging.TaggingController()
+        mock.patch.dict(
+            attributes.RESOURCES,
+            {
+                'floatingips': {
+                    'id': {'primary_key': True},
+                    'router_id': {'required_by_policy': True},
+                    'tenant_id': {'required_by_policy': True}
+                },
+                'network_segment_ranges': {
+                    'id': {'primary_key': True},
+                    'project_id': {'required_by_policy': True}
+                },
+                'policies':
+                {
+                    'id': {'primary_key': True},
+                    'tenant_id': {'required_by_policy': True}
+                },
+                'routers':
+                {
+                    'id': {'primary_key': True},
+                    'tenant_id': {'required_by_policy': True}
+                },
+                'security_groups':
+                {
+                    'id': {'primary_key': True},
+                    'tenant_id': {'required_by_policy': True}
+                },
+                'trunks':
+                {
+                    'id': {'primary_key': True},
+                    'port_id': {'required_by_policy': True},
+                    'tenant_id': {'required_by_policy': True}
+                }
+            }
+        ).start()
 
-    def test_all_parents_have_a_reference(self):
+    def test_all_ovo_cls_have_a_reference(self):
         tc_supported_resources = set(self.tc.supported_resources.keys())
-        parent_resources = set(tagging.PARENTS.keys())
-        self.assertEqual(tc_supported_resources, parent_resources)
+        ovo_resources = set(tagging.OVO_CLS.keys())
+        self.assertEqual(tc_supported_resources, ovo_resources)
 
-    def _check_resource_info(self, parent_id, parent_type,
-                             upper_parent_id=None, upper_parent_type=None):
-        p_id = self.tc.supported_resources[parent_type] + '_id'
-        res = self.tc._get_resource_info(self.ctx, {p_id: parent_id})
-        reference = tagging.ResourceInfo(
-            self.project_id, parent_type, parent_id,
-            upper_parent_type, upper_parent_id)
+    def _check_resource_info(self, obj, obj_type):
+        id_key = self.tc.supported_resources[obj_type] + '_id'
+        res = self.tc._get_resource_info(self.ctx, {id_key: obj['id']})
+        reference = tagging.ResourceInfo(self.project_id, obj_type, obj)
         self.assertEqual(reference, res)
 
     def test__get_resource_info_floatingips(self):
@@ -78,26 +113,51 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
             self.ctx, id=fip_id, project_id=self.project_id,
             floating_network_id=ext_net_id, floating_port_id=fip_port_id,
             floating_ip_address=ip_address).create()
-        self._check_resource_info(fip_id, 'floatingips')
+        expected_fip = {
+            'attributes_to_update': ['tags'],
+            'id': fip_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id
+        }
+        self._check_resource_info(expected_fip, 'floatingips')
 
     def test__get_resource_info_network_segment_ranges(self):
         srange_id = uuidutils.generate_uuid()
         network_segment_range_obj.NetworkSegmentRange(
             self.ctx, id=srange_id, project_id=self.project_id,
-            shared=False, network_type=n_const.TYPE_GENEVE).create()
-        self._check_resource_info(srange_id, 'network_segment_ranges')
+            shared=False, network_type=n_const.TYPE_GENEVE,
+            minimum=1, maximum=100).create()
+        expected_segment = {
+            'attributes_to_update': ['tags'],
+            'id': srange_id,
+            'project_id': self.project_id
+        }
+        self._check_resource_info(expected_segment, 'network_segment_ranges')
 
     def test__get_resource_info_networks(self):
         net_id = uuidutils.generate_uuid()
         network_obj.Network(
             self.ctx, id=net_id, project_id=self.project_id).create()
-        self._check_resource_info(net_id, 'networks')
+        expected_net = {
+            'attributes_to_update': ['tags'],
+            'id': net_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id,
+            'shared': False,
+        }
+        self._check_resource_info(expected_net, 'networks')
 
     def test__get_resource_info_policies(self):
         qos_id = uuidutils.generate_uuid()
         policy_obj.QosPolicy(
             self.ctx, id=qos_id, project_id=self.project_id).create()
-        self._check_resource_info(qos_id, 'policies')
+        expected_qos = {
+            'attributes_to_update': ['tags'],
+            'id': qos_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id
+        }
+        self._check_resource_info(expected_qos, 'policies')
 
     def test__get_resource_info_ports(self):
         net_id = uuidutils.generate_uuid()
@@ -111,20 +171,40 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
             self.ctx, id=port_id, project_id=self.project_id,
             mac_address=mac, network_id=net_id, admin_state_up=True,
             status='UP', device_id='', device_owner='').create()
-        self._check_resource_info(port_id, 'ports')
+        expected_port = {
+            'attributes_to_update': ['tags'],
+            'id': port_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id,
+            'network_id': net_id,
+            'status': 'UP',
+        }
+        self._check_resource_info(expected_port, 'ports')
 
     def test__get_resource_info_routers(self):
         router_id = uuidutils.generate_uuid()
         router_obj.Router(
             self.ctx, id=router_id, project_id=self.project_id).create()
-        self._check_resource_info(router_id, 'routers')
+        expected_router = {
+            'attributes_to_update': ['tags'],
+            'id': router_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id
+        }
+        self._check_resource_info(expected_router, 'routers')
 
     def test__get_resource_info_security_groups(self):
         sg_id = uuidutils.generate_uuid()
         securitygroup_obj.SecurityGroup(
             self.ctx, id=sg_id, project_id=self.project_id,
             is_default=True).create()
-        self._check_resource_info(sg_id, 'security_groups')
+        expected_sg = {
+            'attributes_to_update': ['tags'],
+            'id': sg_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id
+        }
+        self._check_resource_info(expected_sg, 'security_groups')
 
     def test__get_resource_info_subnets(self):
         net_id = uuidutils.generate_uuid()
@@ -136,9 +216,16 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
             self.ctx, id=subnet_id, project_id=self.project_id,
             ip_version=n_const.IP_VERSION_4, cidr=cidr,
             network_id=net_id).create()
-        self._check_resource_info(subnet_id, 'subnets',
-                                  upper_parent_id=net_id,
-                                  upper_parent_type='networks')
+        expected_subnet = {
+            'attributes_to_update': ['tags'],
+            'id': subnet_id,
+            'ip_version': n_const.IP_VERSION_4,
+            'shared': False,
+            'network_id': net_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id
+        }
+        self._check_resource_info(expected_subnet, 'subnets')
 
     def test__get_resource_info_subnetpools(self):
         sp_id = uuidutils.generate_uuid()
@@ -146,7 +233,17 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
             self.ctx, id=sp_id, project_id=self.project_id,
             ip_version=n_const.IP_VERSION_4, default_prefixlen=26,
             min_prefixlen=28, max_prefixlen=26).create()
-        self._check_resource_info(sp_id, 'subnetpools')
+        expected_sp = {
+            'attributes_to_update': ['tags'],
+            'id': sp_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id,
+            'ip_version': n_const.IP_VERSION_4,
+            'shared': False,
+            'is_default': False,
+            'prefixes': [],
+        }
+        self._check_resource_info(expected_sp, 'subnetpools')
 
     def test__get_resource_info_trunks(self):
         trunk_id = uuidutils.generate_uuid()
@@ -164,9 +261,16 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
         trunk_obj.Trunk(
             self.ctx, id=trunk_id, project_id=self.project_id,
             port_id=port_id).create()
-        self._check_resource_info(trunk_id, 'trunks')
+        expected_trunk = {
+            'attributes_to_update': ['tags'],
+            'id': trunk_id,
+            'tenant_id': self.project_id,
+            'project_id': self.project_id,
+            'port_id': port_id
+        }
+        self._check_resource_info(expected_trunk, 'trunks')
 
-    def test__get_resource_info_parent_not_present(self):
+    def test__get_resource_info_object_not_present(self):
         missing_id = uuidutils.generate_uuid()
         p_id = self.tc.supported_resources['trunks'] + '_id'
         res = self.tc._get_resource_info(self.ctx, {p_id: missing_id})
