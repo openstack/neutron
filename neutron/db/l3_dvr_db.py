@@ -1262,18 +1262,19 @@ class _DVRAgentInterfaceMixin:
             for address_pair in port_dict['allowed_address_pairs']:
                 aap_mac_address = address_pair.get("mac_address",
                                                    port_dict["mac_address"])
-                aap_ip_cidr = address_pair['ip_address'].split("/")
-                if len(aap_ip_cidr) == 1 or int(aap_ip_cidr[1]) == 32:
+                aap_ip_cidr = netaddr.IPNetwork(address_pair['ip_address'])
+                aap_ip_str = str(aap_ip_cidr.ip)
+                if n_utils.is_cidr_host(str(aap_ip_cidr.cidr)):
                     subnet_id = self._get_subnet_id_for_given_fixed_ip(
-                        context, aap_ip_cidr[0], port_dict)
+                        context, aap_ip_str, port_dict)
                     if subnet_id is not None:
                         fixed_ip = {'subnet_id': subnet_id,
-                                    'ip_address': aap_ip_cidr[0],
+                                    'ip_address': aap_ip_str,
                                     'mac_address': aap_mac_address}
                         aa_pair_fixed_ips.append(fixed_ip)
                     else:
                         LOG.debug("Subnet does not match for the given "
-                                  "fixed_ip %s for arp update", aap_ip_cidr[0])
+                                  "fixed_ip %s for arp update", aap_ip_str)
         return aa_pair_fixed_ips
 
     def update_arp_entry_for_dvr_service_port(self, context, port_dict):
