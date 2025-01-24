@@ -226,8 +226,6 @@ class Controller(object):
             @db_api.retry_db_errors
             def _handle_action(request, id, **kwargs):
                 arg_list = [request.context, id]
-                # Ensure policy engine is initialized
-                policy.init()
                 # Fetch the resource and verify if the user can access it
                 try:
                     parent_id = kwargs.get(self._parent_id_name)
@@ -365,8 +363,6 @@ class Controller(object):
     def index(self, request, **kwargs):
         """Returns a list of the requested entity."""
         parent_id = kwargs.get(self._parent_id_name)
-        # Ensure policy engine is initialized
-        policy.init()
         return self._items(request, True, parent_id)
 
     @db_api.retry_db_errors
@@ -379,8 +375,6 @@ class Controller(object):
             field_list, added_fields = self._do_field_list(
                 api_common.list_args(request, "fields"))
             parent_id = kwargs.get(self._parent_id_name)
-            # Ensure policy engine is initialized
-            policy.init()
             return {self._resource:
                     self._view(request.context,
                                self._item(request,
@@ -457,8 +451,6 @@ class Controller(object):
             items = body[self._collection]
         else:
             items = [body]
-        # Ensure policy engine is initialized
-        policy.init()
         # Store requested resource amounts grouping them by tenant
         # This won't work with multiple resources. However because of the
         # current structure of this controller there will hardly be more than
@@ -579,7 +571,6 @@ class Controller(object):
         action = self._plugin_handlers[self.DELETE]
 
         # Check authz
-        policy.init()
         parent_id = kwargs.get(self._parent_id_name)
         obj = self._item(request, id, parent_id=parent_id)
         try:
@@ -650,8 +641,6 @@ class Controller(object):
                       if (value.get('required_by_policy') or
                           value.get('primary_key') or
                           'default' not in value)]
-        # Ensure policy engine is initialized
-        policy.init()
         parent_id = kwargs.get(self._parent_id_name)
         # If the parent_id exist, we should get orig_obj with
         # self._parent_id_name field.
