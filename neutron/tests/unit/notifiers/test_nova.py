@@ -29,6 +29,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
 
+from neutron.notifiers import batch_notifier
 from neutron.notifiers import nova
 from neutron.objects import ports as port_obj
 from neutron.tests import base
@@ -317,7 +318,9 @@ class TestNovaNotify(base.BaseTestCase):
             {'name': 'network-changed', 'server_uuid': device_id}])
         create.assert_called()
 
-    def test_reassociate_floatingip_without_disassociate_event(self):
+    @mock.patch.object(batch_notifier.BatchNotifier, '_notify')
+    def test_reassociate_floatingip_without_disassociate_event(
+            self, mock_notify):
         returned_obj = {'floatingip':
                         {'port_id': 'f5348a16-609a-4971-b0f0-4b8def5235fb'}}
         original_obj = {'port_id': '5a39def4-3d3f-473d-9ff4-8e90064b9cc1'}
@@ -387,7 +390,8 @@ class TestNovaNotify(base.BaseTestCase):
             extensions=mock.ANY,
             global_request_id=mock.ANY)
 
-    def test_notify_port_active_direct(self):
+    @mock.patch.object(batch_notifier.BatchNotifier, '_notify')
+    def test_notify_port_active_direct(self, mock_notify):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
         port = port_obj.Port(self.ctx, id=port_id, device_id=device_id,

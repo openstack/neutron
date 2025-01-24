@@ -13,9 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import queue
+import time
 from unittest import mock
-
-import eventlet
 
 from neutron.common import utils
 from neutron.notifiers import batch_notifier
@@ -25,9 +25,9 @@ from neutron.tests import base
 class TestBatchNotifier(base.BaseTestCase):
     def setUp(self):
         super().setUp()
-        self._received_events = eventlet.Queue()
-        self.notifier = batch_notifier.BatchNotifier(2, self._queue_events)
-        self.spawn_n_p = mock.patch.object(eventlet, 'spawn_n')
+        self._received_events = queue.Queue()
+        self.notifier = batch_notifier.BatchNotifier(0.1, self._queue_events)
+        self.spawn_n_p = mock.patch.object(utils, 'spawn_n')
 
     def _queue_events(self, events):
         for event in events:
@@ -55,7 +55,7 @@ class TestBatchNotifier(base.BaseTestCase):
         events = 20
         for i in range(events):
             self.notifier.queue_event('Event %s' % i)
-            eventlet.sleep(0)  # yield to let coro execute
+            time.sleep(0)  # yield to let coro execute
 
         utils.wait_until_true(self.notifier._pending_events.empty,
                               timeout=5)
@@ -69,7 +69,7 @@ class TestBatchNotifier(base.BaseTestCase):
         events = 20
         for i in range(events):
             self.notifier.queue_event('Event %s' % i)
-            eventlet.sleep(0)  # yield to let coro execute
+            time.sleep(0)  # yield to let coro execute
 
         utils.wait_until_true(self.notifier._pending_events.empty,
                               timeout=5)
