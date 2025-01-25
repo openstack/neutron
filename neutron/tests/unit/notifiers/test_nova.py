@@ -14,9 +14,10 @@
 #    under the License.
 
 import queue
+import threading
+import time
 from unittest import mock
 
-import eventlet
 from keystoneauth1 import exceptions as ks_exc
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_ctx
@@ -409,31 +410,39 @@ class TestNovaNotify(base.BaseTestCase):
             self.nova_notifier.batch_notifier._pending_events.get())
 
     def test_notify_concurrent_enable_flag_update(self):
-        # This test assumes Neutron server uses eventlet.
+        # This test assumes Neutron server can use eventlet or not.
         # NOTE(ralonsoh): the exceptions raise inside a thread won't stop the
         # test. The checks are stored in "_queue" and tested at the end of the
         # test execution.
-        _queue = eventlet.queue.Queue()
+        # NOTE(ralonsoh): once the eventlet deprecation is finished, the
+        # ``time.sleep()`` calls can be removed; the kernel threads are
+        # preemptive and it is not needed to manually yield the GIL.
+        _queue = queue.Queue()
 
         def _local_executor(thread_idx):
             # This thread has not yet initialized the local "enable" flag.
             _queue.put(getattr(nova._notifier_store, 'enable', None) is None)
-            eventlet.sleep(0)  # Next thread execution.
+            time.sleep(0)  # Next thread execution.
             new_enable = bool(thread_idx % 2)
             with self.nova_notifier.context_enabled(new_enable):
                 # At this point, the Nova Notifier should have updated the
                 # "enable" flag.
                 _queue.put(new_enable == nova._notifier_store.enable)
-                eventlet.sleep(0)  # Next thread execution.
+                time.sleep(0)  # Next thread execution.
                 _queue.put(new_enable == nova._notifier_store.enable)
             _queue.put(nova.NOTIFIER_ENABLE_DEFAULT ==
                        nova._notifier_store.enable)
 
         num_threads = 20
-        pool = eventlet.GreenPool(num_threads)
+        threads = []
         for idx in range(num_threads):
-            pool.spawn(_local_executor, idx)
-        pool.waitall()
+            t = threading.Thread(target=_local_executor, args=(idx,))
+            t.start()
+            threads.append(t)
+
+        for t in threads:
+            t.join()
+
         try:
             while True:
                 self.assertTrue(_queue.get(block=False))
