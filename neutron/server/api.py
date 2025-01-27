@@ -24,7 +24,7 @@ from neutron.common import config
 from neutron.common import profiler
 
 
-def eventlet_api_server():
+def api_server():
     profiler.setup('neutron-server', cfg.CONF.host)
     app = config.load_paste_app('neutron')
     registry.publish(resources.PROCESS, events.BEFORE_SPAWN,
