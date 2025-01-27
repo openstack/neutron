@@ -14,7 +14,6 @@
 import abc
 import collections
 import copy
-import functools
 import itertools
 
 from neutron_lib.api.definitions import port
@@ -88,14 +87,6 @@ ResourceInfo = collections.namedtuple(
                      'upper_parent_id',
                      ])
 EMPTY_RESOURCE_INFO = ResourceInfo(None, None, None, None, None)
-
-
-def _policy_init(f):
-    @functools.wraps(f)
-    def func(self, *args, **kwargs):
-        policy.init()
-        return f(self, *args, **kwargs)
-    return func
 
 
 class TagResourceNotFound(exceptions.NotFound):
@@ -189,7 +180,6 @@ class TaggingController(object):
         # This should never be returned.
         return EMPTY_RESOURCE_INFO
 
-    @_policy_init
     def index(self, request, **kwargs):
         # GET /v2.0/{parent_resource}/{parent_resource_id}/tags
         ctx = request.context
@@ -199,7 +189,6 @@ class TaggingController(object):
                        target)
         return self.plugin.get_tags(ctx, rinfo.parent_type, rinfo.parent_id)
 
-    @_policy_init
     def show(self, request, id, **kwargs):
         # GET /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
@@ -216,7 +205,6 @@ class TaggingController(object):
         # POST /v2.0/{parent_resource}/{parent_resource_id}/tags
         raise webob.exc.HTTPNotFound("not supported")
 
-    @_policy_init
     def update(self, request, id, **kwargs):
         # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
@@ -234,7 +222,6 @@ class TaggingController(object):
                           rinfo.parent_id, [id])
         return result
 
-    @_policy_init
     def update_all(self, request, body, **kwargs):
         # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags
         # body: {"tags": ["aaa", "bbb"]}
@@ -252,7 +239,6 @@ class TaggingController(object):
                           rinfo.parent_id, body['tags'])
         return result
 
-    @_policy_init
     def delete(self, request, id, **kwargs):
         # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
@@ -270,7 +256,6 @@ class TaggingController(object):
                           rinfo.parent_id, [id])
         return result
 
-    @_policy_init
     def delete_all(self, request, **kwargs):
         # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags
         ctx = request.context
