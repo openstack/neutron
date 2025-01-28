@@ -51,10 +51,12 @@ class TestAsyncProcess(base.BaseTestCase):
         mock_spawn.assert_has_calls([
             mock.call(proc._watch_process,
                       proc._read_stdout,
-                      proc._kill_event),
+                      proc._kill_event,
+                      mock.ANY),
             mock.call(proc._watch_process,
                       proc._read_stderr,
-                      proc._kill_event),
+                      proc._kill_event,
+                      mock.ANY),
         ])
         self.assertEqual(len(proc._watchers), 2)
 
@@ -107,11 +109,15 @@ class TestAsyncProcess(base.BaseTestCase):
     def _test__watch_process(self, callback, kill_event):
         self.proc._is_running = True
         self.proc._kill_event = kill_event
+
+        thread_exit_event = eventlet.event.Event()
+
         # Ensure the test times out eventually if the watcher loops endlessly
         with self.assert_max_execution_time():
             with mock.patch.object(self.proc,
                                    '_handle_process_error') as func:
-                self.proc._watch_process(callback, kill_event)
+                self.proc._watch_process(
+                    callback, kill_event, thread_exit_event)
 
         if not kill_event.ready():
             func.assert_called_once_with()
@@ -122,10 +128,12 @@ class TestAsyncProcess(base.BaseTestCase):
     def test__watch_process_exits_on_exception(self):
         self._test__watch_process(self._watch_process_exception,
                                   eventlet.event.Event())
+        thread_exit_event = eventlet.event.Event()
         with mock.patch.object(self.proc,
                                '_handle_process_error') as func:
             self.proc._watch_process(self._watch_process_exception,
-                                     self.proc._kill_event)
+                                     self.proc._kill_event,
+                                     thread_exit_event)
             func.assert_not_called()
 
     def test__watch_process_exits_on_sent_kill_event(self):

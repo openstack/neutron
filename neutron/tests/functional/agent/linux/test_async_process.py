@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 import eventlet
 
 from neutron._i18n import _
@@ -78,3 +80,13 @@ class TestAsyncProcess(AsyncProcessTestFramework):
             sleep=0.01,
             exception=RuntimeError(_("Async process didn't respawn")))
         self._check_stdout(proc)
+
+    def test_async_process_respawns_with_race_condition(self):
+        original_sleep = eventlet.sleep
+
+        with mock.patch(
+                'eventlet.sleep',
+                side_effect=lambda x=None: original_sleep(
+                    0.1 if x is None else x)):
+            # Simulating a race condition
+            self.test_async_process_respawns()
