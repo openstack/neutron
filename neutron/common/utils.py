@@ -35,7 +35,6 @@ import time
 import typing
 import uuid
 
-import eventlet
 import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as n_const
@@ -726,15 +725,15 @@ def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
     :param exception: Exception instance to raise on timeout. If None is passed
                       (default) then WaitTimeout exception is raised.
     """
-    try:
-        with eventlet.Timeout(timeout):
-            while not predicate():
-                eventlet.sleep(sleep)
-    except eventlet.Timeout:
-        if exception is not None:
-            # pylint: disable=raising-bad-type
-            raise exception
-        raise WaitTimeout(_("Timed out after %d seconds") % timeout)
+    start_time = time.time()
+
+    while not predicate():
+        elapsed_time = time.time() - start_time
+        if elapsed_time > timeout:
+            raise exception if exception else WaitTimeout(
+                _("Timed out after %d seconds") % timeout
+            )
+        time.sleep(sleep)
 
 
 class classproperty:
