@@ -12,9 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
 from unittest import mock
-
-import eventlet
 
 from neutron._i18n import _
 from neutron.agent.common import async_process
@@ -39,7 +38,7 @@ class AsyncProcessTestFramework(base.BaseLoggingTestCase):
             new_output = list(proc.iter_stdout())
             if new_output:
                 output += new_output
-            eventlet.sleep(0.01)
+            time.sleep(0.01)
 
 
 class TestAsyncProcess(AsyncProcessTestFramework):
@@ -57,11 +56,11 @@ class TestAsyncProcess(AsyncProcessTestFramework):
         self._check_stdout(proc)
         proc.stop(block=True)
 
-        # Ensure that the process and greenthreads have stopped
+        # Ensure that the process and threads have stopped
         proc._process.wait()
         self.assertEqual(proc._process.returncode, -9)
         for watcher in proc._watchers:
-            watcher.wait()
+            watcher.join()
 
     def test_async_process_respawns(self):
         proc = async_process.AsyncProcess(['tail', '-f',
@@ -82,11 +81,11 @@ class TestAsyncProcess(AsyncProcessTestFramework):
         self._check_stdout(proc)
 
     def test_async_process_respawns_with_race_condition(self):
-        original_sleep = eventlet.sleep
+        original_sleep = time.sleep
 
         with mock.patch(
-                'eventlet.sleep',
-                side_effect=lambda x=None: original_sleep(
-                    0.1 if x is None else x)):
+                'time.sleep',
+                side_effect=lambda x=0: original_sleep(
+                    0.1 if x == 0 else x)):
             # Simulating a race condition
             self.test_async_process_respawns()

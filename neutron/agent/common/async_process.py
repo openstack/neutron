@@ -12,12 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import queue as python_queue
 import signal
+import subprocess  # nosec
+import threading
+import time
 
-import eventlet
-import eventlet.event
-from eventlet.green import subprocess
-import eventlet.queue
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 
@@ -38,12 +38,12 @@ class AsyncProcess:
     """Manages an asynchronous process.
 
     This class spawns a new process via subprocess and uses
-    greenthreads to read stderr and stdout asynchronously into queues
+    threads to read stderr and stdout asynchronously into queues
     that can be read via repeatedly calling iter_stdout() and
     iter_stderr().
 
     If respawn_interval is non-zero, any error in communicating with
-    the managed process will result in the process and greenthreads
+    the managed process will result in the process and threads
     being cleaned up and the process restarted after the specified
     interval.
 
@@ -112,8 +112,8 @@ class AsyncProcess:
         return self._is_started
 
     def _reset_queues(self):
-        self._stdout_lines = eventlet.queue.LightQueue()
-        self._stderr_lines = eventlet.queue.LightQueue()
+        self._stdout_lines = python_queue.Queue()
+        self._stderr_lines = python_queue.Queue()
 
     def is_active(self):
         # If using sudo rootwrap as a root_helper, we have to wait until sudo
@@ -166,7 +166,7 @@ class AsyncProcess:
         """Spawn a process and its watchers."""
         self._is_running = True
         self._pid = None
-        self._kill_event = eventlet.event.Event()
+        self._kill_event = threading.Event()
         self._process, cmd = utils.create_process(self._cmd,
                                                   run_as_root=self.run_as_root)
         self._watchers = []
@@ -175,17 +175,19 @@ class AsyncProcess:
         # synchronization of their termination.  If one thread
         # finishes, this event is triggered to signal the other thread
         # to stop as well.
-        thread_exit_event = eventlet.event.Event()
+        thread_exit_event = threading.Event()
 
         for reader in (self._read_stdout, self._read_stderr):
-            # Pass the stop event directly to the greenthread to
+            # Pass the stop event directly to the thread to
             # ensure that assignment of a new event to the instance
-            # attribute does not prevent the greenthread from using
+            # attribute does not prevent the thread from using
             # the original event.
-            watcher = eventlet.spawn(self._watch_process,
-                                     reader,
-                                     self._kill_event,
-                                     thread_exit_event)
+            watcher = threading.Thread(
+                target=self._watch_process,
+                args=(reader, self._kill_event, thread_exit_event),
+                # Let a chance to terminate properly with event mech
+                daemon=False)
+            watcher.start()
             self._watchers.append(watcher)
 
     @property
@@ -199,16 +201,16 @@ class AsyncProcess:
             return self._pid
 
     def _kill(self, kill_signal, kill_timeout=None):
-        """Kill the process and the associated watcher greenthreads."""
+        """Kill the process and the associated watcher threads."""
         pid = self.pid
         if pid:
             self._is_running = False
             self._pid = None
             self._kill_process_and_wait(pid, kill_signal, kill_timeout)
 
-        # Halt the greenthreads if they weren't already.
+        # Halt the threads if they weren't already.
         if self._kill_event:
-            self._kill_event.send()
+            self._kill_event.set()
             self._kill_event = None
 
     def _kill_process_and_wait(self, pid, kill_signal, kill_timeout=None):
@@ -245,11 +247,12 @@ class AsyncProcess:
         """Kill the async process and respawn if necessary."""
         stdout = list(self.iter_stdout())
         stderr = list(self.iter_stderr())
+
         LOG.debug('Halting async process [%s] in response to an error. stdout:'
                   ' [%s] - stderr: [%s]', self.cmd, stdout, stderr)
         self._kill(getattr(signal, 'SIGKILL', signal.SIGTERM))
         if self.respawn_interval is not None and self.respawn_interval >= 0:
-            eventlet.sleep(self.respawn_interval)
+            time.sleep(self.respawn_interval)
             if not self.is_started:
                 return
 
@@ -261,7 +264,7 @@ class AsyncProcess:
                 pass
 
     def _watch_process(self, callback, kill_event, thread_exit_event):
-        while not kill_event.ready() or not thread_exit_event.ready():
+        while not kill_event.is_set() or not thread_exit_event.is_set():
             try:
                 output = callback()
                 if not output and output != "":
@@ -270,13 +273,13 @@ class AsyncProcess:
                 LOG.exception('An error occurred while communicating '
                               'with async process [%s].', self.cmd)
                 break
-            # Ensure that watching a process with lots of output does
-            # not block execution of other greenthreads.
-            eventlet.sleep()
+            # TODO(sahid): Should be removed once monkey patching by
+            # eventlet removed.
+            time.sleep(0)
 
-        if not thread_exit_event.ready():
+        if not thread_exit_event.is_set():
             # Indicates to the other watcher that the loop is broken.
-            thread_exit_event.send()
+            thread_exit_event.set()
 
             # self._is_running being True indicates that the loop was
             # broken out of due to an error in the watched process
@@ -320,7 +323,7 @@ class AsyncProcess:
         while True:
             try:
                 yield queue.get(block=block)
-            except eventlet.queue.Empty:
+            except python_queue.Empty:
                 break
 
     def iter_stdout(self, block=False):
