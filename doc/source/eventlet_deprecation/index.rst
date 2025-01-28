@@ -69,7 +69,16 @@ Neutron API
 
 The Neutron API currently can be executed only with the uWSGI module; the
 eventlet executor has been deprecated, although the code has not been removed
-from the repository yet.
+from the repository yet. It is now mandatory to define the configuration
+variable ``start-time`` in the uWSGI configuration file, using the magic
+variable [1]_ "%t" that provides the *unix time (in seconds, gathered at
+instance startup)*.
+
+.. code::
+
+  [uwsgi]
+  start-time = %t
+
 
 The Neutron API consists of the following executables:
 
@@ -89,3 +98,11 @@ The Neutron API consists of the following executables:
 .. note::
 
   Right now, only the API server is running without eventlet.
+
+
+
+
+References
+----------
+
+.. [1] https://uwsgi-docs.readthedocs.io/en/latest/Configuration.html#magic-variables

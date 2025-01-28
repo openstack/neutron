@@ -124,10 +124,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._maintenance_thread = None
         self._hash_ring_thread = None
         self._hash_ring_probe_event = multiprocessing.Event()
-        self._start_time = wsgi_utils.get_start_time()
-        if self._start_time:
-            LOG.info('Server start time: %s',
-                     str(n_utils.ts_to_datetime(self._start_time)))
         self.node_uuid = None
         self.hash_ring_group = ovn_const.HASH_RING_ML2_GROUP
         self.sg_enabled = ovn_acl.is_sg_enabled()
@@ -148,6 +144,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
         self.log_driver = log_driver.register(self)
+        self._start_time = None
 
     @property
     def nb_schema_helper(self):
@@ -187,6 +184,24 @@ class OVNMechanismDriver(api.MechanismDriver):
     @sb_ovn.setter
     def sb_ovn(self, val):
         self._sb_ovn = val
+
+    @property
+    def start_time(self):
+        if self._start_time:
+            return self._start_time
+
+        self._start_time = wsgi_utils.get_start_time()
+        if not self._start_time:
+            LOG.warning('uWSGI must provide a start time using the '
+                        'configuration parameter "start-time %t" in the '
+                        'configuration file')
+            # NOTE(ralonsoh): this is happening if the uWSGI configuration file
+            # does not have the "start-time %t" parameter or when using the
+            # Neutron API eventlet server, still in use in the grenade
+            # skip-level jobs. This should be removed in the F release.
+            self._start_time = wsgi_utils.get_start_time(current_time=True)
+
+        return self._start_time
 
     def get_supported_vif_types(self):
         vif_types = set()
@@ -325,12 +340,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         sh = oslo_service.SignalHandler()
         atexit.register(self._remove_node_from_hash_ring)
         sh.add_handler("SIGTERM", self._remove_node_from_hash_ring)
-
-        admin_context = n_context.get_admin_context()
-        if self._start_time:
-            self._setup_hash_ring_start_time(admin_context)
-        else:
-            self._setup_hash_ring_event(admin_context)
+        self._init_hash_ring(n_context.get_admin_context())
         self._register_hash_ring_maintenance()
 
     def _register_hash_ring_maintenance(self):
@@ -346,24 +356,12 @@ class OVNMechanismDriver(api.MechanismDriver):
         LOG.info('Hash Ring probing thread for node %s has started',
                  self.node_uuid)
 
-    def _setup_hash_ring_event(self, context):
-        LOG.debug('Hash Ring setup using multiprocess event lock')
-        if not self._hash_ring_probe_event.is_set():
-            # Clear existing entries. This code section should be executed
-            # only once per node (chassis); the multiprocess event should be
-            # set just after the ``is_set`` check.
-            self._hash_ring_probe_event.set()
-            ovn_hash_ring_db.remove_nodes_from_host(context,
-                                                    self.hash_ring_group)
-        self.node_uuid = ovn_hash_ring_db.add_node(context,
-                                                   self.hash_ring_group)
-
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_WRITER
-    def _setup_hash_ring_start_time(self, context):
-        LOG.debug('Hash Ring setup using WSGI start time')
-        # Delete all node registers without created_at=self._start_time
-        created_at = n_utils.ts_to_datetime(self._start_time)
+    def _init_hash_ring(self, context):
+        LOG.debug('Hash Ring setup using WSGI start time %s',
+                  str(n_utils.ts_to_datetime(self.start_time)))
+        created_at = n_utils.ts_to_datetime(self.start_time)
         ovn_hash_ring_db.remove_nodes_from_host(
             context, self.hash_ring_group, created_at=created_at)
         self.node_uuid = ovn_hash_ring_db.add_node(

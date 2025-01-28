@@ -62,7 +62,7 @@ VHOSTUSER_VIF_DETAILS = {
 
 class TestOVNMechanismDriver(base.TestOVNFunctionalBase):
 
-    def test__setup_hash_ring_start_time(self):
+    def test__init_hash_ring(self):
         # Create a differentiated OVN hash ring name.
         ring_group = uuidutils.generate_uuid()
         self.mech_driver.hash_ring_group = ring_group
@@ -81,7 +81,7 @@ class TestOVNMechanismDriver(base.TestOVNFunctionalBase):
         start_time = timeutils.utcnow()
         self.mech_driver._start_time = int(start_time.timestamp())
         for _ in range(3):
-            self.mech_driver._setup_hash_ring_start_time(self.context)
+            self.mech_driver._init_hash_ring(self.context)
 
         ovn_hrs = ovn_hash_ring_db.get_nodes(self.context, ring_group)
         self.assertEqual(3, len(ovn_hrs))

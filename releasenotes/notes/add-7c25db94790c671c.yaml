@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    Now it is mandatory to define the ``start-time=%t`` variable in the uWSGI
+    configuration file. It will provide the unix time in seconds, gathered at
+    instance startup. This value is the same for all workers and is persistent
+    if the uWSGI process restarts any of them.
