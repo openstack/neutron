@@ -613,7 +613,3 @@ class L3HATestFailover(framework.L3AgentTestFramework):
 
         self.assertEqual(primary_router, new_primary)
         self.assertEqual(backup_router, new_backup)
-
-
-class LinuxBridgeL3HATestCase(L3HATestCase):
-    INTERFACE_DRIVER = 'neutron.agent.linux.interface.BridgeInterfaceDriver'

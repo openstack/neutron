@@ -19,14 +19,14 @@ them in the ``experimental`` section of ``neutron.conf``.
    <https://governance.openstack.org/tc/reference/projects/neutron.html>`_.
 
 The following table shows the Neutron features currently designated as
-experimetal:
+experimental:
 
 .. table:: **Neutron Experimental features**
 
     =========================  ===================================
      Feature                    Option in neutron.conf to enable
     =========================  ===================================
-     ML2 Linuxbridge driver     linuxbridge
+     IPv6 Prefix Delegation     ipv6_pd_enabled
     =========================  ===================================
 
 This is an example of how to enable the use of an experimental feature:
@@ -34,4 +34,4 @@ This is an example of how to enable the use of an experimental feature:
 .. code-block:: ini
 
    [experimental]
-   linuxbridge = true
+   ipv6_pd_enabled = true

@@ -55,15 +55,15 @@ traffic directions (from the VM point of view).
 
 .. table:: **Networking back ends, supported rules, and traffic direction**
 
-    ====================  =============================  =======================  ===================  ===================
-     Rule \\ back end      Open vSwitch                  SR-IOV                   Linux bridge         OVN
-    ====================  =============================  =======================  ===================  ===================
-     Bandwidth limit       Egress \\ Ingress             Egress (1)               Egress \\ Ingress    Egress \\ Ingress
-     Packet rate limit     Egress \\ Ingress             -                        -                    -
-     Minimum bandwidth     Egress \\ Ingress (2)         Egress \\ Ingress (2)    -                    -
-     Minimum packet rate   -                             -                        -                    -
-     DSCP marking          Egress                        -                        Egress               Egress
-    ====================  =============================  =======================  ===================  ===================
+    ====================  =============================  =======================  ===================
+     Rule \\ back end      Open vSwitch                  SR-IOV                   OVN
+    ====================  =============================  =======================  ===================
+     Bandwidth limit       Egress \\ Ingress             Egress (1)               Egress \\ Ingress
+     Packet rate limit     Egress \\ Ingress             -                        -
+     Minimum bandwidth     Egress \\ Ingress (2)         Egress \\ Ingress (2)    -
+     Minimum packet rate   -                             -                        -
+     DSCP marking          Egress                        -                        Egress
+    ====================  =============================  =======================  ===================
 
 .. note::
 
@@ -74,12 +74,12 @@ traffic directions (from the VM point of view).
 
 .. table:: **Neutron backends, supported directions and enforcement types for Minimum Bandwidth rule**
 
-    ============================  ====================  ====================  ==============  =====
-     Enforcement type \ Backend    Open vSwitch          SR-IOV                Linux Bridge    OVN
-    ============================  ====================  ====================  ==============  =====
-     Dataplane                     Egress (3)            Egress (1)            -               -
-     Placement                     Egress/Ingress (2)    Egress/Ingress (2)    -               -
-    ============================  ====================  ====================  ==============  =====
+    ============================  ====================  ====================  =====
+     Enforcement type \ Backend    Open vSwitch          SR-IOV                OVN
+    ============================  ====================  ====================  =====
+     Dataplane                     Egress (3)            Egress (1)            -
+     Placement                     Egress/Ingress (2)    Egress/Ingress (2)    -
+    ============================  ====================  ====================  =====
 
 .. note::
 
@@ -95,12 +95,12 @@ traffic directions (from the VM point of view).
 
 .. table:: **Neutron backends, supported directions and enforcement types for Minimum Packet Rate rule**
 
-    ============================  ==========================  ====================  ==============  =====
-     Enforcement type \ Backend    Open vSwitch                SR-IOV                Linux Bridge    OVN
-    ============================  ==========================  ====================  ==============  =====
-     Dataplane                     -                           -                     -               -
-     Placement                     Any(1)/Egress/Ingress (2)   -                     -               -
-    ============================  ==========================  ====================  ==============  =====
+    ============================  ==========================  ====================  =====
+     Enforcement type \ Backend    Open vSwitch                SR-IOV                OVN
+    ============================  ==========================  ====================  =====
+     Dataplane                     -                           -                     -
+     Placement                     Any(1)/Egress/Ingress (2)   -                     -
+    ============================  ==========================  ====================  =====
 
 .. note::
 
@@ -281,8 +281,8 @@ On the network and compute nodes:
 
 .. note::
 
-   QoS currently works with ml2 only (SR-IOV, Open vSwitch, and linuxbridge
-   are drivers enabled for QoS).
+   QoS currently works with ml2 only (SR-IOV and Open vSwitch are drivers
+   enabled for QoS).
 
 DSCP marking on outer header for overlay networks
 -------------------------------------------------
@@ -411,7 +411,7 @@ First, create a QoS policy and its bandwidth limit rule:
 .. note::
 
    The QoS implementation requires a burst value to ensure proper behavior of
-   bandwidth limit rules in the Open vSwitch and Linux bridge agents.
+   bandwidth limit rules in the Open vSwitch agent.
    Configuring the proper burst value is very important. If the burst value is
    set too low, bandwidth usage will be throttled even with a proper bandwidth
    limit setting. This issue is discussed in various documentation sources, for

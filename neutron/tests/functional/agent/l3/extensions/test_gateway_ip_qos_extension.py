@@ -191,8 +191,3 @@ class TestRouterGatewayIPQosAgentExtensionDVR(
 
     def test_ha_dvr_edge_router_gateway_ip_qos(self):
         self._test_dvr_gateway_ip_qos(enable_ha=True)
-
-
-class LinuxBridgeRouterGatewayIPQosAgentExtensionTestCase(
-        TestRouterGatewayIPQosAgentExtension):
-    INTERFACE_DRIVER = 'neutron.agent.linux.interface.BridgeInterfaceDriver'

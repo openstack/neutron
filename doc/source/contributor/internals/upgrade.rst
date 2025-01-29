@@ -120,7 +120,7 @@ sent by older versions of agents which are part of the cloud.
 
 The recommended order of agent upgrade (per node) is:
 
-#. first, L2 agents (openvswitch, linuxbridge, sr-iov).
+#. first, L2 agents (openvswitch, sr-iov).
 #. then, all other agents (L3, DHCP, Metadata, ...).
 
 The rationale of the agent upgrade order is that L2 agent is usually

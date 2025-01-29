@@ -1,6 +1,6 @@
 This service plugin implements the L3 routing functionality (resources router
 and floatingip) that in earlier releases before Havana was provided by core
-plugins (openvswitch, linuxbridge, ... etc).
+plugins (openvswitch, ... etc).
 
 Core plugins can now choose not to implement L3 routing functionality and
 instead delegate that to the L3 routing service plugin.

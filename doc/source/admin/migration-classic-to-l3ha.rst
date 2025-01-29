@@ -15,10 +15,10 @@ of bandwidth constraints that limit performance. However, it supports random
 distribution of routers on different network nodes to reduce the chances of
 bandwidth constraints and to improve scaling.
 
-This section references parts of :ref:`deploy-lb-ha-vrrp` and
-:ref:`deploy-ovs-ha-vrrp`. For details regarding needed infrastructure and
-configuration to allow actual L3 HA deployment, read the relevant guide
-before continuing with the migration process.
+This section references parts of :ref:`deploy-ovs-ha-vrrp`. For details
+regarding needed infrastructure and configuration to allow actual L3 HA
+deployment, read the relevant guide before continuing with the migration
+process.
 
 Migration
 ~~~~~~~~~

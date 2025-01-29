@@ -59,16 +59,13 @@
       - ^plugin.spec$
       - ^tools/ovn_migration/.*$
       - ^neutron/agent/ovn/.*$
-      - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
       - ^neutron/services/ovn_l3/.*$
       - ^neutron/services/logapi/drivers/ovn/.*$
       - ^neutron/services/portforwarding/drivers/ovn/.*$
-      - ^neutron/services/qos/drivers/linuxbridge/.*$
       - ^neutron/services/qos/drivers/ovn/.*$
-      - ^neutron/services/trunk/drivers/linuxbridge/.*$
       - ^neutron/services/trunk/drivers/ovn/.*$
       - ^neutron/cmd/ovn/.*$
       - ^neutron/common/ovn/.*$
@@ -90,7 +87,7 @@
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_AGENT: openvswitch
         NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_services:
@@ -159,7 +156,7 @@
           neutron: https://opendev.org/openstack/neutron.git
         devstack_localrc:
           Q_ML2_TENANT_NETWORK_TYPE: vxlan
-          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
           Q_AGENT: openvswitch
         devstack_services:
           q-agt: true
@@ -271,7 +268,7 @@
       subnode:
         devstack_localrc:
           Q_ML2_TENANT_NETWORK_TYPE: vxlan
-          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
           Q_AGENT: openvswitch
         devstack_services:
           q-agt: true
@@ -351,7 +348,7 @@
       subnode:
         devstack_localrc:
           Q_ML2_TENANT_NETWORK_TYPE: vxlan
-          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
           Q_AGENT: openvswitch
         devstack_services:
           q-agt: true
@@ -404,13 +401,10 @@
       - ^neutron/agent/resource_cache.py
       - ^neutron/agent/rpc.py
       - ^neutron/agent/securitygroup_rpc.py
-      - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
       - ^neutron/plugins/ml2/drivers/openvswitch/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
-      - ^neutron/services/qos/drivers/linuxbridge/.*$
       - ^neutron/services/qos/drivers/openvswitch/.*$
-      - ^neutron/services/trunk/drivers/linuxbridge/.*$
       - ^neutron/services/trunk/drivers/openvswitch/.*$
       - ^neutron/scheduler/.*$
       - ^roles/.*functional.*$

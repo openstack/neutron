@@ -195,7 +195,7 @@ Project network considerations
 Dataplane
 ---------
 
-All dataplane modules, including OVN, Open vSwitch and Linux bridge,
+All dataplane modules, including OVN and Open vSwitch,
 support forwarding IPv6
 packets amongst the guests and router ports. Similar to IPv4, there is no
 special configuration or setup required to enable the dataplane to properly

@@ -1,14 +1,12 @@
-The Modular Layer 2 (ML2) plugin is a framework allowing OpenStack
-Networking to simultaneously utilize the variety of layer 2 networking
-technologies found in complex real-world data centers. It supports the
-Open vSwitch, Linux bridge, and Hyper-V L2 agents, replacing and
-deprecating the monolithic plugins previously associated with those
-agents, and can also support hardware devices and SDN controllers. The
-ML2 framework is intended to greatly simplify adding support for new
-L2 networking technologies, requiring much less initial and ongoing
-effort than would be required for an additional monolithic core
-plugin. It is also intended to foster innovation through its
-organization as optional driver modules.
+The Modular Layer 2 (ML2) plugin is a framework allowing OpenStack Networking
+to simultaneously utilize the variety of layer 2 networking technologies found
+in complex real-world data centers. It supports Open vSwitch L2 agent,
+replacing and deprecating the monolithic plugins previously associated with
+those agents, and can also support hardware devices and SDN controllers. The
+ML2 framework is intended to greatly simplify adding support for new L2
+networking technologies, requiring much less initial and ongoing effort than
+would be required for an additional monolithic core plugin. It is also intended
+to foster innovation through its organization as optional driver modules.
 
 The ML2 plugin supports all the non-vendor-specific neutron API
 extensions, and works with the standard neutron DHCP agent. It
@@ -43,7 +41,7 @@ interact with external devices and controllers. Mechanism drivers are
 also called as part of the port binding process, to determine whether
 the associated mechanism can provide connectivity for the network, and
 if so, the network segment and VIF driver to be used. The havana
-release includes mechanism drivers for the Open vSwitch, Linux bridge,
+release included mechanism drivers for the Open vSwitch, Linux bridge,
 and Hyper-V L2 agents, and for vendor switches/controllers/etc.
 It also includes an L2 Population mechanism driver that
 can help optimize tunneled virtual network traffic.

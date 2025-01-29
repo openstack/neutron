@@ -30,7 +30,7 @@
 
    .. note::
 
-      The namespace for router 1 from :ref:`deploy-lb-selfservice` should
+      The namespace for router 1 from :ref:`deploy-ovs-selfservice` should
       only appear on network node 1 because of creation prior to enabling
       VRRP.
 

@@ -8,7 +8,6 @@ omit =
   neutron/cmd/eventlet/agents/metadata.py
   neutron/cmd/eventlet/agents/ovn_metadata.py
   neutron/cmd/eventlet/agents/ovn_neutron_agent.py
-  neutron/cmd/eventlet/plugins/linuxbridge_neutron_agent.py
   neutron/cmd/eventlet/plugins/macvtap_neutron_agent.py
   neutron/cmd/eventlet/plugins/ovs_neutron_agent.py
   neutron/cmd/eventlet/plugins/sriov_nic_neutron_agent.py

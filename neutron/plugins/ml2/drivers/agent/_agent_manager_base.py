@@ -121,9 +121,7 @@ class CommonAgentManagerBase(metaclass=abc.ABCMeta):
         This value will be stored in the Plug-in and be part of the
         device_details.
 
-        Typically this list is retrieved from the sysfs. E.g. for linuxbridge
-        it returns all names of devices of type 'tap' that start with a certain
-        prefix.
+        Typically this list is retrieved from the sysfs.
 
         :return: set -- the set of all devices e.g. ['tap1', 'tap2']
         """

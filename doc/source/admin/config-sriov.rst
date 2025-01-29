@@ -393,8 +393,8 @@ Enable neutron-sriov-nic-agent (Compute)
 (Optional) FDB L2 agent extension
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forwarding DataBase (FDB) population is an L2 agent extension to OVS agent or
-Linux bridge. Its objective is to update the FDB table for existing instance
+Forwarding DataBase (FDB) population is an L2 agent extension to OVS agent. Its
+objective is to update the FDB table for existing instance
 using normal port. This enables communication between SR-IOV instances and
 normal instances. The use cases of the FDB population extension are:
 
@@ -407,8 +407,7 @@ For additional information describing the problem, refer to:
 `Virtual switching technologies and Linux bridge.
 <https://events.static.linuxfound.org/sites/events/files/slides/LinuxConJapan2014_makita_0.pdf>`_
 
-#. Edit the ``ovs_agent.ini`` or ``linuxbridge_agent.ini`` file on each compute
-   node. For example:
+#. Edit the ``ovs_agent.ini`` file on each compute node. For example:
 
    .. code-block:: console
 

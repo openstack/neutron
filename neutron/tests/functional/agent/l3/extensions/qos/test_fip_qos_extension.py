@@ -293,7 +293,3 @@ class TestL3AgentFipQosExtensionDVR(
                 dvr_fip_device, '19.4.4.2', self.test_bw_limit_rule_1)
             self._assert_dvr_snat_qrouter_ns_rule_is_set(
                 dvr_fip_device, '19.4.4.2', self.test_bw_limit_rule_2)
-
-
-class LinuxBridgeL3AgentFipQosExtensionTestCase(TestL3AgentFipQosExtension):
-    INTERFACE_DRIVER = 'neutron.agent.linux.interface.BridgeInterfaceDriver'

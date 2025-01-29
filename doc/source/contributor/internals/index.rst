@@ -45,7 +45,6 @@ Neutron Internals
    l2_agents
    l3_agent_extensions
    layer3
-   linuxbridge_agent
    live_migration
    local_ips
    metadata

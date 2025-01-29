@@ -45,7 +45,7 @@ LOG = log.getLogger(__name__)
 class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     # history
-    #   1.0 Initial version (from openvswitch/linuxbridge)
+    #   1.0 Initial version (from openvswitch)
     #   1.1 Support Security Group RPC
     #   1.2 Support get_devices_details_list
     #   1.3 get_device_details rpc signature upgrade to obtain 'host' and
@@ -309,7 +309,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             # need to notify nova explicitly
             port = ml2_db.get_port(rpc_context, port_id)
             # _device_to_port_id may have returned a truncated UUID if the
-            # agent did not provide a full one (e.g. Linux Bridge case).
+            # agent did not provide a full one.
             if not port:
                 LOG.debug("Port %s not found, will not notify nova.", port_id)
                 return
@@ -338,8 +338,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                                       n_const.PORT_STATUS_ACTIVE, host)
         else:
             # _device_to_port_id may have returned a truncated UUID if the
-            # agent did not provide a full one (e.g. Linux Bridge case). We
-            # need to look up the full one before calling provisioning_complete
+            # agent did not provide a full one. We need to look up the full one
+            # before calling provisioning_complete
             if not port:
                 port = ml2_db.get_port(rpc_context, port_id)
             if not port:

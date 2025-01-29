@@ -15,9 +15,6 @@ ncat_filter: CommandFilter, ncat, root
 ncat_kill: KillFilter, root, ncat, -9
 ss_filter: CommandFilter, ss, root
 
-# enable neutron-linuxbridge-cleanup from namespace
-lb_cleanup_filter: RegExpFilter, neutron-linuxbridge-cleanup, root, neutron-linuxbridge-cleanup, --config-file, .*
-
 # enable dhclient from namespace
 dhclient_filter: CommandFilter, dhclient, root
 dhclient_kill: KillFilter, root, dhclient, -9
@@ -47,7 +44,6 @@ pid_kill: RegExpFilter, kill, root, kill, -\d+, .*
 
 #needed to set up fullstack 'multinode' environment
 rabbitmqctl: CommandFilter, rabbitmqctl, root
-linuxbridge_agent: CommandFilter, neutron-linuxbridge-agent, root
 dhcp_agent: CommandFilter, dhcp_agent.py, root
 ovs_agent: CommandFilter, ovs_agent.py, root
 l3_agent: CommandFilter, l3_agent.py, root

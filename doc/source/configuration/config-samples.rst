@@ -11,7 +11,6 @@ Sample Configuration Files
    :maxdepth: 1
 
    samples/ml2-conf.rst
-   samples/linuxbridge-agent.rst
    samples/macvtap-agent.rst
    samples/openvswitch-agent.rst
    samples/sriov-agent.rst

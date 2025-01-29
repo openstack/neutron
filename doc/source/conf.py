@@ -250,7 +250,6 @@ latex_elements = {
 _config_generator_config_files = [
     'dhcp_agent.ini',
     'l3_agent.ini',
-    'linuxbridge_agent.ini',
     'macvtap_agent.ini',
     'metadata_agent.ini',
     'metering_agent.ini',

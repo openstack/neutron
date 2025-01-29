@@ -56,12 +56,11 @@ Example configuration
 The ML2 plug-in supports trunking with the following mechanism drivers:
 
 * Open vSwitch (OVS)
-* Linux bridge
 * Open Virtual Network (OVN)
 
-When using a ``segmentation-type`` of ``vlan``, the OVS and Linux bridge
-drivers present the network of the parent port as the untagged VLAN and all
-subports as tagged VLANs.
+When using a ``segmentation-type`` of ``vlan``, the OVS driver present the
+network of the parent port as the untagged VLAN and all subports as tagged
+VLANs.
 
 Controller node
 ---------------
