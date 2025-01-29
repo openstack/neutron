@@ -50,6 +50,7 @@ TAGS_ANY = TAGS + '-any'
 NOT_TAGS = 'not-' + TAGS
 NOT_TAGS_ANY = NOT_TAGS + '-any'
 MAX_TAG_LEN = 255
+MAX_TAGS_COUNT = 50
 TAG_PLUGIN_TYPE = 'TAG'
 
 TAG_SUPPORTED_RESOURCES = standard_attr.get_tag_resource_parent_map()
@@ -103,6 +104,14 @@ def validate_tag(tag):
     msg = validators.validate_string(tag, MAX_TAG_LEN)
     if msg:
         raise exceptions.InvalidInput(error_message=msg)
+
+
+def validate_tags_limit(resource, tags):
+    tags = set(tags)
+    if len(tags) > MAX_TAGS_COUNT:
+        msg = (_("The number of tags exceed the per-resource limit of %d")
+               % MAX_TAGS_COUNT)
+        raise exceptions.BadRequest(resource=resource, msg=msg)
 
 
 def validate_tags(body):
@@ -210,6 +219,7 @@ class TaggingController:
         rinfo = self._get_resource_info(ctx, kwargs, tags=body[TAGS])
         policy.enforce(ctx, 'create_{}:{}'.format(rinfo.obj_type, TAGS),
                        rinfo.obj)
+        validate_tags_limit(rinfo.obj_type, body['tags'])
         notify_tag_action(ctx, 'create.start', rinfo.obj_type,
                           rinfo.obj['id'], body['tags'])
         result = self.plugin.create_tags(ctx, rinfo.obj_type,
@@ -226,6 +236,10 @@ class TaggingController:
         rinfo = self._get_resource_info(ctx, kwargs, tags=[id])
         policy.enforce(ctx, 'update_{}:{}'.format(rinfo.obj_type, TAGS),
                        rinfo.obj)
+        current_tags = self.plugin.get_tags(
+            ctx, rinfo.obj_type, rinfo.obj['id'])['tags']
+        new_tags = current_tags + [id]
+        validate_tags_limit(rinfo.obj_type, new_tags)
         notify_tag_action(ctx, 'create.start', rinfo.obj_type,
                           rinfo.obj['id'], [id])
         result = self.plugin.update_tag(ctx, rinfo.obj_type,
@@ -244,6 +258,7 @@ class TaggingController:
             ctx,
             self._get_policy_action("update", rinfo.obj_type),
             rinfo.obj)
+        validate_tags_limit(rinfo.obj_type, body['tags'])
         notify_tag_action(ctx, 'update.start', rinfo.obj_type,
                           rinfo.obj['id'], body['tags'])
         result = self.plugin.update_tags(ctx, rinfo.obj_type,

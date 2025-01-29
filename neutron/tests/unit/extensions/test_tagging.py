@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib.api import attributes
 from neutron_lib import constants as n_const
 from neutron_lib import context
+from neutron_lib import exceptions
 from neutron_lib.utils import net as net_utils
 from oslo_utils import uuidutils
 
@@ -281,3 +282,196 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
         res = self.tc._get_resource_info(self.ctx,
                                          {'wrong_resource_id': missing_id})
         self.assertEqual(tagging.EMPTY_RESOURCE_INFO, res)
+
+    def test_create_tags_for_resource_below_max_tags_limit(self):
+        req = mock.Mock(context=self.ctx)
+        tags = ['tag-%i' % i for i in range(tagging.MAX_TAGS_COUNT - 1)]
+        body = {'tags': tags}
+        obj_mock = {
+            'id': uuidutils.generate_uuid()
+        }
+        with mock.patch.object(self.tc, '_get_resource_info') as get_res, \
+                mock.patch('neutron.policy.enforce') as policy_enforce, \
+                mock.patch.object(tagging, 'notify_tag_action') as notify:
+            self.tc.plugin = mock.Mock()
+            get_res.return_value = mock.MagicMock(obj_type='networks',
+                                                  obj=obj_mock)
+
+            self.tc.create(req, body)
+
+            get_res.assert_called_once_with(self.ctx, mock.ANY, tags=tags)
+            policy_enforce.assert_called_once_with(
+                self.ctx, mock.ANY, obj_mock)
+            self.tc.plugin.create_tags.assert_called_once_with(
+                self.ctx, mock.ANY, mock.ANY, body)
+            notify.assert_has_calls([
+                mock.call(self.ctx, 'create.start', mock.ANY, mock.ANY, tags),
+                mock.call(self.ctx, 'create.end', mock.ANY, mock.ANY, tags)])
+
+    def test_create_tags_for_resource_over_max_tags_limit(self):
+        req = mock.Mock(context=self.ctx)
+        tags = ['tag-%i' % i for i in range(tagging.MAX_TAGS_COUNT + 1)]
+        body = {'tags': tags}
+        obj_mock = {
+            'id': uuidutils.generate_uuid()
+        }
+        with mock.patch.object(self.tc, '_get_resource_info') as get_res, \
+                mock.patch('neutron.policy.enforce') as policy_enforce, \
+                mock.patch.object(tagging, 'notify_tag_action') as notify:
+            self.tc.plugin = mock.Mock()
+            get_res.return_value = mock.MagicMock(obj_type='networks',
+                                                  obj=obj_mock)
+
+            self.assertRaises(
+                exceptions.BadRequest,
+                self.tc.create, req, body)
+
+            get_res.assert_called_once_with(self.ctx, mock.ANY, tags=tags)
+            policy_enforce.assert_called_once_with(
+                self.ctx, mock.ANY, obj_mock)
+            self.tc.plugin.create_tags.assert_not_called()
+            notify.assert_not_called()
+
+    def test_update_tag_for_resource_below_max_tags_limit(self):
+        req = mock.Mock(context=self.ctx)
+        kwargs = {'network_id': uuidutils.generate_uuid()}
+        existing_tags = [
+            'tag-%i' % i for i in range(tagging.MAX_TAGS_COUNT - 2)]
+        new_tag = 'new-tag'
+        obj_mock = {
+            'id': uuidutils.generate_uuid()
+        }
+        with mock.patch.object(self.tc, '_get_resource_info') as get_res, \
+                mock.patch('neutron.policy.enforce') as policy_enforce, \
+                mock.patch.object(tagging, 'notify_tag_action') as notify:
+            self.tc.plugin = mock.Mock()
+            self.tc.plugin.get_tags.return_value = {'tags': existing_tags}
+            get_res.return_value = mock.MagicMock(obj_type='networks',
+                                                  obj=obj_mock)
+
+            self.tc.update(req, new_tag, **kwargs)
+
+            get_res.assert_called_once_with(self.ctx, kwargs, tags=[new_tag])
+            policy_enforce.assert_called_once_with(
+                self.ctx, mock.ANY, obj_mock)
+            self.tc.plugin.get_tags.assert_called_once_with(
+                self.ctx, mock.ANY, mock.ANY)
+            self.tc.plugin.update_tag.assert_called_once_with(
+                self.ctx, mock.ANY, mock.ANY, new_tag)
+            notify.assert_has_calls([
+                mock.call(
+                    self.ctx, 'create.start', mock.ANY, mock.ANY, [new_tag]),
+                mock.call(
+                    self.ctx, 'create.end', mock.ANY, mock.ANY, [new_tag])])
+
+    def test_update_exising_tag_for_resource_above_max_tags_limit(self):
+        """Test to ensure that TaggingController.update() method is idempotent.
+        """
+
+        req = mock.Mock(context=self.ctx)
+        kwargs = {'network_id': uuidutils.generate_uuid()}
+        existing_tags = [
+            'tag-%i' % i for i in range(tagging.MAX_TAGS_COUNT)]
+        new_tag = existing_tags[0]
+        obj_mock = {
+            'id': uuidutils.generate_uuid()
+        }
+        with mock.patch.object(self.tc, '_get_resource_info') as get_res, \
+                mock.patch('neutron.policy.enforce') as policy_enforce, \
+                mock.patch.object(tagging, 'notify_tag_action') as notify:
+            self.tc.plugin = mock.Mock()
+            self.tc.plugin.get_tags.return_value = {'tags': existing_tags}
+            get_res.return_value = mock.MagicMock(obj_type='networks',
+                                                  obj=obj_mock)
+
+            self.tc.update(req, new_tag, **kwargs)
+
+            get_res.assert_called_once_with(self.ctx, kwargs, tags=[new_tag])
+            policy_enforce.assert_called_once_with(
+                self.ctx, mock.ANY, obj_mock)
+            self.tc.plugin.get_tags.assert_called_once_with(
+                self.ctx, mock.ANY, mock.ANY)
+            self.tc.plugin.update_tag.assert_called_once_with(
+                self.ctx, mock.ANY, mock.ANY, new_tag)
+            notify.assert_has_calls([
+                mock.call(
+                    self.ctx, 'create.start', mock.ANY, mock.ANY, [new_tag]),
+                mock.call(
+                    self.ctx, 'create.end', mock.ANY, mock.ANY, [new_tag])])
+
+    def test_update_tag_for_resource_over_max_tags_limit(self):
+        req = mock.Mock(context=self.ctx)
+        kwargs = {'network_id': uuidutils.generate_uuid()}
+        existing_tags = ['tag-%i' % i for i in range(tagging.MAX_TAGS_COUNT)]
+        new_tag = 'new-tag'
+        obj_mock = {
+            'id': uuidutils.generate_uuid()
+        }
+        with mock.patch.object(self.tc, '_get_resource_info') as get_res, \
+                mock.patch('neutron.policy.enforce') as policy_enforce, \
+                mock.patch.object(tagging, 'notify_tag_action') as notify:
+            self.tc.plugin = mock.Mock()
+            self.tc.plugin.get_tags.return_value = {'tags': existing_tags}
+            get_res.return_value = mock.MagicMock(obj_type='networks',
+                                                  obj=obj_mock)
+
+            self.assertRaises(
+                exceptions.BadRequest,
+                self.tc.update, req, new_tag, **kwargs)
+
+            get_res.assert_called_once_with(self.ctx, kwargs, tags=[new_tag])
+            policy_enforce.assert_called_once_with(
+                self.ctx, mock.ANY, obj_mock)
+            self.tc.plugin.get_tags.assert_called_once_with(
+                self.ctx, mock.ANY, mock.ANY)
+            self.tc.plugin.update_tag.assert_not_called()
+            notify.assert_not_called()
+
+    def test_update_all_tags_for_resource_below_max_tags_limit(self):
+        req = mock.Mock(context=self.ctx)
+        tags = ['tag-%i' % i for i in range(tagging.MAX_TAGS_COUNT - 1)]
+        body = {'tags': tags}
+        obj_mock = {
+            'id': uuidutils.generate_uuid()
+        }
+        with mock.patch.object(self.tc, '_get_resource_info') as get_res, \
+                mock.patch('neutron.policy.enforce') as policy_enforce, \
+                mock.patch.object(tagging, 'notify_tag_action') as notify:
+            self.tc.plugin = mock.Mock()
+            get_res.return_value = mock.MagicMock(obj_type='networks',
+                                                  obj=obj_mock)
+
+            self.tc.update_all(req, body)
+
+            get_res.assert_called_once_with(self.ctx, mock.ANY, tags=tags)
+            policy_enforce.assert_called_once_with(
+                self.ctx, mock.ANY, obj_mock)
+            self.tc.plugin.update_tags.assert_called_once_with(
+                self.ctx, mock.ANY, mock.ANY, body)
+            notify.assert_has_calls([
+                mock.call(self.ctx, 'update.start', mock.ANY, mock.ANY, tags),
+                mock.call(self.ctx, 'update.end', mock.ANY, mock.ANY, tags)])
+
+    def test_update_all_tags_for_resource_over_max_tags_limit(self):
+        req = mock.Mock(context=self.ctx)
+        tags = ['tag-%i' % i for i in range(tagging.MAX_TAGS_COUNT + 1)]
+        body = {'tags': tags}
+        obj_mock = {
+            'id': uuidutils.generate_uuid()
+        }
+        with mock.patch.object(self.tc, '_get_resource_info') as get_res, \
+                mock.patch('neutron.policy.enforce') as policy_enforce, \
+                mock.patch.object(tagging, 'notify_tag_action') as notify:
+            self.tc.plugin = mock.Mock()
+            get_res.return_value = mock.MagicMock(obj_type='networks',
+                                                  obj=obj_mock)
+
+            self.assertRaises(
+                exceptions.BadRequest,
+                self.tc.update_all, req, body)
+
+            get_res.assert_called_once_with(self.ctx, mock.ANY, tags=tags)
+            policy_enforce.assert_called_once_with(
+                self.ctx, mock.ANY, obj_mock)
+            self.tc.plugin.update_tags.assert_not_called()
+            notify.assert_not_called()
