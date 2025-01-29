@@ -56,7 +56,10 @@
         q-dhcp: true
         q-l3: true
         q-meta: true
-        q-svc: true
+        q-svc: false
+        neutron-api: true
+        neutron-rpc-server: true
+        neutron-periodic-workers: true
         q-metering: true
         ovn-controller: false
         ovn-northd: false
@@ -133,7 +136,10 @@
         q-dhcp: true
         q-l3: true
         q-meta: true
-        q-svc: true
+        q-svc: false
+        neutron-api: true
+        neutron-rpc-server: true
+        neutron-periodic-workers: true
         q-metering: true
         ovn-controller: false
         ovn-northd: false
@@ -316,7 +322,11 @@
         ovsdb-server: true
         placement-api: true
         peakmem_tracker: false
-        q-svc: true
+        q-svc: false
+        neutron-api: true
+        neutron-ovn-maintenance-worker: true
+        neutron-rpc-server: false
+        neutron-periodic-workers: true
         q-agt: false
         q-dhcp: false
         q-l3: false
@@ -396,6 +406,13 @@
       grenade_devstack_localrc:
         shared:
           NEUTRON_DEPLOY_MOD_WSGI: False
+      devstack_services:
+        # Neutron services
+        q-svc: true
+        neutron-api: false
+        neutron-rpc-server: false
+        neutron-periodic-workers: false
+        neutron-ovn-maintenance-worker: false
 
 - job:
     name: neutron-ovn-grenade-multinode-skip-level
@@ -415,3 +432,9 @@
       grenade_devstack_localrc:
         shared:
           NEUTRON_DEPLOY_MOD_WSGI: False
+      devstack_services:
+        q-svc: true
+        neutron-api: false
+        neutron-rpc-server: false
+        neutron-periodic-workers: false
+        neutron-ovn-maintenance-worker: false
