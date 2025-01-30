@@ -1943,15 +1943,19 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                        physical_network, segmentation_id, admin_state_up,
                        fixed_ips, device_owner, provisioning_needed):
         port_needs_binding = True
-        if (not vif_port.ofport or
-                vif_port.ofport == ovs_lib.INVALID_OFPORT):
-            # When this function is called for a port, the port should have
-            # an OVS ofport configured, as only these ports were considered
-            # for being treated. If that does not happen, it is a potential
-            # error condition of which operators should be aware
-            LOG.error("VIF port: %s has no ofport configured or is "
-                      "invalid, and might not be able to transmit. "
-                      "(ofport=%s)", vif_port.vif_id, vif_port.ofport)
+        if not vif_port.ofport:
+            # Log an error if the VIF port has no ofport, which indicates
+            # that the port might not be able to transmit traffic.
+            LOG.error("VIF port: %s has no ofport and might not "
+                      "be able to transmit.", vif_port.vif_id)
+        elif vif_port.ofport == ovs_lib.INVALID_OFPORT:
+            # When the ofport is set to INVALID_OFPORT, it indicates that
+            # the port is in a transitional state and has not yet been fully
+            # configured.
+            LOG.info("VIF port: %s is in a transitional state and has not "
+                     "yet been assigned a valid ofport. This is expected "
+                     "during port initialization. (ofport=%s)",
+                     vif_port.vif_id, vif_port.ofport)
         if admin_state_up:
             port_needs_binding = self.port_bound(
                 vif_port, network_id, network_type,
