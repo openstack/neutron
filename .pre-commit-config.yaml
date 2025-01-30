@@ -47,6 +47,16 @@ repos:
       - id: hacking
         additional_dependencies: ['neutron', 'neutron-lib']
         exclude: '^(doc|releasenotes|tools)/.*$'
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+        args: [--config-file=./mypy.ini]
+        pass_filenames: false
+        # need to list alembic here; otherwise it doesn't see internals
+        # necessary to detect one of 'ignored' errors and complains about
+        # unnecessary ignore; other dependencies can be left out it seems
+        additional_dependencies: ['alembic']
   - repo: local
     hooks:
       - id: flake8
