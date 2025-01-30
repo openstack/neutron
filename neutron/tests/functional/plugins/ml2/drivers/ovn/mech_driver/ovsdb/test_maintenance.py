@@ -197,6 +197,10 @@ class _TestMaintenanceHelper(testlib_api.MySQLTestCaseMixin,
                     ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY) == name):
                 return row
 
+    def _get_lrp_ext_ids_router_name(self, port_id):
+        row = self._find_router_port_row_by_port_id(port_id)
+        return row.external_ids.get(ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
+
     def _create_security_group(self):
         data = {'security_group': {'name': 'sgtest',
                                    'description': 'SpongeBob Rocks!'}}
@@ -729,6 +733,21 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert the router port was now created
         self.assertIsNotNone(
             self._find_router_port_row_by_port_id(neutron_obj['port_id']))
+
+        # Assert router port has "neutron-" prefix and correct router uuid
+        # for external_ids neutron:router_name value, when created and after
+        # maintenance/updated (LP#2055045)
+
+        self.assertEqual(
+            '%s%s' % (ovn_const.OVN_NAME_PREFIX, neutron_router['id']),
+            self._get_lrp_ext_ids_router_name(neutron_obj['port_id']))
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.update_lrouter_ports_ext_ids_name_prefix)
+
+        self.assertEqual(
+            '%s%s' % (ovn_const.OVN_NAME_PREFIX, neutron_router['id']),
+            self._get_lrp_ext_ids_router_name(neutron_obj['port_id']))
 
         # > Delete
 

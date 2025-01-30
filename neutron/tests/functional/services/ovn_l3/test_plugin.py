@@ -346,8 +346,9 @@ class TestRouter(base.TestOVNFunctionalBase):
                 if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY
                         not in row.external_ids):
                     continue
-                if row.external_ids[
-                        ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY] == router['id']:
+                ext_ids_rtr_name = row.external_ids[
+                    ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
+                if ext_ids_rtr_name == ovn_utils.ovn_name(router['id']):
                     chassis = {}
                     for gwc in row.gateway_chassis:
                         chassis[gwc.priority] = gwc.chassis_name

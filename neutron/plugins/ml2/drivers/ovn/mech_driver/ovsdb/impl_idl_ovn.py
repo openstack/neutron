@@ -560,10 +560,9 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                           default=None)
         if not lrp:
             return []
-        router_id = lrp.external_ids.get(
+        router_name = lrp.external_ids.get(
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY, "")
-        lrouter = self.lookup('Logical_Router', utils.ovn_name(router_id),
-                              default=None)
+        lrouter = self.lookup('Logical_Router', router_name, default=None)
         if not lrouter:
             return []
         az_string = lrouter.external_ids.get(
@@ -819,7 +818,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         for lrp in getattr(lr, 'ports', []):
             lrp_ext_ids = getattr(lrp, 'external_ids', {})
             if (r_name not in lrp_ext_ids or
-                    utils.ovn_name(lrp_ext_ids[r_name]) != lr.name or
+                    lrp_ext_ids[r_name] != lr.name or
                     not strutils.bool_from_string(lrp_ext_ids.get(is_gw))):
                 continue
 
