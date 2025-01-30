@@ -336,3 +336,15 @@ class TestOVSDBHandler(base.BaseTestCase):
         expected_subport_ids = '["foo_subport_1"]'
         self._test__update_trunk_metadata_wire_flag(
             mock_br, False, external_ids, subport_ids, expected_subport_ids)
+
+    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
+    def test__update_trunk_metadata_no_tbr_no_raise(self, br):
+        mock_br = br.return_value
+        mock_br.configure_mock(**{'bridge_exists.return_value': False})
+        try:
+            self.ovsdb_handler._update_trunk_metadata(
+                mock_br, None, self.trunk_id, ['foo_subport_1'])
+        except RuntimeError:
+            self.fail(
+                "_update_trunk_metadata() should not raise RuntimeError "
+                "when the trunk bridge does not exist")
