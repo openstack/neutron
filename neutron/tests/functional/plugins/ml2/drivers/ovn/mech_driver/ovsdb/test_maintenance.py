@@ -16,10 +16,12 @@
 from unittest import mock
 
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from futurist import periodics
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
+from neutron_lib.api.definitions import provider_net as provnet_apidef
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as lib_l3_exc
@@ -1145,6 +1147,21 @@ class TestMaintenance(_TestMaintenanceHelper):
         self._test_set_fip_distributed_flag_change(
             original_value=True,
             config_value=True)
+
+    def test_set_network_type(self):
+        net1 = self._create_network(uuidutils.generate_uuid())
+        ls_name = utils.ovn_name(net1['id'])
+        self.nb_api.db_remove(
+            'Logical_Switch', ls_name, 'external_ids',
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY).execute(check_error=True)
+        ls = self.nb_api.lookup('Logical_Switch', ls_name)
+        self.assertIsNone(ls.external_ids.get(
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+
+        self.assertRaises(periodics.NeverAgain, self.maint.set_network_type)
+        ls = self.nb_api.lookup('Logical_Switch', ls_name)
+        self.assertEqual(net1[provnet_apidef.NETWORK_TYPE],
+                         ls.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY))
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,

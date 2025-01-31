@@ -310,6 +310,12 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self._start_mock(
             'neutron.common.ovn.utils.is_nat_gateway_port_supported',
             return_value=False)
+        ext_ids = {
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_GENEVE,
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: 9000,
+        }
+        self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
+            mock.Mock(external_ids=ext_ids))
 
     def test__plugin_driver(self):
         # No valid mech drivers should raise an exception.
@@ -663,6 +669,12 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         fake_network_vlan = self.fake_network
         fake_network_vlan[pnet.NETWORK_TYPE] = constants.TYPE_VLAN
         gn.return_value = fake_network_vlan
+        ext_ids = {
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_VLAN,
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: 1500,
+        }
+        self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
+            mock.Mock(external_ids=ext_ids))
 
         self.l3_inst.add_router_interface(self.context, router_id,
                                           interface_info)
@@ -1666,13 +1678,20 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         ari.return_value = self.fake_router_interface_info
         grps.return_value = [interface_info]
         self.get_router.return_value = self.fake_router_with_ext_gw
-        network_attrs = {'id': 'prov-net', 'mtu': 1200}
+        mtu = 1200
+        network_attrs = {'id': 'prov-net', 'mtu': mtu}
         prov_net = fake_resources.FakeNetwork.create_one_network(
                 attrs=network_attrs).info()
         self.fake_router_port['device_owner'] = (
             constants.DEVICE_OWNER_ROUTER_GW)
         gn.return_value = prov_net
         gns.return_value = [self.fake_network]
+        ext_ids = {
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_GENEVE,
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: mtu,
+        }
+        self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
+            mock.Mock(external_ids=ext_ids))
 
         self.l3_inst.add_router_interface(self.context, router_id,
                                           interface_info)
@@ -1866,6 +1885,12 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             'OVNClient.delete_mac_binding_entries_by_mac',
             return_value=1)
         self.setup_notification_driver()
+        ext_ids = {
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_GENEVE,
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: 9000,
+        }
+        self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
+            mock.Mock(external_ids=ext_ids))
 
     # Note(dongj): According to bug #1657693, status of an unassociated
     # floating IP is set to DOWN. Revise expected_status to DOWN for related
