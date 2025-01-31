@@ -64,6 +64,16 @@ This implementation does not rely on ``neutron.api.wsgi.Server`` nor
   implementations will enable again this configuration variable.
 
 
+OVN metadata agent
+------------------
+
+Metadata proxy
+~~~~~~~~~~~~~~
+
+The OVN metadata agent uses the same implementation as the OVN agent. The same
+limitations apply.
+
+
 Neutron API
 -----------
 

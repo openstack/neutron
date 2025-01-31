@@ -27,7 +27,7 @@ import testtools
 from neutron.agent.linux import iptables_manager
 from neutron.agent.ovn.metadata import agent
 from neutron.agent.ovn.metadata import ovsdb
-from neutron.agent.ovn.metadata import server as metadata_server
+from neutron.agent.ovn.metadata import server_socket as metadata_server
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
 from neutron.conf.agent.metadata import config as meta_config
@@ -453,7 +453,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
     def test_metadata_proxy_handler_idl(self):
         # This test relies on the configuration option metadata_workers=0
-        proxy_sb_idl = self.agent._proxy.server._server._application.sb_idl
+        proxy_sb_idl = metadata_server.MetadataProxyHandler._sb_idl
         agent_sb_idl = self.agent.sb_idl
         self.assertEqual(agent_sb_idl, proxy_sb_idl)
 
