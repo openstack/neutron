@@ -415,6 +415,9 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
     def _delete_extra_gw_port(self, context, router_id, gw_port_id):
         admin_ctx = context.elevated()
         gw_port = port_obj.Port.get_object(admin_ctx, id=gw_port_id)
+        if not gw_port:
+            return
+
         fip_count = self._router_extra_gw_port_has_floating_ips(context,
                                                                 router_id,
                                                                 gw_port)
