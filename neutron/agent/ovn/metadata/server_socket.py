@@ -60,7 +60,6 @@ class MetadataProxyHandlerBaseSocketServer(
     def _http_response(http_response, request):
         _res = webob.Response(
             body=http_response.content,
-            headerlist=list(http_response.headers.items()),
             status=http_response.status_code,
             content_type=http_response.headers['content-type'],
             charset=http_response.encoding)
@@ -68,6 +67,11 @@ class MetadataProxyHandlerBaseSocketServer(
         # response, adding the HTTP version to the ``webob.Response``
         # output string.
         out = request.http_version + ' ' + str(_res)
+        if (int(_res.headers['content-length']) == 0 and
+                _res.status_code == 200):
+            # Add 2 extra \r\n to the result. HAProxy is also expecting
+            # it even when the body is empty.
+            out += '\r\n\r\n'
         return out.encode(http_response.encoding)
 
     def _proxy_request(self, instance_id, project_id, req):
