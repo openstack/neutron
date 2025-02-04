@@ -76,7 +76,7 @@ class TestAsyncProcess(AsyncProcessTestFramework):
         common_utils.wait_until_true(
             lambda: proc.is_active() and pid != proc.pid,
             timeout=5,
-            sleep=0.01,
+            sleep=0.2,
             exception=RuntimeError(_("Async process didn't respawn")))
         self._check_stdout(proc)
 
