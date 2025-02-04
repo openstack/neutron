@@ -15,11 +15,11 @@
 
 import errno
 from os import path
+import queue as pqueue
 import re
 import threading
 import time
 
-import eventlet
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions
@@ -1114,8 +1114,7 @@ def _arping(ns_name, iface_name, address, count, log_exception):
 
 
 def send_ip_addr_adv_notif(
-        ns_name, iface_name, address, count=3, log_exception=True,
-        use_eventlet=True):
+        ns_name, iface_name, address, count=3, log_exception=True):
     """Send advance notification of an IP address assignment.
 
     If the address is in the IPv4 family, send gratuitous ARP.
@@ -1133,18 +1132,12 @@ def send_ip_addr_adv_notif(
     :param log_exception: (Optional) True if possible failures should be logged
                           on exception level. Otherwise they are logged on
                           WARNING level. Default is True.
-    :param use_eventlet: (Optional) True if the arping command will be spawned
-                         using eventlet, False to use Python threads
-                         (threading).
     """
     def arping():
         _arping(ns_name, iface_name, address, count, log_exception)
 
     if count > 0 and netaddr.IPAddress(address).version == 4:
-        if use_eventlet:
-            eventlet.spawn_n(arping)
-        else:
-            threading.Thread(target=arping).start()
+        threading.Thread(target=arping).start()
 
 
 def sysctl(cmd, namespace=None, log_fail_as_error=True):
@@ -1536,7 +1529,7 @@ def ip_monitor(namespace, queue, event_stop, event_started):
         except EOFError:
             pass
 
-    _queue = eventlet.Queue()
+    _queue = pqueue.Queue()
     try:
         cache_devices = {}
         with privileged.get_iproute(namespace) as ip:
@@ -1553,7 +1546,7 @@ def ip_monitor(namespace, queue, event_stop, event_started):
                 ip_address = _queue.get(timeout=1)
                 LOG.debug("IP monitor %s; IP address to process: %s",
                           namespace, ip_address)
-            except eventlet.queue.Empty:
+            except pqueue.Empty:
                 continue
             if 'index' in ip_address and 'prefixlen' in ip_address:
                 index = ip_address['index']
