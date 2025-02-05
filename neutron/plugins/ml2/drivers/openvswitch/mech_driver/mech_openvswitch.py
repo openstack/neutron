@@ -113,6 +113,10 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         """Currently Openvswitch driver doesn't support vlan transparency."""
         return False
 
+    def check_vlan_qinq(self, context):
+        """Currently Openvswitch driver doesn't support QinQ vlan."""
+        return False
+
     def bind_port(self, context):
         vnic_type = context.current.get(portbindings.VNIC_TYPE,
                                         portbindings.VNIC_NORMAL)

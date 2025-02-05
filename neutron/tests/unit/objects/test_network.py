@@ -260,6 +260,11 @@ class NetworkDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj = network.Network.get_object(self.context, id=obj.id)
         self.assertEqual('bar.com', obj.dns_domain)
 
+    def test_v1_2_to_v1_1_drops_qinq_attribute(self):
+        network_obj = self._make_object(self.obj_fields[0])
+        network_v1_1 = network_obj.obj_to_primitive(target_version='1.1')
+        self.assertNotIn('qinq', network_v1_1['versioned_object.data'])
+
 
 class SegmentHostMappingIfaceObjectTestCase(
         obj_test_base.BaseObjectIfaceTestCase):

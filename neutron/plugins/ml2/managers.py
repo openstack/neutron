@@ -23,6 +23,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import multiprovidernet as mpnet_exc
 from neutron_lib.exceptions import placement as place_exc
+from neutron_lib.exceptions import vlanqinq as qinq_exc
 from neutron_lib.exceptions import vlantransparent as vlan_exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
@@ -469,6 +470,19 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 if not driver.obj.check_vlan_transparency(context):
                     raise vlan_exc.VlanTransparencyDriverError()
 
+    def _check_vlan_qinq(self, context):
+        """Helper method for checking vlan qinq support.
+
+        :param context: context parameter to pass to each method call
+        :raises: neutron_lib.exceptions.qinq.
+        VlanQinqDriverError if any mechanism driver doesn't
+        support vlan transparency.
+        """
+        if context.current.get('qinq'):
+            for driver in self.ordered_mech_drivers:
+                if not driver.obj.check_vlan_qinq(context):
+                    raise qinq_exc.VlanQinqDriverError()
+
     def start_driver_rpc_listeners(self):
         servers = []
         for driver in self.ordered_mech_drivers:
@@ -529,6 +543,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         that all mechanism drivers are called in this case.
         """
         self._check_vlan_transparency(context)
+        self._check_vlan_qinq(context)
         self._call_on_drivers("create_network_precommit", context,
                               raise_db_retriable=True)
 

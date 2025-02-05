@@ -201,6 +201,10 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         """SR-IOV driver vlan transparency support."""
         return True
 
+    def check_vlan_qinq(self, context):
+        """Currently SR-IOV driver doesn't support QinQ vlan."""
+        return False
+
     def _get_vif_details(self, segment):
         network_type = segment[api.NETWORK_TYPE]
         if network_type == constants.TYPE_FLAT:
