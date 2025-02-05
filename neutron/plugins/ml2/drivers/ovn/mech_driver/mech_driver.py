@@ -227,7 +227,11 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def check_vlan_qinq(self, context):
         """OVN driver vlan QinQ support."""
-        return False
+        vlan_qinq_network_types = [
+            const.TYPE_VLAN,
+        ]
+        return (context.current.get(provider_net.NETWORK_TYPE)
+                in vlan_qinq_network_types)
 
     def _setup_vif_port_bindings(self):
         self.supported_vnic_types = ovn_const.OVN_SUPPORTED_VNIC_TYPES

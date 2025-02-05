@@ -26,6 +26,7 @@ from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api.definitions import qinq as qinq_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -178,6 +179,7 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         # setting up test_plugin
         config.register_common_config_options()
         cfg.CONF.set_override('vlan_transparent', True)
+        cfg.CONF.set_override('vlan_qinq', True)
         cfg.CONF.set_override('ovsdb_connection_timeout', 30, group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super().setUp()
@@ -896,24 +898,41 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_create_network_igmp_snoop_disabled(self):
         self._create_network_igmp_snoop(enabled=False)
 
-    def _create_network_vlan_passthru(self, enabled):
+    def _create_network_vlan_passthru(self, vlan_transparent, qinq):
         nb_idl = self.mech_driver._ovn_client._nb_idl
-        net = self._make_network(self.fmt, name='net1',
-                                 admin_state_up=True,
-                                 vlan_transparent=enabled)['network']
-        value = 'true' if enabled else 'false'
+        net = self._make_network(
+            self.fmt, name='net1',
+            as_admin=True,
+            admin_state_up=True,
+            arg_list=('provider:network_type',
+                      'provider:segmentation_id',
+                      'provider:physical_network',
+                      qinq_apidef.QINQ_FIELD),
+            vlan_transparent=vlan_transparent,
+            qinq=qinq,
+            **{'provider:network_type': 'vlan',
+               'provider:segmentation_id': 100,
+               'provider:physical_network': 'physnet1'})['network']
+        value = 'true' if vlan_transparent or qinq else 'false'
+        expected_fdb_age_treshold = ovn_conf.get_fdb_age_threshold()
         nb_idl.ls_add.assert_called_once_with(
             ovn_utils.ovn_name(net['id']), external_ids=mock.ANY,
             may_exist=True,
-            other_config={ovn_const.MCAST_SNOOP: 'false',
-                          ovn_const.MCAST_FLOOD_UNREGISTERED: 'false',
-                          ovn_const.VLAN_PASSTHRU: value})
+            other_config={
+                ovn_const.MCAST_SNOOP: 'false',
+                ovn_const.MCAST_FLOOD_UNREGISTERED: 'false',
+                ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD:
+                    expected_fdb_age_treshold,
+                ovn_const.VLAN_PASSTHRU: value})
 
-    def test_create_network_vlan_passthru_enabled(self):
-        self._create_network_vlan_passthru(enabled=True)
+    def test_create_network_vlan_passthru_vlan_transparent_enabled(self):
+        self._create_network_vlan_passthru(vlan_transparent=True, qinq=False)
+
+    def test_create_network_vlan_passthru_qinq_enabled(self):
+        self._create_network_vlan_passthru(vlan_transparent=False, qinq=True)
 
     def test_create_network_vlan_passthru_disabled(self):
-        self._create_network_vlan_passthru(enabled=False)
+        self._create_network_vlan_passthru(vlan_transparent=False, qinq=False)
 
     def test_create_network_create_localnet_port_tunnel_network_type(self):
         nb_idl = self.mech_driver._ovn_client._nb_idl

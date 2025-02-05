@@ -447,8 +447,21 @@ CMS_OPT_CHASSIS_AS_EXTPORT_HOST = 'enable-chassis-as-extport-host'
 CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
 CMS_OPT_CARD_SERIAL_NUMBER = 'card-serial-number'
 
-# OVN vlan transparency option
+# OVN vlan transparency and QinQ options
 VLAN_PASSTHRU = 'vlan-passthru'
+VLAN_ETHTYPE = 'ethtype'
+# TODO(slaweq): handle somehow differences between version < 24.03 where
+# 802.11ad was wrongly used and >= 24.03 where it was fixed and works with
+# correct name 802.1ad
+# according to
+# https://github.com/ovn-org/ovn/commit/58dcbef8aace526d1ca57769ff1c38eff8db83be
+# it seems that those old, wrong values are still accepted for now. Maybe they
+# will not be in the future so we will need to update it then,
+# I need to:
+# - test locally if 802.11ad and 802.11q will be working fine in newer ovn, if
+# yes, just add todo explaining that this may have to be changed in the future
+ETHTYPE_8021q = '802.11q'
+ETHTYPE_8021ad = '802.11ad'
 
 # OVN mechanism driver constants.
 OVN_RP_UUID = uuid.UUID('5533233b-800c-11eb-b1f4-000056b2f5b8')

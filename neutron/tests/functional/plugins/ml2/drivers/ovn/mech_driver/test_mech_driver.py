@@ -22,6 +22,8 @@ from unittest import mock
 import netaddr
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import qinq as qinq_apidef
+from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib.exceptions import agent as agent_exc
@@ -33,6 +35,7 @@ from ovsdbapp.backend.ovs_idl import event
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
+from neutron.conf import common as common_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db as db_rev
@@ -1046,6 +1049,89 @@ class TestProvnetPorts(base.TestOVNFunctionalBase):
         ovn_localnetport = self._find_port_row_by_name(
             utils.ovn_provnet_port_name(seg_2['id']))
         self.assertIsNone(ovn_localnetport)
+
+
+class TestVlanTransparencyOptions(base.TestOVNFunctionalBase):
+
+    """Tests for the vlan_transparent and vlan_qinq network params.
+
+    This class contains tests which tests both "vlan_transparent" and
+    "vlan_qinq" options. The reason why those 2 are tested together is that
+    both options are using the same options on the OVN side and are mutually
+    exclusive.
+    """
+
+    def setUp(self):
+        common_conf.register_core_common_config_opts()
+        common_conf.cfg.CONF.set_override('vlan_qinq', True)
+        common_conf.cfg.CONF.set_override('vlan_transparent', True)
+        super().setUp()
+        self._ovn_client = self.mech_driver._ovn_client
+
+    def _find_row_by_name(self, row_name, name):
+        cmd = self.nb_api.db_find_rows(row_name, ('name', '=', name))
+        rows = cmd.execute(check_error=True)
+        return rows[0] if rows else None
+
+    def _find_port_row_by_name(self, name):
+        return self._find_row_by_name('Logical_Switch_Port', name)
+
+    def _find_network_row_by_name(self, name):
+        return self._find_row_by_name('Logical_Switch', name)
+
+    def _test_network_with_qinq_and_vlan_transparent(
+            self, vlan_qinq, vlan_transparent):
+        net = self._make_network(
+            self.fmt, 'n1', True, as_admin=True,
+            arg_list=('provider:network_type',
+                      'provider:segmentation_id',
+                      'provider:physical_network',
+                      qinq_apidef.QINQ_FIELD,
+                      vlan_apidef.VLANTRANSPARENT),
+            **{'provider:network_type': 'vlan',
+               'provider:segmentation_id': 100,
+               'provider:physical_network': 'physnet1',
+               qinq_apidef.QINQ_FIELD: vlan_qinq,
+               vlan_apidef.VLANTRANSPARENT: vlan_transparent}
+        )['network']
+
+        seg_db = self.segments_plugin.get_segments(
+            self.context, filters={'network_id': [net['id']]})
+        ovn_network = self._find_network_row_by_name(utils.ovn_name(net['id']))
+        ovn_localnetport = self._find_port_row_by_name(
+            utils.ovn_provnet_port_name(seg_db[0]['id']))
+
+        if vlan_qinq:
+            self.assertEqual(ovn_const.ETHTYPE_8021ad,
+                             ovn_localnetport.options[ovn_const.VLAN_ETHTYPE])
+            # This means that "vlan-passthru" should be set to "true" for
+            # the LS
+            self.assertEqual('true',
+                             ovn_network.other_config[ovn_const.VLAN_PASSTHRU])
+        else:
+            self.assertNotIn(ovn_const.VLAN_ETHTYPE, ovn_localnetport.options)
+            if vlan_transparent:
+                # This means that "vlan-passthru" should be set to "true" for
+                # the LS, in case of vlan-transparent network there is no need
+                # to set ethtype on the localnet port as 802.1q is default
+                # value for this field in the OVN db
+                self.assertEqual(
+                    'true', ovn_network.other_config[ovn_const.VLAN_PASSTHRU])
+            else:
+                self.assertEqual(
+                    'false', ovn_network.other_config[ovn_const.VLAN_PASSTHRU])
+
+    def test_network_with_qinq_enabled_vlan_transparent_disabled(self):
+        self._test_network_with_qinq_and_vlan_transparent(
+            True, False)
+
+    def test_network_with_qinq_disabled_vlan_transparent_enabled(self):
+        self._test_network_with_qinq_and_vlan_transparent(
+            False, True)
+
+    def test_network_with_qinq_and_vlan_transparent_disabled(self):
+        self._test_network_with_qinq_and_vlan_transparent(
+            False, False)
 
 
 class TestMetadataPorts(base.TestOVNFunctionalBase):

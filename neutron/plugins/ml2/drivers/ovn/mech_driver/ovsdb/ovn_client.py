@@ -25,6 +25,7 @@ from neutron_lib.api.definitions import l3_ext_gw_multihoming
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api.definitions import qinq as qinq_apidef
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
@@ -2043,7 +2044,8 @@ class OVNClient:
 
         self._transaction(commands, txn=txn)
 
-    def create_provnet_port(self, network_id, segment, txn=None):
+    def create_provnet_port(self, network_id, segment, txn=None,
+                            network=None):
         tag = segment.get(segment_def.SEGMENTATION_ID, [])
         physnet = segment.get(segment_def.PHYSICAL_NETWORK)
         fdb_enabled = ('true' if ovn_conf.is_learn_fdb_enabled()
@@ -2055,6 +2057,15 @@ class OVNClient:
             ovn_const.LSP_OPTIONS_MCAST_FLOOD:
                 ovs_conf.get_igmp_flood(),
             ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: fdb_enabled}
+        network = network or self._plugin.get_network(
+            n_context.get_admin_context(), network_id)
+        if self._get_vlan_passthru(network):
+            vlan_ethtype = self._get_vlan_ethtype(network)
+            if vlan_ethtype == ovn_const.ETHTYPE_8021ad:
+                # 802.1q ethtype is default so it needs to be set in the OVN
+                # db only if required value is 802.1ad
+                options[ovn_const.VLAN_ETHTYPE] = vlan_ethtype
+
         cmd = self._nb_idl.create_lswitch_port(
             lport_name=utils.ovn_provnet_port_name(segment['id']),
             lswitch_name=utils.ovn_name(network_id),
@@ -2072,6 +2083,14 @@ class OVNClient:
             lswitch_name=utils.ovn_name(network_id))
         self._transaction([cmd])
 
+    def _get_vlan_passthru(self, network):
+        return bool(network.get('vlan_transparent') or
+                    network.get(qinq_apidef.QINQ_FIELD))
+
+    def _get_vlan_ethtype(self, network):
+        return (ovn_const.ETHTYPE_8021ad if network.get(qinq_apidef.QINQ_FIELD)
+                else ovn_const.ETHTYPE_8021q)
+
     def _gen_network_parameters(self, network):
         params = {'external_ids': {
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: network['name'],
@@ -2086,14 +2105,13 @@ class OVNClient:
         }}
 
         # Enable IGMP snooping if igmp_snooping_enable is enabled in Neutron
-        vlan_transparent = (
-            'true' if network.get('vlan_transparent') else 'false')
         params['other_config'] = {
             ovn_const.MCAST_SNOOP:
                 ovs_conf.get_igmp_snooping_enabled(),
             ovn_const.MCAST_FLOOD_UNREGISTERED:
                 ovs_conf.get_igmp_flood_unregistered(),
-            ovn_const.VLAN_PASSTHRU: vlan_transparent}
+            ovn_const.VLAN_PASSTHRU: str(
+                self._get_vlan_passthru(network)).lower()}
         if utils.is_provider_network(network):
             params['other_config'][ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD] = (
                 ovn_conf.get_fdb_age_threshold())
@@ -2120,7 +2138,8 @@ class OVNClient:
                                         may_exist=True))
             for segment in segments:
                 if segment.get(segment_def.PHYSICAL_NETWORK):
-                    self.create_provnet_port(network['id'], segment, txn=txn)
+                    self.create_provnet_port(network['id'], segment, txn=txn,
+                                             network=network)
         db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)
         self.create_metadata_port(context, network)
         return network
