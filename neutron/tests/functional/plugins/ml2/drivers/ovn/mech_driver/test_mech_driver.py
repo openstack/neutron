@@ -72,10 +72,14 @@ class TestOVNMechanismDriver(base.TestOVNFunctionalBase):
 
         # Create several OVN hash registers left by a previous execution.
         created_at = timeutils.utcnow() - datetime.timedelta(1)
+        node_uuids = [uuidutils.generate_uuid(),
+                      uuidutils.generate_uuid(),
+                      uuidutils.generate_uuid()]
         with db_api.CONTEXT_WRITER.using(self.context):
-            for _ in range(3):
-                self.node_uuid = ovn_hash_ring_db.add_node(
-                    self.context, ring_group, created_at=created_at)
+            for idx in range(3):
+                ovn_hash_ring_db.add_node(
+                    self.context, ring_group,
+                    node_uuids[idx], created_at=created_at)
 
         # Check the existing OVN hash ring registers.
         ovn_hrs = ovn_hash_ring_db.get_nodes(self.context, ring_group)
@@ -83,7 +87,8 @@ class TestOVNMechanismDriver(base.TestOVNFunctionalBase):
 
         start_time = timeutils.utcnow()
         self.mech_driver._start_time = int(start_time.timestamp())
-        for _ in range(3):
+        for idx in range(3):
+            self.mech_driver._node_uuid = node_uuids[idx]
             self.mech_driver._init_hash_ring(self.context)
 
         ovn_hrs = ovn_hash_ring_db.get_nodes(self.context, ring_group)

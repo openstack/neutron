@@ -105,6 +105,25 @@ The Neutron API consists of the following executables:
   mechanism driver.
 
 
+ML2/OVN
+~~~~~~~
+
+The mechanism driver ML2/OVN requires a synchronization method between all
+nodes (controllers) and workers. The OVN database events will be received by
+all workers in all nodes; however, only one worker should process this event.
+The ``HashRingManager``, locally instantiated in each worker, is in charge of
+hashing the event received and decide what worker will process the event.
+
+The ``HashRingManager`` uses the information stored in the Neutron database to
+determine how many workers are alive at this time. Each worker will register
+itself in the Neutron database, creating a register in the table
+``ovn_hash_ring``. The UUID of each register is created using a deterministic
+method that depends on (1) the hash ring group (always "mechanism_driver" for
+the API workers), (2) the host name and (3) the worker ID. If the worker is
+restarted, this method will provide the same register UUID and the previous
+register (if present in the database) will be overwritten.
+
+
 .. note::
 
   Right now, only the API server is running without eventlet.
