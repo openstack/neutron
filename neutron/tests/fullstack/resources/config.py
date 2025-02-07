@@ -230,6 +230,8 @@ class OVSConfigFixture(ConfigFixture):
                 'bridge_mappings': '{}:{}'.format(physnet, ext_dev),
                 'of_inactivity_probe': '0',
                 'ovsdb_debug': 'True',
+                'qos_meter_bandwidth': str(
+                    self.env_desc.use_meter_bandwidth_limit),
             },
             'securitygroup': {
                 'firewall_driver': host_desc.firewall_driver,

@@ -62,8 +62,10 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         (_dp, ofp, ofpp) = self._get_dp()
         self.setup_canary_table()
         self.install_goto(dest_table_id=PACKET_RATE_LIMIT)
-        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+        self.install_goto(dest_table_id=BANDWIDTH_RATE_LIMIT,
                           table_id=PACKET_RATE_LIMIT)
+        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+                          table_id=BANDWIDTH_RATE_LIMIT)
         self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=1)
         self.init_dhcp(enable_openflow_dhcp=enable_openflow_dhcp,
                        enable_dhcpv6=enable_dhcpv6)

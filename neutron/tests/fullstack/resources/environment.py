@@ -45,7 +45,8 @@ class EnvironmentDescription:
                  dhcp_scheduler_class=None, ml2_extension_drivers=None,
                  api_workers=1,
                  enable_traditional_dhcp=True, local_ip_ext=False,
-                 quota_driver=quota_conf.QUOTA_DB_DRIVER):
+                 quota_driver=quota_conf.QUOTA_DB_DRIVER,
+                 use_meter_bandwidth_limit=False):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -73,6 +74,7 @@ class EnvironmentDescription:
         if self.local_ip_ext:
             self.service_plugins += ',local_ip'
         self.quota_driver = quota_driver
+        self.use_meter_bandwidth_limit = use_meter_bandwidth_limit
 
     @property
     def tunneling_enabled(self):
