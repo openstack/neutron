@@ -149,11 +149,11 @@ ovs_opts = [
                        "https://docs.openstack.org/api-ref/placement/"
                        "#update-resource-provider-inventories")),
     cfg.StrOpt('datapath_type', default=ovs_constants.OVS_DATAPATH_SYSTEM,
-               choices=[ovs_constants.OVS_DATAPATH_SYSTEM,
-                        ovs_constants.OVS_DATAPATH_NETDEV],
-               help=_("OVS datapath to use. 'system' is the default value and "
-                      "corresponds to the kernel datapath. To enable the "
-                      "userspace datapath set this value to 'netdev'.")),
+               choices=[(ovs_constants.OVS_DATAPATH_SYSTEM,
+                         "Kernel datapath"),
+                        (ovs_constants.OVS_DATAPATH_NETDEV,
+                         "Userspace datapath")],
+               help=_("OVS datapath to use.")),
     cfg.StrOpt('vhostuser_socket_dir',
                default=ovs_constants.VHOST_USER_SOCKET_DIR,
                help=_("OVS vhost-user socket directory.")),

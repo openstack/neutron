@@ -98,31 +98,33 @@ ovn_opts = [
                       'to 60 seconds.')),
     cfg.StrOpt('neutron_sync_mode',
                default='log',
-               choices=('off', 'log', 'repair', MIGRATE_MODE),
+               choices=[('off',
+                         "Synchronization is off."),
+                        ('log',
+                         "During neutron-server startup, check to see if OVN "
+                         "is in sync with the Neutron database. "
+                         "Log warnings for any inconsistencies found so that "
+                         "an admin can investigate."),
+                        ('repair',
+                         "During neutron-server startup, automatically create "
+                         "resources found in Neutron but not in OVN. "
+                         "Also remove resources from OVN that are no longer "
+                         "found in Neutron."),
+                        (MIGRATE_MODE,
+                         "This mode is to OVS to OVN migration. "
+                         "It will sync the DB just like repair mode but it "
+                         "will additionally fix the Neutron DB resource from "
+                         "OVS to OVN.")],
                help=_('The synchronization mode of OVN_Northbound OVSDB '
-                      'with Neutron DB.\n'
-                      'off - synchronization is off \n'
-                      'log - during neutron-server startup, '
-                      'check to see if OVN is in sync with '
-                      'the Neutron database. '
-                      ' Log warnings for any inconsistencies found so'
-                      ' that an admin can investigate\n'
-                      'repair - during neutron-server startup, automatically'
-                      ' create resources found in Neutron but not in OVN.'
-                      ' Also remove resources from OVN'
-                      ' that are no longer in Neutron.'
-                      '%(migrate)s - This mode is to OVS to OVN migration. It'
-                      ' will sync the DB just like repair mode but it will'
-                      ' additionally fix the Neutron DB resource from OVS to'
-                      ' OVN.') % {'migrate': MIGRATE_MODE}),
+                      'with Neutron DB.')),
     cfg.StrOpt("ovn_l3_scheduler",
                default='leastloaded',
-               choices=('leastloaded', 'chance'),
+               choices=[('leastloaded',
+                         "Select chassis with fewest gateway ports."),
+                        ('chance',
+                         "Select chassis randomly.")],
                help=_('The OVN L3 Scheduler type used to schedule router '
-                      'gateway ports on hypervisors/chassis.\n'
-                      'leastloaded - chassis with fewest gateway ports '
-                      'selected\n'
-                      'chance - chassis randomly selected')),
+                      'gateway ports on hypervisors/chassis.')),
     cfg.BoolOpt('enable_distributed_floating_ip',
                 default=False,
                 help=_('Enable distributed floating IP support.\n'
@@ -232,13 +234,14 @@ ovn_opts = [
                        '"False".')),
     cfg.StrOpt('live_migration_activation_strategy',
                default="rarp",
-               choices=["rarp", ""],
-               help=_('Activation strategy to use for live migration. '
-                      'The default `rarp` strategy expects the hypervisor to '
-                      'send a Reverse ARP request through the migrated port '
-                      'after migration is complete. '
-                      'An empty value means a migrated port is immediately '
-                      'activated on the destination host.')),
+               choices=[("rarp",
+                         "Expect the hypervisor to send a Reverse ARP request "
+                         "through the migrated port after migration is "
+                         "complete."),
+                        ("",
+                         "A migrated port is immediately activated on "
+                         "the destination host.")],
+               help=_('Activation strategy to use for live migration.')),
 ]
 
 nb_global_opts = [

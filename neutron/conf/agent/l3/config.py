@@ -22,30 +22,28 @@ from neutron._i18n import _
 
 OPTS = [
     cfg.StrOpt('agent_mode', default=constants.L3_AGENT_MODE_LEGACY,
-               choices=(constants.L3_AGENT_MODE_DVR,
-                        constants.L3_AGENT_MODE_DVR_SNAT,
-                        constants.L3_AGENT_MODE_LEGACY,
-                        constants.L3_AGENT_MODE_DVR_NO_EXTERNAL),
-               help=_("The working mode for the agent. Allowed modes are: "
-                      "'legacy' - this preserves the existing behavior "
-                      "where the L3 agent is deployed on a centralized "
-                      "networking node to provide L3 services like DNAT "
-                      "and SNAT. Use this mode if you do not want to "
-                      "adopt DVR. 'dvr' - this mode enables DVR "
-                      "functionality and must be used for an L3 agent "
-                      "that runs on a compute host. 'dvr_snat' - this "
-                      "enables centralized SNAT support in conjunction "
-                      "with DVR. This mode must be used for an L3 agent "
-                      "running on a centralized node (or in single-host "
-                      "deployments, e.g. devstack). "
-                      "dvr_snat mode is not supported on a compute host. "
-                      "'dvr_no_external' - this mode enables only East/West "
-                      "DVR routing functionality for an L3 agent that runs on "
-                      "a compute host, the North/South functionality such "
-                      "as DNAT and SNAT will be provided by the centralized "
-                      "network node that is running in 'dvr_snat' mode. "
-                      "This mode should be used when there is no "
-                      "external network connectivity on the compute host.")),
+               choices=[(constants.L3_AGENT_MODE_DVR,
+                         "Enable DVR functionality and must be used for "
+                         "an L3 agent that runs on a compute host."),
+                        (constants.L3_AGENT_MODE_DVR_SNAT,
+                         "Enable centralized SNAT support in conjunction "
+                         "with DVR. This mode must be used for an L3 agent "
+                         "running on a centralized node (or in single-host "
+                         "deployments, e.g. devstack)."),
+                        (constants.L3_AGENT_MODE_LEGACY,
+                         "Preserve the existing behavior where the L3 agent "
+                         "is deployed on a centralized networking node to "
+                         "provide L3 services like DNAT and SNAT. "
+                         "Use this mode if you do not want to adopt DVR."),
+                        (constants.L3_AGENT_MODE_DVR_NO_EXTERNAL,
+                         "Enable only East/West DVR routing functionality for "
+                         "an L3 agent that runs on a compute host, while "
+                         "the North/South functionality such as DNAT and SNAT "
+                         "will be provided by the centralized network node "
+                         "that is running in 'dvr_snat' mode. This mode "
+                         "should be used when there is no external network "
+                         "connectivity on the compute host.")],
+               help=_("The working mode for the agent.")),
     cfg.PortOpt('metadata_port',
                 default=9697,
                 help=_("TCP Port used by Neutron metadata namespace proxy.")),
