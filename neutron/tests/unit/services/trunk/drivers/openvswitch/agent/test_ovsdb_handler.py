@@ -15,6 +15,7 @@
 
 from unittest import mock
 
+import futurist
 from neutron_lib.services.trunk import constants
 import oslo_messaging
 from oslo_serialization import jsonutils
@@ -337,14 +338,31 @@ class TestOVSDBHandler(base.BaseTestCase):
         self._test__update_trunk_metadata_wire_flag(
             mock_br, False, external_ids, subport_ids, expected_subport_ids)
 
-    @mock.patch('neutron.agent.common.ovs_lib.OVSBridge')
-    def test__update_trunk_metadata_no_tbr_no_raise(self, br):
-        mock_br = br.return_value
-        mock_br.configure_mock(**{'bridge_exists.return_value': False})
-        try:
-            self.ovsdb_handler._update_trunk_metadata(
-                mock_br, None, self.trunk_id, ['foo_subport_1'])
-        except RuntimeError:
-            self.fail(
-                "_update_trunk_metadata() should not raise RuntimeError "
-                "when the trunk bridge does not exist")
+    @mock.patch('neutron.services.trunk.drivers.openvswitch.agent'
+                '.ovsdb_handler.is_trunk_bridge', return_value=True)
+    def test_process_trunk_port_events(self, mock_is_trunk_bridge):
+        payload = mock.MagicMock(latest_state={
+            'added': [{'name': 'abc'}],
+            'removed': [{'external_ids': {'bridge_name': 'def'}}]})
+
+        with futurist.ThreadPoolExecutor() as executor:
+            with (mock.patch(('neutron.services.trunk.drivers.openvswitch'
+                              '.agent.ovsdb_handler.futurist'
+                              '.ThreadPoolExecutor'),
+                             return_value=executor),
+                  mock.patch.object(
+                      self.ovsdb_handler,
+                      "handle_trunk_add") as mock_add,
+                  mock.patch.object(
+                      self.ovsdb_handler,
+                      "handle_trunk_remove") as mock_remove):
+
+                self.ovsdb_handler.process_trunk_port_events(
+                    mock.ANY, mock.ANY, mock.ANY, payload)
+
+                executor.shutdown()
+
+                mock_add.assert_called_once_with(
+                    'abc')
+                mock_remove.assert_called_once_with(
+                    'def', mock.ANY)
