@@ -18,7 +18,7 @@ import sys
 from neutron_lib import constants as n_const
 from oslo_utils import encodeutils
 
-from neutron.cmd.eventlet.plugins.ovs_neutron_agent import main as _main
+from neutron.cmd.agents.ovs_neutron_agent import main as _main
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent
 
 

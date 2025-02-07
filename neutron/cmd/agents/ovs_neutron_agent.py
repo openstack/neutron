@@ -13,10 +13,23 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import setproctitle
+# NOTE(ralonsoh): remove once the default backend is ``BackendType.THREADING``
+import os
 
-import neutron.plugins.ml2.drivers.openvswitch.agent.main as agent_main
-from neutron_lib import constants
+import oslo_service.backend as service
+service.init_backend(service.BackendType.THREADING)
+
+# NOTE: the environment variable "OSKEN_HUB_TYPE" defines the ``os-ken``
+# hub type to be used. The default value is now "eventlet". Once the
+# default value is set to "native", we will remove the following line.
+os.environ['OSKEN_HUB_TYPE'] = 'native'
+
+
+# pylint: disable=wrong-import-position, line-too-long
+import setproctitle  # noqa: E402
+
+import neutron.plugins.ml2.drivers.openvswitch.agent.main as agent_main  # noqa: E402,E501
+from neutron_lib import constants  # noqa: E402
 
 
 def main():
