@@ -10,10 +10,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
 from unittest import mock
 
+import os_ken.exception as os_ken_exc
 from os_ken.ofproto import ofproto_v1_3
 from os_ken.ofproto import ofproto_v1_3_parser
+from oslo_config import cfg
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ofswitch
@@ -49,6 +52,46 @@ class TestBundledOpenFlowBridge(base.BaseTestCase):
             self.fail("Expected an exception")
         except Exception as e:
             self.assertIsInstance(e, AttributeError)
+
+    @mock.patch.object(ofswitch.OpenFlowSwitchMixin, '_send_msg_retry')
+    def test__send_msg_success(self, mock_send_msg_retry):
+        mock_send_msg_retry.return_value = 'xyz'
+
+        app = mock.MagicMock()
+
+        of = ofswitch.OpenFlowSwitchMixin(os_ken_app=app)
+        self.assertEqual('xyz', of._send_msg("abc"))
+
+        mock_send_msg_retry.assert_called_once_with(
+            app, "abc", None, False)
+
+    @mock.patch.object(ofswitch.OpenFlowSwitchMixin, '_send_msg_retry')
+    def test__send_msg_osken_exc(self, mock_send_msg_retry):
+
+        mock_send_msg_retry.side_effect = os_ken_exc.OSKenException(
+            "something wrong!")
+
+        app = mock.MagicMock()
+
+        of = ofswitch.OpenFlowSwitchMixin(os_ken_app=app)
+        self.assertRaises(RuntimeError, of._send_msg, "abc")
+
+        mock_send_msg_retry.assert_called_once_with(
+            app, "abc", None, False)
+
+    @mock.patch.object(ofswitch.OpenFlowSwitchMixin, '_send_msg_retry')
+    def test__send_msg_timeout(self, mock_send_msg_retry):
+        cfg.CONF.set_override('of_request_timeout', 1, group='OVS')
+
+        mock_send_msg_retry.side_effect = lambda *a, **b: time.sleep(2)
+
+        app = mock.MagicMock()
+
+        of = ofswitch.OpenFlowSwitchMixin(os_ken_app=app)
+        self.assertRaises(RuntimeError, of._send_msg, "abc")
+
+        mock_send_msg_retry.assert_called_once_with(
+            app, "abc", None, False)
 
     def test_normal_bundle_context(self):
         self.assertIsNone(self.br.active_bundle)
