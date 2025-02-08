@@ -474,3 +474,9 @@ OVN_SUPPORTED_VNIC_TYPES = [portbindings.VNIC_NORMAL,
                             portbindings.VNIC_BAREMETAL,
                             portbindings.VNIC_VIRTIO_FORWARDER,
                             ]
+
+# OVN db sync mode options
+OVN_DB_SYNC_MODE_OFF = 'off'
+OVN_DB_SYNC_MODE_LOG = 'log'
+OVN_DB_SYNC_MODE_REPAIR = 'repair'
+OVN_DB_SYNC_MODE_MIGRATE = 'migrate'

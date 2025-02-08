@@ -1597,19 +1597,22 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         self._validate_resources(should_match=should_match_after_sync)
 
     def test_ovn_nb_sync_repair(self):
-        self._test_ovn_nb_sync_helper('repair')
+        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_REPAIR)
 
     def test_ovn_nb_sync_repair_delete_ovn_nb_db(self):
         # In this test case, the ovsdb-server for OVN NB DB is restarted
         # with empty OVN NB DB.
-        self._test_ovn_nb_sync_helper('repair', modify_resources=False,
+        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_REPAIR,
+                                      modify_resources=False,
                                       restart_ovsdb_processes=True)
 
     def test_ovn_nb_sync_log(self):
-        self._test_ovn_nb_sync_helper('log', should_match_after_sync=False)
+        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_LOG,
+                                      should_match_after_sync=False)
 
     def test_ovn_nb_sync_off(self):
-        self._test_ovn_nb_sync_helper('off', should_match_after_sync=False)
+        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_OFF,
+                                      should_match_after_sync=False)
 
     def test_sync_port_qos_policies(self):
         res = self._create_network(self.fmt, 'n1', True)
@@ -1673,7 +1676,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            'log', self.mech_driver)
+            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_port_qos_policies(ctx)
         self._validate_qos_records()
@@ -1756,7 +1759,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            'log', self.mech_driver)
+            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_fip_qos_policies(ctx)
         self._validate_qos_records()
@@ -1797,7 +1800,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
 
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            'repair', self.mech_driver)
+            ovn_const.OVN_DB_SYNC_MODE_REPAIR, self.mech_driver)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_acls(ctx)
         self._validate_acls()
