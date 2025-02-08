@@ -117,10 +117,10 @@ ovn_opts = [
                help=_('The synchronization mode of OVN_Northbound OVSDB '
                       'with Neutron DB.')),
     cfg.StrOpt("ovn_l3_scheduler",
-               default='leastloaded',
-               choices=[('leastloaded',
+               default=ovn_const.OVN_L3_SCHEDULER_LEASTLOADED,
+               choices=[(ovn_const.OVN_L3_SCHEDULER_LEASTLOADED,
                          "Select chassis with fewest gateway ports."),
-                        ('chance',
+                        (ovn_const.OVN_L3_SCHEDULER_CHANCE,
                          "Select chassis randomly.")],
                help=_('The OVN L3 Scheduler type used to schedule router '
                       'gateway ports on hypervisors/chassis.')),

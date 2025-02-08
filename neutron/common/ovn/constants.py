@@ -475,6 +475,10 @@ OVN_SUPPORTED_VNIC_TYPES = [portbindings.VNIC_NORMAL,
                             portbindings.VNIC_VIRTIO_FORWARDER,
                             ]
 
+# OVN L3 scheduler options
+OVN_L3_SCHEDULER_LEASTLOADED = 'leastloaded'
+OVN_L3_SCHEDULER_CHANCE = 'chance'
+
 # OVN db sync mode options
 OVN_DB_SYNC_MODE_OFF = 'off'
 OVN_DB_SYNC_MODE_LOG = 'log'
