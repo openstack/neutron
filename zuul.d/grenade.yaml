@@ -127,6 +127,7 @@
           Q_AGENT: openvswitch
           Q_ML2_TENANT_NETWORK_TYPE: vxlan
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
+          NEUTRON_DEPLOY_MOD_WSGI: True
       devstack_services:
         etcd: false
         br-ex-tcpdump: true
