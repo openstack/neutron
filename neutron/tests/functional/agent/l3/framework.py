@@ -71,16 +71,16 @@ vrrp_instance VR_1 {
         169.254.0.1/24 dev %(ha_device_name)s
     }
     virtual_ipaddress_excluded {
-        %(floating_ip_cidr)s dev %(ex_device_name)s
-        %(external_device_cidr)s dev %(ex_device_name)s
-        %(internal_device_cidr)s dev %(internal_device_name)s
-        %(ex_port_ipv6)s dev %(ex_device_name)s scope link
-        %(int_port_ipv6)s dev %(internal_device_name)s scope link
+        %(floating_ip_cidr)s dev %(ex_device_name)s no_track
+        %(external_device_cidr)s dev %(ex_device_name)s no_track
+        %(internal_device_cidr)s dev %(internal_device_name)s no_track
+        %(ex_port_ipv6)s dev %(ex_device_name)s scope link no_track
+        %(int_port_ipv6)s dev %(internal_device_name)s scope link no_track
     }
     virtual_routes {
-        0.0.0.0/0 via %(default_gateway_ip)s dev %(ex_device_name)s protocol static
-        8.8.8.0/24 via 19.4.4.4 protocol static
-        %(extra_subnet_cidr)s dev %(ex_device_name)s scope link protocol static
+        0.0.0.0/0 via %(default_gateway_ip)s dev %(ex_device_name)s no_track protocol static
+        8.8.8.0/24 via 19.4.4.4 no_track protocol static
+        %(extra_subnet_cidr)s dev %(ex_device_name)s scope link no_track protocol static
     }
 }"""  # noqa: E501 # pylint: disable=line-too-long
 
