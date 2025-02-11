@@ -131,10 +131,14 @@ class SriovMechVlanTestCase(SriovNicSwitchMechanismBaseTestCase,
                             base.AgentMechanismBaseTestCase):
     VLAN_SEGMENTS = [{api.ID: 'unknown_segment_id',
                       api.NETWORK_TYPE: 'no_such_type'},
-                     {api.ID: 'vlan_segment_id',
+                     {api.ID: 'vlan_segment_id_1',
                       api.NETWORK_TYPE: 'vlan',
                       api.PHYSICAL_NETWORK: 'fake_physical_network',
-                      api.SEGMENTATION_ID: 1234}]
+                      api.SEGMENTATION_ID: 1234},
+                     {api.ID: 'vlan_segment_id_2',
+                      api.NETWORK_TYPE: 'vlan',
+                      api.PHYSICAL_NETWORK: 'fake_physical_network',
+                      api.SEGMENTATION_ID: 5678}]
 
     def test_type_vlan(self):
         context = TestFakePortContext(self.AGENT_TYPE,
@@ -151,6 +155,32 @@ class SriovMechVlanTestCase(SriovNicSwitchMechanismBaseTestCase,
                                       portbindings.VNIC_DIRECT)
         self.driver.bind_port(context)
         self._check_unbound(context)
+
+    @mock.patch.object(mech_driver.SriovNicSwitchMechanismDriver,
+                       'get_subnets_from_fixed_ips')
+    def test_type_vlan_fixed_ip_l3(self, mocked_subnets_from_fixed_ips):
+        subnets = [{"segment_id": "vlan_segment_id_2"}]
+        context = TestFakePortContext(self.AGENT_TYPE,
+                                      self.AGENTS,
+                                      self.VLAN_SEGMENTS,
+                                      portbindings.VNIC_DIRECT)
+        mocked_subnets_from_fixed_ips.return_value = subnets
+        self.driver.bind_port(context)
+        mocked_subnets_from_fixed_ips.assert_called_once_with(context)
+        self._check_bound(context, self.VLAN_SEGMENTS[2])
+
+    @mock.patch.object(mech_driver.SriovNicSwitchMechanismDriver,
+                       'get_subnets_from_fixed_ips')
+    def test_type_vlan_fixed_ip_l2(self, mocked_subnets_from_fixed_ips):
+        subnets = [{"segment_id": None}]
+        context = TestFakePortContext(self.AGENT_TYPE,
+                                      self.AGENTS,
+                                      self.VLAN_SEGMENTS,
+                                      portbindings.VNIC_DIRECT)
+        mocked_subnets_from_fixed_ips.return_value = subnets
+        self.driver.bind_port(context)
+        mocked_subnets_from_fixed_ips.assert_called_once_with(context)
+        self._check_bound(context, self.VLAN_SEGMENTS[1])
 
 
 class SriovSwitchMechVnicTypeTestCase(SriovNicSwitchMechanismBaseTestCase):
