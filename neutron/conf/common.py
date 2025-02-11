@@ -68,8 +68,7 @@ core_opts = [
                help=_("Maximum number of host routes per subnet")),
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
                 help=_("Warning: This feature is experimental with low test "
-                       "coverage, and the Dibbler client which is used for "
-                       "this feature is no longer maintained! "
+                       "coverage. "
                        "Enables IPv6 Prefix Delegation for automatic subnet "
                        "CIDR allocation. "
                        "Set to True to enable IPv6 Prefix Delegation for "
@@ -81,8 +80,9 @@ core_opts = [
                        "the default IPv6 subnetpool."),
                 deprecated_for_removal=True,
                 deprecated_since='2023.2',
-                deprecated_reason=("The Dibbler client used for this feature "
-                                   "is no longer maintained. See LP#1916428"),
+                deprecated_reason=(
+                    "There is no reference implementation for the feature for "
+                    "any of in-tree drivers."),
                 ),
     cfg.IntOpt('dhcp_lease_duration', default=86400,
                help=_("DHCP lease duration (in seconds). Use -1 to tell "

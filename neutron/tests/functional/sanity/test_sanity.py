@@ -38,9 +38,6 @@ class SanityTestCase(base.BaseLoggingTestCase):
     def test_dnsmasq_version(self):
         checks.dnsmasq_version_supported()
 
-    def test_dibbler_version(self):
-        checks.dibbler_version_supported()
-
     def test_ipset_support(self):
         checks.ipset_supported()
 

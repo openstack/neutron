@@ -46,10 +46,6 @@ haproxy_env: EnvFilter, env, root, PROCESS_TAG=, haproxy, -f, .*
 dnsmasq: CommandFilter, dnsmasq, root
 dnsmasq_env: EnvFilter, env, root, PROCESS_TAG=, dnsmasq
 
-# DIBBLER
-dibbler-client: CommandFilter, dibbler-client, root
-dibbler-client_env: EnvFilter, env, root, PROCESS_TAG=, dibbler-client
-
 # L3
 radvd: CommandFilter, radvd, root
 radvd_env: EnvFilter, env, root, PROCESS_TAG=, radvd

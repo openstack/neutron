@@ -17,7 +17,7 @@ neutron-sanity-check usage
    usage: neutron-sanity-check [-h] [--arp_header_match] [--arp_responder]
                                [--bridge_firewalling] [--config-dir DIR]
                                [--config-file PATH] [--debug] [--dhcp_release6]
-                               [--dibbler_version] [--dnsmasq_version]
+                               [--dnsmasq_version]
                                [--ebtables_installed] [--icmpv6_header_match]
                                [--ip6tables_installed] [--ip_nonlocal_bind]
                                [--iproute2_vxlan] [--ipset_installed]
@@ -27,7 +27,7 @@ neutron-sanity-check usage
                                [--log-dir LOG_DIR] [--log-file PATH]
                                [--noarp_header_match] [--noarp_responder]
                                [--nobridge_firewalling] [--nodebug]
-                               [--nodhcp_release6] [--nodibbler_version]
+                               [--nodhcp_release6]
                                [--nodnsmasq_version] [--noebtables_installed]
                                [--noicmpv6_header_match]
                                [--noip6tables_installed] [--noip_nonlocal_bind]
@@ -79,9 +79,6 @@ neutron-sanity-check optional arguments
 
 ``--dhcp_release6``
   Check dhcp_release6 installation
-
-``--dibbler_version``
-  Check minimal dibbler version
 
 ``--dnsmasq_version``
   Check minimal dnsmasq version
@@ -140,9 +137,6 @@ neutron-sanity-check optional arguments
 
 ``--nodhcp_release6``
    The inverse of --dhcp_release6
-
-``--nodibbler_version``
-  The inverse of --dibbler_version
 
 ``--nodnsmasq_version``
   The inverse of --dnsmasq_version

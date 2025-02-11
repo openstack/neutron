@@ -29,24 +29,6 @@ EXTERNAL_PROCESS_OPTS = [
 ]
 
 
-PD_OPTS = [
-    cfg.StrOpt('pd_dhcp_driver',
-               default='dibbler',
-               help=_('Service to handle DHCPv6 Prefix delegation.')),
-]
-
-
-PD_DRIVER_OPTS = [
-    cfg.StrOpt('pd_confs',
-               default='$state_path/pd',
-               help=_('Location to store IPv6 Prefix Delegation files.')),
-    cfg.StrOpt('vendor_pen',
-               default='8888',
-               help=_("A decimal value as Vendor's Registered Private "
-                      "Enterprise Number as required by RFC3315 DUID-EN.")),
-]
-
-
 INTERFACE_OPTS = [
     cfg.BoolOpt('ovs_use_veth',
                 default=False,
@@ -172,14 +154,6 @@ DHCP_PROTOCOL_OPTS = [
 
 def register_external_process_opts(cfg=cfg.CONF):
     cfg.register_opts(EXTERNAL_PROCESS_OPTS)
-
-
-def register_pd_opts(cfg=cfg.CONF):
-    cfg.register_opts(PD_OPTS)
-
-
-def register_pddriver_opts(cfg=cfg.CONF):
-    cfg.register_opts(PD_DRIVER_OPTS)
 
 
 def register_interface_opts(cfg=cfg.CONF):

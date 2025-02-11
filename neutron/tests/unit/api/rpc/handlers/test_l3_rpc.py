@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import netaddr
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import directory
@@ -56,13 +55,3 @@ class TestL3RpcCallback(testlib_api.SqlTestCase):
                              'ipv6_ra_mode': constants.IPV6_SLAAC,
                              'ipv6_address_mode': constants.IPV6_SLAAC}}
         return self.plugin.create_subnet(self.ctx, subnet)
-
-    def test_process_prefix_update(self):
-        subnet = self._prepare_ipv6_pd_subnet()
-        data = {subnet['id']: netaddr.IPNetwork('2001:db8::/64')}
-        allocation_pools = [{'start': '2001:db8::2',
-                             'end': '2001:db8::ffff:ffff:ffff:ffff'}]
-        res = self.callbacks.process_prefix_update(self.ctx, subnets=data)
-        updated_subnet = res[0]
-        self.assertEqual(str(data[subnet['id']]), updated_subnet['cidr'])
-        self.assertEqual(updated_subnet['allocation_pools'], allocation_pools)

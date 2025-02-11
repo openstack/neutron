@@ -42,7 +42,6 @@ def register_opts(conf):
     config.register_agent_state_opts_helper(conf)
     config.register_interface_opts(conf)
     config.register_external_process_opts(conf)
-    config.register_pddriver_opts(conf)
     config.register_ra_opts(conf)
     config.register_availability_zone_opts_helper(conf)
     ovs_conf.register_ovs_opts(conf)

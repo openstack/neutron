@@ -72,13 +72,6 @@ OPTS = [
                       "next-hop using a global unique address (GUA) is "
                       "desired, it needs to be done via a subnet allocated "
                       "to the network and not through this parameter.")),
-    cfg.StrOpt('prefix_delegation_driver',
-               default='dibbler',
-               help=_('Driver used for IPv6 Prefix Delegation. This needs to '
-                      'be an entry point defined in the '
-                      'neutron.agent.linux.pd_drivers namespace. See '
-                      'setup.cfg for entry points included with the Neutron '
-                      'source code.')),
     cfg.BoolOpt('enable_metadata_proxy', default=True,
                 help=_("Allow running metadata proxy.")),
     cfg.StrOpt('metadata_access_mark',

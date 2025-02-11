@@ -53,7 +53,6 @@ from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces as l3_namespaces
 from neutron.agent.linux import external_process
-from neutron.agent.linux import pd
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import utils
@@ -70,15 +69,13 @@ SYNC_ROUTERS_MIN_CHUNK_SIZE = 32
 PRIORITY_RELATED_ROUTER = 0
 PRIORITY_RPC = 1
 PRIORITY_SYNC_ROUTERS_TASK = 2
-PRIORITY_PD_UPDATE = 3
 
 # Actions
 DELETE_ROUTER = 1
 DELETE_RELATED_ROUTER = 2
 ADD_UPDATE_ROUTER = 3
 ADD_UPDATE_RELATED_ROUTER = 4
-PD_UPDATE = 5
-UPDATE_NETWORK = 6
+UPDATE_NETWORK = 5
 
 RELATED_ACTION_MAP = {DELETE_ROUTER: DELETE_RELATED_ROUTER,
                       ADD_UPDATE_ROUTER: ADD_UPDATE_RELATED_ROUTER}
@@ -117,6 +114,7 @@ class L3PluginApi:
         1.11 Added get_host_ha_router_count
         1.12 Added get_networks
         1.13 Removed get_external_network_id
+        1.14 Removed process_prefix_update
     """
 
     def __init__(self, topic, host):
@@ -177,13 +175,6 @@ class L3PluginApi:
         cctxt = self.client.prepare(version='1.5')
         return cctxt.cast(context, 'update_ha_routers_states',
                           host=self.host, states=states)
-
-    @utils.timecost
-    def process_prefix_update(self, context, prefix_update):
-        """Process prefix update whenever prefixes get changed."""
-        cctxt = self.client.prepare(version='1.6')
-        return cctxt.call(context, 'process_prefix_update',
-                          subnets=prefix_update)
 
     @utils.timecost
     def delete_agent_gateway_port(self, context, fip_net):
@@ -334,12 +325,6 @@ class L3NATAgent(ha.AgentMixin,
 
         self.target_ex_net_id = None
         self.use_ipv6 = netutils.is_ipv6_enabled()
-
-        self.pd = pd.PrefixDelegation(self.context, self.process_monitor,
-                                      self.driver,
-                                      self.plugin_rpc.process_prefix_update,
-                                      self.create_pd_router_update,
-                                      self.conf)
 
         # Consume network updates to trigger router resync
         consumers = [[topics.NETWORK, topics.UPDATE]]
@@ -762,13 +747,6 @@ class L3NATAgent(ha.AgentMixin,
                  update.id, update.action, update.priority,
                  update.update_id,
                  update.time_elapsed_since_create)
-        if update.action == PD_UPDATE:
-            self.pd.process_prefix_update()
-            LOG.info("Finished a router update for %s IPv6 PD, "
-                     "update_id. %s. Time elapsed: %.3f",
-                     update.id, update.update_id,
-                     update.time_elapsed_since_start)
-            return
 
         routers = [update.resource] if update.resource else []
 
@@ -977,14 +955,6 @@ class L3NATAgent(ha.AgentMixin,
             for router in self.router_info.values():
                 router.delete()
 
-    def create_pd_router_update(self):
-        router_id = None
-        update = queue.ResourceUpdate(router_id,
-                                      PRIORITY_PD_UPDATE,
-                                      timestamp=timeutils.utcnow(),
-                                      action=PD_UPDATE)
-        self._queue.add(update)
-
 
 class L3NATAgentWithStateReport(L3NATAgent):
 
@@ -1059,8 +1029,6 @@ class L3NATAgentWithStateReport(L3NATAgent):
         LOG.info("L3 agent started")
         # Do the report state before we do the first full sync.
         self._report_state()
-
-        self.pd.after_start()
 
     def agent_updated(self, context, payload):
         """Handle the agent_updated notification event."""

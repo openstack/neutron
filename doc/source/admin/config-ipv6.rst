@@ -543,9 +543,9 @@ Prefix delegation
 
 .. warning::
 
-   This feature is experimental with low test coverage, and the Dibbler client
-   which is used for this feature is no longer maintained. For details see:
-   https://github.com/tomaszmrugalski/dibbler#project-status
+   This feature is experimental with low test coverage. There is currently no
+   reference implementation that would implement the feature in the tree. A
+   third party driver may have to be used to utilize it.
 
 From the Liberty release onwards, OpenStack Networking supports IPv6 prefix
 delegation. This section describes the configuration and workflow steps
@@ -553,12 +553,6 @@ necessary to use IPv6 prefix delegation to provide automatic allocation of
 subnet CIDRs. This allows you as the OpenStack administrator to rely on an
 external (to the OpenStack Networking service) DHCPv6 server to manage your
 project network prefixes.
-
-.. note::
-
-   Prefix delegation became available in the Liberty release, it is
-   not available in the Kilo release. HA and DVR routers
-   are not currently supported by this feature.
 
 Configuring OpenStack Networking for prefix delegation
 ------------------------------------------------------
@@ -571,15 +565,7 @@ To enable prefix delegation, edit the ``/etc/neutron/neutron.conf`` file.
 
 .. note::
 
-   If you are not using the default dibbler-based driver for prefix
-   delegation, then you also need to set the driver in
-   ``/etc/neutron/neutron.conf``:
-
-   .. code-block:: console
-
-      pd_dhcp_driver = <class path to driver>
-
-   Drivers other than the default one may require extra configuration.
+   Drivers may require extra configuration.
 
 This tells OpenStack Networking to use the prefix delegation mechanism for
 subnet allocation when the user does not provide a CIDR or subnet pool id when
@@ -594,10 +580,6 @@ running on the OpenStack Networking node(s) or elsewhere, or a physical router.
 For the purposes of this guide we are using the open-source DHCPv6 server,
 Dibbler. Dibbler is available in many Linux package managers, or from source at
 `tomaszmrugalski/dibbler <https://github.com/tomaszmrugalski/dibbler>`_.
-
-When using the reference implementation of the OpenStack Networking prefix
-delegation driver, Dibbler must also be installed on your OpenStack Networking
-node(s) to serve as a DHCPv6 client. Version 1.0.1 or higher is required.
 
 This guide assumes that you are running a Dibbler server on the network node
 where the external network bridge exists. If you already have a prefix

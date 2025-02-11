@@ -89,9 +89,8 @@ such as what L2 agent to use or what type of routers to create.
 +--------------------+------+------------+-----+-----------+----------+------+
 
 * Patch https://review.opendev.org/c/openstack/neutron/+/286087 was abandoned.
-* Prefix delegation doesn't have functional tests for the dibbler and pd
-  layers, nor for the L3 agent changes. This has been an area of repeated
-  regressions.
+* Prefix delegation doesn't have a reference implementation in tree and hence
+  is not covered with functional tests of any sort.
 
 Missing Infrastructure
 ----------------------
