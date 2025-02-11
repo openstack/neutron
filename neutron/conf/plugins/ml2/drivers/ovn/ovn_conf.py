@@ -15,6 +15,7 @@ from oslo_log import log as logging
 from ovsdbapp.backend.ovs_idl import vlog
 
 from neutron._i18n import _
+from neutron.common.ovn import constants as ovn_const
 from neutron.conf.agent import ovs_conf
 
 LOG = logging.getLogger(__name__)
@@ -24,8 +25,6 @@ EXTRA_LOG_LEVEL_DEFAULTS = [
 
 VLOG_LEVELS = {'CRITICAL': vlog.CRITICAL, 'ERROR': vlog.ERROR, 'WARNING':
                vlog.WARN, 'INFO': vlog.INFO, 'DEBUG': vlog.DEBUG}
-
-MIGRATE_MODE = "migrate"
 
 OVN_NB_GLOBAL = "ovn_nb_global"
 
@@ -97,20 +96,20 @@ ovn_opts = [
                       'will be forced to at least 1000 milliseconds. Defaults '
                       'to 60 seconds.')),
     cfg.StrOpt('neutron_sync_mode',
-               default='log',
-               choices=[('off',
+               default=ovn_const.OVN_DB_SYNC_MODE_LOG,
+               choices=[(ovn_const.OVN_DB_SYNC_MODE_OFF,
                          "Synchronization is off."),
-                        ('log',
+                        (ovn_const.OVN_DB_SYNC_MODE_LOG,
                          "During neutron-server startup, check to see if OVN "
                          "is in sync with the Neutron database. "
                          "Log warnings for any inconsistencies found so that "
                          "an admin can investigate."),
-                        ('repair',
+                        (ovn_const.OVN_DB_SYNC_MODE_REPAIR,
                          "During neutron-server startup, automatically create "
                          "resources found in Neutron but not in OVN. "
                          "Also remove resources from OVN that are no longer "
                          "found in Neutron."),
-                        (MIGRATE_MODE,
+                        (ovn_const.OVN_DB_SYNC_MODE_MIGRATE,
                          "This mode is to OVS to OVN migration. "
                          "It will sync the DB just like repair mode but it "
                          "will additionally fix the Neutron DB resource from "

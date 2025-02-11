@@ -21,6 +21,7 @@ from oslo_db import options as db_options
 from oslo_log import log as logging
 
 from neutron.common import config as common_config
+from neutron.common.ovn import constants as ovn_const
 from neutron.conf.agent import securitygroups_rpc
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron import manager
@@ -175,12 +176,16 @@ def main():
     mode = ovn_conf.get_ovn_neutron_sync_mode()
     # Migrate mode will run as repair mode in the synchronizer
     migrate = False
-    if mode == ovn_conf.MIGRATE_MODE:
-        mode = ovn_db_sync.SYNC_MODE_REPAIR
+    if mode == ovn_const.OVN_DB_SYNC_MODE_MIGRATE:
+        mode = ovn_const.OVN_DB_SYNC_MODE_REPAIR
         migrate = True
-    if mode not in [ovn_db_sync.SYNC_MODE_LOG, ovn_db_sync.SYNC_MODE_REPAIR]:
+    if mode not in [ovn_const.OVN_DB_SYNC_MODE_LOG,
+                    ovn_const.OVN_DB_SYNC_MODE_REPAIR]:
         LOG.error(
-            'Invalid sync mode: ["%s"]. Should be "log" or "repair"', mode)
+            'Invalid sync mode: ["%s"]. Should be "%s" or "%s"',
+            mode,
+            ovn_const.OVN_DB_SYNC_MODE_LOG,
+            ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         raise SystemExit(1)
 
     # Validate and modify core plugin and ML2 mechanism drivers for syncing.

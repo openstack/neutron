@@ -33,6 +33,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from neutron.agent.linux import utils
 from neutron.api import extensions as exts
 from neutron.api import wsgi
+from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import ovs_conf
@@ -327,7 +328,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         trigger_cls = TriggerCls()
         if self.maintenance_worker:
             trigger_cls.trigger.__self__.__class__ = worker.MaintenanceWorker
-            cfg.CONF.set_override('neutron_sync_mode', 'off', 'ovn')
+            cfg.CONF.set_override(
+                'neutron_sync_mode', ovn_const.OVN_DB_SYNC_MODE_OFF, 'ovn')
         else:
             trigger_cls.trigger.__self__.__class__ = wsgi.WorkerService
 
