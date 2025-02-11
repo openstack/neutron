@@ -18,8 +18,11 @@ import threading
 
 import eventlet
 from eventlet.green import threading as threading_eventlet
+from oslo_log import log as logging
 from oslo_utils import eventletutils
 
+
+LOG = logging.getLogger(__name__)
 
 IS_MONKEY_PATCHED = False
 
@@ -35,6 +38,8 @@ def monkey_patch():
             return
 
         eventlet.monkey_patch()
+        LOG.warning('This program is using eventlet and has been '
+                    'monkey_patched')
 
         # pylint: disable=import-outside-toplevel
         from oslo_utils import importutils
