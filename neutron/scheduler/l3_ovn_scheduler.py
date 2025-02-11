@@ -25,9 +25,6 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 
 LOG = log.getLogger(__name__)
 
-OVN_SCHEDULER_CHANCE = 'chance'
-OVN_SCHEDULER_LEAST_LOADED = 'leastloaded'
-
 
 class OVNGatewayScheduler(metaclass=abc.ABCMeta):
 
@@ -224,8 +221,8 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
 
 
 OVN_SCHEDULER_STR_TO_CLASS = {
-    OVN_SCHEDULER_CHANCE: OVNGatewayChanceScheduler,
-    OVN_SCHEDULER_LEAST_LOADED: OVNGatewayLeastLoadedScheduler}
+    ovn_const.OVN_L3_SCHEDULER_CHANCE: OVNGatewayChanceScheduler,
+    ovn_const.OVN_L3_SCHEDULER_LEASTLOADED: OVNGatewayLeastLoadedScheduler}
 
 
 def get_scheduler():
