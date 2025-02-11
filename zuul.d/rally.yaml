@@ -171,7 +171,10 @@
       devstack_localrc:
         Q_AGENT: ovn
         ML2_L3_PLUGIN: ovn-router,trunk
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+        # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
+        # driver has been removed from this list. Re-add it once the removal
+        # is finished or the mech driver does not call monkey_patch().
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
         Q_ML2_TENANT_NETWORK_TYPE: geneve
         USE_PYTHON3: true
         PHYSICAL_NETWORK: public

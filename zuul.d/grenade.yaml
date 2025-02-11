@@ -293,7 +293,10 @@
           OVN_BUILD_MODULES: false
         shared:
           Q_AGENT: ovn
-          Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+          # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
+          # driver has been removed from this list. Re-add it once the removal
+          # is finished or the mech driver does not call monkey_patch().
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
           Q_ML2_TENANT_NETWORK_TYPE: geneve
           Q_USE_PROVIDERNET_FOR_PUBLIC: true
           PHYSICAL_NETWORK: public
@@ -382,7 +385,10 @@
             OVN_BUILD_MODULES: false
           shared:
             Q_AGENT: ovn
-            Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
+            # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
+            # driver has been removed from this list. Re-add it once the removal
+            # is finished or the mech driver does not call monkey_patch().
+            Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
             Q_ML2_TENANT_NETWORK_TYPE: geneve
             Q_USE_PROVIDERNET_FOR_PUBLIC: true
             PHYSICAL_NETWORK: public
