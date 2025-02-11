@@ -87,7 +87,7 @@ class KeepalivedGetFreeRangeTestCase(KeepalivedBaseTestCase):
 
 class KeepalivedConfBaseMixin(object):
 
-    def _get_config(self, track=True):
+    def _get_config(self):
         config = keepalived.KeepalivedConf()
 
         instance1 = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
@@ -97,16 +97,16 @@ class KeepalivedConfBaseMixin(object):
         instance1.track_interfaces.append("eth0")
 
         vip_address1 = keepalived.KeepalivedVipAddress('192.168.1.0/24',
-                                                       'eth1', track=track)
+                                                       'eth1', track=False)
 
         vip_address2 = keepalived.KeepalivedVipAddress('192.168.2.0/24',
-                                                       'eth2', track=track)
+                                                       'eth2', track=False)
 
         vip_address3 = keepalived.KeepalivedVipAddress('192.168.3.0/24',
-                                                       'eth2', track=track)
+                                                       'eth2', track=False)
 
         vip_address_ex = keepalived.KeepalivedVipAddress('192.168.55.0/24',
-                                                         'eth10', track=track)
+                                                         'eth10', track=False)
 
         instance1.vips.append(vip_address1)
         instance1.vips.append(vip_address2)
@@ -115,7 +115,7 @@ class KeepalivedConfBaseMixin(object):
 
         virtual_route = keepalived.KeepalivedVirtualRoute(n_consts.IPv4_ANY,
                                                           "192.168.1.1",
-                                                          "eth1", track=track)
+                                                          "eth1")
         instance1.virtual_routes.gateway_routes = [virtual_route]
 
         instance2 = keepalived.KeepalivedInstance('MASTER', 'eth4', 2,
@@ -124,7 +124,7 @@ class KeepalivedConfBaseMixin(object):
         instance2.track_interfaces.append("eth4")
 
         vip_address1 = keepalived.KeepalivedVipAddress('192.168.3.0/24',
-                                                       'eth6', track=track)
+                                                       'eth6', track=False)
 
         instance2.vips.append(vip_address1)
         instance2.vips.append(vip_address2)
@@ -192,8 +192,7 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=True):
             config = self._get_config()
-            self.assertEqual(self.expected.replace(' no_track', ''),
-                             config.get_config_str())
+            self.assertEqual(self.expected, config.get_config_str())
 
     def test_config_generation_no_track_not_supported(self):
         self._mock_no_track_supported.start().return_value = False
@@ -208,7 +207,7 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=True):
-            config = self._get_config(track=False)
+            config = self._get_config()
             self.assertEqual(self.expected, config.get_config_str())
 
         config.reset()
@@ -239,24 +238,20 @@ class KeepalivedStateExceptionTestCase(KeepalivedBaseTestCase):
 
 class KeepalivedInstanceRoutesTestCase(KeepalivedBaseTestCase):
     @classmethod
-    def _get_instance_routes(cls, track=True):
+    def _get_instance_routes(cls):
         routes = keepalived.KeepalivedInstanceRoutes()
         default_gw_eth0 = keepalived.KeepalivedVirtualRoute(
-            '0.0.0.0/0', '1.0.0.254', 'eth0', track=track)
+            '0.0.0.0/0', '1.0.0.254', 'eth0')
         default_gw_eth1 = keepalived.KeepalivedVirtualRoute(
-            '::/0', 'fe80::3e97:eff:fe26:3bfa/64', 'eth1',
-            track=track)
+            '::/0', 'fe80::3e97:eff:fe26:3bfa/64', 'eth1')
         routes.gateway_routes = [default_gw_eth0, default_gw_eth1]
         extra_routes = [
-            keepalived.KeepalivedVirtualRoute(
-                '10.0.0.0/8', '1.0.0.1', track=track),
-            keepalived.KeepalivedVirtualRoute(
-                '20.0.0.0/8', '2.0.0.2', track=track)]
+            keepalived.KeepalivedVirtualRoute('10.0.0.0/8', '1.0.0.1'),
+            keepalived.KeepalivedVirtualRoute('20.0.0.0/8', '2.0.0.2')]
         routes.extra_routes = extra_routes
         extra_subnets = [
             keepalived.KeepalivedVirtualRoute(
-                '30.0.0.0/8', None, 'eth0', scope='link',
-                track=track)]
+                '30.0.0.0/8', None, 'eth0', scope='link')]
         routes.extra_subnets = extra_subnets
         return routes
 
@@ -282,7 +277,7 @@ class KeepalivedInstanceRoutesTestCase(KeepalivedBaseTestCase):
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=True):
-            routes = self._get_instance_routes(track=False)
+            routes = self._get_instance_routes()
             self.assertEqual(expected, '\n'.join(routes.build_config()))
 
     def _get_no_track_less_expected_config(self):
@@ -295,19 +290,11 @@ class KeepalivedInstanceRoutesTestCase(KeepalivedBaseTestCase):
     }"""
         return expected
 
-    def test_build_config_without_no_track(self):
-        with mock.patch.object(
-                keepalived, '_is_keepalived_use_no_track_supported',
-                return_value=True):
-            routes = self._get_instance_routes()
-            self.assertEqual(self._get_no_track_less_expected_config(),
-                             '\n'.join(routes.build_config()))
-
     def test_build_config_no_track_not_supported(self):
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=False):
-            routes = self._get_instance_routes(track=False)
+            routes = self._get_instance_routes()
             self.assertEqual(self._get_no_track_less_expected_config(),
                              '\n'.join(routes.build_config()))
 
@@ -319,13 +306,11 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                                                  ['169.254.192.0/18'])
         self.assertEqual('169.254.0.42/24', instance.get_primary_vip())
 
-    def _test_remove_addresses_by_interface(self, track=True):
-        config = self._get_config(track=track)
+    def _test_remove_addresses_by_interface(self, no_track_value):
+        config = self._get_config()
         instance = config.get_instance(1)
         instance.remove_vips_vroutes_by_interface('eth2')
         instance.remove_vips_vroutes_by_interface('eth10')
-
-        no_track_value = ' no_track' if not track else ''
 
         expected = KEEPALIVED_GLOBAL_CONFIG + textwrap.dedent("""
             vrrp_instance VR_1 {
@@ -378,19 +363,13 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=True):
-            self._test_remove_addresses_by_interface()
-
-    def test_remove_addresses_by_interface_with_no_track(self):
-        with mock.patch.object(
-                keepalived, '_is_keepalived_use_no_track_supported',
-                return_value=True):
-            self._test_remove_addresses_by_interface(track=False)
+            self._test_remove_addresses_by_interface(" no_track")
 
     def test_remove_address_by_interface_no_track_not_supported(self):
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=False):
-            self._test_remove_addresses_by_interface()
+            self._test_remove_addresses_by_interface("")
 
     def test_build_config_no_vips(self):
         expected = textwrap.dedent("""\
@@ -458,16 +437,6 @@ class KeepalivedVirtualRouteTestCase(KeepalivedBaseTestCase):
             route = keepalived.KeepalivedVirtualRoute(
                 n_consts.IPv4_ANY, '1.2.3.4', 'eth0')
             self.assertEqual(
-                '0.0.0.0/0 via 1.2.3.4 dev eth0 protocol static',
-                route.build_config())
-
-    def test_virtual_route_with_dev_supported_no_track(self):
-        with mock.patch.object(
-                keepalived, '_is_keepalived_use_no_track_supported',
-                return_value=True):
-            route = keepalived.KeepalivedVirtualRoute(
-                n_consts.IPv4_ANY, '1.2.3.4', 'eth0', track=False)
-            self.assertEqual(
                 '0.0.0.0/0 via 1.2.3.4 dev eth0 no_track protocol static',
                 route.build_config())
 
@@ -480,21 +449,11 @@ class KeepalivedVirtualRouteTestCase(KeepalivedBaseTestCase):
             self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0 protocol static',
                              route.build_config())
 
-    def test_virtual_route_with_dev_no_track_not_supported_not_track(self):
-        with mock.patch.object(
-                keepalived, '_is_keepalived_use_no_track_supported',
-                return_value=False):
-            route = keepalived.KeepalivedVirtualRoute(
-                n_consts.IPv4_ANY, '1.2.3.4', 'eth0', track=False)
-            self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0 protocol static',
-                             route.build_config())
-
     def test_virtual_route_without_dev(self):
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=True):
-            route = keepalived.KeepalivedVirtualRoute(
-                '50.0.0.0/8', '1.2.3.4', track=False)
+            route = keepalived.KeepalivedVirtualRoute('50.0.0.0/8', '1.2.3.4')
             self.assertEqual('50.0.0.0/8 via 1.2.3.4 no_track protocol static',
                              route.build_config())
 
