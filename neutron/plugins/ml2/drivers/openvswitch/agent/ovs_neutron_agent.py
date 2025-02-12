@@ -19,6 +19,7 @@ import functools
 import hashlib
 import signal
 import sys
+import threading
 import time
 
 import netaddr
@@ -42,7 +43,6 @@ from os_vif.objects import vif as vif_obj
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_service import loopingcall
 from oslo_service import systemd
 from oslo_utils import netutils
 from osprofiler import profiler
@@ -400,11 +400,24 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             'agent_type': n_const.AGENT_TYPE_OVS,
             'start_flag': True}
 
+        self.heartbeat = {}
+
         report_interval = agent_conf.report_interval
         if report_interval:
-            heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
-            heartbeat.start(interval=report_interval)
+            report_event = threading.Event()
+
+            def report_worker():
+                while not report_event.is_set():
+                    start_time = time.time()
+                    self._report_state()
+                    exec_time = time.time() - start_time
+                    report_event.wait(max(0, report_interval - exec_time))
+
+            self.heartbeat['thread'] = threading.Thread(target=report_worker)
+            self.heartbeat['event'] = report_event
+
+            self.heartbeat['thread'].start()
+
         # Initialize iteration counter
         self.iter_num = 0
         self.run_daemon_loop = True
@@ -2940,6 +2953,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 'SIGTERM received, capping RPC timeout by %d seconds.',
                 self.quitting_rpc_timeout)
             self.set_rpc_timeout(self.quitting_rpc_timeout)
+        if self.heartbeat:
+            LOG.info("SIGTERM received, stopping agent reporting.")
+            self.heartbeat['event'].set()
+            self.heartbeat['thread'].join()
 
     def _handle_sighup(self, signum, frame):
         self.catch_sighup = True
