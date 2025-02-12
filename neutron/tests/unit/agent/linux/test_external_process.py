@@ -326,7 +326,7 @@ class TestProcessManager(base.BaseTestCase):
         else:
             expected_cmd = ['kill', '-9', 4]
 
-        with (mock.patch.object(ep.ProcessManager, 'pid') as pid):
+        with mock.patch.object(ep.ProcessManager, 'pid') as pid:
             pid.__get__ = mock.Mock(return_value=4)
             with mock.patch.object(ep.ProcessManager, 'active') as active:
                 active.__get__ = mock.Mock(return_value=True)
