@@ -21,6 +21,7 @@ import re
 
 import eventlet
 import netaddr
+from neutron_lib.agent.common import constants as agent_consts
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
@@ -67,10 +68,13 @@ def _replace_register(flow_params, register_number, register_value):
 
 def create_reg_numbers(flow_params):
     """Replace reg_(port|net) values with defined register numbers"""
-    _replace_register(flow_params, ovsfw_consts.REG_PORT, 'reg_port')
-    _replace_register(flow_params, ovsfw_consts.REG_NET, 'reg_net')
     _replace_register(
-        flow_params, ovsfw_consts.REG_REMOTE_GROUP, 'reg_remote_group')
+        flow_params, agent_consts.REG_PORT, agent_consts.PORT_REG_NAME)
+    _replace_register(
+        flow_params, agent_consts.REG_NET, agent_consts.NET_REG_NAME)
+    _replace_register(
+        flow_params, agent_consts.REG_REMOTE_GROUP,
+        agent_consts.REMOTE_GROUP_REG_NAME)
 
 
 def get_segmentation_id_from_other_config(bridge, port_name):
@@ -910,10 +914,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         actions = ('set_field:{:d}->reg{:d},'
                    'set_field:{:d}->reg{:d},').format(
                        ofport,
-                       ovsfw_consts.REG_PORT,
+                       agent_consts.REG_PORT,
                        # This always needs the local vlan.
                        local_vlan,
-                       ovsfw_consts.REG_NET)
+                       agent_consts.REG_NET)
         if network_type == lib_const.TYPE_VLAN:
             actions += 'strip_vlan,resubmit(,{:d})'.format(
                 ovs_consts.BASE_INGRESS_TABLE)
@@ -962,9 +966,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                     'set_field:{:d}->reg{:d},'
                     'resubmit(,{:d})'.format(
                         port.ofport,
-                        ovsfw_consts.REG_PORT,
+                        agent_consts.REG_PORT,
                         port.vlan_tag,
-                        ovsfw_consts.REG_NET,
+                        agent_consts.REG_NET,
                         ovs_consts.BASE_EGRESS_TABLE)
         )
 
@@ -984,9 +988,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                         'set_field:{:d}->reg{:d},'
                         'strip_vlan,resubmit(,{:d})'.format(
                             port.ofport,
-                            ovsfw_consts.REG_PORT,
+                            agent_consts.REG_PORT,
                             port.vlan_tag,
-                            ovsfw_consts.REG_NET,
+                            agent_consts.REG_NET,
                             ovs_consts.BASE_INGRESS_TABLE),
             )
 
@@ -1051,9 +1055,9 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                     'set_field:%d->reg%d,'
                     'resubmit(,%d)' % (
                         ovs_port.ofport,
-                        ovsfw_consts.REG_PORT,
+                        agent_consts.REG_PORT,
                         vlan_tag,
-                        ovsfw_consts.REG_NET,
+                        agent_consts.REG_NET,
                         ovs_consts.ACCEPT_OR_INGRESS_TABLE)
         )
         self._add_flow(
@@ -1131,7 +1135,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 nw_src=ip_addr,
                 actions='ct(table={:d},zone=NXM_NX_REG{:d}[0..15])'.format(
                     ovs_consts.RULES_EGRESS_TABLE,
-                    ovsfw_consts.REG_NET)
+                    agent_consts.REG_NET)
             )
 
         # Apply mac/ip pairs for IPv6
@@ -1149,7 +1153,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ipv6_src=ip_addr,
                 actions='ct(table={:d},zone=NXM_NX_REG{:d}[0..15])'.format(
                     ovs_consts.RULES_EGRESS_TABLE,
-                    ovsfw_consts.REG_NET)
+                    agent_consts.REG_NET)
             )
 
         # DHCP discovery
@@ -1237,7 +1241,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 reg_net=port.vlan_tag,
                 actions='set_field:{:d}->reg{:d},resubmit(,{:d})'.format(
                     port.ofport,
-                    ovsfw_consts.REG_PORT,
+                    agent_consts.REG_PORT,
                     ovs_consts.BASE_INGRESS_TABLE),
             )
         for ethertype in [lib_const.ETHERTYPE_IP, lib_const.ETHERTYPE_IPV6]:
@@ -1249,7 +1253,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=ovsfw_consts.OF_STATE_NEW_NOT_ESTABLISHED,
                 actions='ct(commit,zone=NXM_NX_REG{:d}[0..15]),'
                         'resubmit(,{:d})'.format(
-                            ovsfw_consts.REG_NET,
+                            agent_consts.REG_NET,
                             ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE)
             )
         self._add_flow(
@@ -1392,7 +1396,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=ovsfw_consts.OF_STATE_ESTABLISHED,
                 actions="ct(commit,zone=NXM_NX_REG{:d}[0..15],"
                         "exec(set_field:{:s}->ct_mark))".format(
-                            ovsfw_consts.REG_NET,
+                            agent_consts.REG_NET,
                             ovsfw_consts.CT_MARK_INVALID)
             )
 
@@ -1459,7 +1463,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=ovsfw_consts.OF_STATE_NOT_TRACKED,
                 actions='ct(table={:d},zone=NXM_NX_REG{:d}[0..15])'.format(
                     ovs_consts.RULES_INGRESS_TABLE,
-                    ovsfw_consts.REG_NET)
+                    agent_consts.REG_NET)
             )
         self._add_flow(
             table=ovs_consts.BASE_INGRESS_TABLE,
@@ -1527,7 +1531,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 ct_state=ovsfw_consts.OF_STATE_ESTABLISHED,
                 actions="ct(commit,zone=NXM_NX_REG{:d}[0..15],"
                         "exec(set_field:{:s}->ct_mark))".format(
-                            ovsfw_consts.REG_NET,
+                            agent_consts.REG_NET,
                             ovsfw_consts.CT_MARK_INVALID)
             )
 
@@ -1597,7 +1601,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                         port, conj_id, direction, ethertype):
                     flow['actions'] = "set_field:{:d}->reg{:d},{:s}".format(
                         flow['conj_id'],
-                        ovsfw_consts.REG_REMOTE_GROUP,
+                        agent_consts.REG_REMOTE_GROUP,
                         flow['actions']
                     )
                     self._add_flow(**flow)
