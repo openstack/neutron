@@ -18,6 +18,7 @@ import functools
 import inspect
 import threading
 
+import futurist
 from futurist import periodics
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
@@ -96,7 +97,9 @@ class MaintenanceThread:
 
     def start(self):
         if self._thread is None:
-            self._worker = periodics.PeriodicWorker(self._callables)
+            self._worker = periodics.PeriodicWorker(
+                self._callables,
+                executor_factory=futurist.ThreadPoolExecutor)
             self._thread = threading.Thread(target=self._worker.start)
             self._thread.daemon = True
             self._thread.start()
