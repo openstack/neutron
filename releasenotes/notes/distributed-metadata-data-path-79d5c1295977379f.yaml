@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    A new openvswitch agent extension ``metadata_path`` was added to implement
+    a distributed approach for virtual machines to retrieve metadata in
+    each running host without a traditional metadata-agent and its dependent
+    router or DHCP namespace.
+    For a new host, users need to create the OVS bridge
+    named ``br-meta``. The OVS-agent will implicitly add an entry
+    ``meta:br-meta`` to the list of ``bridge_mappings``.
+    New config options ``provider_cidr``, ``provider_vlan_id``,
+    ``provider_base_mac`` and ``host_proxy_listen_port`` are added to the
+    openvswitch agent ``[METADATA]`` section.
