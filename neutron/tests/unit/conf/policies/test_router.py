@@ -292,6 +292,36 @@ class SystemAdminTests(RouterAPITestCase):
             policy.enforce,
             self.context, 'update_routers_tags', self.alt_target)
 
+    def test_add_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'add_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'add_external_gateways', self.alt_target)
+
+    def test_update_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_external_gateways', self.alt_target)
+
+    def test_remove_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'remove_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'remove_external_gateways', self.alt_target)
+
     def test_delete_router(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -532,6 +562,29 @@ class AdminTests(RouterAPITestCase):
             policy.enforce(self.context, 'update_routers_tags', self.target))
         self.assertTrue(
             policy.enforce(self.context, 'update_routers_tags',
+                           self.alt_target))
+
+    def test_add_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'add_external_gateways', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'add_external_gateways',
+                           self.alt_target))
+
+    def test_update_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_external_gateways',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'update_external_gateways',
+                           self.alt_target))
+
+    def test_remove_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_external_gateways',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_external_gateways',
                            self.alt_target))
 
     def test_delete_router(self):
@@ -794,6 +847,36 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, 'update_routers_tags', self.alt_target)
 
+    def test_add_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_external_gateways', self.alt_target)
+
+    def test_update_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_external_gateways', self.alt_target)
+
+    def test_remove_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_external_gateways', self.alt_target)
+
     def test_delete_router(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_router', self.target))
@@ -912,6 +995,36 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'update_routers_tags', self.alt_target)
+
+    def test_add_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_external_gateways', self.alt_target)
+
+    def test_update_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_external_gateways', self.alt_target)
+
+    def test_remove_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_external_gateways', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_external_gateways', self.alt_target)
 
     def test_delete_router(self):
         self.assertRaises(
