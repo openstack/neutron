@@ -431,6 +431,93 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since="Xena")
     ),
+
+    policy.DocumentedRuleDefault(
+        name='add_external_gateways',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Add router external gateways',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='add_external_gateways:external_gateways',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Add router external gateways',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='add_external_gateways:external_gateways:network_id',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Add router external gateways with defined network ID',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='add_external_gateways:external_gateways:enable_snat',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Add router external gateways specifying SNAT flag',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='add_external_gateways:external_gateways:external_fixed_ips',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Add router external gateways specifying the fixed IPs',
+        operations=ACTION_PUT,
+    ),
+
+    policy.DocumentedRuleDefault(
+        name='update_external_gateways',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update router external gateways',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_external_gateways:external_gateways',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update router external gateways',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_external_gateways:external_gateways:network_id',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update router external gateways network ID',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_external_gateways:external_gateways:enable_snat',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Update router external gateways SNAT flag',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_external_gateways:external_gateways:external_fixed_ips',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Update router external gateways fixed IPs',
+        operations=ACTION_PUT,
+    ),
+
+    policy.DocumentedRuleDefault(
+        name='remove_external_gateways',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Remove router external gateways',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='remove_external_gateways:external_gateways',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Remove router external gateways',
+        operations=ACTION_PUT,
+    ),
 ]
 
 

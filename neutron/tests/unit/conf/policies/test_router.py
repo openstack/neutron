@@ -342,6 +342,175 @@ class SystemAdminTests(RouterAPITestCase):
             policy.enforce,
             self.context, 'remove_router_interface', self.alt_target)
 
+    def test_add_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_network_id(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:network_id',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:network_id',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_external_fixed_ips(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.alt_target)
+
+    def test_update_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_network_id(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:network_id',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:network_id',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_external_fixed_ips(
+            self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.alt_target)
+
+    def test_remove_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways',
+            self.alt_target)
+
+    def test_remove_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways:external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways:external_gateways',
+            self.alt_target)
+
 
 class SystemMemberTests(SystemAdminTests):
 
@@ -579,6 +748,149 @@ class AdminTests(RouterAPITestCase):
         self.assertTrue(
             policy.enforce(self.context,
                            'remove_router_interface', self.alt_target))
+
+    def test_add_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways',
+                self.alt_target))
+
+    def test_add_external_gateways_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways',
+                self.alt_target))
+
+    def test_add_external_gateways_external_gateways_network_id(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways:network_id',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways:network_id',
+                self.alt_target))
+
+    def test_add_external_gateways_external_gateways_enable_snat(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways:enable_snat',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways:enable_snat',
+                self.alt_target))
+
+    def test_add_external_gateways_external_gateways_external_fixed_ips(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways:external_fixed_ips',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways:external_fixed_ips',
+                self.alt_target))
+
+    def test_update_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways',
+                self.alt_target))
+
+    def test_update_external_gateways_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways',
+                self.alt_target))
+
+    def test_update_external_gateways_external_gateways_network_id(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways:network_id',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways:network_id',
+                self.alt_target))
+
+    def test_update_external_gateways_external_gateways_enable_snat(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways:enable_snat',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways:enable_snat',
+                self.alt_target))
+
+    def test_update_external_gateways_external_gateways_external_fixed_ips(
+            self):
+        self.assertTrue(policy.enforce(
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.target))
+        self.assertTrue(policy.enforce(
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.alt_target))
+
+    def test_remove_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'remove_external_gateways',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'remove_external_gateways',
+                self.alt_target))
+
+    def test_remove_external_gateways_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'remove_external_gateways:external_gateways',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'remove_external_gateways:external_gateways',
+                self.alt_target))
 
 
 class ProjectManagerTests(AdminTests):
@@ -853,6 +1165,167 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'remove_router_interface', self.alt_target)
 
+    def test_add_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_network_id(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'add_external_gateways:external_gateways:network_id',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:network_id',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_external_fixed_ips(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.alt_target)
+
+    def test_update_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_network_id(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_external_gateways:external_gateways:network_id',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:network_id',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:enable_snat',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:enable_snat',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_external_fixed_ips(
+            self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.alt_target)
+
+    def test_remove_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'remove_external_gateways',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways',
+            self.alt_target)
+
+    def test_remove_external_gateways_external_gateways(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'remove_external_gateways:external_gateways',
+                self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways:external_gateways',
+            self.alt_target)
+
 
 class ProjectMemberTests(ProjectManagerTests):
 
@@ -994,6 +1467,175 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'remove_router_interface', self.alt_target)
+
+    def test_add_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_network_id(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:network_id',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:network_id',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.alt_target)
+
+    def test_add_external_gateways_external_gateways_external_fixed_ips(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.alt_target)
+
+    def test_update_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_network_id(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:network_id',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:network_id',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:enable_snat',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:enable_snat',
+            self.alt_target)
+
+    def test_update_external_gateways_external_gateways_external_fixed_ips(
+            self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.alt_target)
+
+    def test_remove_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways',
+            self.alt_target)
+
+    def test_remove_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways:external_gateways',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways:external_gateways',
+            self.alt_target)
 
 
 class ExtrarouteAPITestCase(base.PolicyBaseTestCase):
@@ -1266,3 +1908,100 @@ class ServiceRoleTests(RouterAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'remove_router_interface', self.target)
+
+    def test_add_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways',
+            self.target)
+
+    def test_add_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways',
+            self.target)
+
+    def test_add_external_gateways_external_gateways_network_id(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:network_id',
+            self.target)
+
+    def test_add_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:enable_snat',
+            self.target)
+
+    def test_add_external_gateways_external_gateways_external_fixed_ips(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'add_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+
+    def test_update_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways',
+            self.target)
+
+    def test_update_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways',
+            self.target)
+
+    def test_update_external_gateways_external_gateways_network_id(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:network_id',
+            self.target)
+
+    def test_update_external_gateways_external_gateways_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:enable_snat',
+            self.target)
+
+    def test_update_external_gateways_external_gateways_external_fixed_ips(
+            self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_external_gateways:external_gateways:external_fixed_ips',
+            self.target)
+
+    def test_remove_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways',
+            self.target)
+
+    def test_remove_external_gateways_external_gateways(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'remove_external_gateways:external_gateways',
+            self.target)
