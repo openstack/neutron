@@ -312,6 +312,27 @@ rules = [
         description='Update the router tags',
         operations=ACTION_PUT_TAGS,
     ),
+    policy.DocumentedRuleDefault(
+        name='add_external_gateways',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=('Add router external gateways'),
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_external_gateways',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=('Update router external gateways'),
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='remove_external_gateways',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=('Remove router external gateways'),
+        operations=ACTION_PUT,
+    ),
 
     policy.DocumentedRuleDefault(
         name='delete_router',
