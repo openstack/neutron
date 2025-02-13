@@ -26,7 +26,7 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
 call = mock.call  # short hand
 
 
-class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
+class OVSBridgeTestMixin(ovs_test_base.OVSOSKenTestBase):
     _ARP_MODULE = 'os_ken.lib.packet.arp'
     _ETHER_TYPES_MODULE = 'os_ken.lib.packet.ether_types'
     _ICMPV6_MODULE = 'os_ken.lib.packet.icmpv6'
@@ -34,9 +34,9 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
     _OFP_MODULE = 'os_ken.ofproto.ofproto_v1_3'
     _OFPP_MODULE = 'os_ken.ofproto.ofproto_v1_3_parser'
 
-    def setup_bridge_mock(self, name, cls):
-        self.br = cls(name)
-        self.stamp = self.br.default_cookie
+    def mock_bridge_cls(self, name, cls):
+        br = cls(name)
+        self.stamp = br.default_cookie
         self.dp = mock.Mock()
         self.ofp = importutils.import_module(self._OFP_MODULE)
         self.ofpp = importutils.import_module(self._OFPP_MODULE)
@@ -44,17 +44,24 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
         self.ether_types = importutils.import_module(self._ETHER_TYPES_MODULE)
         self.icmpv6 = importutils.import_module(self._ICMPV6_MODULE)
         self.in_proto = importutils.import_module(self._IN_PROTO_MODULE)
-        mock.patch.object(self.br, '_get_dp', autospec=True,
+        mock.patch.object(br, '_get_dp', autospec=True,
                           return_value=self._get_dp()).start()
-        mock__send_msg = mock.patch.object(self.br, '_send_msg').start()
-        mock_delete_flows = mock.patch.object(self.br,
+        mock__send_msg = mock.patch.object(br, '_send_msg').start()
+        mock_delete_flows = mock.patch.object(br,
                                               'uninstall_flows').start()
         self.mock = mock.Mock()
         self.mock.attach_mock(mock__send_msg, '_send_msg')
         self.mock.attach_mock(mock_delete_flows, 'uninstall_flows')
+        return br
 
     def _get_dp(self):
         return self.dp, self.ofp, self.ofpp
+
+
+class OVSBridgeTestBase(OVSBridgeTestMixin):
+
+    def setup_bridge_mock(self, name, cls):
+        self.br = self.mock_bridge_cls(name, cls)
 
     def test_drop_port(self):
         in_port = 2345
