@@ -147,15 +147,6 @@ def patch_supported():
         return port != ovs_lib.INVALID_OFPORT
 
 
-def nova_notify_supported():
-    try:
-        # pylint:disable=import-outside-toplevel
-        import neutron.notifiers.nova  # noqa since unused
-        return True
-    except ImportError:
-        return False
-
-
 def ofctl_arg_supported(cmd, **kwargs):
     """Verify if ovs-ofctl binary supports cmd with **kwargs.
 

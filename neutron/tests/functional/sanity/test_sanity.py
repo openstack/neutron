@@ -32,9 +32,6 @@ class SanityTestCase(base.BaseLoggingTestCase):
         # needed for test_dnsmasq_version()
         cfg.CONF.register_opts(dhcp_conf.DNSMASQ_OPTS)
 
-    def test_nova_notify_runs(self):
-        checks.nova_notify_supported()
-
     def test_dnsmasq_version(self):
         checks.dnsmasq_version_supported()
 

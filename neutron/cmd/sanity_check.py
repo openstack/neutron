@@ -163,15 +163,6 @@ def check_keepalived_garp_on_sighup_support():
     return result
 
 
-def check_nova_notify():
-    result = checks.nova_notify_supported()
-    if not result:
-        LOG.error('Nova notifications are enabled, but novaclient is not '
-                  'installed. Either disable nova notifications or '
-                  'install python-novaclient.')
-    return result
-
-
 def check_arp_responder():
     result = checks.arp_responder_supported()
     if not result:
@@ -362,8 +353,6 @@ OPTS = [
                     help=_('Check for iproute2 vxlan support')),
     BoolOptCallback('ovs_patch', check_ovs_patch, default=True,
                     help=_('Check for patch port support')),
-    BoolOptCallback('nova_notify', check_nova_notify,
-                    help=_('Check for nova notification support')),
     BoolOptCallback('arp_responder', check_arp_responder,
                     help=_('Check for ARP responder support')),
     BoolOptCallback('arp_header_match', check_arp_header_match,
@@ -458,9 +447,6 @@ def enable_tests_from_config():
     if (constants.TYPE_VXLAN in cfg.CONF.ml2.type_drivers or
             cfg.CONF.VXLAN.enable_vxlan):
         cfg.CONF.set_default('iproute2_vxlan', True)
-    if (cfg.CONF.notify_nova_on_port_status_changes or
-            cfg.CONF.notify_nova_on_port_data_changes):
-        cfg.CONF.set_default('nova_notify', True)
     if cfg.CONF.AGENT.arp_responder:
         cfg.CONF.set_default('arp_responder', True)
     if not cfg.CONF.AGENT.use_helper_for_ns_read:
