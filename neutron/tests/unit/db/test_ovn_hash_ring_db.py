@@ -63,7 +63,9 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
                                      group_name=HASH_RING_TEST_GROUP):
         nodes = []
         for i in range(count):
-            node_uuid = ovn_hash_ring_db.add_node(self.admin_ctx, group_name)
+            node_uuid = uuidutils.generate_uuid()
+            ovn_hash_ring_db.add_node(self.admin_ctx, group_name,
+                                      node_uuid)
             self.assertIsNotNone(self._get_node_row(node_uuid))
             nodes.append(node_uuid)
         return nodes
@@ -311,3 +313,9 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         # Assert we only have 3 node entries after the clean up
         self.assertEqual(3, ovn_hash_ring_db.count_nodes_from_host(
             self.admin_ctx, HASH_RING_TEST_GROUP))
+
+    def test_get_node_uuid(self):
+        # Test get_node_uuid is idempotent
+        res1 = ovn_hash_ring_db.get_node_uuid('group1', 'host1', 1)
+        res2 = ovn_hash_ring_db.get_node_uuid('group1', 'host1', 1)
+        self.assertEqual(res1, res2)

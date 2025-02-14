@@ -14,26 +14,33 @@
 #    under the License.
 
 import datetime
+import uuid
 
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import timeutils
-from oslo_utils import uuidutils
 
 from neutron.db.models import ovn as ovn_models
 
 CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
+OVN_HASHRING_UUID_NAMESPACE = uuid.UUID('551ea055-1982-4295-8bc7-207a0d3c9231')
+
+
+def get_node_uuid(
+        group_name: str,
+        host: str,
+        worker_id: int) -> str:
+    node_str = '%s%s%s' % (group_name, host, str(worker_id))
+    return uuid.uuid5(OVN_HASHRING_UUID_NAMESPACE, node_str).hex
+
 
 # NOTE(ralonsoh): this was migrated from networking-ovn to neutron and should
 #                 be refactored to be integrated in a OVO.
 @db_api.retry_if_session_inactive()
-def add_node(context, group_name, node_uuid=None, created_at=None):
-    if node_uuid is None:
-        node_uuid = uuidutils.generate_uuid()
-
+def add_node(context, group_name, node_uuid, created_at=None):
     with db_api.CONTEXT_WRITER.using(context):
         kwargs = {'node_uuid': node_uuid,
                   'hostname': CONF.host,

@@ -43,6 +43,7 @@ from oslo_db import exception as os_db_exc
 from oslo_log import log
 from oslo_service import service as oslo_service
 from oslo_utils import timeutils
+from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron._i18n import _
@@ -124,7 +125,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._maintenance_thread = None
         self._hash_ring_thread = None
         self._hash_ring_probe_event = multiprocessing.Event()
-        self.node_uuid = None
+        self._node_uuid = None
         self.hash_ring_group = ovn_const.HASH_RING_ML2_GROUP
         self.sg_enabled = ovn_acl.is_sg_enabled()
         ovn_conf.register_opts()
@@ -202,6 +203,28 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._start_time = wsgi_utils.get_start_time(current_time=True)
 
         return self._start_time
+
+    @property
+    def node_uuid(self):
+        if self._node_uuid:
+            return self._node_uuid
+
+        worker_id = wsgi_utils.get_api_worker_id()
+        if worker_id is None:
+            # NOTE(ralonsoh): the hash ring node UUID should be based on the
+            # Neutron API worker ID. Right now only uWSGI mode is supported.
+            # The worker ID is provided via ``uwsgi`` library. If other loader
+            # is used, a random node UUID will be provided.
+            LOG.warning('uWSGI is the only supported loader for the Neutron '
+                        'API; it provides, via ``uwsgi`` library, the worker '
+                        'ID. If other loader is used, a random hash ring node '
+                        'UUID will be provided')
+            self._node_uuid = uuidutils.generate_uuid()
+        else:
+            self._node_uuid = ovn_hash_ring_db.get_node_uuid(
+                self.hash_ring_group, cfg.CONF.host, worker_id)
+
+        return self._node_uuid
 
     def get_supported_vif_types(self):
         vif_types = set()
@@ -372,8 +395,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         created_at = n_utils.ts_to_datetime(self.start_time)
         ovn_hash_ring_db.remove_nodes_from_host(
             context, self.hash_ring_group, created_at=created_at)
-        self.node_uuid = ovn_hash_ring_db.add_node(
-            context, self.hash_ring_group, created_at=created_at)
+        ovn_hash_ring_db.add_node(
+            context, self.hash_ring_group, self.node_uuid,
+            created_at=created_at)
         newer_nodes = ovn_hash_ring_db.get_nodes(
             context, self.hash_ring_group, created_at=created_at)
         LOG.debug('Hash Ring setup, this worker has detected %s OVN hash '

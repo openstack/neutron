@@ -55,9 +55,11 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exceptions
 from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils as ovn_utils
+from neutron.common import wsgi_utils
 from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import db_base_plugin_v2
+from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db
@@ -3170,6 +3172,18 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             lport_name=ovn_utils.ovn_provnet_port_name(segment['id']),
             tag=new_vlan_tag, if_exists=True)
         self.nb_ovn.set_lswitch_port.assert_has_calls([expected_call])
+
+    @mock.patch.object(wsgi_utils, 'get_api_worker_id', return_value=1)
+    def test_node_uuid_worker_id(self, *args):
+        cfg.CONF.set_override('host', 'host1')
+        node_uuid = ovn_hash_ring_db.get_node_uuid(
+            self.mech_driver.hash_ring_group, 'host1', 1)
+        self.assertEqual(node_uuid, self.mech_driver.node_uuid)
+
+    @mock.patch.object(wsgi_utils, 'get_api_worker_id', return_value=None)
+    @mock.patch.object(uuidutils, 'generate_uuid', return_value=123456789)
+    def test_node_uuid_no_worker_id(self, *args):
+        self.assertEqual(123456789, self.mech_driver.node_uuid)
 
 
 class OVNMechanismDriverTestCase(MechDriverSetupBase,

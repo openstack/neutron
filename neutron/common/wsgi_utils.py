@@ -13,6 +13,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import typing
+
 from oslo_utils import timeutils
 
 from neutron.common import utils
@@ -44,3 +46,13 @@ def get_start_time(default=None, current_time=False):
         return int(start_time.decode(encoding='utf-8'))
     except ImportError:
         return default
+
+
+def get_api_worker_id() -> typing.Union[int, None]:
+    """Return the worker ID number provided by uWSGI"""
+    try:
+        # pylint: disable=import-outside-toplevel
+        import uwsgi
+        return uwsgi.worker_id()
+    except ImportError:
+        return None
