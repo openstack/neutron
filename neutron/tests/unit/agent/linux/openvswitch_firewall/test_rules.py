@@ -14,6 +14,7 @@
 
 from unittest import mock
 
+from neutron_lib.agent.common import constants as agent_consts
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 
@@ -395,7 +396,7 @@ class TestCreateConjFlows(base.BaseTestCase):
                          flows[0]['actions'])
         self.assertEqual("ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s},"
                          "resubmit(,{:d})".format(
-                             ovsfw_consts.REG_NET, flows[0]['actions'],
+                             agent_consts.REG_NET, flows[0]['actions'],
                              ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE),
                          flows[1]['actions'])
 

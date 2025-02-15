@@ -14,6 +14,7 @@
 
 from unittest import mock
 
+from neutron_lib.agent.common import constants as agent_consts
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
@@ -96,9 +97,9 @@ class TestCreateRegNumbers(base.BaseTestCase):
         flow = {'foo': 'bar', 'reg_port': 1, 'reg_net': 2,
                 'reg_remote_group': 3}
         expected_flow = {'foo': 'bar',
-                         f'reg{ovsfw_consts.REG_PORT:d}': 1,
-                         f'reg{ovsfw_consts.REG_NET:d}': 2,
-                         f'reg{ovsfw_consts.REG_REMOTE_GROUP:d}': 3}
+                         f'reg{agent_consts.REG_PORT:d}': 1,
+                         f'reg{agent_consts.REG_NET:d}': 2,
+                         f'reg{agent_consts.REG_REMOTE_GROUP:d}': 3}
         ovsfw.create_reg_numbers(flow)
         self.assertEqual(expected_flow, flow)
 
@@ -594,8 +595,8 @@ class TestOVSFirewallDriver(base.BaseTestCase):
     def test__add_flow_registers_are_replaced(self):
         self.firewall._add_flow(in_port=1, reg_port=1, reg_net=2)
         expected_calls = {'in_port': 1,
-                          f'reg{ovsfw_consts.REG_PORT:d}': 1,
-                          f'reg{ovsfw_consts.REG_NET:d}': 2}
+                          f'reg{agent_consts.REG_PORT:d}': 1,
+                          f'reg{agent_consts.REG_NET:d}': 2}
         self.mock_bridge.br.add_flow.assert_called_once_with(
             **expected_calls)
 
@@ -789,9 +790,9 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                        'set_field:{:d}->reg{:d},'
                        'resubmit(,{:d})'.format(
                            port.ofport,
-                           ovsfw_consts.REG_PORT,
+                           agent_consts.REG_PORT,
                            port.vlan_tag,
-                           ovsfw_consts.REG_NET,
+                           agent_consts.REG_NET,
                            ovs_consts.BASE_EGRESS_TABLE)}
         expected_calls.append(mock.call(**call_args1))
 
@@ -805,9 +806,9 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                            'set_field:{:d}->reg{:d},'
                            'strip_vlan,resubmit(,{:d})'.format(
                                port.ofport,
-                               ovsfw_consts.REG_PORT,
+                               agent_consts.REG_PORT,
                                port.vlan_tag,
-                               ovsfw_consts.REG_NET,
+                               agent_consts.REG_NET,
                                ovs_consts.BASE_INGRESS_TABLE)}
             expected_calls.append(mock.call(**call_args2))
 
@@ -821,9 +822,9 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                            'set_field:{:d}->reg{:d},'
                            'resubmit(,{:d})'.format(
                                port.ofport,
-                               ovsfw_consts.REG_PORT,
+                               agent_consts.REG_PORT,
                                port.vlan_tag,
-                               ovsfw_consts.REG_NET,
+                               agent_consts.REG_NET,
                                ovs_consts.BASE_INGRESS_TABLE)}
             expected_calls.append(mock.call(**call_args2))
 
@@ -836,9 +837,9 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                        'set_field:{:d}->reg{:d},'
                        'strip_vlan,resubmit(,{:d})'.format(
                            port.ofport,
-                           ovsfw_consts.REG_PORT,
+                           agent_consts.REG_PORT,
                            port.vlan_tag,
-                           ovsfw_consts.REG_NET,
+                           agent_consts.REG_NET,
                            ovs_consts.BASE_INGRESS_TABLE)}
         expected_calls.append(mock.call(**call_args3))
         self.mock_bridge.br.add_flow.assert_has_calls(expected_calls)
@@ -1117,9 +1118,9 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                     'set_field:%d->reg%d,'
                     'resubmit(,%d)' % (
                         self.fake_ovs_port.ofport,
-                        ovsfw_consts.REG_PORT,
+                        agent_consts.REG_PORT,
                         TESTING_VLAN_TAG,
-                        ovsfw_consts.REG_NET,
+                        agent_consts.REG_NET,
                         ovs_consts.ACCEPT_OR_INGRESS_TABLE)
         )
         calls = self.mock_bridge.br.add_flow.call_args_list

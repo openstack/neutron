@@ -16,6 +16,7 @@
 import collections
 
 import netaddr
+from neutron_lib.agent.common import constants as agent_consts
 from neutron_lib import constants as n_consts
 from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 
@@ -188,7 +189,7 @@ def create_flows_from_rule_and_port(rule, port, conjunction=False):
     flow_template = {
         'priority': 70 + flow_priority_offset(rule, conjunction),
         'dl_type': ovsfw_consts.ethertype_to_dl_type_map[ethertype],
-        'reg_port': port.ofport,
+        agent_consts.PORT_REG_NAME: port.ofport,
     }
 
     if is_valid_prefix(dst_ip_prefix):
@@ -312,7 +313,7 @@ def create_flows_for_ip_address_and_mac(ip_address, mac_address, direction,
 
     flow_template = {
         'dl_type': ovsfw_consts.ethertype_to_dl_type_map[ethertype],
-        'reg_net': vlan_tag,  # needed for project separation
+        agent_consts.NET_REG_NAME: vlan_tag,  # needed for project separation
     }
 
     ip_ver = utils.get_ip_version(ip_prefix)
@@ -348,7 +349,7 @@ def create_accept_flows(flow):
         flow['actions'] = (
             'ct(commit,zone=NXM_NX_REG{:d}[0..15]),{:s},'
             'resubmit(,{:d})'.format(
-                ovsfw_consts.REG_NET, flow['actions'],
+                agent_consts.REG_NET, flow['actions'],
                 ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE)
         )
     result.append(flow)
@@ -379,7 +380,7 @@ def create_conj_flows(port, conj_id, direction, ethertype):
         # The matching is redundant as it has been done by
         # conjunction(...,2/2) flows and flows can be summarized
         # without this.
-        'reg_port': port.ofport,
+        agent_consts.PORT_REG_NAME: port.ofport,
     }
     flow_template = populate_flow_common(direction, flow_template, port)
     flows = create_accept_flows(flow_template)
