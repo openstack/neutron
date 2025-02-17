@@ -180,6 +180,10 @@
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         NEUTRON_DEPLOY_MOD_WSGI: true
+        # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
+        # driver has been removed from this list. Re-add it once the removal
+        # is finished or the mech driver does not call monkey_patch().
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -300,6 +304,10 @@
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         NEUTRON_DEPLOY_MOD_WSGI: true
+        # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
+        # driver has been removed from this list. Re-add it once the removal
+        # is finished or the mech driver does not call monkey_patch().
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -377,6 +385,10 @@
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         NEUTRON_DEPLOY_MOD_WSGI: true
+        # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
+        # driver has been removed from this list. Re-add it once the removal
+        # is finished or the mech driver does not call monkey_patch().
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -795,6 +807,10 @@
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         NEUTRON_DEPLOY_MOD_WSGI: true
+        # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
+        # driver has been removed from this list. Re-add it once the removal
+        # is finished or the mech driver does not call monkey_patch().
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
