@@ -19,8 +19,11 @@ import urllib
 
 from neutron_lib.api import attributes
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import address_group
 from neutron_lib.api.definitions import empty_string_filtering
 from neutron_lib.api.definitions import filter_validation
+from neutron_lib.api.definitions import l3
+from neutron_lib.api.definitions import l3_ext_gw_multihoming
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
 from neutron_lib import context
@@ -38,6 +41,7 @@ import webtest
 from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import base as v2_base
+from neutron.api.v2 import resource as api_resource
 from neutron.api.v2 import router
 from neutron.conf import quota as quota_conf
 from neutron import policy
@@ -1584,3 +1588,74 @@ class CreateResourceTestCase(base.BaseTestCase):
     def test_resource_creation(self):
         resource = v2_base.create_resource('fakes', 'fake', None, {})
         self.assertIsInstance(resource, webob.dec.wsgify)
+
+
+class ResourceExtendedActionsTestCase(base.BaseTestCase):
+    def test_resource_attrs_included(self):
+        resource = v2_base.create_resource(
+            l3_ext_gw_multihoming.COLLECTION_NAME,
+            l3_ext_gw_multihoming.RESOURCE_NAME,
+            mock.Mock(),
+            l3.RESOURCE_ATTRIBUTE_MAP[l3.ROUTERS],
+            member_actions=l3.ACTION_MAP[l3.ROUTER])
+
+        action = 'update_external_gateways'
+        router_id = uuidutils.generate_uuid()
+        url = (l3_ext_gw_multihoming.RESOURCE_NAME + '/' + router_id + '/' +
+               action)
+        request = api_resource.Request.blank(url, method='PUT')
+        controller = resource.controller
+        method = getattr(controller, action)
+
+        _router = {
+            'router': {'external_gateways': [
+                {'network_id': 'net_uuid', 'qos_policy_id': 'qos_uuid'}]
+            }
+        }
+        _args = {'body': _router,
+                 'id': router_id
+                 }
+        resource = {'id': router_id}
+        with mock.patch.object(controller, '_item', return_value=resource), \
+                mock.patch.object(policy, 'enforce') as mock_enforce:
+            method(request=request, **_args)
+            resource.update({'network_id': 'net_uuid',
+                             'qos_policy_id': 'qos_uuid'})
+            mock_enforce.assert_called_once_with(
+                request.context,
+                action,
+                resource,
+                pluralized=l3_ext_gw_multihoming.COLLECTION_NAME
+            )
+
+    def test_resource_attrs_not_included(self):
+        resource = v2_base.create_resource(
+            address_group.COLLECTION_NAME,
+            address_group.RESOURCE_NAME,
+            mock.Mock(),
+            address_group.RESOURCE_ATTRIBUTE_MAP[
+                address_group.COLLECTION_NAME],
+            member_actions=address_group.ACTION_MAP[
+                address_group.RESOURCE_NAME])
+
+        action = 'add_addresses'
+        ag_id = uuidutils.generate_uuid()
+        url = (address_group.RESOURCE_NAME + '/' + ag_id + '/' +
+               action)
+        request = api_resource.Request.blank(url, method='PUT')
+        controller = resource.controller
+        method = getattr(controller, action)
+
+        _args = {'body': {'addresses': ['10.10.0.0/24']},
+                 'id': ag_id
+                 }
+        resource = {'id': ag_id}
+        with mock.patch.object(controller, '_item', return_value=resource), \
+                mock.patch.object(policy, 'enforce') as mock_enforce:
+            method(request=request, **_args)
+            mock_enforce.assert_called_once_with(
+                request.context,
+                action,
+                resource,
+                pluralized=address_group.COLLECTION_NAME
+            )
