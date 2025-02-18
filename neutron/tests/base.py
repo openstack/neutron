@@ -224,7 +224,7 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
         # With this suppress of log levels DEBUG logs will not be captured by
         # stestr on pythonlogging stream and will not cause this parser issue.
         supress_logs = ['neutron', 'neutron_lib', 'stevedore', 'oslo_policy',
-                        'oslo_concurrency', 'oslo_db', 'alembic', 'ovsdbapp']
+                        'oslo_concurrency', 'oslo_db', 'alembic']
         for supress_log in supress_logs:
             logger = logging.getLogger(supress_log)
             logger.setLevel(logging.ERROR)
