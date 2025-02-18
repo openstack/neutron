@@ -393,13 +393,18 @@ class NovaSegmentNotifier(object):
             LOG.info('Segment %s resource provider not found; error: %s',
                      event.segment_id, str(exc))
 
+    @staticmethod
+    def _payload_segment_ids(payload, key):
+        # NOTE(twilson) My assumption is that this is to guarantee the subnets
+        # passed exist in at least one subnet
+        subnets = subnet_obj.Subnet.get_objects(
+            payload.context, segment_id=payload.metadata.get(key))
+        return {s.segment_id for s in subnets}
+
     @registry.receives(resources.SEGMENT_HOST_MAPPING, [events.AFTER_CREATE])
     def _notify_host_addition_to_aggregate(self, resource, event, trigger,
                                            payload=None):
-        subnets = subnet_obj.Subnet.get_objects(
-            payload.context,
-            segment_id=payload.metadata.get('current_segment_ids'))
-        segment_ids = {s.segment_id for s in subnets}
+        segment_ids = self._payload_segment_ids(payload, 'current_segment_ids')
         self.batch_notifier.queue_event(
             Event(self._add_host_to_aggregate,
                   segment_ids, host=payload.metadata.get('host')))
@@ -418,6 +423,29 @@ class NovaSegmentNotifier(object):
             except nova_exc.Conflict:
                 LOG.info('Host %(host)s already exists in aggregate for '
                          'routed network segment %(segment_id)s',
+                         {'host': event.host, 'segment_id': segment_id})
+
+    @registry.receives(resources.SEGMENT_HOST_MAPPING, [events.AFTER_DELETE])
+    def _notify_host_removal_from_aggregate(self, resource, event, trigger,
+                                            payload=None):
+        segment_ids = self._payload_segment_ids(payload, 'deleted_segment_ids')
+        self.batch_notifier.queue_event(
+            Event(self._remove_host_from_aggregate,
+                  segment_ids, host=payload.metadata.get('host')))
+
+    def _remove_host_from_aggregate(self, event):
+        for segment_id in event.segment_ids:
+            aggregate_id = self._get_aggregate_id(segment_id)
+            if not aggregate_id:
+                LOG.info('When removing host %(host)s, aggregate not found '
+                         'for routed network segment %(segment_id)s',
+                         {'host': event.host, 'segment_id': segment_id})
+                continue
+            try:
+                self.n_client.aggregates.remove_host(aggregate_id, event.host)
+            except nova_exc.NotFound:
+                LOG.info('Host %(host)s is not in aggregate for '
+                         'routed network segment %(segment_ids)s',
                          {'host': event.host, 'segment_id': segment_id})
 
     @registry.receives(resources.PORT, [events.AFTER_CREATE,
