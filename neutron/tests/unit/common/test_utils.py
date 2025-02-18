@@ -665,3 +665,15 @@ class ParsePermittedEthertypesTestCase(base.BaseTestCase):
                            '0x123R'),
                  ]
         mock_log.warning.assert_has_calls(calls)
+
+
+class StringMapTestCase(base.BaseTestCase):
+    data = {'a': 1, 'b': None, 'c': 'hi'}
+
+    def test_stringmap(self):
+        expected = {'a': '1', 'b': '', 'c': 'hi'}
+
+        self.assertEqual(expected, utils.stringmap(self.data))
+
+    def test_stringmap_custom_default(self):
+        self.assertEqual('None', utils.stringmap(self.data, 'None')['b'])

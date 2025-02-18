@@ -17,6 +17,7 @@
 # when needed.
 
 """Utilities and helper functions."""
+from collections import abc
 import datetime
 import functools
 import hashlib
@@ -1104,3 +1105,11 @@ def ts_to_datetime(timestamp):
 def datetime_to_ts(_datetime):
     """Converts datetime to timestamp in seconds"""
     return int(datetime.datetime.timestamp(_datetime))
+
+
+def stringmap(data: abc.Mapping[str, typing.Any],
+              default: str = '') -> dict[str, str]:
+    result = {}
+    for key, value in data.items():
+        result[key] = default if value is None else str(value)
+    return result
