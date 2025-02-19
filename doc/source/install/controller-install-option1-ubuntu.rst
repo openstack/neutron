@@ -287,16 +287,15 @@ The DHCP agent provides DHCP services for virtual networks.
 * Edit the ``/etc/neutron/dhcp_agent.ini`` file and complete the following
   actions:
 
-  * In the ``[DEFAULT]`` section, configure the Linux bridge interface driver,
-    Dnsmasq DHCP driver, and enable isolated metadata so instances on provider
-    networks can access metadata over the network:
+  * In the ``[DEFAULT]`` section, configure the Dnsmasq DHCP driver, and enable
+    isolated metadata so instances on provider networks can access metadata
+    over the network:
 
     .. path /etc/neutron/dhcp_agent.ini
     .. code-block:: ini
 
        [DEFAULT]
        # ...
-       interface_driver = openvswitch
        dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
        enable_isolated_metadata = true
 

@@ -33,7 +33,6 @@ from neutron.tests.functional import base
 from neutron.tests.functional.cmd import process_spawn
 
 GET_NAMESPACES = 'neutron.agent.linux.ip_lib.list_network_namespaces'
-TEST_INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
 NUM_SUBPROCESSES = 6
 
 
@@ -52,7 +51,6 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
         args.append('--force')
 
         self.conf = netns_cleanup.setup_conf()
-        self.conf.set_override('interface_driver', TEST_INTERFACE_DRIVER)
         self.config_parse(conf=self.conf, args=args)
 
     def test_cleanup_network_namespaces_cleans_dhcp_and_l3_namespaces(self):

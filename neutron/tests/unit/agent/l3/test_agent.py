@@ -3125,10 +3125,6 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertFalse(agent.router_info[router['id']].router['distributed'])
 
     def test_nonexistent_interface_driver(self):
-        self.conf.set_override('interface_driver', None)
-        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
-                          HOSTNAME, self.conf)
-
         self.conf.set_override('interface_driver', 'wrong.driver')
         self.assertRaises(SystemExit, l3_agent.L3NATAgent,
                           HOSTNAME, self.conf)
