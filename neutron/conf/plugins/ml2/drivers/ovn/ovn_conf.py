@@ -154,6 +154,14 @@ ovn_opts = [
                        "field is empty. If both subnet's dns_nameservers and "
                        "this option are empty, then the DNS resolvers on the "
                        "host running the neutron server will be used.")),
+    cfg.BoolOpt('dns_records_ovn_owned',
+                default=False,
+                help=_("Whether to consider DNS records local to OVN or not. "
+                       "For OVN version 24.03 and above if this option is set "
+                       "to True, DNS records will be treated local to the OVN "
+                       "controller and it will respond to the queries for the "
+                       "records and record types known to it, else it will "
+                       "forward them to the configured DNS server(s).")),
     cfg.DictOpt('ovn_dhcp4_global_options',
                 default={},
                 help=_("Dictionary of global DHCPv4 options which will be "
@@ -367,6 +375,10 @@ def is_ovn_metadata_enabled():
 
 def get_dns_servers():
     return cfg.CONF.ovn.dns_servers
+
+
+def is_dns_records_ovn_owned():
+    return cfg.CONF.ovn.dns_records_ovn_owned
 
 
 def get_global_dhcpv4_opts():

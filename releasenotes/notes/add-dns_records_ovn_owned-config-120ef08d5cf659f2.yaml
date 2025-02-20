@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    For OVN version 24.03 and above you can now configure DNS records to be
+    local to OVN by setting the new configuration option
+    ``[ovn]dns_records_ovn_owned``.
+    If this option is set to True, DNS records will be treated local to the OVN
+    controller and it will respond to the queries for the records and record
+    types known to it, else it will forward them to the configured DNS server(s).
+    For more information, see bug
+    `2059405 <https://bugs.launchpad.net/neutron/+bug/2059405>`_.
+    Default is False.

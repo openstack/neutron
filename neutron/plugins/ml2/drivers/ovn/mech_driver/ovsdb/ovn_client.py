@@ -2891,6 +2891,14 @@ class OVNClient:
             txn.add(self._nb_idl.ls_set_dns_records(ls.uuid, dns_add_txn))
             return
 
+        # Only run when options column is available
+        if hasattr(ls_dns_record, 'options'):
+            ovn_owned = ('true' if ovn_conf.is_dns_records_ovn_owned()
+                         else 'false')
+            dns_options = {ovn_const.OVN_OWNED: ovn_owned}
+            txn.add(self._nb_idl.dns_set_options(ls_dns_record.uuid,
+                    **dns_options))
+
         if original_port:
             old_records = self.get_port_dns_records(original_port)
 

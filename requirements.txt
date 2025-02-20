@@ -45,7 +45,7 @@ osprofiler>=2.3.0 # Apache-2.0
 os-ken>=2.11.2 # Apache-2.0
 os-resource-classes>=1.1.0 # Apache-2.0
 ovs>=2.12.0 # Apache-2.0
-ovsdbapp>=2.7.1 # Apache-2.0
+ovsdbapp>=2.11.0 # Apache-2.0
 psutil>=6.1.0 # BSD
 pyroute2>=0.7.3;sys_platform!='win32' # Apache-2.0 (+ dual licensed GPL2)
 pyOpenSSL>=17.1.0 # Apache-2.0
