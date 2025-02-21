@@ -22,8 +22,8 @@ class OvsdbNativeHelpersTestCase(base.BaseTestCase):
             'ptcp:6640:127.0.0.1',
             helpers._connection_to_manager_uri('tcp:127.0.0.1:6640'))
         self.assertEqual(
-            'ptls:6640:127.0.0.1',
-            helpers._connection_to_manager_uri('tls:127.0.0.1:6640'))
+            'pssl:6640:127.0.0.1',
+            helpers._connection_to_manager_uri('ssl:127.0.0.1:6640'))
         self.assertEqual(
             'ptcp:127.0.0.1',
             helpers._connection_to_manager_uri('tcp:127.0.0.1'))
@@ -33,8 +33,8 @@ class OvsdbNativeHelpersTestCase(base.BaseTestCase):
             'ptcp:6640:[::1]',
             helpers._connection_to_manager_uri('tcp:[::1]:6640'))
         self.assertEqual(
-            'ptls:6640:[::1]',
-            helpers._connection_to_manager_uri('tls:[::1]:6640'))
+            'pssl:6640:[::1]',
+            helpers._connection_to_manager_uri('ssl:[::1]:6640'))
         self.assertEqual(
             'ptcp:[::1]',
             helpers._connection_to_manager_uri('tcp:[::1]'))
@@ -44,8 +44,14 @@ class OvsdbNativeHelpersTestCase(base.BaseTestCase):
             'ptcp:6640:localhost',
             helpers._connection_to_manager_uri('tcp:localhost:6640'))
         self.assertEqual(
-            'ptls:6640:localhost',
-            helpers._connection_to_manager_uri('tls:localhost:6640'))
+            'pssl:6640:localhost',
+            helpers._connection_to_manager_uri('ssl:localhost:6640'))
         self.assertEqual(
             'ptcp:localhost',
             helpers._connection_to_manager_uri('tcp:localhost'))
+
+    def test__connect_to_manager_uri_unix(self):
+        self.assertEqual(
+            'punix:/run/openvswitch/db.sock',
+            helpers._connection_to_manager_uri(
+                'unix:/run/openvswitch/db.sock'))
