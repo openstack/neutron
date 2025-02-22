@@ -20,11 +20,13 @@ from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_constants
+from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
 from neutron.db import l3_db
+from neutron.objects.qos import binding as qos_binding
 from neutron.tests.functional import base
 
 
@@ -92,8 +94,13 @@ class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
         with self.nb_api.transaction(check_error=True):
             ls = self.qos_driver.nb_idl.lookup(
                 'Logical_Switch', ovn_utils.ovn_name(network_id))
-            self.assertEqual(len(qos_rules), len(ls.qos_rules))
+            # Find the port related rules.
+            port_rules = []
             for rule in ls.qos_rules:
+                if port_id in rule.match:
+                    port_rules.append(rule)
+            self.assertEqual(len(qos_rules), len(port_rules))
+            for rule in port_rules:
                 if expected_ext_ids:
                     self.assertDictEqual(expected_ext_ids, rule.external_ids)
                 ref_rule = (egress_ovn_rule if rule.direction == 'from-lport'
@@ -129,6 +136,7 @@ class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
 
 @ddt.ddt
 class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
+    _extension_drivers = ['qos']
 
     def setUp(self, maintenance_worker=False):
         super().setUp(
@@ -149,7 +157,11 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
     def _add_logical_switch(self):
         self.network_1 = 'network_1'
         with self.nb_api.transaction(check_error=True) as txn:
-            txn.add(self.nb_api.ls_add(ovn_utils.ovn_name(self.network_1)))
+            ls_params = {'external_ids': {
+                ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_VLAN}
+            }
+            txn.add(self.nb_api.ls_add(ovn_utils.ovn_name(self.network_1),
+                                       **ls_params))
 
     def _add_logical_switch_port(self, port_id):
         with self.nb_api.transaction(check_error=True) as txn:
@@ -206,6 +218,36 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
         fip_dict = {'floating_network_id': self.fip['floating_network_id'],
                     'id': self.fip['id']}
         self._update_fip_and_check(fip_dict, {})
+
+    def test_update_policy(self):
+        # This test checks the error reported in LP#2099706 and prevents
+        # further regressions. The order to check it is:
+        # 1) Create a LS and several LSPs
+        # 2) Call the ``update_policy`` method.
+        # 3) Check all LSPs located in the same LS have the corresponding QoS
+        #    parameters.
+        ports = [{'id': uuidutils.generate_uuid()},
+                 {'id': uuidutils.generate_uuid()},
+                 ]
+        self._add_logical_switch_port(ports[0]['id'])
+        self._add_logical_switch_port(ports[1]['id'])
+        qos_policy = mock.Mock()
+        qos_policy.get_bound_networks.return_value = [self.network_1]
+        qos_policy.get_bound_ports.return_value = []
+        qos_policy.get_bound_floatingips.return_value = []
+        qos_policy.get_bound_routers.return_value = []
+        self.mock_qos_rules.return_value = copy.deepcopy(QOS_RULES_0)
+
+        with mock.patch.object(qos_binding.QosPolicyPortBinding,
+                               'get_ports_by_network_id',
+                               return_value=ports):
+            self.qos_driver.update_policy(self.context, qos_policy)
+
+        _qos_rules = copy.deepcopy(QOS_RULES_0)
+        for port in ports:
+            self._check_rules_qos(_qos_rules, port['id'], self.network_1,
+                                  constants.TYPE_VLAN)
+            self._check_rules_lsp(_qos_rules, port['id'], constants.TYPE_VLAN)
 
 
 class TestOVNClientQosExtensionEndToEnd(_TestOVNClientQosExtensionBase):

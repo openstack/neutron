@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import copy
 
 from neutron.objects.qos import binding as qos_binding
 from neutron.objects.qos import policy as qos_policy
@@ -298,8 +299,9 @@ class OVNClientQosExtension:
 
         # TODO(ralonsoh): for update_network and update_policy operations,
         # the QoS rules can be retrieved only once.
-        qos_rules = qos_rules or self._qos_rules(admin_context, qos_policy_id)
-        for direction, rules in qos_rules.items():
+        _qos_rules = (copy.deepcopy(qos_rules) if qos_rules else
+                      self._qos_rules(admin_context, qos_policy_id))
+        for direction, rules in _qos_rules.items():
             if (network_type in TYPE_PHYSICAL and
                     direction == constants.EGRESS_DIRECTION):
                 ovn_rule_lsp = self._ovn_lsp_rule(rules)
