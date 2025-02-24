@@ -2091,21 +2091,24 @@ class OVNClient:
         return (ovn_const.ETHTYPE_8021ad if network.get(qinq_apidef.QINQ_FIELD)
                 else ovn_const.ETHTYPE_8021q)
 
-    def _gen_network_parameters(self, network):
-        params = {'external_ids': {
+    def _gen_network_parameters(self,
+                                network: dict) -> dict[str, dict[str, str]]:
+        ext_ids = {
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: network['name'],
-            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(network['mtu']),
-            ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
-                utils.get_revision_number(network, ovn_const.TYPE_NETWORKS)),
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: network['mtu'],
+            ovn_const.OVN_REV_NUM_EXT_ID_KEY:
+                utils.get_revision_number(network, ovn_const.TYPE_NETWORKS),
             ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
                 ','.join(common_utils.get_az_hints(network)),
             # NOTE(ralonsoh): it is not considered the case of multiple
             # segments.
+            # NOTE(twilson): in the case of multiple segments, or when all
+            # segments are removed, NETWORK_TYPE=None, which is invalid ovsdb
             ovn_const.OVN_NETTYPE_EXT_ID_KEY: network.get(pnet.NETWORK_TYPE),
-        }}
+        }
 
         # Enable IGMP snooping if igmp_snooping_enable is enabled in Neutron
-        params['other_config'] = {
+        other_config = {
             ovn_const.MCAST_SNOOP:
                 ovs_conf.get_igmp_snooping_enabled(),
             ovn_const.MCAST_FLOOD_UNREGISTERED:
@@ -2113,15 +2116,15 @@ class OVNClient:
             ovn_const.VLAN_PASSTHRU: str(
                 self._get_vlan_passthru(network)).lower()}
         if utils.is_provider_network(network):
-            params['other_config'][ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD] = (
+            other_config[ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD] = (
                 ovn_conf.get_fdb_age_threshold())
         if utils.is_external_network(network):
-            params['other_config'][
-                ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS] = (
-                    'true'
-                    if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
-                    'false')
-        return params
+            other_config[ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS] = (
+                'true'
+                if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
+                'false')
+        return {'external_ids': common_utils.stringmap(ext_ids),
+                'other_config': common_utils.stringmap(other_config)}
 
     def create_network(self, context, network):
         # Create a logical switch with a name equal to the Neutron network
