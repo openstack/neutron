@@ -932,17 +932,17 @@ class TestOvsdbClientCommand(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.nb_connection = 'ovn_nb_connection'
-        self.sb_connection = 'ovn_sb_connection'
+        self.nb_connection = 'tcp:192.0.2.10:6641'
+        self.sb_connection = 'tcp:192.0.2.11:6642'
 
         ovn_conf.register_opts()
         ovn_conf.cfg.CONF.set_default(
             'ovn_nb_connection',
-            self.nb_connection,
+            [self.nb_connection],
             group='ovn')
         ovn_conf.cfg.CONF.set_default(
             'ovn_sb_connection',
-            self.sb_connection,
+            [self.sb_connection],
             group='ovn')
         self.m_exec = mock.patch.object(processutils, 'execute').start()
 

@@ -62,9 +62,9 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
         conf.set_override('extensions', ','.join(self.extensions),
                           group='agent')
         ovn_nb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('nb')
-        conf.set_override('ovn_nb_connection', ovn_nb_db, group='ovn')
+        conf.set_override('ovn_nb_connection', [ovn_nb_db], group='ovn')
         ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
-        conf.set_override('ovn_sb_connection', ovn_sb_db, group='ovn')
+        conf.set_override('ovn_sb_connection', [ovn_sb_db], group='ovn')
 
         agt = ovn_neutron_agent.OVNNeutronAgent(conf)
         agt.test_ovs_idl = []

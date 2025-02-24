@@ -104,7 +104,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         meta_config_ovn.setup_privsep()
 
         ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
-        conf.set_override('ovn_sb_connection', ovn_sb_db, group='ovn')
+        conf.set_override('ovn_sb_connection', [ovn_sb_db], group='ovn')
         conf.set_override('metadata_workers', '0')
 
         self.chassis_name = self.add_fake_chassis(self.FAKE_CHASSIS_HOST)
