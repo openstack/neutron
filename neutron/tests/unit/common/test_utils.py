@@ -72,7 +72,8 @@ class _PortRange:
         return [str(self)]
 
 
-_hex_str = lambda num: format(num, '#06x')
+def _hex_str(num):
+    return format(num, '#06x')
 
 
 def _hex_format(port, mask):
@@ -590,7 +591,7 @@ class SingletonDecoratorTestCase(base.BaseTestCase):
         instance_1.variable = 'value1'
 
         instance_2 = _TestSingletonClass()
-        self.assertEqual(instance_1.__hash__(), instance_2.__hash__())
+        self.assertEqual(hash(instance_1), hash(instance_2))
         self.assertEqual('value1', instance_2.variable)
 
 
