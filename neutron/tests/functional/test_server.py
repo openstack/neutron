@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
 import multiprocessing
 import os
 import queue
 import signal
-import time
 import traceback
 from unittest import mock
 
@@ -45,13 +45,16 @@ FAKE_RESET_MSG = 'reset'
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 
-class TestNeutronServer(base.BaseLoggingTestCase):
+class TestNeutronServer(base.BaseLoggingTestCase,
+                        metaclass=abc.ABCMeta):
     def setUp(self):
         super().setUp()
         self.service_pid = None
         self.workers = None
+        self.num_workers = None
+        self.num_start = 0
         self._mp_queue = multiprocessing.Queue()
-        self.health_checker = self._check_active
+        self._start_queue = multiprocessing.Queue()
         self.pipein, self.pipeout = os.pipe()
         self.addCleanup(self._destroy_workers)
 
@@ -90,16 +93,17 @@ class TestNeutronServer(base.BaseLoggingTestCase):
         # If number of workers is 1 it is assumed that we run
         # a service in the current process.
         if self.workers > 1:
-            workers = self._get_workers(10, processes_queue=processes_queue)
-            self.assertEqual(len(workers), self.workers)
-            return workers
+            workers_pid = self._get_workers(
+                10, processes_queue=processes_queue)
+            self.assertEqual(len(workers_pid), self.workers)
+        else:
+            workers_pid = [self.service_pid]
 
-        # Wait for a service to start.
-        utils.wait_until_true(self.health_checker, timeout=10, sleep=0.1,
+        utils.wait_until_true(self._check_active, timeout=10, sleep=0.5,
                               exception=RuntimeError(
                                   "Failed to start service."))
 
-        return [self.service_pid]
+        return workers_pid
 
     def _get_workers(self, timeout, processes_queue=None):
         """Get the list of processes in which WSGI server is running."""
@@ -126,17 +130,20 @@ class TestNeutronServer(base.BaseLoggingTestCase):
 
         # Wait at most 10 seconds to spawn workers
         condition = lambda: self.workers == len(get_workers_pid())
-        utils.wait_until_true(condition, timeout=timeout, sleep=0.1,
+        utils.wait_until_true(condition, timeout=timeout, sleep=0.5,
                               exception=exception)
         return get_workers_pid()
 
     def _check_active(self):
-        """Dummy service activity check."""
-        time.sleep(5)
-        return True
+        """Service activity check."""
+        while not self._start_queue.empty():
+            self._start_queue.get()
+            self.num_start += 1
+        return self.num_start == self.num_workers
 
     def _fake_start(self):
         self._mp_queue.put(FAKE_START_MSG)
+        self._start_queue.put(True)
 
     def _fake_reset(self):
         self._mp_queue.put(FAKE_RESET_MSG)
@@ -178,7 +185,7 @@ class TestNeutronServer(base.BaseLoggingTestCase):
             utils.wait_until_true(is_ret_buffer_ok, timeout=5, sleep=1)
         except utils.WaitTimeout:
             raise RuntimeError('Expected buffer size: %s, current size: %s' %
-                               (len(ret_msg), expected_size))
+                               (expected_size, len(ret_msg)))
 
         # Verify that start has been called twice for each worker (one for
         # initial start, and the second one on SIGHUP after children were
@@ -191,7 +198,6 @@ class TestWsgiServer(TestNeutronServer):
 
     def setUp(self):
         super().setUp()
-        self.health_checker = self._check_active
         self.port = None
 
     @staticmethod
@@ -280,8 +286,9 @@ class TestRPCServer(TestNeutronServer):
 
     @tests_base.unstable_test('LP bug 2100001')
     def test_restart_rpc_on_sighup_multiple_workers(self):
+        self.num_workers = 2
         self._test_restart_service_on_sighup(
-            service=self._serve_rpc, workers=2,
+            service=self._serve_rpc, workers=self.num_workers,
             processes_queue=self._processes_queue)
 
 
@@ -321,5 +328,6 @@ class TestPluginWorker(TestNeutronServer):
         FakeWorker.reset = self._fake_reset
         workers = [FakeWorker()]
         self.plugin.return_value.get_workers.return_value = workers
+        self.num_workers = len(workers)
         self._test_restart_service_on_sighup(service=self._start_plugin,
-                                             workers=len(workers))
+                                             workers=self.num_workers)
