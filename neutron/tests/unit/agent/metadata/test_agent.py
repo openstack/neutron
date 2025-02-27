@@ -25,7 +25,6 @@ from oslo_config import fixture as config_fixture
 from oslo_utils import fileutils
 from oslo_utils import netutils
 
-from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import agent
 from neutron.agent.metadata import proxy_base
 from neutron.agent import metadata_agent
@@ -41,16 +40,6 @@ class ConfFixture(config_fixture.Config):
         cache.register_oslo_configs(self.conf)
 
 
-class NewCacheConfFixture(ConfFixture):
-    def setUp(self):
-        super().setUp()
-        self.config(
-            group='cache',
-            enabled=True,
-            backend='oslo_cache.dict',
-            expiration_time=5)
-
-
 class TestMetadataProxyHandlerBase(base.BaseTestCase):
     fake_conf = cfg.CONF
     fake_conf_fixture = ConfFixture(fake_conf)
@@ -60,7 +49,10 @@ class TestMetadataProxyHandlerBase(base.BaseTestCase):
         self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(proxy_base, 'LOG')
         self.log = self.log_p.start()
-        self.handler = agent.MetadataProxyHandler(self.fake_conf)
+        agent.MetadataProxyHandler._conf = self.fake_conf
+        with mock.patch.object(agent.MetadataProxyHandler, 'handle'):
+            self.handler = agent.MetadataProxyHandler(
+                mock.Mock(), mock.Mock(), mock.Mock())
         self.handler.plugin_rpc = mock.Mock()
         self.handler.context = mock.Mock()
 
@@ -121,16 +113,6 @@ class _TestMetadataProxyHandlerCacheMixin:
 
                 retval = self.handler(req)
                 self.assertEqual('value', retval)
-
-    def test_call_skip_cache(self):
-        req = mock.Mock()
-        with mock.patch.object(self.handler,
-                               '_get_instance_and_project_id') as get_ids:
-            get_ids.return_value = ('instance_id', 'tenant_id')
-            with mock.patch.object(self.handler, '_proxy_request') as proxy:
-                proxy.return_value = webob.exc.HTTPNotFound()
-                self.handler(req)
-                get_ids.assert_called_with(req, skip_cache=True)
 
     def test_call_no_instance_match(self):
         req = mock.Mock()
@@ -405,12 +387,6 @@ class _TestMetadataProxyHandlerCacheMixin:
         )
 
 
-class TestMetadataProxyHandlerNewCache(TestMetadataProxyHandlerBase,
-                                       _TestMetadataProxyHandlerCacheMixin):
-    fake_conf = cfg.CONF
-    fake_conf_fixture = NewCacheConfFixture(fake_conf)
-
-
 class TestUnixDomainMetadataProxy(base.BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -458,25 +434,6 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                     with testtools.ExpectedException(OSError):
                         agent.UnixDomainMetadataProxy(mock.Mock())
                     unlink.assert_called_once_with('/the/path')
-
-    @mock.patch.object(agent, 'MetadataProxyHandler')
-    @mock.patch.object(agent_utils, 'UnixDomainWSGIServer')
-    @mock.patch.object(fileutils, 'ensure_tree')
-    def test_run(self, ensure_dir, server, handler):
-        p = agent.UnixDomainMetadataProxy(self.cfg.CONF)
-        p.run()
-
-        ensure_dir.assert_called_once_with('/the', mode=0o755)
-        server.assert_has_calls([
-            mock.call(n_const.AGENT_PROCESS_METADATA),
-            mock.call().start(handler.return_value,
-                              '/the/path', workers=0,
-                              backlog=128, mode=0o644),
-            mock.call().wait()]
-        )
-        self.looping_mock.assert_called_once_with(p._report_state)
-        self.looping_mock.return_value.start.assert_called_once_with(
-            interval=mock.ANY)
 
     def test_main(self):
         with mock.patch.object(agent, 'UnixDomainMetadataProxy') as proxy:

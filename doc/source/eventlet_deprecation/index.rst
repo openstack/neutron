@@ -74,6 +74,17 @@ The OVN metadata agent uses the same implementation as the OVN agent. The same
 limitations apply.
 
 
+Metadata agent
+--------------
+
+The Metadata agent uses the same implementation as the OVN agent and the same
+limitations apply. The ``MetadataProxyHandler`` class is now instantiated every
+time a new request is done; after the call, the instance is destroyed. The
+cache used to store the previous RPC calls results is no longer relevant and
+has been removed. In order to implement an RPC cache, it should be implemented
+outside the mentioned class.
+
+
 Neutron API
 -----------
 
