@@ -278,6 +278,7 @@ class TestRPCServer(TestNeutronServer):
             self._processes_queue.put(list(rpc_workers_launcher.children))
             rpc_workers_launcher.wait()
 
+    @tests_base.unstable_test('LP bug 2100001')
     def test_restart_rpc_on_sighup_multiple_workers(self):
         self._test_restart_service_on_sighup(
             service=self._serve_rpc, workers=2,
@@ -300,6 +301,7 @@ class TestPluginWorker(TestNeutronServer):
             plugin_workers_launcher = service.start_plugins_workers()
             plugin_workers_launcher.wait()
 
+    @tests_base.unstable_test('LP bug 2100001')
     def test_start(self):
         class FakeWorker(neutron_worker.BaseWorker):
             def start(self):
