@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import queue
 import re
+import threading
 
-import eventlet
 
 from neutron.agent.common import async_process
 
@@ -52,9 +53,11 @@ class OFMonitor(async_process.AsyncProcess):
         if start:
             self.start()
 
-        self._queue = eventlet.queue.Queue()
-        eventlet.spawn(self._read_and_enqueue, self.iter_stdout)
-        eventlet.spawn(self._read_and_enqueue, self.iter_stderr)
+        self._queue = queue.Queue()
+        threading.Thread(
+            target=self._read_and_enqueue, args=(self.iter_stdout,)).start()
+        threading.Thread(
+            target=self._read_and_enqueue, args=(self.iter_stderr,)).start()
 
     def _read_and_enqueue(self, iter):
         for event_line in iter(block=True):
