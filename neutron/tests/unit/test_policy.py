@@ -286,6 +286,7 @@ class DefaultPolicyTestCase(base.BaseTestCase):
 
 FAKE_RESOURCE_NAME = 'fake_resource'
 FAKE_SPECIAL_RESOURCE_NAME = 'fake_policy'
+FAKE_RESOURCE_LIST_OF_DICTS = 'fake_list_of_dicts'
 FAKE_RESOURCES = {"%ss" % FAKE_RESOURCE_NAME:
                   {'attr': {'allow_post': True,
                             'allow_put': True,
@@ -312,7 +313,21 @@ FAKE_RESOURCES = {"%ss" % FAKE_RESOURCE_NAME:
                             'validate': {'type:dict':
                                          {'sub_attr_1': {'type:string': None},
                                           'sub_attr_2': {'type:string': None}}}
-                            }}}
+                            }},
+                  "%ss" % FAKE_RESOURCE_LIST_OF_DICTS:
+                  {'attr': {'allow_post': True,
+                            'allow_put': True,
+                            'is_visible': True,
+                            'default': None,
+                            'enforce_policy': True,
+                            'validate': {
+                                'type:list_of_dict_or_nodata:':
+                                    {'sub_attr_str': {'type:string': None},
+                                     'sub_attr_int': {'type:integer': None},
+                                     'sub_attr_bool': {'type:boolean': None},
+                                     }}
+                            }},
+                  }
 
 
 class CustomRulesTestCase(base.BaseTestCase):
@@ -586,12 +601,69 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             target))
         FAKE_RESOURCES['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = bk
 
-    def test_build_subattribute_match_rule_empty_dict_validator(self):
+    def test__build_subattr_match_rule_empty_dict_validator(self):
         self._test_build_subattribute_match_rule({})
 
-    def test_build_subattribute_match_rule_wrong_validation_info(self):
+    def test__build_subattr_match_rule_wrong_validation_info(self):
         self._test_build_subattribute_match_rule(
             {'type:dict': 'wrong_stuff'})
+
+    def test__build_subattr_match_rule_list_of_dict_rule(self):
+        action = 'create_' + FAKE_RESOURCE_LIST_OF_DICTS
+        attrs = [{'sub_attr_str': 'x', 'sub_attr_int': 1},
+                 {'sub_attr_str': 'y', 'sub_attr_bool': True},
+                 {'sub_attr_bool': False},
+                 {}]
+        target = {'tenant_id': 'fake', 'attr': attrs}
+        result_policy = policy._build_subattr_match_rule(
+            'attr',
+            FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
+            action,
+            target)
+        self.assertEqual(3, len(result_policy.rules))
+        matches = (action + ':attr:sub_attr_str',
+                   action + ':attr:sub_attr_int',
+                   action + ':attr:sub_attr_bool')
+        for rule in result_policy.rules:
+            self.assertIn(rule.match, matches)
+
+    def test__build_subattr_match_rule_list_of_dict_rule_missing_sattr(self):
+        action = 'create_' + FAKE_RESOURCE_LIST_OF_DICTS
+        attrs = [{'sub_attr_str': 'x', 'sub_attr_int': 1},
+                 {'sub_attr_str': 'y'}]
+        target = {'tenant_id': 'fake', 'attr': attrs}
+        result_policy = policy._build_subattr_match_rule(
+            'attr',
+            FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
+            action,
+            target)
+        self.assertEqual(2, len(result_policy.rules))
+        matches = (action + ':attr:sub_attr_str',
+                   action + ':attr:sub_attr_int')
+        for rule in result_policy.rules:
+            self.assertIn(rule.match, matches)
+
+    def test__build_subattr_match_rule_list_of_dict_rule_empty_list(self):
+        action = 'create_' + FAKE_RESOURCE_LIST_OF_DICTS
+        attrs = []
+        target = {'tenant_id': 'fake', 'attr': attrs}
+        result_policy = policy._build_subattr_match_rule(
+            'attr',
+            FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
+            action,
+            target)
+        self.assertEqual(0, len(result_policy.rules))
+
+    def test__build_subattr_match_rule_list_of_dict_rule_empty_dict(self):
+        action = 'create_' + FAKE_RESOURCE_LIST_OF_DICTS
+        attrs = [{}]
+        target = {'tenant_id': 'fake', 'attr': attrs}
+        result_policy = policy._build_subattr_match_rule(
+            'attr',
+            FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
+            action,
+            target)
+        self.assertEqual(0, len(result_policy.rules))
 
     def test_build_match_rule_special_pluralized(self):
         action = "create_" + FAKE_SPECIAL_RESOURCE_NAME

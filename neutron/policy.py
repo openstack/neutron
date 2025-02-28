@@ -139,8 +139,9 @@ def _should_validate_sub_attributes(attribute, sub_attr):
     """Verify that sub-attributes are iterable and should be validated."""
     validate = attribute.get('validate')
     return (validate and isinstance(sub_attr, abc.Iterable) and
-            any(k.startswith('type:dict') and v
-                for (k, v) in validate.items()))
+            any((k.startswith('type:dict') or
+                 k.startswith('type:list_of_dict')) and
+                v for (k, v) in validate.items()))
 
 
 def _build_subattr_match_rule(attr_name, attr, action, target):
@@ -149,7 +150,8 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
     # typing for API attributes
     # Expect a dict as type descriptor
     validate = attr['validate']
-    key = [k for k in validate.keys() if k.startswith('type:dict')]
+    key = [k for k in validate.keys() if (k.startswith('type:dict') or
+                                          k.startswith('type:list_of_dict'))]
     if not key:
         LOG.warning("Unable to find data type descriptor for attribute %s",
                     attr_name)
@@ -160,11 +162,18 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
                   "generate any sub-attr policy rule for %s.",
                   attr_name)
         return
+
+    if key[0].startswith('type:list_of_dict'):
+        target_attributes = set([])
+        for _attrs in target[attr_name]:
+            target_attributes = target_attributes.union(set(_attrs.keys()))
+    else:
+        target_attributes = target[attr_name]
     sub_attr_rules = [policy.RuleCheck('rule', '%s:%s:%s' %
                                        (action, attr_name,
                                         sub_attr_name)) for
                       sub_attr_name in data if sub_attr_name in
-                      target[attr_name]]
+                      target_attributes]
     return policy.AndCheck(sub_attr_rules)
 
 
