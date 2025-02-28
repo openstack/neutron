@@ -237,7 +237,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_init_ha_conf(self):
         with mock.patch('os.path.dirname', return_value='/etc/ha/'):
             l3_agent.L3NATAgent(HOSTNAME, self.conf)
-            self.ensure_dir.assert_called_once_with('/etc/ha/', mode=0o755)
+            self.ensure_dir.assert_has_calls(
+                [mock.call('/etc/ha/', mode=0o755)])
 
     def test_enqueue_state_change_router_not_found(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
