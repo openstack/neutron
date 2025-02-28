@@ -244,6 +244,17 @@ class Controller:
                 # Explicit comparison with None to distinguish from {}
                 if body is not None:
                     arg_list.append(body)
+                    try:
+                        resource.update(body[self._resource])
+                        # Make a list of attributes to be updated to inform the
+                        # policy engine which attributes are set explicitly so
+                        # that it can distinguish them from the ones that are
+                        # set to their default values.
+                        resource[constants.ATTRIBUTES_TO_UPDATE] = body[
+                            self._resource].keys()
+                    except KeyError:
+                        pass
+
                 # It is ok to raise a 403 because accessibility to the
                 # object was checked earlier in this method
                 policy.enforce(request.context,
