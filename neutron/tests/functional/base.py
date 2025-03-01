@@ -300,11 +300,10 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         LOG.debug("OVSDB server manager instantiated: %r",
                   self.ovsdb_server_mgr)
         set_cfg = cfg.CONF.set_override
-        set_cfg('ovn_nb_connection',
-                self.ovsdb_server_mgr.get_ovsdb_connection_path(), 'ovn')
-        set_cfg('ovn_sb_connection',
-                self.ovsdb_server_mgr.get_ovsdb_connection_path(
-                    db_type='sb'), 'ovn')
+        ovn_nb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('nb')
+        set_cfg('ovn_nb_connection', [ovn_nb_db], 'ovn')
+        ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
+        set_cfg('ovn_sb_connection', [ovn_sb_db], 'ovn')
         set_cfg('ovn_nb_private_key', self.ovsdb_server_mgr.private_key, 'ovn')
         set_cfg('ovn_nb_certificate', self.ovsdb_server_mgr.certificate, 'ovn')
         set_cfg('ovn_nb_ca_cert', self.ovsdb_server_mgr.ca_cert, 'ovn')
