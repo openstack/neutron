@@ -396,7 +396,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
             except Exception:  # pylint:disable=bare-except
                 pass
 
-    def restart(self):
+    def restart(self, delete_dbs=True):
         self.stop()
 
         if self.ovsdb_server_mgr:
@@ -404,7 +404,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         if self.ovn_northd_mgr:
             self.ovn_northd_mgr.stop()
 
-        self.ovsdb_server_mgr.delete_dbs()
+        if delete_dbs:
+            self.ovsdb_server_mgr.delete_dbs()
         self._start_ovsdb_server()
         self._start_idls()
         self._start_ovn_northd()
