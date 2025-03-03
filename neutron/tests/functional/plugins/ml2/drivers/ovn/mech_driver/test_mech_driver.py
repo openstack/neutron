@@ -39,6 +39,7 @@ from neutron.conf import common as common_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests import base as tests_base
 from neutron.tests.functional import base
@@ -300,6 +301,61 @@ class TestPortBinding(base.TestOVNFunctionalBase):
                 pf_mac_address),
             ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY: str(vf_num),
         })
+
+    def _create_router(self):
+        e1 = self._make_network(self.fmt, 'e1', True, as_admin=True,
+                                arg_list=('router:external',
+                                          'provider:network_type',
+                                          'provider:physical_network'),
+                                **{'router:external': True,
+                                   'provider:network_type': 'flat',
+                                   'provider:physical_network': 'public'})
+        res = self._create_subnet(self.fmt, e1['network']['id'],
+                                  '100.0.0.0/24')
+        s1 = self.deserialize(self.fmt, res)
+        return self.l3_plugin.create_router(
+            self.context,
+            {'router': {
+                'name': uuidutils.generate_uuid(),
+                'admin_state_up': True,
+                'tenant_id': self._tenant_id,
+                'external_gateway_info': {
+                    'enable_snat': True,
+                    'network_id': e1['network']['id'],
+                    'external_fixed_ips': [
+                        {'ip_address': '100.0.0.2',
+                         'subnet_id': s1['subnet']['id']}]}}})
+
+    def test_lsp_up_event_update_and_creation(self):
+        def _check_set_up_called(_mock, lsp_name):
+            n_utils.wait_until_true(lambda: _mock.call_count == 1, timeout=10)
+            mock_set_up.assert_called_once_with(lsp_name)
+
+        with mock.patch.object(self.mech_driver, 'set_port_status_up') as \
+                mock_set_up:
+            router = self._create_router()
+            lr = self.nb_api.lr_get(utils.ovn_name(router['id'])).execute(
+                check_error=True)
+            lrp = self.nb_api.lrp_get(lr.ports[0].uuid).execute(
+                check_error=True)
+            lsp_name = lrp.name.replace('lrp-', '')
+            # Check that ``set_port_status_up`` has been called when the port
+            # is created.
+            _check_set_up_called(mock_set_up, lsp_name)
+
+            # Restart the OVS database that forces the IDL reconnection.
+            # Reset the ``mock_set_up`` that needs to be called again.
+            with mock.patch.object(self.mech_driver, '_init_hash_ring'), \
+                    mock.patch.object(ml2_db, 'get_port') as mock_get_port:
+                mock_get_port.return_value = mock.Mock(
+                    port_bindings=[mock.Mock(host='host1')],
+                    id=lsp_name, device_owner='router')
+                mock_set_up.reset_mock()
+                self.restart(delete_dbs=False)
+
+            # Check that ``set_port_status_up`` has been called when the IDL
+            # reconnects.
+            _check_set_up_called(mock_set_up, lsp_name)
 
 
 class TestPortBindingOverTcp(TestPortBinding):
