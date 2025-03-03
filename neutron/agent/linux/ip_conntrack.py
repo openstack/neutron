@@ -11,9 +11,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import queue
 import re
+import threading
 
-import eventlet
 import netaddr
 from neutron_lib import constants
 from neutron_lib import exceptions
@@ -71,9 +72,11 @@ class IpConntrackManager:
         self.unfiltered_ports = unfiltered_ports
         self.zone_per_port = zone_per_port  # zone per port vs per network
         self._populate_initial_zone_map()
-        self._queue = eventlet.queue.LightQueue()
+        self._queue = queue.Queue()
         LOG.debug('Starting the ip_conntrack _process_queue_worker() thread')
-        eventlet.spawn_n(self._process_queue_worker)
+        # TODO(sahid): We have to revisit this part as this should have
+        # some kind of termination event.
+        threading.Thread(target=self._process_queue_worker).start()
 
     def _process_queue_worker(self):
         # While it's technically not necessary to have this method, the
