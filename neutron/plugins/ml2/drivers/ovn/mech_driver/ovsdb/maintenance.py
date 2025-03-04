@@ -1111,6 +1111,29 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     check_error=True)
         raise periodics.NeverAgain()
 
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def set_ovn_owned_dns_option(self):
+        """Set the ovn_owned option as configured for the DNS records"""
+        cmds = []
+        ovn_owned = ('true' if ovn_conf.is_dns_records_ovn_owned()
+                     else 'false')
+        dns_options = {ovn_const.OVN_OWNED: ovn_owned}
+        for dns in self._nb_idl.dns_list().execute(check_error=True):
+            if ('ls_name' in dns.external_ids and
+                    dns.options.get(ovn_const.OVN_OWNED) != ovn_owned):
+                cmds.append(self._nb_idl.dns_set_options(
+                    dns.uuid, **dns_options))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics:
 

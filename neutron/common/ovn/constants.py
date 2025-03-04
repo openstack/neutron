@@ -67,6 +67,7 @@ OVN_GATEWAY_NAT_ADDRESSES_KEY = 'nat-addresses'
 OVN_ROUTER_PORT_EXCLUDE_LB_VIPS_GARP = 'exclude-lb-vips-from-garp'
 OVN_DROP_PORT_GROUP_NAME = 'neutron_pg_drop'
 OVN_ROUTER_PORT_GW_MTU_OPTION = 'gateway_mtu'
+OVN_OWNED = 'ovn-owned'
 
 OVN_PROVNET_PORT_NAME_PREFIX = 'provnet-'
 OVN_NAME_PREFIX = 'neutron-'

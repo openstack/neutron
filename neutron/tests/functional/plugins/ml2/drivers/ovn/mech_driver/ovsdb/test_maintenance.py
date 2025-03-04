@@ -1425,6 +1425,34 @@ class TestMaintenance(_TestMaintenanceHelper):
             original_value=True,
             config_value=True)
 
+    def test_set_ovn_owned_dns_option(self):
+        neutron_net = self._create_network('network1')
+        ls_name = utils.ovn_name(neutron_net['id'])
+        with mock.patch.object(
+                self._ovn_client, 'is_dns_required_for_port',
+                return_value=True):
+            self._create_port('portdns', neutron_net['id'])
+
+        ls, ls_dns_record = self.nb_api.get_ls_and_dns_record(ls_name)
+
+        # Assert that option is not set
+        self.assertNotEqual(
+            ls_dns_record.options.get('ovn-owned'), 'true')
+
+        # Override config
+        cfg.CONF.set_override(
+            'dns_records_ovn_owned', True, group='ovn')
+
+        # Call the maintenance task and check that the option has been
+        # updated in the DNS record
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.set_ovn_owned_dns_option)
+
+        # Assert that option is not set
+        self.assertEqual(
+            ls_dns_record.options.get('ovn-owned'), 'true')
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):

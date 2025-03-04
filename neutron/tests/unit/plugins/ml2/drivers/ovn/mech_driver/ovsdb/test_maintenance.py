@@ -978,3 +978,50 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             mock.call(sroute_a, external_ids=external_ids),
             mock.call(sroute_b, external_ids=external_ids),
         ])
+
+    def _test_set_ovn_owned_dns_option(self, dns):
+        nb_idl = self.fake_ovn_client._nb_idl
+        nb_idl.dns_list.return_value.execute.return_value = [dns]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.set_ovn_owned_dns_option)
+
+    def test_set_ovn_owned_dns_option(self):
+        cfg.CONF.set_override('dns_records_ovn_owned', 'true',
+                              group='ovn')
+        dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {'ls_name': 'neutron-foo'},
+                   'options': {constants.OVN_OWNED: 'false'}})
+
+        self._test_set_ovn_owned_dns_option(dns)
+
+        ovn_owned = ('true' if ovn_conf.is_dns_records_ovn_owned()
+                     else 'false')
+        dns_options = {constants.OVN_OWNED: ovn_owned}
+
+        self.fake_ovn_client._nb_idl.dns_set_options.assert_called_once_with(
+            dns.uuid, **dns_options)
+
+    def test_set_ovn_owned_dns_option_already_set(self):
+        cfg.CONF.set_override('dns_records_ovn_owned', 'true',
+                              group='ovn')
+        dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {'ls_name': 'neutron-foo'},
+                   'options': {constants.OVN_OWNED: 'true'}})
+
+        self._test_set_ovn_owned_dns_option(dns)
+
+        # Assert there was no transactions because the value was already set
+        self.fake_ovn_client._nb_idl.dns_set_options.assert_not_called()
+
+    def test_set_ovn_owned_dns_option_ovn_direct_record(self):
+        dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {'ovn_direct': 'ovn-foo'},
+                   'options': {constants.OVN_OWNED: 'true'}})
+
+        self._test_set_ovn_owned_dns_option(dns)
+
+        # Assert there was no transactions because the record directly
+        # created in ovn i.e not created by neutron
+        self.fake_ovn_client._nb_idl.dns_set_options.assert_not_called()
