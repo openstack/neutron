@@ -1291,14 +1291,6 @@ class _TestRouter(base.TestOVNFunctionalBase):
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['router']
 
-
-class TestNATRuleGatewayPort(_TestRouter):
-
-    def deserialize(self, content_type, response):
-        ctype = 'application/%s' % content_type
-        data = self._deserializers[ctype].deserialize(response.body)['body']
-        return data
-
     def _process_router_interface(self, action, router_id, subnet_id):
         req = self.new_action_request(
             'routers', {'subnet_id': subnet_id}, router_id,
@@ -1308,6 +1300,14 @@ class TestNATRuleGatewayPort(_TestRouter):
 
     def _add_router_interface(self, router_id, subnet_id):
         return self._process_router_interface('add', router_id, subnet_id)
+
+
+class TestNATRuleGatewayPort(_TestRouter):
+
+    def deserialize(self, content_type, response):
+        ctype = 'application/%s' % content_type
+        data = self._deserializers[ctype].deserialize(response.body)['body']
+        return data
 
     def _create_port(self, name, net_id, security_groups=None,
                      device_owner=None):
@@ -1383,7 +1383,7 @@ class TestNATRuleGatewayPort(_TestRouter):
 
 class TestRouterGWPort(_TestRouter):
 
-    def test_create_and_delete_router_gw_port(self):
+    def _test_create_and_delete_router_gw_port(self, nested_snat=False):
         ext_net = self._make_network(
             self.fmt, 'ext_networktest', True, as_admin=True,
             arg_list=('router:external',
@@ -1403,18 +1403,46 @@ class TestRouterGWPort(_TestRouter):
             uuidutils.generate_uuid(),
             external_gateway_info=external_gateway_info)
 
+        inner_network = self._make_network(
+            self.fmt, 'inner_network', True)['network']
+        subnet_cidr = '192.168.0.0/24'
+        res = self._create_subnet(self.fmt, inner_network['id'],
+            '192.168.0.0/24', gateway_ip='192.168.0.1',
+            allocation_pools=[{'start': '192.168.0.2',
+                               'end': '192.168.0.253'}],
+            enable_dhcp=False)
+        inner_subnet = self.deserialize(self.fmt, res)['subnet']
+        self._add_router_interface(router['id'], inner_subnet['id'])
+
         # Check GW LRP.
         lr = self._ovn_client._nb_idl.lookup('Logical_Router',
                                              utils.ovn_name(router['id']))
-        for lrp in lr.ports:
-            if lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW] == str(True):
-                break
-        else:
-            self.fail('Logical Router %s does not have a gateway port' %
-                      utils.ovn_name(router['id']))
+
+        def _find_ext_gw_lrp(lr):
+            for lrp in lr.ports:
+                if (lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW] ==
+                        str(True)):
+                    return lrp
+
+        self.assertIsNotNone(_find_ext_gw_lrp(lr))
+
+        nats = lr.nat
+        self.assertEqual(1, len(nats))
+        expected_logical_ip = (
+            ovn_const.OVN_DEFAULT_SNAT_CIDR if nested_snat else subnet_cidr
+        )
+        self.assertEqual(expected_logical_ip, nats[0].logical_ip)
 
         # Remove LR GW port and check.
         self._update_router(router['id'], {'external_gateway_info': {}})
         lr = self._ovn_client._nb_idl.lookup('Logical_Router',
                                              utils.ovn_name(router['id']))
-        self.assertEqual([], lr.ports)
+        self.assertEqual([], lr.nat)
+        self.assertIsNone(_find_ext_gw_lrp(lr))
+
+    def test_create_and_delete_router_gw_port(self):
+        self._test_create_and_delete_router_gw_port()
+
+    def test_create_and_delete_router_gw_port_nested_snat(self):
+        ovn_conf.cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
+        self._test_create_and_delete_router_gw_port(nested_snat=True)
