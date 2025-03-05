@@ -1080,9 +1080,14 @@ class TestIpNeighCommand(TestIPCmdBase):
 class TestArpPing(TestIPCmdBase):
     @mock.patch.object(ip_lib, 'ARPING_SLEEP', 0)
     @mock.patch.object(ip_lib, 'IPWrapper')
-    @mock.patch('eventlet.spawn_n')
-    def test_send_ipv4_addr_adv_notif(self, spawn_n, mIPWrapper):
-        spawn_n.side_effect = lambda f: f()
+    @mock.patch('threading.Thread')
+    def test_send_ipv4_addr_adv_notif(self, mock_thread, mIPWrapper):
+        def Thread(target):
+            target()
+            return mock.MagicMock()
+
+        mock_thread.side_effect = Thread
+
         ARPING_COUNT = 3
         address = '20.0.0.1'
         ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
@@ -1090,7 +1095,7 @@ class TestArpPing(TestIPCmdBase):
                                       address,
                                       ARPING_COUNT)
 
-        self.assertTrue(spawn_n.called)
+        self.assertTrue(mock_thread.called)
         mIPWrapper.assert_has_calls([
             mock.call(namespace=mock.sentinel.ns_name),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1],
@@ -1120,9 +1125,13 @@ class TestArpPing(TestIPCmdBase):
                                                      privsep_exec=True)
 
     @mock.patch.object(ip_lib, 'IPWrapper')
-    @mock.patch('eventlet.spawn_n')
-    def test_send_ipv4_addr_adv_notif_nodev(self, spawn_n, mIPWrapper):
-        spawn_n.side_effect = lambda f: f()
+    @mock.patch('threading.Thread')
+    def test_send_ipv4_addr_adv_notif_nodev(self, mock_thread, mIPWrapper):
+        def Thread(target):
+            target()
+            return mock.MagicMock()
+
+        mock_thread.side_effect = Thread
         ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
         ip_wrapper.netns.execute.side_effect = RuntimeError
         ARPING_COUNT = 3
@@ -1141,14 +1150,14 @@ class TestArpPing(TestIPCmdBase):
                                       privsep_exec=True)
         ] * 1)
 
-    @mock.patch('eventlet.spawn_n')
-    def test_no_ipv6_addr_notif(self, spawn_n):
+    @mock.patch('threading.Thread')
+    def test_no_ipv6_addr_notif(self, mock_thread):
         ipv6_addr = 'fd00::1'
         ip_lib.send_ip_addr_adv_notif(mock.sentinel.ns_name,
                                       mock.sentinel.iface_name,
                                       ipv6_addr,
                                       3)
-        self.assertFalse(spawn_n.called)
+        self.assertFalse(mock_thread.called)
 
 
 class TestAddNamespaceToCmd(base.BaseTestCase):
