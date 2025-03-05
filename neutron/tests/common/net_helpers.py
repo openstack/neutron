@@ -824,6 +824,22 @@ class OVSBridgeFixture(fixtures.Fixture):
         self.addCleanup(self.bridge.destroy)
 
 
+class OVSMetaBridgeFixture(fixtures.Fixture):
+    """Create an OVS bridge.
+
+    :ivar bridge: created bridge
+    :type bridge: OVSBridge
+    """
+    def __init__(self, name):
+        super().__init__()
+        self.name = name
+
+    def _setUp(self):
+        ovs = ovs_lib.BaseOVS()
+        self.bridge = ovs.add_bridge(self.name)
+        self.addCleanup(self.bridge.destroy)
+
+
 class OVSTrunkBridgeFixture(OVSBridgeFixture):
     """This bridge doesn't generate the name."""
     def _setUp(self):
