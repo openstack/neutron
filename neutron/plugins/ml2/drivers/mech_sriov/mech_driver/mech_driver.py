@@ -135,6 +135,22 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                       vnic_type)
             return
 
+        allowed_binding_segments = []
+
+        subnets = self.get_subnets_from_fixed_ips(context)
+        if subnets:
+            # In case that fixed IPs is provided, filter segments per subnet
+            # that they belong to first.
+            for segment in context.segments_to_bind:
+                for subnet in subnets:
+                    seg_id = subnet.get('segment_id')
+                    # If subnet is not attached to any segment, let's use
+                    # default behavior.
+                    if seg_id is None or seg_id == segment[api.ID]:
+                        allowed_binding_segments.append(segment)
+        else:
+            allowed_binding_segments = context.segments_to_bind
+
         if vnic_type == portbindings.VNIC_DIRECT_PHYSICAL:
             # Physical functions don't support things like QoS properties,
             # spoof checking, etc. so we might as well side-step the agent
@@ -143,7 +159,7 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             # either. This should be changed in the future so physical
             # functions can use device mapping checks and the plugin can
             # get port status updates.
-            for segment in context.segments_to_bind:
+            for segment in allowed_binding_segments:
                 if self.try_to_bind_segment_for_agent(context, segment,
                                                       agent=None):
                     break
@@ -152,7 +168,7 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         for agent in context.host_agents(self.agent_type):
             LOG.debug("Checking agent: %s", agent)
             if agent['alive']:
-                for segment in context.segments_to_bind:
+                for segment in allowed_binding_segments:
                     if self.try_to_bind_segment_for_agent(context, segment,
                                                           agent):
                         return
