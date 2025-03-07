@@ -37,7 +37,7 @@ from oslo_log import log
 from oslo_serialization import jsonutils
 from oslo_utils import netutils
 from oslo_utils import strutils
-from ovsdbapp.backend.ovs_idl import rowview
+from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
 from pecan import util as pecan_util
 import tenacity
@@ -1114,16 +1114,14 @@ def _sync_ha_chassis_group(nb_idl, hcg_info, txn):
     candidates = _filter_candidates_for_ha_chassis_group(hcg_info)
 
     # Try to get the HA Chassis Group or create if it doesn't exist
-    ha_ch_grp_cmd = txn.add(nb_idl.ha_chassis_group_add(
-        hcg_info.group_name, may_exist=True,
-        external_ids=hcg_info.external_ids))
-
-    if isinstance(ha_ch_grp_cmd.result, rowview.RowView):
-        # The HA chassis group existed before this transaction.
-        ha_ch_grp = ha_ch_grp_cmd.result
-    else:
-        # The HA chassis group is being created in this transaction.
-        ha_ch_grp = None
+    ha_ch_grp = ha_ch_grp_cmd = None
+    try:
+        ha_ch_grp = nb_idl.ha_chassis_group_get(
+            hcg_info.group_name).execute(check_error=True)
+    except idlutils.RowNotFound:
+        ha_ch_grp_cmd = txn.add(nb_idl.ha_chassis_group_add(
+            hcg_info.group_name, may_exist=True,
+            external_ids=hcg_info.external_ids))
 
     max_chassis_number = constants.MAX_CHASSIS_IN_HA_GROUP
     priority = constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY

@@ -1035,9 +1035,8 @@ class BaseTestOVNL3RouterPluginMixin():
             'ext-subnet-id': self.fake_ext_subnet}.get(sid, self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port
         getv4nets.return_value = self.fake_router_ports
-        chassis = mock.Mock(name='chassis1', other_config={})
-        self.sb_idl().get_gateway_chassis_from_cms_options.return_value = (
-            [chassis])
+        self.nb_idl().ha_chassis_group_get.return_value.execute.\
+            return_value = None
 
         payload = self._create_payload_for_router_update(
             self.fake_router_without_ext_gw, self.fake_router_with_ext_gw)
@@ -2188,6 +2187,8 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
         }
         self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
             mock.Mock(external_ids=ext_ids))
+        self.l3_inst._nb_ovn.ha_chassis_group_get.return_value.execute.\
+            return_value = None
 
     # Note(dongj): According to bug #1657693, status of an unassociated
     # floating IP is set to DOWN. Revise expected_status to DOWN for related
