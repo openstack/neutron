@@ -249,14 +249,6 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
 
         self.useFixture(fixture.DBQueryHooksFixture())
 
-        # NOTE(ihrachys): oslotest already sets stopall for cleanup, but it
-        # does it using six.moves.mock (the library was moved into
-        # unittest.mock in Python 3.4). So until we switch to six.moves.mock
-        # everywhere in unit tests, we can't remove this setup. The base class
-        # is used in 3party projects, so we would need to switch all of them to
-        # six before removing the cleanup callback from here.
-        self.addCleanup(mock.patch.stopall)
-
         self.useFixture(fixture.DBResourceExtendFixture())
 
         self.addOnException(self.check_for_systemexit)
