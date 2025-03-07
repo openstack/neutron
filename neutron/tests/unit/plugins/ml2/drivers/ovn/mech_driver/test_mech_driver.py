@@ -44,7 +44,6 @@ from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
-from ovsdbapp.backend.ovs_idl import rowview
 from webob import exc
 
 from neutron.common import _constants as n_const
@@ -2972,9 +2971,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             expected_calls, any_order=True)
 
     @mock.patch.object(ml2_plugin.Ml2Plugin, 'get_network', return_value={})
-    @mock.patch.object(ovn_utils, '_filter_candidates_for_ha_chassis_group')
     def test_sync_ha_chassis_group_network_existing_group(
-            self, mock_candidates, *args):
+            self, *args):
         fake_txn = mock.Mock()
         hcg_info = self._build_hcg_info(network_id='fake-net-id')
 
@@ -2992,20 +2990,19 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         hcg_attrs = {
             'name': hcg_info.group_name,
             'ha_chassis': [hc0, hc1, hc2, hc3]}
-        fake_txn.add.return_value.result = mock.Mock(
-            spec=rowview.RowView, uuid=uuidutils.generate_uuid(), **hcg_attrs)
-        mock_candidates.return_value = {'ch0', 'ch1', 'ch2', 'ch3'}
+        fake_ha_chassis_group = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs=hcg_attrs)
+        self.nb_ovn.ha_chassis_group_get().execute.return_value = (
+            fake_ha_chassis_group)
+        self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = (
+            hcg_info.chassis_list)
 
         # Invoke the method
         ovn_utils.sync_ha_chassis_group_network(
             self.context, self.nb_ovn, self.sb_ovn, 'fake-port-id',
             'fake-net-id', fake_txn)
 
-        self.nb_ovn.ha_chassis_group_add.assert_has_calls(
-            [mock.call(hcg_info.group_name, may_exist=True,
-                       external_ids={'neutron:availability_zone_hints': ''})]
-        )
-        self.nb_ovn.ha_chassis_group_add.reset_mock()
+        self.nb_ovn.ha_chassis_group_add.assert_not_called()
 
         # Assert the chassis that are no longer part of the candidates list
         # are removed from group
