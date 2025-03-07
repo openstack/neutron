@@ -25,9 +25,14 @@ def check_bandwidth_rule_conflict(policy, rule_data):
     doesn't conflict with the existing rules.
     Raises an exception if conflict is identified.
     """
+    direction = rule_data.get('direction')
     for rule in policy.rules:
         if rule.rule_type == qos_consts.RULE_TYPE_DSCP_MARKING:
             # Skip checks if Rule is DSCP
+            continue
+        if direction and rule.direction != direction:
+            # Rule check must be done within the same direction.
+            # DSCP rules have no direction.
             continue
         if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
             if "max_kbps" in rule_data and (
