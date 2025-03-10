@@ -24,6 +24,7 @@ from neutron.common import utils as common_utils
 from neutron.conf import quota as quota_conf
 from neutron.tests.common.exclusive_resources import ip_address
 from neutron.tests.common import net_helpers
+from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config
 from neutron.tests.fullstack.resources import process
 
@@ -360,7 +361,7 @@ class Environment(fixtures.Fixture):
         self.hosts = []
 
     def wait_until_env_is_up(self):
-        common_utils.wait_until_true(
+        base.wait_until_true(
             self._processes_are_ready,
             timeout=180,
             sleep=10)

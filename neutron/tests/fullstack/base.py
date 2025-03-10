@@ -18,6 +18,7 @@ import os
 import random
 import time
 
+import eventlet
 import netaddr
 from neutron_lib.tests import tools
 from oslo_config import cfg
@@ -99,7 +100,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             agent = self.client.show_agent(agent_id)['agent']
             return agent.get('alive')
 
-        common_utils.wait_until_true(_agent_up)
+        wait_until_true(_agent_up)
 
     def _wait_until_agent_down(self, agent_id):
         def _agent_down():
@@ -117,7 +118,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
                 agent = self.client.show_agent(agent_id)['agent']
             return not agent.get('alive')
 
-        common_utils.wait_until_true(_agent_down)
+        wait_until_true(_agent_down)
 
     def _assert_ping_during_agents_restart(
             self, agents, src_namespace, ips, restart_timeout=30,
@@ -140,7 +141,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             # happen only after RPC is established
             agent_names = ', '.join({agent.process_fixture.process_name
                                      for agent in agents})
-            common_utils.wait_until_true(
+            wait_until_true(
                 done,
                 timeout=count * (ping_timeout + 1),
                 exception=RuntimeError("Could not ping the other VM, "
@@ -197,6 +198,32 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
         return vms
 
     def assert_namespace_exists(self, ns_name):
-        common_utils.wait_until_true(
+        wait_until_true(
             lambda: ip_lib.network_namespace_exists(ns_name,
                                                     try_is_ready=True))
+
+
+def wait_until_true(predicate, timeout=60, sleep=1, exception=None):
+    """Wait until callable predicate is evaluated as True
+
+    NOTE(ralonsoh): this method should be replaced with
+    ``neutron.common.utils.wait_until_true`` once the eventlet deprecation is
+    finished in the fullstack framework.
+
+    :param predicate: Callable deciding whether waiting should continue.
+    Best practice is to instantiate predicate with functools.partial()
+    :param timeout: Timeout in seconds how long should function wait.
+    :param sleep: Polling interval for results in seconds.
+    :param exception: Exception instance to raise on timeout. If None is passed
+                      (default) then WaitTimeout exception is raised.
+    """
+    try:
+        with eventlet.Timeout(timeout):
+            while not predicate():
+                eventlet.sleep(sleep)
+    except eventlet.Timeout:
+        if exception is not None:
+            # pylint: disable=raising-bad-type
+            raise exception
+        raise common_utils.WaitTimeout(
+            _("Timed out after %d seconds") % timeout)

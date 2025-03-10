@@ -18,7 +18,6 @@ from neutron_lib import constants
 from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 from oslo_utils import uuidutils
 
-from neutron.common import utils
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -51,7 +50,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
     def assert_no_connection(self, *args, **kwargs):
         netcat = net_helpers.NetcatTester(*args, **kwargs)
         try:
-            utils.wait_until_true(netcat.test_no_connectivity)
+            base.wait_until_true(netcat.test_no_connectivity)
         finally:
             netcat.stop_processes()
 
@@ -66,7 +65,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
                 if pattern.match(flow.strip()):
                     return True
             return False
-        utils.wait_until_true(lambda: _is_log_flow_set(table, actions))
+        base.wait_until_true(lambda: _is_log_flow_set(table, actions))
 
     def _check_log(self, log_id, action, regex_str=None):
 
@@ -83,7 +82,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
                         return True
             return False
 
-        utils.wait_until_true(lambda: _is_log_event(log_id, action, regex_str))
+        base.wait_until_true(lambda: _is_log_event(log_id, action, regex_str))
 
 
 class TestLogging(BaseLoggingTestCase):

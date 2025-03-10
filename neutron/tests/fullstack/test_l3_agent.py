@@ -60,7 +60,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
         def is_port_status_active():
             port = self.client.show_port(port_id)
             return port['port']['status'] == 'ACTIVE'
-        common_utils.wait_until_true(lambda: is_port_status_active(), sleep=1)
+        base.wait_until_true(lambda: is_port_status_active(), sleep=1)
 
     def _create_and_attach_subnet(
             self, tenant_id, subnet_cidr, network_id, router_id):
@@ -253,7 +253,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
             qrouter_ns = self._get_namespace(router['id'])
         ip = ip_lib.IPWrapper(qrouter_ns)
         try:
-            common_utils.wait_until_true(get_router_gw_interface)
+            base.wait_until_true(get_router_gw_interface)
         except common_utils.WaitTimeout:
             self.fail('Router gateway interface "qg-*" not found')
 
@@ -261,7 +261,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
         tc_wrapper = l3_tc_lib.FloatingIPTcCommand(
             interface_name,
             namespace=qrouter_ns)
-        common_utils.wait_until_true(
+        base.wait_until_true(
             functools.partial(
                 self._wait_until_filters_set,
                 tc_wrapper),
@@ -347,7 +347,7 @@ class TestLegacyL3Agent(TestL3Agent):
         self.assert_namespace_exists(namespace)
 
         ip = ip_lib.IPWrapper(namespace)
-        common_utils.wait_until_true(lambda: ip.get_devices())
+        base.wait_until_true(lambda: ip.get_devices())
 
         devices = ip.get_devices()
         self.assertEqual(1, len(devices))
@@ -358,7 +358,7 @@ class TestLegacyL3Agent(TestL3Agent):
 
         mtu -= 1
         network = self.safe_client.update_network(network['id'], mtu=mtu)
-        common_utils.wait_until_true(lambda: ri_dev.link.mtu == mtu)
+        base.wait_until_true(lambda: ri_dev.link.mtu == mtu)
 
     def test_gateway_ip_changed(self):
         self._test_gateway_ip_changed()
@@ -411,13 +411,13 @@ class TestHAL3Agent(TestL3Agent):
         tenant_id = uuidutils.generate_uuid()
         router = self.safe_client.create_router(tenant_id, ha=True)
 
-        common_utils.wait_until_true(
+        base.wait_until_true(
             lambda:
             len(self.client.list_l3_agent_hosting_routers(
                 router['id'])['agents']) == 2,
             timeout=90)
 
-        common_utils.wait_until_true(
+        base.wait_until_true(
             functools.partial(
                 self._is_ha_router_active_on_one_agent,
                 router['id']),
@@ -467,7 +467,7 @@ class TestHAL3Agent(TestL3Agent):
                 self.safe_client))
         external.block_until_boot()
 
-        common_utils.wait_until_true(
+        base.wait_until_true(
             functools.partial(
                 self._is_ha_router_active_on_one_agent,
                 router_id),
@@ -508,7 +508,7 @@ class TestHAL3Agent(TestL3Agent):
             return len(active_hosts) == 1
 
         try:
-            common_utils.wait_until_true(
+            base.wait_until_true(
                 is_one_host_active_for_router, timeout=15)
         except common_utils.WaitTimeout:
             pass
@@ -544,7 +544,7 @@ class TestHAL3Agent(TestL3Agent):
 
         # Assert the backup host got active
         timeout = self.environment.env_desc.agent_down_time * 1.2
-        common_utils.wait_until_true(
+        base.wait_until_true(
             lambda: backup_host in get_active_hosts(),
             timeout=timeout,
         )
@@ -554,7 +554,7 @@ class TestHAL3Agent(TestL3Agent):
             # Assert the previously active host is no longer active if it was
             # killed or shutdown. In the disconnect case both hosts will stay
             # active, but one host is disconnected from the data plane.
-            common_utils.wait_until_true(
+            base.wait_until_true(
                 lambda: active_host not in get_active_hosts(),
                 timeout=timeout,
             )
@@ -605,12 +605,12 @@ class TestHAL3Agent(TestL3Agent):
         ext_net, ext_sub = self._create_external_network_and_subnet(tenant_id)
         router = self.safe_client.create_router(tenant_id, ha=True,
                                                 external_network=ext_net['id'])
-        common_utils.wait_until_true(
+        base.wait_until_true(
             lambda:
             len(self.client.list_l3_agent_hosting_routers(
                 router['id'])['agents']) == 2,
             timeout=90)
-        common_utils.wait_until_true(
+        base.wait_until_true(
             functools.partial(
                 self._is_ha_router_active_on_one_agent,
                 router['id']),
@@ -656,13 +656,13 @@ class TestHAL3Agent(TestL3Agent):
 
         external_vm = self._create_external_vm(ext_net, ext_sub)
 
-        common_utils.wait_until_true(
+        base.wait_until_true(
             lambda:
             len(self.client.list_l3_agent_hosting_routers(
                 router['id'])['agents']) == 2,
             timeout=90)
 
-        common_utils.wait_until_true(
+        base.wait_until_true(
             functools.partial(
                 self._is_ha_router_active_on_one_agent,
                 router['id']),

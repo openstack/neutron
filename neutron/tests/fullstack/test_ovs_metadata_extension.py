@@ -21,7 +21,6 @@ from neutron_lib.plugins import utils as p_utils
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -112,7 +111,7 @@ class OvsMetadataExtensionTestCase(base.BaseFullStackTestCase):
         def is_port_status_active():
             port = self.client.show_port(port_id)
             return port['port']['status'] == 'ACTIVE'
-        common_utils.wait_until_true(lambda: is_port_status_active(), sleep=1)
+        base.wait_until_true(lambda: is_port_status_active(), sleep=1)
 
     def _prepare_vms(self):
         sgs = [self.safe_client.create_security_group(self.tenant_id)
@@ -190,7 +189,7 @@ class OvsMetadataExtensionTestCase(base.BaseFullStackTestCase):
                 if pattern.match(flow.strip()):
                     return True
             return False
-        common_utils.wait_until_true(lambda: _is_metadata_flow_set(
+        base.wait_until_true(lambda: _is_metadata_flow_set(
             vm, table, actions))
 
     def test_ovs_meta_agent_extension_verify_ovs_flows(self):

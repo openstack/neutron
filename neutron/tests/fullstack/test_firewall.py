@@ -22,7 +22,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux.openvswitch_firewall import iptables as ovs_iptables
-from neutron.common import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -118,7 +117,7 @@ class FirewallMigrationTestCase(base.BaseFullStackTestCase):
             l2_agent_config['ovs']['integration_bridge'])
         predicate = functools.partial(
             ovs_iptables.is_bridge_cleaned, int_bridge)
-        utils.wait_until_true(
+        base.wait_until_true(
             predicate,
             exception=RuntimeError(
                 "Bridge %s hasn't been marked as clean." % int_bridge.br_name))

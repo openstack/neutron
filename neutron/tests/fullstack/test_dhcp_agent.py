@@ -18,7 +18,6 @@ from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import ip_lib
-from neutron.common import utils as common_utils
 from neutron.tests.fullstack.agents import dhcp_agent
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -113,7 +112,7 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
 
         mtu -= 1
         self.safe_client.update_network(self.network['id'], mtu=mtu)
-        common_utils.wait_until_true(lambda: dhcp_dev.link.mtu == mtu)
+        base.wait_until_true(lambda: dhcp_dev.link.mtu == mtu)
 
 
 class TestDhcpAgentHA(BaseDhcpAgentTest):
@@ -128,7 +127,7 @@ class TestDhcpAgentHA(BaseDhcpAgentTest):
                 return network_agents[0]['id'] != old_agent['id']
             return False
 
-        common_utils.wait_until_true(_agent_rescheduled, timeout=120)
+        base.wait_until_true(_agent_rescheduled, timeout=120)
 
     def _kill_dhcp_agent(self, agent):
         for host in self.environment.hosts:
@@ -302,6 +301,6 @@ class TestSubnetDeleteRace(BaseDhcpAgentTest):
                 return True
             return False
 
-        common_utils.wait_until_true(_is_subnet_deleted)
+        base.wait_until_true(_is_subnet_deleted)
         # Note(lajoskatona): Here cleanup does its job and it will fail if the
         # segment or network deletion is impossible
