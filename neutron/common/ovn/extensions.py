@@ -25,6 +25,7 @@ from neutron_lib.api.definitions import dhcpagentscheduler
 from neutron_lib.api.definitions import dns
 from neutron_lib.api.definitions import dns_domain_keywords
 from neutron_lib.api.definitions import dns_domain_ports
+from neutron_lib.api.definitions import empty_string_filtering
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt
@@ -123,6 +124,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     default_subnetpools.ALIAS,
     dhcpagentscheduler.ALIAS,
     dns.ALIAS,
+    empty_string_filtering.ALIAS,
     external_net.ALIAS,
     extra_dhcp_opt.ALIAS,
     filter_validation.ALIAS,
