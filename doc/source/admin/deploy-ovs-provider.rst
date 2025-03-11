@@ -184,7 +184,6 @@ Compute nodes
    .. code-block:: ini
 
       [DEFAULT]
-      interface_driver = openvswitch
       enable_isolated_metadata = True
       force_metadata = True
 

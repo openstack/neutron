@@ -318,19 +318,9 @@ Configure the layer-3 agent
 The Layer-3 (L3) agent provides routing and NAT services for
 self-service virtual networks.
 
-* Edit the ``/etc/neutron/l3_agent.ini`` file and complete the following
-  actions:
+* Edit the ``/etc/neutron/l3_agent.ini`` file in case additional customization
+  is needed.
 
-  * In the ``[DEFAULT]`` section, configure the Open vSwitch interface driver:
-
-    .. path /etc/neutron/l3_agent.ini
-    .. code-block:: ini
-
-       [DEFAULT]
-       # ...
-       interface_driver = openvswitch
-
-    .. end
 
 Configure the DHCP agent
 ------------------------
@@ -340,16 +330,15 @@ The DHCP agent provides DHCP services for virtual networks.
 * Edit the ``/etc/neutron/dhcp_agent.ini`` file and complete the following
   actions:
 
-  * In the ``[DEFAULT]`` section, configure the Open vSwitch interface driver,
-    Dnsmasq DHCP driver, and enable isolated metadata so instances on provider
-    networks can access metadata over the network:
+  * In the ``[DEFAULT]`` section, configure the Dnsmasq DHCP driver and enable
+    isolated metadata so instances on provider networks can access metadata
+    over the network:
 
     .. path /etc/neutron/dhcp_agent.ini
     .. code-block:: ini
 
        [DEFAULT]
        # ...
-       interface_driver = openvswitch
        dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
        enable_isolated_metadata = true
 

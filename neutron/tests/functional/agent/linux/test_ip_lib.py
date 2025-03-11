@@ -62,6 +62,9 @@ class IpLibTestFramework(functional_base.BaseSudoTestCase):
 
     def _configure(self):
         config.register_interface_driver_opts_helper(cfg.CONF)
+        # TODO(tkajinam): This is not needed theoretically but for some reasons
+        # the option defaults to None in tests. Make sure the expected default
+        # is used to avoid failure in the following import_object.
         cfg.CONF.set_override(
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')

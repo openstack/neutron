@@ -113,13 +113,6 @@ Network node 2
    Replace ``OVERLAY_INTERFACE_IP_ADDRESS`` with the IP address of the
    interface that handles VXLAN overlays for self-service networks.
 
-#. In the ``l3_agent.ini`` file, configure the layer-3 agent.
-
-   .. code-block:: ini
-
-      [DEFAULT]
-      interface_driver = openvswitch
-
 #. Start the following services:
 
    * Open vSwitch agent

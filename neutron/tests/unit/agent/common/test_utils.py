@@ -34,10 +34,6 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
         config.register_interface_opts(self.conf)
         config.register_interface_driver_opts_helper(self.conf)
 
-    def test_load_interface_driver_not_set(self):
-        with testlib_api.ExpectedException(SystemExit):
-            utils.load_interface_driver(self.conf)
-
     def test_load_interface_driver_wrong_driver(self):
         self.conf.set_override('interface_driver', 'neutron.NonExistentDriver')
         with testlib_api.ExpectedException(SystemExit):
@@ -50,6 +46,10 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
                         side_effect=RuntimeError()):
             with testlib_api.ExpectedException(RuntimeError):
                 utils.load_interface_driver(self.conf)
+
+    def test_load_interface_driver_default(self):
+        self.assertIsInstance(utils.load_interface_driver(self.conf),
+                              interface.OVSInterfaceDriver)
 
     def test_load_interface_driver_success(self):
         self.conf.set_override('interface_driver',

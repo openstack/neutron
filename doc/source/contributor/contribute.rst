@@ -535,11 +535,14 @@ Interface (VIF) drivers for the reference implementations are defined in
 defined in a similar location within their own repo.
 
 The entry point for the interface driver is a Neutron config option. It is up
-to the installer to configure this item in the ``[default]`` section.
+to the installer to configure this item in the ``[DEFAULT]`` section.
 For example::
 
-    [default]
+    [DEFAULT]
     interface_driver = networking_foo.agent.linux.interface.FooInterfaceDriver
+
+The ``openvswitch`` interface driver is used by default in case the option is
+not explicitly set.
 
 **ToDo: Interface Driver port bindings.**
     ``VIF_TYPE_*`` constants in ``neutron_lib/api/definitions/portbindings.py`` should be

@@ -129,7 +129,6 @@ Network nodes
 
       [DEFAULT]
       ha_vrrp_auth_password = password
-      interface_driver = openvswitch
       agent_mode = dvr_snat
 
 
@@ -158,7 +157,6 @@ Compute nodes
    .. code-block:: ini
 
       [DEFAULT]
-      interface_driver = openvswitch
       agent_mode = dvr
 
    Replace ``TUNNEL_INTERFACE_IP_ADDRESS`` with the IP address of the interface

@@ -49,8 +49,6 @@ LOG = logging.getLogger(__name__)
 
 _uuid = uuidutils.generate_uuid
 
-OVS_INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
-
 KEEPALIVED_CONFIG = """\
 global_defs {
     notification_email_from %(email_from)s
@@ -90,7 +88,6 @@ def get_ovs_bridge(br_name):
 
 
 class L3AgentTestFramework(base.BaseSudoTestCase):
-    INTERFACE_DRIVER = OVS_INTERFACE_DRIVER
     NESTED_NAMESPACE_SEPARATOR = '@'
 
     def setUp(self):
@@ -117,7 +114,6 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _configure_agent(self, host, agent_mode='dvr_snat'):
         conf = self._get_config_opts()
         l3_agent_main.register_opts(conf)
-        conf.set_override('interface_driver', self.INTERFACE_DRIVER)
 
         br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         conf.set_override('integration_bridge', br_int.br_name, 'OVS')

@@ -814,11 +814,6 @@ class TestDhcpAgent(base.BaseTestCase):
 
         self.assertEqual(set(networks), set(dhcp.cache.get_network_ids()))
 
-    def test_none_interface_driver(self):
-        cfg.CONF.set_override('interface_driver', None)
-        self.assertRaises(SystemExit, dhcp.DeviceManager,
-                          cfg.CONF, mock.Mock())
-
     def test_nonexistent_interface_driver(self):
         # Temporarily turn off mock, so could use the real import_class
         # to import interface_driver.
@@ -832,10 +827,9 @@ class TestDhcpAgent(base.BaseTestCase):
 class TestDhcpAgentEventHandler(base.BaseTestCase):
     def setUp(self):
         super().setUp()
-        config.register_interface_driver_opts_helper(cfg.CONF)
+        entry.register_options(cfg.CONF)  # register all dhcp cfg options
         cfg.CONF.set_override('interface_driver',
                               'neutron.agent.linux.interface.NullDriver')
-        entry.register_options(cfg.CONF)  # register all dhcp cfg options
 
         self.plugin_p = mock.patch(DHCP_PLUGIN)
         plugin_cls = self.plugin_p.start()

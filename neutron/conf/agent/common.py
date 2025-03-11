@@ -95,6 +95,7 @@ AGENT_STATE_OPTS = [
 
 INTERFACE_DRIVER_OPTS = [
     cfg.StrOpt('interface_driver',
+               default='openvswitch',
                help=_("The driver used to manage virtual interfaces.")),
 ]
 
@@ -152,16 +153,16 @@ DHCP_PROTOCOL_OPTS = [
 ]
 
 
-def register_external_process_opts(cfg=cfg.CONF):
-    cfg.register_opts(EXTERNAL_PROCESS_OPTS)
+def register_external_process_opts(conf=cfg.CONF):
+    conf.register_opts(EXTERNAL_PROCESS_OPTS)
 
 
-def register_interface_opts(cfg=cfg.CONF):
-    cfg.register_opts(INTERFACE_OPTS)
+def register_interface_opts(conf=cfg.CONF):
+    conf.register_opts(INTERFACE_OPTS)
 
 
-def register_ra_opts(cfg=cfg.CONF):
-    cfg.register_opts(RA_OPTS)
+def register_ra_opts(conf=cfg.CONF):
+    conf.register_opts(RA_OPTS)
 
 
 def register_root_helper(conf=cfg.CONF):

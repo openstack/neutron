@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The ``[DEFAULT] interface_driver`` option now defaults to ``openvswitch``,
+    and is not required if the openvswitch mechanism driver or the ovn
+    mechanism driver is used.

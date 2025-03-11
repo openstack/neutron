@@ -134,7 +134,6 @@ Compute nodes
    .. code-block:: ini
 
       [DEFAULT]
-      interface_driver = openvswitch
       agent_mode = dvr
 
 #. Restart the following services:
