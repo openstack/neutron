@@ -16,8 +16,10 @@
 
 import collections
 import itertools
+import signal
 import socket
 import sys
+import threading
 import time
 
 from neutron_lib.agent import topics
@@ -29,7 +31,6 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_service import loopingcall
 from osprofiler import profiler
 import pyroute2
 
@@ -199,6 +200,23 @@ class SriovNicSwitchAgent:
             'resource_versions': resources.LOCAL_RESOURCE_VERSIONS,
             'start_flag': True}
 
+        self.heartbeat = {}
+        self.daemon_loop_event = threading.Event()
+        report_interval = cfg.CONF.AGENT.report_interval
+        if report_interval:
+            report_event = threading.Event()
+
+            def report_worker():
+                while not report_event.is_set():
+                    start_time = time.time()
+                    self._report_state()
+                    exec_time = time.time() - start_time
+                    report_event.wait(max(0, report_interval - exec_time))
+
+            self.heartbeat['thread'] = threading.Thread(target=report_worker)
+            self.heartbeat['event'] = report_event
+            self.heartbeat['thread'].start()
+
         # The initialization is complete; we can start receiving messages
         self.connection.consume_in_threads()
         # Initialize iteration counter
@@ -224,12 +242,6 @@ class SriovNicSwitchAgent:
                                                      self.topic,
                                                      consumers,
                                                      start_listening=False)
-
-        report_interval = cfg.CONF.AGENT.report_interval
-        if report_interval:
-            heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
-            heartbeat.start(interval=report_interval)
 
     def _report_state(self):
         try:
@@ -457,13 +469,26 @@ class SriovNicSwitchAgent:
                                                   self.agent_id,
                                                   host=cfg.CONF.host)
 
+    def _handle_sigterm(self, signum, frame):
+        if self.heartbeat:
+            LOG.info("SIGTERM received, stopping SRIOV agent reporting.")
+            self.heartbeat['event'].set()
+            self.daemon_loop_event.set()
+            self.heartbeat['thread'].join()
+
     def daemon_loop(self):
         sync = True
         devices = set()
 
         LOG.info("SRIOV NIC Agent RPC Daemon Started!")
 
-        while True:
+        # Note(lajoskatona): The signal handling can be revisited once
+        # oslo_service give support for threads, and the daemon_loop
+        # like structures can be replaced by oslo.service native
+        # method
+        signal.signal(signal.SIGTERM, self._handle_sigterm)
+
+        while not self.daemon_loop_event.is_set():
             start = time.time()
             LOG.debug("Agent rpc_loop - iteration:%d started",
                       self.iter_num)
@@ -505,7 +530,7 @@ class SriovNicSwitchAgent:
             # sleep till end of polling interval
             elapsed = (time.time() - start)
             if (elapsed < self.polling_interval):
-                time.sleep(self.polling_interval - elapsed)
+                self.daemon_loop_event.wait(self.polling_interval - elapsed)
             else:
                 LOG.debug("Loop iteration exceeded interval "
                           "(%(polling_interval)s vs. %(elapsed)s)!",
