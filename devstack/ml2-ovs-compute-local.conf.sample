@@ -54,6 +54,8 @@ tunnel_types=vxlan,gre
 # Uncomment the following to enable distributed DHCP for openvswitch agent
 # for your compute node.
 #extensions = dhcp
+# Enable Neutron Openvswitch Agent metadata path extenison.
+#extensions = dhcp,metadata_path
 
 [[post-config|$Q_L3_CONF_FILE]]
 [DEFAULT]

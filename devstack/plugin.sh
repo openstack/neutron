@@ -8,6 +8,7 @@ source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/l3_agent
 source $LIBDIR/l3_conntrack_helper
 source $LIBDIR/l3_ndp_proxy
+source $LIBDIR/metadata_path
 source $LIBDIR/ml2
 source $LIBDIR/network_segment_range
 source $LIBDIR/segments
@@ -67,6 +68,11 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-distributed-dhcp neutron-distributed-dhcp; then
                 if [ $Q_AGENT = openvswitch ]; then
                     configure_ovs_distributed_dhcp
+                fi
+            fi
+            if is_service_enabled q-metadata-path neutron-metadata-path; then
+                if [ $Q_AGENT = openvswitch ]; then
+                    configure_ovs_metadata_path
                 fi
             fi
             if is_service_enabled neutron-local-ip; then
