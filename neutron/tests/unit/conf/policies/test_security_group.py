@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from unittest import mock
 
 from oslo_policy import policy as base_policy
@@ -388,19 +389,35 @@ class SecurityGroupRuleAPITestCase(base.PolicyBaseTestCase):
         super().setUp()
         self.sg = {
             'id': uuidutils.generate_uuid(),
-            'project_id': self.project_id}
+            'project_id': self.project_id,
+            'tenant_id': self.project_id}
+        self.alt_sg = {
+            'id': uuidutils.generate_uuid(),
+            'project_id': self.alt_project_id,
+            'tenant_id': self.alt_project_id}
 
         self.target = {
             'project_id': self.project_id,
+            'tenant_id': self.project_id,
             'security_group_id': self.sg['id'],
+            'ext_parent:tenant_id': self.sg['id'],
             'ext_parent_security_group_id': self.sg['id']}
         self.alt_target = {
             'project_id': self.alt_project_id,
-            'security_group_id': self.sg['id'],
-            'ext_parent_security_group_id': self.sg['id']}
+            'tenant_id': self.alt_project_id,
+            'security_group_id': self.alt_sg['id'],
+            'ext_parent:tenant_id': self.alt_sg['id'],
+            'ext_parent_security_group_id': self.alt_sg['id']}
+
+        def get_security_group_mock(context, id,
+                                    fields=None, tenant_id=None):
+            if id == self.alt_sg['id']:
+                return self.alt_sg
+            return self.sg
 
         self.plugin_mock = mock.Mock()
-        self.plugin_mock.get_security_group.return_value = self.sg
+        self.plugin_mock.get_security_group.side_effect = (
+            get_security_group_mock)
         mock.patch(
             'neutron_lib.plugins.directory.get_plugin',
             return_value=self.plugin_mock).start()
@@ -539,6 +556,17 @@ class ProjectManagerSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
             policy.enforce,
             self.context, 'create_security_group_rule', self.alt_target)
 
+        # Test for the SG_OWNER different then current user case:
+        target = copy.copy(self.target)
+        target['security_group_id'] = self.alt_sg['id']
+        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent_security_group_id'] = self.alt_sg['id']
+        self.plugin_mock.get_security_group.return_value = self.alt_sg
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_group_rule', target)
+
     def test_create_security_group_rule_default_sg(self):
         self.override_create_security_group_rule()
         self.assertRaises(
@@ -563,10 +591,22 @@ class ProjectManagerSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
         self.assertTrue(
             policy.enforce(self.context,
                            'delete_security_group_rule', self.target))
+        self.plugin_mock.get_security_group.return_value = self.alt_sg
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_security_group_rule', self.alt_target)
+
+        # Test for the SG_OWNER different then current user case:
+        target = copy.copy(self.target)
+        target['security_group_id'] = self.alt_sg['id']
+        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent_security_group_id'] = self.alt_sg['id']
+        self.plugin_mock.get_security_group.return_value = self.alt_sg
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_security_group_rule', target)
 
     def test_delete_security_group_rule_default_sg(self):
         self.override_delete_security_group_rule()
@@ -603,6 +643,16 @@ class ProjectReaderSecurityGroupRuleTests(ProjectMemberSecurityGroupRuleTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_security_group_rule', self.alt_target)
+        # Test for the SG_OWNER different then current user case:
+        target = copy.copy(self.target)
+        target['security_group_id'] = self.alt_sg['id']
+        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent_security_group_id'] = self.alt_sg['id']
+        self.plugin_mock.get_security_group.return_value = self.alt_sg
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_group_rule', target)
 
     def test_delete_security_group_rule(self):
         self.assertRaises(
@@ -613,6 +663,16 @@ class ProjectReaderSecurityGroupRuleTests(ProjectMemberSecurityGroupRuleTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_security_group_rule', self.alt_target)
+        # Test for the SG_OWNER different then current user case:
+        target = copy.copy(self.target)
+        target['security_group_id'] = self.alt_sg['id']
+        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent_security_group_id'] = self.alt_sg['id']
+        self.plugin_mock.get_security_group.return_value = self.alt_sg
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_security_group_rule', target)
 
 
 class ServiceRoleSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
