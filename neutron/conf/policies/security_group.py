@@ -208,11 +208,9 @@ rules = [
             deprecated_since="2025.1")
     ),
 
-    # TODO(amotoki): admin_or_owner is the right rule?
-    # Does an empty string make more sense for create_security_group_rule?
     policy.DocumentedRuleDefault(
         name='create_security_group_rule',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_SG_OWNER_MEMBER,
         scope_types=['project'],
         description='Create a security group rule',
         operations=[
@@ -229,9 +227,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group_rule',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
-            base.RULE_SG_OWNER),
+        check_str=base.ADMIN_OR_SG_OWNER_READER,
         scope_types=['project'],
         description='Get a security group rule',
         operations=[
@@ -252,7 +248,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group_rule',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_SG_OWNER_MEMBER,
         scope_types=['project'],
         description='Delete a security group rule',
         operations=[

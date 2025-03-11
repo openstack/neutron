@@ -26,7 +26,6 @@ from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_policy import fixture as op_fixture
 from oslo_policy import policy as oslo_policy
 from oslo_serialization import jsonutils
@@ -768,14 +767,16 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_retryrequest_on_notfound(self):
         failure = exceptions.NetworkNotFound(net_id='whatever')
         action = "create_port:mac"
-        with mock.patch.object(directory.get_plugin(),
-                               'get_network', side_effect=failure):
+        with mock.patch.object(
+                directory.get_plugin(),
+                'get_network', side_effect=failure) as get_network_mock:
             target = {'network_id': 'whatever'}
             try:
                 policy.enforce(self.context, action, target)
-                self.fail("Did not raise RetryRequest")
-            except db_exc.RetryRequest as e:
-                self.assertEqual(failure, e.inner_exc)
+                self.fail("Did not raise NotFound exception and retry "
+                          "DB request.")
+            except exceptions.NetworkNotFound:
+                self.assertEqual(2, get_network_mock.call_count)
 
     def test_enforce_tenant_id_check_parent_resource_bw_compatibility(self):
 
