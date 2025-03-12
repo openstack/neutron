@@ -177,7 +177,7 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
         check_agent_alive = functools.partial(self._check_agent_configurations,
                                               l2_agent['id'],
                                               physnets)
-        utils.wait_until_true(
+        base.wait_until_true(
             predicate=check_agent_alive,
             timeout=float(report_interval) + 10,
             sleep=5)
@@ -231,7 +231,7 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
         self.original_agent_id = agents['agents'][0]['id']
 
         check_agent_synced = functools.partial(self._check_agent_synced)
-        utils.wait_until_true(
+        base.wait_until_true(
             predicate=check_agent_synced,
             timeout=report_interval + 10,
             sleep=1)
@@ -239,7 +239,7 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
         self.environment.placement.process_fixture.stop()
 
         placement_fixture = self.environment.placement.process_fixture
-        utils.wait_until_true(
+        base.wait_until_true(
             predicate=functools.partial(
                 placement_fixture.process_is_not_running),
             timeout=report_interval, sleep=1
@@ -249,14 +249,14 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
 
         check_agent_not_synced = functools.partial(
             self._check_agent_not_synced)
-        utils.wait_until_true(
+        base.wait_until_true(
             predicate=check_agent_not_synced,
             timeout=report_interval + 10,
             sleep=1)
 
         self.environment.placement.process_fixture.start()
         check_agent_synced = functools.partial(self._check_agent_synced)
-        utils.wait_until_true(
+        base.wait_until_true(
             predicate=check_agent_synced,
             timeout=report_interval + 10,
             sleep=1)

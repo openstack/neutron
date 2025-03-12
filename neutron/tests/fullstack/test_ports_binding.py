@@ -14,7 +14,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.unit import testlib_api
@@ -54,7 +53,7 @@ class TestPortsBinding(base.BaseFullStackTestCase):
                     [portbindings.VIF_TYPE_UNBOUND,
                      portbindings.VIF_TYPE_BINDING_FAILED])
 
-        common_utils.wait_until_true(port_bound)
+        base.wait_until_true(port_bound)
 
     def _ensure_port_binding_failed(self, port_id):
         def port_binding_failed():
@@ -62,7 +61,7 @@ class TestPortsBinding(base.BaseFullStackTestCase):
             return (port[portbindings.VIF_TYPE] ==
                     portbindings.VIF_TYPE_BINDING_FAILED)
 
-        common_utils.wait_until_true(port_binding_failed)
+        base.wait_until_true(port_binding_failed)
 
     def test_smartnic_port_binding(self):
         """Test scenario

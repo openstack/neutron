@@ -16,7 +16,6 @@
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -97,7 +96,7 @@ class OvsDHCPExtensionTestCase(base.BaseFullStackTestCase):
         def is_port_status_active():
             port = self.client.show_port(port_id)
             return port['port']['status'] == 'ACTIVE'
-        common_utils.wait_until_true(lambda: is_port_status_active(), sleep=1)
+        base.wait_until_true(lambda: is_port_status_active(), sleep=1)
 
     def _prepare_vms(self):
         sgs = [self.safe_client.create_security_group(self.tenant_id)

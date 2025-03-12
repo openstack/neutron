@@ -16,7 +16,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -66,7 +65,7 @@ class TestPortsRebind(base.BaseFullStackTestCase):
                     [portbindings.VIF_TYPE_UNBOUND,
                      portbindings.VIF_TYPE_BINDING_FAILED])
 
-        common_utils.wait_until_true(port_bound)
+        base.wait_until_true(port_bound)
         bound_drivers = {'0': self.l2_mechdriver_name}
         self.assertEqual(bound_drivers,
                          port[portbindings.VIF_DETAILS][
@@ -79,7 +78,7 @@ class TestPortsRebind(base.BaseFullStackTestCase):
             return (port[portbindings.VIF_TYPE] ==
                     portbindings.VIF_TYPE_BINDING_FAILED)
 
-        common_utils.wait_until_true(port_binding_failed)
+        base.wait_until_true(port_binding_failed)
 
 
 class TestVMPortRebind(TestPortsRebind):

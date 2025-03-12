@@ -23,9 +23,10 @@ from neutron_lib import constants
 
 from neutron.agent.common import async_process
 from neutron.agent.linux import ip_lib
-from neutron.common import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
+from neutron.tests.fullstack import base as fullstack_base
+
 
 FULLSTACK_DHCLIENT_SCRIPT = 'fullstack-dhclient-script'
 LOG = logging.getLogger(__name__)
@@ -205,13 +206,13 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         return gateway_info.get('via') == self.gateway_ip
 
     def block_until_boot(self):
-        utils.wait_until_true(
+        fullstack_base.wait_until_true(
             lambda: (self.safe_client.client.show_port(self.neutron_port['id'])
                      ['port']['status'] == 'ACTIVE'),
             sleep=3)
 
     def block_until_dhcp_config_done(self):
-        utils.wait_until_true(
+        fullstack_base.wait_until_true(
             lambda: self.ip_configured() and self.gateway_configured(),
             exception=machine_fixtures.FakeMachineException(
                 "Address %s or gateway %s not configured properly on "

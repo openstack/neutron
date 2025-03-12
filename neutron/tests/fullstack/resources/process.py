@@ -106,7 +106,7 @@ class ProcessFixture(fixtures.Fixture):
             # run unprivileged if run_as_root is False.
             run_as_root=True,
         )
-        common_utils.wait_until_true(self.service_is_active)
+        fullstack_base.wait_until_true(self.service_is_active)
         LOG.debug("Process started: %s", self.process_name)
 
     def stop(self, kill_signal=None):
@@ -133,7 +133,7 @@ class ProcessFixture(fixtures.Fixture):
 
         utils.execute(stop_cmd, run_as_root=True,
                       check_exit_code=check_exit_code)
-        common_utils.wait_until_true(self.process_is_not_running)
+        fullstack_base.wait_until_true(self.process_is_not_running)
         LOG.debug(msg)
 
     def restart(self, executor=None):
@@ -146,7 +146,7 @@ class ProcessFixture(fixtures.Fixture):
                     self.unit_name,
                 ]
                 utils.execute(restart_cmd, run_as_root=True)
-                common_utils.wait_until_true(self.service_is_active)
+                fullstack_base.wait_until_true(self.service_is_active)
             else:
                 self.start()
 
@@ -244,7 +244,7 @@ class NeutronServerFixture(ServiceFixture):
             exec_name=self.NEUTRON_SERVER,
             config_filenames=config_filenames))
 
-        common_utils.wait_until_true(self.server_is_live)
+        fullstack_base.wait_until_true(self.server_is_live)
 
     def server_is_live(self):
         try:

@@ -314,11 +314,11 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
 
     def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
         if direction == constants.EGRESS_DIRECTION:
-            utils.wait_until_true(
+            base.wait_until_true(
                 lambda: vm.bridge.get_egress_bw_limit_for_port(
                     vm.port.name) == (limit, burst))
         elif direction == constants.INGRESS_DIRECTION:
-            utils.wait_until_true(
+            base.wait_until_true(
                 lambda: vm.bridge.get_ingress_bw_limit_for_port(
                     vm.port.name) == (limit, burst),
                 timeout=10)
@@ -788,7 +788,7 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
     def _wait_for_min_bw_rule_applied(self, vm, min_bw, direction):
         if direction == constants.EGRESS_DIRECTION:
             try:
-                utils.wait_until_true(
+                base.wait_until_true(
                     lambda: vm.bridge.get_egress_min_bw_for_port(
                         vm.neutron_port['id']) == min_bw)
             except utils.WaitTimeout:
@@ -826,7 +826,7 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
                     return True
 
         try:
-            utils.wait_until_true(check_qos_and_queue, timeout=10)
+            base.wait_until_true(check_qos_and_queue, timeout=10)
             return data['qos'], data['qos_queue']
         except utils.WaitTimeout:
             queuenum = ('QoS register not found with queue-num %s' %

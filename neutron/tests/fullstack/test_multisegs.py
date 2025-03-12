@@ -14,7 +14,6 @@
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
-from neutron.common import utils as common_utils
 from neutron.tests import base as tests_base
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -143,7 +142,7 @@ class TestMultiSegs(base.BaseFullStackTestCase):
             if dhcp_ports[1]['status'] != 'ACTIVE':
                 return False
             return True
-        common_utils.wait_until_true(_is_dhcp_ports_ready)
+        base.wait_until_true(_is_dhcp_ports_ready)
 
         self.vm1 = self._spawn_vm(neutron_port=self.port1)
         self.vm2 = self._spawn_vm(neutron_port=self.port2)

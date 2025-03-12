@@ -19,7 +19,6 @@ from oslo_log import log as logging
 from oslo_utils import uuidutils
 import testscenarios
 
-from neutron.common import utils as common_utils
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config
@@ -120,7 +119,7 @@ class TestOvsConnectivitySameNetworkOnOvsBridgeControllerStop(
         # by itself when the fail type settings is not set to secure (see
         # ovs-vsctl man page for further details)
         with net_helpers.async_ping(ns0, [ip1], timeout=2, count=25) as done:
-            common_utils.wait_until_true(
+            base.wait_until_true(
                 done,
                 exception=RuntimeError("Networking interrupted after "
                                        "controllers have vanished"))

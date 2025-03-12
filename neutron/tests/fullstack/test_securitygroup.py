@@ -20,7 +20,6 @@ from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import iptables_manager
 from neutron.cmd.sanity import checks
 from neutron.cmd import sanity_check
-from neutron.common import utils as common_utils
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -78,14 +77,14 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
                 return False
 
         try:
-            common_utils.wait_until_true(test_connectivity)
+            base.wait_until_true(test_connectivity)
         finally:
             netcat.stop_processes()
 
     def assert_no_connection(self, *args, **kwargs):
         netcat = net_helpers.NetcatTester(*args, **kwargs)
         try:
-            common_utils.wait_until_true(netcat.test_no_connectivity)
+            base.wait_until_true(netcat.test_no_connectivity)
         finally:
             netcat.stop_processes()
 
@@ -155,7 +154,7 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
             vms[2].namespace, vms[0].namespace, vms[0].ip, 3333,
             net_helpers.NetcatTester.TCP)
         # Wait until port update takes effect on the ports
-        common_utils.wait_until_true(
+        base.wait_until_true(
             netcat.test_no_connectivity,
             exception=AssertionError(
                 "Still can connect to the VM from different host.")
@@ -512,7 +511,7 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                 namespace=vm.host.host_namespace)
             vm_tap_device = iptables_firewall.get_hybrid_port_name(
                 vm.neutron_port['id'])
-            common_utils.wait_until_true(
+            base.wait_until_true(
                 lambda: self._is_stateless_configured(iptables,
                                                       vm_tap_device),
                 exception=StatelessRulesNotConfiguredException(
