@@ -64,6 +64,11 @@ QOS_RULES_3 = {
         qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1}
 }
 
+QOS_RULES_4 = {
+    constants.INGRESS_DIRECTION: {
+        qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH: QOS_RULE_MINBW_1}
+}
+
 
 class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
     def setUp(self, maintenance_worker=False):
@@ -74,7 +79,8 @@ class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
                          fip_id=None, ip_address=None, expected_ext_ids=None):
         qos_rules = copy.deepcopy(rules)
         if network_type in (constants.TYPE_VLAN, constants.TYPE_FLAT):
-            # Remove the egress max-rate and min-rate rules.
+            # Remove the egress max-rate and min-rate rules, these are defined
+            # in the LSP.options field for a physical network.
             try:
                 qos_rules[constants.EGRESS_DIRECTION].pop(
                     qos_constants.RULE_TYPE_BANDWIDTH_LIMIT, None)
@@ -82,6 +88,17 @@ class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
                     qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH, None)
             except KeyError:
                 pass
+
+        # Remove the min-bw rule from the qos_rules because this is not added
+        # to the OVN QoS registers.
+        for _, rules in qos_rules.items():
+            rules.pop(qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH, None)
+
+        # Remove any direction in qos_rules without defined rules.
+        for direction in copy.deepcopy(qos_rules):
+            if not qos_rules[direction]:
+                qos_rules.pop(direction)
+
         egress_ovn_rule = self.qos_driver._ovn_qos_rule(
             constants.EGRESS_DIRECTION,
             qos_rules.get(constants.EGRESS_DIRECTION),
@@ -179,7 +196,7 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
                 _qos_rules = copy.deepcopy(qos_rules)
                 for direction in constants.VALID_DIRECTIONS:
                     _qos_rules[direction] = _qos_rules.get(direction, {})
-                self.mock_qos_rules.return_value = _qos_rules
+                self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
                 self.qos_driver._update_port_qos_rules(
                     txn, port, self.network_1, network_type, 'qos1', None)
             self._check_rules_qos(qos_rules, port, self.network_1,
@@ -190,6 +207,7 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
         update_and_check(QOS_RULES_1)
         update_and_check(QOS_RULES_2)
         update_and_check(QOS_RULES_3)
+        update_and_check(QOS_RULES_4)
         update_and_check({})
 
     def _update_fip_and_check(self, fip, qos_rules):
@@ -197,7 +215,7 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
             _qos_rules = copy.deepcopy(qos_rules)
             for direction in constants.VALID_DIRECTIONS:
                 _qos_rules[direction] = _qos_rules.get(direction, {})
-            self.mock_qos_rules.return_value = _qos_rules
+            self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
             self.qos_driver.update_floatingip(txn, fip)
         self._check_rules_qos(qos_rules, self.gw_port_id, self.network_1,
                               '', fip_id='fip_id', ip_address='1.2.3.4')
@@ -292,7 +310,7 @@ class TestOVNClientQosExtensionEndToEnd(_TestOVNClientQosExtensionBase):
         _qos_rules = copy.deepcopy(QOS_RULES_1)
         for direction in constants.VALID_DIRECTIONS:
             _qos_rules[direction] = _qos_rules.get(direction, {})
-        self.mock_qos_rules.return_value = _qos_rules
+        self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
 
         network = self._create_ext_network(
             utils.get_rand_name(), 'flat', 'physnet4',
@@ -310,7 +328,7 @@ class TestOVNClientQosExtensionEndToEnd(_TestOVNClientQosExtensionBase):
         _qos_rules = copy.deepcopy(QOS_RULES_1)
         for direction in constants.VALID_DIRECTIONS:
             _qos_rules[direction] = _qos_rules.get(direction, {})
-        self.mock_qos_rules.return_value = _qos_rules
+        self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
 
         network = self._create_ext_network(
             utils.get_rand_name(), 'flat', 'physnet4',
@@ -350,7 +368,7 @@ class TestOVNClientQosExtensionEndToEnd(_TestOVNClientQosExtensionBase):
             _qos_rules = copy.deepcopy(qos_rules)
             for direction in constants.VALID_DIRECTIONS:
                 _qos_rules[direction] = _qos_rules.get(direction, {})
-            self.mock_qos_rules.return_value = _qos_rules
+            self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
             self.l3_plugin.update_router(
                 self.context, router['id'],
                 {'router': {'admin_state_up': False}})

@@ -1,0 +1,6 @@
+---
+issues:
+  - |
+    Using ML2/OVN, it is now possible to define a QoS policy with a single minimum
+    bandwidth rule and apply it to a bound port. The ML2/OVN QoS extension
+    will not try to add an OVN QoS register in that case.
