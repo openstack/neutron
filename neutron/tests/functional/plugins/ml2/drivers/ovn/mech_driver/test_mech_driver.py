@@ -20,7 +20,7 @@ import time
 from unittest import mock
 
 import netaddr
-
+from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import qinq as qinq_apidef
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
@@ -1575,3 +1575,37 @@ class TestRouterGWPort(_TestRouter):
     def test_create_and_delete_router_gw_port_nested_snat(self):
         ovn_conf.cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
         self._test_create_and_delete_router_gw_port(nested_snat=True)
+
+
+class TestHAChassisGroupSync(base.TestOVNFunctionalBase):
+    def test_ha_chassis_keep_priority_external_ports(self):
+        for i in range(5):
+            self.add_fake_chassis('host%d' % i, enable_chassis_as_gw=True,
+                                  azs=[])
+        net_arg = {external_net.EXTERNAL: True}
+        with self.network('test-ovn-client', as_admin=True,
+                          arg_list=tuple(net_arg.keys()), **net_arg) as net:
+            with self.subnet(net) as subnet:
+                port_arg = {
+                    portbindings.VNIC_TYPE: portbindings.VNIC_BAREMETAL}
+                with self.port(subnet,
+                               arg_list=tuple(port_arg.keys()), **port_arg):
+                    hcg1 = self.mech_driver._ovn_client._nb_idl.lookup(
+                        'HA_Chassis_Group',
+                        utils.ovn_name(net['network']['id']))
+                    self.assertIsNotNone(hcg1)
+                    master_ch1 = max(hcg1.ha_chassis, key=lambda x: x.priority,
+                                     default=None)
+                    with self.port(subnet, arg_list=tuple(port_arg.keys()),
+                                   **port_arg):
+                        hcg2 = self.mech_driver._ovn_client._nb_idl.lookup(
+                            'HA_Chassis_Group',
+                            utils.ovn_name(net['network']['id']))
+                        master_ch2 = max(hcg2.ha_chassis,
+                                         key=lambda x: x.priority,
+                                         default=None)
+                        # A second port created on this network will have the
+                        # same HCG assigned and the same highest priority
+                        # chassis.
+                        self.assertEqual(master_ch1.chassis_name,
+                                         master_ch2.chassis_name)
