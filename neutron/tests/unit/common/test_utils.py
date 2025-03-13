@@ -577,43 +577,76 @@ class SpawnWithOrWithoutProfilerTestCase(
 
 
 @utils.SingletonDecorator
-class _TestSingletonClass(object):
+class _TestSingletonClass1():
+    def __init__(self, variable):
+        self.variable = variable
 
-    def __init__(self):
-        self.variable = None
+
+@utils.SingletonDecorator
+class _TestSingletonClass2():
+    def __init__(self, variable):
+        self.variable = variable
 
 
 class SingletonDecoratorTestCase(base.BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.instance_1 = self.instance_2 = None
+        self.addCleanup(self._destroy_instances)
+
+    def _destroy_instances(self):
+        try:
+            del self.instance_1
+        except AttributeError:
+            pass
+        try:
+            del self.instance_2
+        except AttributeError:
+            pass
 
     def test_singleton_instance_class(self):
-        instance_1 = _TestSingletonClass()
-        instance_1.variable = 'value1'
+        self.instance_1 = _TestSingletonClass1('value1')
+        self.instance_2 = _TestSingletonClass1('other_value_that_is_not_set')
+        self.assertIs(self.instance_1, self.instance_2)
+        self.assertEqual('value1', self.instance_2.variable)
 
-        instance_2 = _TestSingletonClass()
-        self.assertEqual(instance_1.__hash__(), instance_2.__hash__())
-        self.assertEqual('value1', instance_2.variable)
+        # If one reference is deleted, the other variable (instance_2) is still
+        # referenced to the same object and the singleton decorator keeps it.
+        del self.instance_1
+        self.instance_1 = _TestSingletonClass1('again_value_that_is_not_set')
+        self.assertIs(self.instance_1, self.instance_2)
+        self.assertEqual('value1', self.instance_2.variable)
 
+    def test_singleton_several_independent_classes(self):
+        self.instance_1 = _TestSingletonClass1('value1')
+        self.instance_2 = _TestSingletonClass2('value2')
+        self.assertIsNot(self.instance_1, self.instance_2)
+        self.assertEqual('value1', self.instance_1.variable)
+        self.assertEqual('value2', self.instance_2.variable)
 
-class SkipDecoratorTestCase(base.BaseTestCase):
+    def test_singleton_instance_deletion(self):
+        self.instance_1 = _TestSingletonClass1('value1')
+        self.instance_2 = _TestSingletonClass2('value2')
+        self.assertIsNotNone(self.instance_1)
+        self.assertIsNotNone(self.instance_2)
 
-    def test_skip_exception(self):
-        @utils.skip_exceptions(AttributeError)
-        def raise_attribute_error_single_exception():
-            raise AttributeError()
+        # Delete instance 1, new value "value1_b" set in __init__()
+        del self.instance_1
+        self.instance_1 = _TestSingletonClass1('value1_b')
+        self.instance_2 = _TestSingletonClass2('value2_b')
+        self.assertIsNotNone(self.instance_1)
+        self.assertIsNotNone(self.instance_2)
+        self.assertEqual('value1_b', self.instance_1.variable)
+        self.assertEqual('value2', self.instance_2.variable)
 
-        @utils.skip_exceptions([AttributeError, IndexError])
-        def raise_attribute_error_exception_list():
-            raise AttributeError()
-
-        raise_attribute_error_single_exception()
-        raise_attribute_error_exception_list()
-
-    def test_skip_exception_fail(self):
-        @utils.skip_exceptions(IndexError)
-        def raise_attribute_error():
-            raise AttributeError()
-
-        self.assertRaises(AttributeError, raise_attribute_error)
+        # Delete instance 2, new value "value2_c" set in __init__()
+        del self.instance_2
+        self.instance_1 = _TestSingletonClass1('value1_c')
+        self.instance_2 = _TestSingletonClass2('value2_c')
+        self.assertIsNotNone(self.instance_1)
+        self.assertIsNotNone(self.instance_2)
+        self.assertEqual('value1_b', self.instance_1.variable)
+        self.assertEqual('value2_c', self.instance_2.variable)
 
 
 class DisableNotificationTestCase(base.BaseTestCase):

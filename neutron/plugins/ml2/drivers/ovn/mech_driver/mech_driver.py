@@ -143,6 +143,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
         self.log_driver = log_driver.register(self)
+        self._agent_cache = None
 
     @property
     def nb_schema_helper(self):
@@ -356,7 +357,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         if worker_class == wsgi.WorkerService:
             self._setup_hash_ring()
 
-        n_agent.AgentCache(self)  # Initialize singleton agent cache
+        # Initialize singleton agent cache and keep a copy.
+        self._agent_cache = n_agent.AgentCache(self)
         self.nb_ovn, self.sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
 
         # Override agents API methods
