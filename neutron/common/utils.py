@@ -32,6 +32,7 @@ import sys
 import threading
 import time
 import uuid
+import weakref
 
 import eventlet
 from eventlet.green import subprocess
@@ -965,15 +966,16 @@ def timecost(f):
 
 
 class SingletonDecorator:
+    _singleton_instances = weakref.WeakValueDictionary()
 
     def __init__(self, klass):
         self._klass = klass
-        self._instance = None
 
     def __call__(self, *args, **kwargs):
-        if self._instance is None:
-            self._instance = self._klass(*args, **kwargs)
-        return self._instance
+        if self._klass not in self._singleton_instances:
+            _inst = self._klass(*args, **kwargs)
+            self._singleton_instances[self._klass] = _inst
+        return self._singleton_instances[self._klass]
 
 
 def with_metaclass(meta, *bases):

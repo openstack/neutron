@@ -20,6 +20,7 @@ import os
 import shutil
 from unittest import mock
 import warnings
+import weakref
 
 import fixtures
 from neutron_lib.plugins import constants
@@ -211,7 +212,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
                 test_securitygroup.RULES_TEMPLATE_FOR_DEFAULT_SG)).start()
 
     def _reset_agent_cache_singleton(self):
-        neutron_agent.AgentCache._instance = None
+        neutron_agent.AgentCache._singleton_instances = (
+            weakref.WeakValueDictionary())
 
     def _reset_ovn_client_placement_extension(self):
         ovn_client_placement.OVNClientPlacementExtension._instance = None
