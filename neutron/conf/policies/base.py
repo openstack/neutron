@@ -83,6 +83,19 @@ ADMIN_OR_NET_OWNER_MEMBER = (
 ADMIN_OR_NET_OWNER_READER = (
     '(' + ADMIN + ') or (' + NET_OWNER_READER + ')')
 
+# Those rules for the SG owner are needed for the policies related to the
+# Security Group rules and are very similar to the parent owner rules defined
+# above. We should probably deprecate SG_OWNER rules and use PARENT_OWNER
+# instead but this can be done later
+# TODO(slaweq): Deprecate SG_OWNER rules and replace them with PARENT_OWNER
+# rules but for that, 'ext_parent_owner:tenant_id' needs to be added to the SG
+# rule target dict
+SG_OWNER_MEMBER = 'role:member and ' + RULE_SG_OWNER
+SG_OWNER_READER = 'role:reader and ' + RULE_SG_OWNER
+ADMIN_OR_SG_OWNER_MEMBER = (
+    '(' + ADMIN + ') or (' + SG_OWNER_MEMBER + ')')
+ADMIN_OR_SG_OWNER_READER = (
+    '(' + ADMIN + ') or (' + SG_OWNER_READER + ')')
 
 rules = [
     policy.RuleDefault(

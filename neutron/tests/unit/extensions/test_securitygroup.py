@@ -1350,7 +1350,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                port_range_max,
                                                remote_ip_prefix,
                                                remote_group_id)
-        res = self._create_security_group_rule(self.fmt, rule)
+        res = self._create_security_group_rule(self.fmt, rule, as_admin=True)
         self.deserialize(self.fmt, res)
         self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
@@ -1383,7 +1383,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                    tenant_id='bad_tenant',
                                                    set_context=True)
             self.deserialize(self.fmt, res)
-            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+            self.assertEqual(webob.exc.HTTPForbidden.code, res.status_int)
 
     def test_create_security_group_rule_bad_tenant_remote_group_id(self):
         with self.security_group() as sg:
@@ -1424,7 +1424,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                    tenant_id='bad_tenant',
                                                    set_context=True)
             self.deserialize(self.fmt, res)
-            self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+            self.assertEqual(webob.exc.HTTPForbidden.code, res.status_int)
 
     def test_create_security_group_rule_bad_remote_group_id(self):
         name = 'webservers'
@@ -2146,7 +2146,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                                                port_range_max,
                                                remote_ip_prefix,
                                                remote_group_id)
-        res = self._create_security_group_rule(self.fmt, rule)
+        res = self._create_security_group_rule(self.fmt, rule, as_admin=True)
         self.deserialize(self.fmt, res)
         self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
