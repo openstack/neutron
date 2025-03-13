@@ -26,7 +26,7 @@ class TestBatchNotifier(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         self._received_events = queue.Queue()
-        self.notifier = batch_notifier.BatchNotifier(0.1, self._queue_events)
+        self.notifier = batch_notifier.BatchNotifier(0.2, self._queue_events)
         self.spawn_n_p = mock.patch.object(utils, 'spawn_n')
 
     def _queue_events(self, events):
