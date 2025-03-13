@@ -471,6 +471,56 @@ class TestQosPlugin(base.BaseQosTestCase):
                 port['resource_request']['same_subtree'],
             )
 
+    def test__extend_port_resource_request_bulk_non_min_bw_or_pps_rule(self):
+        network_id = uuidutils.generate_uuid()
+
+        ports_res = [
+            {
+                "resource_request": {
+                    "port_id": uuidutils.generate_uuid(),
+                    "qos_id": self.policy.id,
+                    "network_id": network_id,
+                    "vnic_type": "normal",
+
+                }
+            },
+            {
+                "resource_request": {
+                    "port_id": uuidutils.generate_uuid(),
+                    "qos_id": self.policy.id,
+                    "network_id": network_id,
+                    "vnic_type": "normal",
+                }
+            },
+        ]
+        segment_mock = mock.MagicMock(network_id=network_id,
+                                  physical_network='public')
+        min_bw_rules = []
+        min_pps_rules = []
+
+        with mock.patch('neutron.objects.network.NetworkSegment.get_objects',
+                        return_value=[segment_mock]) as network_segment_mock, \
+                mock.patch(
+                    'neutron.objects.qos.rule.QosMinimumBandwidthRule.'
+                    'get_objects',
+                    return_value=min_bw_rules) as qos_min_bw_rule_mock, \
+                mock.patch(
+                    'neutron.objects.qos.rule.QosMinimumPacketRateRule.'
+                    'get_objects',
+                    return_value=min_pps_rules) as qos_min_pps_rule_mock, \
+                mock.patch(
+                    'uuid.uuid5',
+                    return_value='fake_uuid',
+                    side_effect=None):
+            ports = qos_plugin.QoSPlugin._extend_port_resource_request_bulk(
+                ports_res, None)
+
+            self.assertEqual(network_segment_mock.call_count, 1)
+            self.assertEqual(qos_min_bw_rule_mock.call_count, 1)
+            self.assertEqual(qos_min_pps_rule_mock.call_count, 1)
+            for port in ports:
+                self.assertIsNone(port.get('resource_request'))
+
     def test__extend_port_resource_request_no_qos_policy(self):
         port = self._create_and_extend_port([], physical_network='public',
                                             has_qos_policy=False)
