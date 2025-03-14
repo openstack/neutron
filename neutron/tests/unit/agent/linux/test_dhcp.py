@@ -3369,6 +3369,50 @@ class TestDeviceManager(TestConfBase):
         self._test_setup(self.mock_load_interface_driver,
                          self.mock_ip_lib, use_gateway_ips=True)
 
+    def test_setup_v4_only_network(self):
+        with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
+            self.conf.register_opt(cfg.BoolOpt('force_metadata',
+                                               default=True))
+            plugin = mock.Mock()
+            device = mock.Mock()
+            mock_IPDevice.return_value = device
+            device.route.get_gateway.return_value = None
+            mgr = dhcp.DeviceManager(self.conf, plugin)
+
+            network = FakeV4Network()
+            network.project_id = 'Project A'
+
+            # We just need to return something, does not need an IP address
+            port = dhcp.DictModel(port={})
+            port.id = 'abcd-123456789'
+            port.mac_address = '00-12-34-56-78-90'
+            port.fixed_ips = []
+
+            mgr.setup_dhcp_port = mock.Mock()
+            mgr.setup_dhcp_port.return_value = port
+            mgr.driver.get_device_name.return_value = 'ns-XXX'
+            self.mock_ip_lib.ensure_device_is_ready.return_value = True
+            mgr.setup(network)
+
+            # There should be no IPv6 metadata address as we used a network
+            # with just an IPv4 subnet
+            mgr.driver.init_l3.assert_called_with(
+                'ns-XXX',
+                ['192.168.0.1/24', '169.254.169.254/32'],
+                namespace='qdhcp-ns')
+
+            mgr.driver.init_l3.reset_mock()
+            network = FakeDualNetwork()
+            mgr.setup(network)
+
+            # There should be an IPv6 metadata address as we used a network
+            # with both IPv4 and IPv6 subnets
+            mgr.driver.init_l3.assert_called_with(
+                'ns-XXX',
+                ['192.168.0.1/24', 'fdca:3ba5:a17a:4ba3::1/64',
+                 '169.254.169.254/32', 'fe80::a9fe:a9fe/128'],
+                namespace='qdhcp-ns')
+
     def _test_setup_reserved(self, enable_isolated_metadata=False,
                              force_metadata=False):
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
