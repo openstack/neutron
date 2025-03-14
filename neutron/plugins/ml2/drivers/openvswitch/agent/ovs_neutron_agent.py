@@ -1267,8 +1267,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # Do not bind a port if it's already bound
             cur_tag = tags_by_name.get(port.port_name)
             if cur_tag is None:
-                LOG.debug("Port %s was deleted concurrently, skipping it",
-                          port.port_name)
+                LOG.info("During port binding, port %s was deleted "
+                         "concurrently, skipping it", port.port_name)
                 continue
             if self.prevent_arp_spoofing:
                 self.setup_arp_spoofing_protection(self.int_br,
