@@ -492,6 +492,9 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         if not cfg.CONF.network_auto_schedule:
             return
         segment_plugin = directory.get_plugin('segments')
+        if not segment_plugin:
+            return
+
         dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
         segment_ids = payload.metadata.get('current_segment_ids')
         segments = segment_plugin.get_segments(
