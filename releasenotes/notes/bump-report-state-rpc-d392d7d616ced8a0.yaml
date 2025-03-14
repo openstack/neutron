@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Add new `get_agents` method to PluginReportStateAPI which fetches list of
+    agents depending on provided filters.
+  - |
+    Add new `delete_agent` method to PluginReportStateAPI which deletes the
+    agent.
+upgrade:
+  - |
+    PluginReportStateAPI has a new version 1.4.
+

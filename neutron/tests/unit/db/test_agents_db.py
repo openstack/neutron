@@ -385,3 +385,22 @@ class TestAgentExtRpcCallback(TestAgentsDbBase):
     def test_has_alive_neutron_server(self):
         alive = self.callback.has_alive_neutron_server(self.context)
         self.assertTrue(alive)
+
+    def test_delete_agent(self):
+        with mock.patch.object(agent_obj, 'Agent',
+                               autospec=True) as mock_agent:
+            fake_agent = mock.Mock()
+            mock_agent.get_object.return_value = fake_agent
+            kwargs = {'host': 'test-host',
+                      'agent_type': 'test-agent-type'}
+            self.callback.delete_agent(self.context, **kwargs)
+            mock_agent.get_object.assert_called_once_with(
+                self.context, **kwargs)
+            fake_agent.delete.assert_called_once()
+
+    def test_get_agents(self):
+        with mock.patch.object(agent_obj.Agent, 'get_objects') as mock_get:
+            host = 'test-host'
+            self.callback.get_agents(self.context, host=host,
+                                     is_active=False)
+            mock_get.assert_called_once_with(self.context, host=host)
