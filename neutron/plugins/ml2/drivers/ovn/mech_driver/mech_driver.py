@@ -1490,11 +1490,6 @@ def delete_agent(self, context, id, _driver=None):
         'SB_Global', '.', 'external_ids', delete_agent=str(id),
         if_exists=True).execute(check_error=True)
 
-    try:
-        n_agent.AgentCache().delete(id)
-    except KeyError:
-        LOG.debug('OVN agent %s has been deleted concurrently', id)
-
 
 def get_availability_zones(cls, context, _driver, filters=None, fields=None,
                            sorts=None, limit=None, marker=None,
