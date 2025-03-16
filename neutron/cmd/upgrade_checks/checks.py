@@ -103,13 +103,6 @@ def table_exists(table_name):
         return table_name in tables
 
 
-def get_ovn_db_revisions():
-    ctx = context.get_admin_context()
-    with db_api.CONTEXT_READER.using(ctx):
-        return [row[0] for row in ctx.session.execute(
-            "SELECT version_num from %s;" % OVN_ALEMBIC_TABLE_NAME)]  # nosec
-
-
 def count_vlan_allocations_invalid_segmentation_id():
     ctx = context.get_admin_context()
     with db_api.CONTEXT_READER.using(ctx):
@@ -214,8 +207,6 @@ class CoreChecks(base.BaseChecks):
     def get_checks(self):
         return [
             (_("Worker counts configured"), self.worker_count_check),
-            (_("Networking-ovn database revision"),
-             self.ovn_db_revision_check),
             (_("NIC Switch agent check kernel"),
              self.nic_switch_agent_min_kernel_check),
             (_("VLAN allocations valid segmentation ID check"),
@@ -282,30 +273,6 @@ class CoreChecks(base.BaseChecks):
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
             _("The 'mtu' attribute of all networks are set."))
-
-    @staticmethod
-    def ovn_db_revision_check(checker):
-        if not cfg.CONF.database.connection:
-            return upgradecheck.Result(
-                upgradecheck.Code.WARNING,
-                _("Database connection string is not set. Check of "
-                  "networking-ovn database revision can't be done."))
-        if not table_exists(OVN_ALEMBIC_TABLE_NAME):
-            return upgradecheck.Result(
-                upgradecheck.Code.SUCCESS,
-                _("Networking-ovn alembic version table don't exists in "
-                  "the database yet."))
-        revisions = get_ovn_db_revisions()
-        if (LAST_NETWORKING_OVN_EXPAND_HEAD not in revisions or
-                LAST_NETWORKING_OVN_CONTRACT_HEAD not in revisions):
-            return upgradecheck.Result(
-                upgradecheck.Code.FAILURE,
-                _("Networking-ovn database tables are not up to date. "
-                  "Please firts update networking-ovn to the latest version "
-                  "from Train release."))
-        return upgradecheck.Result(
-            upgradecheck.Code.SUCCESS,
-            _("Networking-ovn database tables are up to date."))
 
     @staticmethod
     def nic_switch_agent_min_kernel_check(checker):
