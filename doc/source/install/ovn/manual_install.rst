@@ -103,6 +103,26 @@ information.
         that run ovn-controller, and compute node services like ovn-controller
         and ovn-metadata-agent. 6641 (NBDB) to hosts running neutron-server.
 
+    * Since we are using ``options:redirect-type`` set to ``bridged`` for Logical
+      Router Ports in VLAN and FLAT networks, OVN redirects packets to the
+      gateway chassis using the localnet port of the  router’s  peer  logical
+      switch, instead of a tunnel. If ``external-ids:ovn-chassis-mac-mappings`` is
+      not configured reply packets from VM on compute node leave physnet with
+      source MAC address of Neutron Logical Router Port. Which cause MAC jump over
+      computes and gateways. To avoid this setting
+      ``external-ids:ovn-chassis-mac-mappings`` for each physnet with unique MAC
+      address on each compute is required.
+
+      Below you can find example how to set ``ovn-chassis-mac-mappings`` for
+      compute host with two physical networks ``physnet1`` and ``physnet2``.
+      For example you can take MAC address from physical interface that is plugged
+      into physnet.
+
+     .. code-block:: console
+
+        # ovs-vsctl set open . external-ids:ovn-chassis-mac-mappings=\
+            physnet1:aa:bb:cc:dd:ee:ff,physnet2:aa:bb:cc:dd:ee:fe
+
 #. Start the ``ovn-northd`` service.
 
    Using the *systemd* unit:
