@@ -42,6 +42,7 @@ RELEASE_2023_2 = '2023.2'
 RELEASE_2024_1 = '2024.1'
 RELEASE_2024_2 = '2024.2'
 RELEASE_2025_1 = '2025.1'
+RELEASE_2025_2 = '2025.2'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
@@ -64,6 +65,7 @@ NEUTRON_MILESTONES = [
     RELEASE_2023_2,
     RELEASE_2024_1,
     RELEASE_2024_2,
+    RELEASE_2025_1,
     # Do not add the milestone until the end of the release
 ]
 
