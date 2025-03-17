@@ -27,7 +27,6 @@ from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib.services import constants as service_const
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_policy import opts
 from oslo_policy import policy
@@ -289,7 +288,8 @@ class OwnerCheck(policy.Check):
         return OwnerCheck(self._orig_kind, self._orig_match)
 
     @cache.cache_method_results
-    def _extract(self, resource_type, resource_id, field):
+    def _extract(self, resource_type, resource_id, field,
+                 retry_if_not_found=True):
         # NOTE(salv-orlando): This check currently assumes the parent
         # resource is handled by the core plugin. It might be worth
         # having a way to map resources to plugins so to make this
@@ -306,12 +306,15 @@ class OwnerCheck(policy.Check):
                      resource_id,
                      fields=[field])
         except exceptions.NotFound as e:
-            # NOTE(kevinbenton): a NotFound exception can occur if a
+            # NOTE(kevinbenton, slaweq): a NotFound exception can occur if a
             # list operation is happening at the same time as one of
             # the parents and its children being deleted. So we issue
-            # a RetryRequest so the API will redo the lookup and the
+            # retry to get it once again if we didn't yet.
             # problem items will be gone.
-            raise db_exc.RetryRequest(e)
+            if retry_if_not_found:
+                return self._extract(resource_type, resource_id, field,
+                                     retry_if_not_found=False)
+            raise e
         except Exception:
             with excutils.save_and_reraise_exception():
                 LOG.exception('Policy check error while calling %s!', f)
