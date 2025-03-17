@@ -173,7 +173,8 @@ IP address and netmask, and this example would be written as
 
    Creating CIDR subnets including a multicast address or a loopback address
    cannot be used in an OpenStack environment. For example, creating a subnet
-   using ``224.0.0.0/16`` or ``127.0.1.0/24`` is not supported.
+   which is part of ``224.0.0.0/4`` or ``127.0.0.0/8`` address blocks
+   is not supported.
 
 Sometimes we want to refer to a subnet, but not any particular IP
 address on the subnet. A common convention is to set the host
