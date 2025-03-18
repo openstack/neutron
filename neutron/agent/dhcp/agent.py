@@ -782,7 +782,9 @@ class DhcpAgent(manager.Manager):
                     self._metadata_routers[network.id] = (
                         router_ports[0].device_id)
 
-        if netutils.is_ipv6_enabled():
+        need_ipv6_metadata = any(subnet.ip_version == constants.IP_VERSION_6
+                                 for subnet in network.subnets)
+        if need_ipv6_metadata and netutils.is_ipv6_enabled():
             try:
                 dhcp_ifaces = [
                     self.call_driver(
