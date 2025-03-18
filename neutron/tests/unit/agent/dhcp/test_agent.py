@@ -103,6 +103,15 @@ fake_meta_subnet = dhcp.DictModel(dict(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                                        enable_dhcp=True,
                                        ip_version=const.IP_VERSION_4))
 
+fake_meta_v6_subnet = dhcp.DictModel(dict(id='bbbbbbbb-3333-4444-bbbbbbbbbbbb',
+                                          network_id=FAKE_NETWORK_UUID,
+                                          cidr='2001:0db8::0/64',
+                                          gateway_ip='2001:0db8::1',
+                                          enable_dhcp=True,
+                                          ip_version=const.IP_VERSION_6,
+                                          ipv6_ra_mode='slaac',
+                                          ipv6_address_mode=None))
+
 fake_fixed_ip1 = dhcp.DictModel(id='', subnet_id=fake_subnet1.id,
                                 ip_address='172.9.9.9')
 fake_fixed_ip_subnet2 = dhcp.DictModel(id='', subnet_id=fake_subnet2.id,
@@ -247,14 +256,31 @@ fake_meta_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
                                   subnets=[fake_meta_subnet],
                                   ports=[fake_meta_port])
 
+fake_meta_dual_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
+                                       project_id=FAKE_PROJECT_ID,
+                                       admin_state_up=True,
+                                       subnets=[fake_meta_subnet,
+                                                fake_meta_v6_subnet],
+                                       ports=[fake_meta_port])
+
 fake_meta_dvr_network = dhcp.NetModel(fake_meta_network)
 fake_meta_dvr_network['ports'] = [fake_meta_dvr_port]
+
+fake_meta_dvr_dual_network = dhcp.NetModel(fake_meta_dual_network)
+fake_meta_dvr_dual_network['ports'] = [fake_meta_dvr_port]
 
 fake_dist_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
                                   project_id=FAKE_PROJECT_ID,
                                   admin_state_up=True,
                                   subnets=[fake_meta_subnet],
                                   ports=[fake_meta_port, fake_dist_port])
+
+fake_dist_dual_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
+                                       project_id=FAKE_PROJECT_ID,
+                                       admin_state_up=True,
+                                       subnets=[fake_meta_subnet,
+                                                fake_meta_v6_subnet],
+                                       ports=[fake_meta_port, fake_dist_port])
 
 fake_down_network = dhcp.NetModel(id='12345678-dddd-dddd-1234567890ab',
                                   project_id=FAKE_PROJECT_ID,
@@ -1151,7 +1177,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                           bind_address_v6='fe80::a9fe:a9fe')
 
     def test_enable_isolated_metadata_proxy_with_metadata_network_ipv6(self):
-        network = copy.deepcopy(fake_meta_network)
+        network = copy.deepcopy(fake_meta_dual_network)
         dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
         dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
             network.id, self.dhcp.conf.host)
@@ -1160,7 +1186,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_enable_isolated_metadata_proxy_with_metadata_network_dvr_ipv6(
             self):
-        network = copy.deepcopy(fake_meta_dvr_network)
+        network = copy.deepcopy(fake_meta_dvr_dual_network)
         dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
         dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
             network.id, self.dhcp.conf.host)
@@ -1168,7 +1194,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self._test_enable_isolated_metadata_proxy_ipv6(network)
 
     def test_enable_isolated_metadata_proxy_with_dist_network_ipv6(self):
-        network = copy.deepcopy(fake_dist_network)
+        network = copy.deepcopy(fake_dist_dual_network)
         dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
         dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
             network.id, self.dhcp.conf.host)
@@ -1176,7 +1202,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self._test_enable_isolated_metadata_proxy_ipv6(network)
 
     def test_enable_isolated_metadata_proxy_with_2_agents_network_ipv6(self):
-        network = copy.deepcopy(fake_meta_network)
+        network = copy.deepcopy(fake_meta_dual_network)
         dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
         dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
             network.id, self.dhcp.conf.host)
