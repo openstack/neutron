@@ -55,7 +55,7 @@ NEUTRON_MILESTONES = [
     WALLABY,
     XENA,
     YOGA,
-    RELEASE_2023_1,
+    ZED,
     # Do not add the milestone until the end of the release
 ]
 
