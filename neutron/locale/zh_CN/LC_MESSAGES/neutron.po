@@ -18,7 +18,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2024-11-14 19:41+0000\n"
+"POT-Creation-Date: 2025-03-17 10:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -96,11 +96,6 @@ msgstr "0不允许作为CIDR前缀长度"
 
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr "在缺少子网池的情况下，必须指定 cidr"
-
-msgid ""
-"A decimal value as Vendor's Registered Private Enterprise Number as required "
-"by RFC3315 DUID-EN."
-msgstr "作为 RFC3315 DUID-EN 所需要的供应商的已注册私营企业号的十进制值。"
 
 #, python-format
 msgid "A default external network already exists: %(net_id)s."
@@ -303,9 +298,6 @@ msgstr "检查OVS vxlan支持"
 msgid "Check for iproute2 vxlan support"
 msgstr "检查 iproute2 vxlan 支持"
 
-msgid "Check for nova notification support"
-msgstr "检查 nova 通知支持"
-
 msgid "Check for patch port support"
 msgstr "检查补丁端口支持"
 
@@ -317,9 +309,6 @@ msgstr "检查 ipset 安装"
 
 msgid "Check keepalived IPv6 support"
 msgstr "检查保持活动的 IPv6 支持"
-
-msgid "Check minimal dibbler version"
-msgstr "检查最低点播器版本"
 
 msgid "Check minimal dnsmasq version"
 msgstr "检查最小 dnsmasq 版本"
@@ -877,9 +866,6 @@ msgstr "L3 代理程序无法设置浮动 IP"
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "请对租赁数进行限制，以防止拒绝服务。"
 
-msgid "List of <physical_network>:<physical_bridge>"
-msgstr "<physical_network>:<physical_bridge> 的列表"
-
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
@@ -1110,13 +1096,6 @@ msgstr "同步过程中要使用的线程数。不应超过在服务器上配置
 
 msgid "OK"
 msgstr "确定"
-
-msgid ""
-"OVS datapath to use. 'system' is the default value and corresponds to the "
-"kernel datapath. To enable the userspace datapath set this value to 'netdev'."
-msgstr ""
-"要使用的 OVS 数据路径。“system”是缺省值，对应内核数据路径，要启用用户空间数据"
-"路径，请将此值设置为“netdev”。"
 
 msgid "OVS vhost-user socket directory."
 msgstr "OVS vhost-user 套接字目录。"
@@ -1353,9 +1332,6 @@ msgid ""
 "Service provider '%(provider)s' could not be found for service type "
 "%(service_type)s"
 msgstr "对于以下服务类型，找不到服务提供程序“%(provider)s”：%(service_type)s"
-
-msgid "Service to handle DHCPv6 Prefix delegation."
-msgstr "用来处理 DHCPv6 前缀授权的服务。"
 
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
@@ -1622,21 +1598,6 @@ msgstr "VRRP认证密码"
 
 msgid "VRRP authentication type"
 msgstr "VRRP认证类型"
-
-msgid ""
-"Value of host kernel tick rate (hz) for calculating minimum burst value in "
-"bandwidth limit rules for a port with QoS. See kernel configuration file for "
-"HZ value and tc-tbf manual for more information."
-msgstr ""
-"主机内核节拍率的值 (hz)，用于计算带有 QoS 的端口的带宽限制规则中的最小脉冲"
-"值。请参阅内核配置文件以获取 HZ 值，并参阅 tc-tbf 手册以获取更多信息。"
-
-msgid ""
-"Value of latency (ms) for calculating size of queue for a port with QoS. See "
-"tc-tbf manual for more information."
-msgstr ""
-"延迟值 (ms)，用于计算带有 QoS 的端口的队列的大小。请参阅 tc-tbf 手册以了解更"
-"多信息。"
 
 msgid ""
 "Where to store Neutron state files. This directory must be writable by the "

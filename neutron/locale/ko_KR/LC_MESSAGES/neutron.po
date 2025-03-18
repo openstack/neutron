@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2024-11-14 19:41+0000\n"
+"POT-Creation-Date: 2025-03-17 10:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -97,13 +97,6 @@ msgstr "0은 CIDR 접두부 길이로 허용되지 않음"
 
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr "서브넷 풀이 없는 경우 cidr을 지정해야 함"
-
-msgid ""
-"A decimal value as Vendor's Registered Private Enterprise Number as required "
-"by RFC3315 DUID-EN."
-msgstr ""
-"RFC3315 DUID-EN에서 요구하는 대로 벤더의 등록된 개인용 엔터프라이즈 번호로서"
-"의 10진수 값입니다. "
 
 #, python-format
 msgid "A default external network already exists: %(net_id)s."
@@ -309,9 +302,6 @@ msgstr "OVS vxlan 지원 확인"
 msgid "Check for iproute2 vxlan support"
 msgstr "iproute2 vxlan 지원 확인"
 
-msgid "Check for nova notification support"
-msgstr "nova 알림 지원 확인"
-
 msgid "Check for patch port support"
 msgstr "패치 포트 지원 확인"
 
@@ -323,9 +313,6 @@ msgstr "ipset 설치 확인"
 
 msgid "Check keepalived IPv6 support"
 msgstr "keepalived IPv6 지원 확인"
-
-msgid "Check minimal dibbler version"
-msgstr "최소 dibbler 버전 확인"
 
 msgid "Check minimal dnsmasq version"
 msgstr "최소 dnsmasq 버전 확인"
@@ -920,9 +907,6 @@ msgstr "L3 에이전트에서 Floating IP 설정 실패"
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "서비스 거부(DoS)를 막기 위해 리스 수를 제한합니다."
 
-msgid "List of <physical_network>:<physical_bridge>"
-msgstr "<physical_network>:<physical_bridge>의 목록"
-
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
@@ -1163,13 +1147,6 @@ msgstr ""
 
 msgid "OK"
 msgstr "OK"
-
-msgid ""
-"OVS datapath to use. 'system' is the default value and corresponds to the "
-"kernel datapath. To enable the userspace datapath set this value to 'netdev'."
-msgstr ""
-"사용할 OVS 데이터 경로입니다. '시스템'은 기본값이며 커널 데이터 경로에 해당합"
-"니다. 사용자 공간 데이터 경로를 사용하려면 이 값을 'netdev'로 설정하십시오."
 
 msgid "OVS vhost-user socket directory."
 msgstr "OVS vhost-사용자 소켓 디렉토리."
@@ -1416,9 +1393,6 @@ msgid ""
 msgstr ""
 "서비스 유형에 대한 '%(provider)s' 서비스 제공자를 찾을 수 없음: "
 "%(service_type)s"
-
-msgid "Service to handle DHCPv6 Prefix delegation."
-msgstr "DHCPv6 접두부 위임을 처리할 서비스입니다. "
 
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
@@ -1699,22 +1673,6 @@ msgstr "VRRP 인증 비밀번호"
 
 msgid "VRRP authentication type"
 msgstr "VRRP 인증 유형"
-
-msgid ""
-"Value of host kernel tick rate (hz) for calculating minimum burst value in "
-"bandwidth limit rules for a port with QoS. See kernel configuration file for "
-"HZ value and tc-tbf manual for more information."
-msgstr ""
-"QoS가 있는 포트의 대역폭 한계 규칙에서 최소 버스트 값을 계산하기 위한 호스트 "
-"커널 틱(tick) 속도(hz) 값입니다. 자세한 내용은 HZ 값 및 tc-tbf 매뉴얼의 커널 "
-"구성 파일을 참조하십시오."
-
-msgid ""
-"Value of latency (ms) for calculating size of queue for a port with QoS. See "
-"tc-tbf manual for more information."
-msgstr ""
-"QoS가 있는 포트의 큐 크기를 계산하기 위한 지연 시간 값(ms)입니다. 자세한 정보"
-"는 tc-tbf 매뉴얼을 참조하십시오."
 
 msgid ""
 "Where to store Neutron state files. This directory must be writable by the "

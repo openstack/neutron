@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2024-11-14 19:41+0000\n"
+"POT-Creation-Date: 2025-03-17 10:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -86,11 +86,6 @@ msgstr "不接受 0 作為 CIDR 字首長度"
 
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr "如果未指定子網路儲存區，則必須指定 cidr"
-
-msgid ""
-"A decimal value as Vendor's Registered Private Enterprise Number as required "
-"by RFC3315 DUID-EN."
-msgstr "十進位值，依 RFC3315 DUID-EN 的需要，作為供應商的已登錄專用企業號碼。"
 
 #, python-format
 msgid "A default external network already exists: %(net_id)s."
@@ -289,9 +284,6 @@ msgstr "檢查 OVS vxlan 支援"
 msgid "Check for iproute2 vxlan support"
 msgstr "檢查 iproute2 vxlan 支援"
 
-msgid "Check for nova notification support"
-msgstr "檢查 Nova 通知支援"
-
 msgid "Check for patch port support"
 msgstr "檢查修補程式埠支援"
 
@@ -303,9 +295,6 @@ msgstr "檢查 ipset 安裝"
 
 msgid "Check keepalived IPv6 support"
 msgstr "檢查 keepalived IPv6 支援"
-
-msgid "Check minimal dibbler version"
-msgstr "檢查 dibbler 版本下限"
 
 msgid "Check minimal dnsmasq version"
 msgstr "檢查最低 dnsmasq 版本"
@@ -863,9 +852,6 @@ msgstr "L3 代理程式無法設定浮動 IP"
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "限制租賃次數以防止阻斷服務攻擊。"
 
-msgid "List of <physical_network>:<physical_bridge>"
-msgstr "<physical_network>:<physical_bridge> 的清單"
-
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
@@ -1098,13 +1084,6 @@ msgstr ""
 
 msgid "OK"
 msgstr "確定"
-
-msgid ""
-"OVS datapath to use. 'system' is the default value and corresponds to the "
-"kernel datapath. To enable the userspace datapath set this value to 'netdev'."
-msgstr ""
-"要使用的 OVS 資料路徑。'system' 是預設值，且與核心資料路徑對應。如果要啟用使"
-"用者空間資料路徑，請將此值設為 'netdev'。"
 
 msgid "OVS vhost-user socket directory."
 msgstr "OVS vhost 使用者 Socket 目錄。"
@@ -1339,9 +1318,6 @@ msgid ""
 "Service provider '%(provider)s' could not be found for service type "
 "%(service_type)s"
 msgstr "找不到服務類型 %(service_type)s 的服務提供者 '%(provider)s'"
-
-msgid "Service to handle DHCPv6 Prefix delegation."
-msgstr "用於處理 DHCPv6 字首委派的服務。"
 
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
@@ -1609,21 +1585,6 @@ msgstr "VRRP 鑑別密碼"
 
 msgid "VRRP authentication type"
 msgstr "VRRP 鑑別類型"
-
-msgid ""
-"Value of host kernel tick rate (hz) for calculating minimum burst value in "
-"bandwidth limit rules for a port with QoS. See kernel configuration file for "
-"HZ value and tc-tbf manual for more information."
-msgstr ""
-"主機核心記號率 (hz) 的值，用來透過服務品質計算埠的頻寬限制規則中的激增值下"
-"限。如需相關資訊，請參閱 HZ 值的核心配置檔和 tc-tbf 手冊。"
-
-msgid ""
-"Value of latency (ms) for calculating size of queue for a port with QoS. See "
-"tc-tbf manual for more information."
-msgstr ""
-"透過服務品質來計算埠的佇列大小時的延遲值（毫秒）。如需相關資訊，請參閱 tc-"
-"tbf 手冊。"
 
 msgid ""
 "Where to store Neutron state files. This directory must be writable by the "

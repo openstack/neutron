@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2024-11-14 19:41+0000\n"
+"POT-Creation-Date: 2025-03-17 10:43+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -90,13 +90,6 @@ msgstr "0 não é permitido como um comprimento do prefixo CIDR"
 
 msgid "A cidr must be specified in the absence of a subnet pool"
 msgstr "Um cidr deve ser especificado na ausência de um conjunto de sub-rede"
-
-msgid ""
-"A decimal value as Vendor's Registered Private Enterprise Number as required "
-"by RFC3315 DUID-EN."
-msgstr ""
-"Um valor decimal, como o Número de Empresa Privada Registrada do Fornecedor, "
-"conforme requerido pelo RFC3315 DUID-EN."
 
 #, python-format
 msgid "A default external network already exists: %(net_id)s."
@@ -316,9 +309,6 @@ msgstr "Verifique o suporte do vxlan do OVS"
 msgid "Check for iproute2 vxlan support"
 msgstr "Verifique o suporte do vxlan do iproute2"
 
-msgid "Check for nova notification support"
-msgstr "Verifique suporte para nova notificação"
-
 msgid "Check for patch port support"
 msgstr "Verifique o suporte para a porta de correção"
 
@@ -330,9 +320,6 @@ msgstr "Verificar instalação do ipset"
 
 msgid "Check keepalived IPv6 support"
 msgstr "Verificar suporte a keepalived IPv6"
-
-msgid "Check minimal dibbler version"
-msgstr "Verificar versão do dibbler mínima"
 
 msgid "Check minimal dnsmasq version"
 msgstr "Verifique a versão dnsmasq mínima"
@@ -947,9 +934,6 @@ msgstr "Falha do agente L3 ao configurar IPs flutuantes"
 msgid "Limit number of leases to prevent a denial-of-service."
 msgstr "Limitar o número de concessões para impedir uma negação de serviço."
 
-msgid "List of <physical_network>:<physical_bridge>"
-msgstr "Lista de <physical_network>:<physical_bridge>"
-
 msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
@@ -1211,14 +1195,6 @@ msgstr ""
 msgid "OK"
 msgstr "OK"
 
-msgid ""
-"OVS datapath to use. 'system' is the default value and corresponds to the "
-"kernel datapath. To enable the userspace datapath set this value to 'netdev'."
-msgstr ""
-"O caminho de dados do OVS a ser utilizado. 'system' é o valor padrão e "
-"corresponde ao caminho de dados do kernel. Para ativar o caminho de dados do "
-"espaço do usuário, configure esse valor para 'netdev'."
-
 msgid "OVS vhost-user socket directory."
 msgstr "O diretório de soquete do usuário vhost do OVS."
 
@@ -1476,9 +1452,6 @@ msgid ""
 msgstr ""
 "Provedor de serviço '%(provider)s' não pôde ser encontrado para o tipo de "
 "serviço %(service_type)s"
-
-msgid "Service to handle DHCPv6 Prefix delegation."
-msgstr "Serviço para manipular a delegação de Prefixo DHCPv6."
 
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
@@ -1765,23 +1738,6 @@ msgstr "Senha de autenticação do VRRP"
 
 msgid "VRRP authentication type"
 msgstr "Tipo de autenticação do VRRP"
-
-msgid ""
-"Value of host kernel tick rate (hz) for calculating minimum burst value in "
-"bandwidth limit rules for a port with QoS. See kernel configuration file for "
-"HZ value and tc-tbf manual for more information."
-msgstr ""
-"Valor da taxa tick (hz) do kernel do host para calcular o valor de burst "
-"mínimo nas regras de limite de largura da banda para uma porta com QoS. "
-"Consulte o arquivo de configuração do kernel para obter o valor de HZ e o "
-"manual tc-tbf para obter mais informações."
-
-msgid ""
-"Value of latency (ms) for calculating size of queue for a port with QoS. See "
-"tc-tbf manual for more information."
-msgstr ""
-"Valor de latência (ms) para calcular o tamanho da fila de uma porta com QoS. "
-"Consulte o manual tc-tbf para obter mais informações."
 
 msgid ""
 "Where to store Neutron state files. This directory must be writable by the "
