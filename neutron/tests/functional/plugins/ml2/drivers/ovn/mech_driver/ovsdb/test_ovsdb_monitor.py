@@ -28,6 +28,7 @@ from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
+from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 import tenacity
 
 from neutron.common.ovn import constants as ovn_const
@@ -43,6 +44,7 @@ from neutron.tests.functional.resources.ovsdb import fixtures
 from neutron.tests.functional.resources import process
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_l3
+from neutron.tests.unit import testlib_api
 
 
 class WaitForDataPathBindingCreateEvent(event.WaitEvent):
@@ -85,10 +87,12 @@ class GlobalTestEvent(DistributedLockTestEvent):
     GLOBAL = True
 
 
-class TestNBDbMonitor(base.TestOVNFunctionalBase):
+class TestNBDbMonitor(testlib_api.MySQLTestCaseMixin,
+                      base.TestOVNFunctionalBase):
 
     def setUp(self):
         super(TestNBDbMonitor, self).setUp()
+        self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
         self.chassis = self.add_fake_chassis('ovs-host1')
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         self.net = self._make_network(self.fmt, 'net1', True)
