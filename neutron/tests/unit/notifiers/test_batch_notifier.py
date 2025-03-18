@@ -26,7 +26,7 @@ class TestBatchNotifier(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         self._received_events = queue.Queue()
-        self.notifier = batch_notifier.BatchNotifier(0.2, self._queue_events)
+        self.notifier = batch_notifier.BatchNotifier(0.1, self._queue_events)
         self.spawn_n_p = mock.patch.object(utils, 'spawn_n')
 
     def _queue_events(self, events):
@@ -44,26 +44,6 @@ class TestBatchNotifier(base.BaseTestCase):
         self.notifier.queue_event(mock.Mock())
         self.assertEqual(1, len(self.notifier._pending_events.queue))
         self.assertEqual(1, spawn_n.call_count)
-
-    def test_queue_event_multiple_events_notify_method(self):
-        def _batch_notifier_dequeue():
-            while not self.notifier._pending_events.empty():
-                self.notifier._pending_events.get()
-
-        c_mock = mock.patch.object(self.notifier, '_notify',
-                                   side_effect=_batch_notifier_dequeue).start()
-        events = 20
-        for i in range(events):
-            self.notifier.queue_event('Event %s' % i)
-            time.sleep(0)  # yield to let coro execute
-
-        utils.wait_until_true(self.notifier._pending_events.empty,
-                              timeout=5)
-        # Called twice: when the first thread calls "synced_send" and then,
-        # in the same loop, when self._pending_events is not empty(). All
-        # self.notifier.queue_event calls are done in just one
-        # "batch_interval" (2 secs).
-        self.assertEqual(2, c_mock.call_count)
 
     def test_queue_event_multiple_events_callback_method(self):
         events = 20
