@@ -16,6 +16,8 @@
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db import migration
+
 
 # Add qinq column to the Network table
 #
@@ -26,6 +28,9 @@ import sqlalchemy as sa
 # revision identifiers, used by Alembic.
 revision = 'ad80a9f07c5c'
 down_revision = '5bcb7b31ec7d'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2025_1]
 
 
 def upgrade():
