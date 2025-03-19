@@ -18,8 +18,6 @@ from neutron_lib import constants as n_const
 from neutron_lib.db import constants as db_const
 import sqlalchemy as sa
 
-from neutron.db import migration
-
 
 """qos_minimum_packet_rate_rules
 
@@ -32,9 +30,6 @@ Create Date: 2021-07-09 15:47:46.826903
 # revision identifiers, used by Alembic.
 revision = 'c181bb1d89e4'
 down_revision = '1bb3393de75d'
-
-# milestone identifier, used by neutron-db-manage
-neutron_milestone = [migration.YOGA]
 
 
 def upgrade():
