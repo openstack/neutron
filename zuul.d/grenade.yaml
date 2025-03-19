@@ -403,11 +403,11 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is Caracal (2024.1) because master is
-      # Epoxy (2025.1).
-      # When master is F (2025.2), this should become Dalmatian (2024.2),
+      # target release. Right now, this is Dalmatian (2024.2) because master is
+      # Flamingo (2025.2).
+      # When master is G (2026.1), this should become Epoxy (2025.1),
       # and so forth.
-      grenade_from_branch: stable/2024.1
+      grenade_from_branch: stable/2024.2
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
       grenade_devstack_localrc:
@@ -429,11 +429,11 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is Caracal (2024.1) because master is
-      # Epoxy (2025.1).
-      # When master is F (2025.2), this should become Dalmatian (2024.2),
+      # target release. Right now, this is Dalmatian (2024.2) because master is
+      # Flamingo (2025.2).
+      # When master is G (2026.1), this should become Epoxy (2025.1),
       # and so forth.
-      grenade_from_branch: stable/2024.1
+      grenade_from_branch: stable/2024.2
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
       grenade_devstack_localrc:
