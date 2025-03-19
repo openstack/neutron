@@ -228,3 +228,34 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
                           common_utils.wait_until_true,
                           lambda: mock_send_placement.called,
                           timeout=2)
+
+    @mock.patch.object(placement_extension, '_send_deferred_batch')
+    def test_chassis_bandwidth_initial_config_event(self, mock_send_placement):
+        ch_name = uuidutils.generate_uuid()
+        rp_uuid = uuidutils.generate_uuid()
+        ch_event = test_ovsdb_monitor.WaitForChassisPrivateCreateEvent(ch_name)
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(ch_event)
+        self.mock_name2uuid.return_value = {'host1': rp_uuid}
+        self._create_chassis(
+            'host1', ch_name, physical_nets=['phys1'],
+            bandwidths='br-provider0:1000:2000',
+            inventory_defaults='allocation_ratio:1.0;min_unit:2',
+            hypervisors='br-provider0:host1')
+        self.assertTrue(ch_event.wait())
+        common_utils.wait_until_true(lambda: mock_send_placement.called,
+                                     timeout=2)
+        mock_send_placement.assert_called_once()
+        placement_state = mock_send_placement.call_args[0][0]
+
+        device_mappings = {'phys1': ['br-provider0']}
+        self.assertEqual(placement_state._device_mappings, device_mappings)
+
+        hypervisor_rps = {'br-provider0': {'name': 'host1', 'uuid': rp_uuid}}
+        self.assertEqual(placement_state._hypervisor_rps, hypervisor_rps)
+
+        rp_bandwidths = {'br-provider0': {'egress': 1000, 'ingress': 2000}}
+        self.assertEqual(placement_state._rp_bandwidths, rp_bandwidths)
+
+        rp_inventory_defaults = {'allocation_ratio': 1.0, 'min_unit': 2}
+        self.assertEqual(placement_state._rp_inventory_defaults,
+                         rp_inventory_defaults)
