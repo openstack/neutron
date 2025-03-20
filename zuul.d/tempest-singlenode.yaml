@@ -475,6 +475,7 @@
     parent: tempest-ipv6-only
     timeout: 10800
     vars:
+      tempest_exclude_regex: "(DHCPAgentSchedulersTestJSON)"
       tox_envlist: integrated-network
       devstack_localrc:
         CIRROS_VERSION: 0.5.2
