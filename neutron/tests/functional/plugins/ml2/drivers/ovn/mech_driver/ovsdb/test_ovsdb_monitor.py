@@ -69,6 +69,21 @@ class WaitForChassisPrivateCreateEvent(event.WaitEvent):
         super().__init__(events, 'Chassis_Private', conditions, timeout=15)
 
 
+class WaitForChassisAgentDeleteEvent(event.WaitEvent):
+    event_name = 'WaitForChassisAgentDeleteEvent'
+
+    def __init__(self):
+        events = (self.ROW_UPDATE,)
+        super().__init__(events, 'SB_Global', {}, timeout=15)
+
+    def match_fn(self, event, row, old=None):
+        try:
+            return (old.external_ids.get('delete_agent') !=
+                    row.external_ids['delete_agent'])
+        except (AttributeError, KeyError):
+            return False
+
+
 class DistributedLockTestEvent(event.WaitEvent):
     ONETIME = False
     COUNTER = 0
@@ -807,6 +822,25 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         except n_utils.WaitTimeout:
             self.fail('Agent did not go up after sync is done')
         self.assertTrue(check_nb_cfg_timestamp_is_not_null())
+
+    def test_agent_removal(self):
+        agents = neutron_agent.AgentCache().get_agents()
+        agent_id = agents[0].agent_id
+
+        row_event = WaitForChassisAgentDeleteEvent()
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
+        # Send the SB_Global event to delete an agent from the local caches.
+        self.sb_api.db_set(
+            'SB_Global', '.',
+            ('external_ids', {'delete_agent': agent_id})).execute(
+            check_error=True)
+        self.sb_api.db_remove(
+            'SB_Global', '.', 'external_ids', delete_agent=agent_id,
+            if_exists=True).execute(check_error=True)
+
+        self.assertTrue(row_event.wait())
+        self.assertEqual([],
+                         neutron_agent.AgentCache().get_agents())
 
 
 class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):
