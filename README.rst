@@ -20,7 +20,7 @@ To learn more about neutron:
   * Source: https://opendev.org/openstack/neutron
 
 If you would like to contribute to Neutron, please read the file
-`CONTRIBUTING.rst <CONTRIBUTING.rst>`__ or see the Neutron contributor guide:
+`CONTRIBUTING.rst <./CONTRIBUTING.rst>`__ or see the Neutron contributor guide:
 
     https://docs.openstack.org/neutron/latest/contributor/contributing.html
 
