@@ -63,8 +63,18 @@ Release candidate (RC) process allows for stabilization of the final release.
 The following technical steps should be taken before the final release is cut
 off:
 
-#. the latest alembic scripts are tagged with a milestone label. For example,
-   see: https://review.opendev.org/c/openstack/neutron/+/755285/
+#. the latest alembic script of the version that is being released is tagged
+   with a milestone label; for example, in
+   https://review.opendev.org/c/openstack/neutron/+/944804 the latest script
+   is being tagged with ``RELEASE_2025_1``
+#. the new release tag must be created; using the previous example, the tag
+   ``RELEASE_2025_2`` is created.
+#. add the released version tag to the ``NEUTRON_MILESTONES`` list; in the
+   previous example, the tag ``RELEASE_2025_1`` is added to this list.
+#. update the ``CURRENT_RELEASE`` variable with the new tag created and
+   add it to the ``RELEASES`` tuple; in the previous example,
+   ``RELEASE_2025_2`` is added to the ``RELEASES`` tuple and used as the
+   current release milestone.
 
 In the new stable branch, you should make sure that:
 
@@ -98,12 +108,6 @@ In the new stable branch, you should make sure that:
 
 Note that some of those steps are covered by the OpenStack release team and its
 release bot.
-
-
-In the opened master branch, you should:
-
-#. update CURRENT_RELEASE in neutron.db.migration.cli to point to the next
-   release name.
 
 While preparing the next release and even in the middle of development, it's
 worth keeping the infrastructure clean. Consider using these tools to declutter
