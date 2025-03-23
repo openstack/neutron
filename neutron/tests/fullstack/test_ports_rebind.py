@@ -55,7 +55,7 @@ class TestPortsRebind(base.BaseFullStackTestCase):
             self.tenant_id, self.network['id'], '20.0.0.0/24')
 
     def _ensure_port_bound(self, port_id):
-        port = None
+        port = {}
 
         def port_bound():
             nonlocal port

@@ -151,18 +151,16 @@ class OVSBridgeTestBase(OVSBridgeTestMixin):
         cfg.OVS.of_listen_address = "127.0.0.1"
         cfg.OVS.of_listen_port = "6633"
 
-        m_get_controller = mock.patch.object(self.br, 'get_controller')
-        m_add_protocols = mock.patch.object(self.br, 'add_protocols')
-        m_set_controller = mock.patch.object(self.br, 'set_controller')
-        m_set_probe = mock.patch.object(self.br,
-                                        'set_controllers_inactivity_probe')
-        m_disable_in_band = mock.patch.object(self.br, 'disable_in_band')
-
-        with m_disable_in_band as disable_in_band, \
-                m_add_protocols as add_protocols, \
-                m_set_controller as set_controller, \
-                m_get_controller as get_controller, \
-                m_set_probe:
+        with mock.patch.object(
+            self.br, 'disable_in_band'
+        ) as disable_in_band, mock.patch.object(
+            self.br, 'add_protocols'
+        ) as add_protocols, mock.patch.object(
+            self.br, 'set_controller'
+        ) as set_controller, mock.patch.object(
+            self.br, 'get_controller'
+        ) as get_controller, mock.patch.object(
+                self.br, 'set_controllers_inactivity_probe'):
             get_controller.return_value = existing_controllers
 
             self.br.setup_controllers(cfg)

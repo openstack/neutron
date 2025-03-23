@@ -152,6 +152,7 @@ class TestAgentBandwidthReport(base.BaseFullStackTestCase):
         self.assertEqual(1, len(agents['agents']))
         self.assertTrue(agents['agents'][0]['alive'])
 
+        physnets = []
         agent_config = self.environment.hosts[0].l2_agent.agent_config
         if 'ovs' in self.environment.hosts[0].agents:
             physnets = _get_physnet_names_from_mapping(

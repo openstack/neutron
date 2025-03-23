@@ -223,7 +223,7 @@ class OvsdbServer(DaemonProcessFixture):
                 for connect in process.net_connections():
                     if connect.status == 'LISTEN':
                         return connect.laddr[1]
-                raise Exception(_("Could not find LISTEN port."))
+                raise Exception("Could not find LISTEN port.")
 
             if ovsdb_process['protocol'] != 'unix':
                 _set_connection()

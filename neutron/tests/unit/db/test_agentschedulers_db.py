@@ -1580,6 +1580,7 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
 
     def test_network_ha_port_create_notification(self):
         cfg.CONF.set_override('dhcp_agents_per_network', 3)
+        high_host = None
         hosts = [DHCP_HOSTA, DHCP_HOSTC, DHCP_HOSTD]
         net, subnet, port = self._network_port_create(hosts)
         for host_call in self.dhcp_notifier_cast.call_args_list:

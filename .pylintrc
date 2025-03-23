@@ -123,6 +123,10 @@ deprecated-modules=
 [TYPECHECK]
 # List of module names for which member attributes should not be checked
 ignored-modules=_MovedItems
+# List of decorators that change the signature of a decorated function
+signature-mutators=
+ unittest.mock.patch,
+ unittest.mock._patch_object
 
 [REPORTS]
 # Tells whether to display a full report or only the messages

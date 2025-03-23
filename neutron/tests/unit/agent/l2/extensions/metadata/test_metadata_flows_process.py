@@ -31,7 +31,7 @@ call = mock.call  # short hand
 class MetadataDataPathFlowsTestCase(ovs_bridge_test_base.OVSBridgeTestMixin):
 
     def setUp(self):
-        super(MetadataDataPathFlowsTestCase, self).setUp()
+        super().setUp()
         self.int_br = self.mock_bridge_cls('br-int', self.br_int_cls)
         self.path_br = self.mock_bridge_cls('br-phys', self.br_phys_cls)
         self.flows = metadata_flows_process.MetadataDataPathFlows()

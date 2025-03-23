@@ -792,7 +792,7 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
         self.assertEqual(set(), actual_hosts)
 
 
-class _TestMl2HostSegmentMappingOVS(object):
+class _TestMl2HostSegmentMappingOVS:
     _mechanism_drivers = ['openvswitch', 'logger']
     mock_path = 'neutron.services.segments.db.update_segment_host_mapping'
 

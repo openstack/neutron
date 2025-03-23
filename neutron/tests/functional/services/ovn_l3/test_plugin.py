@@ -755,7 +755,7 @@ class TestRouter(base.TestOVNFunctionalBase):
                           'Logical_Router', ovn_utils.ovn_name(router['id']))
         for lrp_name in lrps:
             if self.nb_api.bfd_find(
-                    lrp.name, default_gw).execute(check_error=True):
+                    lrp_name, default_gw).execute(check_error=True):
                 raise AssertionError('Unexpectedly found BFD rows.')
 
     def test_update_router_single_gw_bfd(self):

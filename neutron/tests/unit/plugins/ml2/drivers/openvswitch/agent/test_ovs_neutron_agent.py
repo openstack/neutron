@@ -1115,19 +1115,20 @@ class TestOvsNeutronAgent:
     def test_treat_devices_removed_ext_delete_port(self):
         port_id = 'fake-id'
 
-        m_delete = mock.patch.object(self.agent.ext_manager, 'delete_port')
-        m_rpc = mock.patch.object(self.agent.plugin_rpc, 'update_device_list',
-                                  return_value={'devices_up': [],
-                                                'devices_down': [],
-                                                'failed_devices_up': [],
-                                                'failed_devices_down': []})
-        m_unbound = mock.patch.object(self.agent, 'port_unbound')
-        with m_delete as delete, m_rpc, m_unbound:
-            with mock.patch.object(self.agent.int_br,
-                                   'get_vif_port_by_id',
-                                   return_value=None):
-                self.agent.treat_devices_removed([port_id])
-                delete.assert_called_with(mock.ANY, {'port_id': port_id})
+        with mock.patch.object(
+            self.agent.ext_manager, 'delete_port'
+        ) as delete, mock.patch.object(
+            self.agent.plugin_rpc, 'update_device_list',
+            return_value={'devices_up': [],
+                          'devices_down': [],
+                          'failed_devices_up': [],
+                          'failed_devices_down': []}
+        ), mock.patch.object(
+            self.agent, 'port_unbound'
+        ), mock.patch.object(
+                self.agent.int_br, 'get_vif_port_by_id', return_value=None):
+            self.agent.treat_devices_removed([port_id])
+            delete.assert_called_with(mock.ANY, {'port_id': port_id})
 
     def test_treat_vif_port_shut_down_port(self):
         details = mock.MagicMock()

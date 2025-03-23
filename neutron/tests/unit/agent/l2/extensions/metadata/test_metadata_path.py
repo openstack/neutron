@@ -32,7 +32,7 @@ from neutron.tests import base
 class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(MetadataPathAgentExtensionTestCase, self).setUp()
+        super().setUp()
         ovs_conf.register_ovs_agent_opts(cfg=cfg.CONF)
         cfg.CONF.set_override('provider_cidr', '240.0.0.0/31', 'METADATA')
         self.context = context.get_admin_context()
@@ -220,7 +220,7 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
 
         port_device_owner = "compute:test"
 
-        class Port(object):
+        class Port:
             def __init__(self):
                 self.device_id = "d1"
                 self.project_id = "p1"

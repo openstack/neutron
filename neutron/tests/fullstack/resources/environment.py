@@ -180,7 +180,7 @@ class Host(fixtures.Fixture):
         if self.env_desc.tunneling_enabled:
             self.useFixture(
                 net_helpers.OVSBridgeFixture(
-                    agent_cfg_fixture.get_br_tun_name())).bridge
+                    agent_cfg_fixture.get_br_tun_name()))
             self.connect_to_central_network_via_tunneling()
         else:
             self.connect_to_central_network_via_vlans(self.br_phys)

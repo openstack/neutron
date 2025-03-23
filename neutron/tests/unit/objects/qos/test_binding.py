@@ -19,7 +19,8 @@ from neutron.tests.unit import testlib_api
 class _QosPolicyBindingMixinTestCase:
 
     def test_get_bound_ids(self):
-        [obj.create() for obj in self.objs]
+        for obj in self.objs:
+            obj.create()
         for obj in self.objs:
             obj_ids = obj.get_bound_ids(self.context, obj.policy_id)
             self.assertEqual(1, len(obj_ids))

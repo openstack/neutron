@@ -726,11 +726,12 @@ class TestIpLinkCommand(TestIPCmdBase):
         self.link_cmd.delete()
         delete.assert_called_once_with(self.parent.name, self.parent.namespace)
 
-    @mock.patch.object(priv_lib, 'get_link_attributes')
-    def test_settings_property(self, get_link_attributes):
-        self.link_cmd.attributes
+    @mock.patch.object(priv_lib, 'get_link_attributes', return_value='foo')
+    def test_attributes_property(self, get_link_attributes):
+        attrs = self.link_cmd.attributes
         get_link_attributes.assert_called_once_with(
             self.parent.name, self.parent.namespace)
+        self.assertEqual(attrs, 'foo')
 
 
 class TestIpAddrCommand(TestIPCmdBase):

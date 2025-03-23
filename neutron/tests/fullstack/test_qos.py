@@ -452,7 +452,7 @@ class TestDscpMarkingQoSOvs(_TestDscpMarkingQoS, base.BaseFullStackTestCase):
             vm.bridge, vm.port.name, dscp_mark)
 
 
-class _TestMeterRateLimitQoS(object):
+class _TestMeterRateLimitQoS:
 
     def _wait_for_meter_rate_limit_rule_applied(
             self, vm, direction,
@@ -615,7 +615,7 @@ class TestMeterRateLimitQoSOvs(_TestMeterRateLimitQoS,
     def reverse_direction(self):
         if self.direction == constants.INGRESS_DIRECTION:
             return constants.EGRESS_DIRECTION
-        elif self.direction == constants.EGRESS_DIRECTION:
+        if self.direction == constants.EGRESS_DIRECTION:
             return constants.INGRESS_DIRECTION
 
     def setUp(self):
@@ -629,7 +629,7 @@ class TestMeterRateLimitQoSOvs(_TestMeterRateLimitQoS,
             qos=True,
             use_meter_bandwidth_limit=True)
         env = environment.Environment(env_desc, host_desc)
-        super(TestMeterRateLimitQoSOvs, self).setUp(env)
+        super().setUp(env)
         self.l2_agent_process = self.environment.hosts[0].l2_agent
         self.l2_agent = self.safe_client.client.list_agents(
             agent_type=self.l2_agent_type)['agents'][0]

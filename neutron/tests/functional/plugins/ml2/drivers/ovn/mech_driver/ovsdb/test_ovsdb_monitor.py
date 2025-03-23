@@ -303,7 +303,8 @@ class TestNBDbMonitor(testlib_api.MySQLTestCaseMixin,
             worker_list.append(worker)
 
         # Refresh the hash rings just in case
-        [worker.idl._hash_ring.refresh() for worker in worker_list]
+        for worker in worker_list:
+            worker.idl._hash_ring.refresh()
 
         # Assert we have 11 active workers in the ring
         self.assertEqual(
