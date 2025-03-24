@@ -167,11 +167,14 @@ class OvsdbServer(DaemonProcessFixture):
     def start(self):
         pki_done = False
         for ovsdb_process in self.ovsdb_server_processes:
-            # create the db from the schema using ovsdb-tool
-            ovsdb_tool_cmd = [shutil.which('ovsdb-tool'),
-                              'create', ovsdb_process['db_path'],
-                              ovsdb_process['schema_path']]
-            utils.execute(ovsdb_tool_cmd)
+            # Create the db from the schema using ovsdb-tool only if the file
+            # is not present. It could be possible to restart the ovsdb-server
+            # using an existing database file.
+            if not os.path.exists(ovsdb_process['db_path']):
+                ovsdb_tool_cmd = [shutil.which('ovsdb-tool'),
+                                  'create', ovsdb_process['db_path'],
+                                  ovsdb_process['schema_path']]
+                utils.execute(ovsdb_tool_cmd)
 
             # start the ovsdb-server
             ovsdb_server_cmd = [

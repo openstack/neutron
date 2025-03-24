@@ -62,6 +62,9 @@ OVN_NB_SCHEMA = {
                                            "max": "unlimited"}},
                 "up": {"type": {"key": "boolean", "min": 0, "max": 1}},
                 "enabled": {"type": {"key": "boolean", "min": 0, "max": 1}},
+                "external_ids": {
+                    "type": {"key": "string", "value": "string",
+                             "min": 0, "max": "unlimited"}},
             },
             "indexes": [["name"]],
             "isRoot": False,
@@ -471,22 +474,6 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self._test_lsp_helper('create', row_data)
         self.assertFalse(self.mech_driver.set_port_status_up.called)
         self.mech_driver.set_port_status_down.assert_called_once_with('foo')
-
-    def test_unwatch_logical_switch_port_create_events(self):
-        self.idl.unwatch_logical_switch_port_create_events()
-        row_data = {'up': False, 'name': 'foo-name'}
-        self._test_lsp_helper('create', row_data)
-        self.assertFalse(self.mech_driver.set_port_status_up.called)
-        self.assertFalse(self.mech_driver.set_port_status_down.called)
-
-        row_data["up"] = False
-        self._test_lsp_helper('create', row_data)
-        self.assertFalse(self.mech_driver.set_port_status_up.called)
-        self.assertFalse(self.mech_driver.set_port_status_down.called)
-
-    def test_post_connect(self):
-        self.idl.post_connect()
-        self.assertIsNone(getattr(self.idl, '_lsp_create_event', None))
 
     def test_lsp_up_update_event(self):
         new_row_json = {'up': True, 'enabled': True, 'name': 'foo-name'}

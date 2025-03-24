@@ -893,21 +893,6 @@ class OvnNbIdl(OvnIdlDistributedLock):
         helper.register_all()
         return cls(driver, connection_string, helper)
 
-    def unwatch_logical_switch_port_create_events(self):
-        """Unwatch the logical switch port create events.
-
-        When the ovs idl client connects to the ovsdb-server, it gets
-        a dump of all logical switch ports as events and we need to process
-        them at start up.
-        After the startup, there is no need to watch these events.
-        So unwatch these events.
-        """
-        self.notify_handler.unwatch_events([self._lsp_create_event])
-        del self._lsp_create_event
-
-    def post_connect(self):
-        self.unwatch_logical_switch_port_create_events()
-
 
 class OvnSbIdl(OvnIdlDistributedLock):
 
