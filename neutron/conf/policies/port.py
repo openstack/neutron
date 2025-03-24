@@ -258,7 +258,8 @@ rules = [
         name='create_port:allowed_address_pairs',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_NET_OWNER_MEMBER,
-            base.PROJECT_MANAGER),
+            base.PROJECT_MANAGER,
+            base.SERVICE),
         scope_types=['project'],
         description=(
             'Specify ``allowed_address_pairs`` '
@@ -275,7 +276,8 @@ rules = [
         name='create_port:allowed_address_pairs:mac_address',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_NET_OWNER_MEMBER,
-            base.PROJECT_MANAGER),
+            base.PROJECT_MANAGER,
+            base.SERVICE),
         scope_types=['project'],
         description=(
             'Specify ``mac_address` of `allowed_address_pairs`` '
@@ -292,7 +294,8 @@ rules = [
         name='create_port:allowed_address_pairs:ip_address',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_NET_OWNER_MEMBER,
-            base.PROJECT_MANAGER),
+            base.PROJECT_MANAGER,
+            base.SERVICE),
         scope_types=['project'],
         description=(
             'Specify ``ip_address`` of ``allowed_address_pairs`` '
@@ -650,7 +653,8 @@ rules = [
         name='update_port:allowed_address_pairs',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_NET_OWNER_MEMBER,
-            base.PROJECT_MANAGER),
+            base.PROJECT_MANAGER,
+            base.SERVICE),
         scope_types=['project'],
         description='Update ``allowed_address_pairs`` attribute of a port',
         operations=ACTION_PUT,
@@ -664,7 +668,8 @@ rules = [
         name='update_port:allowed_address_pairs:mac_address',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_NET_OWNER_MEMBER,
-            base.PROJECT_MANAGER),
+            base.PROJECT_MANAGER,
+            base.SERVICE),
         scope_types=['project'],
         description=(
             'Update ``mac_address`` of ``allowed_address_pairs`` '
@@ -681,7 +686,8 @@ rules = [
         name='update_port:allowed_address_pairs:ip_address',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_NET_OWNER_MEMBER,
-            base.PROJECT_MANAGER),
+            base.PROJECT_MANAGER,
+            base.SERVICE),
         scope_types=['project'],
         description=(
             'Update ``ip_address`` of ``allowed_address_pairs`` '

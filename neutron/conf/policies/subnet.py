@@ -126,6 +126,7 @@ rules = [
             'rule:shared',
             'rule:external_network',
             base.ADMIN_OR_NET_OWNER_READER,
+            base.SERVICE,
         ),
         scope_types=['project'],
         description='Get a subnet',

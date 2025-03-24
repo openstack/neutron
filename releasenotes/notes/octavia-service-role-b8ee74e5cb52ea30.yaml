@@ -1,0 +1,33 @@
+---
+features:
+  - |
+    Updated RBAC rules so that they allow the ``service`` role to pass the
+    following policies by default:
+
+    - ``get_subnet``
+
+    - ``get_network_ip_availability``
+
+    - ``create_port:allowed_address_pairs``
+
+    - ``create_port:allowed_address_pairs:mac_address``
+
+    - ``create_port:allowed_address_pairs:ip_address``
+
+    - ``update_port:allowed_address_pairs``
+
+    - ``update_port:allowed_address_pairs:mac_address``
+
+    - ``update_port:allowed_address_pairs:ip_address``
+
+    This allows for integration with the Octavia project using the
+    ``service`` role instead of the ``admin`` role for integration
+    with Neutron.
+upgrade:
+  - |
+    Default RBAC policies for ``get_subnet``, ``get_network_ip_availability``,
+    ``create_port:allowed_address_pairs``, ``create_port:allowed_address_pairs:mac_address``,
+    ``create_port:allowed_address_pairs:ip_address``, ``update_port:allowed_address_pairs``,
+    ``update_port:allowed_address_pairs:mac_address`` and
+    ``update_port:allowed_address_pairs:ip_address`` have been updated to allow the
+    ``service`` role.
