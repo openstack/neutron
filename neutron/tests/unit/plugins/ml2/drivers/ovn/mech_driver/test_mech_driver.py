@@ -98,10 +98,7 @@ class MechDriverSetupBase(abc.ABC):
         self.mech_driver.sb_ovn = fakes.FakeOvsdbSbOvnIdl()
         self.mech_driver._post_fork_event.set()
         self.mech_driver._ovn_client._qos_driver = mock.Mock()
-        neutron_agent.AgentCache(self.mech_driver)
-        # Because AgentCache is a singleton and we get a new mech_driver each
-        # setUp(), override the AgentCache driver.
-        neutron_agent.AgentCache().driver = self.mech_driver
+        self._agent_cache = neutron_agent.AgentCache(self.mech_driver)
         agent1 = self._add_agent('agent1')
         neutron_agent.AgentCache().get_agents = mock.Mock()
         neutron_agent.AgentCache().get_agents.return_value = [agent1]
