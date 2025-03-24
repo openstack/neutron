@@ -98,7 +98,7 @@ def _send_deferred_batch(state):
             LOG.debug('Placement client: %s', str(deferred))
             deferred.execute()
         except Exception:
-            LOG.exception('Placement client call failed: %s', str(deferred))
+            LOG.error('Placement client call failed: %s', str(deferred))
 
 
 def dict_chassis_config(state):
