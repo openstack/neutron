@@ -1820,6 +1820,7 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
             self.plugin, self.mech_driver.sb_ovn, self.mech_driver)
         self.addCleanup(self.sb_synchronizer.stop)
         self.ctx = context.get_admin_context()
+        self.host1 = uuidutils.generate_uuid()
 
     def _sync_resources(self):
         self.sb_synchronizer.sync_hostname_and_physical_networks(self.ctx)
@@ -1853,23 +1854,23 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
     def test_ovn_sb_sync_add_new_host(self):
         with self.network() as network:
             network_id = network['network']['id']
-        self.create_segment(network_id, 'physnet1', 50)
-        self.add_fake_chassis('host1', ['physnet1'])
+        self.create_segment(network_id, self.physnet, 50)
+        self.add_fake_chassis(self.host1, [self.physnet])
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertFalse(segment_hosts)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        self.assertEqual({'host1'}, segment_hosts)
+        self.assertEqual({self.host1}, segment_hosts)
 
     def test_ovn_sb_sync_update_existing_host(self):
         with self.network() as network:
             network_id = network['network']['id']
-        segment = self.create_segment(network_id, 'physnet1', 50)
+        segment = self.create_segment(network_id, self.physnet, 50)
         segments_db.update_segment_host_mapping(
-            self.ctx, 'host1', {segment['id']})
+            self.ctx, self.host1, {segment['id']})
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        self.assertEqual({'host1'}, segment_hosts)
-        self.add_fake_chassis('host1', ['physnet2'])
+        self.assertEqual({self.host1}, segment_hosts)
+        self.add_fake_chassis(self.host1, [self.physnet2])
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertFalse(segment_hosts)
@@ -1877,13 +1878,14 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
     def test_ovn_sb_sync_delete_stale_host(self):
         with self.network() as network:
             network_id = network['network']['id']
-        segment = self.create_segment(network_id, 'physnet1', 50)
+        segment = self.create_segment(network_id, self.physnet, 50)
         segments_db.update_segment_host_mapping(
-            self.ctx, 'host1', {segment['id']})
-        _ = self.create_agent('host1', bridge_mappings={'physnet1': 'eth0'})
+            self.ctx, self.host1, {segment['id']})
+        _ = self.create_agent(self.host1,
+                              bridge_mappings={self.physnet: 'eth0'})
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        self.assertEqual({'host1'}, segment_hosts)
-        # Since there is no chassis in the sb DB, host1 is the stale host
+        self.assertEqual({self.host1}, segment_hosts)
+        # Since there is no chassis in the sb DB, self.host1 is the stale host
         # recorded in neutron DB. It should be deleted after sync.
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
@@ -1892,57 +1894,61 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
     def test_ovn_sb_sync_host_with_no_agent_not_deleted(self):
         with self.network() as network:
             network_id = network['network']['id']
-        segment = self.create_segment(network_id, 'physnet1', 50)
+        segment = self.create_segment(network_id, self.physnet, 50)
         segments_db.update_segment_host_mapping(
-            self.ctx, 'host1', {segment['id']})
-        _ = self.create_agent('host1', bridge_mappings={'physnet1': 'eth0'},
+            self.ctx, self.host1, {segment['id']})
+        _ = self.create_agent(self.host1,
+                              bridge_mappings={self.physnet: 'eth0'},
                               agent_type="Not OVN Agent")
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        self.assertEqual({'host1'}, segment_hosts)
-        # There is no chassis in the sb DB, host1 does not have an agent
+        self.assertEqual({self.host1}, segment_hosts)
+        # There is no chassis in the sb DB, self.host1 does not have an agent
         # so it is not deleted.
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        self.assertEqual({'host1'}, segment_hosts)
+        self.assertEqual({self.host1}, segment_hosts)
 
     def test_ovn_sb_sync_host_with_other_agent_type_not_deleted(self):
         with self.network() as network:
             network_id = network['network']['id']
-        segment = self.create_segment(network_id, 'physnet1', 50)
+        segment = self.create_segment(network_id, self.physnet, 50)
         segments_db.update_segment_host_mapping(
-            self.ctx, 'host1', {segment['id']})
+            self.ctx, self.host1, {segment['id']})
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        self.assertEqual({'host1'}, segment_hosts)
-        # There is no chassis in the sb DB, host1 does not have an agent
+        self.assertEqual({self.host1}, segment_hosts)
+        # There is no chassis in the sb DB, self.host1 does not have an agent
         # so it is not deleted.
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        self.assertEqual({'host1'}, segment_hosts)
+        self.assertEqual({self.host1}, segment_hosts)
 
     def test_ovn_sb_sync(self):
+        host2 = uuidutils.generate_uuid()
+        host3 = uuidutils.generate_uuid()
+        host4 = uuidutils.generate_uuid()
         with self.network() as network:
             network_id = network['network']['id']
-        seg1 = self.create_segment(network_id, 'physnet1', 50)
-        self.create_segment(network_id, 'physnet2', 51)
+        seg1 = self.create_segment(network_id, self.physnet, 50)
+        self.create_segment(network_id, self.physnet2, 51)
         segments_db.update_segment_host_mapping(
-            self.ctx, 'host1', {seg1['id']})
+            self.ctx, self.host1, {seg1['id']})
         segments_db.update_segment_host_mapping(
-            self.ctx, 'host2', {seg1['id']})
+            self.ctx, host2, {seg1['id']})
         segments_db.update_segment_host_mapping(
-            self.ctx, 'host3', {seg1['id']})
+            self.ctx, host3, {seg1['id']})
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        _ = self.create_agent('host1')
-        _ = self.create_agent('host2', bridge_mappings={'physnet2': 'eth0'})
-        _ = self.create_agent('host3', bridge_mappings={'physnet3': 'eth0'})
-        self.assertEqual({'host1', 'host2', 'host3'}, segment_hosts)
-        self.add_fake_chassis('host2', ['physnet2'])
-        self.add_fake_chassis('host3', ['physnet3'])
-        self.add_fake_chassis('host4', ['physnet1'])
+        _ = self.create_agent(self.host1)
+        _ = self.create_agent(host2, bridge_mappings={self.physnet2: 'eth0'})
+        _ = self.create_agent(host3, bridge_mappings={self.physnet3: 'eth0'})
+        self.assertEqual({self.host1, host2, host3}, segment_hosts)
+        self.add_fake_chassis(host2, [self.physnet2])
+        self.add_fake_chassis(host3, [self.physnet3])
+        self.add_fake_chassis(host4, [self.physnet])
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         # host1 should be cleared since it is not in the chassis DB. host3
         # should be cleared since there is no segment for mapping.
-        self.assertEqual({'host2', 'host4'}, segment_hosts)
+        self.assertEqual({host2, host4}, segment_hosts)
 
 
 class TestOvnNbSyncOverTcp(TestOvnNbSync):
