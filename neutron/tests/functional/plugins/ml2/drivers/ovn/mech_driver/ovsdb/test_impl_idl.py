@@ -12,6 +12,7 @@
 #    under the License.
 #
 
+from collections import abc
 import copy
 from unittest import mock
 import uuid
@@ -694,6 +695,89 @@ class TestNbApi(BaseOvnIdlTest):
                         ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}
 
         self.assertEqual(external_ids, lr.static_routes[0].external_ids)
+
+    def _cleanup_delete_hcg(self, hcg_name):
+        if isinstance(hcg_name, str):
+            self.nbapi.db_destroy('HA_Chassis_Group', hcg_name).execute(
+                check_error=True)
+        elif isinstance(hcg_name, abc.Iterable):
+            for _hcg_name in hcg_name:
+                self.nbapi.db_destroy('HA_Chassis_Group', _hcg_name).execute(
+                    check_error=True)
+
+    def _check_hcg(self, hcg, hcg_name, chassis_priority,
+                   chassis_priority_deleted=None):
+        self.assertEqual(hcg_name, hcg.name)
+        self.assertEqual(len(chassis_priority), len(hcg.ha_chassis))
+        for hc in hcg.ha_chassis:
+            self.assertEqual(chassis_priority[hc.chassis_name], hc.priority)
+
+        if chassis_priority_deleted:
+            for hc_name in chassis_priority_deleted:
+                self.assertIsNone(
+                    self.nbapi.lookup('HA_Chassis', hc_name, default=None))
+
+    def test_ha_chassis_group_with_hc_add_no_existing_hcg(self):
+        chassis_priority = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        hcg = self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority).execute(check_error=True)
+        self._check_hcg(hcg, hcg_name, chassis_priority)
+
+    def test_ha_chassis_group_with_hc_add_existing_hcg(self):
+        chassis_priority = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority).execute(check_error=True)
+        cmd = self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority)
+        self.assertRaises(RuntimeError, cmd.execute, check_error=True)
+
+    def test_ha_chassis_group_with_hc_add_existing_hcg_may_exist(self):
+        chassis_priority = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        hcg = None
+        for _ in range(2):
+            hcg = self.nbapi.ha_chassis_group_with_hc_add(
+                hcg_name, chassis_priority, may_exist=True).execute(
+                check_error=True)
+        self._check_hcg(hcg, hcg_name, chassis_priority)
+
+    def test_ha_chassis_group_with_hc_add_existing_hcg_update_chassis(self):
+        # This test:
+        # - adds new chassis: ch5, ch6
+        # - removes others: ch3, ch4
+        # - changes the priority of the existing ones ch1, ch2
+        chassis_priority = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority).execute(check_error=True)
+
+        chassis_priority = {'ch1': 2, 'ch2': 1, 'ch5': 3, 'ch6': 4}
+        hcg = self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority, may_exist=True).execute(
+            check_error=True)
+        self._check_hcg(hcg, hcg_name, chassis_priority,
+                        chassis_priority_deleted=['ch3', 'ch4'])
+
+    def test_ha_chassis_group_with_hc_add_two_hcg(self):
+        # Both HCG will have the same chassis priority (the same chassis
+        # names, that is something very common.
+        chassis_priority1 = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+        chassis_priority2 = {'ch1': 11, 'ch2': 12, 'ch3': 13, 'ch4': 14}
+        hcg_name1 = uuidutils.generate_uuid()
+        hcg_name2 = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, [hcg_name1, hcg_name2])
+        hcg1 = self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name1, chassis_priority1).execute(check_error=True)
+        hcg2 = self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name2, chassis_priority2).execute(check_error=True)
+        self._check_hcg(hcg1, hcg_name1, chassis_priority1)
+        self._check_hcg(hcg2, hcg_name2, chassis_priority2)
 
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
