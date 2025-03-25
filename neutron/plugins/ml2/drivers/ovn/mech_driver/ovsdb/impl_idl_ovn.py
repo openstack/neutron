@@ -912,6 +912,12 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.SetLRouterMacAgeLimitCommand(
             self, router, cfg.get_ovn_mac_binding_age_threshold())
 
+    def ha_chassis_group_with_hc_add(self, name, chassis_priority,
+                                     may_exist=False, **columns):
+        return cmd.HAChassisGroupWithHCAddCommand(
+            self, name, chassis_priority, may_exist=may_exist,
+            **columns)
+
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     @n_utils.classproperty
