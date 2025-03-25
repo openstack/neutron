@@ -18,6 +18,7 @@
 
 """Utilities and helper functions."""
 from collections import abc
+from concurrent import futures
 import datetime
 import functools
 import hashlib
@@ -1115,3 +1116,19 @@ def stringmap(data: abc.Mapping[str, typing.Any],
     for key, value in data.items():
         result[key] = default if value is None else str(value)
     return result
+
+
+class ThreadPoolExecutorWithBlock(futures.ThreadPoolExecutor):
+    """A thread pool executor with a submit blocking method
+
+    This class implements a method that allow to submit new workers but only if
+    there are available workers. If not, the method blocks indefinitely.
+    """
+    def submit(self, fn, *args, **kwargs):
+        while self._work_queue.qsize() > 0 and not self._shutdown:
+            time.sleep(0.1)
+
+        if self._shutdown:
+            return
+
+        return super().submit(fn, *args, **kwargs)
