@@ -315,8 +315,9 @@ class L3NATAgent(ha.AgentMixin,
             self.driver,
             self.metadata_driver)
 
-        # L3 agent router processing green pool
-        self._pool = eventlet.GreenPool(size=ROUTER_PROCESS_THREADS)
+        # L3 agent router processing Thread Pool Executor
+        self._pool = utils.ThreadPoolExecutorWithBlock(
+            max_workers=ROUTER_PROCESS_THREADS)
         self._queue = queue.ResourceProcessingQueue()
         super().__init__(host=self.conf.host)
 
@@ -825,7 +826,7 @@ class L3NATAgent(ha.AgentMixin,
     def _process_routers_loop(self):
         LOG.debug("Starting _process_routers_loop")
         while not self._exiting:
-            self._pool.spawn_n(self._process_update)
+            self._pool.submit(self._process_update)
 
     # NOTE(kevinbenton): this is set to 1 second because the actual interval
     # is controlled by a FixedIntervalLoopingCall in neutron/service.py that
