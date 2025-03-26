@@ -215,11 +215,21 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def check_vlan_transparency(self, context):
         """SR-IOV driver vlan transparency support."""
+
+        # The SR-IOV driver don't really have any way to configure vlans
+        # transparency for the ports but it returns `True` so that having
+        # this driver enabled will not prevent the creation of networks with
+        # enabled vlan QinQ
         return True
 
     def check_vlan_qinq(self, context):
-        """Currently SR-IOV driver doesn't support QinQ vlan."""
-        return False
+        """SR-IOV driver vlan QinQ support."""
+
+        # The SR-IOV driver don't really have any way to configure QinQ vlans
+        # for the ports but it returns `True` so that having this driver
+        # enabled will not prevent the creation of networks with enabled
+        # vlan QinQ
+        return True
 
     def _get_vif_details(self, segment):
         network_type = segment[api.NETWORK_TYPE]
