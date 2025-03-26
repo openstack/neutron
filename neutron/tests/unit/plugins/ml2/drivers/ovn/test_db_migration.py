@@ -13,6 +13,7 @@
 #    under the License.
 import copy
 from unittest import mock
+import uuid
 
 from neutron_lib.api.definitions import portbindings as pb
 from neutron_lib.api.definitions import provider_net as pnet
@@ -25,6 +26,7 @@ from neutron.common import _constants as n_const
 from neutron.db.models.plugins.ml2 import geneveallocation
 from neutron.db.models.plugins.ml2 import vxlanallocation
 from neutron.objects import ports as port_obj
+from neutron.objects import servicetype as servicetype_obj
 from neutron.objects import trunk as trunk_obj
 from neutron.plugins.ml2.drivers.ovn import db_migration
 from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import (
@@ -97,6 +99,15 @@ class TestMigrateNeutronDatabaseToOvn(
 
         self.subport_profiles[subport2['id']]["foo"] = "bar"
 
+        providers = ("fake", "ovn", "single_node", "ha", "dvr", "dvrha")
+        with db_api.CONTEXT_WRITER.using(ctx):
+            for name in providers:
+                servicetype_obj.ProviderResourceAssociation(
+                    context=ctx,
+                    provider_name=name,
+                    resource_id=uuid.uuid4(),
+                ).create()
+
     def _validate_resources_after_migration(self, expected_vif_details):
         ctx = n_context.get_admin_context()
 
@@ -132,6 +143,11 @@ class TestMigrateNeutronDatabaseToOvn(
                 self.assertEqual(
                     self.subport_profiles[subport.port_id],
                     port["binding:profile"])
+
+        pra = servicetype_obj.ProviderResourceAssociation.get_objects(ctx)
+        self.assertEqual(6, len(pra))
+        self.assertEqual(5, len([p for p in pra if p.provider_name == "ovn"]))
+        self.assertEqual(1, len([p for p in pra if p.provider_name == "fake"]))
 
     def test_db_migration(self):
         """Test the DB migration

@@ -25,6 +25,7 @@ from sqlalchemy.orm import exc as sqla_exc
 from neutron.common import _constants as n_const
 from neutron.db.models.plugins.ml2 import geneveallocation
 from neutron.db.models.plugins.ml2 import vxlanallocation
+from neutron.db.models import servicetype
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import trunk as trunk_obj
@@ -40,6 +41,7 @@ def migrate_neutron_database_to_ovn():
      - Removes bridge name from port binding vif details to support operations
        on instances with a trunk bridge.
      - Updates the port profile for trunk ports.
+     - Updates provider name in ProviderResourceAssociation
     """
     ctx = n_context.get_admin_context()
     with db_api.CONTEXT_WRITER.using(ctx) as session:
@@ -133,3 +135,16 @@ def migrate_neutron_database_to_ovn():
                         pb.update()
 
         trunk_updated.update(diff)
+
+    # update ``ProviderResourceAssociation`` objects
+    # NOTE(pas-ha): OVS has four L3 service providers, while OVN has only one
+    # (compare neutron/services/ovn_l3/service_providers/driver_controller.py
+    # and neutron/services/l3_router/service_providers/driver_controller.py),
+    # so we can blindly replace all OVS provider associations with "ovn" ones
+    pra_model = servicetype.ProviderResourceAssociation
+    ovs_providers = ("single_node", "ha", "dvr", "dvrha")
+    ovn_provider = "ovn"
+    with db_api.CONTEXT_WRITER.using(ctx) as session:
+        session.query(pra_model).filter(
+            pra_model.provider_name.in_(ovs_providers)
+        ).update({"provider_name": ovn_provider})
