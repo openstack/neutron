@@ -1377,3 +1377,41 @@ def validate_port_forwarding_configuration():
     if any(net_type in provider_network_types
            for net_type in cfg.CONF.ml2.tenant_network_types):
         raise ovn_exc.InvalidPortForwardingConfiguration()
+
+
+def ovs_persist_uuid_supported(nb_idl):
+    # OVS 3.1+ contain the persist_uuid feature that allows choosing the UUID
+    # that will be stored in the DB. It was broken prior to 3.1.5/3.2.3/3.3.1
+    # so this will return True only for the fixed version. As actually testing
+    # the fix requires committing a transaction, an implementation detail is
+    # tested. This can be removed once a fixed version is required.
+    global _OVS_PERSIST_UUID
+    if _OVS_PERSIST_UUID is _SENTINEL:
+        _OVS_PERSIST_UUID = isinstance(
+            next(iter(nb_idl.tables["NB_Global"].rows.data.values())), list)
+        LOG.debug(f"OVS persist_uuid supported={_OVS_PERSIST_UUID}")
+    return _OVS_PERSIST_UUID
+
+
+def get_logical_router_port_ha_chassis(nb_idl, lrp, priorities=None):
+    """Get the list of chassis hosting this Logical_Router_Port.
+
+    :param nb_idl: (``OvsdbNbOvnIdl``) OVN Northbound IDL
+    :param lrp: Logical_Router_Port
+    :param priorities: (list of int) a list of HA_Chassis chassis priorities
+           to search for
+    :return: List of tuples (chassis_name, priority) sorted by priority. If
+             ``priorities`` is set then only chassis matching of these
+             priorities are returned.
+    """
+    chassis = []
+    lrp = nb_idl.lookup('Logical_Router_Port', lrp.name, default=None)
+    if not lrp or not lrp.ha_chassis_group:
+        return chassis
+
+    for hc in lrp.ha_chassis_group[0].ha_chassis:
+        if priorities and hc.priority not in priorities:
+            continue
+        chassis.append((hc.chassis_name, hc.priority))
+
+    return chassis
