@@ -19,6 +19,7 @@ import uuid
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import ip_lib
@@ -83,6 +84,9 @@ class TestMetadataAgent(base.BaseTestCase):
         self.agent.ovs_idl.transaction = mock.MagicMock()
         self.agent._chassis = 'chassis'
         self.agent._ovn_bridge = 'br-int'
+        self.ipv6_p = mock.patch.object(netutils, 'is_ipv6_enabled')
+        self.ipv6 = self.ipv6_p.start()
+        self.ipv6.return_value = True
 
         self.ports = []
         for i in range(0, 3):
@@ -213,17 +217,25 @@ class TestMetadataAgent(base.BaseTestCase):
             del_veth.assert_called_once_with('veth_0')
             garbage_collect.assert_called_once_with()
 
-    def test__process_cidrs_when_current_namespace_empty(self):
+    def _test__process_cidrs_when_current_namespace_empty(self, ipv6_enabled):
+        """Current namespace contains no cidrs, it is missing required cidrs.
+        """
+        self.ipv6.return_value = ipv6_enabled
         current_namespace_cidrs = set()
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
-                                     n_const.METADATA_CIDR,
-                                     n_const.METADATA_V6_CIDR,
-                                     lla])
+        expected_cidrs_to_add = {'10.0.0.0/30', '10.0.1.0/28',
+                                 n_const.METADATA_CIDR}
         expected_cidrs_to_delete = set()
+
+        if ipv6_enabled:
+            datapath_port_ips.extend(['2001:db8::2'])
+            metadaport_subnet_cidrs.extend(['2001:db8::2/64'])
+            expected_cidrs_to_add.add('2001:db8::2/64')
+            expected_cidrs_to_add.add(n_const.METADATA_V6_CIDR)
+            expected_cidrs_to_add.add(lla)
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
@@ -234,16 +246,32 @@ class TestMetadataAgent(base.BaseTestCase):
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
         self.assertSetEqual(actual_cidrs_to_delete, expected_cidrs_to_delete)
 
-    def test__process_cidrs_when_current_namespace_only_contains_metadata_cidr(
-            self):
-        current_namespace_cidrs = set([n_const.METADATA_CIDR])
+    def test__process_cidrs_when_current_namespace_empty_ipv6(self):
+        self._test__process_cidrs_when_current_namespace_empty(True)
+
+    def test__process_cidrs_when_current_namespace_empty_no_ipv6(self):
+        self._test__process_cidrs_when_current_namespace_empty(False)
+
+    def _test__process_cidrs_current_ns_only_contains_meta_cidr(self,
+            ipv6_enabled):
+        """Current namespace cidrs only contains IPv4 metadata cidr,
+        and it is missing new required cidrs.
+        """
+        self.ipv6.return_value = ipv6_enabled
+        current_namespace_cidrs = {n_const.METADATA_CIDR}
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
-                                     n_const.METADATA_V6_CIDR, lla])
+        expected_cidrs_to_add = {'10.0.0.0/30', '10.0.1.0/28'}
         expected_cidrs_to_delete = set()
+
+        if ipv6_enabled:
+            datapath_port_ips.extend(['2001:db8::2'])
+            metadaport_subnet_cidrs.extend(['2001:db8::2/64'])
+            expected_cidrs_to_add.add('2001:db8::2/64')
+            expected_cidrs_to_add.add(n_const.METADATA_V6_CIDR)
+            expected_cidrs_to_add.add(lla)
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
@@ -254,16 +282,36 @@ class TestMetadataAgent(base.BaseTestCase):
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
         self.assertSetEqual(actual_cidrs_to_delete, expected_cidrs_to_delete)
 
-    def test__process_cidrs_when_current_namespace_contains_stale_cidr(self):
+    def test__process_cidrs_current_ns_only_contains_meta_cidr_ipv6(self):
+        self._test__process_cidrs_current_ns_only_contains_meta_cidr(True)
+
+    def test__process_cidrs_current_ns_only_contains_meta_cidr_no_ipv6(self):
+        self._test__process_cidrs_current_ns_only_contains_meta_cidr(False)
+
+    def _test__process_cidrs_current_ns_contains_stale_cidr(self,
+            ipv6_enabled):
+        """Current namespace cidrs contains stale cidrs, including lla,
+        and it is missing new required cidrs.
+        """
+        self.ipv6.return_value = ipv6_enabled
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
         current_namespace_cidrs = set([n_const.METADATA_CIDR, '10.0.1.0/31',
                                        lla])
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
-                                     n_const.METADATA_V6_CIDR])
-        expected_cidrs_to_delete = set(['10.0.1.0/31'])
+        expected_cidrs_to_add = {'10.0.0.0/30', '10.0.1.0/28'}
+        expected_cidrs_to_delete = {'10.0.1.0/31'}
+        # If IPv6 is enabled, the IPv6 metadata address will be added as the
+        # LLA is already present in the namespace, else the LLA will be removed
+        # as there are no IPv6 subnets configured.
+        if ipv6_enabled:
+            expected_cidrs_to_add.add(n_const.METADATA_V6_CIDR)
+        else:
+            expected_cidrs_to_delete.add(lla)
+            # Do not pass the LLA to _process_cidrs(), indicating it should
+            # not be configured
+            lla = None
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
@@ -274,21 +322,37 @@ class TestMetadataAgent(base.BaseTestCase):
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
         self.assertSetEqual(actual_cidrs_to_delete, expected_cidrs_to_delete)
 
-    def test__process_cidrs_when_current_namespace_contains_mix_cidrs(self):
+    def test__process_cidrs_current_ns_contains_stale_cidr_ipv6(self):
+        self._test__process_cidrs_current_ns_contains_stale_cidr(True)
+
+    def test__process_cidrs_current_ns_contains_stale_cidr_no_ipv6(self):
+        self._test__process_cidrs_current_ns_contains_stale_cidr(False)
+
+    def _test__process_cidrs_current_namespace_contains_mix_cidrs(self,
+            ipv6_enabled):
         """Current namespace cidrs contains stale cidrs and it is missing
         new required cidrs.
         """
+        self.ipv6.return_value = ipv6_enabled
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
-        current_namespace_cidrs = set([n_const.METADATA_CIDR,
-                                      '10.0.1.0/31',
-                                      '10.0.1.0/28',
-                                      'fe77::/64',
-                                      lla])
+        current_namespace_cidrs = {n_const.METADATA_CIDR,
+                                   '10.0.1.0/31',
+                                   '10.0.1.0/28',
+                                   'fe77::/64',
+                                   '2001:db8::2/64',
+                                   lla}
         datapath_port_ips = ['10.0.0.2', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
+        expected_cidrs_to_add = {'10.0.0.0/30'}
+        expected_cidrs_to_delete = {'10.0.1.0/31', 'fe77::/64'}
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', n_const.METADATA_V6_CIDR])
-        expected_cidrs_to_delete = set(['10.0.1.0/31', 'fe77::/64'])
+        if ipv6_enabled:
+            datapath_port_ips.extend(['2001:db8::2'])
+            metadaport_subnet_cidrs.extend(['2001:db8::2/64'])
+            expected_cidrs_to_add.add(n_const.METADATA_V6_CIDR)
+        else:
+            expected_cidrs_to_delete.add('2001:db8::2/64')
+            expected_cidrs_to_delete.add(lla)
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
@@ -298,6 +362,12 @@ class TestMetadataAgent(base.BaseTestCase):
 
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
         self.assertSetEqual(actual_cidrs_to_delete, expected_cidrs_to_delete)
+
+    def test__process_cidrs_current_namespace_contains_mix_cidrs_ipv6(self):
+        self._test__process_cidrs_current_namespace_contains_mix_cidrs(True)
+
+    def test__process_cidrs_current_namespace_contains_mix_cidrs_no_ipv6(self):
+        self._test__process_cidrs_current_namespace_contains_mix_cidrs(False)
 
     def test__get_provision_params_returns_none_when_metadata_port_is_missing(
             self):
@@ -386,12 +456,16 @@ class TestMetadataAgent(base.BaseTestCase):
                 return_value=datapath_ports):
             actual_params = self.agent._get_provision_params(datapath)
 
-        net_name, datapath_port_ips, metadata_port_info = actual_params
+        net_name, datapath_port_ips, any_ip6, metadata_port_info = (
+            actual_params)
 
         self.assertEqual(network_id, net_name)
 
         if utils.get_ip_version(port_ip) == n_const.IP_VERSION_4:
             self.assertListEqual([port_ip], datapath_port_ips)
+            self.assertFalse(any_ip6)
+        else:
+            self.assertTrue(any_ip6)
         self.assertEqual(metada_port_mac, metadata_port_info.mac)
         self.assertSetEqual(set([metada_port_subnet_cidr]),
                             metadata_port_info.ip_addresses)
@@ -406,13 +480,14 @@ class TestMetadataAgent(base.BaseTestCase):
         self._test__get_provision_params_returns_provision_parameters(
             'fe80::f816:3eff:feb6:c0c0')
 
-    def test_provision_datapath(self):
+    def _test_provision_datapath(self, ipv6_enabled):
         """Test datapath provisioning.
 
         Check that the VETH pair, OVS port and namespace associated to this
         namespace are created, that the interface is properly configured with
         the right IP addresses and that the metadata proxy is spawned.
         """
+        self.ipv6.return_value = ipv6_enabled
         net_name = '123'
         metadaport_logical_port = '123-abc-456'
         datapath_ports_ips = ['10.0.0.1', '10.0.0.2']
@@ -422,8 +497,12 @@ class TestMetadataAgent(base.BaseTestCase):
                           '2001:470:9:1224:5595:dd51:6ba2:e788/64'],
             logical_port=metadaport_logical_port
         )
-        provision_params = (net_name, datapath_ports_ips, metada_port_info,)
-        nemaspace_name = 'namespace'
+        provision_params = (net_name, datapath_ports_ips, ipv6_enabled,
+                            metada_port_info,)
+        namespace_name = 'namespace'
+
+        if ipv6_enabled:
+            datapath_ports_ips.extend(['2001:470:9:1224:5595:dd51:6ba2:e788'])
 
         with mock.patch.object(self.agent,
                                '_get_provision_params',
@@ -435,7 +514,7 @@ class TestMetadataAgent(base.BaseTestCase):
                 mock.patch.object(agent.MetadataAgent, '_get_veth_name',
                                   return_value=['veth_0', 'veth_1']),\
                 mock.patch.object(agent.MetadataAgent, '_get_namespace_name',
-                                  return_value=nemaspace_name),\
+                                  return_value=namespace_name),\
                 mock.patch.object(ip_link, 'set_up') as link_set_up,\
                 mock.patch.object(ip_link, 'set_address') as link_set_addr, \
                 mock.patch.object(ip_link, 'set_mtu') as link_set_mtu, \
@@ -468,7 +547,7 @@ class TestMetadataAgent(base.BaseTestCase):
                 'veth_0', bridge='br-fake', if_exists=True)
             # Check that the VETH pair is created
             add_veth.assert_called_once_with('veth_0', 'veth_1',
-                nemaspace_name)
+                                             namespace_name)
             # Make sure that the two ends of the VETH pair have been set as up.
             self.assertEqual(2, link_set_up.call_count)
             link_set_mtu.assert_has_calls([mock.call(mtu), mock.call(mtu)])
@@ -481,18 +560,29 @@ class TestMetadataAgent(base.BaseTestCase):
                 ('external_ids', {'iface-id': metadaport_logical_port}))
             # Check that the metadata port has the IP addresses properly
             # configured and that IPv6 address has been skipped.
-            expected_call = [n_const.METADATA_CIDR, n_const.METADATA_V6_CIDR,
-                             '10.0.0.1/23',
-                             ip_lib.get_ipv6_lladdr('aa:bb:cc:dd:ee:ff')]
+            expected_call = [n_const.METADATA_CIDR, '10.0.0.1/23']
+            bind_address_v6 = None
+            if ipv6_enabled:
+                expected_call.extend(
+                    ['2001:470:9:1224:5595:dd51:6ba2:e788/64',
+                     n_const.METADATA_V6_CIDR,
+                     ip_lib.get_ipv6_lladdr('aa:bb:cc:dd:ee:ff')])
+                bind_address_v6 = n_const.METADATA_V6_IP
             self.assertCountEqual(expected_call,
                                   ip_addr_add_multiple.call_args.args[0])
             # Check that metadata proxy has been spawned
             spawn_mdp.assert_called_once_with(
-                mock.ANY, nemaspace_name, 80, mock.ANY,
+                mock.ANY, namespace_name, 80, mock.ANY,
                 bind_address=n_const.METADATA_V4_IP, network_id=net_name,
-                bind_address_v6=n_const.METADATA_V6_IP,
+                bind_address_v6=bind_address_v6,
                 bind_interface='veth_1')
-            mock_checksum.assert_called_once_with(nemaspace_name)
+            mock_checksum.assert_called_once_with(namespace_name)
+
+    def test_provision_datapath_ipv6(self):
+        self._test_provision_datapath(True)
+
+    def test_provision_datapath_no_ipv6(self):
+        self._test_provision_datapath(False)
 
     def test__load_config(self):
         # Chassis name UUID formatted string. OVN bridge "br-ovn".
