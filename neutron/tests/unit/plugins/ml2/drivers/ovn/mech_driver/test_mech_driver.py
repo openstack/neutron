@@ -2974,7 +2974,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     @mock.patch.object(ml2_plugin.Ml2Plugin, 'get_network', return_value={})
     @mock.patch.object(ovn_utils, '_filter_candidates_for_ha_chassis_group')
     def test_sync_ha_chassis_group_network(self, mock_candidates, *args):
-        self.nb_ovn.ha_chassis_group_get.side_effect = idlutils.RowNotFound
+        self.nb_ovn.lookup.return_value = None
         fake_txn = mock.Mock()
         hcg_info = self._build_hcg_info(network_id='fake-net-id')
         mock_candidates.return_value = {'ch0', 'ch1', 'ch2', 'ch3'}
@@ -3020,8 +3020,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             'ha_chassis': [hc0, hc1, hc2, hc3]}
         fake_ha_chassis_group = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs=hcg_attrs)
-        self.nb_ovn.ha_chassis_group_get().execute.return_value = (
-            fake_ha_chassis_group)
+        # HA_Chassis_Group lookup.
+        self.nb_ovn.lookup.return_value = fake_ha_chassis_group
         self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = (
             hcg_info.chassis_list)
 
