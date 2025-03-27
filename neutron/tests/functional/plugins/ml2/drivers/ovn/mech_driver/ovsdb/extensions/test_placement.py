@@ -68,11 +68,15 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
         super().setUp(maintenance_worker=maintenance_worker,
                       service_plugins=service_plugins)
         self.ovn_client = self.mech_driver._ovn_client
-        self.placement_ext = self.ovn_client.placement_extension
+        self.ovn_client.placement_extension._reset(self.ovn_client)
         self.mock_name2uuid = mock.patch.object(
-            self.placement_ext, 'name2uuid').start()
+            self.ovn_client.placement_extension, 'name2uuid').start()
         self.mock_send_batch = mock.patch.object(
             placement_extension, '_send_deferred_batch').start()
+        self.addCleanup(self._reset_placement_singleton)
+
+    def _reset_placement_singleton(self):
+        del self.ovn_client.placement_extension
 
     def _build_other_config(self, bandwidths, inventory_defaults, hypervisors):
         options = []
@@ -105,7 +109,8 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
 
         def check_chassis():
             nonlocal current_chassis
-            current_chassis = self.placement_ext.get_chassis_config()
+            current_chassis = (
+                self.ovn_client.placement_extension.get_chassis_config())
             current_chassis = {
                 chassis_name: placement_extension.dict_chassis_config(state)
                 for chassis_name, state in current_chassis.items()}
