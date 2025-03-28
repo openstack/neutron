@@ -1726,13 +1726,13 @@ class OVNClient:
                 LOG.debug("Router %s not found", port['device_id'])
             else:
                 network_ids = {port['network_id'] for port in router_ports}
-                # If this method is called during a port creation, the port
-                # won't be present yet in the router ports list.
-                network_ids.add(port['network_id'])
-                networks = None
                 if ovn_conf.is_ovn_emit_need_to_frag_enabled():
+                    # If this method is called during a port creation, the port
+                    # won't be present yet in the router ports list. It is
+                    # needed not to modify the ``network_ids`` set.
+                    _network_ids = network_ids.union({port['network_id']})
                     networks = self._plugin.get_networks(
-                        admin_context, filters={'id': network_ids})
+                        admin_context, filters={'id': _network_ids})
                     # Set the lower MTU of all networks connected to the router
                     min_mtu = str(min(net['mtu'] for net in networks))
                     options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = min_mtu
@@ -1744,7 +1744,7 @@ class OVNClient:
                     # If there are no VLAN type networks attached we need to
                     # still make it centralized.
                     enable_redirect = False
-                    networks = networks or self._plugin.get_networks(
+                    networks = self._plugin.get_networks(
                         admin_context, filters={'id': network_ids})
                     if networks:
                         enable_redirect = all(
