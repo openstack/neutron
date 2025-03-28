@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import operator
+
+from collections import UserDict
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
@@ -22,15 +24,215 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_messaging.rpc import dispatcher as rpc_dispatcher
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.handlers import dhcp_rpc
+from neutron.api.rpc.handlers.dhcp_rpc import CustomNetworkConfigurator
 from neutron.common import utils
 from neutron.db import provisioning_blocks
 from neutron.objects import network as network_obj
 from neutron.tests import base
+
+
+class MockedDBObj(UserDict):
+    def __getattr__(self, attr):
+        try:
+            return self.data[attr]
+        except KeyError:
+            raise AttributeError(f"'MockedNetwork' has no attribute '{attr}'")
+
+
+class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
+
+    def test_network_dict_empty(self):
+        """ensure nothing is added to the network dict when
+           nothing is configured
+        """
+        cnc = CustomNetworkConfigurator()
+
+        empty_dict = {}
+        cnc.add_dnssettings_to_net(empty_dict)
+
+        self.assertFalse(bool(empty_dict))
+
+    @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
+    def test_no_match_no_change(self, mock_keystone):
+        """ensure that we do not change a setting if the domain does not match
+        """
+
+        # we manipulate the network, so we need fresh mock objects
+        mock_network = {'id': 123, 'project_id': 666}
+        mock_project = MockedDBObj(id=666, domain_id=42)
+        mock_domain = MockedDBObj(id=42, name='mydomain')
+
+        mock_keystone.get_project.return_value = mock_project
+        mock_keystone.get_domain.return_value = mock_domain
+
+        cfg.CONF.set_override('enabled', True,
+                              group='customdns')
+        cfg.CONF.set_override('domain_name_prefixes', ['some', 'other'],
+                              group='customdns')
+
+        cnc = CustomNetworkConfigurator()
+
+        cnc.add_dnssettings_to_net(mock_network)
+
+        mock_keystone.get_project.assert_called_with(666)
+        mock_keystone.get_domain.assert_called_with(42)
+
+        # assert we do not change the settings
+        self.assertIsNone(mock_network.get('dns_ednslogging_enabled'))
+        self.assertIsNone(mock_network.get('dns_custom_upstreams'))
+
+    @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
+    def test_network_id_lookup(self, mock_keystone):
+        """ensure keystone lookup methods are called and the network
+           returned matches the expected settings
+        """
+
+        # we manipulate the network, so we need fresh mock objects
+        mock_network = {'id': 123, 'project_id': 666}
+        mock_project = MockedDBObj(id=666, domain_id=42)
+        mock_domain = MockedDBObj(id=42, name='mydomain')
+
+        mock_keystone.get_project.return_value = mock_project
+        mock_keystone.get_domain.return_value = mock_domain
+
+        cfg.CONF.set_override('enabled', True,
+                              group='customdns')
+        cfg.CONF.set_override('domain_name_prefixes', ['mydomain'],
+                              group='customdns')
+
+        cnc = CustomNetworkConfigurator()
+
+        cnc.add_dnssettings_to_net(mock_network)
+
+        mock_keystone.get_project.assert_called_with(666)
+        mock_keystone.get_domain.assert_called_with(42)
+
+        # assert we get the correct settings when no nameservers are set
+        # but logging should be off
+        self.assertFalse(mock_network.get('dns_ednslogging_enabled'))
+        self.assertIsNone(mock_network.get('dns_custom_upstreams'))
+
+    @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
+    def test_nameserver_settings(self, mock_keystone):
+        """ensure the configured nameserver IPs are present in the network
+           dict returned
+        """
+
+        # we manipulate the network, so we need fresh mock objects
+        mock_network = {'id': 123, 'project_id': 666}
+        mock_project = MockedDBObj(id=666, domain_id=42)
+        mock_domain = MockedDBObj(id=42, name='mydomain')
+
+        mock_keystone.get_project.return_value = mock_project
+        mock_keystone.get_domain.return_value = mock_domain
+
+        dns1 = "2001:db8::456"
+        dns2 = "192.0.2.123"
+
+        cfg.CONF.set_override('enabled', True,
+                              group='customdns')
+        cfg.CONF.set_override('domain_name_prefixes', ['mydomain'],
+                              group='customdns')
+        cfg.CONF.set_override('upstream_dns_servers', [dns1, dns2],
+                              group='customdns')
+
+        cnc = CustomNetworkConfigurator()
+
+        cnc.add_dnssettings_to_net(mock_network)
+        self.assertFalse(mock_network.get('dns_ednslogging_enabled'))
+        sentinel = object()
+        upstreams = mock_network.get('dns_custom_upstreams', sentinel)
+        self.assertNotEqual(sentinel, upstreams)
+        self.assertIsNotNone(upstreams)
+        self.assertIn(dns1, upstreams)
+        self.assertIn(dns2, upstreams)
+        self.assertEqual(len(upstreams), 2)
+
+    @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
+    def test_exceptions_prefixmatch(self, mock_keystone):
+        """ensure we are doing a prefix match on the domain name """
+
+        # we manipulate the network, so we need fresh mock objects
+        mock_network = {'id': 123, 'project_id': 666}
+        mock_project = MockedDBObj(id=666, domain_id=42)
+        mock_domain = MockedDBObj(id=42, name='mydomain-123')
+
+        mock_keystone.get_project.return_value = mock_project
+        mock_keystone.get_domain.return_value = mock_domain
+
+        dns1 = "2001:db8::456"
+        dns2 = "192.0.2.123"
+
+        cfg.CONF.set_override('enabled', True,
+                              group='customdns')
+        cfg.CONF.set_override('domain_name_prefixes', ['mydomain'],
+                              group='customdns')
+        cfg.CONF.set_override('upstream_dns_servers', [dns1, dns2],
+                              group='customdns')
+
+        cnc = CustomNetworkConfigurator()
+
+        cnc.add_dnssettings_to_net(mock_network)
+
+        self.assertFalse(mock_network.get('dns_ednslogging_enabled'))
+
+        upstreams = mock_network.get('dns_custom_upstreams')
+        self.assertIn(dns1, upstreams)
+        self.assertIn(dns2, upstreams)
+
+    @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
+    def test_exceptions_catched_project_lookup(self, mock_keystone):
+        """ensure that all exceptions are catched and do not break the
+           rpc call
+        """
+
+        # we manipulate the network, so we need fresh mock objects
+        mock_network = {'id': 123, 'project_id': 666}
+        mock_domain = MockedDBObj(id=42, name='mydomain-123')
+
+        mock_keystone.get_project.side_effect = Exception('Test')
+        mock_keystone.get_domain.return_value = mock_domain
+
+        cfg.CONF.set_override('enabled', True,
+                              group='customdns')
+        cfg.CONF.set_override('domain_name_prefixes', ['mydomain'],
+                              group='customdns')
+
+        cnc = CustomNetworkConfigurator()
+
+        cnc.add_dnssettings_to_net(mock_network)
+        upstreams = mock_network.get('dns_custom_upstreams')
+        self.assertIsNone(upstreams)
+
+    @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
+    def test_exceptions_catched_domain_lookup(self, mock_keystone):
+        """ensure that all exceptions are catched and do not break the
+           rpc call
+        """
+
+        # we manipulate the network, so we need fresh mock objects
+        mock_network = {'id': 123, 'project_id': 666}
+        mock_project = MockedDBObj(id=666, domain_id=42)
+
+        mock_keystone.get_project.return_value = mock_project
+        mock_keystone.get_domain.side_effect = Exception('Test')
+
+        cfg.CONF.set_override('enabled', True,
+                              group='customdns')
+        cfg.CONF.set_override('domain_name_prefixes', ['mydomain'],
+                              group='customdns')
+
+        cnc = CustomNetworkConfigurator()
+
+        cnc.add_dnssettings_to_net(mock_network)
+        upstreams = mock_network.get('dns_custom_upstreams')
+        self.assertIsNone(upstreams)
 
 
 class TestDhcpRpcCallback(base.BaseTestCase):

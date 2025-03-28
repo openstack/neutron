@@ -17,6 +17,7 @@ import abc
 import collections
 import copy
 import io
+import ipaddress
 import itertools
 import os
 import re
@@ -567,7 +568,24 @@ class Dnsmasq(DhcpLocalProcess):
 
         cmd.append('--conf-file=%s' %
                    (self.conf.dnsmasq_config_file.strip() or '/dev/null'))
-        for server in self.conf.dnsmasq_dns_servers:
+
+        # if the network has custom upstreams set, we will use them instead
+        if hasattr(self.network, 'dns_custom_upstreams'):
+            # Do some input validation on the data we got via rpc call, to
+            # avoid dnsmasq not starting - worst case is we have no dns, but
+            # at least dhcp is working. if all servers are wrong. Should not
+            # happen as we are doing validation on the server side as well.
+            dns_servers = []
+            for server in self.network.dns_custom_upstreams:
+                try:
+                    dns_servers.append(ipaddress.ip_address(server).compressed)
+                except ValueError:
+                    LOG.error('Invalid DNS server "%s" for network %s',
+                              server, self.network.id)
+        else:
+            dns_servers = self.conf.dnsmasq_dns_servers
+
+        for server in dns_servers:
             cmd.append('--server=%s' % server)
 
         if self.conf.dns_domain:
@@ -591,8 +609,16 @@ class Dnsmasq(DhcpLocalProcess):
                 cmd.append('--log-dhcp')
                 cmd.append('--log-facility=%s' % log_filename)
 
+        edns_fingerprinting_enabled = self.conf.edns_client_fingerprint
+
+        if hasattr(self.network, 'dns_ednslogging_enabled'):
+            if not isinstance(self.network.dns_ednslogging_enabled, bool):
+                sval = str(self.network.dns_ednslogging_enabled).lower()
+                self.network.dns_ednslogging_enabled = sval in ('yes', 'true')
+            edns_fingerprinting_enabled = self.network.dns_ednslogging_enabled
+
         # fingerprint the client (network id + client IP)
-        if self.conf.edns_client_fingerprint:
+        if edns_fingerprinting_enabled:
             cmd.append('--add-cpe-id=%s' % self.network.id)
             if self._is_dnsmasq_umbrella_supported():
                 cmd.append('--umbrella')

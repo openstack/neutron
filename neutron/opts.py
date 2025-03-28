@@ -204,7 +204,11 @@ def list_opts():
         ('designate',
          neutron.conf.services.extdns_designate_driver.designate_opts
          ),
-        ('quotas', neutron.conf.quota.core_quota_opts)
+        ('quotas', neutron.conf.quota.core_quota_opts),
+        (neutron.conf.service.DNSSETTINGS_CONF_SECTION,
+         itertools.chain(
+             neutron.conf.service.DNSSETTINGS_OPTS)
+         ),
     ]
 
 

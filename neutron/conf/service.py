@@ -55,9 +55,26 @@ RPC_EXTRA_OPTS = [
                       'call.')),
 ]
 
+DNSSETTINGS_CONF_SECTION = 'customdns'
+DNSSETTINGS_OPTS = [
+    cfg.BoolOpt('enabled',
+                default=False,
+                help=_("Enable domain specific DNS settings")),
+    cfg.ListOpt('upstream_dns_servers', default=[],
+                help=_("Custom upstream DNS server IPs")),
+    cfg.ListOpt('domain_name_prefixes', default=[],
+                help=_("OS Domain Name Prefixes to match against")),
+    cfg.ListOpt('project_ids', default=[],
+                help=_("IDs of projects to match for testing only")),
+]
+
 
 def register_service_opts(opts, conf=cfg.CONF):
     conf.register_opts(opts)
+
+
+def register_dns_opts(opts, conf=cfg.CONF):
+    conf.register_opts(opts, group=DNSSETTINGS_CONF_SECTION)
 
 
 def get_rpc_workers(conf=cfg.CONF):

@@ -14,9 +14,12 @@
 # limitations under the License.
 
 import copy
+import ipaddress
 import itertools
 import operator
+from typing import Optional
 
+from keystoneauth1 import loading as ks_loading
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api import extensions
 from neutron_lib.callbacks import resources
@@ -26,6 +29,7 @@ from neutron_lib import exceptions
 from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
+from openstack import connection
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -41,6 +45,179 @@ from neutron.quota import resource_registry
 
 
 LOG = logging.getLogger(__name__)
+
+
+class DomainLookupFailed(Exception):
+    pass
+
+
+class CustomNetworkConfigurator:
+
+    def __init__(self):
+        self._KEYSTONE = None
+        self._domain_id_cache = {}
+        self._domain_name_cache = {}
+
+    def add_dnssettings_to_net(self, network_dict):
+        """Add custom dns settings to the network if the network
+        is found to be part of one of the custom OpenStack domains
+        or projects from our settings.
+        """
+
+        if not (cfg.CONF.customdns.domain_name_prefixes or
+                cfg.CONF.customdns.project_ids):
+            # The config is empty, there is no need to do any lookups
+            # against keystone
+            return
+
+        if not self._is_customdns_project(network_dict['project_id']):
+            return
+
+        # logging always has to be disabled for all custom domains
+        network_dict['dns_ednslogging_enabled'] = False
+
+        if cfg.CONF.customdns.upstream_dns_servers:
+            # only set if the config setting isn't empty, so we do not
+            # break DNS resolution in that domain when the config is
+            # incomplete. Can also be used intentionally to only disable
+            # logging but keep the default upstream servers.
+            addrs = []
+            # TODO(mutax): make e.g. custom config item type to validate only
+            #  once on startup
+            for item in cfg.CONF.customdns.upstream_dns_servers:
+                try:
+                    addr = ipaddress.ip_address(item)
+                    addrs.append(addr.compressed)
+                except ValueError:
+                    LOG.error("Custom DNS settings invalid for network %s "
+                              "not a valid IP for DNS: %s",
+                              network_dict['id'], item)
+            network_dict['dns_custom_upstreams'] = addrs
+
+        LOG.debug("Network %s is in a custom OS-domain, "
+                 "customized DNS settings: "
+                 "dns_ednslogging_enabled=%s, "
+                 "dns_custom_upstreams=%s",
+                 network_dict['id'],
+                 network_dict.get('dns_ednslogging_enabled', 'NOT-SET'),
+                 network_dict.get('dns_custom_upstreams', 'NOT-SET'))
+
+    @property
+    def _keystone_connection(self):
+        auth_section = 'nova'  # name of the section in the config file
+        # TODO(mutax): trying to use the section 'keystone_authtoken'
+        #  throws an exception because it misses a timeout setting in
+        #  the section, but nova also misses it? makes no sense, needs
+        #  investigation
+        #  Would be nice to not use the nova service user for that...
+
+        if not self._KEYSTONE:
+            # this needs to be a Singleton, so we do not pile up sockets
+            LOG.debug("domainlookup: creating new connection to keystone")
+            auth = ks_loading.load_auth_from_conf_options(
+                    cfg.CONF, auth_section)
+            keystone_session = ks_loading.load_session_from_conf_options(
+                    cfg.CONF, auth_section, auth=auth)
+            self._KEYSTONE = connection.Connection(
+                    session=keystone_session, oslo_conf=cfg.CONF,
+                    connect_retries=cfg.CONF.http_retries)
+
+        return self._KEYSTONE
+
+    def get_domain_name(self, project_id: str) -> str:
+        """query keystone to get the name of the domain that
+        the project belongs to. Will cache both the project_id to
+        domain_id mapping and the domain_id to domain_name mapping.
+        """
+        # this is inspired by code taken from
+        # class ProjectIdMiddleware in api/extensions.py
+
+        if not project_id:
+            raise ValueError(_("No project_id provided!"))
+
+        domain_id = self._domain_id_cache.get(project_id)
+
+        if not domain_id:
+            LOG.debug("domainlookup: project %s not in cache",
+                      project_id)
+            project = self._keystone_connection.get_project(project_id)
+
+            if not project:
+                msg = f"Unable to find project {project_id}"
+                raise DomainLookupFailed(msg)
+
+            domain_id = project.domain_id
+            if not domain_id:
+                msg = (f"Project {project_id} has an"
+                       f"invalid (empty) domain id: '{domain_id}'")
+                raise DomainLookupFailed(msg)
+
+            self._domain_id_cache[project_id] = domain_id
+
+        domain_name = self._domain_name_cache.get(domain_id)
+
+        if not domain_name:
+            LOG.debug("domainlookup: domain %s for project %s not in cache",
+                      domain_id, project_id)
+            domain = self._keystone_connection.get_domain(domain_id)
+
+            if not domain:
+                msg = f"Domain {domain_id} for project {project_id} not found"
+                raise DomainLookupFailed(msg)
+
+            domain_name = domain.name
+            self._domain_name_cache[domain_id] = domain_name
+
+        return domain_name
+
+    def _is_customdns_project(self, project_id: Optional[str]) -> bool:
+        """check if the network is in an OpenStack domain or project that we
+           want to configure in a custom way.
+           For domains we use prefix matches on the name, for projects we
+           directly match on the id.
+        """
+
+        # should not happen, but would never match anyway
+        if not project_id:
+            return False
+
+        # check if the project-id matches the list for custom settings
+        if project_id in cfg.CONF.customdns.project_ids:
+            # this comes in handy for testing, no need for a test-domain!
+            LOG.debug("domainlookup: project %s matches customdns project ids",
+                      project_id)
+            return True
+
+        # now try to retrieve the OpenStack domain name via the project id,
+        # this uses a local cache and on a cache miss queries keystone
+        domain_name = None
+        try:
+            domain_name = self.get_domain_name(project_id)
+        except Exception as e:  # noqa
+            # If Keystone is not reachable or something goes wrong with
+            # the lookup, we do not want to fail configuring all networks.
+            # Currently, the sane thing to do is using default settings in
+            # those cases. As we want to fail to the default in all error
+            # cases anyway, we can use a bare Exception here.
+            # TODO(mutax): I do want to get the stack trace logged, but I
+            #   also want to get a nice warning to the log independent of the
+            #   source of the error - but now we log the same error twice.
+            LOG.exception('Failed to retrieve domain to set custom dns for'
+                          ' project %s - %s: %s', project_id, type(e), e
+                          )
+
+        # in case of an error or empty result, we fall back to the 'safe'
+        # side by using default settings.
+        if not domain_name:
+            LOG.warning('Unable to retrieve domain name for project %s,'
+                        ' falling back to default settings!',
+                        project_id)
+            return False
+
+        # check if the OpenStack domain name starts with one of the prefixes
+        # from our config (or is equal).
+        return domain_name.startswith(
+                tuple(cfg.CONF.customdns.domain_name_prefixes))
 
 
 class DhcpRpcCallback(object):
@@ -81,6 +258,8 @@ class DhcpRpcCallback(object):
     target = oslo_messaging.Target(
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
         version='1.10')
+
+    _domain_lookup = CustomNetworkConfigurator()
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -231,7 +410,7 @@ class DhcpRpcCallback(object):
         # the order changes.
         # TODO(ralonsoh): in Z+, remove "tenant_id" parameter. DHCP agents
         # should read only "project_id".
-        ret = {'id': network.id,
+        network_dict = {'id': network.id,
                'project_id': network.project_id,
                'tenant_id': network.project_id,
                'admin_state_up': network.admin_state_up,
@@ -241,7 +420,7 @@ class DhcpRpcCallback(object):
                'ports': ports,
                'mtu': network.mtu}
         if seg_plug:
-            ret['segments'] = [{
+            network_dict['segments'] = [{
                 'id': segment.id,
                 'network_id': segment.network_id,
                 'name': segment.name,
@@ -251,7 +430,11 @@ class DhcpRpcCallback(object):
                 'is_dynamic': segment.is_dynamic,
                 'segment_index': segment.segment_index,
                 'hosts': segment.hosts} for segment in network.segments]
-        return ret
+
+        if cfg.CONF.customdns.enabled:
+            self._domain_lookup.add_dnssettings_to_net(network_dict)
+
+        return network_dict
 
     @db_api.retry_db_errors
     def release_dhcp_port(self, context, **kwargs):
