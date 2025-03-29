@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    The ML2/OVN Placement extension now removes any existing resource provider
+    deleted from the updated local node configuration. If the resource provider
+    has allocations, Placement will return an exception and it will not be
+    deleted.

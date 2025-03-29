@@ -92,11 +92,14 @@ class PlacementState:
                  hypervisor_rps,
                  device_mappings,
                  supported_vnic_types,
-                 client):
+                 client,
+                 rp_deleted=None,
+                 ):
         self._rp_bandwidths = rp_bandwidths
         self._rp_inventory_defaults = rp_inventory_defaults
         self._rp_pp = rp_pkt_processing
         self._rp_pp_inventory_defaults = rp_pkt_processing_inventory_defaults
+        self._rp_deleted = rp_deleted
         self._driver_uuid_namespace = driver_uuid_namespace
         self._agent_type = agent_type
         self._hypervisor_rps = hypervisor_rps
@@ -176,14 +179,26 @@ class PlacementState:
                      'parent_provider_uuid': agent_rp_uuid}))
         return rps
 
+    def _deferred_delete_device_rps(self):
+        rps = []
+        if not self._rp_deleted:
+            return rps
+
+        for device in self._rp_deleted:
+            hypervisor = self._hypervisor_rps[device]
+            rp_uuid = place_utils.device_resource_provider_uuid(
+                self._driver_uuid_namespace,
+                hypervisor['name'],
+                device)
+            rps.append(
+                DeferredCall(self._client.delete_resource_provider, rp_uuid))
+        return rps
+
     def deferred_create_resource_providers(self):
         agent_rps = self._deferred_create_agent_rps()
         device_rps = self._deferred_create_device_rps()
-
-        rps = []
-        rps.extend(agent_rps)
-        rps.extend(device_rps)
-        return rps
+        deleted_rps = self._deferred_delete_device_rps()
+        return agent_rps + device_rps + deleted_rps
 
     def _deferred_update_agent_rp_traits(self, traits_):
         agent_rp_traits = []
