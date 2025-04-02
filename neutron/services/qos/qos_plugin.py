@@ -197,11 +197,11 @@ class QoSPlugin(qos.QoSPluginBase):
                                   network_id, min_bw_rules=None,
                                   segments=None):
         request_group = {}
-        if not min_bw_rules:
+        if min_bw_rules is None:
             min_bw_rules = rule_object.QosMinimumBandwidthRule.get_objects(
                 context.get_admin_context(), qos_policy_id=qos_policy_id)
         min_bw_resources = QoSPlugin._get_min_bw_resources(min_bw_rules)
-        if not segments:
+        if segments is None:
             segments = network_object.NetworkSegment.get_objects(
                 context.get_admin_context(), network_id=network_id)
         min_bw_traits = QoSPlugin._get_min_bw_traits(vnic_type, segments)
@@ -218,7 +218,7 @@ class QoSPlugin(qos.QoSPluginBase):
     def _get_min_pps_request_group(qos_policy_id, port_id, vnic_type,
                                    min_pps_rules=None):
         request_group = {}
-        if not min_pps_rules:
+        if min_pps_rules is None:
             min_pps_rules = rule_object.QosMinimumPacketRateRule.get_objects(
                 context.get_admin_context(),
                 qos_policy_id=qos_policy_id)
