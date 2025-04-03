@@ -125,16 +125,19 @@ class ChassisBandwidthConfigEvent(row_event.RowEvent):
         if self._driver._post_fork_event.is_set():
             return self._driver._ovn_client.placement_extension
 
+    @property
+    def placement_extension_enabled(self):
+        return self.placement_extension and self.placement_extension.enabled
+
     def match_fn(self, event, row, old=None):
-        # If the OVNMechanismDriver OVNClient has not been instantiated, the
-        # event is skipped. All chassis configurations are read during the
-        # OVN placement extension initialization.
-        if (not self.placement_extension or
-                not self.placement_extension.enabled):
-            return False
         if event == self.ROW_CREATE:
             return True
-        if event == self.ROW_UPDATE and old and hasattr(old, 'other_config'):
+
+        # If the OVNMechanismDriver OVNClient has not been instantiated, the
+        # update event is skipped.
+        if not self.placement_extension_enabled:
+            return False
+        if old and hasattr(old, 'other_config'):
             row_bw = _parse_ovn_cms_options(row)
             old_bw = _parse_ovn_cms_options(old)
             if row_bw != old_bw:
@@ -142,6 +145,14 @@ class ChassisBandwidthConfigEvent(row_event.RowEvent):
         return False
 
     def run(self, event, row, old):
+        if event == self.ROW_CREATE:
+            # It is possible that a Chassis create event is received before
+            # the OVNMechanismDriver OVNClient has been instantiated. Wait for
+            # it and check the Placement extension.
+            self._driver._post_fork_event.wait()
+            if not self.placement_extension_enabled:
+                return
+
         name2uuid = self.placement_extension.name2uuid()
         state = self.placement_extension.build_placement_state(row, name2uuid,
                                                                chassis_old=old)
@@ -150,8 +161,8 @@ class ChassisBandwidthConfigEvent(row_event.RowEvent):
 
         _send_deferred_batch(state)
         ch_config = dict_chassis_config(state)
-        LOG.debug('OVN chassis %(chassis)s Placement configuration modified: '
-                  '%(config)s', {'chassis': row.name, 'config': ch_config})
+        LOG.info('OVN chassis %(chassis)s Placement configuration modified: '
+                 '%(config)s', {'chassis': row.name, 'config': ch_config})
 
 
 @common_utils.SingletonDecorator
@@ -231,7 +242,7 @@ class OVNClientPlacementExtension:
         msg = ', '.join(['Chassis {}: {}'.format(
             name, dict_chassis_config(state))
             for (name, state) in chassis.items()]) or '(no info)'
-        LOG.debug('OVN chassis Placement initial configuration: %s', msg)
+        LOG.info('OVN chassis Placement initial configuration: %s', msg)
         return chassis
 
     def name2uuid(self, name=None):

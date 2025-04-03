@@ -1,0 +1,8 @@
+---
+issues:
+  - |
+    The ML2/OVN Placement initial configuration is executed now in the Neutron
+    API process and removed from the maintenance worker; since the migration
+    to WSGI, now the API and the maintenance worker are different processes.
+    When an OVN ``Chassis`` creation event is received, the configuration is
+    read, a ``PlacementState`` object created and sent to the Placement API.

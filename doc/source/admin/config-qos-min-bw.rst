@@ -325,13 +325,11 @@ by commas.
 This information is retrieved from the OVN SB database during the Neutron
 server initialization and when the "Chassis" registers are updated.
 
-During the Neutron server initialization, a ``MaintenanceWorker`` thread will
-call ``OvnSbSynchronizer.do_sync``, that will call
-``OVNClientPlacementExtension.read_initial_chassis_config``. This method lists
-all chassis and builds the resource provider information needed by Placement.
-This information is stored in the "Chassis" registers, in
-"external_ids:ovn-cms-options", with the same format as retrieved from the
-local "Open_vSwitch" registers from each chassis.
+The initial Placement configuration is retrieved when the Neutron API receives
+a "Chassis" create event, that happens when the IDL is connected to the
+database server. When a creation event is received, the Neutron API reads the
+configuration, builds a ``PlacementState`` instance and sends it to the
+Placement API.
 
 The second method to update the Placement information is when a "Chassis"
 registers is updated. The ``OVNClientPlacementExtension`` extension registers
