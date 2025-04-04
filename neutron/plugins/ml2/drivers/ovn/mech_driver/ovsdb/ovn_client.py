@@ -587,9 +587,11 @@ class OVNClient:
         # controller does not yet see that network in its local cache of the
         # OVN northbound database.  Check if the logical switch is present
         # or not in the idl's local copy of the database before creating
-        # the lswitch port.
-        self._nb_idl.check_for_row_by_value_and_retry(
-            'Logical_Switch', 'name', lswitch_name)
+        # the lswitch port. Once we require an ovs version with working
+        # persist_uuid support, this can be removed.
+        if not utils.ovs_persist_uuid_supported(self._nb_idl):
+            self._nb_idl.check_for_row_by_value_and_retry(
+                'Logical_Switch', 'name', lswitch_name)
 
         with self._nb_idl.transaction(check_error=True) as txn:
             dhcpv4_options, dhcpv6_options = self.update_port_dhcp_options(
@@ -601,6 +603,7 @@ class OVNClient:
             kwargs = {
                 'lport_name': port['id'],
                 'lswitch_name': lswitch_name,
+                'network_id': port['network_id'],
                 'addresses': port_info.addresses,
                 'external_ids': external_ids,
                 'parent_name': port_info.parent_name,
@@ -2069,6 +2072,7 @@ class OVNClient:
         cmd = self._nb_idl.create_lswitch_port(
             lport_name=utils.ovn_provnet_port_name(segment['id']),
             lswitch_name=utils.ovn_name(network_id),
+            network_id=network_id,
             addresses=[ovn_const.UNKNOWN_ADDR],
             external_ids={},
             type=ovn_const.LSP_TYPE_LOCALNET,
@@ -2131,14 +2135,13 @@ class OVNClient:
         # UUID.  This provides an easy way to refer to the logical switch
         # without having to track what UUID OVN assigned to it.
         lswitch_params = self._gen_network_parameters(network)
-        lswitch_name = utils.ovn_name(network['id'])
         # NOTE(mjozefcz): Remove this workaround when bug
         # 1869877 will be fixed.
         segments = segments_db.get_network_segments(
             context, network['id'])
         with self._nb_idl.transaction(check_error=True) as txn:
-            txn.add(self._nb_idl.ls_add(lswitch_name, **lswitch_params,
-                                        may_exist=True))
+            txn.add(self._nb_idl.ls_add(network_id=network['id'],
+                                        **lswitch_params, may_exist=True))
             for segment in segments:
                 if segment.get(segment_def.PHYSICAL_NETWORK):
                     self.create_provnet_port(network['id'], segment, txn=txn,

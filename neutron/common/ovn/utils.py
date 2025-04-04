@@ -69,6 +69,8 @@ HAChassisGroupInfo = collections.namedtuple(
     'HAChassisGroupInfo', ['group_name', 'chassis_list', 'az_hints',
                            'ignore_chassis', 'external_ids'])
 
+_OVS_PERSIST_UUID = _SENTINEL = object()
+
 
 class OvsdbClientCommand:
     _CONNECTION = 0
@@ -1377,3 +1379,17 @@ def validate_port_forwarding_configuration():
     if any(net_type in provider_network_types
            for net_type in cfg.CONF.ml2.tenant_network_types):
         raise ovn_exc.InvalidPortForwardingConfiguration()
+
+
+def ovs_persist_uuid_supported(nb_idl):
+    # OVS 3.1+ contain the persist_uuid feature that allows choosing the UUID
+    # that will be stored in the DB. It was broken prior to 3.1.5/3.2.3/3.3.1
+    # so this will return True only for the fixed version. As actually testing
+    # the fix requires committing a transaction, an implementation detail is
+    # tested. This can be removed once a fixed version is required.
+    global _OVS_PERSIST_UUID
+    if _OVS_PERSIST_UUID is _SENTINEL:
+        _OVS_PERSIST_UUID = isinstance(
+            next(iter(nb_idl.tables["NB_Global"].rows.data.values())), list)
+        LOG.debug(f"OVS persist_uuid supported={_OVS_PERSIST_UUID}")
+    return _OVS_PERSIST_UUID
