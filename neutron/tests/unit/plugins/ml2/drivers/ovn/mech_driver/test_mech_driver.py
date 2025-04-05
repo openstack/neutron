@@ -97,7 +97,9 @@ class MechDriverSetupBase(abc.ABC):
         self.mech_driver.nb_ovn = fakes.FakeOvsdbNbOvnIdl()
         self.mech_driver.sb_ovn = fakes.FakeOvsdbSbOvnIdl()
         self.mech_driver._post_fork_event.set()
-        self.mech_driver._ovn_client._qos_driver = mock.Mock()
+        self.mech_driver._ovn_client._qos_driver = mock.Mock(
+            get_lsp_options_qos=mock.Mock(return_value={})
+        )
         self._agent_cache = neutron_agent.AgentCache(self.mech_driver)
         agent1 = self._add_agent('agent1')
         neutron_agent.AgentCache().get_agents = mock.Mock()
@@ -187,6 +189,8 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         self.rp_ns = self.mech_driver.resource_provider_uuid5_namespace
         self.placement_ext = self.mech_driver._ovn_client.placement_extension
         self.placement_ext._reset(self.placement_ext._driver)
+        mock.patch.object(self.mech_driver._ovn_client._qos_driver,
+                          'get_lsp_options_qos', return_value={}).start()
 
         self.fake_subnet = fakes.FakeSubnet.create_one_subnet().info()
 

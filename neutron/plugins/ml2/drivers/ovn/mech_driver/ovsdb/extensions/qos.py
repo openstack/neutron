@@ -205,7 +205,23 @@ class OVNClientQosExtension:
 
         return ovn_qos_rule
 
-    def _ovn_lsp_rule(self, rules):
+    def get_lsp_options_qos(self, port_id):
+        """Return the current LSP.options QoS fields, passing the port ID"""
+        qos_options = {}
+        lsp = self.nb_idl.lookup('Logical_Switch_Port', port_id, default=None)
+        if not lsp:
+            return {}
+
+        for qos_key in (ovn_const.LSP_OPTIONS_QOS_MAX_RATE,
+                        ovn_const.LSP_OPTIONS_QOS_BURST,
+                        ovn_const.LSP_OPTIONS_QOS_MIN_RATE):
+            qos_value = lsp.options.get(qos_key)
+            if qos_value is not None:
+                qos_options[qos_key] = qos_value
+        return qos_options
+
+    @staticmethod
+    def _ovn_lsp_rule(rules):
         """Generate the OVN LSP.options for physical network ports (egress)
 
         The Logical_Switch_Port options field is a dictionary that can contain
