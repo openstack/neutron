@@ -47,6 +47,10 @@ following table shows the attributes available for each one of these resources:
    to list the active API extensions. This preserves backwards API
    compatibility.
 
+.. note::
+   For ``Floating IPs`` external DNSaaS is also required as described
+   in :ref:`config-dns-int-ext-serv`.
+
 .. _config-dns-int-dns-resolution:
 
 The Networking service internal DNS resolution
