@@ -150,6 +150,10 @@
     vars:
       nslookup_target: 'opendev.org'
       enable_fips: True
+      # NOTE(ykarel) remove python3 override with 10-stream switch
+      PYTHON3_VERSION: 3.12
+      tox_environment:
+        TOX_PYTHON: python3.12
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
@@ -235,6 +239,10 @@
     vars:
       nslookup_target: 'opendev.org'
       enable_fips: True
+      # NOTE(ykarel) remove python3 override with 10-stream switch
+      PYTHON3_VERSION: 3.12
+      tox_environment:
+        TOX_PYTHON: python3.12
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true

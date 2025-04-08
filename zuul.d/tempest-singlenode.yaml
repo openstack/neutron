@@ -702,6 +702,9 @@
     parent: neutron-ovn-tempest-ovs-master
     nodeset: devstack-single-node-centos-9-stream
     vars:
+      devstack_localrc:
+        # NOTE(ykarel) remove python3 override with 10-stream switch
+        PYTHON3_VERSION: 3.12
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'
         '{{ devstack_base_dir }}/data/ovn': 'logs'
@@ -721,6 +724,9 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+      devstack_localrc:
+        # NOTE(ykarel) remove python3 override with 10-stream switch
+        PYTHON3_VERSION: 3.12
       devstack_local_conf:
         test-config:
           "$TEMPEST_CONFIG":
@@ -737,6 +743,9 @@
     vars:
       nslookup_target: 'opendev.org'
       configure_swap_size: 4096
+      devstack_localrc:
+        # NOTE(ykarel) remove python3 override with 10-stream switch
+        PYTHON3_VERSION: 3.12
       devstack_local_conf:
         test-config:
           "$TEMPEST_CONFIG":

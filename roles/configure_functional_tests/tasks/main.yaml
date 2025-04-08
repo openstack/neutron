@@ -25,6 +25,7 @@
         # This is DB USER used in mysql db
         DATABASE_USER=openstack_citest
         MYSQL_GATHER_PERFORMANCE={{ MYSQL_GATHER_PERFORMANCE | default(true) }}
+        PYTHON3_VERSION={{ PYTHON3_VERSION | default('3') }}
 
         source $NEUTRON_DIR/tools/configure_for_func_testing.sh
         if is_fedora; then
