@@ -106,7 +106,8 @@ class BaseTestOVNL3RouterPluginMixin():
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name(self.fake_network['id']),
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'False',
-                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router-id',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                utils.ovn_name('router-id'),
             }
         }
         self.fake_router_ports = [self.fake_router_port]
@@ -172,7 +173,8 @@ class BaseTestOVNL3RouterPluginMixin():
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name('ext-network-id'),
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'True',
-                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router-id',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                utils.ovn_name('router-id'),
             },
             'options': {
                 ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION: str(default_mtu)
@@ -429,7 +431,8 @@ class BaseTestOVNL3RouterPluginMixin():
         fake_rtr_intf_networks = ['2001:db8::1/24', '2001:dba::1/24']
         payload = self._create_payload_for_router_interface(router_id)
         self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = {
-            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id}
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+            utils.ovn_name('router-id')}
         self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
                                                    events.AFTER_CREATE,
                                                    self, payload)
@@ -448,7 +451,8 @@ class BaseTestOVNL3RouterPluginMixin():
     def test_remove_router_interface(self):
         router_id = 'router-id'
         self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
-            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id})
+            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                          utils.ovn_name(router_id)})
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
 
@@ -465,7 +469,7 @@ class BaseTestOVNL3RouterPluginMixin():
     def test_remove_router_interface_update_lrouter_port(self):
         router_id = 'router-id'
         self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = {
-            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id}
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(router_id)}
         payload = self._create_payload_for_router_interface(router_id,
                                                             pass_subnet=False)
         self.ovn_drv._process_remove_router_interface(
@@ -482,17 +486,19 @@ class BaseTestOVNL3RouterPluginMixin():
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name(self.fake_network['id']),
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'False',
-                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id,
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                utils.ovn_name(router_id)
             })
 
     def test_remove_router_interface_router_not_found(self):
         router_id = 'router-id'
         self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
-            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id})
+            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                          utils.ovn_name(router_id)})
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
         self.get_router.side_effect = l3_exc.RouterNotFound(
-            router_id='router-id')
+            router_id='neutron-router-id')
 
         payload = self._create_payload_for_router_interface(router_id,
                                                             pass_subnet=False)
@@ -2177,7 +2183,8 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             'OVNClient.delete_mac_binding_entries_by_mac',
             return_value=1)
         self.setup_notification_driver()
-        ext_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router-id'}
+        ext_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                   utils.ovn_name('router-id')}
         self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = ext_ids
         self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
             external_ids=ext_ids)

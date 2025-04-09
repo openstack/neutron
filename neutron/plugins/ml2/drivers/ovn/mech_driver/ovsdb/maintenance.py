@@ -491,6 +491,46 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    def update_lrouter_ports_ext_ids_name_prefix(self):
+        """Update OVN logical router ports if missing external ids
+        "neutron-" prefix for router name.
+        """
+        LOG.debug(
+            'Maintenance task: Check missing prefix router_name in '
+            'external_ids of LRPs.')
+        self._sync_timer.restart()
+        ports_to_prefix = []
+        rports = self._nb_idl.db_find(
+            'Logical_Router_Port').execute(check_error=True)
+        for port in rports:
+            ext_id_rname = port['external_ids'].get(
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
+            if ext_id_rname and not ext_id_rname.startswith(
+                    ovn_const.OVN_NAME_PREFIX):
+                ports_to_prefix.append(port)
+        if ports_to_prefix:
+            LOG.debug('Update missing prefix for router_name in %d LRPs:\n%s',
+                      len(ports_to_prefix),
+                      [str(p['_uuid']) for p in ports_to_prefix])
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for port in ports_to_prefix:
+                    router_id = port['external_ids'].get(
+                        ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
+                    txn.add(self._nb_idl.update_lrouter_port(
+                        name=port.name,
+                        external_ids=self._ovn_client._gen_router_port_ext_ids(
+                            port, router_id)))
+        self._sync_timer.stop()
+        LOG.info('Maintenance task: Check missing prefix router_name in LRPs '
+                 '(took %.2f seconds)', self._sync_timer.elapsed())
+        raise periodics.NeverAgain()
+
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_global_dhcp_opts(self):
         if (not ovn_conf.get_global_dhcpv4_opts() and
                 not ovn_conf.get_global_dhcpv6_opts()):

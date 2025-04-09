@@ -1672,7 +1672,8 @@ class OVNClient:
                 utils.ovn_name(port['network_id']),
             ovn_const.OVN_ROUTER_IS_EXT_GW:
                 str(const.DEVICE_OWNER_ROUTER_GW == port.get('device_owner')),
-            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id,
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                utils.ovn_name(router_id),
         }
 
     def _get_reside_redir_for_gateway_port(self, device_id):
@@ -1877,7 +1878,8 @@ class OVNClient:
         external_ids = self._nb_idl.db_get(
             'Logical_Router_Port', lrp_name,
             'external_ids').execute(check_error=True)
-        router_id = external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
+        router_id = external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY].replace(
+            ovn_const.OVN_NAME_PREFIX, '')
         commands = [
             self._nb_idl.update_lrouter_port(
                 name=lrp_name,
@@ -1956,7 +1958,8 @@ class OVNClient:
                 port_removed = True
 
             router_id = ovn_port.external_ids[
-                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY].replace(
+                    ovn_const.OVN_NAME_PREFIX, '')
             router = None
             gw_ports = []
             try:

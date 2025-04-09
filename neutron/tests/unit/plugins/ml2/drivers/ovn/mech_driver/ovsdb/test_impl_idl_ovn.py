@@ -168,18 +168,24 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                               'lr-name-f'}}],
         'lrouter_ports': [
             {'name': utils.ovn_lrouter_port_name('orp-id-a1'),
-             'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'lr-id-a',
-                              ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
+             'external_ids': {
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                     utils.ovn_name('lr-id-a'),
+                 ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.1.0/24'],
              'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-1'}},
             {'name': utils.ovn_lrouter_port_name('orp-id-a2'),
-             'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'lr-id-a',
-                              ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
+             'external_ids': {
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                     utils.ovn_name('lr-id-a'),
+                 ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.2.0/24'],
              'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-1'}},
             {'name': utils.ovn_lrouter_port_name('orp-id-a3'),
-             'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'lr-id-a',
-                              ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
+             'external_ids': {
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                     utils.ovn_name('lr-id-a'),
+                 ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.3.0/24'],
              'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: None}},
             {'name': 'xrp-id-b1',
@@ -191,8 +197,10 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
              'external_ids': {}, 'networks': ['20.0.3.0/24'],
              'options': {}},
             {'name': utils.ovn_lrouter_port_name('gwc'),
-             'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'lr-id-f',
-                              ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
+             'external_ids': {
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                     utils.ovn_name('lr-id-f'),
+                 ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.4.0/24'],
              'options': {}}],
         'gateway_chassis': [

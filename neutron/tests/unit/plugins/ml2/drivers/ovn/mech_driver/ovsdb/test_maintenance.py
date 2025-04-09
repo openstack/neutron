@@ -394,6 +394,33 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.periodic._log_maintenance_inconsistencies(incst, [])
         self.assertFalse(mock_log.called)
 
+    def test_update_lrouter_ports_ext_ids_name_prefix(self):
+        lrp1_no_prefix = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                '_uuid': 'port-id1',
+                'name': 'lrp-id1',
+                'external_ids': {
+                    constants.OVN_ROUTER_NAME_EXT_ID_KEY: 'rtr-id1'}})
+        lrp2_with_prefix = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                '_uuid': 'port-id2',
+                'name': 'lrp-id2',
+                'external_ids': {
+                    constants.OVN_ROUTER_NAME_EXT_ID_KEY:
+                    '%srtr-id2' % constants.OVN_NAME_PREFIX}})
+
+        nb_idl = self.fake_ovn_client._nb_idl
+        nb_idl.db_find.return_value.execute.return_value = [
+            lrp1_no_prefix,
+            lrp2_with_prefix]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.update_lrouter_ports_ext_ids_name_prefix)
+
+        nb_idl.update_lrouter_port.assert_called_once_with(
+            name='lrp-id1', external_ids=mock.ANY)
+
     def test_check_for_igmp_snoop_support(self):
         cfg.CONF.set_override('igmp_snooping_enable', True, group='OVS')
         nb_idl = self.fake_ovn_client._nb_idl
