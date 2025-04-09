@@ -496,7 +496,7 @@ class TunnelTypeNetworkSegmentRangeTestMixin:
         self.assertIsNone(network_segment_range.project_id)
         self.assertEqual(self.driver.get_type(),
                          network_segment_range.network_type)
-        self.assertIsNone(network_segment_range.physical_network)
+        self.assertEqual('', network_segment_range.physical_network)
         self.assertEqual(TUN_MIN, network_segment_range.minimum)
         self.assertEqual(TUN_MAX, network_segment_range.maximum)
 
@@ -508,3 +508,15 @@ class TunnelTypeNetworkSegmentRangeTestMixin:
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
             self.context, network_type=self.driver.get_type())
         self.assertEqual(0, len(ret))
+
+    def test_try_to_create_duplicate_network_segment_ranges(self):
+        self.driver.initialize_network_segment_range_support(self.start_time)
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(1, len(ret))
+
+        self.driver._populate_new_default_network_segment_ranges(
+            self.context, self.start_time)
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(1, len(ret))

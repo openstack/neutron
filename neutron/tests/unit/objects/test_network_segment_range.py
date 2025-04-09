@@ -18,6 +18,7 @@ from unittest import mock
 
 from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.utils import helpers
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
@@ -410,23 +411,17 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         num_ranges = 5
         for network_type in network_segment_range.models_map.keys():
             for idx in range(num_ranges):
-                obj = self._create_network_segment_range(
-                    1, 10, network_type=network_type, default=True,
-                    shared=True, start_time=start_time - idx)
-                obj.create()
+                try:
+                    obj = self._create_network_segment_range(
+                        1, 10, network_type=network_type, default=True,
+                        shared=True, start_time=start_time - idx)
+                    obj.create()
+                except obj_exc.NeutronDbObjectDuplicateEntry:
+                    pass
             ranges = network_segment_range.NetworkSegmentRange.get_objects(
                 self.context, default=True, shared=True,
                 network_type=network_type)
-            self.assertEqual(num_ranges, len(ranges))
-
-            network_segment_range.NetworkSegmentRange.\
-                delete_expired_default_network_segment_ranges(
-                    self.context, network_type, start_time)
-            # NOTE(ralonsoh): there should be just one that has the same
-            # "created_at" value as "start_time".
-            ranges = network_segment_range.NetworkSegmentRange.get_objects(
-                self.context, default=True, shared=True,
-                network_type=network_type)
+            # No duplicated entry in DB at all
             self.assertEqual(1, len(ranges))
 
     def test_new_default(self):

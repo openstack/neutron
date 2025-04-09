@@ -22,6 +22,7 @@ from neutron_lib import constants as p_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
+from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
@@ -144,7 +145,6 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
         LOG.info("%(type)s ID ranges: %(range)s",
                  {'type': self.get_type(), 'range': current_range})
 
-    @db_api.retry_db_errors
     def _populate_new_default_network_segment_ranges(self, ctx, start_time):
         for tun_min, tun_max in self._tunnel_ranges:
             range_obj.NetworkSegmentRange.new_default(
@@ -165,18 +165,22 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
     @db_api.retry_db_errors
     def initialize_network_segment_range_support(self, start_time):
         admin_context = context.get_admin_context()
-        with db_api.CONTEXT_WRITER.using(admin_context):
-            self._delete_expired_default_network_segment_ranges(
-                admin_context, start_time)
-            self._populate_new_default_network_segment_ranges(
-                admin_context, start_time)
-            # Override self.tunnel_ranges with the network segment range
-            # information from DB and then do a sync_allocations since the
-            # segment range service plugin has not yet been loaded at this
-            # initialization time.
-            self._tunnel_ranges = self._get_network_segment_ranges_from_db(
-                ctx=admin_context)
-            self._sync_allocations(ctx=admin_context)
+        try:
+            with db_api.CONTEXT_WRITER.using(admin_context):
+                self._delete_expired_default_network_segment_ranges(
+                    admin_context, start_time)
+                self._populate_new_default_network_segment_ranges(
+                    admin_context, start_time)
+        except o_exc.NeutronDbObjectDuplicateEntry:
+            pass
+
+        # Override self.tunnel_ranges with the network segment range
+        # information from DB and then do a sync_allocations since the
+        # segment range service plugin has not yet been loaded at this
+        # initialization time.
+        self._tunnel_ranges = self._get_network_segment_ranges_from_db(
+            ctx=admin_context)
+        self._sync_allocations(ctx=admin_context)
 
     def update_network_segment_range_allocations(self):
         self._sync_allocations()

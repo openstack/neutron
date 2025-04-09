@@ -25,13 +25,13 @@ from neutron.conf import common as common_config
 from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.conf.plugins.ml2.drivers import driver_type as driver_type_config
 from neutron.objects import network_segment_range as range_obj
-from neutron.plugins.ml2.drivers import type_geneve
+from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 
 
 def _initialize_network_segment_range_support(type_driver, start_time):
     # This method is similar to
-    # ``_TunnelTypeDriverBase.initialize_network_segment_range_support``.
+    # ``VlanTypeDriverBase.initialize_network_segment_range_support``.
     # The method first deletes the existing default network ranges and then
     # creates the new ones. It also adds an extra second before closing the
     # DB transaction.
@@ -46,31 +46,41 @@ def _initialize_network_segment_range_support(type_driver, start_time):
         pass
 
 
-class TunnelTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
+class VlanTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
                                    testlib_api.SqlTestCase):
     def setUp(self):
         super().setUp()
         cfg.CONF.register_opts(common_config.core_opts)
         ml2_config.register_ml2_plugin_opts()
-        driver_type_config.register_ml2_drivers_geneve_opts()
+        driver_type_config.register_ml2_drivers_vlan_opts()
         ml2_config.cfg.CONF.set_override(
             'service_plugins', 'network_segment_range')
         self.min = 1001
         self.max = 1020
-        self.net_type = constants.TYPE_GENEVE
+        self.net_type = constants.TYPE_VLAN
+        self.ranges = [f'phys1:{self.min}:{self.max}',
+                       f'phys2:{self.min}:{self.max}',
+                       f'phys3:{self.min}:{self.max}',
+                       ]
         ml2_config.cfg.CONF.set_override(
-            'vni_ranges', f'{self.min}:{self.max}', group='ml2_type_geneve')
+            'network_vlan_ranges', self.ranges, group='ml2_type_vlan')
         self.admin_ctx = context.get_admin_context()
-        self.type_driver = type_geneve.GeneveTypeDriver()
+        self.type_driver = type_vlan.VlanTypeDriver()
         self.type_driver.initialize()
 
     def _check_sranges(self, sranges):
-        self.assertEqual(1, len(sranges))
-        self.assertEqual(self.net_type, sranges[0].network_type)
-        self.assertEqual(self.min, sranges[0].minimum)
-        self.assertEqual(self.max, sranges[0].maximum)
-        self.assertEqual([(self.min, self.max)],
-                         self.type_driver._tunnel_ranges)
+        self.assertEqual(len(self.ranges), len(sranges))
+        for _srange in sranges:
+            self.assertEqual(self.net_type, _srange.network_type)
+            self.assertEqual(self.min, _srange.minimum)
+            self.assertEqual(self.max, _srange.maximum)
+            self.assertIn(_srange.physical_network,
+                          ('phys1', 'phys2', 'phys3'))
+
+        self.assertEqual({'phys1': [(self.min, self.max)],
+                          'phys2': [(self.min, self.max)],
+                          'phys3': [(self.min, self.max)]},
+                         self.type_driver._network_vlan_ranges)
 
     def test_initialize_network_segment_range_support(self):
         # Execute the initialization several times with different start times.
@@ -101,7 +111,7 @@ class TunnelTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
         sranges = range_obj.NetworkSegmentRange.get_objects(self.admin_ctx)
         self._check_sranges(sranges)
 
-    def test_initialize_nsrange_support_parallel_exec_same_init_time(self):
+    def test__initialize_nsrange_support_parallel_exec_same_init_time(self):
         self._test_initialize_nsrange(same_init_time=True)
 
     def test_initialize_nsrange_support_parallel_exec_diff_init_time(self):

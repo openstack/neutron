@@ -165,7 +165,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                         network_type=range_data['network_type'],
                         physical_network=(range_data['physical_network']
                                           if range_data['network_type'] ==
-                                          const.TYPE_VLAN else None),
+                                          const.TYPE_VLAN else ''),
                         minimum=range_data['minimum'],
                         maximum=range_data['maximum'])
                 )

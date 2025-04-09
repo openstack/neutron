@@ -410,3 +410,15 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
             self.context, network_type=self.driver.get_type())
         self.assertEqual(0, len(ret))
+
+    def test_try_to_create_duplicate_network_segment_ranges(self):
+        self.driver.initialize_network_segment_range_support(self.start_time)
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(2, len(ret))
+
+        self.driver._populate_new_default_network_segment_ranges(
+            self.context, self.start_time)
+        ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
+            self.context)
+        self.assertEqual(2, len(ret))

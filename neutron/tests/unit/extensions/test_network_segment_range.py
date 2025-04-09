@@ -171,10 +171,10 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
         expected_range = {'shared': True,
                           'project_id': None,
                           'network_type': constants.TYPE_VXLAN,
-                          'physical_network': None}
+                          'physical_network': ''}
         self._test_create_network_segment_range(
             network_type=constants.TYPE_VXLAN,
-            physical_network=None,
+            physical_network='',
             expected=expected_range)
 
     def test_create_network_segment_range_tenant_specific(self):
