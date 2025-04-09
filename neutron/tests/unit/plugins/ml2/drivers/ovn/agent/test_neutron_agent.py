@@ -44,7 +44,7 @@ class AgentCacheTestCase(base.BaseTestCase):
             self.names_ref.append('chassis' + str(i))
 
     def _clean_agent_cache(self):
-        self.agent_cache.agents = {}
+        del self.agent_cache
 
     def _list_agents(self):
         self.names_read = []
