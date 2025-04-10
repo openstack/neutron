@@ -15,7 +15,11 @@
 
 from unittest import mock
 
-from pyroute2.netlink import nlsocket
+# TODO(haleyb) remove when pyroute >=0.9.1 required
+try:
+    from pyroute2.netlink import core as nlcore
+except ImportError:
+    from pyroute2.netlink import nlsocket as nlcore
 
 from neutron.agent.linux import devlink
 from neutron.privileged.agent import linux as priv_linux
@@ -46,7 +50,7 @@ GET_PORT_LIST = (
          'pid': 448943,
          'error': None,
          'target': 'localhost',
-         'stats': nlsocket.Stats(qsize=0, delta=0, delay=0)
+         'stats': nlcore.Stats(qsize=0, delta=0, delay=0)
      },
      'event': 'DEVLINK_CMD_NEW'},
     {'cmd': 3,
@@ -77,7 +81,7 @@ GET_PORT_LIST = (
          'pid': 448943,
          'error': None,
          'target': 'localhost',
-         'stats': nlsocket.Stats(qsize=0, delta=0, delay=0)
+         'stats': nlcore.Stats(qsize=0, delta=0, delay=0)
      },
      'event': 'DEVLINK_CMD_NEW'},
     {'cmd': 3,
@@ -108,7 +112,7 @@ GET_PORT_LIST = (
          'pid': 448943,
          'error': None,
          'target': 'localhost',
-         'stats': nlsocket.Stats(qsize=0, delta=0, delay=0)
+         'stats': nlcore.Stats(qsize=0, delta=0, delay=0)
      },
      'event': 'DEVLINK_CMD_NEW'}
 )
