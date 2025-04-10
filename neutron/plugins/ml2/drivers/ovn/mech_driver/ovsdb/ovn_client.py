@@ -497,8 +497,11 @@ class OVNClient:
         if self.is_mcast_flood_broken and port_type not in (
                 'vtep', ovn_const.LSP_TYPE_LOCALPORT, 'router'):
             options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
-
         sg_ids = ' '.join(utils.get_lsp_security_groups(port))
+
+        lsp_options_qos = self._qos_driver.get_lsp_options_qos(port['id'])
+        options.update(lsp_options_qos)
+
         return OvnPortInfo(port_type, options, addresses, port_security,
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
                            cidrs.strip(), device_owner, sg_ids,
