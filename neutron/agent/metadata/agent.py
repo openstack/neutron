@@ -24,7 +24,6 @@ from oslo_log import log as logging
 from oslo_service import loopingcall
 import requests
 import webob
-from webob import exc as webob_exc
 
 from neutron._i18n import _
 from neutron.agent.common import base_agent_rpc
@@ -169,9 +168,22 @@ class MetadataProxyHandler(MetadataProxyHandlerBaseSocketServer,
                 res = self._proxy_request(instance_id, project_id, req)
                 self.wfile.write(res)
                 return
-            # TODO(ralonsoh): change this return to be a formatted Request
-            # and added to self.wfile
-            return webob_exc.HTTPNotFound()
+
+            network_id, router_id = self._get_instance_id(req)
+            if network_id and router_id:
+                title = '400 Bad Request'
+                msg = _(f'Both network {network_id} and router {router_id} '
+                        f'defined.')
+            elif network_id:
+                title = '404 Not Found'
+                msg = _(f'Instance was not found on network {network_id}.')
+                LOG.warning(msg)
+            else:
+                title = '404 Not Found'
+                msg = _(f'Instance was not found on router {router_id}.')
+                LOG.warning(msg)
+            res = common_metadata.encode_http_reponse(title, title, msg)
+            self.wfile.write(res)
         except Exception as exc:
             LOG.exception('Error while receiving data.')
             raise exc
