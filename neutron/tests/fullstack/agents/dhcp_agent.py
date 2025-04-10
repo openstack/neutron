@@ -33,7 +33,7 @@ OPTS = [
 
 def _get_namespace_name(id_, suffix=None):
     suffix = suffix or cfg.CONF.test_namespace_suffix
-    return "{}{}{}".format(linux_dhcp.NS_PREFIX, id_, suffix)
+    return f"{linux_dhcp.NS_PREFIX}{id_}{suffix}"
 
 
 def NetModel_init(self, d):

@@ -163,7 +163,7 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
         return
 
     if key[0].startswith('type:list_of_dict'):
-        target_attributes = set([])
+        target_attributes = set()
         for _attrs in target[attr_name]:
             target_attributes = target_attributes.union(set(_attrs.keys()))
     else:
@@ -182,7 +182,7 @@ def _build_list_of_subattrs_rule(attr_name, attribute_value, action):
         if isinstance(sub_attr, dict):
             for k in sub_attr:
                 rules.append(policy.RuleCheck(
-                    'rule', '{}:{}:{}'.format(action, attr_name, k)))
+                    'rule', f'{action}:{attr_name}:{k}'))
     if rules:
         return policy.AndCheck(rules)
 
@@ -227,7 +227,7 @@ def _build_match_rule(action, target, pluralized):
                     attribute = res_map[resource][attribute_name]
                     if 'enforce_policy' in attribute:
                         attr_rule = policy.RuleCheck(
-                            'rule', '{}:{}'.format(action, attribute_name))
+                            'rule', f'{action}:{attribute_name}')
                         # Build match entries for sub-attributes
                         if _should_validate_sub_attributes(
                                 attribute, target[attribute_name]):
@@ -277,7 +277,7 @@ class OwnerCheck(policy.Check):
                           match)
             LOG.exception(err_reason)
             raise exceptions.PolicyInitError(
-                policy="{}:{}".format(kind, match),
+                policy=f"{kind}:{match}",
                 reason=err_reason)
         self._cache = cache._get_memory_cache_region(expiration_time=5)
         super().__init__(kind, match)
@@ -349,7 +349,7 @@ class OwnerCheck(policy.Check):
                               self.target_field)
                 LOG.error(err_reason)
                 raise exceptions.PolicyCheckError(
-                    policy="{}:{}".format(self.kind, self.match),
+                    policy=f"{self.kind}:{self.match}",
                     reason=err_reason)
             parent_foreign_key = _RESOURCE_FOREIGN_KEYS.get(
                 "%ss" % parent_res, None)
@@ -367,7 +367,7 @@ class OwnerCheck(policy.Check):
                               {'match': self.match, 'res': parent_res})
                 LOG.error(err_reason)
                 raise exceptions.PolicyCheckError(
-                    policy="{}:{}".format(self.kind, self.match),
+                    policy=f"{self.kind}:{self.match}",
                     reason=err_reason)
 
             target_copy[self.target_field] = self._extract(

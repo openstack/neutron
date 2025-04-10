@@ -343,7 +343,8 @@ class SubnetRequestFactory:
             prefixlen = subnet['prefixlen']
             if not validators.is_attr_set(prefixlen):
                 prefixlen = int(subnetpool['default_prefixlen'])
-            gw_ip_net = netaddr.IPNetwork('%s/%s' % (gateway_ip, prefixlen))
+            gw_ip_net = netaddr.IPNetwork(
+                '{}/{}'.format(gateway_ip, prefixlen))
             cidr = gw_ip_net.cidr
 
         # TODO(ralonsoh): "tenant_id" reference should be removed.

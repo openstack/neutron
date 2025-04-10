@@ -236,7 +236,7 @@ class MetadataPathAgentExtension(
                     "for dev %s, error: %s") % (self.META_DEV_NAME, e)
             raise RuntimeError(msg)
 
-        cidr = "%s/%s" % (
+        cidr = "{}/{}".format(
             self.provider_gateway_ip,
             netaddr.IPNetwork(self.provider_cidr).prefixlen)
         ns_dev.addr.add(cidr)

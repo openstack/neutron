@@ -80,7 +80,7 @@ def _hex_str(num):
 
 def _hex_format(port, mask):
     if mask != 0xffff:
-        return "{}/{}".format(_hex_str(port), _hex_str(0xffff & mask))
+        return f"{_hex_str(port)}/{_hex_str(0xffff & mask)}"
     return _hex_str(port)
 
 

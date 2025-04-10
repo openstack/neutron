@@ -146,7 +146,7 @@ class AgentMixin:
             LOG.debug("Enqueueing router's %s state change to %s",
                       router_id, state)
             state_change = threading.Thread(target=self._enqueue_state_change,
-                             args=(router_id, state))
+                                            args=(router_id, state))
             state_change.start()
             # TODO(ralonsoh): remove once the eventlet deprecation is finished.
             time.sleep(0)

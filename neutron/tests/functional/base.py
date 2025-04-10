@@ -434,7 +434,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         if enable_chassis_as_extport:
             append_cms_options(other_config, 'enable-chassis-as-extport-host')
 
-        bridge_mapping = ",".join(["{}:br-provider{}".format(phys_net, i)
+        bridge_mapping = ",".join([f"{phys_net}:br-provider{i}"
                                   for i, phys_net in enumerate(physical_nets)])
         if name is None:
             name = uuidutils.generate_uuid()

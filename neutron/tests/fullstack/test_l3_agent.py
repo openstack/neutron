@@ -178,7 +178,7 @@ class TestL3Agent(base.BaseFullStackTestCase):
             suffix = agent.get_namespace_suffix()
         else:
             suffix = self.environment.hosts[0].l3_agent.get_namespace_suffix()
-        return "{}@{}".format(namespace, suffix)
+        return f"{namespace}@{suffix}"
 
     def _get_l3_agents_with_ha_state(
             self, router_id, ha_state=None):

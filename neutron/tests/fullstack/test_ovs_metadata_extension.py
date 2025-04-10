@@ -184,7 +184,8 @@ class OvsMetadataExtensionTestCase(base.BaseFullStackTestCase):
             flows_list = flows.splitlines()
             LOG.info("Metadata bridge flows_list: %s", flows_list)
             pattern = re.compile(
-                r"^.* table=%s,.* actions=%s" % (table, re.escape(actions)))
+                r"^.* table={},.* actions={}".format(table,
+                                                     re.escape(actions)))
             for flow in flows_list:
                 if pattern.match(flow.strip()):
                     return True

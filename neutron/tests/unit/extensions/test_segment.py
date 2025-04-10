@@ -94,10 +94,10 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override(
             'network_vlan_ranges',
-            ['physnet:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
-             'physnet0:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
-             'physnet1:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
-             'physnet2:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX)],
+            [f'physnet:{self.VLAN_MIN}:{self.VLAN_MAX}',
+             f'physnet0:{self.VLAN_MIN}:{self.VLAN_MAX}',
+             f'physnet1:{self.VLAN_MIN}:{self.VLAN_MAX}',
+             f'physnet2:{self.VLAN_MIN}:{self.VLAN_MAX}'],
             group='ml2_type_vlan')
         ext_mgr = SegmentTestExtensionManager()
         super().setUp(plugin=plugin, ext_mgr=ext_mgr,
@@ -2786,10 +2786,10 @@ class TestSegmentHostRoutes(TestSegmentML2):
         driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override(
             'network_vlan_ranges',
-            ['physnet:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
-             'physnet0:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
-             'physnet1:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX),
-             'physnet2:{}:{}'.format(self.VLAN_MIN, self.VLAN_MAX)],
+            [f'physnet:{self.VLAN_MIN}:{self.VLAN_MAX}',
+             f'physnet0:{self.VLAN_MIN}:{self.VLAN_MAX}',
+             f'physnet1:{self.VLAN_MIN}:{self.VLAN_MAX}',
+             f'physnet2:{self.VLAN_MIN}:{self.VLAN_MAX}'],
             group='ml2_type_vlan')
         super().setUp()
 

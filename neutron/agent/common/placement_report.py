@@ -40,7 +40,7 @@ class DeferredCall:
         return '{}({})'.format(
             self.func.__name__,
             ', '.join([repr(x) for x in self.args] +
-                      ['{}={}'.format(k, repr(v))
+                      [f'{k}={repr(v)}'
                        for k, v in self.kwargs.items()]))
 
     def execute(self):

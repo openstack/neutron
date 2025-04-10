@@ -251,7 +251,7 @@ def _get_release_labels(labels):
     for label in labels:
         # release labels were introduced Liberty for a short time and dropped
         # in that same release cycle
-        result.add('{}_{}'.format(migration.LIBERTY, label))
+        result.add(f'{migration.LIBERTY}_{label}')
     return result
 
 

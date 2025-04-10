@@ -22,7 +22,6 @@ import shlex
 import socket
 import threading
 import time
-import typing
 
 import eventlet
 from eventlet.green import subprocess
@@ -185,7 +184,7 @@ def find_child_pids(pid, recursive=False):
 def pgrep(
         command: str,
         entire_command_line: bool = True
-) -> typing.Optional[str]:
+) -> str | None:
     cmd = ['pgrep']
     if entire_command_line:
         cmd += ['-f']
@@ -254,7 +253,7 @@ def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
 def get_conf_file_name(cfg_root, uuid, cfg_file, ensure_conf_dir=False):
     """Returns the file name for a given kind of config file."""
     conf_base = _get_conf_base(cfg_root, uuid, ensure_conf_dir)
-    return "{}.{}".format(conf_base, cfg_file)
+    return f"{conf_base}.{cfg_file}"
 
 
 def get_value_from_file(filename, converter=None):

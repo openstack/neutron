@@ -26,8 +26,8 @@ class LinkLocalAddressPair(netaddr.IPNetwork):
         # TODO(kevinbenton): the callers of this seem only interested in an IP,
         # so we should just return two IPAddresses.
         return (
-            netaddr.IPNetwork("{}/{}".format(self.network, self.prefixlen)),
-            netaddr.IPNetwork("{}/{}".format(self[-1], self.prefixlen)))
+            netaddr.IPNetwork(f"{self.network}/{self.prefixlen}"),
+            netaddr.IPNetwork(f"{self[-1]}/{self.prefixlen}"))
 
 
 class LinkLocalAllocator(ItemAllocator):

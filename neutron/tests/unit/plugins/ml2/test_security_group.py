@@ -85,7 +85,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                 ports = plugin.get_ports_from_devices(
                     self.ctx,
                     [orig_ports[0]['id'], orig_ports[1]['id'][0:8],
-                    orig_ports[2]['id']])
+                     orig_ports[2]['id']])
                 self.assertEqual(len(orig_ports), len(ports))
                 for port_dict in ports:
                     p = next(p for p in orig_ports
@@ -145,7 +145,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                         return_value={}) as get_mock:
                 plugin.get_ports_from_devices(
                     self.ctx,
-                    ['{}{}'.format(const.TAP_DEVICE_PREFIX, i)
+                    [f'{const.TAP_DEVICE_PREFIX}{i}'
                      for i in range(ports_to_query)])
                 all_call_args = [x[1][1] for x in get_mock.mock_calls]
                 last_call_args = all_call_args.pop()

@@ -223,7 +223,7 @@ class OVSConfigFixture(ConfigFixture):
 
         self.phy_br_name = utils.get_rand_device_name(prefix='br-eth')
         self.meta_br_name = self._generate_meta_bridge()
-        bridge_mappings = '{}:{}'.format(physnet, self.phy_br_name)
+        bridge_mappings = f'{physnet}:{self.phy_br_name}'
         if env_desc.has_metadata:
             bridge_mappings += ',{}:{}'.format('meta', self.meta_br_name)
         self.config.update({

@@ -169,7 +169,7 @@ class TestSbApi(BaseOvnIdlTest):
         chassis, switch = self._add_switch(
             self.data['chassis'][0]['name'])
         port, binding = self._add_port_to_switch(switch)
-        mac_ip = '{} {}'.format(mac, ipaddr)
+        mac_ip = f'{mac} {ipaddr}'
         pb_update_event = events.WaitForUpdatePortBindingEvent(
             port.name, mac=[mac_ip])
         self.handler.watch_event(pb_update_event)

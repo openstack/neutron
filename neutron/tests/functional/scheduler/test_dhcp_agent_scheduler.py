@@ -524,7 +524,7 @@ class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
         # create dhcp agents
         for i in range(self.az_count):
             az = 'az%s' % i
-            hosts = ['{}-host-{}'.format(az, j)
+            hosts = [f'{az}-host-{j}'
                      for j in range(self.agent_count[i])]
             dhcp_agents = self._create_and_set_agents_down(
                 hosts, down_agent_count=self.down_agent_count[i], az=az)

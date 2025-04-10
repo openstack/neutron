@@ -81,7 +81,7 @@ class L3NATAgentForTest(agent.L3NATAgentWithStateReport):
 def _append_suffix(dev_name):
     # If dev_name = 'xyz123' and the suffix is 'hostB' then the result
     # will be 'xy_stB'
-    return '{}_{}'.format(dev_name[:-4], cfg.CONF.test_namespace_suffix[-3:])
+    return f'{dev_name[:-4]}_{cfg.CONF.test_namespace_suffix[-3:]}'
 
 
 def get_internal_device_name(ri, port_id):

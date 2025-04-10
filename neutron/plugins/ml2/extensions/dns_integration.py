@@ -309,13 +309,13 @@ class DNSExtensionDriver(api.ExtensionDriver):
                 hostname = dns_name
                 fqdn = dns_name
                 if not dns_name.endswith('.'):
-                    fqdn = '{}.{}'.format(dns_name, dns_domain)
+                    fqdn = f'{dns_name}.{dns_domain}'
             else:
                 hostname = 'host-%s' % ip['ip_address'].replace(
                     '.', '-').replace(':', '-')
                 fqdn = hostname
                 if dns_domain:
-                    fqdn = '{}.{}'.format(hostname, dns_domain)
+                    fqdn = f'{hostname}.{dns_domain}'
             dns_assignment.append({'ip_address': ip['ip_address'],
                                    'hostname': hostname,
                                    'fqdn': fqdn})

@@ -68,7 +68,7 @@ class StringSetMatcher:
 
     def __repr__(self):
         sep = '' if self.separator == ',' else " on %s" % self.separator
-        return '<comma-separated string for {}{}>'.format(self.set, sep)
+        return f'<comma-separated string for {self.set}{sep}>'
 
 
 class OVS_Lib_Test_Common(base.BaseTestCase):
@@ -158,7 +158,7 @@ class OVS_Lib_Test(base.BaseTestCase):
             ('cookie', 1754),
             ('priority', 3),
             ('tun_id', lsw_id),
-            ('actions', "mod_vlan_vid:{},output:{}".format(vid, ofport))])
+            ('actions', f"mod_vlan_vid:{vid},output:{ofport}")])
         flow_dict_7 = collections.OrderedDict([
             ('cookie', 1256),
             ('priority', 4),
@@ -385,10 +385,10 @@ class OVS_Lib_Test(base.BaseTestCase):
                                  "%s,in_port=%d" % (cookie_spec, ofport))),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input=StringSetMatcher(
-                                 "{},tun_id={}".format(cookie_spec, lsw_id))),
+                                 f"{cookie_spec},tun_id={lsw_id}")),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input=StringSetMatcher(
-                                 "{},dl_vlan={}".format(cookie_spec, vid))),
+                                 f"{cookie_spec},dl_vlan={vid}")),
             self._ofctl_mock("del-flows", self.BR_NAME, '-',
                              process_input="%s" % cookie_spec),
         ]

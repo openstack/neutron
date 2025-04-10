@@ -65,7 +65,7 @@ def get_free_range(parent_range, excluded_ranges, size=PRIMARY_VIP_RANGE_SIZE):
     free_cidrs = netaddr.IPSet([parent_range]) - netaddr.IPSet(excluded_ranges)
     for cidr in free_cidrs.iter_cidrs():
         if cidr.prefixlen <= size:
-            return '{}/{}'.format(cidr.network, size)
+            return f'{cidr.network}/{size}'
 
     raise ValueError(_('Network of size %(size)s, from IP range '
                        '%(parent_range)s excluding IP ranges '
@@ -115,7 +115,7 @@ class KeepalivedVipAddress:
                                          self.track)
 
     def build_config(self):
-        result = '{} dev {}'.format(self.ip_address, self.interface_name)
+        result = f'{self.ip_address} dev {self.interface_name}'
         if self.scope:
             result += ' scope %s' % self.scope
         if not self.track and _is_keepalived_use_no_track_supported():
@@ -535,7 +535,7 @@ class KeepalivedTrackScript(KeepalivedConf):
 
     def build_config_preamble(self):
         config = ['',
-                  'vrrp_script {}_{} {{'.format(HEALTH_CHECK_NAME, self.vr_id),
+                  f'vrrp_script {HEALTH_CHECK_NAME}_{self.vr_id} {{',
                   '    script "%s"' % self._get_script_location(),
                   '    interval %s' % self.interval,
                   '    fall 2',
@@ -557,7 +557,7 @@ class KeepalivedTrackScript(KeepalivedConf):
             return ''
 
         config = ['    track_script {',
-                  '        {}_{}'.format(HEALTH_CHECK_NAME, self.vr_id),
+                  f'        {HEALTH_CHECK_NAME}_{self.vr_id}',
                   '    }']
 
         return config
@@ -575,7 +575,7 @@ class KeepalivedTrackScript(KeepalivedConf):
             6: 'ping6',
         }.get(netaddr.IPAddress(ip_addr).version)
 
-        return '{} -c 1 -w 1 {} 1>/dev/null || exit 1'.format(cmd, ip_addr)
+        return f'{cmd} -c 1 -w 1 {ip_addr} 1>/dev/null || exit 1'
 
     def _check_ip_assigned(self):
         cmd = 'ip a | grep %s || exit 0'

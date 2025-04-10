@@ -210,7 +210,7 @@ class OVNClient:
         subnet_opt = subnet_opts.get(opt)
         if not subnet_opt:
             return port_opt
-        return '{{{}, {}}}'.format(subnet_opt[1:-1], port_opt[1:-1])
+        return f'{{{subnet_opt[1:-1]}, {port_opt[1:-1]}}}'
 
     def _get_port_dhcp_options(self, port, ip_version):
         """Return dhcp options for port.

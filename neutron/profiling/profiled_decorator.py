@@ -45,7 +45,7 @@ def profile(f):
         if not cfg.CONF.enable_code_profiling:
             return f(*args, **kwargs)
 
-        profid = "{}.{}".format(f.__module__, f.__name__)
+        profid = f"{f.__module__}.{f.__name__}"
         profiler = cProfile.Profile()
         start_time = datetime.now()
         try:

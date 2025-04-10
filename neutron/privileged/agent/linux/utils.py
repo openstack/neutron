@@ -15,7 +15,6 @@
 import os
 from os import path
 import re
-import typing
 
 from eventlet.green import subprocess
 from neutron_lib.utils import helpers
@@ -61,7 +60,7 @@ def read_file(_path: str) -> str:
 
 @privileged.default.entrypoint
 def write_to_tempfile(content: bytes,
-                      _path: typing.Optional[str] = None,
+                      _path: str | None = None,
                       suffix: str = '',
                       prefix: str = 'tmp'):
     return fileutils.write_to_tempfile(content, path=_path, suffix=suffix,

@@ -88,7 +88,7 @@ def wait_until_pkt_meter_rule_applied_ovs(bridge, port_vif, port_id,
     def _pkt_rate_limit_rule_applied():
         port_num = bridge.get_port_ofport(port_vif)
         port_vlan = bridge.get_port_tag_by_name(port_vif)
-        key = "{}_{}_{}".format(type_, port_id, direction)
+        key = f"{type_}_{port_id}_{direction}"
         meter_id = bridge.get_value_from_other_config(
             port_vif, key, value_type=int)
 

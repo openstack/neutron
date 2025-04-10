@@ -43,7 +43,7 @@ class TestDestroyPatchPorts(base.BaseSudoTestCase):
         config.set_override('integration_bridge', self.int_br.br_name, "OVS")
         config.set_override(
             'bridge_mappings',
-            ','.join(["{}:{}".format(net, br)
+            ','.join([f"{net}:{br}"
                       for net, br in bridge_mappings.items()]),
             "OVS")
 

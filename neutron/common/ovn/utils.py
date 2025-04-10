@@ -202,7 +202,7 @@ def ovn_name(id):
     # is a UUID. If so then there will be no matches.
     # We prefix the UUID to enable us to use the Neutron UUID when
     # updating, deleting etc.
-    return "{}{}".format(constants.OVN_NAME_PREFIX, id)
+    return f"{constants.OVN_NAME_PREFIX}{id}"
 
 
 def ovn_lrouter_port_name(id):
@@ -249,7 +249,7 @@ def ovn_addrset_name(sg_id, ip_version):
     #   as-<ip version>-<security group uuid>
     # with all '-' replaced with '_'. This replacement is necessary
     # because OVN doesn't support '-' in an address set name.
-    return ('as-{}-{}'.format(ip_version, sg_id)).replace('-', '_')
+    return (f'as-{ip_version}-{sg_id}').replace('-', '_')
 
 
 def ovn_pg_addrset_name(sg_id, ip_version):
@@ -258,7 +258,7 @@ def ovn_pg_addrset_name(sg_id, ip_version):
     #   pg-<security group uuid>-<ip version>
     # with all '-' replaced with '_'. This replacement is necessary
     # because OVN doesn't support '-' in an address set name.
-    return ('pg-{}-{}'.format(sg_id, ip_version)).replace('-', '_')
+    return (f'pg-{sg_id}-{ip_version}').replace('-', '_')
 
 
 def ovn_ag_addrset_name(ag_id, ip_version):
@@ -267,7 +267,7 @@ def ovn_ag_addrset_name(ag_id, ip_version):
     #   ag-<address group uuid>-<ip version>
     # with all '-' replaced with '_'. This replacement is necessary
     # because OVN doesn't support '-' in an address set name.
-    return ('ag-%s-%s' % (ag_id, ip_version)).replace('-', '_')
+    return ('ag-{}-{}'.format(ag_id, ip_version)).replace('-', '_')
 
 
 def ovn_port_group_name(sg_id):

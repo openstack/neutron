@@ -88,7 +88,7 @@ class EnvironmentDescription:
         return self.network_type in ('vxlan', 'gre')
 
     def __str__(self):
-        return '{}'.format(vars(self))
+        return f'{vars(self)}'
 
 
 class HostDescription:
@@ -113,7 +113,7 @@ class HostDescription:
         self.segmented_physnet = segmented_physnet
 
     def __str__(self):
-        return '{}'.format(vars(self))
+        return f'{vars(self)}'
 
 
 class Host(fixtures.Fixture):

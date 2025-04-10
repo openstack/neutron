@@ -60,7 +60,7 @@ class BaseLoggingTestCase(base.BaseFullStackTestCase):
             flows = vm.bridge.dump_flows_for_table(table)
             flows_list = flows.splitlines()
             pattern = re.compile(
-                r"^.* table={}.* actions={}".format(table, actions))
+                fr"^.* table={table}.* actions={actions}")
             for flow in flows_list:
                 if pattern.match(flow.strip()):
                     return True

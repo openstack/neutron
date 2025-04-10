@@ -22,7 +22,7 @@ from neutron.tests.common.exclusive_resources import resource_allocator
 
 def _get_random_network(low, high, netmask):
     ip = ip_address.get_random_ip(low, high)
-    return str(netaddr.IPNetwork("{}/{}".format(ip, netmask)).cidr)
+    return str(netaddr.IPNetwork(f"{ip}/{netmask}").cidr)
 
 
 class ExclusiveIPNetwork(resource_allocator.ExclusiveResource):

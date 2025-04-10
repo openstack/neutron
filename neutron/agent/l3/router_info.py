@@ -293,7 +293,7 @@ class RouterInfo(BaseRouterInfo):
 
         mark_id = self._address_scope_to_mark_id[address_scope]
         # NOTE: Address scopes use only the upper 16 bits of the 32 fwmark
-        return "{}/{}".format(hex(mark_id << 16), ADDRESS_SCOPE_MARK_MASK)
+        return f"{hex(mark_id << 16)}/{ADDRESS_SCOPE_MARK_MASK}"
 
     def get_port_address_scope_mark(self, port):
         """Get the IP version 4 and 6 address scope mark for the port
@@ -642,7 +642,7 @@ class RouterInfo(BaseRouterInfo):
             namespace=self.ns_name)
 
     def address_scope_mangle_rule(self, device_name, mark_mask):
-        return '-i {} -j MARK --set-xmark {}'.format(device_name, mark_mask)
+        return f'-i {device_name} -j MARK --set-xmark {mark_mask}'
 
     def address_scope_filter_rule(self, device_name, mark_mask):
         return '-o {} -m mark ! --mark {} -j DROP'.format(

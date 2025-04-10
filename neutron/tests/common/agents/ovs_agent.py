@@ -38,7 +38,7 @@ def get_tunnel_name_full(cls, network_type, local_ip, remote_ip):
     local_tunnel_hash = encodeutils.to_utf8(local_tunnel_hash)
     source_ip_hash = hashlib.sha1(local_tunnel_hash).hexdigest()[:hashlen]
 
-    return '{}-{}-{}'.format(network_type, source_ip_hash, remote_ip_hash)
+    return f'{network_type}-{source_ip_hash}-{remote_ip_hash}'
 
 
 ovs_neutron_agent.OVSNeutronAgent.get_tunnel_name = get_tunnel_name_full

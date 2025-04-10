@@ -146,7 +146,7 @@ class ConntrackHelperAgentExtension(l3_extension.L3AgentExtension):
     def _get_chain_rules_list(self, conntrack_helper, wrap_name):
         chain_name = self._get_chain_name(conntrack_helper.id)
         chain_rule_list = [(DEFAULT_CONNTRACK_HELPER_CHAIN,
-                            '-j {}-{}'.format(wrap_name, chain_name))]
+                            f'-j {wrap_name}-{chain_name}')]
         chain_rule_list.append((chain_name,
                                 '-p %(proto)s --dport %(dport)s -j CT '
                                 '--helper %(helper)s' %

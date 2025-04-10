@@ -250,7 +250,7 @@ class Daemon:
         self.run()
 
     def _set_process_title(self):
-        proctitle = "{} ({})".format(self.procname, self._parent_proctitle)
+        proctitle = f"{self.procname} ({self._parent_proctitle})"
         setproctitle.setproctitle(proctitle)
 
     def run(self):

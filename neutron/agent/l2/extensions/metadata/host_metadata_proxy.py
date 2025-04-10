@@ -138,7 +138,7 @@ class HostMedataHAProxyDaemonMonitor:
 
         buf.write('%s' % _HOST_PATH_PROXY_TEMPLATE.render(
             log_level='debug',
-            log_tag="{}-{}".format(PROXY_SERVICE_NAME, self._host_id),
+            log_tag=f"{PROXY_SERVICE_NAME}-{self._host_id}",
             user=username,
             group=groupname,
             maxconn=1024,

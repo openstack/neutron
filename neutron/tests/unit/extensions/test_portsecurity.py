@@ -400,7 +400,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
                 security_group = self.deserialize(
                     'json',
                     self._create_security_group(self.fmt, 'asdf', 'asdf',
-                    tenant_id='other_tenant'))
+                                                tenant_id='other_tenant'))
                 security_group_id = security_group['security_group']['id']
                 update_port = {'port':
                                {'security_groups': [security_group_id]}}
@@ -426,7 +426,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
                 security_group = self.deserialize(
                     'json',
                     self._create_security_group(self.fmt, 'asdf', 'asdf',
-                    tenant_id='other_tenant'))
+                                                tenant_id='other_tenant'))
                 security_group_id = security_group['security_group']['id']
                 update_port = {'port':
                                {'security_groups': [security_group_id]}}

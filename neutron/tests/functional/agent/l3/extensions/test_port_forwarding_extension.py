@@ -142,7 +142,7 @@ class L3AgentFipPortForwardingExtensionTestFramework(
         conf_path = os.path.join(keepalived_pm.pids_path, keepalived_pm.uuid,
                                  'keepalived.conf')
 
-        regex = "{} dev {}".format(fip_pf, interface_name)
+        regex = f"{fip_pf} dev {interface_name}"
         pattern = re.compile(regex)
 
         def check_harouter_fip_is_set():

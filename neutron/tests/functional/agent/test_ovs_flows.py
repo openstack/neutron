@@ -69,7 +69,7 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
                 trace[l] = r
         for k in required_keys:
             if k not in trace:
-                self.fail("{} not found in trace {}".format(k, trace_lines))
+                self.fail(f"{k} not found in trace {trace_lines}")
 
         return trace
 
@@ -96,10 +96,10 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         self.addOnException(self.collect_flows_and_ports)
 
     def collect_flows_and_ports(self, exc_info):
-        nicevif = lambda x: ['{}={}'.format(k, getattr(x, k))
+        nicevif = lambda x: [f'{k}={getattr(x, k)}'
                              for k in ['ofport', 'port_name', 'switch',
                                        'vif_id', 'vif_mac']]
-        nicedev = lambda x: ['{}={}'.format(k, getattr(x, k))
+        nicedev = lambda x: [f'{k}={getattr(x, k)}'
                              for k in ['name', 'namespace']] + x.addr.list()
         details = {'flows': self.br.dump_all_flows(),
                    'vifs': map(nicevif, self.br.get_vif_ports()),

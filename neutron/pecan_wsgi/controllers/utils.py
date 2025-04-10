@@ -165,8 +165,8 @@ class NeutronPecanController:
         self._parent_id_name = ('%s_id' % self.parent
                                 if self.parent else None)
         self._plugin_handlers = {
-            self.LIST: 'get{}_{}'.format(parent_resource, self.collection),
-            self.SHOW: 'get{}_{}'.format(parent_resource, self.resource)
+            self.LIST: f'get{parent_resource}_{self.collection}',
+            self.SHOW: f'get{parent_resource}_{self.resource}'
         }
         for action in [self.CREATE, self.UPDATE, self.DELETE]:
             self._plugin_handlers[action] = '{}{}_{}'.format(

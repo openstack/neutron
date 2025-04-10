@@ -14,7 +14,6 @@
 #    under the License.
 
 import abc
-import typing
 
 import netaddr
 from neutron_lib.api import converters
@@ -149,7 +148,7 @@ class SecurityGroupRuleInvalidEtherType(exceptions.InvalidInput):
                 "supported. Allowed values are %(values)s.")
 
 
-def convert_protocol(value) -> typing.Optional[str]:
+def convert_protocol(value) -> str | None:
     if value in _constants.SG_RULE_PROTO_ANY:
         return None
     try:

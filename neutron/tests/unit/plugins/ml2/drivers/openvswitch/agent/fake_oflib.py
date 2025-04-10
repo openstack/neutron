@@ -49,7 +49,7 @@ class _Op(_Value):
         self.b = b
 
     def __repr__(self):
-        return '{}{}{}'.format(self.a, self.op, self.b)
+        return f'{self.a}{self.op}{self.b}'
 
 
 def _mkcls(name):
@@ -66,7 +66,7 @@ def _mkcls(name):
 
         def __repr__(self):
             args = list(map(repr, self._args))
-            kwargs = sorted(['{}={}'.format(x, y) for x, y in
+            kwargs = sorted([f'{x}={y}' for x, y in
                              self._kwargs.items()])
             return '{}({})'.format(self._name, ', '.join(args + kwargs))
 
@@ -80,7 +80,7 @@ class _Mod:
         self._name = name
 
     def __getattr__(self, name):
-        fullname = '{}.{}'.format(self._name, name)
+        fullname = f'{self._name}.{name}'
         if '_' in name:  # constants are named like OFPxxx_yyy_zzz
             return _SimpleValue(fullname)
         try:
@@ -92,7 +92,7 @@ class _Mod:
         return cls
 
     def __repr__(self):
-        return 'Mod({})'.format(self._name)
+        return f'Mod({self._name})'
 
 
 def patch_fake_oflib_of():

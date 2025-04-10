@@ -87,7 +87,7 @@ def _add_gateway_chassis(api, txn, lrp_name, val):
     prio = len(val)
     uuid_list = []
     for chassis in val:
-        gwc_name = '{}_{}'.format(lrp_name, chassis)
+        gwc_name = f'{lrp_name}_{chassis}'
         try:
             gwc = idlutils.row_by_value(
                 api.idl, 'Gateway_Chassis', 'name', gwc_name)

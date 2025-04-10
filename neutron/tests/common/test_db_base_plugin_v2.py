@@ -437,7 +437,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         collection = "%ss" % resource
         for i in range(number):
             obj = copy.deepcopy(data)
-            obj[resource]['name'] = "{}_{}".format(name, i)
+            obj[resource]['name'] = f"{name}_{i}"
             if 'override' in kwargs and i in kwargs['override']:
                 obj[resource].update(kwargs['override'][i])
             objects.append(obj)
@@ -516,7 +516,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if ip_version == constants.IP_VERSION_6:
             base_cidr = "fd%s::/64"
         overrides = dict(zip(range(number),
-            [{'cidr': base_cidr % num} for num in range(number)]))
+                             [{'cidr': base_cidr % num}
+                              for num in range(number)]))
         kwargs.update({'override': overrides})
         return self._create_bulk(fmt, number, 'subnet', base_data, **kwargs)
 
@@ -665,7 +666,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _make_security_group(self, fmt, name=None, expected_res_status=None,
                              project_id=None, is_admin=False):
-        name = name or 'sg-{}'.format(uuidutils.generate_uuid())
+        name = name or f'sg-{uuidutils.generate_uuid()}'
         project_id = project_id or self._tenant_id
         data = {'security_group': {'name': name,
                                    'description': name,
@@ -7405,7 +7406,7 @@ class DbOperationBoundMixin:
         # using filters shouldn't change the count either
         if filters:
             query_params = "&".join(
-                ["{}={}".format(f, obj[f]) for f in filters])
+                [f"{f}={obj[f]}" for f in filters])
             after_queries = self._list_and_record_queries(plural, query_params)
             self.assertEqual(len(before_queries), len(after_queries),
                              self._qry_fail_msg(before_queries, after_queries))

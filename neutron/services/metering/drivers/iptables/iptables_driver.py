@@ -249,7 +249,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         if rule['excluded']:
             ipt_rule = '%s -j RETURN' % ipt_rule
         else:
-            ipt_rule = '{} -j {}'.format(ipt_rule, label_chain)
+            ipt_rule = f'{ipt_rule} -j {label_chain}'
         return ipt_rule
 
     @staticmethod
@@ -261,7 +261,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
         source_ip_prefix = rule.get('source_ip_prefix')
         if source_ip_prefix:
-            iptables_rule = "-s {} {}".format(source_ip_prefix, iptables_rule)
+            iptables_rule = f"-s {source_ip_prefix} {iptables_rule}"
 
         destination_ip_prefix = rule.get('destination_ip_prefix')
         if destination_ip_prefix:
@@ -274,9 +274,9 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def prepare_source_and_destination_rule_legacy(ext_dev, rule):
         remote_ip = rule['remote_ip_prefix']
         if rule['direction'] == 'egress':
-            ipt_rule = '-s {} -o {}'.format(remote_ip, ext_dev)
+            ipt_rule = f'-s {remote_ip} -o {ext_dev}'
         else:
-            ipt_rule = '-d {} -i {}'.format(remote_ip, ext_dev)
+            ipt_rule = f'-d {remote_ip} -i {ext_dev}'
         return ipt_rule
 
     def _process_ns_specific_metering_label(self, router, ext_dev, im):

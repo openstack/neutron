@@ -67,7 +67,7 @@ class BaseIpsetManagerTest(base.BaseTestCase):
 
     def expect_set(self, addresses):
         temp_input = ['create %s hash:net family inet' % TEST_SET_NAME_NEW]
-        temp_input.extend('add {} {}'.format(TEST_SET_NAME_NEW, ip)
+        temp_input.extend(f'add {TEST_SET_NAME_NEW} {ip}'
                           for ip in self.ipset._sanitize_addresses(addresses))
         input = '\n'.join(temp_input)
         self.expected_calls.extend([

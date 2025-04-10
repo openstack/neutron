@@ -724,7 +724,7 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         n_utils.wait_until_true(
             lambda:
             isinstance(neutron_agent.AgentCache().get(self.chassis_name),
-            neutron_agent.ControllerAgent))
+                       neutron_agent.ControllerAgent))
 
         # Change back to gw chassis
         self.sb_api.db_set(
@@ -735,7 +735,7 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         n_utils.wait_until_true(
             lambda:
             isinstance(neutron_agent.AgentCache().get(self.chassis_name),
-            neutron_agent.ControllerGatewayAgent))
+                       neutron_agent.ControllerGatewayAgent))
 
     def test_agent_updated_at_use_nb_cfg_timestamp(self):
         def check_agent_ts():

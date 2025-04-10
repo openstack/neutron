@@ -154,7 +154,7 @@ class TestExtensionsController(TestRootController):
     def test_get(self):
         # Fetch any extension supported by plugins
         test_alias = self._get_supported_extensions().pop()
-        response = self.app.get('{}/{}'.format(self.base_url, test_alias))
+        response = self.app.get(f'{self.base_url}/{test_alias}')
         self.assertEqual(response.status_int, 200)
         json_body = jsonutils.loads(response.body)
         self.assertEqual(test_alias, json_body['extension']['alias'])
@@ -296,7 +296,7 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
 
     def test_get_project_info(self):
         for key in ('project', 'tenant'):
-            response = self.app.get('{}/{}.json'.format(self.base_url, key),
+            response = self.app.get(f'{self.base_url}/{key}.json',
                                     headers={'X-Project-Id': 'admin',
                                              'X-Roles': 'admin'})
             self.assertEqual(200, response.status_int)

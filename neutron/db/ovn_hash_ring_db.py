@@ -33,7 +33,7 @@ def get_node_uuid(
         group_name: str,
         host: str,
         worker_id: int) -> str:
-    node_str = '%s%s%s' % (group_name, host, str(worker_id))
+    node_str = '{}{}{}'.format(group_name, host, str(worker_id))
     return uuid.uuid5(OVN_HASHRING_UUID_NAMESPACE, node_str).hex
 
 

@@ -221,7 +221,7 @@ class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
         # 39: Fully Qualified Domain Name
         fqdn = 'host-%s' % ip_addr.replace('.', '-').replace(':', '-')
         if req_type == 'REQUEST' and cfg.CONF.dns_domain:
-            fqdn = '{}.{}'.format(fqdn, cfg.CONF.dns_domain)
+            fqdn = f'{fqdn}.{cfg.CONF.dns_domain}'
 
         # 0000 0... = Reserved: 0x00
         # .... .0.. = N bit: Server should perform DNS updates

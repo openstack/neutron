@@ -43,7 +43,7 @@ class NotifierHook(hooks.PecanHook):
         if utils.is_member_action(utils.get_controller(state)):
             return
         action = pecan_constants.ACTION_MAP.get(state.request.method)
-        event = '{}.{}.start'.format(resource, action)
+        event = f'{resource}.{action}.start'
         if action in ('create', 'update'):
             # notifier just gets plain old body without any treatment other
             # than the population of the object ID being operated on
@@ -96,7 +96,7 @@ class NotifierHook(hooks.PecanHook):
             else:
                 result = state.response.json
 
-        notifier_method = '{}.{}.end'.format(resource_name, action)
+        notifier_method = f'{resource_name}.{action}.end'
         notifier_action = utils.get_controller(state).plugin_handlers[action]
         registry.publish(resource_name, events.BEFORE_RESPONSE, self,
                          payload=events.APIEventPayload(

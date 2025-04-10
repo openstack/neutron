@@ -124,7 +124,7 @@ class DictModel(collections.abc.MutableMapping):
         del self._dictmodel_internal_storage[name]
 
     def __str__(self):
-        pairs = ['{}={}'.format(k, v) for k, v in
+        pairs = [f'{k}={v}' for k, v in
                  self._dictmodel_internal_storage.items()]
         return ', '.join(sorted(pairs))
 
@@ -164,7 +164,7 @@ class NetModel(DictModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._ns_name = "{}{}".format(NS_PREFIX, self.id)
+        self._ns_name = f"{NS_PREFIX}{self.id}"
 
     @property
     def namespace(self):
@@ -770,7 +770,7 @@ class Dnsmasq(DhcpLocalProcess):
                         ip_addresses[0].replace('.', '-').replace(':', '-'))
             fqdn = hostname
             if self.conf.dns_domain:
-                fqdn = '{}.{}'.format(fqdn, self.conf.dns_domain)
+                fqdn = f'{fqdn}.{self.conf.dns_domain}'
 
         return hostname, fqdn
 
@@ -1847,7 +1847,7 @@ class DeviceManager:
         for fixed_ip in port.fixed_ips:
             subnet = fixed_ip.subnet
             net = netaddr.IPNetwork(subnet.cidr)
-            ip_cidr = '{}/{}'.format(fixed_ip.ip_address, net.prefixlen)
+            ip_cidr = f'{fixed_ip.ip_address}/{net.prefixlen}'
             ip_cidrs.append(ip_cidr)
 
         need_ipv6_metadata = False
@@ -1863,7 +1863,7 @@ class DeviceManager:
                 gateway = subnet.gateway_ip
                 if gateway:
                     net = netaddr.IPNetwork(subnet.cidr)
-                    ip_cidrs.append('{}/{}'.format(gateway, net.prefixlen))
+                    ip_cidrs.append(f'{gateway}/{net.prefixlen}')
 
         if self.conf.force_metadata or self.conf.enable_isolated_metadata:
             ip_cidrs.append(constants.METADATA_CIDR)

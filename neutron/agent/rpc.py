@@ -63,7 +63,7 @@ def create_consumers(endpoints, prefix, topic_details, start_listening=True):
         topic_name = topics.get_topic_name(prefix, topic, operation)
         connection.create_consumer(topic_name, endpoints, fanout=True)
         if node_name:
-            node_topic_name = '{}.{}'.format(topic_name, node_name)
+            node_topic_name = f'{topic_name}.{node_name}'
             connection.create_consumer(node_topic_name,
                                        endpoints,
                                        fanout=False)

@@ -100,7 +100,7 @@ class TestLoggingExtension(LoggingExtensionTestFramework):
     def _is_log_flow_set(self, table, actions):
         flows = self.log_driver.int_br.br.dump_flows_for_table(table)
         pattern = re.compile(
-            r"^.* table={}.* actions={}".format(table, actions)
+            fr"^.* table={table}.* actions={actions}"
         )
         for flow in flows.splitlines():
             if pattern.match(flow.strip()):

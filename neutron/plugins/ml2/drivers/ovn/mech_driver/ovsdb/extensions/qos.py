@@ -122,7 +122,7 @@ class OVNClientQosExtension:
             in_or_out = 'outport'
             src_or_dst = 'dst'
 
-        match = '{} == "{}"'.format(in_or_out, port_id)
+        match = f'{in_or_out} == "{port_id}"'
         if ip_address and resident_port:
             match += (' && ip4.%s == %s && is_chassis_resident("%s")' %
                       (src_or_dst, ip_address, resident_port))

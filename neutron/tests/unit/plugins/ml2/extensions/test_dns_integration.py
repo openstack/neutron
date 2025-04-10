@@ -491,7 +491,7 @@ class DNSIntegrationTestCaseDefaultDomain(DNSIntegrationTestCase):
         for ip in port['fixed_ips']:
             hostname = 'host-%s' % ip['ip_address'].replace(
                 '.', '-').replace(':', '-')
-            fqdn.append('{}.{}'.format(hostname, self._domain))
+            fqdn.append(f'{hostname}.{self._domain}')
         return set(fqdn)
 
     def _verify_port_dns(self, port, dns_data_db, dns_name=True,

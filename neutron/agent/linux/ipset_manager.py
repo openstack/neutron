@@ -123,7 +123,7 @@ class IpsetManager:
         process_input = ["create {} hash:net family {}".format(new_set_name,
                                                                set_type)]
         for ip in member_ips:
-            process_input.append("add {} {}".format(new_set_name, ip))
+            process_input.append(f"add {new_set_name} {ip}")
 
         self._restore_sets(process_input)
         self._swap_sets(new_set_name, set_name)
