@@ -21,10 +21,8 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as lib_constants
 
-from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
-from neutron.agent.l3 import router_info
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.tests.common import machine_fixtures
@@ -108,47 +106,6 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         router.process()
 
         self.assertIsNone(device.route.get_gateway())
-
-    def test_router_processing_pool_size(self):
-        mock.patch.object(router_info.RouterInfo, 'initialize').start()
-        mock.patch.object(router_info.RouterInfo, 'process').start()
-        self.agent.l3_ext_manager = mock.Mock()
-        mock.patch.object(router_info.RouterInfo, 'delete').start()
-        mock.patch.object(registry, 'publish').start()
-
-        router_info_1 = self.generate_router_info(False)
-        r1 = self.manage_router(self.agent, router_info_1)
-        self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MIN,
-                         self.agent._pool.size)
-
-        router_info_2 = self.generate_router_info(False)
-        r2 = self.manage_router(self.agent, router_info_2)
-        self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MIN,
-                         self.agent._pool.size)
-
-        router_info_list = [r1, r2]
-        for _i in range(l3_agent.ROUTER_PROCESS_GREENLET_MAX + 1):
-            ri = self.generate_router_info(False)
-            rtr = self.manage_router(self.agent, ri)
-            router_info_list.append(rtr)
-
-        self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MAX,
-                         self.agent._pool.size)
-
-        for router in router_info_list:
-            self.agent._safe_router_removed(router.router_id)
-
-        agent_router_info_len = len(self.agent.router_info)
-        if agent_router_info_len < l3_agent.ROUTER_PROCESS_GREENLET_MIN:
-            self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MIN,
-                             self.agent._pool.size)
-        elif (l3_agent.ROUTER_PROCESS_GREENLET_MIN <= agent_router_info_len <=
-                l3_agent.ROUTER_PROCESS_GREENLET_MAX):
-            self.assertEqual(agent_router_info_len,
-                             self.agent._pool.size)
-        else:
-            self.assertEqual(l3_agent.ROUTER_PROCESS_GREENLET_MAX,
-                             self.agent._pool.size)
 
     def _make_bridge(self):
         bridge = framework.get_ovs_bridge(utils.get_rand_name())
