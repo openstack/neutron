@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Added ``service`` role to the ``create_port:device_id`` and
+    ``update_port:device_id`` policies to allow service users
+    for other OpenStack projects to complete Secure RBAC.
