@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import provider_net
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import strutils
+from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
@@ -25,13 +26,16 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.tests.functional import base
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_l3
+from neutron.tests.unit import testlib_api
 
 
-class TestOVNClient(base.TestOVNFunctionalBase,
+class TestOVNClient(testlib_api.MySQLTestCaseMixin,
+                    base.TestOVNFunctionalBase,
                     test_l3.L3NatTestCaseMixin):
 
     def setUp(self, **kwargs):
         super().setUp(**kwargs)
+        self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
         ext_mgr = test_l3.L3TestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
