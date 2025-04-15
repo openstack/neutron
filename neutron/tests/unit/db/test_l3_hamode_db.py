@@ -705,7 +705,7 @@ class L3HATestCase(L3HATestFramework):
         self.assertEqual(project_id, ha_network.project_id)
         self.assertEqual(network['id'], ha_network.network_id)
 
-        with testtools.ExpectedException(l3_hamode_db.DuplicatedHANetwork):
+        with testtools.ExpectedException(l3ha_exc.DuplicatedHANetwork):
             network[network_ha.HA] = True
             ctx = self.admin_ctx  # That will create a new admin context
             ctx.project_id = project_id

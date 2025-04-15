@@ -65,11 +65,6 @@ LOG = logging.getLogger(__name__)
 l3_hamode_db.register_db_l3_hamode_opts()
 
 
-# TODO(ralonsoh): move to neutron-lib
-class DuplicatedHANetwork(n_exc.Conflict):
-    message = _('Project %(project_id)s already has a HA network.')
-
-
 @registry.has_registry_receivers
 class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                          router_az_db.RouterAvailabilityZoneMixin):
@@ -213,7 +208,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         try:
             ha_network.create()
         except obj_base.NeutronDbObjectDuplicateEntry:
-            raise DuplicatedHANetwork(project_id=context.project_id)
+            raise l3ha_exc.DuplicatedHANetwork(project_id=context.project_id)
 
     def _add_ha_network_settings(self, network):
         if cfg.CONF.l3_ha_network_type:
