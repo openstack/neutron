@@ -14,10 +14,10 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.placement import constants as place_constants
 from oslo_config import cfg
 
 from neutron._i18n import _
-from neutron.common import _constants as common_const
 
 
 ml2_opts = [
@@ -76,7 +76,7 @@ ml2_opts = [
                help=_("IP version of all overlay (tunnel) network "
                       "endpoints.")),
     cfg.StrOpt('tunnelled_network_rp_name',
-               default=common_const.RP_TUNNELLED,
+               default=place_constants.RP_TUNNELLED,
                help=_("Resource provider name for the host with tunnelled "
                       "networks. This resource provider represents the "
                       "available bandwidth for all tunnelled networks in a "

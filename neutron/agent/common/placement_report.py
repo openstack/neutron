@@ -13,12 +13,11 @@
 # limitations under the License.
 
 from neutron_lib import constants as nlib_const
+from neutron_lib.placement import constants as place_constants
 from neutron_lib.placement import utils as place_utils
 import os_resource_classes as orc
 from oslo_config import cfg
 from oslo_log import log as logging
-
-from neutron.common import _constants as n_const
 
 
 LOG = logging.getLogger(__name__)
@@ -121,7 +120,7 @@ class PlacementState:
 
     def _deferred_update_tunnelled_traits(self):
         return [DeferredCall(self._client.update_trait,
-                             name=n_const.TRAIT_NETWORK_TUNNEL)]
+                             name=place_constants.TRAIT_NETWORK_TUNNEL)]
 
     def _deferred_update_vnic_type_traits(self):
         traits = []
@@ -226,11 +225,11 @@ class PlacementState:
             if device == self._rp_tun_name and device not in physical_bridges:
                 # That means the RP for tunnelled networks is not associated
                 # to a physical bridge interface.
-                return [n_const.TRAIT_NETWORK_TUNNEL]
+                return [place_constants.TRAIT_NETWORK_TUNNEL]
             if device == self._rp_tun_name and device in physical_bridges:
                 # The physical network and the tunnelled networks share the
                 # same physical interface.
-                return [n_const.TRAIT_NETWORK_TUNNEL,
+                return [place_constants.TRAIT_NETWORK_TUNNEL,
                         physnet_trait_mappings[device]]
             # Just the physical interface.
             return [physnet_trait_mappings.get(device)]
