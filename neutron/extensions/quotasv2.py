@@ -51,8 +51,7 @@ LOG = logging.getLogger(__name__)
 def validate_policy(context, policy_name):
     policy.enforce(context,
                    policy_name,
-                   target={'project_id': context.project_id},
-                   plugin=None)
+                   target={'project_id': context.project_id})
 
 
 class QuotaSetsController(wsgi.Controller):

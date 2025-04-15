@@ -174,14 +174,12 @@ class PolicyHook(hooks.PecanHook):
         # in the single case, we enforce which raises on violation
         # in the plural case, we just check so violating items are hidden
         policy_method = policy.enforce if is_single else policy.check
-        plugin = manager.NeutronManager.get_plugin_for_resource(collection)
         try:
             resp = [self._get_filtered_item(state.request, controller,
                                             resource, collection, item)
                     for item in to_process
                     if (state.request.method != 'GET' or
                         policy_method(neutron_context, action, item,
-                                      plugin=plugin,
                                       pluralized=collection))]
         except (oslo_policy.PolicyNotAuthorized, oslo_policy.InvalidScope):
             # This exception must be explicitly caught as the exception

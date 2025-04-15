@@ -464,8 +464,7 @@ def log_rule_list(match_rule):
         LOG.debug("Enforcing rules: %s", rules)
 
 
-def check(context, action, target, plugin=None, might_not_exist=False,
-          pluralized=None):
+def check(context, action, target, might_not_exist=False, pluralized=None):
     """Verifies that the action is valid on the target in this context.
 
     :param context: neutron context
@@ -474,8 +473,6 @@ def check(context, action, target, plugin=None, might_not_exist=False,
     :param target: dictionary representing the object of the action
         for object creation this should be a dictionary representing the
         location of the object e.g. ``{'project_id': context.project_id}``
-    :param plugin: currently unused and deprecated.
-        Kept for backward compatibility.
     :param might_not_exist: If True the policy check is skipped (and the
         function returns True) if the specified policy does not exist.
         Defaults to false.
@@ -504,7 +501,7 @@ def check(context, action, target, plugin=None, might_not_exist=False,
                              pluralized=pluralized)
 
 
-def enforce(context, action, target, plugin=None, pluralized=None):
+def enforce(context, action, target, pluralized=None):
     """Verifies that the action is valid on the target in this context.
 
     :param context: neutron context
@@ -513,8 +510,6 @@ def enforce(context, action, target, plugin=None, pluralized=None):
     :param target: dictionary representing the object of the action
         for object creation this should be a dictionary representing the
         location of the object e.g. ``{'project_id': context.project_id}``
-    :param plugin: currently unused and deprecated.
-        Kept for backward compatibility.
     :param pluralized: pluralized case of resource
         e.g. firewall_policy -> pluralized = "firewall_policies"
 
