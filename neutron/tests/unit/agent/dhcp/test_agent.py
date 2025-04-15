@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+from concurrent import futures
 import copy
 import datetime
 import signal
@@ -523,12 +524,12 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_sync_state_disabled_net(self):
         self._test_sync_state_helper(['b'], ['a'])
 
-    def test_sync_state_waitall(self):
-        with mock.patch.object(dhcp_agent.eventlet.GreenPool, 'waitall') as w:
+    def test_sync_state_wait(self):
+        with mock.patch.object(futures, 'wait') as mock_wait:
             active_net_ids = ['1', '2', '3', '4', '5']
             known_net_ids = ['1', '2', '3', '4', '5']
             self._test_sync_state_helper(known_net_ids, active_net_ids)
-            w.assert_called_once_with()
+            mock_wait.assert_called_once()
 
     def test_sync_state_for_all_networks_plugin_error(self):
         with mock.patch(DHCP_PLUGIN) as plug:
