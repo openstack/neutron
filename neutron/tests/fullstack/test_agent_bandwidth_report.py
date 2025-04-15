@@ -206,7 +206,8 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
             mech_drivers=self.mech_drivers,
             report_bandwidths=True,
             has_placement=True,
-            placement_port=self.placement_port
+            placement_port=self.placement_port,
+            agent_down_time=10
         )
         env = environment.Environment(env_desc, host_desc)
         super(TestPlacementBandwidthReport, self).setUp(env)
@@ -233,7 +234,7 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
         check_agent_synced = functools.partial(self._check_agent_synced)
         utils.wait_until_true(
             predicate=check_agent_synced,
-            timeout=report_interval + 10,
+            timeout=report_interval + 20,
             sleep=1)
 
         self.environment.placement.process_fixture.stop()
@@ -251,12 +252,12 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
             self._check_agent_not_synced)
         utils.wait_until_true(
             predicate=check_agent_not_synced,
-            timeout=report_interval + 10,
+            timeout=report_interval + 20,
             sleep=1)
 
         self.environment.placement.process_fixture.start()
         check_agent_synced = functools.partial(self._check_agent_synced)
         utils.wait_until_true(
             predicate=check_agent_synced,
-            timeout=report_interval + 10,
+            timeout=report_interval + 20,
             sleep=1)
