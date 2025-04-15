@@ -38,12 +38,6 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
 
 LOG = logging.getLogger(__name__)
 
-# TODO(liuyulong): move to neutron-lib.
-IPV4_NETWORK_BROADCAST = "255.255.255.255"
-# All_DHCP_Relay_Agents_and_Servers
-# [RFC8415] https://datatracker.ietf.org/doc/html/rfc8415
-IPV6_All_DHCP_RELAY_AGENYS_AND_SERVERS = "ff02::1:2"
-
 METER_FLAG_PPS = comm_consts.METER_FLAG_PPS
 METER_FLAG_BPS = comm_consts.METER_FLAG_BPS
 
@@ -95,7 +89,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                           priority=101,
                           eth_type=ether_types.ETH_TYPE_IP,
                           ip_proto=in_proto.IPPROTO_UDP,
-                          ipv4_dst=IPV4_NETWORK_BROADCAST,
+                          ipv4_dst=lib_consts.IPv4_NETWORK_BROADCAST,
                           udp_src=lib_consts.DHCP_CLIENT_PORT,
                           udp_dst=lib_consts.DHCP_RESPONSE_PORT)
         self.install_drop(table_id=constants.DHCP_IPV4_TABLE)
@@ -104,13 +98,13 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
             return
         # DHCP IPv6
         self.install_goto(dest_table_id=constants.DHCP_IPV6_TABLE,
-                          table_id=constants.TRANSIENT_TABLE,
-                          priority=101,
-                          eth_type=ether_types.ETH_TYPE_IPV6,
-                          ip_proto=in_proto.IPPROTO_UDP,
-                          ipv6_dst=IPV6_All_DHCP_RELAY_AGENYS_AND_SERVERS,
-                          udp_src=lib_consts.DHCPV6_CLIENT_PORT,
-                          udp_dst=lib_consts.DHCPV6_RESPONSE_PORT)
+            table_id=constants.TRANSIENT_TABLE,
+            priority=101,
+            eth_type=ether_types.ETH_TYPE_IPV6,
+            ip_proto=in_proto.IPPROTO_UDP,
+            ipv6_dst=lib_consts.IPv6_ALL_DHCP_RELAY_AGENTS_AND_SERVERS,
+            udp_src=lib_consts.DHCPV6_CLIENT_PORT,
+            udp_dst=lib_consts.DHCPV6_RESPONSE_PORT)
         self.install_drop(table_id=constants.DHCP_IPV6_TABLE)
 
     def add_dhcp_ipv4_flow(self, port_id, ofport, port_mac):
