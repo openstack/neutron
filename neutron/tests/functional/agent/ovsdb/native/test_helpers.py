@@ -51,3 +51,29 @@ class EnableConnectionUriTestCase(base.BaseSudoTestCase):
 
         for connection in manager_connections:
             self.assertNotIn(connection, ovs.ovsdb.get_manager().execute())
+
+    def test_add_manager_overwrites_existing_manager(self):
+        ovs = ovs_lib.BaseOVS()
+
+        _port = self.useFixture(port.ExclusivePort(
+            const.PROTO_NAME_TCP,
+            start=net_helpers.OVS_MANAGER_TEST_PORT_FIRST,
+            end=net_helpers.OVS_MANAGER_TEST_PORT_LAST)).port
+        ovsdb_cfg_connection = 'tcp:127.0.0.1:%s' % _port
+        manager_connection = 'ptcp:%s:127.0.0.1' % _port
+
+        helpers.enable_connection_uri(ovsdb_cfg_connection,
+                                      inactivity_probe=10)
+        self.addCleanup(ovs.ovsdb.remove_manager(manager_connection).execute)
+        # First call of enable_connection_uri cretes the manager
+        # and the list returned by get_manager contains it:
+        my_mans = ovs.ovsdb.get_manager().execute()
+        self.assertIn(manager_connection, my_mans)
+
+        # after 2nd call of enable_connection_uri with new value of
+        # inactivity_probe will keep the original manager only the
+        # inactivity_probe value is set:
+        helpers.enable_connection_uri(ovsdb_cfg_connection,
+                                      inactivity_probe=100)
+        my_mans = ovs.ovsdb.get_manager().execute()
+        self.assertIn(manager_connection, my_mans)

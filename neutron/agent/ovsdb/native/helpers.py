@@ -26,6 +26,6 @@ ml2_ovs_conf.register_ovs_opts(cfg=cfg.CONF)
 
 enable_connection_uri = functools.partial(
     priv_helpers.enable_connection_uri,
-    log_fail_as_error=False, check_exit_code=False,
+    log_fail_as_error=False, check_exit_code=True,
     timeout=cfg.CONF.OVS.ovsdb_timeout,
     inactivity_probe=cfg.CONF.OVS.of_inactivity_probe * 1000)
