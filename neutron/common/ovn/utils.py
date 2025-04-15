@@ -903,6 +903,16 @@ def get_chassis_without_azs(chassis_list):
             get_chassis_availability_zones(ch)}
 
 
+def get_chassis_priority(chassis_list):
+    """Given a chassis list, returns a dictionary with chassis name and prio
+
+    The chassis list is ordered according to the priority: the first one is the
+    highest priority chassis, the last one is the least priority chassis.
+    """
+    return {chassis: prio + 1 for prio, chassis
+            in enumerate(reversed(chassis_list))}
+
+
 def parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs):
     """Return a dictionary compatible with port forwarding from OVN lb."""
     result = {}
