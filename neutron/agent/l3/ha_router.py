@@ -122,12 +122,7 @@ class HaRouter(router.RouterInfo):
             return self._ha_state
         try:
             with open(self.ha_state_path) as f:
-                # TODO(haleyb): put old code back after a couple releases,
-                # Y perhaps, just for backwards-compat
-                # self._ha_state = f.read()
-                ha_state = f.read()
-                ha_state = 'primary' if ha_state == 'master' else ha_state
-                self._ha_state = ha_state
+                self._ha_state = f.read()
         except OSError as error:
             LOG.debug('Error while reading HA state for %s: %s',
                       self.router_id, error)
