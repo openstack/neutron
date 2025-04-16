@@ -82,6 +82,20 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='create_port:device_id',
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_MEMBER,
+            base.SERVICE),
+        scope_types=['project'],
+        description='Specify ``device_id`` attribute when creating a port',
+        operations=ACTION_POST,
+        deprecated_rule=policy.DeprecatedRule(
+            name='create_port:device_id',
+            check_str=neutron_policy.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
         name='create_port:device_owner',
         check_str=neutron_policy.policy_or(
             'not rule:network_device',
@@ -457,6 +471,20 @@ rules = [
             check_str=neutron_policy.policy_or(
                 neutron_policy.RULE_ADMIN_OR_OWNER,
                 neutron_policy.RULE_ADVSVC),
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_port:device_id',
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_MEMBER,
+            base.SERVICE),
+        scope_types=['project'],
+        description='Update ``device_id`` attribute of a port',
+        operations=ACTION_PUT,
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_port:device_id',
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
