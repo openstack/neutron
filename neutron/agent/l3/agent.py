@@ -26,7 +26,6 @@ from neutron_lib import constants as lib_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib import rpc as n_rpc
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_context import context as common_context
 from oslo_log import log as logging
@@ -80,8 +79,7 @@ UPDATE_NETWORK = 5
 RELATED_ACTION_MAP = {DELETE_ROUTER: DELETE_RELATED_ROUTER,
                       ADD_UPDATE_ROUTER: ADD_UPDATE_RELATED_ROUTER}
 
-ROUTER_PROCESS_GREENLET_MAX = 32
-ROUTER_PROCESS_GREENLET_MIN = 8
+ROUTER_PROCESS_THREADS = 32
 
 
 def log_verbose_exc(message, router_payload):
@@ -318,8 +316,7 @@ class L3NATAgent(ha.AgentMixin,
             self.metadata_driver)
 
         # L3 agent router processing green pool
-        self._pool_size = ROUTER_PROCESS_GREENLET_MIN
-        self._pool = eventlet.GreenPool(size=self._pool_size)
+        self._pool = eventlet.GreenPool(size=ROUTER_PROCESS_THREADS)
         self._queue = queue.ResourceProcessingQueue()
         super().__init__(host=self.conf.host)
 
@@ -446,18 +443,6 @@ class L3NATAgent(ha.AgentMixin,
 
         return self.router_factory.create(features, **kwargs)
 
-    @lockutils.synchronized('resize_greenpool')
-    def _resize_process_pool(self):
-        pool_size = max([ROUTER_PROCESS_GREENLET_MIN,
-                         min([ROUTER_PROCESS_GREENLET_MAX,
-                              len(self.router_info)])])
-        if pool_size == self._pool_size:
-            return
-        LOG.info("Resizing router processing queue green pool size to: %d",
-                 pool_size)
-        self._pool.resize(pool_size)
-        self._pool_size = pool_size
-
     def _router_added(self, router_id, router):
         ri = self._create_router(router_id, router)
         registry.publish(resources.ROUTER, events.BEFORE_CREATE, self,
@@ -476,8 +461,6 @@ class L3NATAgent(ha.AgentMixin,
                 LOG.exception('Error while initializing router %s',
                               router_id)
                 self._cleanup_failed_router(router_id, delete_router_info=True)
-
-        self._resize_process_pool()
 
     def _cleanup_failed_router(self, router_id, delete_router_info):
         ri = self.router_info.pop(router_id)
@@ -502,7 +485,6 @@ class L3NATAgent(ha.AgentMixin,
             LOG.exception('Error while deleting router %s', router_id)
             return False
 
-        self._resize_process_pool()
         return True
 
     def _router_removed(self, ri, router_id):
