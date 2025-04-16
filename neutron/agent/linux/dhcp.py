@@ -66,16 +66,11 @@ def port_requires_dhcp_configuration(port):
         # We can't check if port needs dhcp entry, so it will be better
         # to create one
         return True
-    # TODO(slaweq): define this list as a constant in neutron_lib.constants
     # NOTE(slaweq): Not all port types which belongs e.g. to the routers can be
     # excluded from that list. For some of them, like router interfaces used to
     # plug subnet to the router should be configured in dnsmasq to provide DNS
     # naming resolution. Otherwise it may slowdown e.g. traceroutes from the VM
-    return port.device_owner not in [
-        constants.DEVICE_OWNER_ROUTER_HA_INTF,
-        constants.DEVICE_OWNER_FLOATINGIP,
-        constants.DEVICE_OWNER_DHCP,
-        constants.DEVICE_OWNER_DISTRIBUTED]
+    return port.device_owner not in constants.DHCP_CONFIG_NOT_REQUIRED_OWNERS
 
 
 class DictModel(collections.abc.MutableMapping):
