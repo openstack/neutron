@@ -49,13 +49,13 @@ class DHCPIPv4Responder(dhcp_base.DHCPResponderBase):
     def get_bin_routes(self, gateway=None, routes=None):
         bin_routes = b''
 
-        # Default routes
-        default_route = self.get_bin_route(constants.IPv4_ANY, gateway)
-        bin_routes += default_route
+        if gateway and gateway != constants.METADATA_V4_IP:
+            # Default routes
+            default_route = self.get_bin_route(constants.IPv4_ANY, gateway)
+            bin_routes += default_route
 
-        # For some VMs they may need the metadata IP's route, we move
-        # the destination to gateway IP.
-        if gateway:
+            # For some VMs they may need the metadata IP's route, we move
+            # the destination to gateway IP.
             meta_route = self.get_bin_route(
                 constants.METADATA_V4_CIDR, gateway)
             bin_routes += meta_route
@@ -71,7 +71,7 @@ class DHCPIPv4Responder(dhcp_base.DHCPResponderBase):
         net = netaddr.IPNetwork(fixed_ips[0]['cidr'])
         dns_nameservers = fixed_ips[0]['dns_nameservers']
         host_routes = fixed_ips[0]['host_routes']
-        gateway_ip = fixed_ips[0]['gateway_ip']
+        gateway_ip = str(fixed_ips[0]['gateway_ip'])
         bin_server = addrconv.ipv4.text_to_bin(gateway_ip)
 
         option_list = []
@@ -122,9 +122,10 @@ class DHCPIPv4Responder(dhcp_base.DHCPResponderBase):
                             value=struct.pack(
                                 '!%ds' % len(cfg.CONF.dns_domain),
                                 str.encode(cfg.CONF.dns_domain))))
-        option_list.append(
-            dhcp.option(tag=dhcp.DHCP_GATEWAY_ADDR_OPT,
-                        value=bin_server))
+        if gateway_ip != constants.METADATA_V4_IP:
+            option_list.append(
+                dhcp.option(tag=dhcp.DHCP_GATEWAY_ADDR_OPT,
+                            value=bin_server))
         # Static routes
         option_list.append(
             dhcp.option(tag=dhcp.DHCP_CLASSLESS_ROUTE_OPT,

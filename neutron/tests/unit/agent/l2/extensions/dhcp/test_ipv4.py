@@ -67,52 +67,69 @@ class DHCPIPv4ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
         dhcp_pkt = ret_pkt.get_protocols(dhcp.dhcp)
         self.assertIsNotNone(dhcp_pkt)
 
-    def test_get_dhcp_options(self):
-        expect_bin_routes = (b'\x00\xc0\xa8o\x01 \xa9\xfe\xa9\xfe\xc0\xa8o\x01'
-                             b'\x18\x01\x01\x01\xc0\xa8\x01d '
-                             b'\x02\x02\x02\x02\xc0\xa8\x01e')
+    def _test_get_dhcp_options(self, port_info, has_gateway_ip=False):
+        expect_bin_routes = (
+            b'\x18\x01\x01\x01\xc0\xa8\x01d '
+            b'\x02\x02\x02\x02\xc0\xa8\x01e'
+        )
+        offer_option_list = [
+            dhcp.option(length=0, tag=53, value=b'\x02'),
+            dhcp.option(length=0, tag=54, value=b'\xa9\xfe\xa9\xfe'),
+            dhcp.option(length=0, tag=51, value=b'\x00\x01Q\x80'),
+            dhcp.option(length=0, tag=1, value=b'\xff\xff\xff\x00'),
+            dhcp.option(length=0, tag=28, value=b'\xc0\xa8o\xff'),
+            dhcp.option(length=0, tag=6,
+                        value=b'\x08\x08\x08\x08\x08\x08\x04\x04'),
+            dhcp.option(length=0, tag=15, value=b'openstacklocal'),
+            dhcp.option(length=0, tag=121, value=expect_bin_routes),
+            dhcp.option(length=0, tag=26, value=b'\x05\xaa')
+        ]
+        ack_option_list = list(offer_option_list)
+        ack_option_list[0] = dhcp.option(length=0, tag=53, value=b'\x05')
+        if has_gateway_ip:
+            expect_bin_routes = (
+                b'\x00\xc0\xa8o\x01 \xa9\xfe\xa9\xfe\xc0\xa8o\x01'
+                b'\x18\x01\x01\x01\xc0\xa8\x01d '
+                b'\x02\x02\x02\x02\xc0\xa8\x01e'
+            )
+            offer_option_list[1] = dhcp.option(
+                length=0, tag=54, value=b'\xc0\xa8o\x01'
+            )
+            ack_option_list[1] = dhcp.option(
+                length=0, tag=54, value=b'\xc0\xa8o\x01'
+            )
+            offer_option_list[7] = dhcp.option(
+                length=0, tag=121, value=expect_bin_routes
+            )
+            ack_option_list[7] = dhcp.option(
+                length=0, tag=121, value=expect_bin_routes
+            )
+            offer_option_list.append(
+                dhcp.option(length=0, tag=3, value=b'\xc0\xa8o\x01')
+            )
+            ack_option_list.append(
+                dhcp.option(length=0, tag=3, value=b'\xc0\xa8o\x01')
+            )
+
         expect_offer_options = dhcp.options(
             magic_cookie='99.130.83.99',
-            option_list=[
-                dhcp.option(length=0, tag=53, value=b'\x02'),
-                dhcp.option(length=0, tag=54, value=b'\xc0\xa8o\x01'),
-                dhcp.option(length=0, tag=51, value=b'\x00\x01Q\x80'),
-                dhcp.option(length=0, tag=1, value=b'\xff\xff\xff\x00'),
-                dhcp.option(length=0, tag=28, value=b'\xc0\xa8o\xff'),
-                dhcp.option(length=0, tag=6,
-                            value=b'\x08\x08\x08\x08\x08\x08\x04\x04'),
-                dhcp.option(length=0, tag=15, value=b'openstacklocal'),
-                dhcp.option(length=0, tag=3, value=b'\xc0\xa8o\x01'),
-                dhcp.option(
-                    length=0, tag=121,
-                    value=expect_bin_routes),
-                dhcp.option(length=0, tag=26, value=b'\x05\xaa')],
+            option_list=offer_option_list,
             options_len=0)
-        offer_options = self.dhcp4_responer.get_dhcp_options(self.port_info)
+        offer_options = self.dhcp4_responer.get_dhcp_options(port_info)
         self._compare_option_values(expect_offer_options.option_list,
                                     offer_options.option_list)
 
         expect_ack_options = dhcp.options(
             magic_cookie='99.130.83.99',
-            option_list=[
-                dhcp.option(length=0, tag=53, value=b'\x05'),
-                dhcp.option(length=0, tag=54, value=b'\xc0\xa8o\x01'),
-                dhcp.option(length=0, tag=51, value=b'\x00\x01Q\x80'),
-                dhcp.option(length=0, tag=1, value=b'\xff\xff\xff\x00'),
-                dhcp.option(length=0, tag=28, value=b'\xc0\xa8o\xff'),
-                dhcp.option(length=0, tag=6,
-                            value=b'\x08\x08\x08\x08\x08\x08\x04\x04'),
-                dhcp.option(length=0, tag=15, value=b'openstacklocal'),
-                dhcp.option(length=0, tag=3, value=b'\xc0\xa8o\x01'),
-                dhcp.option(
-                    length=0, tag=121,
-                    value=expect_bin_routes),
-                dhcp.option(length=0, tag=26, value=b'\x05\xaa')],
+            option_list=ack_option_list,
             options_len=0)
         ack_options = self.dhcp4_responer.get_dhcp_options(
-            self.port_info, is_ack=True)
+            port_info, is_ack=True)
         self._compare_option_values(expect_ack_options.option_list,
                                     ack_options.option_list)
+
+    def test_get_dhcp_options(self):
+        self._test_get_dhcp_options(self.port_info, has_gateway_ip=True)
 
     def test_get_bin_routes(self):
         expect_bin_routes = (b'\x00\xc0\xa8o\x01 \xa9\xfe\xa9\xfe\xc0\xa8o\x01'
@@ -121,4 +138,16 @@ class DHCPIPv4ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
         bin_routes = self.dhcp4_responer.get_bin_routes(
             self.port_info['fixed_ips'][0]['gateway_ip'],
             self.port_info['fixed_ips'][0]['host_routes'])
+        self.assertEqual(expect_bin_routes, bin_routes)
+
+    def test_get_dhcp_options_no_gateway(self):
+        self._test_get_dhcp_options(
+            self.no_gateway_port_info, has_gateway_ip=False
+        )
+
+    def test_get_bin_routes_no_gateway(self):
+        expect_bin_routes = (b'\x18\x01\x01\x01\xc0\xa8\x01d '
+                             b'\x02\x02\x02\x02\xc0\xa8\x01e')
+        bin_routes = self.dhcp4_responer.get_bin_routes(
+            routes=self.port_info['fixed_ips'][0]['host_routes'])
         self.assertEqual(expect_bin_routes, bin_routes)
