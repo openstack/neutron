@@ -18,6 +18,7 @@ import functools
 import re
 import time
 from unittest import mock
+import uuid
 
 import netaddr
 from neutron_lib.api.definitions import external_net
@@ -96,6 +97,34 @@ class TestOVNMechanismDriver(base.TestOVNFunctionalBase):
         for ovn_hr in ovn_hrs:
             self.assertEqual(int(start_time.timestamp()),
                              ovn_hr.created_at.timestamp())
+
+
+class TestOvsdbPersistUuid(base.TestOVNFunctionalBase):
+
+    def _create_port(self, name, net_id):
+        data = {'port': {'name': name,
+                         'tenant_id': self._tenant_id,
+                         'network_id': net_id}}
+
+        req = self.new_create_request('ports', data, self.fmt)
+        res = req.get_response(self.api)
+        return self.deserialize(self.fmt, res)['port']['id']
+
+    def test_old_network_new_port(self):
+        if not utils.ovs_persist_uuid_supported(self.nb_api):
+            self.skipTest("OVS persist_uuid not supported")
+        mock_supported = mock.patch.object(utils, 'ovs_persist_uuid_supported',
+                                           return_value=False).start()
+        network = self._make_network(self.fmt, 'n1', True)
+        network_id = network['network']['id']
+        self._create_subnet(self.fmt, network_id, '10.0.0.0/24')
+        n1_ls = self.nb_api.ls_get(
+            utils.ovn_name(network_id)).execute(check_error=True)
+        self.assertNotEqual(uuid.UUID(network_id), n1_ls.uuid)
+        mock_supported.return_value = True
+        port = self._create_port("n1_port", network_id)
+        port_lsp = self.nb_api.lsp_get(port).execute(check_error=True)
+        self.assertIn(port_lsp, n1_ls.ports)
 
 
 class TestPortBinding(base.TestOVNFunctionalBase):
