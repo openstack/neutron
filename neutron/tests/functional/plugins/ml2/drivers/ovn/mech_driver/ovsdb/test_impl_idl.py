@@ -19,6 +19,7 @@ import uuid
 
 import netaddr
 from neutron_lib import constants
+from neutron_lib.utils import net as net_utils
 from oslo_utils import netutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import connection
@@ -778,6 +779,45 @@ class TestNbApi(BaseOvnIdlTest):
             hcg_name2, chassis_priority2).execute(check_error=True)
         self._check_hcg(hcg1, hcg_name1, chassis_priority1)
         self._check_hcg(hcg2, hcg_name2, chassis_priority2)
+
+    def _add_lrp_with_gw(self, chassis_priority=None, is_gw=True):
+        if is_gw:
+            hcg_name = uuidutils.generate_uuid()
+            hcg = self.nbapi.ha_chassis_group_with_hc_add(
+                hcg_name, chassis_priority).execute(check_error=True)
+            kwargs = {'ha_chassis_group': hcg.uuid}
+        else:
+            hcg = None
+            kwargs = {}
+
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        networks = ['192.0.2.0/24']
+        lr = self.nbapi.lr_add(uuidutils.generate_uuid()).execute(
+            check_error=True)
+
+        lrp = self.nbapi.lrp_add(
+            lr.uuid, uuidutils.generate_uuid(), mac, networks,
+            **kwargs).execute(check_error=True)
+        return lr, lrp, hcg
+
+    def test__get_logical_router_port_ha_chassis_group(self):
+        chassis_priority = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+        lr, lrp, hcg = self._add_lrp_with_gw(chassis_priority)
+        cprio_res = self.nbapi._get_logical_router_port_ha_chassis_group(lrp)
+        self.assertEqual([('ch4', 4), ('ch3', 3), ('ch2', 2), ('ch1', 1)],
+                         cprio_res)
+
+    def test__get_logical_router_port_ha_chassis_group_with_priorities(self):
+        chassis_priority = {'ch1': 1, 'ch2': 2, 'ch3': 3, 'ch4': 4}
+        lr, lrp, hcg = self._add_lrp_with_gw(chassis_priority)
+        cprio_res = self.nbapi._get_logical_router_port_ha_chassis_group(
+            lrp, priorities=(1, 3, 4))
+        self.assertEqual([('ch4', 4), ('ch3', 3), ('ch1', 1)], cprio_res)
+
+    def test__get_logical_router_port_ha_chassis_group_no_hcg(self):
+        lr, lrp, hcg = self._add_lrp_with_gw(is_gw=False)
+        cprio_res = self.nbapi._get_logical_router_port_ha_chassis_group(lrp)
+        self.assertEqual([], cprio_res)
 
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
