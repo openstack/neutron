@@ -509,8 +509,9 @@ class AddLRouterPortCommand(command.BaseCommand):
                 if col == 'gateway_chassis':
                     col, val = _add_gateway_chassis(self.api, txn, self.name,
                                                     val)
-                setattr(lrouter_port, col, val)
+                self.set_column(lrouter_port, col, val)
             _addvalue_to_list(lrouter, 'ports', lrouter_port)
+            self.result = lrouter_port.uuid
 
 
 class UpdateLRouterPortCommand(command.BaseCommand):
@@ -535,7 +536,7 @@ class UpdateLRouterPortCommand(command.BaseCommand):
             if col == 'gateway_chassis':
                 col, val = _add_gateway_chassis(self.api, txn, self.name,
                                                 val)
-            setattr(lrouter_port, col, val)
+            self.set_column(lrouter_port, col, val)
 
 
 class DelLRouterPortCommand(command.BaseCommand):
