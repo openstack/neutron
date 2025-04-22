@@ -16,6 +16,7 @@ import os.path
 import random
 import re
 import sys
+import time
 from unittest import mock
 
 import ddt
@@ -25,6 +26,7 @@ import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import timeutils
 from osprofiler import profiler
 import testtools
 
@@ -711,3 +713,69 @@ class StringMapTestCase(base.BaseTestCase):
 
     def test_stringmap_custom_default(self):
         self.assertEqual('None', utils.stringmap(self.data, 'None')['b'])
+
+
+class ThreadPoolExecutorWithBlockTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self._queue = queue.Queue()
+
+    def _check_values(self, expected_values):
+        # Retrieve all stored values
+        stored_values = []
+        while not self._queue.empty():
+            stored_values.append(self._queue.get())
+
+        for expected_value in expected_values:
+            self.assertIn(expected_value, stored_values)
+
+    def _add_tasks(self, tpool, num_tasks):
+        expected_values = []
+        for idx in range(num_tasks):
+            value1 = 'value1_%s' % idx
+            value2 = 'value2_%s' % idx
+            values = (value1, value2)
+            expected_values.append(values)
+            tpool.submit(self._task, self._queue, value1, value2=value2)
+        return expected_values
+
+    @staticmethod
+    def _task(_queue, value1, value2=None):
+        _queue.put((value1, value2))
+        time.sleep(1)
+
+    def test_simple_execution(self):
+        max_workers = 5
+        t1 = timeutils.utcnow()
+        with utils.ThreadPoolExecutorWithBlock(max_workers=max_workers) as \
+                tpool:
+            expected_values = self._add_tasks(tpool, max_workers * 3)
+
+        utils.wait_until_true(lambda: self._queue.qsize() == max_workers * 3,
+                              timeout=5, sleep=0.1)
+        t2 = timeutils.utcnow()
+        diff_seconds = (t2 - t1).total_seconds()
+        # NOTE(ralonsoh): we can't expect a 3 seconds sharp time gap, but at
+        # least the execution is contained in this interval. If each task takes
+        # 1 second, 5 threads can be executed in parallel and 15 workers are
+        # required, that will take at least 3 seconds.
+        self.assertTrue(3 < diff_seconds < 3.5)
+
+        self._check_values(expected_values)
+
+    def test_simple_execution_fast_exit(self):
+        max_workers = 5
+        t1 = timeutils.utcnow()
+        with utils.ThreadPoolExecutorWithBlock(max_workers=max_workers) as \
+                tpool:
+            expected_values = self._add_tasks(tpool, max_workers)
+            tpool.shutdown(wait=False)
+            self._add_tasks(tpool, max_workers)
+
+        utils.wait_until_true(lambda: self._queue.qsize() == max_workers,
+                              timeout=5, sleep=0.1)
+        t2 = timeutils.utcnow()
+        diff_seconds = (t2 - t1).total_seconds()
+        self.assertTrue(1 < diff_seconds < 1.5)
+        self._check_values(expected_values)
