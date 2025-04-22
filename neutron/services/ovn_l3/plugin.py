@@ -299,21 +299,13 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         port_physnet_dict = self._get_gateway_port_physnet_mapping()
         # Filter out unwanted ports in case of event.
         if event_from_chassis:
-            gw_chassis = self._nb_ovn.get_chassis_gateways(
-                chassis_name=event_from_chassis)
-            if not gw_chassis:
-                return
-            ports_impacted = []
-            for gwc in gw_chassis:
-                try:
-                    ports_impacted.append(utils.get_port_id_from_gwc_row(gwc))
-                except AttributeError:
-                    LOG.warning('Malformed Gateway_Chassis register name '
-                                'format: %s', gwc.name)
+            hcgs = self._nb_ovn.get_ha_chassis_group_from_chassis(
+                event_from_chassis)
+            lrps = self._nb_ovn.get_lrp_from_ha_chassis_group(hcgs)
+            ports = [lrp.name.replace(ovn_const.LRP_PREFIX, '', 1) for
+                     lrp in lrps]
             port_physnet_dict = {
-                k: v
-                for k, v in port_physnet_dict.items()
-                if k in ports_impacted}
+                k: v for k, v in port_physnet_dict.items() if k in ports}
         if not port_physnet_dict:
             return
         # All chassis with physnets configured.

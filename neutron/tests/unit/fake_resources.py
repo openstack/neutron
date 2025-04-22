@@ -41,7 +41,8 @@ class FakeOvsdbNbOvnIdl:
         self.dhcp_options_table = FakeOvsdbTable.create_one_ovsdb_table()
         self.nat_table = FakeOvsdbTable.create_one_ovsdb_table()
         self.port_group_table = FakeOvsdbTable.create_one_ovsdb_table()
-        self.gateway_chassis_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.ha_chassis_group_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.ha_chassis_table = FakeOvsdbTable.create_one_ovsdb_table()
         self._tables = {}
         self._tables['Logical_Switch'] = self.lswitch_table
         self._tables['Logical_Switch_Port'] = self.lsp_table
@@ -54,7 +55,8 @@ class FakeOvsdbNbOvnIdl:
         self._tables['DHCP_Options'] = self.dhcp_options_table
         self._tables['NAT'] = self.nat_table
         self._tables['Port_Group'] = self.port_group_table
-        self._tables['Gateway_Chassis'] = self.gateway_chassis_table
+        self._tables['HA_Chassis_Group'] = self.ha_chassis_group_table
+        self._tables['HA_Chassis'] = self.ha_chassis_table
         self.transaction = mock.MagicMock()
         self.create_transaction = mock.MagicMock()
         self.ls_add = mock.Mock()
@@ -79,10 +81,11 @@ class FakeOvsdbNbOvnIdl:
         self.add_static_route = mock.Mock()
         self.delete_static_routes = mock.Mock()
         self.get_all_chassis_gateway_bindings = mock.Mock()
-        self.get_chassis_gateways = mock.Mock()
+        self.get_ha_chassis_group_from_chassis = mock.Mock()
         self.get_gateway_chassis_binding = mock.Mock()
         self.get_gateway_chassis_az_hints = mock.Mock()
         self.get_gateway_chassis_az_hints.return_value = []
+        self.get_chassis_gateways = mock.Mock()
         self.get_unhosted_gateways = mock.Mock()
         self.add_dhcp_options = mock.Mock()
         self.delete_dhcp_options = mock.Mock()
@@ -168,6 +171,7 @@ class FakeOvsdbNbOvnIdl:
         self.get_lrouter_port = mock.Mock()
         self.get_lrouter_gw_ports = mock.Mock()
         self.lrp_get = mock.Mock()
+        self.get_lrp_from_ha_chassis_group = mock.Mock(return_value=[])
         self.get_schema_version = mock.Mock(return_value='3.6.0')
         self.get_lrouter_port = mock.Mock()
         self.schedule_unhosted_gateways = mock.Mock()

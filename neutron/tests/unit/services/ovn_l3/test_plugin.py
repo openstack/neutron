@@ -1966,6 +1966,9 @@ class BaseTestOVNL3RouterPluginMixin:
         self.nb_idl().get_chassis_gateways.return_value = [
             foo_gw]
         self.nb_idl().get_unhosted_gateways.return_value = []
+        foo_lrp = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lrp-foo-1'})
+        self.nb_idl().get_lrp_from_ha_chassis_group.return_value = [foo_lrp]
         # Fake that rescheduling is executed on chassis event
         self.l3_inst.schedule_unhosted_gateways(event_from_chassis='chassis1')
         # Validate that only foo-1 port is beign rescheduled.

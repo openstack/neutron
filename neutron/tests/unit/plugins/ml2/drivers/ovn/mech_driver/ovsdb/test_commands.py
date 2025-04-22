@@ -471,7 +471,7 @@ class TestLrDelCommand(TestBaseCommand):
 
     def _test_lrouter_del_no_exist(self, if_exists=True):
         with mock.patch.object(self.ovn_api, 'lookup',
-                               side_effect=idlutils.RowNotFound):
+                               side_effect=[None, idlutils.RowNotFound]):
             cmd = commands.LrDelCommand(
                 self.ovn_api, 'fake-lrouter', if_exists=if_exists)
             if if_exists:
@@ -486,15 +486,24 @@ class TestLrDelCommand(TestBaseCommand):
         self._test_lrouter_del_no_exist(if_exists=False)
 
     def test_lrouter_del(self):
+        fake_lrp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        fake_lrp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row()
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        fake_lrouter.ports = [fake_lrp1, fake_lrp2]
         fake_hcg = fakes.FakeOvsdbRow.create_one_ovsdb_row()
         self.ovn_api._tables['Logical_Router'].rows[fake_lrouter.uuid] = \
             fake_lrouter
         with mock.patch.object(self.ovn_api, 'lookup',
-                               side_effect=[fake_lrouter, fake_hcg]):
+                               side_effect=[fake_hcg, fake_lrouter,
+                                            fake_lrouter]):
             cmd = commands.LrDelCommand(
                 self.ovn_api, fake_lrouter.name, if_exists=True)
             cmd.run_idl(self.transaction)
+            fake_lrp1.delvalue.assert_called_once_with(
+                'ha_chassis_group', fake_hcg)
+            fake_lrp2.delvalue.assert_called_once_with(
+                'ha_chassis_group', fake_hcg)
+            fake_hcg.delete.assert_called_once_with()
             fake_lrouter.delete.assert_called_once_with()
 
 
@@ -1305,10 +1314,12 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
 class TestScheduleUnhostedGatewaysCommand(TestBaseCommand):
 
     @staticmethod
-    def _insert_gwc(table):
-        fake_gwc = fakes.FakeOvsdbRow.create_one_ovsdb_row()
-        table.rows[fake_gwc.uuid] = fake_gwc
-        return fake_gwc
+    def _insert_hcg(table):
+        fake_hcg = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        table.rows[fake_hcg.uuid] = fake_hcg
+        fake_hcg.ha_chassis = []
+        fake_hcg.addvalue = lambda _, item: fake_hcg.ha_chassis.append(item)
+        return fake_hcg
 
     def test_schedule_unhosted_gateways_rebalances_lower_prios(self):
         unhosted_gws = ['lrp-foo-1', 'lrp-foo-2', 'lrp-foo-3']
@@ -1328,7 +1339,7 @@ class TestScheduleUnhostedGatewaysCommand(TestBaseCommand):
             ['chassis4', 'chassis3', 'chassis1'],
             ['chassis4', 'chassis3', 'chassis1'],
         ]
-        self.transaction.insert.side_effect = self._insert_gwc
+        self.transaction.insert.side_effect = self._insert_hcg
 
         expected_mapping = {
             'lrp-foo-1': ['chassis1', 'chassis4', 'chassis3'],
@@ -1347,17 +1358,22 @@ class TestScheduleUnhostedGatewaysCommand(TestBaseCommand):
             for g_name in unhosted_gws:
                 lrouter_port = mock.MagicMock()
                 with mock.patch.object(self.ovn_api, 'lookup',
-                                       return_value=lrouter_port):
+                                       side_effect=[lrouter_port, None]):
                     with mock.patch.object(idlutils, 'row_by_value',
                                            side_effect=idlutils.RowNotFound):
                         cmd = commands.ScheduleUnhostedGatewaysCommand(
                             self.ovn_api, g_name, sb_api, plugin,
                             port_physnets, chassis, chassis_mappings, [])
                         cmd.run_idl(self.transaction)
-                        self.assertEqual(
-                            expected_mapping[g_name],
-                            [
-                                self.ovn_api._tables[
-                                    'Gateway_Chassis'].rows[uuid].chassis_name
-                                for uuid in lrouter_port.gateway_chassis
-                            ])
+
+                        ch_prio = []
+                        hcg = self.ovn_api._tables['HA_Chassis_Group'].rows[
+                            lrouter_port.ha_chassis_group]
+                        for ha_chassis in hcg.ha_chassis:
+                            ch_prio.append((ha_chassis.chassis_name,
+                                            ha_chassis.priority))
+
+                        ch_prio = sorted(ch_prio, key=lambda item: item[1],
+                                         reverse=True)
+                        ch_name = [ch for ch, _ in ch_prio]
+                        self.assertEqual(expected_mapping[g_name], ch_name)

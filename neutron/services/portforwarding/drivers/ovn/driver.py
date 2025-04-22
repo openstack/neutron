@@ -119,7 +119,7 @@ class OVNPortForwardingHandler:
             ovn_lss = [port.external_ids.get(ext_id_key)
                        for port in ovn_lr.ports
                        if port.external_ids.get(ext_id_key) and
-                       not port.gateway_chassis]
+                       not port.ha_chassis_group]
             for ls_name in ovn_lss:
                 try:
                     ovn_txn.add(nb_ovn.ls_lb_add(ls_name, lb_name,

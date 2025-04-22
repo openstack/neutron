@@ -1348,6 +1348,43 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(ralonsoh): to remove in H+3=K (2028.1) cycle (2nd next SLURP
+    # release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def migrate_lrp_gateway_chassis_to_ha_chassis_group(self):
+        """Migrate the LRP Gateway_Chassis to HA_Chassis_Group"""
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for lrp in self._nb_idl.db_list_rows(
+                    'Logical_Router_Port').execute(check_error=True):
+                if not lrp.gateway_chassis:
+                    continue
+
+                r_name = lrp.external_ids.get(
+                    ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
+                if not r_name:
+                    LOG.warning('Logical_Router_Port %s does not '
+                                'have the router name in external_ids.',
+                                lrp.name)
+                    continue
+
+                chassis_prio = {}
+                for gc in lrp.gateway_chassis:
+                    chassis_prio[gc.chassis_name] = gc.priority
+                # Add the new HA_Chassis_Group and assign to the LRP.
+                hcg_cmd = txn.add(self._nb_idl.ha_chassis_group_with_hc_add(
+                    r_name, chassis_prio, may_exist=True))
+                txn.add(self._nb_idl.db_set(
+                    'Logical_Router_Port', lrp.uuid,
+                    ('ha_chassis_group', hcg_cmd)))
+                # Unset the Gateway_Chassis in the LRP.
+                txn.add(self._nb_idl.db_clear(
+                    'Logical_Router_Port', lrp.uuid, 'gateway_chassis'))
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics:
 

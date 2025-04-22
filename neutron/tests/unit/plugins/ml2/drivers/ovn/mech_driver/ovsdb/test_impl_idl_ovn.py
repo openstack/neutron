@@ -11,7 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 #
-import collections
+
 import copy
 from unittest import mock
 
@@ -173,21 +173,21 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                      utils.ovn_name('lr-id-a'),
                  ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.1.0/24'],
-             'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-1'}},
+             },
             {'name': utils.ovn_lrouter_port_name('orp-id-a2'),
              'external_ids': {
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                      utils.ovn_name('lr-id-a'),
                  ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.2.0/24'],
-             'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-1'}},
+             },
             {'name': utils.ovn_lrouter_port_name('orp-id-a3'),
              'external_ids': {
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                      utils.ovn_name('lr-id-a'),
                  ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.3.0/24'],
-             'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: None}},
+             },
             {'name': 'xrp-id-b1',
              'external_ids': {
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
@@ -198,7 +198,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                      utils.ovn_name('lr-id-b'),
             }, 'networks': ['20.0.2.0/24'],
-                'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'}},
+            },
             {'name': utils.ovn_lrouter_port_name('orp-id-b3'),
              'external_ids': {
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
@@ -218,9 +218,17 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             },
                 'networks': ['10.0.5.0/24'],
                 'options': {}}],
-        'gateway_chassis': [
-            {'chassis_name': 'fake-chassis',
-             'name': utils.ovn_lrouter_port_name('gwc') + '_fake-chassis'}],
+        'ha_chassis_group': [
+            {'name': utils.ovn_name('lr-id-a')},
+            {'name': utils.ovn_name('lr-id-b')},
+        ],
+        'ha_chassis': [
+            {'chassis_name': 'host-1', 'priority': 1},
+            {'chassis_name': 'host-2', 'priority': 2},
+            {'chassis_name': 'host-3', 'priority': 3},
+            {'chassis_name': 'host-4', 'priority': 4},
+            {'chassis_name': 'host-5', 'priority': 5},
+        ],
         'static_routes': [{'ip_prefix': '20.0.0.0/16',
                            'nexthop': '10.0.3.253',
                            'external_ids': {
@@ -369,9 +377,6 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                 utils.ovn_lrouter_port_name('orp-id-b2')],
             utils.ovn_name('lr-id-f'): [
                 utils.ovn_lrouter_port_name('gwc')]},
-        'lrptogwc': {
-            utils.ovn_lrouter_port_name('gwc'): [
-                utils.ovn_lrouter_port_name('gwc') + '_fake-chassis']},
         'lrtosroute': {
             utils.ovn_name('lr-id-a'): ['20.0.0.0/16'],
             utils.ovn_name('lr-id-b'): ['10.0.0.0/16']
@@ -384,7 +389,20 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             utils.ovn_name('ls-id-1'): [1, 2, 3, 4],
             utils.ovn_name('ls-id-2'): [5, 6],
             'ls-id-4': [7, 8],
-            utils.ovn_name('ls-id-5'): [9, 10]}
+            utils.ovn_name('ls-id-5'): [9, 10],
+        },
+        'hcgtohc': {
+            utils.ovn_name('lr-id-a'): ['host-1'],
+            utils.ovn_name('lr-id-b'): ['host-2'],
+        },
+        'lrptohcg': {
+            utils.ovn_lrouter_port_name('orp-id-a1'): [
+                utils.ovn_name('lr-id-a')],
+            utils.ovn_lrouter_port_name('orp-id-a2'): [
+                utils.ovn_name('lr-id-a')],
+            utils.ovn_lrouter_port_name('orp-id-b2'): [
+                utils.ovn_name('lr-id-b')],
+        },
     }
 
     def setUp(self):
@@ -400,7 +418,8 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self.dhcp_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
         self.address_set_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
         self.lb_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
-        self.gwc_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
+        self.hcg_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
+        self.ha_chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
 
         self._tables = {}
         self._tables['Logical_Switch'] = self.lswitch_table
@@ -413,7 +432,8 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables['Address_Set'] = self.address_set_table
         self._tables['Load_Balancer'] = self.lb_table
         self._tables['NAT'] = self.nat_table
-        self._tables['Gateway_Chassis'] = self.gwc_table
+        self._tables['HA_Chassis_Group'] = self.hcg_table
+        self._tables['HA_Chassis'] = self.ha_chassis_table
 
         with mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker',
                                return_value=mock.Mock()):
@@ -440,18 +460,24 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._load_ovsdb_fake_rows(self.lrouter_table, fake_lrouters)
         fake_lrps = TestNBImplIdlOvn.fake_set['lrouter_ports']
         self._load_ovsdb_fake_rows(self.lrp_table, fake_lrps)
-        fake_gwc = TestNBImplIdlOvn.fake_set['gateway_chassis']
-        self._load_ovsdb_fake_rows(self.gwc_table, fake_gwc)
+        fake_hcg = TestNBImplIdlOvn.fake_set['ha_chassis_group']
+        self._load_ovsdb_fake_rows(self.hcg_table, fake_hcg)
+        fake_ha_chassis = TestNBImplIdlOvn.fake_set['ha_chassis']
+        self._load_ovsdb_fake_rows(self.ha_chassis_table, fake_ha_chassis)
+        self._construct_ovsdb_references(
+            TestNBImplIdlOvn.fake_associations['hcgtohc'],
+            self.hcg_table, self.ha_chassis_table,
+            'name', 'chassis_name', 'ha_chassis')
+        self._construct_ovsdb_references(
+            TestNBImplIdlOvn.fake_associations['lrptohcg'],
+            self.lrp_table, self.hcg_table,
+            'name', 'name', 'ha_chassis_group')
+
         # Associate routers and router ports
         self._construct_ovsdb_references(
             TestNBImplIdlOvn.fake_associations['lrtolrp'],
             self.lrouter_table, self.lrp_table,
             'name', 'name', 'ports')
-        # Associate router ports and gateway chassis
-        self._construct_ovsdb_references(
-            TestNBImplIdlOvn.fake_associations['lrptogwc'],
-            self.lrp_table, self.gwc_table,
-            'name', 'name', 'gateway_chassis')
         # Load static routes
         fake_sroutes = TestNBImplIdlOvn.fake_set['static_routes']
         self._load_ovsdb_fake_rows(self.sroute_table, fake_sroutes)
@@ -653,33 +679,24 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
     def test_get_all_chassis_gateway_bindings(self):
         self._load_nb_db()
-
-        # NOTE(fnordahl): The `Gateway_Chassis` table being present without
-        # proper associations fools the test, remove for now.
-        self._tables.pop('Gateway_Chassis')
-
         bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings()
-        expected = {'host-1': [utils.ovn_lrouter_port_name('orp-id-a1'),
-                               utils.ovn_lrouter_port_name('orp-id-a2')],
-                    'host-2': [utils.ovn_lrouter_port_name('orp-id-b2')],
-                    }
-        self.assertCountEqual(bindings, expected)
+        expected = {
+            'host-1': [(utils.ovn_lrouter_port_name('orp-id-a1'), 1),
+                       (utils.ovn_lrouter_port_name('orp-id-a2'), 1)],
+            'host-2': [(utils.ovn_lrouter_port_name('orp-id-b2'), 2)],
+        }
+        self.assertEqual(bindings, expected)
 
-        bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings([])
-        self.assertCountEqual(bindings, expected)
+        bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings(
+            chassis_candidate_list=[])
+        self.assertEqual(bindings, expected)
 
         bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings(['host-1'])
-        expected = {'host-1': [utils.ovn_lrouter_port_name('orp-id-a1'),
-                               utils.ovn_lrouter_port_name('orp-id-a2')]}
-        self.assertCountEqual(bindings, expected)
+        expected.pop('host-2')
+        self.assertEqual(bindings, expected)
 
     def test_get_gateway_chassis_binding(self):
         self._load_nb_db()
-
-        # NOTE(fnordahl): The `Gateway_Chassis` table being present without
-        # proper associations fools the test, remove for now.
-        self._tables.pop('Gateway_Chassis')
-
         chassis = self.nb_ovn_idl.get_gateway_chassis_binding(
             utils.ovn_lrouter_port_name('orp-id-a1'))
         self.assertEqual(chassis, ['host-1'])
@@ -697,11 +714,6 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
     def test_get_unhosted_gateways(self):
         self._load_nb_db()
-
-        # NOTE(fnordahl): The `Gateway_Chassis` table being present without
-        # proper associations fools the test, remove for now.
-        self._tables.pop('Gateway_Chassis')
-
         # Port physnet-dict
         port_physnet_dict = {
             'orp-id-a1': 'physnet1',  # scheduled
@@ -737,16 +749,14 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
     def test_get_unhosted_gateways_deleted_physnet(self):
         self._load_nb_db()
+        # HA_Chassis_Group for "lr-id-b" has a HA_Chassis on host-2
+        lrptohcg = {
+            utils.ovn_lrouter_port_name('orp-id-a1'): [
+                 utils.ovn_name('lr-id-b')]}
+        self._construct_ovsdb_references(
+            lrptohcg, self.lrp_table, self.hcg_table,
+            'name', 'name', 'ha_chassis_group')
 
-        # NOTE(fnordahl): The `Gateway_Chassis` table being present without
-        # proper associations fools the test, remove for now.
-        self._tables.pop('Gateway_Chassis')
-
-        # The LRP is on host-2 now
-        router_row = self._find_ovsdb_fake_row(self.lrp_table,
-                                               'name', 'lrp-orp-id-a1')
-        setattr(router_row, 'options', {
-            ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'})
         port_physnet_dict = {'orp-id-a1': 'physnet1'}
         chassis_with_azs = {'host-1': ['az-a'], 'host-2': ['az-a']}
         # Lets spoof that physnet1 is deleted from host-2.
@@ -754,23 +764,20 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet3'},
             ['host-1', 'host-2'], chassis_with_azs)
         # Make sure that lrp is rescheduled, because host-1 has physet1
-        expected = ['lrp-orp-id-a1']
-        self.assertCountEqual(unhosted_gateways, expected)
+        expected = {utils.ovn_lrouter_port_name('orp-id-a1')}
+        self.assertEqual(unhosted_gateways, expected)
         # Spoof that there is no valid host with required physnet.
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
             port_physnet_dict, {'host-1': 'physnet4', 'host-2': 'physnet3'},
             ['host-1', 'host-2'], chassis_with_azs)
-        self.assertCountEqual(unhosted_gateways, [])
+        self.assertEqual(set(), unhosted_gateways)
 
     def _test_get_unhosted_gateway_max_chassis(self, r):
-        gw_chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
-        self._tables['Gateway_Chassis'] = gw_chassis_table
-        gw_chassis = collections.namedtuple('gw_chassis',
-                                            'chassis_name priority')
-        TestNBImplIdlOvn.fake_set['lrouter_ports'][0]['gateway_chassis'] = [
-            gw_chassis(chassis_name='host-%s' % x,
-                       priority=x) for x in r]
         self._load_nb_db()
+        hcgtohc = {utils.ovn_name('lr-id-a'): [f'host-{idx}' for idx in r]}
+        self._construct_ovsdb_references(
+            hcgtohc, self.hcg_table, self.ha_chassis_table,
+            'name', 'chassis_name', 'ha_chassis')
         self.port_physnet_dict = {'orp-id-a1': 'physnet1'}
 
     def test_get_unhosted_gateway_max_chassis_lack_of_chassis(self):
