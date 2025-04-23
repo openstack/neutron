@@ -91,11 +91,16 @@ class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
             explanation = str(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
 
-    def _get_instance_and_project_id(self, req, skip_cache=False):
-        forwarded_for = req.headers.get('X-Forwarded-For')
+    def _get_instance_id(self, req):
+        """Returns the network ID and the router ID from the request"""
         network_id = req.headers.get(self.NETWORK_ID_HEADER)
         router_id = (req.headers.get(self.ROUTER_ID_HEADER)
                      if self.ROUTER_ID_HEADER else None)
+        return network_id, router_id
+
+    def _get_instance_and_project_id(self, req, skip_cache=False):
+        forwarded_for = req.headers.get('X-Forwarded-For')
+        network_id, router_id = self._get_instance_id(req)
 
         # Only one should be given, drop since it could be spoofed
         if network_id and router_id:
