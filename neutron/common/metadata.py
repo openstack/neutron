@@ -11,8 +11,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import jinja2
 from neutron_lib import constants
 from oslo_log import log as logging
+from oslo_utils import encodeutils
+
 
 LOG = logging.getLogger(__name__)
 
@@ -69,6 +72,24 @@ listen listener
     server metadata %(unix_socket_path)s
 """  # noqa: E501 line-length
 
+RESPONSE = jinja2.Template("""HTTP/1.1 {{ http_code }}
+Content-Type: text/plain; charset=UTF-8
+Connection: close
+Content-Length: {{ len }}
+
+<html>
+ <head>
+  <title>{{ title }}</title>
+ </head>
+ <body>
+  <h1>{{ body_title }}</h1>
+  {{ body }}<br /><br />
+
+
+ </body>
+</html>""")
+RESPONSE_LENGTH = 95
+
 
 def parse_ip_versions(ip_versions):
     if not set(ip_versions).issubset({constants.IP_VERSION_4,
@@ -111,3 +132,11 @@ def get_haproxy_config(cfg_info, rate_limiting_config, header_config_template,
                                  header_config_template)
 
     return FINAL_CONFIG_TEMPLATE % cfg_info
+
+
+def encode_http_reponse(http_code, title, message):
+    """Return an encoded HTTP, providing the HTTP code, title and message"""
+    length = RESPONSE_LENGTH + len(title) * 2 + len(message)
+    reponse = RESPONSE.render(http_code=http_code, title=title,
+                              body_title=title, body=message, len=length)
+    return encodeutils.to_utf8(reponse)
