@@ -51,6 +51,15 @@ def _network_result_filter_hook(query, filters):
     return query.filter(~models_v2.Network.external.has())
 
 
+def _subnet_result_filter_hook(query, filters):
+    vals = filters and filters.get(extnet_apidef.EXTERNAL, [])
+    if not vals:
+        return query
+    if vals[0]:
+        return query.filter(models_v2.Subnet.external.has())
+    return query.filter(~models_v2.Subnet.external.has())
+
+
 @resource_extend.has_resource_extenders
 @registry.has_registry_receivers
 class External_net_db_mixin:
@@ -70,7 +79,7 @@ class External_net_db_mixin:
             "external_subnet",
             query_hook=None,
             filter_hook=None,
-            result_filters=None,
+            result_filters=_subnet_result_filter_hook,
             rbac_actions=EXTERNAL_NETWORK_RBAC_ACTIONS,
         )
         return super().__new__(cls, *args, **kwargs)

@@ -11,7 +11,6 @@
 #    under the License.
 
 import netaddr
-from neutron_lib.api.definitions import external_net
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib.db import model_query
@@ -318,21 +317,6 @@ class Subnet(base.NeutronDbObject):
 
         setattr(self, 'external', external_network)
         self.obj_reset_changes(['external'])
-
-    @classmethod
-    def get_objects(cls, context, _pager=None, validate_filters=True,
-                    fields=None, return_db_obj=False, **kwargs):
-        external = kwargs.pop(external_net.EXTERNAL, None)
-        if isinstance(external, list):
-            external = external[0]
-        subnets = super().get_objects(
-            context, _pager=_pager, validate_filters=validate_filters,
-            fields=fields, return_db_obj=return_db_obj, **kwargs)
-
-        if external is not None:
-            return [subnet for subnet in subnets if
-                    subnet.external == external]
-        return subnets
 
     def from_db_object(self, db_obj):
         super().from_db_object(db_obj)
