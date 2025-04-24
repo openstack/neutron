@@ -56,16 +56,13 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         self.model_segmentation_id = vlan_alloc_model.VlanAllocation.vlan_id
         self._parse_network_vlan_ranges()
 
-    @db_api.retry_db_errors
-    def _populate_new_default_network_segment_ranges(self, start_time):
-        ctx = context.get_admin_context()
-        with db_api.CONTEXT_WRITER.using(ctx):
-            for (physical_network, vlan_ranges) in (
-                    self.network_vlan_ranges.items()):
-                for vlan_min, vlan_max in vlan_ranges:
-                    range_obj.NetworkSegmentRange.new_default(
-                        ctx, self.get_type(), physical_network, vlan_min,
-                        vlan_max, start_time)
+    def _populate_new_default_network_segment_ranges(self, ctx, start_time):
+        for (physical_network, vlan_ranges) in (
+                self.network_vlan_ranges.items()):
+            for vlan_min, vlan_max in vlan_ranges:
+                range_obj.NetworkSegmentRange.new_default(
+                    ctx, self.get_type(), physical_network, vlan_min,
+                    vlan_max, start_time)
 
     def _parse_network_vlan_ranges(self):
         try:
@@ -78,8 +75,8 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         LOG.info("Network VLAN ranges: %s", self.network_vlan_ranges)
 
     @db_api.retry_db_errors
-    def _sync_vlan_allocations(self):
-        ctx = context.get_admin_context()
+    def _sync_vlan_allocations(self, ctx=None):
+        ctx = ctx or context.get_admin_context()
         with db_api.CONTEXT_WRITER.using(ctx):
             # VLAN ranges per physical network:
             #   {phy1: [(1, 10), (30, 50)], ...}
@@ -142,9 +139,9 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                                                      vlan_ids)
 
     @db_api.retry_db_errors
-    def _get_network_segment_ranges_from_db(self):
+    def _get_network_segment_ranges_from_db(self, ctx=None):
         ranges = {}
-        ctx = context.get_admin_context()
+        ctx = ctx or context.get_admin_context()
         with db_api.CONTEXT_READER.using(ctx):
             range_objs = (range_obj.NetworkSegmentRange.get_objects(
                 ctx, network_type=self.get_type()))
@@ -171,15 +168,21 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
             self._sync_vlan_allocations()
         LOG.info("VlanTypeDriver initialization complete")
 
+    @db_api.retry_db_errors
     def initialize_network_segment_range_support(self, start_time):
-        self._delete_expired_default_network_segment_ranges(start_time)
-        self._populate_new_default_network_segment_ranges(start_time)
-        # Override self.network_vlan_ranges with the network segment range
-        # information from DB and then do a sync_allocations since the
-        # segment range service plugin has not yet been loaded at this
-        # initialization time.
-        self.network_vlan_ranges = self._get_network_segment_ranges_from_db()
-        self._sync_vlan_allocations()
+        admin_context = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(admin_context):
+            self._delete_expired_default_network_segment_ranges(
+                admin_context, start_time)
+            self._populate_new_default_network_segment_ranges(
+                admin_context, start_time)
+            # Override self.network_vlan_ranges with the network segment range
+            # information from DB and then do a sync_allocations since the
+            # segment range service plugin has not yet been loaded at this
+            # initialization time.
+            self.network_vlan_ranges = (
+                self._get_network_segment_ranges_from_db(ctx=admin_context))
+            self._sync_vlan_allocations(ctx=admin_context)
 
     def update_network_segment_range_allocations(self):
         self._sync_vlan_allocations()
