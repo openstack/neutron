@@ -2506,6 +2506,7 @@ class TestDnsmasq(TestBase):
         mock_dhcp_release6_supported.assert_called_once_with()
 
     def test_release_for_ipv6_lease_no_dhcp_release6(self):
+        self.conf.set_override('enable_isolated_metadata', False)
         dnsmasq = self._get_dnsmasq(FakeDualNetwork())
 
         ip1 = 'fdca:3ba5:a17a::1'
