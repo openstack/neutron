@@ -45,7 +45,7 @@ class HelpersTest(testlib_api.SqlTestCase):
     def setUp(self):
         super().setUp()
         self.driver = type_vlan.VlanTypeDriver()
-        self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES
+        self.driver._network_vlan_ranges = NETWORK_VLAN_RANGES
         self.driver._sync_vlan_allocations()
         self.context = context.get_admin_context()
 
@@ -150,7 +150,7 @@ class HelpersTestWithNetworkSegmentRange(HelpersTest):
                               NETWORK_VLAN_RANGES_CFG_ENTRIES,
                               group='ml2_type_vlan')
         cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
-        self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+        self._network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
             NETWORK_VLAN_RANGES_CFG_ENTRIES)
         self.context = context.get_admin_context()
         self.driver = type_vlan.VlanTypeDriver()

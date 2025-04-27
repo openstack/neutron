@@ -72,7 +72,7 @@ class TunnelTypeDriverBaseTestCase(testlib_api.SqlTestCase):
             self.assertEqual(self.min, sranges[0].minimum)
             self.assertEqual(self.max, sranges[0].maximum)
             self.assertEqual([(self.min, self.max)],
-                             self.type_driver.tunnel_ranges)
+                             self.type_driver._tunnel_ranges)
 
     def test_initialize_network_segment_range_support_parallel_execution(self):
         max_workers = 3
