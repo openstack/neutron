@@ -470,6 +470,8 @@ class BaseTestOVNL3RouterPluginMixin():
         router_id = 'router-id'
         self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = {
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(router_id)}
+        self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
+            external_ids={'neutron:router_name': router_id})
         payload = self._create_payload_for_router_interface(router_id,
                                                             pass_subnet=False)
         self.ovn_drv._process_remove_router_interface(

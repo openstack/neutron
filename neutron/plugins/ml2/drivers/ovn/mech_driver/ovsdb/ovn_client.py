@@ -1843,7 +1843,8 @@ class OVNClient:
                     for gw_port in gw_ports:
                         provider_net = self._plugin.get_network(
                             context, gw_port['network_id'])
-                        self.set_gateway_mtu(context, provider_net)
+                        self.set_gateway_mtu(context, provider_net, txn=txn,
+                                             router_id=router_id)
 
                 if _has_separate_snat_per_subnet(router):
                     for fixed_ip in port['fixed_ips']:
@@ -1991,7 +1992,8 @@ class OVNClient:
                 for gw_port in gw_ports:
                     provider_net = self._plugin.get_network(
                         context, gw_port['network_id'])
-                    self.set_gateway_mtu(context, provider_net, txn=txn)
+                    self.set_gateway_mtu(context, provider_net, txn=txn,
+                                         router_id=router_id)
 
             if _has_separate_snat_per_subnet(router):
                 for sid in subnet_ids:
@@ -2168,10 +2170,13 @@ class OVNClient:
         db_rev.delete_revision(
             context, network_id, ovn_const.TYPE_NETWORKS)
 
-    def set_gateway_mtu(self, context, prov_net, txn=None):
-        ports = self._plugin.get_ports(
-            context, filters=dict(network_id=[prov_net['id']],
-                                  device_owner=[const.DEVICE_OWNER_ROUTER_GW]))
+    def set_gateway_mtu(self, context, prov_net, txn=None,
+                        router_id=None):
+        _filters = {'network_id': [prov_net['id']],
+                    'device_owner': [const.DEVICE_OWNER_ROUTER_GW]}
+        if router_id:
+            _filters['device_id'] = [router_id]
+        ports = self._plugin.get_ports(context, filters=_filters)
         commands = []
         for port in ports:
             lrp_name = utils.ovn_lrouter_port_name(port['id'])
@@ -2281,7 +2286,7 @@ class OVNClient:
                     # make sure to use admin context as this is a external
                     # network
                     self.set_gateway_mtu(n_context.get_admin_context(),
-                                         network, txn)
+                                         network, txn=txn)
 
             self._check_network_changes_in_ha_chassis_groups(
                 context, lswitch, lswitch_params, txn)
