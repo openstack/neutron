@@ -6,7 +6,7 @@ dumb-init
 
 # sentry client
 raven
-git+https://github.com/sapcc/sentrylogger.git#egg=sapcc_sentrylogger
+git+https://github.com/sapcc/sentrylogger.git@main#egg=sapcc_sentrylogger
 
 # agent checks for neutron
 openstack-agent-checks
