@@ -372,7 +372,14 @@
       - openstack/taskflow
       - openstack/tooz
       - openstack/pbr
-
+      # this is a workaround for a packaging bug in ubuntu
+      # remove when https://bugs.launchpad.net/nova/+bug/2109592
+      # is resolved and oslo config is not a dep of the novnc deb
+      # via the defunct python3-novnc package.
+      - novnc/novnc
+    vars:
+     devstack_localrc:
+        NOVNC_FROM_PACKAGE: false
 - job:
     name: neutron-ovn-tempest
     parent: tempest-integrated-networking
@@ -675,6 +682,14 @@
       - openstack/taskflow
       - openstack/tooz
       - openstack/pbr
+      # this is a workaround for a packaging bug in ubuntu
+      # remove when https://bugs.launchpad.net/nova/+bug/2109592
+      # is resolved and oslo config is not a dep of the novnc deb
+      # via the defunct python3-novnc package.
+      - novnc/novnc
+    vars:
+     devstack_localrc:
+        NOVNC_FROM_PACKAGE: false
 
 - job:
     name: neutron-ovn-tempest-ovs-master-centos-9-stream
