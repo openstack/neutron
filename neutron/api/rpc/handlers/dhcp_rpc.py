@@ -17,7 +17,6 @@ import copy
 import ipaddress
 import itertools
 import operator
-from typing import Optional
 
 from keystoneauth1 import loading as ks_loading
 from neutron_lib.api.definitions import portbindings
@@ -70,7 +69,7 @@ class CustomNetworkConfigurator:
             # against keystone
             return
 
-        if not self._is_customdns_project(network_dict['project_id']):
+        if not self._is_customdns_network(network_dict):
             return
 
         # logging always has to be disabled for all custom domains
@@ -170,12 +169,13 @@ class CustomNetworkConfigurator:
 
         return domain_name
 
-    def _is_customdns_project(self, project_id: Optional[str]) -> bool:
+    def _is_customdns_network(self, network_dict: dict) -> bool:
         """check if the network is in an OpenStack domain or project that we
            want to configure in a custom way.
            For domains we use prefix matches on the name, for projects we
            directly match on the id.
         """
+        project_id = network_dict['project_id']
 
         # should not happen, but would never match anyway
         if not project_id:
@@ -203,15 +203,16 @@ class CustomNetworkConfigurator:
             #   also want to get a nice warning to the log independent of the
             #   source of the error - but now we log the same error twice.
             LOG.exception('Failed to retrieve domain to set custom dns for'
-                          ' project %s - %s: %s', project_id, type(e), e
+                          ' project %s of network %s - %s: %s',
+                          project_id, network_dict['id'], type(e), e
                           )
 
         # in case of an error or empty result, we fall back to the 'safe'
         # side by using default settings.
         if not domain_name:
             LOG.warning('Unable to retrieve domain name for project %s,'
-                        ' falling back to default settings!',
-                        project_id)
+                        ' falling back to default settings for network %s',
+                        project_id, network_dict['id'])
             return False
 
         # check if the OpenStack domain name starts with one of the prefixes
