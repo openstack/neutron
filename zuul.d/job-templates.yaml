@@ -67,7 +67,6 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
-        - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-with-uwsgi-loki
         # Jobs added to the periodic queue by templates defined in
