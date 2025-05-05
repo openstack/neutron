@@ -13,6 +13,7 @@
 #    under the License.
 
 import abc
+import copy
 import uuid
 
 from oslo_utils import timeutils
@@ -101,6 +102,49 @@ def _add_gateway_chassis(api, txn, lrp_name, val):
         prio = prio - 1
         uuid_list.append(gwc.uuid)
     return 'gateway_chassis', uuid_list
+
+
+def _sync_ha_chassis_group(txn, nb_api, name, chassis_priority,
+                           may_exist=False, table_name='HA_Chassis_Group',
+                           **columns):
+    result = None
+    hcg = nb_api.lookup(table_name, name, default=None)
+    if hcg:
+        if not may_exist:
+            raise RuntimeError(_('HA_Chassis_Group %s exists' % name))
+    else:
+        hcg = txn.insert(nb_api._tables[table_name])
+        hcg.name = name
+        command.BaseCommand.set_columns(hcg, **columns)
+        result = hcg.uuid
+
+    # HA_Chassis registers handling.
+    # Remove the non-existing chassis in ``self.chassis_priority``
+    hc_to_remove = []
+    for hc in getattr(hcg, 'ha_chassis', []):
+        if hc.chassis_name not in chassis_priority:
+            hc_to_remove.append(hc)
+
+    for hc in hc_to_remove:
+        hcg.delvalue('ha_chassis', hc)
+        hc.delete()
+
+    # Update the priority of the existing chassis.
+    for hc in getattr(hcg, 'ha_chassis', []):
+        hc_priority = chassis_priority.pop(hc.chassis_name)
+        hc.priority = hc_priority
+
+    # Add the non-existing HA_Chassis registers.
+    for hc_name, priority in chassis_priority.items():
+        hc = txn.insert(nb_api.tables['HA_Chassis'])
+        hc.chassis_name = hc_name
+        hc.priority = priority
+        hcg.addvalue('ha_chassis', hc)
+
+    if not result:
+        result = rowview.RowView(hcg)
+
+    return result
 
 
 class CheckLivenessCommand(command.BaseCommand):
@@ -1135,3 +1179,22 @@ class UnsetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
                 virtual_parents)
 
         setattr(lsp, 'options', options)
+
+
+class HAChassisGroupWithHCAddCommand(command.AddCommand):
+    table_name = 'HA_Chassis_Group'
+
+    def __init__(self, api, name, chassis_priority, may_exist=False,
+                 **columns):
+        super().__init__(api)
+        self.name = name
+        self.chassis_priority = copy.deepcopy(chassis_priority)
+        self.may_exist = may_exist
+        self.columns = columns
+
+    def run_idl(self, txn):
+        # HA_Chassis_Group register creation.
+        self.result = _sync_ha_chassis_group(
+            txn, self.api, self.name, self.chassis_priority,
+            may_exist=self.may_exist, table_name=self.table_name,
+            **self.columns)
