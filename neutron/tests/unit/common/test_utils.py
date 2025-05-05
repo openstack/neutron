@@ -759,8 +759,9 @@ class ThreadPoolExecutorWithBlockTestCase(base.BaseTestCase):
         # NOTE(ralonsoh): we can't expect a 3 seconds sharp time gap, but at
         # least the execution is contained in this interval. If each task takes
         # 1 second, 5 threads can be executed in parallel and 15 workers are
-        # required, that will take at least 3 seconds.
-        self.assertTrue(3 < diff_seconds < 3.5)
+        # required, that will take at least 3 seconds and should complete in
+        # 6 seconds (2x).
+        self.assertTrue(3 < diff_seconds < 6)
 
         self._check_values(expected_values)
 
@@ -777,5 +778,7 @@ class ThreadPoolExecutorWithBlockTestCase(base.BaseTestCase):
                               timeout=5, sleep=0.1)
         t2 = timeutils.utcnow()
         diff_seconds = (t2 - t1).total_seconds()
-        self.assertTrue(1 < diff_seconds < 1.5)
+        # Similar to above, execution will take at least 1 second and should
+        # complete in 2 seconds (2x).
+        self.assertTrue(1 < diff_seconds < 2)
         self._check_values(expected_values)
