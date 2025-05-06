@@ -527,6 +527,30 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         # make sure that chassis are sorted by priority
         return sorted(chassis, reverse=True, key=lambda x: x[1])
 
+    @staticmethod
+    def _get_logical_router_port_ha_chassis_group(lrp, priorities=None):
+        """Get the list of chassis hosting this gateway port.
+
+        @param   lrp: logical router port
+        @type    lrp: Logical_Router_Port row
+        @param   priorities: a list of gateway chassis priorities to search for
+        @type    priorities: list of int
+        @return: List of tuples (chassis_name, priority) sorted by priority. If
+                 ``priorities`` is set then only chassis matching of these
+                 priorities are returned.
+        """
+        chassis = []
+        hcg = getattr(lrp, 'ha_chassis_group', None)
+        if not hcg:
+            return chassis
+
+        for hc in hcg[0].ha_chassis:
+            if priorities is not None and hc.priority not in priorities:
+                continue
+            chassis.append((hc.chassis_name, hc.priority))
+        # Make sure that chassis are sorted by priority (highest prio first)
+        return sorted(chassis, reverse=True, key=lambda x: x[1])
+
     def get_all_chassis_gateway_bindings(self,
                                          chassis_candidate_list=None,
                                          priorities=None):
