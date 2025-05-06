@@ -34,6 +34,8 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
+    as qos_extension
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.services.portforwarding import constants as pf_consts
 from neutron.tests.functional import base
@@ -1452,6 +1454,31 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert that option is not set
         self.assertEqual(
             ls_dns_record.options.get('ovn-owned'), 'true')
+
+    def test_update_qos_fip_rule_priority(self):
+        def_prio = qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY
+        fip_prio = qos_extension.OVN_QOS_FIP_RULE_PRIORITY
+        neutron_net = self._create_network('network1')
+        ls_name = utils.ovn_name(neutron_net['id'])
+        self.nb_api.qos_add(
+            ls_name, 'from-lport', def_prio, "outport == 1",
+            1000, 800, None, None,
+            external_ids={ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: 1})
+        self.nb_api.qos_add(
+            ls_name, 'from-lport', def_prio, "outport == 1",
+            1000, 800, None, None,
+            external_ids={ovn_const.OVN_FIP_EXT_ID_KEY: 1})
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.update_qos_fip_rule_priority)
+
+        for qos_rule in self.nb_api.qos_list(ls_name).execute(
+                check_errors=True):
+            if qos_rule.external_ids.get(ovn_const.OVN_FIP_EXT_ID_KEY):
+                self.assertEqual(fip_prio, qos_rule.priority)
+            else:
+                self.assertEqual(def_prio, qos_rule.priority)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,
