@@ -927,10 +927,8 @@ class ServiceRoleTests(SubnetAPITestCase):
             self.context, 'create_subnet:tags', self.target)
 
     def test_get_subnet(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_subnet', self.target)
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subnet', self.target))
 
     def test_get_subnet_segment_id(self):
         self.assertRaises(
