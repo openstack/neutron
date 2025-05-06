@@ -263,9 +263,11 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         rule = {qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1}
         match = self.qos_driver._ovn_qos_rule_match(
             direction, 'port_id', ip_address, 'resident_port')
+        priority = (qos_extension.OVN_QOS_FIP_RULE_PRIORITY if fip_id else
+                    qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY)
         expected = {'burst': 100, 'rate': 200, 'direction': 'to-lport',
                     'match': match,
-                    'priority': qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY,
+                    'priority': priority,
                     'switch': 'neutron-network_id',
                     'external_ids': external_ids}
         result = self.qos_driver._ovn_qos_rule(
@@ -288,10 +290,11 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         rule = {qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_1}
         match = self.qos_driver._ovn_qos_rule_match(
             direction, 'port_id', ip_address, 'resident_port')
+        priority = (qos_extension.OVN_QOS_FIP_RULE_PRIORITY if fip_id else
+                    qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY)
         expected = {'direction': 'from-lport', 'match': match,
                     'dscp': 16, 'switch': 'neutron-network_id',
-                    'priority': qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY,
-                    'external_ids': external_ids}
+                    'priority': priority, 'external_ids': external_ids}
         result = self.qos_driver._ovn_qos_rule(
             direction, rule, 'port_id', 'network_id', fip_id=fip_id,
             ip_address=ip_address, resident_port='resident_port')
@@ -301,8 +304,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                 qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_2}
         expected = {'direction': 'from-lport', 'match': match,
                     'rate': 300, 'dscp': 20, 'switch': 'neutron-network_id',
-                    'priority': qos_extension.OVN_QOS_DEFAULT_RULE_PRIORITY,
-                    'external_ids': external_ids}
+                    'priority': priority, 'external_ids': external_ids}
         result = self.qos_driver._ovn_qos_rule(
             direction, rule, 'port_id', 'network_id', fip_id=fip_id,
             ip_address=ip_address, resident_port='resident_port')
