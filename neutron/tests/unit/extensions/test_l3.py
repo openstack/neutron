@@ -46,6 +46,7 @@ from webob import exc
 
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.common.ovn import utils as ovn_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import dns_db
 from neutron.db import external_net_db
@@ -1639,6 +1640,10 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         there is no ambiguity regarding on which port to add an IPv6 subnet
         when executing router-interface-add with a subnet and no port.
         """
+        plugin = directory.get_plugin(plugin_constants.L3)
+        if ovn_utils.is_ovn_l3(plugin):
+            self.skipTest("Plugin does not support unique IPv6 "
+                          "router ports per network id")
         with self.network() as n, self.router() as r:
             with self.subnet(network=n, cidr='fd00::/64',
                              ip_version=lib_constants.IP_VERSION_6) as s1, (
