@@ -437,8 +437,7 @@ class ScheduleUnhostedGatewaysCommand(command.BaseCommand):
         az_hints = self.api.get_gateway_chassis_az_hints(self.g_name)
         filtered_existing_chassis = (
             self.scheduler.filter_existing_chassis(
-                nb_idl=self.api, gw_chassis=self.all_gw_chassis,
-                physnet=physnet,
+                gw_chassis=self.all_gw_chassis, physnet=physnet,
                 chassis_physnets=self.chassis_with_physnets,
                 existing_chassis=existing_chassis, az_hints=az_hints,
                 chassis_with_azs=self.chassis_with_azs))
