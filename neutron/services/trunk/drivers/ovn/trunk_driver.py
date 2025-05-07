@@ -14,6 +14,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
@@ -25,7 +26,9 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.db import db_base_plugin_common
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.objects import ports as port_obj
+from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk.drivers import base as trunk_base
+from neutron.services.trunk import exceptions as trunk_exc
 
 
 SUPPORTED_INTERFACES = (
@@ -192,6 +195,46 @@ class OVNTrunkHandler:
             self._unset_sub_ports(subports)
         trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
 
+    def port_updated(self, resource, event, trunk_plugin, payload):
+        '''Propagate trunk parent port ACTIVE to trunk ACTIVE
+
+        During a live migration with a trunk the only way we found to update
+        the trunk to ACTIVE is to do this when the trunk's parent port gets
+        updated to ACTIVE. This is clearly suboptimal, because the trunk's
+        ACTIVE status should mean that all of its ports (parent and sub) are
+        active. But in ml2/ovn the parent port's binding is not cascaded to the
+        subports. Actually the subports' binding:host is left empty. This way
+        here we don't know anything about the subports' state changes during a
+        live migration. If we don't want to leave the trunk in DOWN this is
+        what we have.
+
+        Please note that this affects trunk create as well. Because of this we
+        move ml2/ovn trunks to ACTIVE way early. But at least here we don't
+        affect other mechanism drivers and their corresponding trunk drivers.
+
+        See also:
+        https://bugs.launchpad.net/neutron/+bug/1988549
+        https://review.opendev.org/c/openstack/neutron/+/853779
+        https://bugs.launchpad.net/neutron/+bug/2095152
+        '''
+        updated_port = payload.latest_state
+        trunk_details = updated_port.get('trunk_details')
+        # If no trunk_details, the port is not the parent of a trunk.
+        if not trunk_details:
+            return
+
+        original_port = payload.states[0]
+        orig_status = original_port.get('status')
+        new_status = updated_port.get('status')
+        context = payload.context
+        trunk_id = trunk_details['trunk_id']
+        if (new_status == constants.PORT_STATUS_ACTIVE and
+                new_status != orig_status):
+            trunk = trunk_objects.Trunk.get_object(context, id=trunk_id)
+            if trunk is None:
+                raise trunk_exc.TrunkNotFound(trunk_id=trunk_id)
+            trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
+
 
 class OVNTrunkDriver(trunk_base.DriverBase):
     @property
@@ -221,6 +264,11 @@ class OVNTrunkDriver(trunk_base.DriverBase):
             self._handler.subports_deleted,
             resources.SUBPORTS,
             events.AFTER_DELETE)
+
+        registry.subscribe(
+            self._handler.port_updated,
+            resources.PORT,
+            events.AFTER_UPDATE)
 
     @classmethod
     def create(cls, plugin_driver):
