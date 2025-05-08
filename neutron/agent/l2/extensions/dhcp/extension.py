@@ -26,6 +26,10 @@ from neutron.agent.l2.extensions.dhcp import ipv6
 from neutron.api.rpc.callbacks import resources
 
 LOG = logging.getLogger(__name__)
+LINK_LOCAL_GATEWAY = {
+    constants.IP_VERSION_4: constants.METADATA_V4_IP,
+    constants.IP_VERSION_6: constants.METADATA_V6_IP
+}
 
 
 class DHCPExtensionPortInfoAPI:
@@ -64,7 +68,9 @@ class DHCPExtensionPortInfoAPI:
                     'cidr': subnet.cidr,
                     'host_routes': subnet.host_routes,
                     'dns_nameservers': subnet.dns_nameservers,
-                    'gateway_ip': subnet.gateway_ip}
+                    'gateway_ip': subnet.gateway_ip or LINK_LOCAL_GATEWAY[
+                        subnet.ip_version
+                    ]}
             fixed_ips.append(info)
         net = self.cache_api.get_resource_by_id(
             resources.NETWORK, port_obj.network_id)
