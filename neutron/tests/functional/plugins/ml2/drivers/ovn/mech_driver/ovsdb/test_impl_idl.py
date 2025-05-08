@@ -819,6 +819,82 @@ class TestNbApi(BaseOvnIdlTest):
         cprio_res = self.nbapi._get_logical_router_port_ha_chassis_group(lrp)
         self.assertEqual([], cprio_res)
 
+    def test_create_lrp_with_ha_chassis_group_same_txn(self):
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        networks = ['192.0.2.0/24']
+        lr_name = uuidutils.generate_uuid()
+        lrp_name = uuidutils.generate_uuid()
+        self.nbapi.lr_add(lr_name).execute(check_error=True)
+
+        # Create the HCG and the LRP in the same transaction.
+        with self.nbapi.transaction(check_error=True) as txn:
+            hcg_cmd = txn.add(self.nbapi.ha_chassis_group_with_hc_add(
+                uuidutils.generate_uuid(), {'ch1': 1, 'ch2': 2}))
+            txn.add(self.nbapi.add_lrouter_port(
+                lrp_name, lr_name, mac=mac, networks=networks,
+                ha_chassis_group=hcg_cmd))
+
+        lrp = self.nbapi.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(hcg_cmd.result.uuid, lrp.ha_chassis_group[0].uuid)
+
+    def test_create_lrp_with_ha_chassis_group_different_txn(self):
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        networks = ['192.0.2.0/24']
+        lr_name = uuidutils.generate_uuid()
+        lrp_name = uuidutils.generate_uuid()
+        self.nbapi.lr_add(lr_name).execute(check_error=True)
+
+        # Create the HCG and the LRP in two consecutive transactions.
+        hcg = self.nbapi.ha_chassis_group_with_hc_add(
+            uuidutils.generate_uuid(), {'ch1': 1, 'ch2': 2}).execute(
+            check_error=True)
+        self.nbapi.add_lrouter_port(
+            lrp_name, lr_name, mac=mac, networks=networks,
+            ha_chassis_group=hcg.uuid).execute(check_error=True)
+
+        lrp = self.nbapi.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(hcg.uuid, lrp.ha_chassis_group[0].uuid)
+
+    def test_update_lrp_with_ha_chassis_group_same_txn(self):
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        networks = ['192.0.2.0/24']
+        lr_name = uuidutils.generate_uuid()
+        lrp_name = uuidutils.generate_uuid()
+        self.nbapi.lr_add(lr_name).execute(check_error=True)
+        self.nbapi.add_lrouter_port(
+            lrp_name, lr_name, mac=mac,
+            networks=networks).execute(check_error=True)
+
+        # Create the HCG and update the LRP in the same transaction.
+        with self.nbapi.transaction(check_error=True) as txn:
+            hcg_cmd = txn.add(self.nbapi.ha_chassis_group_with_hc_add(
+                uuidutils.generate_uuid(), {'ch1': 1, 'ch2': 2}))
+            txn.add(self.nbapi.update_lrouter_port(
+                lrp_name, ha_chassis_group=hcg_cmd))
+
+        lrp = self.nbapi.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(hcg_cmd.result.uuid, lrp.ha_chassis_group[0].uuid)
+
+    def test_update_lrp_with_ha_chassis_group_different_txn(self):
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        networks = ['192.0.2.0/24']
+        lr_name = uuidutils.generate_uuid()
+        lrp_name = uuidutils.generate_uuid()
+        self.nbapi.lr_add(lr_name).execute(check_error=True)
+        self.nbapi.add_lrouter_port(
+            lrp_name, lr_name, mac=mac,
+            networks=networks).execute(check_error=True)
+
+        # Create the HCG and update the LRP in two consecutive transactions.
+        hcg = self.nbapi.ha_chassis_group_with_hc_add(
+            uuidutils.generate_uuid(), {'ch1': 1, 'ch2': 2}).execute(
+            check_error=True)
+        self.nbapi.update_lrouter_port(
+            lrp_name, ha_chassis_group=hcg.uuid).execute(check_error=True)
+
+        lrp = self.nbapi.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(hcg.uuid, lrp.ha_chassis_group[0].uuid)
+
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
     @classmethod
