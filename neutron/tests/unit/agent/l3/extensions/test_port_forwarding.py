@@ -67,6 +67,7 @@ class PortForwardingExtensionBaseTestCase(
             router_id=self.floatingip2.router_id)
 
         self.agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.agent.init_host()
         self.ex_gw_port = {'id': _uuid()}
         self.fip = {'id': _uuid(),
                     'floating_ip_address': TEST_FIP,

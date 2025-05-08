@@ -112,6 +112,7 @@ class NDPProxyExtensionDVRTestCase(
         self.conf.host = HOSTNAME
         self.conf.agent_mode = lib_const.L3_AGENT_MODE_DVR
         self.agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self.agent.init_host()
         self.add_route = mock.MagicMock()
         self.delete_route = mock.MagicMock()
         mock_route_cmd = mock.MagicMock()

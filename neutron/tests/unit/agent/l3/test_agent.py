@@ -231,6 +231,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_request_id_changes(self):
         a = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        a.init_host()
         self.assertNotEqual(a.context.request_id, a.context.request_id)
         self.useFixture(IptablesFixture())
 
@@ -242,6 +243,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_enqueue_state_change_router_not_found(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         non_existent_router = 42
 
         # Make sure the exceptional code path has coverage
@@ -250,6 +252,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _enqueue_state_change_transitions(self, transitions, num_called):
         self.conf.set_override('ha_vrrp_advert_int', 1)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._update_transition_state('router_id')
         with mock.patch.object(agent, '_get_router_info', return_value=None) \
                 as mock_get_router_info:
@@ -283,6 +286,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.conf.set_override('enable_metadata_proxy', False)
         self.conf.set_override('ha_vrrp_advert_int', 1)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = mock.Mock()
         router_info = mock.MagicMock()
         agent.router_info[router.id] = router_info
@@ -296,6 +300,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_enqueue_state_change_l3_extension(self, mock_haproxy_conf):
         self.conf.set_override('ha_vrrp_advert_int', 1)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_dict = {'id': 'router_id', 'enable_ndp_proxy': True}
         router_info = mock.MagicMock()
         router_info.agent = agent
@@ -317,6 +322,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_enqueue_state_change_router_active_ha(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = {'distributed': False}
         router_info = mock.MagicMock(router=router)
         with mock.patch.object(
@@ -330,6 +336,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_enqueue_state_change_router_standby_ha(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = {'distributed': False}
         router_info = mock.MagicMock(router=router)
         with mock.patch.object(
@@ -343,6 +350,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_enqueue_state_change_router_standby_ha_dvr(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = {'distributed': True}
         router_info = mock.MagicMock(router=router)
         with mock.patch.object(
@@ -357,6 +365,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test__configure_ipv6_params_helper(self, state, gw_port_id):
         with mock.patch.object(netutils, 'is_ipv6_enabled', return_value=True):
             agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+            agent.init_host()
 
         router_info = l3router.RouterInfo(agent, _uuid(), {}, **self.ri_kwargs)
         if gw_port_id:
@@ -398,6 +407,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_check_ha_state_for_router_primary_standby(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = mock.Mock()
         router.id = '1234'
         router_info = mock.MagicMock()
@@ -411,6 +421,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_check_ha_state_for_router_standby_standby(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = mock.Mock()
         router.id = '1234'
         router_info = mock.MagicMock()
@@ -424,6 +435,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_periodic_sync_routers_task_raise_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self.plugin_api.get_router_ids.return_value = ['fake_id']
         self.plugin_api.get_routers.side_effect = ValueError
         self.assertRaises(ValueError,
@@ -440,7 +452,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
             agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
                                                        conf=self.conf)
-
+            agent.init_host()
             self.assertTrue(agent.agent_state['start_flag'])
             agent.after_start()
             report_state.assert_called_once_with(agent.context,
@@ -453,6 +465,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                'report_state') as report_state:
             agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
                                                        conf=self.conf)
+            agent.init_host()
             report_state.return_value = agent_consts.AGENT_REVIVED
             agent._report_state()
             self.assertTrue(agent.fullsync)
@@ -464,12 +477,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self.plugin_api.get_routers.return_value = []
         agent.periodic_sync_routers_task(agent.context)
         self.assertFalse(agent.namespaces_manager._clean_stale)
 
     def test_periodic_sync_routers_task_call_ensure_snat_cleanup(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.conf.agent_mode = 'dvr_snat'
         dvr_ha_router = {'id': _uuid(),
                          'external_gateway_info': {},
@@ -492,6 +507,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_periodic_sync_routers_task_call_clean_stale_meta_proxies(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         stale_router_ids = [_uuid(), _uuid()]
         active_routers = [{'id': _uuid()}, {'id': _uuid()}]
         self.plugin_api.get_router_ids.return_value = [r['id'] for r
@@ -518,6 +534,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = {'distributed': False, 'ha': False}
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_info = agent._create_router(_uuid(), router)
 
         self.assertEqual(legacy_router.LegacyRouter, type(router_info))
@@ -526,6 +543,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = {'distributed': False, 'ha': True}
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_info = agent._create_router(_uuid(), router)
 
         self.assertEqual(ha_router.HaRouter, type(router_info))
@@ -534,6 +552,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = {'distributed': True, 'ha': False}
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_info = agent._create_router(_uuid(), router)
 
         self.assertEqual(dvr_local_router.DvrLocalRouter, type(router_info))
@@ -544,6 +563,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.conf.set_override('agent_mode',
                                lib_constants.L3_AGENT_MODE_DVR_SNAT)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_info = agent._create_router(_uuid(), router)
 
         self.assertEqual(dvr_router.DvrEdgeRouter, type(router_info))
@@ -552,6 +572,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = {'distributed': True, 'ha': True}
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_info = agent._create_router(_uuid(), router)
 
         self.assertEqual(dvr_local_router.DvrLocalRouter, type(router_info))
@@ -563,6 +584,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.conf.set_override('agent_mode',
                                lib_constants.L3_AGENT_MODE_DVR_SNAT)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_info = agent._create_router(_uuid(), router)
 
         self.assertEqual(dvr_router.DvrEdgeRouter, type(router_info))
@@ -571,6 +593,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                   lib_constants.HA_INTERFACE_KEY: True}
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_info = agent._create_router(_uuid(), router)
 
         self.assertEqual(dvr_edge_ha_router.DvrEdgeHaRouter, type(router_info))
@@ -578,6 +601,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_router_info_create(self):
         id = _uuid()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, id, {}, **self.ri_kwargs)
 
         self.assertTrue(ri.ns_name.endswith(id))
@@ -599,17 +623,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             'routes': [],
             'gw_port': ex_gw_port}
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, ns_id, router, **self.ri_kwargs)
         self.assertTrue(ri.ns_name.endswith(ns_id))
         self.assertEqual(router, ri.router)
 
-    def test_agent_create(self):
-        l3_agent.L3NATAgent(HOSTNAME, self.conf)
+    def test_agent_create_and_init(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
     def _test_internal_network_action(self, action):
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         router_id = router['id']
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, router_id,
                                  router, **self.ri_kwargs)
         port = {'network_id': _uuid(),
@@ -644,6 +671,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test_internal_network_action_dist(self, action, scope_match=False):
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         subnet_id = _uuid()
@@ -820,6 +848,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_external_gateway_action(self, action, router, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ex_net_id = _uuid()
         sn_port = self.snat_ports[1]
         # Special setup for dvr routers
@@ -927,6 +956,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_external_gateway_updated(self, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         ri = l3router.RouterInfo(agent, router['id'],
                                  router, **self.ri_kwargs)
@@ -970,6 +1000,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_external_gateway_updated_dvr(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.conf.agent_mode = 'dvr_snat'
         agent.host = HOSTNAME
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
@@ -1273,6 +1304,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_process_cent_router(self):
         router = l3_test_common.prepare_router_data()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, router['id'],
                                  router, **self.ri_kwargs)
         self._test_process_router(ri, agent)
@@ -1280,6 +1312,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_process_dist_router(self):
         router = l3_test_common.prepare_router_data()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ri.snat_iptables_manager = iptables_manager.IptablesManager(
@@ -1436,6 +1469,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ext_gw_port = ri.router.get('gw_port')
@@ -1499,6 +1533,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ext_gw_port = ri.router.get('gw_port')
@@ -1565,6 +1600,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ext_gw_port = ri.router.get('gw_port')
@@ -1642,6 +1678,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = []
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
 
@@ -1689,6 +1726,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
 
@@ -1740,6 +1778,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router[lib_constants.FLOATINGIP_AGENT_INTF_KEY] = agent_gateway_port
         router['distributed'] = True
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ext_gw_port = ri.router.get('gw_port')
@@ -1772,6 +1811,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, router['id'],
                                  router, **self.ri_kwargs)
         ri.iptables_manager.ipv4['nat'] = mock.MagicMock()
@@ -1781,6 +1821,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test_process_router_snat_disabled(self, random_fully):
         iptables_manager.IptablesManager.random_fully = random_fully
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(enable_snat=True)
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -1815,6 +1856,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test_process_router_snat_enabled(self, random_fully):
         iptables_manager.IptablesManager.random_fully = random_fully
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(enable_snat=False)
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -1855,6 +1897,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                        'nexthop': '19.4.4.200'}
         calls = [mock.call('replace', fake_route1, q_netns)]
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, uuid, router)
         router_cls = (dvr_edge_ha_router.DvrEdgeHaRouter if enable_ha else
                       dvr_router.DvrEdgeRouter)
@@ -1890,6 +1933,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                             'nexthop': '19.4.4.201'}]
         calls = [mock.call(fake_route_list, q_netns)]
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, uuid, router)
         router_cls = (dvr_edge_ha_router.DvrEdgeHaRouter if enable_ha else
                       dvr_router.DvrEdgeRouter)
@@ -1917,6 +1961,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -1932,6 +1977,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def _test_process_ipv6_only_or_dual_stack_gw(self, dual_stack=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(
             ip_version=lib_constants.IP_VERSION_6, dual_stack=dual_stack)
         # Get NAT rules without the gw_port
@@ -1981,6 +2027,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _process_router_ipv6_interface_added(
             self, router, ra_mode=None, addr_mode=None):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
         # Process with NAT
@@ -2015,6 +2062,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                           ipv6_subnet_modes=None,
                                           dns_nameservers=None, network_mtu=0):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         agent.external_gateway_added = mock.Mock()
         self._process_router_instance_for_agent(agent, ri, router)
@@ -2088,6 +2136,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_ipv6_subnets_added_to_existing_port(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         agent.external_gateway_added = mock.Mock()
@@ -2130,6 +2179,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_ipv6v4_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -2146,6 +2196,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_interface_removed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -2161,6 +2212,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_ipv6_interface_removed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -2180,6 +2232,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_ipv6_subnet_removed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         agent.external_gateway_added = mock.Mock()
@@ -2212,6 +2265,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_internal_network_added_unexpected_error(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -2237,6 +2291,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_internal_network_removed_unexpected_error(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         ri = l3router.RouterInfo(agent, router['id'], router, **self.ri_kwargs)
         ri.external_gateway_added = mock.Mock()
@@ -2267,6 +2322,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_floatingip_nochange(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(num_internal_ports=1)
         fip1 = {'id': _uuid(), 'floating_ip_address': '8.8.8.8',
                 'fixed_ip_address': '7.7.7.7', 'status': 'ACTIVE',
@@ -2295,6 +2351,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     @mock.patch.object(l3_agent.LOG, 'exception')
     def _retrigger_initialize(self, log_exception, delete_fail=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = {'id': _uuid(),
                   'external_gateway_info': {'network_id': 'aaa'}}
         self.plugin_api.get_routers.return_value = [router]
@@ -2344,6 +2401,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_floatingip_status_update_if_processed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(num_internal_ports=1)
         fip1 = {'id': _uuid(), 'floating_ip_address': '8.8.8.8',
                 'fixed_ip_address': '7.7.7.7', 'status': 'ACTIVE',
@@ -2371,6 +2429,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_floatingip_disabled(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         with mock.patch.object(
                 agent.plugin_rpc,
                 'update_floatingip_statuses') as mock_update_fip_status:
@@ -2404,6 +2463,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_floatingip_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         with mock.patch.object(
                 agent.plugin_rpc,
                 'update_floatingip_statuses') as mock_update_fip_status:
@@ -2429,6 +2489,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_external_iptables_exception(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         with mock.patch.object(
                 agent.plugin_rpc,
                 'update_floatingip_statuses') as mock_update_fip_status:
@@ -2454,6 +2515,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_handle_router_snat_rules_distributed_without_snat_manager(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, 'foo_router_id', {})
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ri.iptables_manager = mock.MagicMock()
@@ -2466,6 +2528,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_handle_router_snat_rules_add_back_jump(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, _uuid(), {}, **self.ri_kwargs)
         ri.iptables_manager = mock.MagicMock()
         port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
@@ -2484,6 +2547,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_handle_router_snat_rules_add_rules(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, _uuid(), {}, **self.ri_kwargs)
         ex_gw_port = {'fixed_ips': [{'ip_address': '192.168.1.4'}]}
         ri.router = {'distributed': False}
@@ -2518,6 +2582,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_delete_stale_internal_devices(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         stale_devlist = [l3_test_common.FakeDev('qr-a1b2c3d4-e5'),
                          l3_test_common.FakeDev('qr-b2c3d4e5-f6')]
         stale_devnames = [dev.name for dev in stale_devlist]
@@ -2559,6 +2624,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_delete_stale_external_devices(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         stale_devlist = [l3_test_common.FakeDev('qg-a1b2c3d4-e5')]
         stale_devnames = [dev.name for dev in stale_devlist]
 
@@ -2578,6 +2644,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_dvr_router_delete_stale_external_devices(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         stale_devlist = [l3_test_common.FakeDev('qg-a1b2c3d4-e5')]
         stale_devnames = [dev.name for dev in stale_devlist]
 
@@ -2598,6 +2665,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_dvr_router_delete_stale_external_devices_no_snat_ns(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data(enable_gw=False,
                                                     num_internal_ports=1)
         self._set_ri_kwargs(agent, router['id'], router)
@@ -2608,30 +2676,35 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_router_deleted(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._queue = mock.Mock()
         agent.router_deleted(None, FAKE_ID)
         self.assertEqual(1, agent._queue.add.call_count)
 
     def test_routers_updated(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._queue = mock.Mock()
         agent.routers_updated(None, [FAKE_ID])
         self.assertEqual(1, agent._queue.add.call_count)
 
     def test_removed_from_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._queue = mock.Mock()
         agent.router_removed_from_agent(None, {'router_id': FAKE_ID})
         self.assertEqual(1, agent._queue.add.call_count)
 
     def test_added_to_agent(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._queue = mock.Mock()
         agent.router_added_to_agent(None, [FAKE_ID])
         self.assertEqual(1, agent._queue.add.call_count)
 
     def test_network_update_not_called(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._queue = mock.Mock()
         network = {'id': _uuid()}
         agent.network_update(None, network=network)
@@ -2639,6 +2712,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_network_update(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.router_info = {
             _uuid(): mock.Mock(),
             _uuid(): mock.Mock()}
@@ -2651,6 +2725,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test__process_network_update(self):
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._process_added_router(router)
         ri = l3router.RouterInfo(agent, router['id'],
                                  router, **self.ri_kwargs)
@@ -2662,6 +2737,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test__process_network_update_no_router_info_found(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         network_id = _uuid()
         agent._queue = mock.Mock()
         agent._process_network_update(_uuid(), network_id)
@@ -2670,6 +2746,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test__process_network_update_not_connected_to_router(self):
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._process_added_router(router)
         ri = l3router.RouterInfo(agent, router['id'],
                                  router, **self.ri_kwargs)
@@ -2681,6 +2758,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_create_router_namespace(self):
         self.mock_ip.ensure_namespace.return_value = self.mock_ip
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ns = namespaces.Namespace(
             'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
         ns.create()
@@ -2706,6 +2784,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             l3_test_common.FakeDev('rfp-aaaa')]
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         ns = namespaces.RouterNamespace(
             'bar', self.conf, agent.driver, agent.use_ipv6)
@@ -2720,6 +2799,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_destroy_router_namespace(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ns = namespaces.Namespace(
             'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
         ns.create()
@@ -2735,6 +2815,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             l3_test_common.FakeDev('sg-aaaa')]
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         ns = dvr_snat_ns.SnatNamespace(
             'bar', self.conf, agent.driver, agent.use_ipv6)
@@ -2753,6 +2834,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         if not enableflag:
             self.conf.set_override('enable_metadata_proxy', False)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_id = _uuid()
         router = {'id': router_id,
                   'external_gateway_info': {},
@@ -2794,6 +2876,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test__process_router_added_router_not_in_cache_after_failure(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_id = _uuid()
         router = {'id': router_id}
         ri_mock = mock.Mock()
@@ -2812,6 +2895,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test_process_routers_update_rpc_timeout(self, ext_net_call=False,
                                                  ext_net_call_failed=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.fullsync = False
         agent._process_router_if_compatible = mock.Mock()
         router_id = _uuid()
@@ -2841,6 +2925,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_routers_update_resyncs_failed_router(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router_id = _uuid()
         router = {'id': router_id}
 
@@ -2870,6 +2955,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_routers_update_router_update(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._queue = mock.Mock()
         update = mock.Mock()
         update.resource = None
@@ -2895,6 +2981,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def _test_process_routers_update_router_deleted(self,
                                                     error=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent._queue = mock.Mock()
         update = mock.Mock()
         update.resource = None
@@ -2930,6 +3017,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_routers_if_compatible(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = {'id': _uuid()}
         related_router = {'id': _uuid()}
         routers = [router, related_router]
@@ -2962,6 +3050,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_dvr_routers_ha_on_update_when_router_unbound(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.conf.agent_mode = 'dvr_snat'
         router = mock.Mock()
         router.id = '1234'
@@ -3003,6 +3092,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_dvr_routers_ha_on_update_without_ha_interface(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.conf.agent_mode = 'dvr_snat'
         router = mock.Mock()
         router.id = '1234'
@@ -3043,6 +3133,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_routers_if_compatible_error(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = {'id': _uuid()}
         self.plugin_api.get_routers.return_value = [router]
         update = resource_processing_queue.ResourceUpdate(
@@ -3063,6 +3154,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_ha_dvr_router_if_compatible_no_ha_interface(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.conf.agent_mode = 'dvr_snat'
         router = {'id': _uuid(),
                   'distributed': True, 'ha': True,
@@ -3075,6 +3167,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_if_compatible(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         router = {'id': _uuid(),
                   'routes': [],
@@ -3086,6 +3179,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_if_compatible_type_match(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         router = {'id': _uuid(),
                   'routes': [],
@@ -3104,6 +3198,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_process_router_if_compatible_type_changed(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         router = {'id': _uuid(),
                   'routes': [],
@@ -3125,9 +3220,10 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertFalse(agent.router_info[router['id']].router['distributed'])
 
     def test_nonexistent_interface_driver(self):
+        agent_config.register_interface_driver_opts_helper(self.conf)
         self.conf.set_override('interface_driver', 'wrong.driver')
-        self.assertRaises(SystemExit, l3_agent.L3NATAgent,
-                          HOSTNAME, self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, conf=self.conf)
+        self.assertRaises(SystemExit, agent.init_host)
 
     @mock.patch.object(namespaces.RouterNamespace, 'delete')
     @mock.patch.object(dvr_snat_ns.SnatNamespace, 'delete')
@@ -3147,6 +3243,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                                                      other_namespaces)
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         self.assertTrue(agent.namespaces_manager._clean_stale)
 
@@ -3191,6 +3288,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     def test_create_dvr_gateway(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = l3_test_common.prepare_router_data()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
@@ -3226,6 +3324,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router['gw_port_host'] = HOSTNAME
 
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
         ri.get_ex_gw_port = mock.Mock(return_value=None)
@@ -3244,6 +3343,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_get_host_ha_router_count(self):
         self.plugin_api.get_host_ha_router_count.return_value = 1
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         self.assertEqual(1, agent.ha_router_count)
         self.assertTrue(self.plugin_api.get_host_ha_router_count.called)
 
@@ -3255,11 +3355,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             raise_timeout, 0
         )
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         self.assertEqual(0, agent.ha_router_count)
 
     def test_external_gateway_removed_ext_gw_port_no_fip_ns(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         agent.conf.agent_mode = 'dvr_snat'
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         router['gw_port_host'] = HOSTNAME
@@ -3297,6 +3399,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         conffile = '/fake/radvd.conf'
         pidfile = '/fake/radvd.pid'
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
 
         # we don't want the whole process manager to be mocked to be
         # able to catch execute() calls
@@ -3454,6 +3557,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_initialize_address_scope_iptables_rules(self):
         id = _uuid()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         with mock.patch('neutron.agent.linux.iptables_manager.'
                         'IptablesManager'):
             ri = l3router.RouterInfo(agent, id, {}, **self.ri_kwargs)
@@ -3497,6 +3601,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_initialize_metadata_iptables_rules(self):
         id = _uuid()
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         with mock.patch('neutron.agent.linux.iptables_manager.'
                         'IptablesManager'):
             ri = l3router.RouterInfo(agent, id, {}, **self.ri_kwargs)
@@ -3508,6 +3613,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = l3_test_common.prepare_router_data(enable_ha=True)
         router[lib_constants.HA_INTERFACE_KEY] = None
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         # an early failure of an HA router initialization shouldn't try
         # and cleanup a state change monitor process that was never spawned.
         # Cannot use self.assertRaises(Exception, ...) as that causes an H202
@@ -3540,6 +3646,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = l3_test_common.prepare_router_data(enable_snat=True)
         router[lib_constants.FLOATINGIP_KEY] = fake_floatingips['floatingips']
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         ri = l3router.RouterInfo(agent, router['id'],
                                  router, **self.ri_kwargs)
         ri.centralized_port_forwarding_fip_set = {
@@ -3567,12 +3674,14 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
 
     @mock.patch.object(common_utils, 'load_interface_driver')
     def test_interface_driver_init(self, load_driver_mock):
-        l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         load_driver_mock.assert_called_once_with(
                 self.conf, get_networks_callback=mock.ANY)
 
     def test_stop_no_cleanup(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = mock.Mock()
         agent.router_info[1] = router
         agent.stop()
@@ -3581,6 +3690,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_stop_cleanup(self):
         self.conf.set_override('cleanup_on_shutdown', True)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         router = mock.Mock()
         agent.router_info[1] = router
         self.assertFalse(agent._exiting)
@@ -3591,6 +3701,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     @ddt.data(['fip-AAA', 'snat-BBB', 'qrouter-CCC'], [])
     def test_check_ha_router_process_status(self, namespaces):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.init_host()
         with contextlib.ExitStack() as stack:
             list_all = stack.enter_context(mock.patch.object(
                 agent.namespaces_manager, 'list_all'))

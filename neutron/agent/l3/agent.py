@@ -276,16 +276,21 @@ class L3NATAgent(ha.AgentMixin,
             resource_type='router')
 
         self._context = n_context.get_admin_context_without_session()
-        self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, host)
 
+        self.target_ex_net_id = None
+        self.use_ipv6 = netutils.is_ipv6_enabled()
+        self.fullsync = True
+        self._exiting = False
+        self.sync_routers_chunk_size = SYNC_ROUTERS_MAX_CHUNK_SIZE
+        super().__init__(host=self.conf.host)
+
+    def init_host(self):
+        super().init_host()
+        self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, self.host)
         self.driver = common_utils.load_interface_driver(
             self.conf,
             get_networks_callback=functools.partial(
                 self.plugin_rpc.get_networks, self.context))
-
-        self.fullsync = True
-        self.sync_routers_chunk_size = SYNC_ROUTERS_MAX_CHUNK_SIZE
-        self._exiting = False
 
         # Get the HA router count from Neutron Server
         # This is the first place where we contact neutron-server on startup
@@ -319,10 +324,6 @@ class L3NATAgent(ha.AgentMixin,
         self._pool = utils.ThreadPoolExecutorWithBlock(
             max_workers=ROUTER_PROCESS_THREADS)
         self._queue = queue.ResourceProcessingQueue()
-        super().__init__(host=self.conf.host)
-
-        self.target_ex_net_id = None
-        self.use_ipv6 = netutils.is_ipv6_enabled()
 
         # Consume network updates to trigger router resync
         consumers = [[topics.NETWORK, topics.UPDATE]]
@@ -940,31 +941,6 @@ class L3NATAgent(ha.AgentMixin,
 
 
 class L3NATAgentWithStateReport(L3NATAgent):
-
-    def __init__(self, host, conf=None):
-        super().__init__(host=host, conf=conf)
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
-        self.failed_report_state = False
-        self.agent_state = {
-            'binary': lib_const.AGENT_PROCESS_L3,
-            'host': host,
-            'availability_zone': self.conf.AGENT.availability_zone,
-            'topic': topics.L3_AGENT,
-            'configurations': {
-                'agent_mode': self.conf.agent_mode,
-                'handle_internal_only_routers':
-                self.conf.handle_internal_only_routers,
-                'interface_driver': self.conf.interface_driver,
-                'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats,
-                'extensions': self.l3_ext_manager.names()},
-            'start_flag': True,
-            'agent_type': lib_const.AGENT_TYPE_L3}
-        report_interval = self.conf.AGENT.report_interval
-        if report_interval:
-            self.heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
-            self.heartbeat.start(interval=report_interval)
-
     def _report_state(self):
         num_ex_gw_ports = 0
         num_interfaces = 0
@@ -1006,6 +982,30 @@ class L3NATAgentWithStateReport(L3NATAgent):
         if self.failed_report_state:
             self.failed_report_state = False
             LOG.info("Successfully reported state after a previous failure.")
+
+    def init_host(self):
+        super().init_host()
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
+        self.failed_report_state = False
+        self.agent_state = {
+            'binary': lib_const.AGENT_PROCESS_L3,
+            'host': self.host,
+            'availability_zone': self.conf.AGENT.availability_zone,
+            'topic': topics.L3_AGENT,
+            'configurations': {
+                'agent_mode': self.conf.agent_mode,
+                'handle_internal_only_routers':
+                self.conf.handle_internal_only_routers,
+                'interface_driver': self.conf.interface_driver,
+                'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats,
+                'extensions': self.l3_ext_manager.names()},
+            'start_flag': True,
+            'agent_type': lib_const.AGENT_TYPE_L3}
+        report_interval = self.conf.AGENT.report_interval
+        if report_interval:
+            self.heartbeat = loopingcall.FixedIntervalLoopingCall(
+                self._report_state)
+            self.heartbeat.start(interval=report_interval)
 
     def after_start(self):
         eventlet.spawn_n(self._process_routers_loop)

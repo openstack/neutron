@@ -45,6 +45,7 @@ class L3AgentNDPProxyTestFramework(framework.L3AgentTestFramework):
         self.conf.set_override('extensions', ['ndp_proxy'], 'agent')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport(HOSTNAME,
                                                                 self.conf)
+        self.agent.init_host()
         self.np_ext = np.NDPProxyAgentExtension()
 
         port_id1 = uuidutils.generate_uuid()

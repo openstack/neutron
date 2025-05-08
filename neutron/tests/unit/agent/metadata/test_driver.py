@@ -122,6 +122,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                            'NamespaceManager.list_all', return_value={}),\
                 mock.patch.object(router_info.RouterInfo, 'process'):
             agent = l3_agent.L3NATAgent('localhost')
+            agent.init_host()
             router_id = _uuid()
             router = {'id': router_id}
             ri = router_info.RouterInfo(mock.Mock(), router_id, router,
@@ -147,6 +148,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                            'NamespaceManager.list_all', return_value={}),\
                 mock.patch.object(router_info.RouterInfo, 'process'):
             agent = l3_agent.L3NATAgent('localhost')
+            agent.init_host()
             router_id = _uuid()
             router = {'id': router_id}
             ri = router_info.RouterInfo(mock.Mock(), router_id, router,
@@ -197,6 +199,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                     new_callable=mock.PropertyMock,
                     side_effect=[False, True]):
             agent = l3_agent.L3NATAgent('localhost')
+            agent.init_host()
             agent.process_monitor = mock.Mock()
             cfg_file = os.path.join(
                 metadata_driver.HaproxyConfigurator.get_config_path(

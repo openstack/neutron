@@ -37,6 +37,7 @@ class L3AgentConntrackHelperExtensionTestFramework(
         self.conf.set_override('extensions', ['conntrack_helper'], 'agent')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)
+        self.agent.init_host()
 
         self.cth_ext = conntrack_helper.ConntrackHelperAgentExtension()
 
