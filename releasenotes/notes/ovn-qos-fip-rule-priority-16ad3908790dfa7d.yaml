@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    The OVN QoS floating IP rule has precedence over the OVN QoS router
+    rule. If both are present in the same router and port (the one
+    assigned to the floating IP), the floating IP rule will now apply.
+    For more information, see bug
+    `2110018 <https://bugs.launchpad.net/neutron/+bug/2110018>`_.
