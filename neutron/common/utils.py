@@ -1115,3 +1115,10 @@ def stringmap(data: abc.Mapping[str, typing.Any],
     for key, value in data.items():
         result[key] = default if value is None else str(value)
     return result
+
+
+def is_iterable_not_string(value):
+    """Return if a value is iterable but not a string type"""
+    return (isinstance(value, abc.Iterable) and
+            not isinstance(value, abc.ByteString) and
+            not isinstance(value, str))
