@@ -17,12 +17,16 @@ import copy
 import datetime
 
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_utils import timeutils
 
 from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
+
+
+LOG = logging.getLogger(__name__)
 
 
 class DeletedChassis:
@@ -291,8 +295,25 @@ class AgentCache:
     def get_agents(self, filters=None):
         filters = filters or {}
         agent_list = []
+        type_errors = {}
         for agent in self:
             agent_dict = agent.as_dict()
-            if all(agent_dict[k] in v for k, v in filters.items()):
+            for k, v in filters.items():
+                if isinstance(agent_dict[k], type(v)):
+                    if agent_dict[k] != v:
+                        break
+                else:
+                    if utils.is_iterable_not_string(v):
+                        if agent_dict[k] not in v:
+                            break
+                    else:
+                        type_errors[k] = (type(agent_dict[k]), v)
+                        break
+            else:
                 agent_list.append(agent)
+        for field, (field_type, value) in type_errors.items():
+            LOG.info(f'Value "{value}" {type(value)} does not '
+                     f'match the OVN related agent field "{field}" '
+                     f'with type {field_type}')
+
         return agent_list
