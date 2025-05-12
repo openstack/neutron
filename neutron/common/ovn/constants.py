@@ -97,6 +97,11 @@ OVN_NEUTRON_AGENT = 'OVN Neutron agent'
 OVN_CONTROLLER_TYPES = (OVN_CONTROLLER_AGENT,
                         OVN_CONTROLLER_GW_AGENT,
                         )
+OVN_AGENT_TYPES = (OVN_CONTROLLER_AGENT,
+                   OVN_CONTROLLER_GW_AGENT,
+                   OVN_METADATA_AGENT,
+                   OVN_NEUTRON_AGENT,
+                   )
 
 # OVN ACLs have priorities.  The highest priority ACL that matches is the one
 # that takes effect.  Our choice of priority numbers is arbitrary, but it
