@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import external_net as extnet_def
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings as portbindings_def
+from neutron_lib.api.definitions import provider_net as pnet_def
 from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -57,6 +58,7 @@ from neutron.common import utils
 from neutron.conf import experimental as c_exp
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_pluggable_backend
+from neutron.db.models import segment as segment_db
 from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models
@@ -130,6 +132,33 @@ def _port_filter_hook(context, original_model, conditions):
     return conditions
 
 
+def _network_result_filter_hook(query, filters):
+    # This filter matches the provider network attributes, defined in
+    # ``neutron_lib.api.definitions.provider_net.ATTRIBUTES``.
+    attr_to_field = {
+        pnet_def.NETWORK_TYPE: segment_db.NetworkSegment.network_type,
+        pnet_def.PHYSICAL_NETWORK: segment_db.NetworkSegment.physical_network,
+        pnet_def.SEGMENTATION_ID: segment_db.NetworkSegment.segmentation_id
+    }
+
+    if any(attr for attr in pnet_def.ATTRIBUTES if attr in filters):
+        query = query.join(
+            segment_db.NetworkSegment,
+            segment_db.NetworkSegment.network_id == models_v2.Network.id)
+    for attr in pnet_def.ATTRIBUTES:
+        if attr not in filters:
+            continue
+
+        value = filters[attr]
+        field = attr_to_field[attr]
+        if utils.is_iterable_not_string(value):
+            query = query.filter(field.in_(value))
+        else:
+            query = query.filter(field == value)
+
+    return query
+
+
 @registry.has_registry_receivers
 class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         neutron_plugin_base_v2.NeutronPluginBaseV2,
@@ -164,6 +193,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             query_hook=_port_query_hook,
             filter_hook=_port_filter_hook,
             result_filters=None)
+        model_query.register_hook(
+            models_v2.Network,
+            'network',
+            query_hook=None,
+            filter_hook=None,
+            result_filters=_network_result_filter_hook)
         return super().__new__(cls, *args, **kwargs)
 
     @staticmethod
