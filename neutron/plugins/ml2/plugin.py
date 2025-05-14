@@ -457,12 +457,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if workers:
             self.add_workers(workers)
 
-    def _filter_nets_provider(self, context, networks, filters):
-        return [network
-                for network in networks
-                if self.type_manager.network_matches_filters(network, filters)
-                ]
-
     def _check_mac_update_allowed(self, orig_port, port, binding):
         new_mac = port.get('mac_address')
         mac_change = (new_mac is not None and
@@ -1339,8 +1333,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 net_data.append(self._make_network_dict(net, context=context))
 
             self.type_manager.extend_networks_dict_provider(context, net_data)
-            nets = self._filter_nets_provider(context, net_data, filters)
-        return [db_utils.resource_fields(net, fields) for net in nets]
+        return [db_utils.resource_fields(net, fields) for net in net_data]
 
     def get_network_contexts(self, context, network_ids):
         """Return a map of network_id to NetworkContext for network_ids."""
