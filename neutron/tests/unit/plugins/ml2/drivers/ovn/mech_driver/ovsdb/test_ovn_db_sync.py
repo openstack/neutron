@@ -263,7 +263,9 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                              'external_fixed_ips': [
                                  {'subnet_id': 'ext-subnet',
                                   'ip_address': '100.0.0.2'}]}},
-                        {'id': 'r4', 'routes': []}]
+                        {'id': 'r4', 'routes': []},
+                        {'id': 'r5', 'routes': [],
+                         'flavor_id': 'user-defined'}]
 
         self.get_sync_router_ports = [
             {'fixed_ips': [{'subnet_id': 'subnet1',
