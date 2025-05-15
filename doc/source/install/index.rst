@@ -10,7 +10,6 @@ Networking service Installation Guide
    overview.rst
    common/get-started-networking.rst
    concepts.rst
-   install-obs.rst
    install-rdo.rst
    install-ubuntu.rst
    ovn/index.rst
