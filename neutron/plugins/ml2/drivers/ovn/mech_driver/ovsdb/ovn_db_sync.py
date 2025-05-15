@@ -574,6 +574,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         db_extends = {}
         db_router_ports = {}
         for router in self.l3_plugin.get_routers(ctx):
+            if not utils.is_ovn_provider_router(router):
+                continue
             db_routers[router['id']] = router
             db_extends[router['id']] = {}
             db_extends[router['id']]['routes'] = []
