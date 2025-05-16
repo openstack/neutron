@@ -119,6 +119,21 @@ def schema_has_column(table_name, column_name):
 
 
 @raise_if_offline
+def create_table_if_not_exists(table_name, *args, **kwargs):
+    table = None
+    if not schema_has_table(table_name):
+        table = op.create_table(table_name, *args, **kwargs)
+    return table
+
+
+@raise_if_offline
+def add_column_if_not_exists(table_name, column, **kwargs):
+    """Add column only if it not exists in the schema."""
+    if not schema_has_column(table_name, column.name):
+        op.add_column(table_name, column, **kwargs)
+
+
+@raise_if_offline
 def alter_column_if_exists(table_name, column_name, **kwargs):
     """Alter a column only if it exists in the schema."""
     if schema_has_column(table_name, column_name):
