@@ -122,6 +122,17 @@ class GlobalTestEvent(DistributedLockTestEvent):
     GLOBAL = True
 
 
+class WaitForPortBindingCreateEvent(event.WaitEvent):
+    event_name = 'WaitForPortBindingCreateEvent'
+
+    def __init__(self, net_name):
+        table = 'Port_Binding'
+        events = (self.ROW_CREATE,)
+        conditions = (('external_ids', '=',
+                       {ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: net_name}),)
+        super().__init__(events, table, conditions, timeout=15)
+
+
 class TestNBDbMonitor(testlib_api.MySQLTestCaseMixin,
                       base.TestOVNFunctionalBase):
 
@@ -923,8 +934,13 @@ class TestPortBindingChassisEvent(base.TestOVNFunctionalBase,
         self.net = self._make_network(
             self.fmt, 'ext_net', True, as_admin=True, **kwargs)
         self._make_subnet(self.fmt, self.net, '20.0.10.1', '20.0.10.0/24')
+
+        pb_event = WaitForPortBindingCreateEvent(
+            ovn_utils.ovn_name(self.net['network']['id']))
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(pb_event)
         port_res = self._create_port(self.fmt, self.net['network']['id'])
         self.port = self.deserialize(self.fmt, port_res)['port']
+        self.assertTrue(pb_event.wait())
 
         self.ext_api = test_extensions.setup_extensions_middleware(
             test_l3.L3TestExtensionManager())
