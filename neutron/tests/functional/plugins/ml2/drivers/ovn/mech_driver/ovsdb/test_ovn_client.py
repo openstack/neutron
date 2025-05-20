@@ -320,6 +320,72 @@ class TestOVNClient(testlib_api.MySQLTestCaseMixin,
                     self._check_gw_lrp_mtu(router_id,
                                            min(router_attached_net_mtus))
 
+    def test_create_router_port_multiple_routers(self):
+        # The goal of this test is to check that the GW LRPs are updated when
+        # the same network is the external GW for several routers.
+        net_ext_args = {provider_net.NETWORK_TYPE: 'geneve',
+                        external_net.EXTERNAL: True,
+                        mtu_def.MTU: 1400}
+        net_ext = self._make_network(self.fmt, 'test-ext-net', True,
+                                     as_admin=True,
+                                     arg_list=tuple(net_ext_args.keys()),
+                                     **net_ext_args)
+        ext_gw = {'network_id': net_ext['network']['id']}
+        self._make_subnet(self.fmt, net_ext,
+                          gateway=constants.ATTR_NOT_SPECIFIED,
+                          cidr='10.100.0.0/24')
+        nets_int = []
+        routers = []
+        subnets = []
+        for idx in range(3):
+            cidr = f'10.{idx}.0.0/24'
+            net_int_args = {provider_net.NETWORK_TYPE: 'geneve',
+                            mtu_def.MTU: 1300 + idx}
+            nets_int.append(self._make_network(
+                self.fmt, 'test-int-net', True, as_admin=True,
+                arg_list=tuple(net_ext_args.keys()), **net_int_args))
+            subnets.append(self._make_subnet(
+                self.fmt, nets_int[-1],
+                gateway=constants.ATTR_NOT_SPECIFIED, cidr=cidr))
+            routers.append(self._make_router(
+                self.fmt, external_gateway_info=ext_gw))
+
+        for router in routers:
+            lr_name = ovn_utils.ovn_name(router['router']['id'])
+            lrp = self.nb_api.lrp_list(lr_name).execute(check_errors=True)[0]
+            self.assertEqual(1400, int(lrp.options['gateway_mtu']))
+
+        # Add to every router a new internal subnet. That must update the
+        # GW LRP MTU.
+        for idx, router in enumerate(routers):
+            lr_name = ovn_utils.ovn_name(router['router']['id'])
+            subnet = subnets[idx]
+            self._router_interface_action(
+                'add', router['router']['id'], subnet['subnet']['id'],
+                None)
+            lrps = self.nb_api.lrp_list(lr_name).execute(check_errors=True)
+            for lrp in lrps:
+                if strutils.bool_from_string(
+                        lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW]):
+                    # New MTU=1300+idx (old MTU=1400)
+                    self.assertEqual(1300 + idx,
+                                     int(lrp.options['gateway_mtu']))
+
+        # Remove the internal subnet. The GW LRP should restore the GW network
+        # MTU=1400.
+        for idx, router in enumerate(routers):
+            lr_name = ovn_utils.ovn_name(router['router']['id'])
+            subnet = subnets[idx]
+            self._router_interface_action(
+                'remove', router['router']['id'], subnet['subnet']['id'],
+                None)
+            lrps = self.nb_api.lrp_list(lr_name).execute(check_errors=True)
+            for lrp in lrps:
+                if strutils.bool_from_string(
+                        lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW]):
+                    # GW network MTU=1400
+                    self.assertEqual(1400, int(lrp.options['gateway_mtu']))
+
     def test_update_port_with_qos(self):
         def _check_bw(port_id, max_kbps=None, max_burst_kbps=None):
             lsp = self.nb_api.lookup('Logical_Switch_Port', port_id)
