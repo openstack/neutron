@@ -48,4 +48,4 @@ class AddressGroup(standard_attr.HasStandardAttributes,
                                        backref='address_groups',
                                        lazy='joined',
                                        cascade='all, delete, delete-orphan')
-    api_collections = [ag.ALIAS]
+    api_collections = [ag.COLLECTION_NAME]
