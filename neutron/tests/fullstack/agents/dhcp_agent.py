@@ -21,7 +21,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import dhcp as linux_dhcp
-from neutron.cmd.eventlet.agents import dhcp as dhcp_agent
+from neutron.cmd.agents import dhcp as dhcp_agent
 from neutron.common import config
 
 
