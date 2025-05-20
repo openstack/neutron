@@ -17,7 +17,6 @@ import os
 import sys
 from unittest import mock
 
-import eventlet
 from neutron_lib import constants as n_const
 
 from neutron.agent.l3 import namespaces
@@ -75,7 +74,7 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
             common_utils.wait_until_true(
                 lambda: self._get_num_spawned_procs() == procs_launched,
                 timeout=15)
-        except eventlet.Timeout:
+        except common_utils.WaitTimeout:
             num_spawned_procs = self._get_num_spawned_procs()
             err_str = ("Expected number/spawned number: {}/{}\nProcess "
                        "information:\n".format(num_spawned_procs,

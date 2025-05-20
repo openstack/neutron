@@ -12,18 +12,14 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import os.path
 
 from neutron_lib import constants
 import testtools
 
 from neutron.agent.linux import iptables_manager
-from neutron.agent.linux import utils
-from neutron.tests import base
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base as linux_base
-from neutron.tests.functional.agent.linux.bin import ipt_binname
 from neutron.tests.functional import base as functional_base
 
 
@@ -165,24 +161,3 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
     def test_udp_output(self):
         self._test_with_nc(self.client_fw, 'egress', port=None,
                            protocol=net_helpers.NetcatTester.UDP)
-
-
-class IptablesManagerNonRootTestCase(base.BaseTestCase):
-    @staticmethod
-    def _normalize_module_name(name):
-        for suf in ['.pyc', '.pyo']:
-            if name.endswith(suf):
-                return name[:-len(suf)] + '.py'
-        return name
-
-    def _test_binary_name(self, module, *extra_options):
-        executable = self._normalize_module_name(module.__file__)
-        expected = os.path.basename(executable)[:16]
-        observed = utils.execute([executable] + list(extra_options)).rstrip()
-        self.assertEqual(expected, observed)
-
-    def test_binary_name(self):
-        self._test_binary_name(ipt_binname)
-
-    def test_binary_name_eventlet_spawn(self):
-        self._test_binary_name(ipt_binname, 'spawn')

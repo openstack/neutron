@@ -15,9 +15,9 @@
 #    under the License.
 
 import random
+import threading
 from unittest import mock
 
-import eventlet
 import fixtures
 from neutron_lib import constants as n_const
 from neutron_lib.plugins.ml2 import ovs_constants
@@ -54,8 +54,8 @@ class OVSOFControllerHelper:
         self.br_tun_cls = None
         self.br_phys_cls = None
         self.init_done = False
-        self.init_done_ev = eventlet.event.Event()
-        self.main_ev = eventlet.event.Event()
+        self.init_done_ev = threading.Event()
+        self.main_ev = threading.Event()
         self.addCleanup(self._kill_main)
         retry_count = 3
         while True:
@@ -69,7 +69,8 @@ class OVSOFControllerHelper:
                                   conf.OVS.of_listen_port,
                                   group='OVS')
             main_mod.init_config()
-            self._main_thread = eventlet.spawn(self._kick_main)
+            self._main_thread = threading.Thread(target=self._kick_main)
+            self._main_thread.start()
 
             # Wait for _kick_main -> openflow main -> _agent_main
             # NOTE(yamamoto): This complexity came from how we run openflow
@@ -93,8 +94,8 @@ class OVSOFControllerHelper:
             main_mod.main()
 
     def _kill_main(self):
-        self.main_ev.send()
-        self._main_thread.wait()
+        self.main_ev.set()
+        self._main_thread.join()
 
     def _agent_main(self, bridge_classes):
         self.br_int_cls = bridge_classes['br_int']
@@ -103,7 +104,7 @@ class OVSOFControllerHelper:
 
         # signal to setUp()
         self.init_done = True
-        self.init_done_ev.send()
+        self.init_done_ev.set()
 
         self.main_ev.wait()
 
@@ -212,7 +213,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
 
     def stop_agent(self, agent, rpc_loop_thread):
         agent.run_daemon_loop = False
-        rpc_loop_thread.wait()
+        rpc_loop_thread.join()
 
     def start_agent(self, agent, ports=None, unplug_ports=None):
         if unplug_ports is None:
@@ -228,8 +229,9 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
             polling_manager._monitor.is_active)
         agent.check_ovs_status = mock.Mock(
             return_value=ovs_constants.OVS_NORMAL)
-        self.agent_thread = eventlet.spawn(agent.rpc_loop,
-                                           polling_manager)
+        self.agent_thread = threading.Thread(
+            target=agent.rpc_loop, args=(polling_manager,))
+        self.agent_thread.start()
 
         self.addCleanup(self.stop_agent, agent, self.agent_thread)
         return polling_manager
