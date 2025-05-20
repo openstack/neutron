@@ -2187,8 +2187,6 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
         }
         self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
             mock.Mock(external_ids=ext_ids))
-        self.l3_inst._nb_ovn.ha_chassis_group_get.return_value.execute.\
-            return_value = None
 
     # Note(dongj): According to bug #1657693, status of an unassociated
     # floating IP is set to DOWN. Revise expected_status to DOWN for related
@@ -2222,6 +2220,8 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             'neutron-fake_device', [(constants.IPv4_ANY, '120.0.0.1')])
 
     def test_router_update_gateway_upon_subnet_create_max_ips_ipv6(self):
+        # HA_Chassis_Group lookup.
+        self.l3_inst._nb_ovn.lookup.return_value = None
         super(). \
             test_router_update_gateway_upon_subnet_create_max_ips_ipv6()
         expected_ext_ids = {
@@ -2240,3 +2240,15 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
     def test_create_floatingip_with_assoc(self, **kwargs):
         self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(load_balancer=[])
         super().test_create_floatingip_with_assoc(**kwargs)
+
+    def test_route_update_with_external_route(self):
+        # HA_Chassis_Group lookup.
+        self.l3_inst._nb_ovn.lookup.return_value = None
+        super().test_route_update_with_external_route()
+
+    def _test_router_create_show_ext_gwinfo(self, snat_input_value,
+                                            snat_expected_value):
+        # HA_Chassis_Group lookup.
+        self.l3_inst._nb_ovn.lookup.return_value = None
+        super()._test_router_create_show_ext_gwinfo(snat_input_value,
+                                                    snat_expected_value)
