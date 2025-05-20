@@ -112,7 +112,16 @@ DNSMASQ_OPTS = [
                 help=_("Use broadcast in DHCP replies.")),
     cfg.BoolOpt('dnsmasq_enable_addr6_list', default=False,
                 help=_("Enable dhcp-host entry with list of addresses when "
-                       "port has multiple IPv6 addresses in the same subnet."))
+                       "port has multiple IPv6 addresses in the same "
+                       "subnet.")),
+    cfg.StrOpt('dnsmasq_txt_record', default='',
+               help=_("Return a TXT DNS record "
+                      "(option format: <name>[[,<text>],<text>]). "
+                      "The value of the TXT record is a set of strings, so "
+                      "any number may be included, delimited by commas; use "
+                      "quotes to put commas into a string. Note that the "
+                      "maximum length of a single string is 255 characters, "
+                      "longer strings are split into 255 character chunks."))
 ]
 
 
