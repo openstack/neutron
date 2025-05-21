@@ -68,7 +68,7 @@ class OvnTrace:
         return ('ovn-trace', *self.extra_args, self.microflow)
 
     def run(self):
-        return subprocess.run(self.args, check=True)  # nosec
+        return subprocess.run(self.args, check=True)  # noqa: S603
 
     def __str__(self):
         return " ".join(self.args[:-1] + ("'%s'" % self.args[-1],))

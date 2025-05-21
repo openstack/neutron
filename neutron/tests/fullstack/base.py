@@ -24,6 +24,7 @@ from neutron_lib.tests import tools
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config

@@ -17,6 +17,11 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
         exclude: 'rally-jobs/task-neutron.yaml'
+  - repo: https://github.com/lucas-c/pre-commit-hooks
+    rev: v1.5.5
+    hooks:
+      - id: remove-tabs
+        exclude: '.*\.(svg)$'
   - repo: https://opendev.org/openstack/bashate.git
     rev: 2.1.1
     hooks:
@@ -28,27 +33,24 @@ repos:
         args: ['-v', '-iE006', '-iE005,E042,E043']
         files: .*\.sh
         exclude: '.tox/.*'
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.3
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.1
     hooks:
-      - id: bandit
-        # B104: Possible binding to all interfaces
-        args: ['-n5', '-sB104']
-        files: 'neutron/'
-        exclude: 'neutron/tests'
-  - repo: https://github.com/lucas-c/pre-commit-hooks
-    rev: v1.5.5
-    hooks:
-      - id: remove-tabs
-        exclude: '.*\.(svg)$'
+      - id: ruff-check
+        args: []
   - repo: https://opendev.org/openstack/hacking
     rev: 7.0.0
     hooks:
       - id: hacking
         additional_dependencies: ['neutron', 'neutron-lib']
         exclude: '^(doc|releasenotes|tools)/.*$'
+  - repo: https://github.com/hhatto/autopep8
+    rev: v2.3.2
+    hooks:
+      - id: autopep8
+        files: '^.*\.py$'
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.16.1
     hooks:
       - id: mypy
         pass_filenames: false
@@ -56,15 +58,48 @@ repos:
         # necessary to detect one of 'ignored' errors and complains about
         # unnecessary ignore; other dependencies can be left out it seems
         additional_dependencies: ['alembic']
+  - repo: https://github.com/PyCQA/doc8
+    rev: v2.0.0
+    hooks:
+      - id: doc8
+        exclude: |
+          (?x)(
+            doc/source/admin/config-qos-min-pps.rst
+            | doc/source/admin/deploy-provider-verifynetworkoperation.txt
+            | doc/source/admin/deploy-selfservice-verifynetworkoperation.txt
+            | doc/source/admin/shared/deploy-ha-vrrp-initialnetworks.txt
+            | doc/source/admin/shared/deploy-ha-vrrp-verifynetworkoperation.txt
+            | doc/source/admin/shared/deploy-provider-initialnetworks.txt
+            | doc/source/configuration/metering-agent.rst
+            | doc/source/contributor/internals/images
+            | doc/source/contributor/policies/bugs.rst
+          )
+        files: |
+          (?x)(
+            doc/source/.*
+            | neutron/.*
+            | CONTRIBUTING.rst
+            | README.rst
+            | TESTING.rst
+          )
   - repo: local
     hooks:
-      - id: flake8
-        name: flake8
-        additional_dependencies:
-          - hacking>=6.1.0,<6.2.0
-          - neutron
-        language: python
-        entry: flake8
+      - id: misc-sanity-checks
+        name: misc sanity checks
+        language: script
+        require_serial: true
+        pass_filenames: false
+        entry: './tools/misc-sanity-checks.sh'
+        files: '^.*\.py$'
+        exclude: '^(doc|releasenotes|tools)/.*$'
+  - repo: local
+    hooks:
+      - id: check-unit-test-structure
+        name: check unit test structure
+        language: script
+        require_serial: true
+        pass_filenames: false
+        entry: './tools/check_unit_test_structure.sh'
         files: '^.*\.py$'
         exclude: '^(doc|releasenotes|tools)/.*$'
 # todo(slaweq): enable pylint check once all issues in the current code will
