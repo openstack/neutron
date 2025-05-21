@@ -68,7 +68,8 @@ class TestHostMedataHAProxyDaemonMonitor(base.BaseTestCase):
         host_meta.config(instance_infos)
         host_meta.enable()
         cmd = execute.call_args[0][0]
-        _join = lambda *args: ' '.join(args)
+        def _join(*args):
+            return ' '.join(args)
         cmd = _join(*cmd)
         self.assertIn('haproxy', cmd)
         self.assertIn(_join('-f', conffile), cmd)

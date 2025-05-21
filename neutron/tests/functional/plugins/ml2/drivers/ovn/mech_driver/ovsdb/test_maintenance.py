@@ -968,8 +968,8 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertEqual(subnet1['cidr'], snat_rule['logical_ip'])
 
     def test_port_forwarding(self):
-        fip_attrs = lambda args: {
-            pf_def.RESOURCE_NAME: {pf_def.RESOURCE_NAME: args}}
+        def fip_attrs(args):
+            return {pf_def.RESOURCE_NAME: {pf_def.RESOURCE_NAME: args}}
 
         def _verify_lb(test, protocol, vip_ext_port, vip_int_port):
             ovn_lbs = self._find_pf_lb(router_id, fip_id)

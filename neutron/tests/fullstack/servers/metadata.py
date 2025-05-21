@@ -30,7 +30,7 @@ metadata_opts = [
 cfg.CONF.register_opts(metadata_opts)
 
 
-class FakeMetadata():
+class FakeMetadata:
 
     def wsgi_app(self, env, start_response):
         response_headers = [('Content-Type', 'application/json')]

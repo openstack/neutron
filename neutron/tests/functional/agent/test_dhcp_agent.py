@@ -229,8 +229,9 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
         self._run_dhclient(vif_name, network)
 
-        predicate = lambda: len(
-            self._ip_list_for_vif(vif_name, network.namespace))
+        def predicate():
+            return len(self._ip_list_for_vif(vif_name, network.namespace))
+
         common_utils.wait_until_true(predicate, 10)
 
         ip_list = self._ip_list_for_vif(vif_name, network.namespace)

@@ -95,7 +95,7 @@ class DictModel(collections.abc.MutableMapping):
             return item
 
         for key, value in itertools.chain(temp_dict.items(), kwargs.items()):
-            if isinstance(value, (list, tuple)):
+            if isinstance(value, list | tuple):
                 # Keep the same type but convert dicts to DictModels
                 self._dictmodel_internal_storage[key] = type(value)(
                     upgrade(item) for item in value

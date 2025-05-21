@@ -557,8 +557,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.assertFalse(router.iptables_manager.apply())
 
     def _assert_metadata_chains(self, router):
-        metadata_port_filter = lambda rule: (
-            str(self.agent.conf.metadata_port) in rule.rule)
+        def metadata_port_filter(rule):
+            return (str(self.agent.conf.metadata_port) in rule.rule)
+
         self.assertTrue(self._get_rule(router.iptables_manager,
                                        'nat',
                                        'PREROUTING',
@@ -778,7 +779,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                          for route in updated_route]
         for entry in routes_actual:
             if entry['via']:
-                if isinstance(entry['via'], (list, tuple)):
+                if isinstance(entry['via'], list | tuple):
                     via_list = [{'via': hop['via']}
                                 for hop in entry['via']]
                     entry['via'] = sorted(via_list, key=lambda i: i['via'])

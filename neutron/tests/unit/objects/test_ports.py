@@ -118,7 +118,8 @@ class PortBindingVifDetailsTestCase(testscenarios.WithScenarios,
     def setUp(self):
         super().setUp()
         self._create_test_network()
-        getter = lambda: self._create_port(network_id=self._network['id']).id
+        def getter():
+            return self._create_port(network_id=self._network['id']).id
         self.update_obj_fields({'port_id': getter})
 
     def _create_port(self, **port_attrs):

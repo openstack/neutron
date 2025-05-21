@@ -230,7 +230,7 @@ class NeutronObject(obj_base.VersionedObject,
     def is_object_field(cls, field):
         return isinstance(
                    cls.fields[field],
-                   (obj_fields.ListOfObjectsField, obj_fields.ObjectField))
+                   obj_fields.ListOfObjectsField | obj_fields.ObjectField)
 
     @classmethod
     def obj_class_from_name(cls, objname, objver):

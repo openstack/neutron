@@ -586,8 +586,8 @@ def min_tx_rate_support():
             ip_link = ip_lib.IpLinkCommand(device)
             # NOTE(ralonsoh): to set min_tx_rate, first is needed to set
             # max_tx_rate and max_tx_rate >= min_tx_rate.
-            vf_config = {'vf': VF_NUM, 'rate': {'min_tx_rate': int(400),
-                                                'max_tx_rate': int(500)}}
+            vf_config = {'vf': VF_NUM, 'rate': {'min_tx_rate': 400,
+                                                'max_tx_rate': 500}}
             ip_link.set_vf_feature(vf_config)
             vf_config = {'vf': VF_NUM, 'rate': {'min_tx_rate': 0,
                                                 'max_tx_rate': 0}}

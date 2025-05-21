@@ -37,7 +37,7 @@ repos:
     rev: v0.12.1
     hooks:
       - id: ruff-check
-        args: []
+        args: ['--fix', '--unsafe-fixes']
   - repo: https://opendev.org/openstack/hacking
     rev: 7.0.0
     hooks:

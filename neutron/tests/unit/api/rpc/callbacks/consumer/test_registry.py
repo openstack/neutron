@@ -23,13 +23,15 @@ class ConsumerRegistryTestCase(base.BaseTestCase):
 
     @mock.patch.object(registry, '_get_manager')
     def test_register(self, manager_mock):
-        callback = lambda: None
+        def callback():
+            return None
         registry.register(callback, 'TYPE')
         manager_mock().register.assert_called_with(callback, 'TYPE')
 
     @mock.patch.object(registry, '_get_manager')
     def test_unsubscribe(self, manager_mock):
-        callback = lambda: None
+        def callback():
+            return None
         registry.unsubscribe(callback, 'TYPE')
         manager_mock().unregister.assert_called_with(callback, 'TYPE')
 

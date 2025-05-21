@@ -66,7 +66,7 @@ def is_agent_down(heart_beat_time):
                                    cfg.CONF.agent_down_time)
 
 
-class _SocketWrapper():
+class _SocketWrapper:
     """Determines if socket module is patched by eventlet
     and unpatches it.
 

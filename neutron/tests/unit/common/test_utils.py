@@ -583,13 +583,13 @@ class SpawnWithOrWithoutProfilerTestCase(base.BaseTestCase):
 
 
 @utils.SingletonDecorator
-class _TestSingletonClass1():
+class _TestSingletonClass1:
     def __init__(self, variable):
         self.variable = variable
 
 
 @utils.SingletonDecorator
-class _TestSingletonClass2():
+class _TestSingletonClass2:
     def __init__(self, variable):
         self.variable = variable
 

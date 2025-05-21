@@ -37,7 +37,7 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
         super().__init__(conf, L3_AGENT_EXT_MANAGER_NAMESPACE)
         extensions = []
         for extension in self:
-            if not isinstance(extension.obj, (l3_extension.L3AgentExtension,)):
+            if not isinstance(extension.obj, l3_extension.L3AgentExtension):
                 extensions.append(extension.attr)
         if extensions:
             raise l3_exc.L3ExtensionException(extensions=extensions)

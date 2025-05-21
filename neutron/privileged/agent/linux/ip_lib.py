@@ -760,7 +760,7 @@ def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
         if isinstance(protocol, str) and protocol in rtnl.rt_proto:
             protocol = rtnl.rt_proto[protocol]
         args['proto'] = protocol
-    if isinstance(via, (list, tuple)):
+    if isinstance(via, list | tuple):
         args['multipath'] = []
         for mp in via:
             multipath = {}

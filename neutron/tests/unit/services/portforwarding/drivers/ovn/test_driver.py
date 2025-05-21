@@ -499,8 +499,9 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         ovn_conf.register_opts()
         self.pf_plugin = mock.Mock()
         self.handler = mock.Mock()
-        get_mock_pf_plugin = lambda alias: self.pf_plugin if (
-                alias == plugin_constants.PORTFORWARDING) else None
+        def get_mock_pf_plugin(alias):
+            return self.pf_plugin if (
+                        alias == plugin_constants.PORTFORWARDING) else None
         self.fake_get_dir_object = mock.patch(
             "neutron_lib.plugins.directory.get_plugin",
             side_effect=get_mock_pf_plugin).start()
