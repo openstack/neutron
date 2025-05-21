@@ -30,6 +30,7 @@ from neutron.db import ovn_revision_numbers_db as ovn_rn_db
 import neutron.extensions
 from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2
+from neutron.tests.unit.extensions import test_address_group
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup
 
@@ -168,6 +169,7 @@ class TestExtensionManager(extensions.PluginAwareExtensionManager):
 
 
 class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
+                                    test_address_group.AddressGroupTestCase,
                                     test_l3.L3NatTestCaseMixin):
 
     def setUp(self):
@@ -264,6 +266,9 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
             sg['id'], 'ingress', n_const.PROTO_NUM_TCP)
         sg_rule = self._make_security_group_rule(
             self.fmt, rule)['security_group_rule']
+        ag = self.deserialize(
+            self.fmt, self._create_address_group(
+                **{'name': 'ag1'}))['address_group']
 
         self._create_initial_revision(router['id'], ovn_rn_db.TYPE_ROUTERS)
         self._create_initial_revision(subnet['id'], ovn_rn_db.TYPE_SUBNETS)
@@ -274,6 +279,7 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
         self._create_initial_revision(sg_rule['id'],
                                       ovn_rn_db.TYPE_SECURITY_GROUP_RULES)
         self._create_initial_revision(self.net['id'], ovn_rn_db.TYPE_NETWORKS)
+        self._create_initial_revision(ag['id'], ovn_rn_db.TYPE_ADDRESS_GROUPS)
 
         if delete:
             self._delete('security-group-rules', sg_rule['id'])
@@ -283,6 +289,7 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
             self._delete('routers', router['id'])
             self._delete('subnets', subnet['id'])
             self._delete('networks', self.net['id'])
+            self._delete('address-groups', ag['id'])
 
     def test_get_inconsistent_resources_order(self):
         self._prepare_resources_for_ordering_test()

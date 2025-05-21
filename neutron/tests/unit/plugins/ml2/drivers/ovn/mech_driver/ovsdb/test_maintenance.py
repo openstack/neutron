@@ -33,6 +33,7 @@ from neutron.db import ovn_revision_numbers_db
 from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.tests import base
+from neutron.tests.unit.extensions import test_address_group as test_ag
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2 import test_security_group as test_sg
 from neutron.tests.unit import testlib_api
@@ -143,7 +144,8 @@ class TestSchemaAwarePeriodicsBase(testlib_api.SqlTestCaseLight):
 @mock.patch.object(maintenance.DBInconsistenciesPeriodics,
                    'has_lock', mock.PropertyMock(return_value=True))
 class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
-                                     test_sg.Ml2SecurityGroupsTestCase):
+                                     test_sg.Ml2SecurityGroupsTestCase,
+                                     test_ag.AddressGroupTestCase):
 
     def setUp(self):
         ovn_conf.register_opts()
@@ -152,6 +154,9 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             self.fmt, name='net1', admin_state_up=True)['network']
         self.port = self._make_port(
             self.fmt, self.net['id'], name='port1')['port']
+        self.ag = self.deserialize(
+            self.fmt, self._create_address_group(
+                **{'name': 'ag1'}))['address_group']
         self.fake_ovn_client = mock.MagicMock()
         self.periodic = maintenance.DBInconsistenciesPeriodics(
             self.fake_ovn_client)
@@ -289,6 +294,52 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
     def test_fix_security_group_create_version_mismatch(self):
         self._test_fix_security_group_create(revision_number=2)
+
+    def _test_fix_create_update_address_group(self, ovn_rev, neutron_rev):
+        _nb_idl = self.fake_ovn_client._nb_idl
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            self.ag['revision_number'] = neutron_rev
+
+            # Create an entry to the revision_numbers table and assert the
+            # initial revision_number for our test object is the expected
+            ovn_revision_numbers_db.create_initial_revision(
+                self.ctx, self.ag['id'], constants.TYPE_ADDRESS_GROUPS,
+                revision_number=ovn_rev)
+            row = ovn_revision_numbers_db.get_revision_row(self.ctx,
+                                                           self.ag['id'])
+            self.assertEqual(ovn_rev, row.revision_number)
+
+            if ovn_rev < 0:
+                _nb_idl.get_address_set.return_value = None, None
+            else:
+                fake_as_v4 = mock.Mock(external_ids={
+                    constants.OVN_REV_NUM_EXT_ID_KEY: ovn_rev})
+                fake_as_v6 = mock.Mock(external_ids={
+                    constants.OVN_REV_NUM_EXT_ID_KEY: ovn_rev})
+                _nb_idl.get_address_set.return_value = fake_as_v4, fake_as_v6
+
+            self.fake_ovn_client._plugin.get_address_group.return_value = \
+                self.ag
+            self.periodic._fix_create_update(self.ctx, row)
+
+            # Since the revision number was < 0, make sure
+            # create_address_group() is invoked with the latest
+            # version of the object in the neutron database
+            if ovn_rev < 0:
+                self.fake_ovn_client.create_address_group.\
+                    assert_called_once_with(self.ctx, self.ag)
+            # If the revision number is > 0 it means that the object already
+            # exist and we just need to update to match the latest in the
+            # neutron database so, update_address_group() should be called.
+            else:
+                self.fake_ovn_client.update_address_group.\
+                    assert_called_once_with(self.ctx, self.ag)
+
+    def test_fix_address_group_create(self):
+        self._test_fix_create_update_address_group(ovn_rev=-1, neutron_rev=2)
+
+    def test_fix_address_group_update(self):
+        self._test_fix_create_update_address_group(ovn_rev=5, neutron_rev=7)
 
     @mock.patch.object(maintenance, 'LOG')
     def test__fix_create_update_no_sttd_attr(self, mock_log):

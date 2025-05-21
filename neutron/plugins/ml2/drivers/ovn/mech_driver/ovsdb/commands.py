@@ -36,6 +36,7 @@ RESOURCE_TYPE_MAP = {
     ovn_const.TYPE_ROUTER_PORTS: 'Logical_Router_Port',
     ovn_const.TYPE_FLOATINGIPS: 'NAT',
     ovn_const.TYPE_SUBNETS: 'DHCP_Options',
+    ovn_const.TYPE_ADDRESS_GROUPS: 'Address_Set',
 }
 
 
