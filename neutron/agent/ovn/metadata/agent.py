@@ -432,6 +432,21 @@ class MetadataAgent(object):
             'Chassis_Private', self.chassis,
             ('external_ids', external_ids)).execute(check_error=True)
 
+    def _update_metadata_sb_cfg_key(self):
+        """Update the Chassis_Private nb_cfg information in external_ids
+
+        This method should be called once the Metadata Agent has been
+        registered (method ``register_metadata_agent`` has been called) and
+        the corresponding Chassis_Private register has been created/updated
+        and chassis private config has been updated.
+        """
+        nb_cfg = self.sb_idl.db_get('Chassis_Private',
+                                    self.chassis, 'nb_cfg').execute()
+        external_ids = {ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: str(nb_cfg)}
+        self.sb_idl.db_set(
+            'Chassis_Private', self.chassis,
+            ('external_ids', external_ids)).execute(check_error=True)
+
     @_sync_lock
     def resync(self):
         """Resync the agent.
@@ -440,6 +455,7 @@ class MetadataAgent(object):
         """
         self._load_config()
         self._update_chassis_private_config()
+        self._update_metadata_sb_cfg_key()
         self.sync()
 
     def start(self):
@@ -475,6 +491,7 @@ class MetadataAgent(object):
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
         self._update_chassis_private_config()
+        self._update_metadata_sb_cfg_key()
 
         self._proxy.wait()
 
