@@ -543,7 +543,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
 
         # Assert the virt port does not yet have the type virtual (no
         # address pairs were set yet)
-        self._check_port_type(virt_port['id'], ''),
+        self._check_port_type(virt_port['id'], '')
         ovn_vport = self._find_port_row(virt_port['id'])
         self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY,
                          ovn_vport.options)
@@ -554,7 +554,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         self._set_allowed_address_pair(primary['id'], virt_ip)
 
         # Assert the virt port is now updated
-        self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL),
+        self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL)
         ovn_vport = self._find_port_row(virt_port['id'])
         self.assertEqual(
             virt_ip,
@@ -567,7 +567,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         self._set_allowed_address_pair(backup['id'], virt_ip)
 
         # Assert the virt port now includes the backup port as a parent
-        self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL),
+        self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL)
         ovn_vport = self._find_port_row(virt_port['id'])
         self.assertEqual(
             virt_ip,
@@ -583,7 +583,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
         self._unset_allowed_address_pair(primary['id'])
 
         # Assert the virt port now only has the backup port as a parent
-        self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL),
+        self._check_port_type(virt_port['id'], ovn_const.LSP_TYPE_VIRTUAL)
         ovn_vport = self._find_port_row(virt_port['id'])
         self.assertEqual(
             virt_ip,
@@ -597,7 +597,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
 
         # Assert the virt port is not type virtual anymore and the virtual
         # port options are cleared
-        self._check_port_type(virt_port['id'], ''),
+        self._check_port_type(virt_port['id'], '')
         ovn_vport = self._find_port_row(virt_port['id'])
         self.assertNotIn(ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY,
                          ovn_vport.options)

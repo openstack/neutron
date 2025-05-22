@@ -239,7 +239,7 @@ class TestTrackedResources(BaseTestTrackedResources):
 
     def test_list_networks_clears_dirty(self):
         self._test_init('network')
-        self._make_network('json', 'meh', True)['network']
+        self._make_network('json', 'meh', True)
         self._list('networks', as_admin=True)
         self._verify_dirty_bit('network', expected_value=False)
 
@@ -257,7 +257,7 @@ class TestTrackedResources(BaseTestTrackedResources):
     def test_list_ports_clears_dirty(self):
         self._test_init('port')
         net = self._make_network('json', 'meh', True)['network']
-        self._make_port('json', net['id'])['port']
+        self._make_port('json', net['id'])
         self._list('ports', as_admin=True)
         self._verify_dirty_bit('port', expected_value=False)
 
@@ -277,8 +277,7 @@ class TestTrackedResources(BaseTestTrackedResources):
         self._test_init('network')
         self._test_init('subnet')
         net = self._make_network('json', 'meh', True)
-        self._make_subnet('json', net, '10.0.0.1',
-                          '10.0.0.0/24')['subnet']
+        self._make_subnet('json', net, '10.0.0.1', '10.0.0.0/24')
         self._verify_dirty_bit('subnet')
         # Clear the dirty bit
         quota_db_api.set_resources_quota_usage_dirty(
@@ -290,7 +289,7 @@ class TestTrackedResources(BaseTestTrackedResources):
     def test_list_subnets_clears_dirty(self):
         self._test_init('subnet')
         net = self._make_network('json', 'meh', True)
-        self._make_subnet('json', net, '10.0.0.1', '10.0.0.0/24')['subnet']
+        self._make_subnet('json', net, '10.0.0.1', '10.0.0.0/24')
         self._list('subnets', as_admin=True)
         self._verify_dirty_bit('subnet', expected_value=False)
 
@@ -307,7 +306,7 @@ class TestTrackedResources(BaseTestTrackedResources):
 
     def test_list_subnetpools_clears_dirty(self):
         self._test_init('subnetpool')
-        self._make_subnetpool('json', ['10.0.0.0/8'], name='meh')['subnetpool']
+        self._make_subnetpool('json', ['10.0.0.0/8'], name='meh')
         self._list('subnetpools', as_admin=True)
         self._verify_dirty_bit('subnetpool', expected_value=False)
 
@@ -324,8 +323,7 @@ class TestTrackedResources(BaseTestTrackedResources):
 
     def test_list_securitygroups_clears_dirty(self):
         self._test_init('security_group')
-        self._make_security_group(
-            'json', 'meh', 'meh',)['security_group']
+        self._make_security_group('json', 'meh', 'meh')
         self._list('security-groups', as_admin=True)
         self._verify_dirty_bit('security_group', expected_value=False)
 
@@ -346,7 +344,7 @@ class TestTrackedResources(BaseTestTrackedResources):
 
     def test_list_securitygrouprules_clears_dirty(self):
         self._test_init('security_group_rule')
-        self._make_security_group('json', 'meh', 'meh')['security_group']
+        self._make_security_group('json', 'meh', 'meh')
         # As the security group create operation also creates 2 security group
         # rules there is no need to explicitly create any rule
         self._list('security-group-rules', as_admin=True)

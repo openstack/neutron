@@ -942,8 +942,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_create_network_create_localnet_port_tunnel_network_type(self):
         nb_idl = self.mech_driver._ovn_client._nb_idl
-        self._make_network(self.fmt, name='net1',
-                           admin_state_up=True)['network']
+        self._make_network(self.fmt, name='net1', admin_state_up=True)
         # net1 is not physical network
         nb_idl.create_lswitch_port.assert_not_called()
 
