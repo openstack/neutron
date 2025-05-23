@@ -1,3 +1,19 @@
 [build-system]
 requires = ["pbr>=6.0.0", "setuptools>=64.0.0"]
 build-backend = "pbr.build"
+
+[tool.mypy]
+incremental = true
+pretty = true
+show_error_context = true
+show_column_numbers = true
+warn_unused_ignores = true
+# remove gradually as progress is made
+disable_error_code = "import-untyped,var-annotated,import-not-found"
+# honor excludes by not following there through imports
+follow_imports = "silent"
+files = "neutron"
+# NOTE: Gradually enable type checking for each package.
+# Finally, when the whole repo is migrated this option can be deleted
+# and rules applied to the whole repo.
+exclude = "(?x)(^neutron/tests/$)"
