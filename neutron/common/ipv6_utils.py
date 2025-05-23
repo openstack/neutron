@@ -52,7 +52,7 @@ def valid_ipv6_url(host, port):
        square brackets always required in ipv6 URI.
     """
     if netutils.is_valid_ipv6(host):
-        uri = '[{}]:{}'.format(host, port)
+        uri = f'[{host}]:{port}'
     else:
-        uri = '{}:{}'.format(host, port)
+        uri = f'{host}:{port}'
     return uri

@@ -4708,7 +4708,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
             floating_ip_address)
         self.mock_admin_client.recordsets.create.assert_called_with(
             in_addr_zone_name, in_addr_name, 'PTR',
-            ['{}.{}'.format(self.DNS_NAME, self.DNS_DOMAIN)])
+            [f'{self.DNS_NAME}.{self.DNS_DOMAIN}'])
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_create(self, mock_args):

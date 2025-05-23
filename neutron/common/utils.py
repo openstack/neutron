@@ -143,8 +143,8 @@ def get_dhcp_agent_device_id(network_id, host, segmentation_id=None):
     local_hostname = host.split('.')[0]
     host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, str(local_hostname))
     if not segmentation_id:
-        return 'dhcp{}-{}'.format(host_uuid, network_id)
-    return 'dhcp{}-{}-{}'.format(host_uuid, network_id, segmentation_id)
+        return f'dhcp{host_uuid}-{network_id}'
+    return f'dhcp{host_uuid}-{network_id}-{segmentation_id}'
 
 
 def is_dns_servers_any_address(dns_servers, ip_version):
@@ -376,7 +376,7 @@ def _hex_format(port, mask=0):
     def hex_str(num):
         return format(num, '#06x')
     if mask > 0:
-        return "{}/{}".format(hex_str(port), hex_str(0xffff & ~mask))
+        return f"{hex_str(port)}/{hex_str(0xffff & ~mask)}"
     return hex_str(port)
 
 
@@ -840,7 +840,7 @@ def bytes_to_bits(value):
 
 
 def bits_to_kilobits(
-        value: typing.Union[int, float],
+        value: int | float,
         base: int
 ) -> int:
     # NOTE(slaweq): round up that even 1 bit will give 1 kbit as a result, but

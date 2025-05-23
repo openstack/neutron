@@ -47,7 +47,7 @@ def create_request(path, body, content_type, method='GET',
                    query_string=None, context=None, headers=None):
     headers = headers or {}
     if query_string:
-        url = "{}?{}".format(path, query_string)
+        url = f"{path}?{query_string}"
     else:
         url = path
     req = wsgi.Request.blank(url)

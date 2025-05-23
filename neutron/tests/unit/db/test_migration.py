@@ -49,9 +49,9 @@ ALEMBIC_EXPECTED_REGEX = ("""\
     sa.PrimaryKeyConstraint('id')
     )
     op.add_column('user', """
-              """sa.Column('organization_id', sa.Integer(), nullable=True))
+                  """sa.Column('organization_id', sa.Integer(), nullable=True))
     op.create_foreign_key('org_fk', 'user', """
-              """'organization', ['organization_id'], ['id'])
+                          """'organization', ['organization_id'], ['id'])
     ### end Alembic commands ###""")
 
 

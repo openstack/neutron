@@ -372,7 +372,7 @@ class AddIpRulesTestCase(BaseIpRuleTestCase):
             rules = ip_lib.list_ip_rules(self.namespace, ip_version)
             self._check_rules(
                 rules, ['table', 'from'], [str(table), ip_address],
-                'table {} and "from" IP address {}'.format(table, ip_address))
+                f'table {table} and "from" IP address {ip_address}')
 
             priv_ip_lib.delete_ip_rule(self.namespace, table=table,
                                        src=ip_address, src_len=ip_lenght,

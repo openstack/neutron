@@ -76,7 +76,7 @@ class Designate(driver.ExternalDNSService):
         if not CONF.designate.allow_reverse_dns_lookup:
             return
         # Set up the PTR records
-        recordset_name = '{}.{}'.format(dns_name, dns_domain)
+        recordset_name = f'{dns_name}.{dns_domain}'
         ptr_zone_email = 'admin@%s' % dns_domain[:-1]
         if CONF.designate.ptr_zone_email:
             ptr_zone_email = CONF.designate.ptr_zone_email

@@ -129,8 +129,8 @@ class Controller:
             self._parent_id_name = None
             parent_part = ''
         self._plugin_handlers = {
-            self.LIST: 'get{}_{}'.format(parent_part, self._collection),
-            self.SHOW: 'get{}_{}'.format(parent_part, self._resource)
+            self.LIST: f'get{parent_part}_{self._collection}',
+            self.SHOW: f'get{parent_part}_{self._resource}'
         }
         for action in [self.CREATE, self.UPDATE, self.DELETE]:
             self._plugin_handlers[action] = '{}{}_{}'.format(

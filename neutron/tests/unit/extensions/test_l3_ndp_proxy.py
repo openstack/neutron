@@ -472,8 +472,8 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 self.subnetpool(
                     ['2001::100:0:0/100'],
                     **{'address_scope_id': addr_scope['address_scope']['id'],
-                    'default_prefixlen': 112, 'name': 'test1',
-                    'tenant_id': self._tenant_id}) as subnetpool, \
+                       'default_prefixlen': 112, 'name': 'test1',
+                       'tenant_id': self._tenant_id}) as subnetpool, \
                 self.subnet(
                     cidr='2001::100:1:0/112',
                     ip_version=constants.IP_VERSION_6,

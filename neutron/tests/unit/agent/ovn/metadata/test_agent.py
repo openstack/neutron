@@ -254,7 +254,7 @@ class TestMetadataAgent(base.BaseTestCase):
         self._test__process_cidrs_when_current_namespace_empty(False)
 
     def _test__process_cidrs_current_ns_only_contains_meta_cidr(self,
-            ipv6_enabled):
+                                                                ipv6_enabled):
         """Current namespace cidrs only contains IPv4 metadata cidr,
         and it is missing new required cidrs.
         """
@@ -290,7 +290,7 @@ class TestMetadataAgent(base.BaseTestCase):
         self._test__process_cidrs_current_ns_only_contains_meta_cidr(False)
 
     def _test__process_cidrs_current_ns_contains_stale_cidr(self,
-            ipv6_enabled):
+                                                            ipv6_enabled):
         """Current namespace cidrs contains stale cidrs, including lla,
         and it is missing new required cidrs.
         """

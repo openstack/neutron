@@ -109,12 +109,12 @@ class _MovedGlobals:
                 new_module, new_name = self._mg__default_new_mod, name
             if new_module and new_name in vars(new_module):
 
-                old_location = '{}.{}'.format(old_module.__name__, name)
-                new_location = '{}.{}'.format(new_module.__name__, new_name)
+                old_location = f'{old_module.__name__}.{name}'
+                new_location = f'{new_module.__name__}.{new_name}'
                 changed = 'renamed' if old_module == new_module else 'moved'
                 debtcollector.deprecate(
                     old_location,
-                    message='{} to {}'.format(changed, new_location),
+                    message=f'{changed} to {new_location}',
                     stacklevel=4)
 
                 return vars(new_module)[new_name]

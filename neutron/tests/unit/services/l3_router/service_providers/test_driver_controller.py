@@ -215,7 +215,7 @@ class TestDriverController(testlib_api.SqlTestCase):
             self.assertEqual(self.dc.drivers[driver],
                              self.dc.get_provider_for_router(self.ctx,
                                                              body['id']),
-                             'Expecting {} for body {}'.format(driver, body))
+                             f'Expecting {driver} for body {body}')
 
     @mock.patch('neutron_lib.callbacks.registry.publish')
     def test__clear_router_provider(self, mock_cb):

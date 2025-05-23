@@ -643,7 +643,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def test_list_port_bindings_with_query_parameters(self):
         port, new_binding = self._create_port_and_binding()
-        params = '{}={}'.format(pbe_ext.STATUS, const.INACTIVE)
+        params = f'{pbe_ext.STATUS}={const.INACTIVE}'
         retrieved_bindings = self._list_port_bindings(
             port['id'], params=params, raw_response=False)['bindings']
         self.assertEqual(1, len(retrieved_bindings))

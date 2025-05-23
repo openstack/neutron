@@ -1421,7 +1421,7 @@ def _build_flow_expr_str(flow_dict, cmd, strict):
         if key == 'proto':
             flow_expr_arr.append(value)
         else:
-            flow_expr_arr.append("{}={}".format(key, str(value)))
+            flow_expr_arr.append(f"{key}={str(value)}")
 
     if actions:
         flow_expr_arr.append(actions)

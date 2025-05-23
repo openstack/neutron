@@ -852,7 +852,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     args += ['--%s' % direction, '%s' % port_range_min]
             else:
                 args += ['-m', 'multiport', '--%ss' % direction,
-                         '{}:{}'.format(port_range_min, port_range_max)]
+                         f'{port_range_min}:{port_range_max}']
         return args
 
     def _ip_prefix_arg(self, direction, ip_prefix):

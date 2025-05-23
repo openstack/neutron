@@ -400,7 +400,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                     self.assertEqual(expected, actual)
 
     def _lookup_network_by_segmentation_id(self, seg_id, num_expected_nets):
-        params_str = "{}={}".format(pnet.SEGMENTATION_ID, seg_id)
+        params_str = f"{pnet.SEGMENTATION_ID}={seg_id}"
         net_req = self.new_list_request('networks', None,
                                         params=params_str,
                                         as_admin=True)
@@ -4037,6 +4037,6 @@ class TestML2Segments(Ml2PluginV2TestCase):
 class TestMl2PluginCallRPCMechanismDrivers(Ml2PluginV2TestCase):
     def test_mech_driver_start_rpc_listeners_called(self):
         with mock.patch.object(mech_test.TestMechanismDriver,
-                        'start_rpc_listeners') as mock_srl:
+                               'start_rpc_listeners') as mock_srl:
             self.plugin.start_rpc_listeners()
             mock_srl.assert_called_once()

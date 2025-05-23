@@ -616,8 +616,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         ns_name = "{}{}{}".format(
             'qrouter-' + router_info['id'],
             self.NESTED_NAMESPACE_SEPARATOR, agent.host)
-        ext_name = "qg-{}-{}".format(agent.host, _uuid()[-4:])
-        int_name = "qr-{}-{}".format(agent.host, _uuid()[-4:])
+        ext_name = f"qg-{agent.host}-{_uuid()[-4:]}"
+        int_name = f"qr-{agent.host}-{_uuid()[-4:]}"
 
         get_ns_name = mock.patch.object(
             namespaces.RouterNamespace, '_get_ns_name').start()

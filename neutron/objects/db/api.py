@@ -83,10 +83,10 @@ def _safe_get_object(obj_cls, context, **kwargs):
     db_obj = get_object(obj_cls, context, **kwargs)
 
     if db_obj is None:
-        key = ", ".join(['{}={}'.format(key, value) for (key, value)
+        key = ", ".join([f'{key}={value}' for (key, value)
                          in kwargs.items()])
         raise n_exc.ObjectNotFound(
-            id="{}({})".format(obj_cls.db_model.__name__, key))
+            id=f"{obj_cls.db_model.__name__}({key})")
     return db_obj
 
 

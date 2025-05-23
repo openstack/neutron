@@ -204,7 +204,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
             self.fips.append(fip)
 
             network = self._make_network(
-                self.fmt, 'net_{}'.format(net_idx), True,
+                self.fmt, f'net_{net_idx}', True,
                 as_admin=True)['network']
             self.networks.append(network)
 

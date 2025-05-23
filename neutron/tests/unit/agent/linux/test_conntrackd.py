@@ -28,37 +28,37 @@ class ConntrackdConfigTestCase(BasicRouterOperationsFramework):
     def get_expected(ha_confs_path):
         return dedent(
             """
-            General {
+            General {{
                 HashSize 32768
                 HashLimit 131072
                 Syslog on
-                LockFile %(conf_path)s/%(uuid)s/conntrackd.lock
-                UNIX {
-                    Path %(conf_path)s/%(uuid)s/conntrackd.ctl
+                LockFile {conf_path}/{uuid}/conntrackd.lock
+                UNIX {{
+                    Path {conf_path}/{uuid}/conntrackd.ctl
                     Backlog 20
-                }
+                }}
                 SocketBufferSize 262142
                 SocketBufferSizeMaxGrown 655355
-                Filter From Kernelspace {
-                    Protocol Accept {
+                Filter From Kernelspace {{
+                    Protocol Accept {{
                         TCP
                         SCTP
                         DCCP
                         UDP
                         ICMP
                         IPv6-ICMP
-                    }
-                    Address Ignore {
+                    }}
+                    Address Ignore {{
                         IPv4_address 127.0.0.1
                         IPv6_address ::1
                         IPv4_address 192.168.0.5
-                    }
-                }
-            }
-            Sync {
-                Mode FTFW {
-                }
-                Multicast Default {
+                    }}
+                }}
+            }}
+            Sync {{
+                Mode FTFW {{
+                }}
+                Multicast Default {{
                     IPv4_address 225.0.0.50
                     IPv4_interface 192.168.0.5
                     Group 3783
@@ -66,10 +66,8 @@ class ConntrackdConfigTestCase(BasicRouterOperationsFramework):
                     SndSocketBuffer 24985600
                     RcvSocketBuffer 24985600
                     Checksum on
-                }
-            }""" % {'conf_path': ha_confs_path,
-                    'uuid': FAKE_ID,
-                    })
+                }}
+            }}""".format(conf_path=ha_confs_path, uuid=FAKE_ID))
 
     def get_manager(self):
         return conntrackd.ConntrackdManager(

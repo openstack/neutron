@@ -120,8 +120,8 @@ class ItemAllocator:
             self._write_allocations()
 
     def _write_allocations(self):
-        current = ["{},{}\n".format(k, v) for k, v in self.allocations.items()]
-        remembered = ["{},{}\n".format(k, v)
+        current = [f"{k},{v}\n" for k, v in self.allocations.items()]
+        remembered = [f"{k},{v}\n"
                       for k, v in self.remembered.items()]
         current.extend(remembered)
         self._write(current)

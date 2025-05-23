@@ -27,8 +27,8 @@ def _connection_to_manager_uri(conn_uri):
     ip, port = netutils.parse_host_port(addr)
     if port is not None:
         ip = netutils.escape_ipv6(ip)
-        return 'p{}:{}:{}'.format(proto, port, ip)
-    return 'p{}:{}'.format(proto, addr)
+        return f'p{proto}:{port}:{ip}'
+    return f'p{proto}:{addr}'
 
 
 @privileged.ovs_vsctl_cmd.entrypoint

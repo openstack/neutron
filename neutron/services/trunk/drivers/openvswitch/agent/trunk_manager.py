@@ -31,7 +31,7 @@ def get_br_int_port_name(prefix, port_id):
 
     The port name is the one that plumbs into the integration bridge.
     """
-    return ("{}i-{}".format(prefix, port_id))[:constants.DEVICE_NAME_MAX_LEN]
+    return (f"{prefix}i-{port_id}")[:constants.DEVICE_NAME_MAX_LEN]
 
 
 def get_br_trunk_port_name(prefix, port_id):
@@ -39,7 +39,7 @@ def get_br_trunk_port_name(prefix, port_id):
 
     The port name is the one that plumbs into the trunk bridge.
     """
-    return ("{}t-{}".format(prefix, port_id))[:constants.DEVICE_NAME_MAX_LEN]
+    return (f"{prefix}t-{port_id}")[:constants.DEVICE_NAME_MAX_LEN]
 
 
 def get_patch_peer_attrs(peer_name, port_mac=None, port_id=None):

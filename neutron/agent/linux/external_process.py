@@ -83,7 +83,7 @@ class ProcessManager(MonitoredProcess):
             self.service_pid_fname = 'pid'
             self.service = DEFAULT_SERVICE_NAME
 
-        process_tag = '{}-{}'.format(self.service, self.uuid)
+        process_tag = f'{self.service}-{self.uuid}'
         self.cmd_addl_env = cmd_addl_env or {}
         self.cmd_addl_env[PROCESS_TAG] = process_tag
 

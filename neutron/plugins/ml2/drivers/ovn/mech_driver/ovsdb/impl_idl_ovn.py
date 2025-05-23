@@ -612,7 +612,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             if not physnet:
                 continue
 
-            lrp_name = '{}{}'.format(ovn_const.LRP_PREFIX, port)
+            lrp_name = f'{ovn_const.LRP_PREFIX}{port}'
             original_state = self.get_gateway_chassis_binding(lrp_name)
             az_hints = self.get_gateway_chassis_az_hints(lrp_name)
             # Filter out chassis that lost physnet, the cms option,

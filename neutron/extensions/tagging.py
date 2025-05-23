@@ -197,7 +197,7 @@ class TaggingController:
         # GET /v2.0/{obj_resource}/{obj_resource_id}/tags
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs)
-        policy.enforce(ctx, 'get_{}_{}'.format(rinfo.obj_type, TAGS),
+        policy.enforce(ctx, f'get_{rinfo.obj_type}_{TAGS}',
                        rinfo.obj)
         return self.plugin.get_tags(ctx, rinfo.obj_type, rinfo.obj['id'])
 
@@ -207,7 +207,7 @@ class TaggingController:
         validate_tag(id)
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs)
-        policy.enforce(ctx, 'get_{}:{}'.format(rinfo.obj_type, TAGS),
+        policy.enforce(ctx, f'get_{rinfo.obj_type}:{TAGS}',
                        rinfo.obj)
         return self.plugin.get_tag(ctx, rinfo.obj_type, rinfo.obj['id'], id)
 
@@ -217,7 +217,7 @@ class TaggingController:
         validate_tags(body)
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs, tags=body[TAGS])
-        policy.enforce(ctx, 'create_{}:{}'.format(rinfo.obj_type, TAGS),
+        policy.enforce(ctx, f'create_{rinfo.obj_type}:{TAGS}',
                        rinfo.obj)
         validate_tags_limit(rinfo.obj_type, body['tags'])
         notify_tag_action(ctx, 'create.start', rinfo.obj_type,
@@ -234,7 +234,7 @@ class TaggingController:
         validate_tag(id)
         ctx = request.context
         rinfo = self._get_resource_info(ctx, kwargs, tags=[id])
-        policy.enforce(ctx, 'update_{}:{}'.format(rinfo.obj_type, TAGS),
+        policy.enforce(ctx, f'update_{rinfo.obj_type}:{TAGS}',
                        rinfo.obj)
         current_tags = self.plugin.get_tags(
             ctx, rinfo.obj_type, rinfo.obj['id'])['tags']

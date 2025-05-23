@@ -93,7 +93,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
 
     def get_name(self):
         class_name, test_name = self.id().split(".")[-2:]
-        return "{}.{}".format(class_name, test_name)
+        return f"{class_name}.{test_name}"
 
     def _wait_until_agent_up(self, agent_id):
         def _agent_up():

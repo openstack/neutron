@@ -64,7 +64,7 @@ def acl_direction(r, port=None, port_group=None):
 
     if port:
         return '{} == "{}"'.format(portdir, port['id'])
-    return '{} == @{}'.format(portdir, port_group)
+    return f'{portdir} == @{port_group}'
 
 
 def acl_ethertype(r):
@@ -148,7 +148,7 @@ def add_acls_for_drop_port_group(pg_name):
                "name": [],
                "severity": [],
                "direction": direction,
-               "match": '{} == @{} && ip'.format(p, pg_name)}
+               "match": f'{p} == @{pg_name} && ip'}
         acl_list.append(acl)
     return acl_list
 
@@ -226,7 +226,7 @@ def acl_remote_group_id(r, ip_version):
     src_or_dst = 'src' if r['direction'] == const.INGRESS_DIRECTION else 'dst'
     addrset_name = utils.ovn_pg_addrset_name(r['remote_group_id'],
                                              ip_version)
-    return ' && {}.{} == ${}'.format(ip_version, src_or_dst, addrset_name)
+    return f' && {ip_version}.{src_or_dst} == ${addrset_name}'
 
 
 def acl_remote_address_group_id(r, ip_version):
@@ -236,7 +236,7 @@ def acl_remote_address_group_id(r, ip_version):
     src_or_dst = 'src' if r['direction'] == const.INGRESS_DIRECTION else 'dst'
     addrset_name = utils.ovn_ag_addrset_name(r['remote_address_group_id'],
                                              ip_version)
-    return ' && %s.%s == $%s' % (ip_version, src_or_dst, addrset_name)
+    return ' && {}.{} == ${}'.format(ip_version, src_or_dst, addrset_name)
 
 
 def _add_sg_rule_acl_for_port_group(port_group, stateful, r):

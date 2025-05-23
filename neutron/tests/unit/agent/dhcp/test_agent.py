@@ -50,8 +50,8 @@ from neutron.tests import base
 HOSTNAME = 'hostname'
 dev_man = dhcp.DeviceManager
 rpc_api = dhcp_agent.DhcpPluginApi
-DEVICE_MANAGER = '{}.{}'.format(dev_man.__module__, dev_man.__name__)
-DHCP_PLUGIN = '{}.{}'.format(rpc_api.__module__, rpc_api.__name__)
+DEVICE_MANAGER = f'{dev_man.__module__}.{dev_man.__name__}'
+DHCP_PLUGIN = f'{rpc_api.__module__}.{rpc_api.__name__}'
 FAKE_NETWORK_UUID = '12345678-1234-5678-1234567890ab'
 FAKE_NETWORK_DHCP_NS = "qdhcp-%s" % FAKE_NETWORK_UUID
 FAKE_PROJECT_ID = 'aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'

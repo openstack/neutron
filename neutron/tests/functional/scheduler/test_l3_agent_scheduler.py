@@ -324,7 +324,7 @@ class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def _create_legacy_agents(self, agent_count, down_agent_count, az):
         # Creates legacy l3 agents and sets admin state based on
         #  down agent count.
-        hosts = ['{}-host-{}'.format(az, i) for i in range(agent_count)]
+        hosts = [f'{az}-host-{i}' for i in range(agent_count)]
         l3_agents = [
             self._create_l3_agent(hosts[i], self.adminContext, 'legacy',
                                   self.l3_plugin, (i >= down_agent_count),

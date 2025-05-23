@@ -286,8 +286,8 @@ class FakeResource(dict):
     def __repr__(self):
         reprkeys = sorted(k for k in self.__dict__.keys() if k[0] != '_' and
                           k != 'manager')
-        info = ", ".join("{}={}".format(k, getattr(self, k)) for k in reprkeys)
-        return "<{} {}>".format(self.__class__.__name__, info)
+        info = ", ".join(f"{k}={getattr(self, k)}" for k in reprkeys)
+        return f"<{self.__class__.__name__} {info}>"
 
     def keys(self):
         return self._info.keys()

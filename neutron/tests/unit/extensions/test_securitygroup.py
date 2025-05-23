@@ -2200,7 +2200,7 @@ class TestConvertIPPrefixToCIDR(base.BaseTestCase):
     def test_convert_ip_prefix_no_netmask_to_cidr(self):
         addr = {'10.1.2.3': '32', 'fe80::2677:3ff:fe7d:4c': '128'}
         for k, v in addr.items():
-            self.assertEqual('{}/{}'.format(k, v),
+            self.assertEqual(f'{k}/{v}',
                              ext_sg.convert_ip_prefix_to_cidr(k))
 
     def test_convert_ip_prefix_with_netmask_to_cidr(self):

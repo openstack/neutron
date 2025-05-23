@@ -231,7 +231,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
             request_dns_name = dns_name
             request_fqdn = request_dns_name
             if not request_dns_name.endswith('.'):
-                request_fqdn = '{}.{}'.format(dns_name, dns_domain)
+                request_fqdn = f'{dns_name}.{dns_domain}'
         return request_dns_name, request_fqdn
 
     def _get_hostname_and_fqdn(self, request_dns_name, request_fqdn,
@@ -245,7 +245,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                 '.', '-').replace(':', '-')
             fqdn = hostname
             if dns_domain:
-                fqdn = '{}.{}'.format(hostname, dns_domain)
+                fqdn = f'{hostname}.{dns_domain}'
         return hostname, fqdn
 
     def _verify_ip_in_subnet(self, ip, subnets_list):

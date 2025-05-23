@@ -102,10 +102,10 @@ class QinqExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
             with testlib_api.ExpectedException(
                     web_exc.HTTPClientError) as ctx_manager:
                 with self.network(name='net1', as_admin=True,
-                                arg_list=arg_list, **net_kwargs):
+                                  arg_list=arg_list, **net_kwargs):
                     pass
             self.assertEqual(web_exc.HTTPBadRequest.code,
-                            ctx_manager.exception.code)
+                             ctx_manager.exception.code)
             return
 
         # In any other case it should work fine

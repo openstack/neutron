@@ -91,7 +91,7 @@ class ConntrackdManagerTestCase(base.BaseSudoTestCase):
         try:
             with open(config_path) as conf:
                 return conf.read()
-        except (OSError, IOError) as e:
+        except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
         return ''

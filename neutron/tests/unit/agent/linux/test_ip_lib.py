@@ -950,7 +950,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
             self.netns_cmd.execute(['ip', 'link', 'list'], env)
             execute.assert_called_once_with(
                 ['ip', 'netns', 'exec', 'ns', 'env'] +
-                ['{}={}'.format(k, v) for k, v in env.items()] +
+                [f'{k}={v}' for k, v in env.items()] +
                 ['ip', 'link', 'list'],
                 run_as_root=True, check_exit_code=True, extra_ok_codes=None,
                 log_fail_as_error=True, privsep_exec=False)

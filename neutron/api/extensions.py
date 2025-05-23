@@ -157,7 +157,7 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
                       resource.collection)
             for action, method in resource.collection_actions.items():
                 conditions = dict(method=[method])
-                path = "/{}/{}".format(resource.collection, action)
+                path = f"/{resource.collection}/{action}"
                 with mapper.submapper(controller=resource.controller,
                                       action=action,
                                       path_prefix=path_prefix,
@@ -582,7 +582,7 @@ class RequestExtension:
         self.url_route = url_route
         self.handler = handler
         self.conditions = dict(method=[method])
-        self.key = "{}-{}".format(method, url_route)
+        self.key = f"{method}-{url_route}"
 
 
 class ActionExtension:

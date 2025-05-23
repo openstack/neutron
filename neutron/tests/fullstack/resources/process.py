@@ -67,7 +67,7 @@ class ProcessFixture(fixtures.Fixture):
         fileutils.ensure_tree(log_dir, mode=0o755)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S-%f")
-        log_file = "{}--{}.log".format(self.process_name, timestamp)
+        log_file = f"{self.process_name}--{timestamp}.log"
         run_as_root = bool(self.namespace)
         exec_name = (self.exec_name
                      if run_as_root

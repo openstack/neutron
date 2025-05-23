@@ -181,7 +181,7 @@ class TestMechManager(base.BaseTestCase):
         self._manager = managers.MechanismManager()
 
     def _check_precommit(self, resource, operation):
-        meth_name = "{}_{}_precommit".format(operation, resource)
+        meth_name = f"{operation}_{resource}_precommit"
         method = getattr(self._manager, meth_name)
         fake_ctxt = mock.Mock()
         fake_ctxt.current = {}

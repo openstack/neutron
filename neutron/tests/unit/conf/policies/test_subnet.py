@@ -771,7 +771,7 @@ class ProjectManagerTests(AdminTests):
             self.context, 'delete_subnet:tags', self.alt_target)
         self.assertTrue(
                 policy.enforce(self.context, 'delete_subnet:tags',
-                           self.alt_target_own_net))
+                               self.alt_target_own_net))
 
 
 class ProjectMemberTests(ProjectManagerTests):

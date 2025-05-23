@@ -439,7 +439,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def _test_action_on_attr(self, context, action, obj, attr, value,
                              exception=None, **kwargs):
-        action = "{}_{}".format(action, obj)
+        action = f"{action}_{obj}"
         target = {'tenant_id': 'the_owner', attr: value}
         if kwargs:
             target.update(kwargs)
@@ -832,7 +832,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         # Construct RuleChecks for an action, attribute and subattribute
         match_rule = oslo_policy.RuleCheck('rule', action)
         attr_rule = oslo_policy.RuleCheck(
-            'rule', '{}:{}s'.format(action, FAKE_RESOURCE_NAME))
+            'rule', f'{action}:{FAKE_RESOURCE_NAME}s')
         sub_attr_rules = [oslo_policy.RuleCheck(
             'rule', '{}:{}:{}'.format(action, 'attr', 'sub_attr_1'))]
         # Build an AndCheck from the given RuleChecks

@@ -11,7 +11,6 @@
 #    under the License.
 
 from importlib.metadata import entry_points
-import sys
 
 from oslo_config import cfg
 
@@ -20,16 +19,10 @@ from neutron._i18n import _
 
 MIGRATION_ENTRYPOINTS = 'neutron.db.alembic_migrations'
 
-if sys.version_info >= (3, 10):
-    migration_entrypoints = {
-        entrypoint.name: entrypoint
-        for entrypoint in entry_points(group=MIGRATION_ENTRYPOINTS)
-    }
-else:
-    migration_entrypoints = {
-        entrypoint.name: entrypoint
-        for entrypoint in entry_points()[MIGRATION_ENTRYPOINTS]
-    }
+migration_entrypoints = {
+    entrypoint.name: entrypoint
+    for entrypoint in entry_points(group=MIGRATION_ENTRYPOINTS)
+}
 
 INSTALLED_SUBPROJECTS = list(migration_entrypoints)
 

@@ -133,7 +133,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         else:
             self._ip = fixed_ip['ip_address']
             prefixlen = netaddr.IPNetwork(subnet['subnet']['cidr']).prefixlen
-            self._ip_cidr = '{}/{}'.format(self._ip, prefixlen)
+            self._ip_cidr = f'{self._ip}/{prefixlen}'
             self.gateway_ip = subnet['subnet']['gateway_ip']
 
             if self.use_dhcp:

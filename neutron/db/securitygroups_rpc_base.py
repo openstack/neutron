@@ -343,7 +343,7 @@ class SecurityGroupInfoAPIMixin:
             # only allow DHCP servers to talk to the appropriate IP address
             # to avoid getting leases that don't match the Neutron IPs
             prefix = '32' if ip_version == 4 else '128'
-            dests = ['{}/{}'.format(ip, prefix) for ip in port['fixed_ips']
+            dests = [f'{ip}/{prefix}' for ip in port['fixed_ips']
                      if netaddr.IPNetwork(ip).version == ip_version]
             if ip_version == 4:
                 # v4 dhcp servers can also talk to broadcast
