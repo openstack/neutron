@@ -77,6 +77,13 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
                 mock.patch.object(server_socket.UnixDomainMetadataProxy,
                                   'wait'):
             agt.start()
+            external_ids = agt.sb_idl.db_get(
+                'Chassis_Private', agt.chassis, 'external_ids').execute(
+                check_error=True)
+            self.assertEqual(
+                external_ids[ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY],
+                '0')
+
         self._check_loaded_and_started_extensions(agt)
 
         self.addCleanup(agt.ext_manager_api.ovs_idl.ovsdb_connection.stop)
@@ -128,9 +135,10 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
         # Check the metadata extension is registered.
         chassis_id = uuid.UUID(self.chassis_name)
         agent_id = uuid.uuid5(chassis_id, 'metadata_agent')
-        ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: str(agent_id)}
         ch_private = self.sb_api.lookup('Chassis_Private', self.chassis_name)
-        self.assertEqual(ext_ids, ch_private.external_ids)
+        self.assertEqual(
+            ch_private.external_ids[ovn_const.OVN_AGENT_METADATA_ID_KEY],
+            str(agent_id))
 
         # Check Unix proxy is running.
         metadata_extension = self.ovn_agent[METADATA_EXTENSION]

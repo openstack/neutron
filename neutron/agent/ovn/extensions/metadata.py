@@ -161,6 +161,7 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
         Reload the configuration and sync the agent again.
         """
         self.agent_api.load_config()
+        self.agent_api.update_neutron_sb_cfg_key()
         self.sync()
 
     def start(self):
@@ -177,6 +178,7 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
 
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
+        self.agent_api.update_neutron_sb_cfg_key()
 
         # Start the metadata server.
         proxy_thread = threading.Thread(target=self._proxy.wait)
