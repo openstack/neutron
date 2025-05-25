@@ -11,7 +11,6 @@
 #    under the License.
 
 from neutron import server
-from neutron.server import ovn_maintenance
 from neutron.server import periodic_eventlet
 from neutron.server import rpc_eventlet
 from neutron.server import wsgi_eventlet
@@ -27,7 +26,3 @@ def main_rpc_eventlet():
 
 def main_periodic_eventlet():
     server.boot_server(periodic_eventlet.eventlet_periodic_workers)
-
-
-def main_ovn_maintenance_eventlet():
-    return server.boot_server(ovn_maintenance.eventlet_ovn_maintenance_worker)

@@ -284,7 +284,7 @@ def _start_workers(workers, neutron_api=None):
                 worker_launcher = neutron_api.wsgi_app.process_launcher
             if worker_launcher is None:
                 worker_launcher = common_service.ProcessLauncher(
-                    cfg.CONF, wait_interval=1.0, restart_method='mutate'
+                    cfg.CONF, restart_method='mutate',
                 )
 
             # add extra process worker and spawn there all workers with

@@ -134,6 +134,12 @@ The Neutron API consists of the following executables:
   mechanism driver.
 
 
+.. note::
+
+  Right now, only the API server and the OVN maintenance task are running
+  without eventlet.
+
+
 ML2/OVN
 ~~~~~~~
 
@@ -153,11 +159,20 @@ restarted, this method will provide the same register UUID and the previous
 register (if present in the database) will be overwritten.
 
 
+OVN maintenance task
+~~~~~~~~~~~~~~~~~~~~
+
+The ``OvnDbSynchronizer`` class now uses a ``threading.Thread`` to spawn the
+``do_sync`` function. This is used by the Northbound and Southbound
+synchronizer classes (``OvnNbSynchronizer``, ``OvnSbSynchronizer``).
+
+
 .. note::
 
-  Right now, only the API server is running without eventlet.
-
-
+  The ``stop`` method needs to be refactored, along with the function
+  ``do_sync`` implemented in each child class. The ``stop`` method needs to
+  support a fast exit mechanism to stop as fast as possible the running
+  synchronization.
 
 
 References

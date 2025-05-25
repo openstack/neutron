@@ -13,9 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron import server
-from neutron.server import api
+# NOTE(ralonsoh): remove once the default backend is ``BackendType.THREADING``
+import oslo_service.backend as service
+service.init_backend(service.BackendType.THREADING)
+
+# pylint: disable=wrong-import-position
+from neutron import server  # noqa: E402
+from neutron.server import api  # noqa: E402
+from neutron.server import ovn_maintenance  # noqa: E402
 
 
 def main_api_uwsgi():
     return server.boot_server(api.api_server)
+
+
+def main_ovn_maintenance():
+    return server.boot_server(ovn_maintenance.ovn_maintenance_worker)
