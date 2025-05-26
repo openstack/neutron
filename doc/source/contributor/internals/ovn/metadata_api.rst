@@ -24,7 +24,7 @@ Neutron and Metadata Today
 The following blog post describes how VMs access the metadata API through
 Neutron today.
 
-https://www.suse.com/communities/blog/vms-get-access-metadata-neutron/
+https://www.suse.com/c/vms-get-access-metadata-neutron/
 
 In summary, we run a metadata proxy in either the router namespace or DHCP
 namespace.  The DHCP namespace can be used when there's no router connected to
@@ -341,7 +341,7 @@ L3 HA, we will want to evolve to it.
 Other References
 ----------------
 
-* Haproxy config --
+* HAProxy config --
   https://review.openstack.org/#/c/431691/34/neutron/agent/metadata/driver.py
 
 * https://engineeringblog.yelp.com/2015/04/true-zero-downtime-haproxy-reloads.html

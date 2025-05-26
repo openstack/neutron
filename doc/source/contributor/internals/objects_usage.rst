@@ -644,7 +644,6 @@ four releases newer than what is running on the computes.
 Known fast forward upgrade windows are:
 
 * Red Hat OpenStack Platform (RHOSP): X -> X+3 [#]_
-* SuSE OpenStack Cloud (SOC): X -> X+2 [#]_
 * Ubuntu Cloud Archive: X -> X+4 [#]_
 
 Therefore removal of OVO version downgrade code should be removed in the fifth
@@ -690,6 +689,5 @@ References
 .. [#] https://docs.openstack.org/neutron/latest/contributor/internals/db_layer.html#the-standard-attribute-table
 .. [#] https://opendev.org/openstack/neutron/src/tag/ocata-eol/neutron/objects/rbac_db.py#L291
 .. [#] https://access.redhat.com/support/policy/updates/openstack/platform/
-.. [#] https://www.suse.com/releasenotes/x86_64/SUSE-OPENSTACK-CLOUD/8/#Upgrade
 .. [#] https://www.ubuntu.com/about/release-cycle
 .. [#] https://opendev.org/openstack/neutron-lib/src/neutron_lib/objects/utils.py
