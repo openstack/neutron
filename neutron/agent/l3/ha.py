@@ -80,6 +80,9 @@ class AgentMixin:
     def __init__(self, host):
         self._init_ha_conf_path()
         super().__init__(host)
+
+    def init_host(self):
+        super().init_host()
         # BatchNotifier queue is needed to ensure that the HA router
         # state change sequence is under the proper order.
         self.state_change_notifier = batch_notifier.BatchNotifier(

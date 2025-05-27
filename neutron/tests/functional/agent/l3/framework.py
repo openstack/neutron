@@ -101,6 +101,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.conf = self._configure_agent('agent1')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)
+        self.agent.init_host()
 
     def _get_config_opts(self):
         config = cfg.ConfigOpts()

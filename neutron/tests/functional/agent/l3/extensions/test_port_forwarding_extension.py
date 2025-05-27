@@ -41,6 +41,7 @@ class L3AgentFipPortForwardingExtensionTestFramework(
         self.conf.set_override('extensions', ['port_forwarding'], 'agent')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)
+        self.agent.init_host()
         self.fip_pf_ext = pf.PortForwardingAgentExtension()
         self.fip_id1 = _uuid()
         self.fip_id2 = _uuid()

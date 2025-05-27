@@ -70,6 +70,7 @@ class RouterGatewayIPQosAgentExtensionTestFramework(
         self.conf.set_override('extensions', ['gateway_ip_qos'], 'agent')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)
+        self.agent.init_host()
         self._set_pull_mock()
         self.set_test_qos_rules(INGRESS_EGRESS_POLICY_ID,
                                 [self.test_bw_limit_rule_1,
