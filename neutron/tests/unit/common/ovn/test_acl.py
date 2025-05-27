@@ -60,7 +60,8 @@ class TestACLs(base.BaseTestCase):
                         'lport': self.fake_port['id'],
                         'lswitch': 'neutron-network_id1',
                         'match': 'outport == "fake_port_id1" && ip',
-                        'priority': 1001}
+                        'priority': 1001,
+                        'meter': []}
         acl_from_lport = {'action': 'drop', 'direction': 'from-lport',
                           'external_ids': {'neutron:lport':
                                            self.fake_port['id']},
@@ -68,7 +69,8 @@ class TestACLs(base.BaseTestCase):
                           'lport': self.fake_port['id'],
                           'lswitch': 'neutron-network_id1',
                           'match': 'inport == "fake_port_id1" && ip',
-                          'priority': 1001}
+                          'priority': 1001,
+                          'meter': []}
         for acl in acls:
             if 'to-lport' in acl.values():
                 self.assertEqual(acl_to_lport, acl)
