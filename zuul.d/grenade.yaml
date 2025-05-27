@@ -412,16 +412,6 @@
       grenade_from_branch: stable/2024.2
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
-      grenade_devstack_localrc:
-        shared:
-          NEUTRON_DEPLOY_MOD_WSGI: False
-      devstack_services:
-        # Neutron services
-        q-svc: true
-        neutron-api: false
-        neutron-rpc-server: false
-        neutron-periodic-workers: false
-        neutron-ovn-maintenance-worker: false
 
 - job:
     name: neutron-ovn-grenade-multinode-skip-level
@@ -438,12 +428,3 @@
       grenade_from_branch: stable/2024.2
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
-      grenade_devstack_localrc:
-        shared:
-          NEUTRON_DEPLOY_MOD_WSGI: False
-      devstack_services:
-        q-svc: true
-        neutron-api: false
-        neutron-rpc-server: false
-        neutron-periodic-workers: false
-        neutron-ovn-maintenance-worker: false
