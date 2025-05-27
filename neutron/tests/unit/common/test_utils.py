@@ -12,16 +12,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from concurrent import futures
 import os.path
+import queue
 import random
 import re
 import sys
+import threading
 import time
 from unittest import mock
 
 import ddt
-import eventlet
-from eventlet import queue
 import netaddr
 from neutron_lib import constants
 from oslo_config import cfg
@@ -117,11 +118,14 @@ class TestExceptionLogger(base.BaseTestCase):
         logger = mock.Mock()
 
         @utils.exception_logger(logger=logger)
-        def func():
-            return result
+        def func(ret):
+            ret.append(result)
 
-        gt = eventlet.spawn(func)
-        self.assertEqual(result, gt.wait())
+        ret_value = []
+        _thread = threading.Thread(target=func, args=(ret_value, ))
+        _thread.start()
+        _thread.join()
+        self.assertEqual(result, ret_value[0])
         self.assertFalse(logger.called)
 
     def test_spawn_raise(self):
@@ -132,8 +136,8 @@ class TestExceptionLogger(base.BaseTestCase):
         def func():
             raise RuntimeError(result)
 
-        gt = eventlet.spawn(func)
-        self.assertRaises(RuntimeError, gt.wait)
+        _thread = threading.Thread(target=func)
+        _thread.start()
         self.assertTrue(logger.called)
 
     def test_pool_spawn_normal(self):
@@ -144,10 +148,9 @@ class TestExceptionLogger(base.BaseTestCase):
         def func(i):
             calls(i)
 
-        pool = eventlet.GreenPool(4)
-        for i in range(0, 4):
-            pool.spawn(func, i)
-        pool.waitall()
+        with futures.ThreadPoolExecutor(max_workers=4) as executor:
+            fs = [executor.submit(func, i) for i in range(4)]
+            all(f.done() for f in fs)
 
         calls.assert_has_calls([mock.call(0), mock.call(1),
                                 mock.call(2), mock.call(3)],
@@ -164,10 +167,9 @@ class TestExceptionLogger(base.BaseTestCase):
                 raise RuntimeError(2)
             calls(i)
 
-        pool = eventlet.GreenPool(4)
-        for i in range(0, 4):
-            pool.spawn(func, i)
-        pool.waitall()
+        with futures.ThreadPoolExecutor(max_workers=4) as executor:
+            fs = [executor.submit(func, i) for i in range(4)]
+            all(f.done() for f in fs)
 
         calls.assert_has_calls([mock.call(0), mock.call(1), mock.call(3)],
                                any_order=True)
@@ -554,9 +556,10 @@ class SpawnWithOrWithoutProfilerTestCase(base.BaseTestCase):
             q.put(is_profiler_initialized('in-parent'))
 
         # Make sure in parent we start with an uninitialized profiler by
-        # eventlet.spawn()-ing a new thread. Otherwise the unit test runner
-        # thread may leak an initialized profiler from one test to another.
-        eventlet.spawn(thread_with_no_leaked_profiler)
+        # spawning a new thread. Otherwise the unit test runner thread may
+        # leak an initialized profiler from one test to another.
+        _thread = threading.Thread(target=thread_with_no_leaked_profiler)
+        _thread.start()
 
         # In order to have some global protection against leaking initialized
         # profilers neutron.test.base.BaseTestCase.setup() also calls
