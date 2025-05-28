@@ -18,6 +18,8 @@ import uuid
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
+from neutron_lib.api.definitions import qinq as qinq_apidef
+from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
@@ -52,6 +54,11 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     resource_provider_uuid5_namespace = uuid.UUID(
         '87ee7d5c-73bb-11e8-9008-c4d987b2a692')
+
+    _explicitly_not_supported_extensions = set([
+        vlan_apidef.ALIAS,
+        qinq_apidef.ALIAS
+    ])
 
     def __init__(self):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
@@ -108,14 +115,6 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         raise ValueError(
             _('Cannot standardize bridge mappings of agent type: %s'),
             agent['agent_type'])
-
-    def check_vlan_transparency(self, context):
-        """Currently Openvswitch driver doesn't support vlan transparency."""
-        return False
-
-    def check_vlan_qinq(self, context):
-        """Currently Openvswitch driver doesn't support QinQ vlan."""
-        return False
 
     def bind_port(self, context):
         vnic_type = context.current.get(portbindings.VNIC_TYPE,

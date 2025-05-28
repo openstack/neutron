@@ -1,0 +1,9 @@
+---
+deprecations:
+  - |
+    Config options ``vlan_transparent`` and ``vlan_qinq`` are now deprecated and
+    will be removed in a future release. Availability of the ``vlan-transparent``
+    and ``vlan-qinq`` API extensions can now be calculated by Neutron based on the
+    mechanism drivers enabled in the environment. If any of the enabled
+    mechanism drivers do not support these features, the API extensions will be
+    disabled automatically.

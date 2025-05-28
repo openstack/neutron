@@ -15,6 +15,8 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import qinq as qinq_apidef
+from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log
@@ -37,6 +39,11 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     network.
     """
 
+    _explicitly_not_supported_extensions = set([
+        vlan_apidef.ALIAS,
+        qinq_apidef.ALIAS
+    ])
+
     def __init__(self):
         vif_details = {portbindings.CAP_PORT_FILTER: False,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
@@ -55,14 +62,6 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     def get_mappings(self, agent):
         return agent['configurations'].get('interface_mappings', {})
-
-    def check_vlan_transparency(self, context):
-        """Macvtap driver vlan transparency support."""
-        return False
-
-    def check_vlan_qinq(self, context):
-        """Currently Macvtap driver doesn't support QinQ vlan."""
-        return False
 
     def _is_live_migration(self, context):
         # We cannot just check if

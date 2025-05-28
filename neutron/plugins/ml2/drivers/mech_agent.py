@@ -43,6 +43,8 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
     __init__(), and must implement try_to_bind_segment_for_agent().
     """
 
+    _explicitly_not_supported_extensions = set()
+
     def __init__(self, agent_type, supported_vnic_types):
         """Initialize base class for specific L2 agent type.
 
@@ -55,6 +57,11 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
 
     def initialize(self):
         pass
+
+    def supported_extensions(self, extensions):
+        # filter out extensions which this mech driver explicitly claimed
+        # that are not supported
+        return extensions - self._explicitly_not_supported_extensions
 
     def create_port_precommit(self, context):
         self._insert_provisioning_block(context)
