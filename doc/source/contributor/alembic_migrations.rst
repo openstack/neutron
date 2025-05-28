@@ -161,6 +161,31 @@ neutron-db-manage command can be used to generate migration scripts for you to
 complete. The operations in the template are those supported by the Alembic
 migration library.
 
+The neutron-db-manage command is designed for sequential database upgrades.
+Typically, it's executed once to reach a specific schema version. Subsequent
+executions should then resume from that achieved point. This design
+theoretically prevents scenarios where the same upgrade script runs multiple
+times, such as attempting to create an already existing table.
+However, due to potential real-world issues such as loss of the recorded
+database version or backporting of scripts, Alembic migration scripts must be
+idempotent. Therefore, scripts that modify the schema, such as adding a new
+table, should first check for the object's existence, for example:
+
+.. code-block:: python
+
+        import sqlalchemy as sa
+
+        from neutron.db import migration
+
+        def upgrade():
+            migration.add_column_if_not_exists(
+                'networks',
+                sa.Column('qinq', sa.Boolean(), server_default=None)
+            )
+
+Module `neutron.db.migration` provides helper functions to create table or add
+column to the existing table in the idempotent way.
+
 
 .. _neutron-db-manage-without-devstack:
 

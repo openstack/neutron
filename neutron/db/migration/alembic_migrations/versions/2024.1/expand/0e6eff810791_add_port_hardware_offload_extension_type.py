@@ -13,7 +13,6 @@
 #    under the License.
 #
 
-from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
@@ -36,14 +35,15 @@ neutron_milestone = [migration.RELEASE_2024_1]
 
 
 def upgrade():
-    op.create_table('porthardwareoffloadtype',
-                    sa.Column('port_id',
-                              sa.String(36),
-                              sa.ForeignKey('ports.id',
-                                            ondelete="CASCADE"),
-                              primary_key=True,
-                              index=True),
-                    sa.Column('hardware_offload_type',
-                              sa.String(255),
-                              nullable=True)
-                    )
+    migration.create_table_if_not_exists(
+        'porthardwareoffloadtype',
+        sa.Column('port_id',
+                  sa.String(36),
+                  sa.ForeignKey('ports.id',
+                                ondelete="CASCADE"),
+                  primary_key=True,
+                  index=True),
+        sa.Column('hardware_offload_type',
+                  sa.String(255),
+                  nullable=True)
+    )

@@ -505,21 +505,9 @@ class TestWalkDowngrade(oslotest_base.BaseTestCase):
             return True
 
 
-class TestWalkMigrations(testlib_api.MySQLTestCaseMixin,
-                         testlib_api.SqlTestCaseLight):
-    '''This will add framework for testing schema migration
-       for different backends.
-
-    '''
+class _BaseTestWalkMigrations(object):
 
     BUILD_SCHEMA = False
-
-    def execute_cmd(self, cmd=None):
-        with subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                              stderr=subprocess.STDOUT, shell=True) as proc:
-            output = proc.communicate()[0]
-            self.assertEqual(0, proc.returncode, 'Command failed with '
-                             'output:\n%s' % output)
 
     def _get_alembic_config(self, uri):
         db_config = migration.get_neutron_config()
@@ -529,6 +517,22 @@ class TestWalkMigrations(testlib_api.MySQLTestCaseMixin,
                                               str(uri),
                                               group='database')
         return db_config
+
+
+class TestWalkMigrations(_BaseTestWalkMigrations,
+                         testlib_api.MySQLTestCaseMixin,
+                         testlib_api.SqlTestCaseLight):
+    '''This will add framework for testing schema migration
+       for different backends.
+
+    '''
+
+    def execute_cmd(self, cmd=None):
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, shell=True) as proc:
+            output = proc.communicate()[0]
+            self.assertEqual(0, proc.returncode, 'Command failed with '
+                             'output:\n%s' % output)
 
     def _revisions(self):
         """Provides revisions and its parent revisions.
@@ -578,3 +582,55 @@ class TestWalkMigrations(testlib_api.MySQLTestCaseMixin,
 
         if upgrade_dest:
             migration.do_alembic_command(config, 'upgrade', upgrade_dest)
+
+
+class TestMigrationsIdempotency(_BaseTestWalkMigrations,
+                                testlib_api.MySQLTestCaseMixin,
+                                testlib_api.SqlTestCaseLight):
+    '''This class tests if the migration scripts are idempotent
+    '''
+
+    def _revert_alembic_version(self, target_versions=None):
+        alembic_version = sqlalchemy.Table(
+            'alembic_version', sqlalchemy.MetaData(),
+            sqlalchemy.Column('version_num', sqlalchemy.String(32)))
+
+        with self.engine.begin() as conn:
+            # Revision "5c85685d616d" is the head of the CONTRACT branch,
+            # it is from Newton release and we don't allow any new CONTRACT
+            # DB upgrades, so let's don't bother with that branch
+            conn.execute(
+                alembic_version.delete().where(
+                    alembic_version.c.version_num != '5c85685d616d'
+                )
+            )
+            if target_versions:
+                conn.execute(
+                    alembic_version.insert(),
+                    [{'version_num': tv} for tv in target_versions]
+                )
+
+    # NOTE(slaweq): this workaround is taken from Manila patch:
+    # https://review.opendev.org/#/c/291397/
+    # Set 5 minutes timeout for case of running it on very slow nodes/VMs.
+    # Note, that this test becomes slower with each addition of new DB
+    # migration. On fast nodes it can take about 5-10 secs having Mitaka set of
+    # migrations.
+    @test_base.set_timeout(600)
+    def test_db_upgrade_is_idempotent(self):
+        """Tests if Alembic upgrade scripts are idempotent.
+
+        This function tests if running Alembic upgrade scripts multiple times
+        results in the same database state. It does this by first upgrading the
+        database to the latest revision, then reverting it to a previous state,
+        and finally upgrading it again to the latest revision.
+        """
+        url_str = render_url_str(self.engine.url)
+        config = self._get_alembic_config(url_str)
+        migration.do_alembic_command(config, 'upgrade', 'heads')
+
+        # Now lets get back with revision to the 2023.2 HEAD ('89c58a70ceba')
+        # and then test again upgrade from from that point through all next
+        # releases, starting from 2024.1 if db migration scripts are idempotent
+        self._revert_alembic_version(["89c58a70ceba"])
+        migration.do_alembic_command(config, 'upgrade', 'heads')

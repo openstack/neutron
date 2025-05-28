@@ -38,7 +38,7 @@ neutron_milestone = [migration.RELEASE_2024_2]
 
 
 def upgrade():
-    port_trusted_table = op.create_table(
+    port_trusted_table = migration.create_table_if_not_exists(
         'porttrusted',
         sa.Column('port_id',
                   sa.String(36),
@@ -48,6 +48,11 @@ def upgrade():
         sa.Column('trusted',
                   sa.Boolean,
                   nullable=True))
+
+    if port_trusted_table is None:
+        # Table was already created before so no need to insert any data
+        # to it now
+        return
 
     # A simple model of the ml2_port_bindings table, just to get and update
     # binding:profile fields where needed

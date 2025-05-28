@@ -13,7 +13,6 @@
 #    under the License.
 #
 
-from alembic import op
 import sqlalchemy as sa
 
 from neutron.db import migration
@@ -34,7 +33,7 @@ neutron_milestone = [migration.RELEASE_2025_1]
 
 
 def upgrade():
-    op.add_column(
+    migration.add_column_if_not_exists(
         'networks',
         sa.Column('qinq', sa.Boolean(), server_default=None)
     )
