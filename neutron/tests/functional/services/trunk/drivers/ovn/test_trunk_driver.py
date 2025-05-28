@@ -26,13 +26,14 @@ from neutron.services.trunk import plugin as trunk_plugin
 from neutron.tests.functional import base
 
 
-class WaitForLogicalSwitchPortUpdateEvent(event.WaitEvent):
-    event_name = 'WaitForDataPathBindingCreateEvent'
+class WaitForPortBindingDeleteEvent(event.WaitEvent):
+    event_name = 'WaitForPortBindingDeleteEvent'
 
-    def __init__(self):
-        table = 'Logical_Switch_Port'
-        events = (self.ROW_UPDATE,)
-        super().__init__(events, table, None, timeout=15)
+    def __init__(self, port_id):
+        table = 'Port_Binding'
+        events = (self.ROW_DELETE, )
+        conditions = (('logical_port', '=', port_id), )
+        super().__init__(events, table, conditions, timeout=10)
 
 
 class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
@@ -127,14 +128,14 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
     def test_subport_delete(self):
         with self.subport() as subport:
             with self.trunk([subport]) as trunk:
-                lsp_event = WaitForLogicalSwitchPortUpdateEvent()
-                self.mech_driver.nb_ovn.idl.notify_handler.watch_events(
-                    (lsp_event,))
+                pb_event = WaitForPortBindingDeleteEvent(subport['port_id'])
+                self.mech_driver.sb_ovn.idl.notify_handler.watch_event(
+                    pb_event)
                 self.trunk_plugin.remove_subports(self.context, trunk['id'],
                                                   {'sub_ports': [subport]})
                 new_trunk = self.trunk_plugin.get_trunk(self.context,
                                                         trunk['id'])
-                self.assertTrue(lsp_event.wait())
+                self.assertTrue(pb_event.wait())
                 self._verify_trunk_info(new_trunk, has_items=False)
 
     def test_trunk_delete(self):
