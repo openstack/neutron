@@ -311,9 +311,12 @@ class QoSPlugin(qos.QoSPluginBase):
                     network_id=net_id)
                 net_segments[net_id] = segments
 
-            min_bw_request_group = QoSPlugin._get_min_bw_request_group(
-                qos_id, port_id, vnic_type, net_id,
-                min_bw_rules[qos_id], net_segments[net_id])
+            min_bw_request_group = None
+            if net_segments[net_id]:
+                min_bw_request_group = QoSPlugin._get_min_bw_request_group(
+                    qos_id, port_id, vnic_type, net_id,
+                    min_bw_rules=min_bw_rules[qos_id],
+                    segments=net_segments[net_id])
 
             min_pps_request_group = QoSPlugin._get_min_pps_request_group(
                 qos_id, port_id, vnic_type, min_pps_rules[qos_id])
