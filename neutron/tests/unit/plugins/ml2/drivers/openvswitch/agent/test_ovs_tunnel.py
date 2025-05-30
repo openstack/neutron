@@ -208,7 +208,8 @@ class TunnelTest:
             mock.call.setup_controllers(mock.ANY),
             mock.call.set_igmp_snooping_state(igmp_snooping),
             mock.call.setup_default_table(enable_openflow_dhcp=False,
-                                          enable_dhcpv6=False),
+                                          enable_dhcpv6=False,
+                                          enable_dns_forwarder=False),
         ]
 
         self.mock_map_tun_bridge_expected = [

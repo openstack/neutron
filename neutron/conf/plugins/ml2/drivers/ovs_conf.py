@@ -15,6 +15,7 @@
 from neutron_lib import constants as n_const
 from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_config import cfg
+from oslo_config import types
 
 from neutron._i18n import _
 from neutron.conf.agent import common
@@ -285,6 +286,29 @@ metadata_opts = [
 ]
 
 
+dns_forwarder_opts = [
+    cfg.ListOpt('upstream_dns_server_ports',
+               default=[],
+               item_type=types.String(
+                     regex=r'^(?:\d+(?:\.\d+){3}|\[[0-9a-fA-F:]+\]):\d+$',
+               ),
+               help=_("Comma-separated list of the Upstream DNS server "
+                      "in IP:port format which will be used as resolvers. "
+                      "Example: '1.1.1.1:53, [2606:4700:4700::1111]:53'")),
+    cfg.IntOpt('upstream_dns_query_timeout', default=5,
+               help=_("Query timeout in seconds for each "
+                      "upstream DNS servers")),
+    cfg.ListOpt('client_dns_server_ports',
+               default=['169.254.169.254:53', '[fd00::254]:53'],
+               item_type=types.String(
+                     regex=r'^(?:\d+(?:\.\d+){3}|\[[0-9a-fA-F:]+\]):\d+$',
+               ),
+               help=_("Comma-separated list of the Client DNS server "
+                      "in IP:port format which will be used "
+                      "inside client instances.")),
+]
+
+
 def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(ovs_opts, "OVS")
     cfg.register_opts(agent_opts, "AGENT")
@@ -293,6 +317,7 @@ def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(local_ip_opts, "LOCAL_IP")
     cfg.register_opts(meta_conf.METADATA_PROXY_HANDLER_OPTS, "METADATA")
     cfg.register_opts(metadata_opts, "METADATA")
+    cfg.register_opts(dns_forwarder_opts, "DNS_FORWARDER")
 
 
 def register_ovs_opts(cfg=cfg.CONF):

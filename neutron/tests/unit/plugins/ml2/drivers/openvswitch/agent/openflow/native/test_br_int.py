@@ -37,7 +37,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
 
     def test_setup_default_table(self):
         self.br.setup_default_table(enable_openflow_dhcp=True,
-                                    enable_dhcpv6=True)
+                                    enable_dhcpv6=True,
+                                    enable_dns_forwarder=True)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp,
@@ -185,6 +186,42 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 priority=0,
                 table_id=31),
                            active_bundle=None),
+            call._send_msg(
+                ofpp.OFPFlowMod(
+                    dp,
+                    cookie=self.stamp,
+                    instructions=[
+                        ofpp.OFPInstructionActions(
+                            ofp.OFPIT_APPLY_ACTIONS, [
+                                ofpp.OFPActionOutput(ofp.OFPP_CONTROLLER, 0)
+                            ]),
+                    ],
+                    match=ofpp.OFPMatch(
+                        eth_type=self.ether_types.ETH_TYPE_IP,
+                        ip_proto=self.in_proto.IPPROTO_UDP,
+                        ipv4_dst="169.254.169.254",
+                        udp_dst=53),
+                    priority=102,
+                    table_id=ovs_constants.TRANSIENT_TABLE),
+                active_bundle=None),
+            call._send_msg(
+                ofpp.OFPFlowMod(
+                    dp,
+                    cookie=self.stamp,
+                    instructions=[
+                        ofpp.OFPInstructionActions(
+                            ofp.OFPIT_APPLY_ACTIONS, [
+                                ofpp.OFPActionOutput(ofp.OFPP_CONTROLLER, 0)
+                            ]),
+                    ],
+                    match=ofpp.OFPMatch(
+                        eth_type=self.ether_types.ETH_TYPE_IPV6,
+                        ip_proto=self.in_proto.IPPROTO_UDP,
+                        ipv6_dst="fd00::254",
+                        udp_dst=53),
+                    priority=102,
+                    table_id=ovs_constants.TRANSIENT_TABLE),
+                active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
