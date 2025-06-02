@@ -118,10 +118,13 @@ class CustomNetworkConfigurator:
             keystone_session = ks_loading.load_session_from_conf_options(
                     cfg.CONF, auth_section, auth=auth)
             self._KEYSTONE = connection.Connection(
-                    session=keystone_session, oslo_conf=cfg.CONF,
-                    connect_retries=cfg.CONF.http_retries)
+                    session=keystone_session,
+                    connect_retries=cfg.CONF.http_retries,
+                    service_types={'identity'},
+                    strict_proxies=True,
+                    identity_interface='internal')
 
-        return self._KEYSTONE
+        return self._KEYSTONE.identity
 
     def get_domain_name(self, project_id: str) -> str:
         """query keystone to get the name of the domain that
