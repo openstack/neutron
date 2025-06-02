@@ -15,7 +15,6 @@
 
 import functools
 
-from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants as plugin_constants
@@ -165,8 +164,7 @@ class SegmentTypeDriver(BaseTypeDriver):
                     context.elevated()):
                 LOG.debug('    - %s', srange)
 
-    @db_api.retry_db_errors
-    def _delete_expired_default_network_segment_ranges(self, start_time):
-        ns_range.NetworkSegmentRange.\
-            delete_expired_default_network_segment_ranges(
-                context.get_admin_context(), self.get_type(), start_time)
+    def _delete_expired_default_network_segment_ranges(self, ctx, start_time):
+        (ns_range.NetworkSegmentRange.
+        delete_expired_default_network_segment_ranges(
+            ctx, self.get_type(), start_time))
