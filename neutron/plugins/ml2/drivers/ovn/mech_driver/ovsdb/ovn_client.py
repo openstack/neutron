@@ -924,11 +924,16 @@ class OVNClient:
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: gw_lrouter_name,
             ovn_const.OVN_FIP_EXT_MAC_KEY: port_db['mac_address'],
             ovn_const.OVN_FIP_NET_ID: floatingip['floating_network_id']}
+        stateless_nat = ('true' if ovn_conf.is_stateless_nat_enabled() else
+                         'false')
+        options = {'stateless': stateless_nat}
         columns = {'type': 'dnat_and_snat',
                    'logical_ip': floatingip['fixed_ip_address'],
                    'external_ip': floatingip['floating_ip_address'],
                    'logical_port': floatingip['port_id'],
-                   'external_ids': ext_ids}
+                   'external_ids': ext_ids,
+                   'options': options,
+                   }
 
         # If OVN supports gateway_port column for NAT rules set gateway port
         # uuid to floating IP without gw port reference - LP#2035281.

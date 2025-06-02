@@ -449,7 +449,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                 self.nb_ovn,
                 self.sb_ovn,
                 ovn_conf.get_ovn_neutron_sync_mode(),
-                self
+                self,
+                is_maintenance=True,
             )
             self.nb_synchronizer.sync()
 

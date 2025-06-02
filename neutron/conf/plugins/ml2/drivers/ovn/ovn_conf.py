@@ -252,6 +252,12 @@ ovn_opts = [
                          "A migrated port is immediately activated on "
                          "the destination host.")],
                help=_('Activation strategy to use for live migration.')),
+    cfg.BoolOpt('stateless_nat_enabled',
+                default=False,
+                help=_('If enabled, the floating IP NAT rules will be '
+                       'stateless, instead of using the conntrack OVN '
+                       'actions. This strategy is faster in some '
+                       'environments, like for example DPDK deployments.')),
 ]
 
 nb_global_opts = [
@@ -427,3 +433,7 @@ def is_broadcast_arps_to_all_routers_enabled():
 
 def is_ovn_router_indirect_snat_enabled():
     return cfg.CONF.ovn.ovn_router_indirect_snat
+
+
+def is_stateless_nat_enabled():
+    return cfg.CONF.ovn.stateless_nat_enabled

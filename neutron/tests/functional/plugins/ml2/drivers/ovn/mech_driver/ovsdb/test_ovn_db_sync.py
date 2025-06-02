@@ -27,6 +27,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.services.qos import constants as qos_const
 from oslo_config import cfg
+from oslo_utils import strutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
@@ -1703,11 +1704,14 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         nb_synchronizer.sync_port_qos_policies(ctx)
         self._validate_qos_records()
 
-    def _create_floatingip(self, fip_network_id, port_id, qos_policy_id):
+    def _create_floatingip(self, fip_network_id, port_id, qos_policy_id=None):
         body = {'tenant_id': self._tenant_id,
                 'floating_network_id': fip_network_id,
                 'port_id': port_id,
-                'qos_policy_id': qos_policy_id}
+                }
+        if qos_policy_id:
+            body['qos_policy_id'] = qos_policy_id
+
         return self.l3_plugin.create_floatingip(self.context,
                                                 {'floatingip': body})
 
@@ -1862,6 +1866,51 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                                     log_event=log_const.ALL_EVENT)
         self._test_sync_acls_helper(test_log=True,
                                     log_event=log_const.DROP_EVENT)
+
+    def test_sync_fip_dnat_rules(self):
+        res = self._create_network(self.fmt, 'n1_ext', True, as_admin=True,
+                                   arg_list=('router:external',),
+                                   **{'router:external': True})
+        net_ext = self.deserialize(self.fmt, res)['network']
+        res = self._create_subnet(self.fmt, net_ext['id'], '10.0.0.0/24')
+        subnet_ext = self.deserialize(self.fmt, res)['subnet']
+        res = self._create_network(self.fmt, 'n1_int', True)
+        net_int = self.deserialize(self.fmt, res)['network']
+        self._create_subnet(self.fmt, net_int['id'], '10.10.0.0/24')
+
+        # Create a router with net_ext as GW network and net_int as internal
+        # one, and a floating IP on the external network.
+        data = {'name': 'r1', 'admin_state_up': True,
+                'tenant_id': self._tenant_id,
+                'external_gateway_info': {
+                    'enable_snat': True,
+                    'network_id': net_ext['id'],
+                    'external_fixed_ips': [{'ip_address': '10.0.0.5',
+                                            'subnet_id': subnet_ext['id']}]}
+                }
+        router = self.l3_plugin.create_router(self.context, {'router': data})
+        net_int_prtr = self._make_port(self.fmt, net_int['id'],
+                                       name='n1_int-p-rtr')['port']
+        self.l3_plugin.add_router_interface(
+            self.context, router['id'], {'port_id': net_int_prtr['id']})
+
+        ovn_config.cfg.CONF.set_override('stateless_nat_enabled', True,
+                                         group='ovn')
+        fip = self._create_floatingip(net_ext['id'], net_int_prtr['id'])
+        nat = self.nb_api.get_floatingip(fip['id'])
+        stateless = strutils.bool_from_string(nat['options']['stateless'])
+        self.assertTrue(stateless)
+
+        for value in (False, True):
+            ovn_config.cfg.CONF.set_override('stateless_nat_enabled', value,
+                                             group='ovn')
+            nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
+                self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
+                ovn_const.OVN_DB_SYNC_MODE_REPAIR, self.mech_driver)
+            nb_synchronizer.sync_fip_dnat_rules()
+            nat = self.nb_api.get_floatingip(fip['id'])
+            stateless = strutils.bool_from_string(nat['options']['stateless'])
+            self.assertEqual(value, stateless)
 
 
 class TestOvnSbSync(base.TestOVNFunctionalBase):

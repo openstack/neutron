@@ -812,6 +812,13 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         result = fip.execute(check_error=True)
         return result[0] if result else None
 
+    def get_floatingips(self):
+        cmd = self.db_find('NAT',
+            ('external_ids', '!=', {ovn_const.OVN_FIP_EXT_ID_KEY: ''}),
+            ('type', '=', 'dnat_and_snat')
+        )
+        return cmd.execute(check_error=True)
+
     def check_revision_number(self, name, resource, resource_type,
                               if_exists=True):
         return cmd.CheckRevisionNumberCommand(
