@@ -125,10 +125,24 @@ core_opts = [
                help=_("Neutron IPAM (IP address management) driver to use. "
                       "By default, the reference implementation of the "
                       "Neutron IPAM driver is used.")),
-    cfg.BoolOpt('vlan_transparent', default=False,
+    cfg.BoolOpt('vlan_transparent', default=None,
+                deprecated_for_removal=True,
+                deprecated_reason=_(
+                     'This option is going to be removed as availability '
+                     'of the `vlan_transparency` in the deployment is '
+                     'now calculated automatically based on the loaded '
+                     'mechanism drivers.'),
+                deprecated_since='2025.2',
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks.')),
-    cfg.BoolOpt('vlan_qinq', default=False,
+    cfg.BoolOpt('vlan_qinq', default=None,
+                deprecated_for_removal=True,
+                deprecated_reason=_(
+                     'This option is going to be removed as availability '
+                     'of the `vlan_qinq` in the deployment is '
+                     'now calculated automatically based on the loaded '
+                     'mechanism drivers.'),
+                deprecated_since='2025.2',
                 help=_('If True, then allow plugins that support it to '
                        'create VLAN transparent networks using 0x8a88 '
                        'ethertype.')),

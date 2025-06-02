@@ -1148,8 +1148,6 @@ class TestVlanTransparencyOptions(base.TestOVNFunctionalBase):
 
     def setUp(self):
         common_conf.register_core_common_config_opts()
-        common_conf.cfg.CONF.set_override('vlan_qinq', True)
-        common_conf.cfg.CONF.set_override('vlan_transparent', True)
         super().setUp()
         self._ovn_client = self.mech_driver._ovn_client
 

@@ -22,7 +22,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _disable_extension_by_config(aliases):
-    if not cfg.CONF.vlan_qinq:
+    if cfg.CONF.vlan_qinq is False:
         if apidef.ALIAS in aliases:
             aliases.remove(apidef.ALIAS)
         LOG.info('Disabled VLAN QinQ extension.')

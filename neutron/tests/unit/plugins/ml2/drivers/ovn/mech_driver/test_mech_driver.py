@@ -180,8 +180,6 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         # Need to register here for 'vlan_transparent' config before
         # setting up test_plugin
         config.register_common_config_options()
-        cfg.CONF.set_override('vlan_transparent', True)
-        cfg.CONF.set_override('vlan_qinq', True)
         cfg.CONF.set_override('ovsdb_connection_timeout', 30, group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super().setUp()

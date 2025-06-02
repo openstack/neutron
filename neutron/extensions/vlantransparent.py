@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _disable_extension_by_config(aliases):
-    if not cfg.CONF.vlan_transparent:
+    if cfg.CONF.vlan_transparent is False:
         if 'vlan-transparent' in aliases:
             aliases.remove('vlan-transparent')
         LOG.info('Disabled vlantransparent extension.')
