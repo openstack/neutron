@@ -161,6 +161,7 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
         Reload the configuration and sync the agent again.
         """
         self.agent_api.load_config()
+        self._update_chassis_private_config()
         self.agent_api.update_neutron_sb_cfg_key()
         self.sync()
 
@@ -178,6 +179,7 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
 
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
+        self._update_chassis_private_config()
         self.agent_api.update_neutron_sb_cfg_key()
 
         # Start the metadata server.
