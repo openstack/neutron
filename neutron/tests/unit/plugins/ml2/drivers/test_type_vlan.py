@@ -25,10 +25,13 @@ from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from testtools import matchers
 
+from neutron.common import wsgi_utils
+from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.objects import network_segment_range as obj_network_segment_range
 from neutron.objects.plugins.ml2 import vlanallocation as vlan_alloc_obj
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
+
 
 PROVIDER_NET = 'phys_net1'
 TENANT_NET = 'phys_net2'
@@ -361,6 +364,9 @@ class VlanTypeAllocationTest(testlib_api.SqlTestCase):
 class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
 
     def setUp(self):
+        ml2_config.register_ml2_plugin_opts()
+        mock.patch.object(wsgi_utils, 'get_api_worker_id',
+                          return_value=wsgi_utils.FIRST_WORKER_ID).start()
         super().setUp()
         cfg.CONF.set_override('network_vlan_ranges',
                               NETWORK_VLAN_RANGES,
@@ -400,7 +406,7 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
 
     def test__delete_expired_default_network_segment_ranges(self):
         self.driver._delete_expired_default_network_segment_ranges(
-            self.start_time)
+            self.context, self.start_time)
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
             self.context, network_type=self.driver.get_type())
         self.assertEqual(0, len(ret))

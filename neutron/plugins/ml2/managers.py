@@ -32,6 +32,7 @@ from oslo_utils import excutils
 import stevedore
 
 from neutron._i18n import _
+from neutron.common import wsgi_utils
 from neutron.conf.plugins.ml2 import config
 from neutron.db import segments_db
 from neutron.objects import ports
@@ -205,6 +206,9 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             driver.obj.initialize()
 
     def initialize_network_segment_range_support(self, start_time):
+        if wsgi_utils.get_api_worker_id() != wsgi_utils.FIRST_WORKER_ID:
+            return
+
         for network_type, driver in self.drivers.items():
             if network_type in constants.NETWORK_SEGMENT_RANGE_TYPES:
                 LOG.info("Initializing driver network segment range support "

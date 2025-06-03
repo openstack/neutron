@@ -127,7 +127,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
             # allocation during driver initialization, instead of using the
             # directory.get_plugin() method - the normal way used elsewhere to
             # check if a plugin is loaded.
-            self.sync_allocations()
+            self._sync_allocations()
 
     def _parse_tunnel_ranges(self, tunnel_ranges, current_range):
         for entry in tunnel_ranges:
@@ -145,17 +145,15 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
                  {'type': self.get_type(), 'range': current_range})
 
     @db_api.retry_db_errors
-    def _populate_new_default_network_segment_ranges(self, start_time):
-        ctx = context.get_admin_context()
-        with db_api.CONTEXT_WRITER.using(ctx):
-            for tun_min, tun_max in self.tunnel_ranges:
-                range_obj.NetworkSegmentRange.new_default(
-                    ctx, self.get_type(), None, tun_min, tun_max, start_time)
+    def _populate_new_default_network_segment_ranges(self, ctx, start_time):
+        for tun_min, tun_max in self.tunnel_ranges:
+            range_obj.NetworkSegmentRange.new_default(
+                ctx, self.get_type(), None, tun_min, tun_max, start_time)
 
     @db_api.retry_db_errors
-    def _get_network_segment_ranges_from_db(self):
+    def _get_network_segment_ranges_from_db(self, ctx=None):
         ranges = []
-        ctx = context.get_admin_context()
+        ctx = ctx or context.get_admin_context()
         with db_api.CONTEXT_READER.using(ctx):
             range_objs = (range_obj.NetworkSegmentRange.get_objects(
                 ctx, network_type=self.get_type()))
@@ -164,21 +162,27 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
 
         return ranges
 
+    @db_api.retry_db_errors
     def initialize_network_segment_range_support(self, start_time):
-        self._delete_expired_default_network_segment_ranges(start_time)
-        self._populate_new_default_network_segment_ranges(start_time)
-        # Override self.tunnel_ranges with the network segment range
-        # information from DB and then do a sync_allocations since the
-        # segment range service plugin has not yet been loaded at this
-        # initialization time.
-        self.tunnel_ranges = self._get_network_segment_ranges_from_db()
-        self.sync_allocations()
+        admin_context = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(admin_context):
+            self._delete_expired_default_network_segment_ranges(
+                admin_context, start_time)
+            self._populate_new_default_network_segment_ranges(
+                admin_context, start_time)
+            # Override self.tunnel_ranges with the network segment range
+            # information from DB and then do a sync_allocations since the
+            # segment range service plugin has not yet been loaded at this
+            # initialization time.
+            self.tunnel_ranges = self._get_network_segment_ranges_from_db(
+                ctx=admin_context)
+            self._sync_allocations(ctx=admin_context)
 
     def update_network_segment_range_allocations(self):
-        self.sync_allocations()
+        self._sync_allocations()
 
     @db_api.retry_db_errors
-    def sync_allocations(self):
+    def _sync_allocations(self, ctx=None):
         # determine current configured allocatable tunnel ids
         tunnel_ids = set()
         ranges = self.get_network_segment_ranges()
@@ -187,7 +191,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
 
         tunnel_id_getter = operator.attrgetter(self.segmentation_key)
         tunnel_col = getattr(self.model, self.segmentation_key)
-        ctx = context.get_admin_context()
+        ctx = ctx or context.get_admin_context()
         with db_api.CONTEXT_WRITER.using(ctx):
             # Check if the allocations are updated: if the total number of
             # allocations for this tunnel type matches the allocations of the
