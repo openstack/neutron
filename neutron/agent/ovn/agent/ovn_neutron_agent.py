@@ -151,6 +151,14 @@ class OVNNeutronAgent(service.Service):
         return ovsdb.MonitorAgentOvnSbIdl(tables, events,
                                           chassis=self.chassis).start()
 
+    def update_neutron_sb_cfg_key(self):
+        nb_cfg = self.sb_idl.db_get('Chassis_Private',
+                                    self.chassis, 'nb_cfg').execute()
+        external_ids = {ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: str(nb_cfg)}
+        self.sb_idl.db_set(
+            'Chassis_Private', self.chassis,
+            ('external_ids', external_ids)).execute(check_error=True)
+
     def start(self):
         self.ext_manager_api.ovs_idl = self._load_ovs_idl()
         self.load_config()
@@ -159,6 +167,8 @@ class OVNNeutronAgent(service.Service):
         self.ext_manager_api.sb_idl = self._load_sb_idl()
         self.ext_manager_api.nb_idl = self._load_nb_idl()
         self.ext_manager.start()
+
+        self.update_neutron_sb_cfg_key()
         LOG.info('OVN Neutron Agent started')
         self.wait()
 
