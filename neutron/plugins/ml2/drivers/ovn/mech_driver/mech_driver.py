@@ -1321,7 +1321,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
             if self._should_notify_nova(db_port):
                 self._plugin.nova_notifier.record_port_status_changed(
-                    db_port, const.PORT_STATUS_ACTIVE, const.PORT_STATUS_DOWN,
+                    db_port, const.PORT_STATUS_DOWN, const.PORT_STATUS_ACTIVE,
                     None)
                 self._plugin.nova_notifier.send_port_status(
                     None, None, db_port)
