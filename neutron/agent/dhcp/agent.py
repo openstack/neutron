@@ -121,13 +121,9 @@ class DhcpAgent(manager.Manager):
                 opt_value=self.conf.resync_throttle)
         self._periodic_resync_event = threading.Event()
         self.cache = NetworkCache()
-        self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
-        self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, self.conf.host)
         # create dhcp dir to store dhcp info
         dhcp_dir = os.path.dirname("/%s/dhcp/" % self.conf.state_path)
         fileutils.ensure_tree(dhcp_dir, mode=0o755)
-        self.dhcp_version = self.dhcp_driver_cls.check_version()
-        self._populate_networks_cache()
         # keep track of mappings between networks and routers for
         # metadata processing
         self._metadata_routers = {}  # {network_id: router_id}
@@ -153,6 +149,12 @@ class DhcpAgent(manager.Manager):
         self.restarted_metadata_proxy_set = set()
 
     def init_host(self):
+        super().init_host()
+
+        self.dhcp_driver_cls = importutils.import_class(self.conf.dhcp_driver)
+        self.plugin_rpc = DhcpPluginApi(topics.PLUGIN, self.conf.host)
+        self.dhcp_version = self.dhcp_driver_cls.check_version()
+        self._populate_networks_cache()
         self.sync_state()
 
     def _populate_networks_cache(self):
@@ -1060,11 +1062,15 @@ class NetworkCache:
 class DhcpAgentWithStateReport(DhcpAgent):
     def __init__(self, host=None, conf=None):
         super().__init__(host=host, conf=conf)
+        self.host = host
+
+    def init_host(self):
+        super().init_host()
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.failed_report_state = False
         self.agent_state = {
             'binary': constants.AGENT_PROCESS_DHCP,
-            'host': host,
+            'host': self.host,
             'availability_zone': self.conf.AGENT.availability_zone,
             'topic': topics.DHCP_AGENT,
             'configurations': {
