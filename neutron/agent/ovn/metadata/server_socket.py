@@ -88,8 +88,8 @@ class MetadataProxyHandler(
             return (external_ids[ovn_const.OVN_DEVID_EXT_ID_KEY],
                     external_ids[ovn_const.OVN_PROJID_EXT_ID_KEY])
         if num_ports == 0:
-            LOG.error("No port found in network %s with IP address %s",
-                      network_id, remote_address)
+            LOG.warning("No port found in network %s with IP address %s",
+                        network_id, remote_address)
         elif num_ports > 1:
             port_uuids = ', '.join([str(port.uuid) for port in ports])
             LOG.error("More than one port found in network %s with IP address "
