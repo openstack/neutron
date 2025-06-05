@@ -1238,8 +1238,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             else:
                 self.mech_driver._plugin.nova_notifier.\
                     record_port_status_changed.assert_called_once_with(
-                        mock.ANY, const.PORT_STATUS_ACTIVE,
-                        const.PORT_STATUS_DOWN, None)
+                        mock.ANY, const.PORT_STATUS_DOWN,
+                        const.PORT_STATUS_ACTIVE, None)
                 self.mech_driver._plugin.nova_notifier.\
                     send_port_status.assert_called_once_with(
                         None, None, mock.ANY)
