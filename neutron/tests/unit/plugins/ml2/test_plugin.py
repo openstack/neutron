@@ -43,6 +43,7 @@ from neutron_lib.plugins import utils as p_utils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import netutils
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 import testtools
 import webob
@@ -64,6 +65,7 @@ from neutron.plugins.ml2.common import constants as ml2_consts
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_context
+from neutron.plugins.ml2.drivers import type_tunnel
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
@@ -593,6 +595,64 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
             res = network_req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
             self.assertIn("network", res.json['NeutronError']['message'])
+
+
+class TestMl2AgentNotifications(Ml2PluginV2TestCase):
+
+    class Agent:
+        def __init__(self, agent_dict):
+            for field in agent_dict:
+                setattr(self, field, agent_dict[field])
+
+    def test_delete_agent_notified(self):
+        agent_status = {'agent_type': constants.AGENT_TYPE_OVS,
+                'binary': constants.AGENT_PROCESS_OVS,
+                'host': 'AHOST',
+                'topic': 'N/A',
+                'configurations': {'tunnel_types': ['vxlan'],
+                                   'tunneling_ip': '100.101.2.3'}}
+        agent = self.plugin.create_or_update_agent(self.context,
+                                                   dict(agent_status),
+                                                   timeutils.utcnow())
+        agnt = self.Agent(agent[1])
+        with mock.patch.object(
+                self.plugin.notifier, 'tunnel_delete') as m_t_del:
+            with mock.patch.object(
+                    type_tunnel.EndpointTunnelTypeDriver,
+                    'delete_endpoint') as m_del_ep:
+                self.plugin.delete_agent_notified(
+                    resource='agent', event='after_delete', trigger=None,
+                    payload=events.DBEventPayload(
+                        self.context, states=(agnt,),
+                        resource_id=agent[1]['id']))
+                m_t_del.assert_called_once_with(
+                    context=mock.ANY,
+                    tunnel_ip='100.101.2.3', tunnel_type='vxlan')
+                m_del_ep.assert_called_once_with('100.101.2.3')
+
+    def test_delete_agent_notified_non_ovs(self):
+        agent_status = {'agent_type': constants.AGENT_TYPE_NIC_SWITCH,
+                'binary': constants.AGENT_PROCESS_NIC_SWITCH,
+                'host': 'AHOST',
+                'topic': 'N/A',
+                'configurations': {'tunnel_types': ['vxlan'],
+                                   'tunneling_ip': '100.101.2.3'}}
+        agent = self.plugin.create_or_update_agent(self.context,
+                                                  dict(agent_status),
+                                                  timeutils.utcnow())
+        agnt = self.Agent(agent[1])
+        with mock.patch.object(
+                self.plugin.notifier, 'tunnel_delete') as m_t_del:
+            with mock.patch.object(
+                    type_tunnel.EndpointTunnelTypeDriver,
+                    'delete_endpoint') as m_del_ep:
+                self.plugin.delete_agent_notified(
+                    resource='agent', event='after_delete', trigger=None,
+                    payload=events.DBEventPayload(
+                        self.context, states=(agnt,),
+                        resource_id=agent[1]['id']))
+                m_t_del.assert_not_called()
+                m_del_ep.assert_not_called()
 
 
 class TestMl2NetworksV2AgentMechDrivers(Ml2PluginV2TestCase):
