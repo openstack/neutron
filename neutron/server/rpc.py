@@ -27,8 +27,8 @@ from neutron import service
 LOG = log.getLogger(__name__)
 
 
-def eventlet_rpc_server():
-    LOG.info("Eventlet based AMQP RPC server starting...")
+def rpc_server():
+    LOG.info("AMQP RPC server starting...")
 
     try:
         manager.init()

@@ -21,6 +21,7 @@ service.init_backend(service.BackendType.THREADING)
 from neutron import server  # noqa: E402
 from neutron.server import api  # noqa: E402
 from neutron.server import ovn_maintenance  # noqa: E402
+from neutron.server import rpc  # noqa: E402
 
 
 def main_api_uwsgi():
@@ -29,3 +30,7 @@ def main_api_uwsgi():
 
 def main_ovn_maintenance():
     return server.boot_server(ovn_maintenance.ovn_maintenance_worker)
+
+
+def main_rpc():
+    server.boot_server(rpc.rpc_server)

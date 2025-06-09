@@ -12,16 +12,11 @@
 
 from neutron import server
 from neutron.server import periodic_eventlet
-from neutron.server import rpc_eventlet
 from neutron.server import wsgi_eventlet
 
 
 def main():
     server.boot_server(wsgi_eventlet.eventlet_wsgi_server)
-
-
-def main_rpc_eventlet():
-    server.boot_server(rpc_eventlet.eventlet_rpc_server)
 
 
 def main_periodic_eventlet():
