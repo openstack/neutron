@@ -11,13 +11,8 @@
 #    under the License.
 
 from neutron import server
-from neutron.server import periodic_eventlet
 from neutron.server import wsgi_eventlet
 
 
 def main():
     server.boot_server(wsgi_eventlet.eventlet_wsgi_server)
-
-
-def main_periodic_eventlet():
-    server.boot_server(periodic_eventlet.eventlet_periodic_workers)

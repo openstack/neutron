@@ -23,8 +23,8 @@ from neutron import service
 LOG = log.getLogger(__name__)
 
 
-def eventlet_periodic_workers():
-    LOG.info('Eventlet based periodic workers process starting...')
+def periodic_workers():
+    LOG.info('Periodic workers process starting...')
 
     try:
         manager.init()
