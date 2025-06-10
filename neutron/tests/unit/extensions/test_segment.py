@@ -2036,9 +2036,10 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                                'physnet1:200:209', 'physnet2:200:209'],
                               group='ml2_type_vlan')
         self.send_events_interval = 1
+        super().setUp(plugin='ml2')
+        # Must be after super() since it registers common config options
         cfg.CONF.set_override('send_events_interval',
                               self.send_events_interval)
-        super().setUp(plugin='ml2')
         # Need notifier here
         self.patch_notifier.stop()
         self._mock_keystone_auth()
@@ -2662,12 +2663,17 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
             segmentation_id=200, network_type='vlan')
         return network, segment['segment']
 
-    def test_delete_network_and_owned_segments(self):
+    @mock.patch.object(seg_plugin.NovaSegmentNotifier, '_get_clients')
+    def test_delete_network_and_owned_segments(self, mock_get_clients):
         db.subscribe()
         aggregate = mock.MagicMock()
         aggregate.uuid = uuidutils.generate_uuid()
         aggregate.id = 1
         aggregate.hosts = ['fakehost1']
+        # Two NovaSegmentNotifier objects will be created, this will cause
+        # them both to return the same thing. See bug #2038373.
+        mock_get_clients.return_value = (
+            self.mock_p_client, self.mock_n_client)
         self.mock_p_client.list_aggregates.return_value = {
             'aggregates': [aggregate.uuid]}
         self.mock_n_client.aggregates.list.return_value = [aggregate]
