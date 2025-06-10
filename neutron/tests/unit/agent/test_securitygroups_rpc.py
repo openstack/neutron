@@ -2863,7 +2863,9 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 
         self.utils_exec = mock.patch(
             'neutron.agent.linux.utils.execute').start()
-
+        self.mock_process_queue = mock.patch.object(
+            ip_conntrack.IpConntrackManager,
+            '_process_queue_worker').start()
         self.rpc = mock.Mock()
         self._init_agent(defer_refresh_firewall)
         self.iptables = self.agent.firewall.iptables

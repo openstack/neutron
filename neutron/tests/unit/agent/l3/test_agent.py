@@ -19,10 +19,10 @@ from itertools import chain as iter_chain
 from itertools import combinations as iter_combinations
 import os
 import pwd
+import time
 from unittest import mock
 
 import ddt
-import eventlet
 import fixtures
 import netaddr
 from neutron_lib.agent import constants as agent_consts
@@ -230,10 +230,16 @@ class IptablesFixture(fixtures.Fixture):
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def setUp(self):
         super().setUp()
+        cfg.CONF.set_override('report_interval', 0, group='AGENT')
         self.useFixture(IptablesFixture())
         self._mock_load_fip = mock.patch.object(
             dvr_local_router.DvrLocalRouter, '_load_used_fip_information')
         self.mock_load_fip = self._mock_load_fip.start()
+        self._mock_ka_not_server = mock.patch.object(
+            ha.AgentMixin, '_start_keepalived_notifications_server')
+        self.mock_ka_not_server = self._mock_ka_not_server.start()
+        self.mock_p_router_loop = mock.patch.object(
+            l3_agent.L3NATAgent, '_process_routers_loop').start()
 
     def test_request_id_changes(self):
         a = l3_agent.L3NATAgent(HOSTNAME, self.conf)
@@ -264,11 +270,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                 as mock_get_router_info:
             for state in transitions:
                 agent.enqueue_state_change('router_id', state)
-                eventlet.sleep(0.2)
+                time.sleep(0.2)
             # NOTE(ralonsoh): the wait process should be done inside the mock
             # context, to allow the spawned thread to call the mocked function
             # before the context ends.
-            eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
+            time.sleep(self.conf.ha_vrrp_advert_int + 2)
 
         if num_called:
             mock_get_router_info.assert_has_calls(
@@ -298,7 +304,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.router_info[router.id] = router_info
         agent._update_metadata_proxy = mock.Mock()
         agent.enqueue_state_change(router.id, 'primary')
-        eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
+        time.sleep(self.conf.ha_vrrp_advert_int + 2)
         self.assertFalse(agent._update_metadata_proxy.call_count)
 
     @mock.patch.object(metadata_driver_base.MetadataDriverBase,
@@ -320,7 +326,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                         'IpAddrCommand.wait_until_address_ready') as mock_wait:
             mock_wait.return_value = True
             agent.enqueue_state_change('router_id', 'primary')
-            eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
+            time.sleep(self.conf.ha_vrrp_advert_int + 2)
             agent.l3_ext_manager.ha_state_change.assert_called_once_with(
                 agent.context,
                 {'router_id': 'router_id', 'state': 'primary',
@@ -453,9 +459,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         with mock.patch.object(l3_agent.L3NATAgentWithStateReport,
                                'periodic_sync_routers_task'),\
                 mock.patch.object(agent_rpc.PluginReportStateAPI,
-                                  'report_state') as report_state,\
-                mock.patch.object(eventlet, 'spawn_n'):
-
+                                  'report_state') as report_state:
             agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
                                                        conf=self.conf)
             agent.init_host()

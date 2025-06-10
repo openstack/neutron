@@ -29,7 +29,9 @@ from oslo_config import cfg
 from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 import oslo_messaging
-from oslo_service import loopingcall
+# NOTE(ralonsoh): [eventlet-removal] change back to
+# ``oslo_service.loopingcall`` when the removal is completed.
+from oslo_service.backend._threading import loopingcall
 from oslo_utils import fileutils
 from oslo_utils import importutils
 from oslo_utils import netutils

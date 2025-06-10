@@ -236,6 +236,8 @@ class AsyncProcess:
         try:
             # A process started by a root helper will be running as
             # root and need to be killed via the same helper.
+            if self._process:
+                self._process.stdin.close()
             utils.kill_process(pid, kill_signal, self.run_as_root)
         except Exception:
             LOG.exception('An error occurred while killing [%s].',
@@ -273,9 +275,6 @@ class AsyncProcess:
                 LOG.exception('An error occurred while communicating '
                               'with async process [%s].', self.cmd)
                 break
-            # TODO(sahid): Should be removed once monkey patching by
-            # eventlet removed.
-            time.sleep(0)
 
         if not thread_exit_event.is_set():
             # Indicates to the other watcher that the loop is broken.

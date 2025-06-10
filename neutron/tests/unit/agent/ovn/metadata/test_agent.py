@@ -78,6 +78,8 @@ class TestMetadataAgent(base.BaseTestCase):
         self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(agent, 'LOG')
         self.log = self.log_p.start()
+        cfg.CONF.set_override('check_child_processes_interval', 0.1,
+                              group='AGENT')
         self.agent = agent.MetadataAgent(self.fake_conf)
         self.agent.sb_idl = mock.Mock()
         self.agent.ovs_idl = mock.Mock()

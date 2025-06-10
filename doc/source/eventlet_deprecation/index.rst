@@ -183,6 +183,65 @@ and the Metadata server to handle multiple WSGI sockets, is removed from the
 repository.
 
 
+Testing
+-------
+
+Many tests are still not refactored to be compatible with the threading model
+after the eventlet removal. Both in the unit test and the functional test
+framework have been marked with the following message:
+
+.. code::
+
+  self.skipTest('This test is skipped after the eventlet removal and '
+                'needs to be refactored')
+
+
+Unit tests
+~~~~~~~~~~
+
+The ``py310`` job is unstable when executed with "concurrency=8" that is the
+number of vCPUs of the CI virtual machines. It tends to timeout, most probably
+because of a pending thread not being stopped. The ``tox.ini`` file enforces
+this concurrency to 7 only for this job, running with Python 3.10.
+
+
+Functional tests
+~~~~~~~~~~~~~~~~
+
+The main causes to skip the functional tests are:
+
+* The lack of control over the kernel threads, in particular to end them. With
+  eventlet it was possible to kill them, but this is no longer possible with
+  the kernel threads. That leads to endless processing loops started by the
+  tested modules that never end. The test could finish but ``stestr`` doesn't
+  return a result until all threads are finished.
+
+* The inability to spawn signal handlers out of the main thread. With eventlet,
+  all the user threads were spawned on the main kernel thread. Without
+  eventlet, some processes (e.g.: the OVS agent) are spawned in secondary
+  threads but they fail because they are expecting to be executed by the main
+  thread. That mainly affects the OVS agent testing in functional tests.
+
+* The buggy os-ken implementation, that leads to random disconnections when
+  executing the tests. The os-ken library is implemented to handle all the
+  "applications" (processes with sockets open to the OF server). The new
+  backend (using kernel threads) is not as stable as the eventlet one. During
+  the application/OF server communication, some messages are lost and the
+  communication is broken. That affects the OVS agent testing in functional
+  tests.
+
+It is also needed to handle the following issues that could affect the
+performance and the stability of the system:
+
+* Unclosed files. This warning message is repeated several times in the logs:
+
+  :: code
+
+    ResourceWarning: unclosed file <_io.FileIO name=55 mode='rb' closefd=True>
+    ResourceWarning: Enable tracemalloc to get the object allocation traceback
+
+
+
 References
 ----------
 

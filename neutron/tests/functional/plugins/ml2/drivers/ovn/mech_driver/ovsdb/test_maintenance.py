@@ -28,7 +28,6 @@ from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as lib_l3_exc
 from oslo_utils import uuidutils
-from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -44,20 +43,17 @@ from neutron.tests.functional.services.logapi.drivers.ovn \
 
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_extraroute
-from neutron.tests.unit import testlib_api
 
 
 CFG_NEW_BURST = 50
 CFG_NEW_RATE = 150
 
 
-class _TestMaintenanceHelper(testlib_api.MySQLTestCaseMixin,
-                             base.TestOVNFunctionalBase):
+class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
     """A helper class to keep the code more organized."""
 
     def setUp(self):
         super().setUp()
-        self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
         self._ovn_client = self.mech_driver._ovn_client
         self._l3_ovn_client = self.l3_plugin._ovn_client
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()

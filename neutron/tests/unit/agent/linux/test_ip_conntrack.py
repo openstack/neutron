@@ -25,6 +25,8 @@ class IPConntrackTestCase(base.BaseTestCase):
         self.execute = mock.Mock()
         self.filtered_port = {}
         self.unfiltered_port = {}
+        mock.patch.object(ip_conntrack.IpConntrackManager,
+                          '_process_queue_worker').start()
         self.mgr = ip_conntrack.IpConntrackManager(
                      self._get_rule_for_table, self.filtered_port,
                      self.unfiltered_port, self.execute,
@@ -46,6 +48,8 @@ class OvsIPConntrackTestCase(IPConntrackTestCase):
     def setUp(self):
         super(IPConntrackTestCase, self).setUp()
         self.execute = mock.Mock()
+        mock.patch.object(ip_conntrack.IpConntrackManager,
+                          '_process_queue_worker').start()
         self.mgr = ip_conntrack.OvsIpConntrackManager(self.execute)
 
     def test_delete_conntrack_state_dedupes(self):

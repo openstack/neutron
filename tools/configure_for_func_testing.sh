@@ -170,6 +170,7 @@ function _install_database {
 
     MYSQL_PASSWORD=${MYSQL_PASSWORD:-openstack_citest}
     DATABASE_PASSWORD=${DATABASE_PASSWORD:-openstack_citest}
+    export OS_TEST_DBAPI_ADMIN_CONNECTION="mysql+pymysql://${DATABASE_USER}:${MYSQL_PASSWORD}@localhost/mysql;sqlite://"
 
     source $DEVSTACK_PATH/lib/database
 

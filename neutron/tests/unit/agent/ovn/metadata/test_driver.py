@@ -63,6 +63,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             meta_conf.METADATA_RATE_LIMITING_OPTS, cfg.CONF,
             group=meta_conf.RATE_LIMITING_GROUP)
         ovn_conf.register_opts()
+        cfg.CONF.set_override('check_child_processes_interval', 0.1,
+                              group='AGENT')
 
     def test_spawn_metadata_proxy(self):
         return self._test_spawn_metadata_proxy(rate_limited=False)

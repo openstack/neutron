@@ -28,6 +28,7 @@ import testtools
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.agent import firewall as agent_firewall
+from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
@@ -107,6 +108,8 @@ class TestCreateRegNumbers(base.BaseTestCase):
 class TestSecurityGroup(base.BaseTestCase):
     def setUp(self):
         super().setUp()
+        cfg.CONF.set_override('check_child_processes_interval', 0.1,
+                              group='AGENT')
         self.sg = ovsfw.SecurityGroup('123')
         self.sg.members = {'type': [1, 2, 3, 4]}
 
@@ -525,6 +528,8 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         mock_bridge = mock.patch.object(
             ovs_lib, 'OVSBridge', autospec=True).start()
         securitygroups_rpc.register_securitygroups_opts()
+        mock.patch.object(ip_conntrack.IpConntrackManager,
+                          '_process_queue_worker').start()
         self.firewall = ovsfw.OVSFirewallDriver(mock_bridge)
         self.delete_invalid_conntrack_entries_mock = mock.patch.object(
             self.firewall.ipconntrack,
@@ -1336,6 +1341,8 @@ class TestCookieContext(base.BaseTestCase):
 
         self.execute = mock.patch.object(
             utils, "execute", spec=utils.execute).start()
+        mock.patch.object(ip_conntrack.IpConntrackManager,
+                          '_process_queue_worker').start()
         bridge = ovs_bridge.OVSAgentBridge('foo', os_ken_app=mock.Mock())
         mock.patch.object(
             ovsfw.OVSFirewallDriver, 'initialize_bridge',
