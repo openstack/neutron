@@ -25,6 +25,7 @@ from neutron.agent.l3 import dvr_edge_ha_router as dvr_edge_ha_rtr
 from neutron.agent.l3 import dvr_edge_router as dvr_edge_rtr
 from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_local_router as dvr_router
+from neutron.agent.l3 import ha as l3_ha
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import interface
@@ -156,6 +157,9 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.mock_list_all = mock.patch(
             'neutron.agent.l3.namespace_manager.NamespaceManager'
             '.list_all', return_value={}).start()
+        self.mock_ka_notifications = mock.patch.object(
+            l3_ha.AgentMixin, '_start_keepalived_notifications_server')
+        self.mock_ka_notifications.start()
 
     def _create_router(self, router=None, **kwargs):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
