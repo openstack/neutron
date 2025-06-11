@@ -197,3 +197,34 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                                          'fe80::/63')
         with mock.patch("sqlalchemy.orm.query.Query.update", return_value=0):
             self.assertRaises(db_exc.RetryRequest, sa.allocate_subnet, req)
+
+    def test_subnetpool_any_request_no_gateway_ip_set(self):
+        sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
+                                      ['10.1.0.0/16', '192.168.1.0/24'],
+                                      21, 4)
+        sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
+            req = ipam_req.AnySubnetRequest(self._tenant_id,
+                                            uuidutils.generate_uuid(),
+                                            constants.IPv4, 21,
+                                            set_gateway_ip=False)
+            res = sa.allocate_subnet(req)
+            detail = res.get_details()
+            self.assertIsNone(detail.gateway_ip)
+            self.assertFalse(detail.set_gateway_ip)
+
+    def test_subnetpool_specific_request_no_gateway_ip_set(self):
+        sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
+                                      ['10.1.0.0/16', '192.168.1.0/24'],
+                                      21, 4)
+        sp = self.plugin._get_subnetpool(self.ctx, sp['id'])
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
+            req = ipam_req.SpecificSubnetRequest(
+                self._tenant_id, uuidutils.generate_uuid(),
+                '10.1.2.0/27', set_gateway_ip=False)
+            res = sa.allocate_subnet(req)
+            detail = res.get_details()
+            self.assertIsNone(detail.gateway_ip)
+            self.assertFalse(detail.set_gateway_ip)
