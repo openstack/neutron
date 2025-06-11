@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import socketserver
 from unittest import mock
 
 import ddt
@@ -393,7 +394,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         self.cfg_p = mock.patch.object(agent, 'cfg')
         self.cfg = self.cfg_p.start()
         looping_call_p = mock.patch(
-            'oslo_service.loopingcall.FixedIntervalLoopingCall')
+            'neutron.common.loopingcall.FixedIntervalLoopingCall')
         self.looping_mock = looping_call_p.start()
         self.cfg.CONF.metadata_proxy_socket = '/the/path'
         self.cfg.CONF.metadata_workers = 0
@@ -434,6 +435,21 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                     with testtools.ExpectedException(OSError):
                         agent.UnixDomainMetadataProxy(mock.Mock())
                     unlink.assert_called_once_with('/the/path')
+
+    @mock.patch.object(agent, 'MetadataProxyHandler')
+    @mock.patch.object(socketserver, 'ThreadingUnixStreamServer')
+    @mock.patch.object(fileutils, 'ensure_tree')
+    def test_run(self, ensure_dir, server, handler):
+        p = agent.UnixDomainMetadataProxy(self.cfg.CONF)
+        p.run()
+
+        ensure_dir.assert_called_once_with('/the', mode=0o755)
+        server.assert_has_calls([
+            mock.call('/the/path', mock.ANY),
+            mock.call().serve_forever()])
+        self.looping_mock.assert_called_once_with(p._report_state)
+        self.looping_mock.return_value.start.assert_called_once_with(
+            interval=mock.ANY)
 
     def test_main(self):
         with mock.patch.object(agent, 'UnixDomainMetadataProxy') as proxy:

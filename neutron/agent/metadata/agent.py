@@ -21,7 +21,6 @@ from neutron_lib import constants
 from neutron_lib import context
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_service import loopingcall
 import requests
 import webob
 
@@ -31,6 +30,7 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import proxy_base
 from neutron.agent import rpc as agent_rpc
 from neutron.common import ipv6_utils
+from neutron.common import loopingcall
 from neutron.common import metadata as common_metadata
 from neutron.common import utils as common_utils
 
@@ -325,4 +325,5 @@ class UnixDomainMetadataProxy(proxy_base.UnixDomainMetadataProxyBase):
         self._server = socketserver.ThreadingUnixStreamServer(
             file_socket, MetadataProxyHandler)
         MetadataProxyHandler._conf = self.conf
+        self._init_state_reporting()
         self._server.serve_forever()
