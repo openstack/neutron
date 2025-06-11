@@ -381,6 +381,7 @@ class TestHAL3Agent(TestL3Agent):
     use_dhcp = False
 
     def setUp(self):
+        self.skipTest('Skip test until eventlet is removed')
         # Two hosts with L3 agent to host HA routers
         host_descriptions = [
             environment.HostDescription(l3_agent=True,

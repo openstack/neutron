@@ -13,15 +13,12 @@
 #    under the License.
 
 import os
-from unittest import mock
 
 from oslo_utils import uuidutils
 
-from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
-from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 from neutron.tests.common import machine_fixtures as mf
 from neutron.tests.common import net_helpers
@@ -37,6 +34,7 @@ def has_expected_arp_entry(device_name, namespace, ip, mac):
 
 class TestMonitorDaemon(base.BaseLoggingTestCase):
     def setUp(self):
+        self.skipTest('Skip test until eventlet is removed')
         super().setUp()
         self.conf_dir = self.get_default_temp_dir().path
         self.pid_file = os.path.join(self.conf_dir, 'pid_file')
@@ -56,12 +54,14 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
             default_cmd_callback=self._callback, run_as_root=True,
             pid_file=self.pid_file)
 
-        server = linux_utils.UnixDomainWSGIServer(
-            'neutron-keepalived-state-change', num_threads=1)
-        server.start(ha.KeepalivedStateChangeHandler(mock.Mock()),
-                     self.state_file, workers=0,
-                     backlog=ha.KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG)
-        self.addCleanup(server.stop)
+        # NOTE(ralonsoh): this section must be refactored once eventlet is
+        # removed. ``UnixDomainWSGIServer`` is no longer used.
+        # server = linux_utils.UnixDomainWSGIServer(
+        #     'neutron-keepalived-state-change', num_threads=1)
+        # server.start(ha.KeepalivedStateChangeHandler(mock.Mock()),
+        #              self.state_file, workers=0,
+        #              backlog=ha.KEEPALIVED_STATE_CHANGE_SERVER_BACKLOG)
+        # self.addCleanup(server.stop)
 
     def _run_monitor(self):
         self.ext_process.enable()

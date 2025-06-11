@@ -21,7 +21,6 @@ import testtools
 
 from neutron_lib import exceptions
 from neutron_lib import fixture as lib_fixtures
-from oslo_config import cfg
 import oslo_i18n
 
 from neutron.agent.linux import utils
@@ -518,52 +517,3 @@ class TestUnixDomainHttpProtocol(base.BaseTestCase):
     def test_init_unknown_client(self):
         utils.UnixDomainHttpProtocol('foo')
         self.ewhi.assert_called_once_with(mock.ANY, 'foo')
-
-
-class TestUnixDomainWSGIServer(base.BaseTestCase):
-    def setUp(self):
-        super().setUp()
-        self.eventlet_p = mock.patch.object(utils, 'eventlet')
-        self.eventlet = self.eventlet_p.start()
-
-    def test_start(self):
-        self.server = utils.UnixDomainWSGIServer('test')
-        mock_app = mock.Mock()
-        with mock.patch.object(self.server, '_launch') as launcher:
-            self.server.start(mock_app, '/the/path', workers=5, backlog=128)
-            self.eventlet.assert_has_calls([
-                mock.call.listen(
-                    '/the/path',
-                    family=socket.AF_UNIX,
-                    backlog=128
-                )]
-            )
-            launcher.assert_called_once_with(mock_app, workers=5)
-
-    def test_run(self):
-        self.server = utils.UnixDomainWSGIServer('test')
-        self.server._run('app', 'sock')
-
-        self.eventlet.wsgi.server.assert_called_once_with(
-            'sock',
-            'app',
-            protocol=utils.UnixDomainHttpProtocol,
-            log=mock.ANY,
-            log_format=cfg.CONF.wsgi_log_format,
-            max_size=self.server.num_threads
-        )
-
-    def test_num_threads(self):
-        num_threads = 8
-        self.server = utils.UnixDomainWSGIServer('test',
-                                                 num_threads=num_threads)
-        self.server._run('app', 'sock')
-
-        self.eventlet.wsgi.server.assert_called_once_with(
-            'sock',
-            'app',
-            protocol=utils.UnixDomainHttpProtocol,
-            log=mock.ANY,
-            log_format=cfg.CONF.wsgi_log_format,
-            max_size=num_threads
-        )

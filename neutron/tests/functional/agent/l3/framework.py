@@ -28,6 +28,7 @@ import testtools
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import dvr_local_router
+from neutron.agent.l3 import ha
 from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3_router_info
 from neutron.agent import l3_agent as l3_agent_main
@@ -99,6 +100,11 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                    'OVSBridge._set_port_dead').start()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         self.conf = self._configure_agent('agent1')
+        # NOTE(ralonsoh): this mock can be removed once the backend used for
+        # testing is "threading" and eventlet is removed.
+        self.mock_scserver_wait = mock.patch.object(
+            ha.L3AgentKeepalivedStateChangeServer, 'wait')
+        self.mock_scserver_wait.start()
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
                                                                 self.conf)
         self.agent.init_host()

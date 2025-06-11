@@ -14,8 +14,8 @@
 #
 
 import functools
+import threading
 
-import eventlet
 import netaddr
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
@@ -1008,7 +1008,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
             self.heartbeat.start(interval=report_interval)
 
     def after_start(self):
-        eventlet.spawn_n(self._process_routers_loop)
+        threading.Thread(target=self._process_routers_loop).start()
         LOG.info("L3 agent started")
         # Do the report state before we do the first full sync.
         self._report_state()

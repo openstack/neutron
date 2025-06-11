@@ -220,6 +220,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                                    snat_bound_fip=True, enable_gw=False)
 
     def test_dvr_lifecycle_ha_with_snat_with_fips_with_cent_fips_no_gw(self):
+        self.skipTest('Skip test until eventlet is removed')
         self._dvr_router_lifecycle(enable_ha=True, enable_snat=True,
                                    snat_bound_fip=True, enable_gw=False)
 
@@ -1719,6 +1720,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         self._test_dvr_ha_router_failover(enable_gw=True, vrrp_id=10)
 
     def test_dvr_ha_router_failover_with_gw_and_floatingip(self):
+        self.skipTest('Skip test until eventlet is removed')
         self._test_dvr_ha_router_failover_with_gw_and_fip(
             enable_gw=True, enable_centralized_fip=True, snat_bound_fip=True,
             vrrp_id=11)
@@ -2389,4 +2391,5 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         self._test_router_interface_mtu_update(ha=False)
 
     def test_dvr_ha_router_interface_mtu_update(self):
+        self.skipTest('Skip test until eventlet is removed')
         self._test_router_interface_mtu_update(ha=True)

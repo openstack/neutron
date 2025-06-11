@@ -23,6 +23,7 @@ from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_edge_router
 from neutron.agent.l3 import dvr_local_router as dvr_router
 from neutron.agent.l3.extensions import ndp_proxy as np
+from neutron.agent.l3 import ha
 from neutron.agent.l3 import l3_agent_extension_api as l3_ext_api
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import iptables_manager
@@ -112,6 +113,11 @@ class NDPProxyExtensionDVRTestCase(
         self.conf.host = HOSTNAME
         self.conf.agent_mode = lib_const.L3_AGENT_MODE_DVR
         self.agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        # NOTE(ralonsoh): this mock can be removed once the backend used for
+        # testing is "threading" and eventlet is removed.
+        self.mock_scserver_wait = mock.patch.object(
+            ha.L3AgentKeepalivedStateChangeServer, 'wait')
+        self.mock_scserver_wait.start()
         self.agent.init_host()
         self.add_route = mock.MagicMock()
         self.delete_route = mock.MagicMock()

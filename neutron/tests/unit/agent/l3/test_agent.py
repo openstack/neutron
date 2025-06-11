@@ -44,6 +44,7 @@ from neutron.agent.l3 import dvr_edge_router as dvr_router
 from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import dvr_router_base
 from neutron.agent.l3 import dvr_snat_ns
+from neutron.agent.l3 import ha
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import link_local_allocator as lla
@@ -78,6 +79,11 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         mock.patch('eventlet.spawn').start()
+        # NOTE(ralonsoh): this mock can be removed once the backend used for
+        # testing is "threading" and eventlet is removed.
+        self.mock_scserver_wait = mock.patch.object(
+            ha.L3AgentKeepalivedStateChangeServer, 'wait')
+        self.mock_scserver_wait.start()
         self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         log.register_options(self.conf)

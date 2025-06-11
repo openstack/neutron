@@ -85,6 +85,24 @@ has been removed. In order to implement an RPC cache, it should be implemented
 outside the mentioned class.
 
 
+L3 agent
+--------
+
+The L3 agent now uses the ``oslo_service.backend.BackendType.THREADING``
+backend, that doesn't import eventlet. The HA flavor replaces the
+``UnixDomainWSGIServer`` with the ``UnixDomainWSGIThreadServer``. This new
+Unix socket WSGI server is based on ``socketserver.ThreadingUnixStreamServer``
+and doesn't use ``eventlet``.
+
+Several functional and fullstack tests have been skipped until ``eventlet``
+has been completely removed from the repository and the test frameworks. The
+WSGI server cannot be spawned in an ``eventlet`` patched environment. The
+thread that waits for new messages is a blocking function. In a kernel threads
+environment, where the threads are preemptive, it is not needed to manually
+yield the Python GIL; on the contrary, in an ``eventlet`` environment, the
+threads must yield the executor to the next one.
+
+
 Neutron API
 -----------
 
