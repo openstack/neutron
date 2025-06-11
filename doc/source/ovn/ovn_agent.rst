@@ -42,6 +42,9 @@ agent configuration file in the "extensions" parameter:
     extensions = metadata
 
 
+In ``devstack``, the ``[agent]extensions`` configuration parameter is set by
+``OVN_AGENT_EXTENSIONS``.
+
 Each extension will inherit from ``OVNAgentExtension``, which provides the API
 for an OVN agent extension. The extensions are loaded in two steps:
 
@@ -73,3 +76,18 @@ for new events that will trigger actions. As mentioned in the previous section,
 each extension will subscribe to a set of events from the OVN and OVS
 databases; these events will trigger a set of actions executed on the OVN
 agent.
+
+
+Zuul CI testing
+---------------
+
+In order to enable this new agent, it is needed:
+
+* To disable the default OVN Metadata agent (devstack service
+  ``q-ovn-metadata-agent``).
+* To enable the OVN agent (devstack service ``q-ovn-agent``).
+
+Check the Neutron CI job ``neutron-tempest-plugin-ovn`` definition and
+`[OVN] Use the OVN agent in "neutron-tempest-plugin-ovn"
+<https://review.opendev.org/c/openstack/neutron-tempest-plugin/+/909860>`_
+for more information.

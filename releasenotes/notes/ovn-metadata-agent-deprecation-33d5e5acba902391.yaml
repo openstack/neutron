@@ -1,0 +1,15 @@
+---
+deprecations:
+  - |
+    The OVN Metadata agent is deprecated in favor of the `OVN agent
+    <https://docs.openstack.org/neutron/latest/ovn/ovn_agent.html>`_. In order
+    to replace the the first with the second one, it is only needed to stop
+    the OVN Metadata agent and start the OVN agent with the "metadata"
+    plugable extension enabled. The OVN agent allows plugable extensions, like
+    for example "metadata", that can be enabled or disabled `via the
+    configuration file
+    <https://docs.openstack.org/neutron/latest/ovn/ovn_agent.html#plugable-extensions>`_.
+    Apart from the ``[DEFAULT]extensions`` configuration parameter required
+    in the OVN agent, the rest of the configuration is the same. Thus the new
+    agent can use the old configuration files by just adding the the "metadata"
+    plugable extension.

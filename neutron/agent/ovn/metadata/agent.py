@@ -492,6 +492,10 @@ class MetadataAgent:
         self._update_chassis_private_config()
         self._update_metadata_sb_cfg_key()
 
+        LOG.warning(
+            'The OVN Metadata agent is deprecated in favor of the OVN agent '
+            'with the metadata extension. It has been deprecated in 2025.2 '
+            'and will be removed in 2026.2')
         self._proxy.wait()
 
     @ovn_utils.retry()
