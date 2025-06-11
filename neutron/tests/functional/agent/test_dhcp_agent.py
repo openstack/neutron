@@ -15,9 +15,9 @@
 
 import copy
 import os.path
+import time
 from unittest import mock
 
-import eventlet
 import fixtures
 import netaddr
 from neutron_lib.api import converters
@@ -243,7 +243,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         self._run_dhclient(vif_name, network)
         # we need wait some time (10 seconds is enough) and check
         # that dhclient not configured ip-address for interface
-        eventlet.sleep(10)
+        time.sleep(10)
 
         ip_list = self._ip_list_for_vif(vif_name, network.namespace)
         self.assertEqual([], ip_list)
