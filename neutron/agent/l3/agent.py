@@ -271,10 +271,7 @@ class L3NATAgent(ha.AgentMixin,
 
         self._check_config_params()
 
-        self.process_monitor = external_process.ProcessMonitor(
-            config=self.conf,
-            resource_type='router')
-
+        self.process_monitor = None
         self._context = n_context.get_admin_context_without_session()
 
         self.target_ex_net_id = None
@@ -286,6 +283,9 @@ class L3NATAgent(ha.AgentMixin,
 
     def init_host(self):
         super().init_host()
+        self.process_monitor = external_process.ProcessMonitor(
+            config=self.conf,
+            resource_type='router')
         self.plugin_rpc = L3PluginApi(topics.L3PLUGIN, self.host)
         self.driver = common_utils.load_interface_driver(
             self.conf,
