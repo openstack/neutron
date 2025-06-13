@@ -302,14 +302,9 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         net_helpers.assert_ping(ns_phys, ip_int)
         net_helpers.assert_ping(self.namespace, ip_phys)
 
-        with net_helpers.async_ping(ns_phys, [ip_int]) as done:
+        with net_helpers.async_ping(ns_phys, [ip_int, ip_phys]) as done:
+            self.agent.setup_physical_bridges(self.agent.bridge_mappings)
             while not done():
-                self.agent.setup_physical_bridges(self.agent.bridge_mappings)
-                time.sleep(0.25)
-
-        with net_helpers.async_ping(self.namespace, [ip_phys]) as done:
-            while not done():
-                self.agent.setup_physical_bridges(self.agent.bridge_mappings)
                 time.sleep(0.25)
 
     def test_noresync_after_port_gone(self):
