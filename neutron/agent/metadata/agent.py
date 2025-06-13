@@ -175,8 +175,8 @@ class MetadataProxyHandler(
         if num_ports == 1:
             return ports[0]['device_id'], ports[0]['tenant_id']
         if num_ports == 0:
-            LOG.error("No port found in network %s with IP address %s",
-                      network_id, remote_address)
+            LOG.warning("No port found in network %s with IP address %s",
+                        network_id, remote_address)
         return None, None
 
 
