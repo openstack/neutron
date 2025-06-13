@@ -129,7 +129,7 @@ class SubnetAllocator(driver.Pool):
                 if request.prefixlen >= prefix.prefixlen:
                     subnet = next(prefix.subnet(request.prefixlen))
                     gateway_ip = request.gateway_ip
-                    if not gateway_ip:
+                    if not gateway_ip and request.set_gateway_ip:
                         gateway_ip = subnet.network + 1
                     pools = ipam_utils.generate_pools(subnet.cidr,
                                                       gateway_ip)
@@ -138,7 +138,9 @@ class SubnetAllocator(driver.Pool):
                                       request.subnet_id,
                                       subnet.cidr,
                                       gateway_ip=gateway_ip,
-                                      allocation_pools=pools)
+                                      allocation_pools=pools,
+                                      set_gateway_ip=request.set_gateway_ip,
+                                      )
             msg = _("Insufficient prefix space to allocate subnet size /%s")
             raise exceptions.SubnetAllocationError(
                 reason=msg % str(request.prefixlen))
@@ -156,7 +158,9 @@ class SubnetAllocator(driver.Pool):
                                   request.subnet_id,
                                   cidr,
                                   gateway_ip=request.gateway_ip,
-                                  allocation_pools=request.allocation_pools)
+                                  allocation_pools=request.allocation_pools,
+                                  set_gateway_ip=request.set_gateway_ip,
+                                  )
             msg = _("Cannot allocate requested subnet from the available "
                     "set of prefixes")
             raise exceptions.SubnetAllocationError(reason=msg)
@@ -201,13 +205,17 @@ class IpamSubnet(driver.Subnet):
                  subnet_id,
                  cidr,
                  gateway_ip=None,
-                 allocation_pools=None):
+                 allocation_pools=None,
+                 set_gateway_ip=True,
+                 ):
         self._req = ipam_req.SpecificSubnetRequest(
             tenant_id,
             subnet_id,
             cidr,
             gateway_ip=gateway_ip,
-            allocation_pools=allocation_pools)
+            allocation_pools=allocation_pools,
+            set_gateway_ip=set_gateway_ip,
+        )
 
     def allocate(self, address_request):
         raise NotImplementedError()
