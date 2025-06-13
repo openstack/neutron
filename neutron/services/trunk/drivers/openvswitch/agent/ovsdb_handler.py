@@ -15,7 +15,7 @@
 
 import functools
 
-import eventlet
+import futurist
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -133,21 +133,24 @@ class OVSDBHandler:
     def process_trunk_port_events(
             self, resource, event, trigger, payload):
         """Process added and removed port events coming from OVSDB monitor."""
-        ovsdb_events = payload.latest_state
-        for port_event in ovsdb_events['added']:
-            port_name = port_event['name']
-            if is_trunk_bridge(port_name):
-                LOG.debug("Processing trunk bridge %s", port_name)
-                # As there is active waiting for port to appear, it's handled
-                # in a separate greenthread.
-                # NOTE: port_name is equal to bridge_name at this point.
-                eventlet.spawn_n(self.handle_trunk_add, port_name)
 
-        for port_event in ovsdb_events['removed']:
-            bridge_name = port_event['external_ids'].get('bridge_name')
-            if bridge_name and is_trunk_bridge(bridge_name):
-                eventlet.spawn_n(
-                    self.handle_trunk_remove, bridge_name, port_event)
+        with futurist.ThreadPoolExecutor() as executor:
+
+            ovsdb_events = payload.latest_state
+            for port_event in ovsdb_events['added']:
+                port_name = port_event['name']
+                if is_trunk_bridge(port_name):
+                    LOG.debug("Processing trunk bridge %s", port_name)
+                    # As there is active waiting for port to appear,
+                    # it'shandled in a separate greenthread.  NOTE:
+                    # port_name is equal to bridge_name at this point.
+                    executor.submit(self.handle_trunk_add, port_name)
+
+            for port_event in ovsdb_events['removed']:
+                bridge_name = port_event['external_ids'].get('bridge_name')
+                if bridge_name and is_trunk_bridge(bridge_name):
+                    executor.submit(
+                        self.handle_trunk_remove, bridge_name, port_event)
 
     @lock_on_bridge_name(required_parameter='bridge_name')
     def handle_trunk_add(self, bridge_name):
