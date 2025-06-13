@@ -36,7 +36,8 @@ class SubnetRequest(metaclass=abc.ABCMeta):
     instantiated on its own.  Rather, a subclass of this class should be used.
     """
     def __init__(self, tenant_id, subnet_id,
-                 gateway_ip=None, allocation_pools=None):
+                 gateway_ip=None, allocation_pools=None,
+                 set_gateway_ip=True):
         """Initialize and validate
 
         :param tenant_id: The tenant id who will own the subnet
@@ -50,10 +51,16 @@ class SubnetRequest(metaclass=abc.ABCMeta):
             of this range if specifically requested.
         :type allocation_pools: A list of netaddr.IPRange.  None if not
             specified.
+        :param set_gateway_ip: in case the ``gateway_ip`` value is not defined
+            (None), the IPAM module will set an IP address within the range of
+            the subnet CIDR. If ``set_gateway_ip`` is unset, no IP address will
+            be assigned.
+        :type set_gateway_ip: boolean
         """
         self._tenant_id = tenant_id
         self._subnet_id = subnet_id
         self._gateway_ip = None
+        self._set_gateway_ip = set_gateway_ip
         self._allocation_pools = None
 
         if gateway_ip is not None:
@@ -96,6 +103,10 @@ class SubnetRequest(metaclass=abc.ABCMeta):
     @property
     def gateway_ip(self):
         return self._gateway_ip
+
+    @property
+    def set_gateway_ip(self):
+        return self._set_gateway_ip
 
     @property
     def allocation_pools(self):
@@ -144,7 +155,8 @@ class AnySubnetRequest(SubnetRequest):
                  constants.IPv6: '::'}
 
     def __init__(self, tenant_id, subnet_id, version, prefixlen,
-                 gateway_ip=None, allocation_pools=None):
+                 gateway_ip=None, allocation_pools=None,
+                 set_gateway_ip=True):
         """Initialize AnySubnetRequest
 
         :param version: Either constants.IPv4 or constants.IPv6
@@ -156,7 +168,9 @@ class AnySubnetRequest(SubnetRequest):
             tenant_id=tenant_id,
             subnet_id=subnet_id,
             gateway_ip=gateway_ip,
-            allocation_pools=allocation_pools)
+            allocation_pools=allocation_pools,
+            set_gateway_ip=set_gateway_ip,
+        )
 
         net = netaddr.IPNetwork(self.WILDCARDS[version] + '/' + str(prefixlen))
         self._validate_with_subnet(net)
@@ -176,7 +190,8 @@ class SpecificSubnetRequest(SubnetRequest):
     blueprints.
     """
     def __init__(self, tenant_id, subnet_id, subnet_cidr,
-                 gateway_ip=None, allocation_pools=None):
+                 gateway_ip=None, allocation_pools=None,
+                 set_gateway_ip=True):
         """Initialize SpecificSubnetRequest
 
         :param subnet: The subnet requested.  Can be IPv4 or IPv6.  However,
@@ -188,7 +203,9 @@ class SpecificSubnetRequest(SubnetRequest):
             tenant_id=tenant_id,
             subnet_id=subnet_id,
             gateway_ip=gateway_ip,
-            allocation_pools=allocation_pools)
+            allocation_pools=allocation_pools,
+            set_gateway_ip=set_gateway_ip,
+        )
 
         self._subnet_cidr = netaddr.IPNetwork(subnet_cidr)
         self._validate_with_subnet(self._subnet_cidr)
@@ -322,6 +339,7 @@ class SubnetRequestFactory:
         cidr = subnet.get('cidr')
         cidr = cidr if validators.is_attr_set(cidr) else None
         gateway_ip = subnet.get('gateway_ip')
+        set_gateway_ip = gateway_ip is not None
         gateway_ip = gateway_ip if validators.is_attr_set(gateway_ip) else None
         subnet_id = subnet.get('id', uuidutils.generate_uuid())
 
@@ -335,7 +353,9 @@ class SubnetRequestFactory:
                 subnet['tenant_id'],
                 subnet_id,
                 common_utils.ip_version_from_int(subnetpool['ip_version']),
-                prefixlen)
+                prefixlen,
+                set_gateway_ip=set_gateway_ip,
+            )
         alloc_pools = subnet.get('allocation_pools')
         alloc_pools = (
             alloc_pools if validators.is_attr_set(alloc_pools) else None)
@@ -353,4 +373,6 @@ class SubnetRequestFactory:
                                      subnet_id,
                                      cidr,
                                      gateway_ip=gateway_ip,
-                                     allocation_pools=alloc_pools)
+                                     allocation_pools=alloc_pools,
+                                     set_gateway_ip=set_gateway_ip,
+                                     )

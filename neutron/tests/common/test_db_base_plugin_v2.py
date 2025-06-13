@@ -6456,6 +6456,28 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             self.assertEqual(subnet.prefixlen,
                              int(sp['subnetpool']['default_prefixlen']))
 
+    def test_allocate_any_subnet_with_default_prefixlen_no_gateway_ip(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request any subnet allocation using default prefix
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'ip_version': constants.IP_VERSION_4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': None,
+                               }}
+            req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+
+            subnet = netaddr.IPNetwork(res['subnet']['cidr'])
+            self.assertEqual(subnet.prefixlen,
+                             int(sp['subnetpool']['default_prefixlen']))
+            self.assertIsNone(res['subnet']['gateway_ip'])
+
     def test_allocate_specific_subnet_with_mismatch_prefixlen(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
@@ -6645,6 +6667,29 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
+
+    def test_allocate_specific_subnet_no_gateway_ip(self):
+        with self.network() as network:
+            sp = self._test_create_subnetpool(['10.10.0.0/16'],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME,
+                                              min_prefixlen='21')
+
+            # Request a specific subnet allocation
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'cidr': '10.10.1.0/24',
+                               'ip_version': constants.IP_VERSION_4,
+                               'tenant_id': network['network']['tenant_id'],
+                               'gateway_ip': None,
+                               }}
+            req = self.new_create_request('subnets', data)
+            res = self.deserialize(self.fmt, req.get_response(self.api))
+
+            # Assert the allocated subnet CIDR is what we expect
+            subnet = netaddr.IPNetwork(res['subnet']['cidr'])
+            self.assertEqual(netaddr.IPNetwork('10.10.1.0/24'), subnet)
+            self.assertIsNone(res['subnet']['gateway_ip'])
 
     def test_delete_subnetpool_existing_allocations(self):
         with self.network() as network:
