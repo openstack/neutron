@@ -10,9 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import setproctitle
+# NOTE(haleyb): remove once the default backend is ``BackendType.THREADING``
+import oslo_service.backend as service
+service.init_backend(service.BackendType.THREADING)
 
-from neutron.agent.ovn import ovn_neutron_agent
+# pylint: disable=wrong-import-position
+import setproctitle  # noqa: E402
+
+from neutron.agent.ovn import ovn_neutron_agent  # noqa: E402
 
 
 # TODO(ralonsoh): move to ``neutron_lib.constants``.

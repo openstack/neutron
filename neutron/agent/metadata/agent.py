@@ -235,4 +235,5 @@ class UnixDomainMetadataProxy(proxy_base.UnixDomainMetadataProxyBase):
         self._server = socketserver.ThreadingUnixStreamServer(
             file_socket, MetadataProxyHandler)
         MetadataProxyHandler._conf = self.conf
+        self._init_state_reporting()
         self._server.serve_forever()
