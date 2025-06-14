@@ -13,8 +13,9 @@
 import abc
 from datetime import datetime
 import itertools
+import threading
+import time
 
-from eventlet import greenthread
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants
 from neutron_lib import context
@@ -48,17 +49,22 @@ class OvnDbSynchronizer(metaclass=abc.ABCMeta):
         self.ovn_driver = ovn_driver
         self.ovn_api = ovn_api
         self.core_plugin = core_plugin
+        self._thread = None
 
     def sync(self, delay_seconds=10):
-        self._gt = greenthread.spawn_after_local(delay_seconds, self.do_sync)
+        time.sleep(delay_seconds)
+        self._thread = threading.Thread(target=self.do_sync)
+        self._thread.start()
 
     @abc.abstractmethod
     def do_sync(self):
         """Method to sync the OVN DB."""
 
     def stop(self):
+        # TODO(ralonsoh): this method a the function executed in the thread
+        # should support a fast exit way.
         try:
-            self._gt.kill()
+            self._thread.join()
         except AttributeError:
             # Haven't started syncing
             pass

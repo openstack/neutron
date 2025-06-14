@@ -24,8 +24,8 @@ from neutron import service
 LOG = log.getLogger(__name__)
 
 
-def eventlet_ovn_maintenance_worker():
-    LOG.info('Eventlet OVN maintenance process starting...')
+def ovn_maintenance_worker():
+    LOG.info('OVN maintenance process starting...')
 
     try:
         manager.init()
