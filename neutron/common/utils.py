@@ -1137,5 +1137,6 @@ class ThreadPoolExecutorWithBlock(futures.ThreadPoolExecutor):
 def is_iterable_not_string(value):
     """Return if a value is iterable but not a string type"""
     return (isinstance(value, abc.Iterable) and
-            not isinstance(value, abc.ByteString) and
+            not isinstance(value, bytes) and
+            not isinstance(value, bytearray) and
             not isinstance(value, str))
