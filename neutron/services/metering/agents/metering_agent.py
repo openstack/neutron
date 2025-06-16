@@ -67,20 +67,22 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
     def __init__(self, host, conf=None):
         self.conf = conf or cfg.CONF
         self._load_drivers()
-        self.context = context.get_admin_context_without_session()
-        self.metering_loop = loopingcall.FixedIntervalLoopingCall(
-            self._metering_loop
-        )
-        measure_interval = self.conf.measure_interval
-        self.last_report = 0
-        self.metering_loop.start(interval=measure_interval)
         self.host = host
-
         self.label_project_id = {}
         self.routers = {}
         self.metering_infos = {}
         self.metering_labels = {}
+        self.last_report = 0
+        self.context = context.get_admin_context_without_session()
+        self.metering_loop = None
         super().__init__(host=host)
+
+    def init_host(self):
+        super().init_host()
+        self.metering_loop = loopingcall.FixedIntervalLoopingCall(
+            self._metering_loop
+        )
+        self.metering_loop.start(interval=self.conf.measure_interval)
 
     def _load_drivers(self):
         """Loads plugin-driver from configuration."""
@@ -347,13 +349,13 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
 class MeteringAgentWithStateReport(MeteringAgent):
 
     def __init__(self, host, conf=None):
-        super().__init__(host=host,
-                         conf=conf)
-        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
+        super().__init__(host=host, conf=conf)
+        self.use_call = True
         self.failed_report_state = False
+        self.state_rpc = None
         self.agent_state = {
             'binary': constants.AGENT_PROCESS_METERING,
-            'host': host,
+            'host': self.host,
             'topic': topics.METERING_AGENT,
             'configurations': {
                 'metering_driver': self.conf.driver,
@@ -363,8 +365,10 @@ class MeteringAgentWithStateReport(MeteringAgent):
             },
             'start_flag': True,
             'agent_type': constants.AGENT_TYPE_METERING}
+
+    def init_host(self):
+        self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         report_interval = cfg.CONF.AGENT.report_interval
-        self.use_call = True
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
                 self._report_state)
