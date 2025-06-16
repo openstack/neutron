@@ -36,7 +36,6 @@ from oslo_utils import importutils
 import psutil
 
 from neutron._i18n import _
-from neutron.api import wsgi
 from neutron.common import config
 from neutron.common import profiler
 from neutron.conf import service
@@ -49,52 +48,6 @@ service.register_service_opts(service.SERVICE_OPTS)
 service.register_service_opts(service.RPC_EXTRA_OPTS)
 
 LOG = logging.getLogger(__name__)
-
-
-class WsgiService:
-    """Base class for WSGI based services.
-
-    For each api you define, you must also define these flags:
-    :<api>_listen: The address on which to listen
-    :<api>_listen_port: The port on which to listen
-
-    """
-
-    def __init__(self, app_name):
-        self.app_name = app_name
-        self.wsgi_app = None
-
-    def start(self):
-        self.wsgi_app = _run_wsgi(self.app_name)
-
-    def wait(self):
-        self.wsgi_app.wait()
-
-
-class NeutronApiService(WsgiService):
-    """Class for neutron-api service."""
-    def __init__(self, app_name):
-        profiler.setup('neutron-server', cfg.CONF.host)
-        super().__init__(app_name)
-
-    @classmethod
-    def create(cls, app_name='neutron'):
-        service = cls(app_name)
-        return service
-
-
-def serve_wsgi(cls):
-
-    try:
-        service = cls.create()
-        service.start()
-    except Exception:
-        with excutils.save_and_reraise_exception():
-            LOG.exception('Unrecoverable error: please check log '
-                          'for details.')
-
-    registry.publish(resources.PROCESS, events.BEFORE_SPAWN, service)
-    return service
 
 
 class RpcWorker(neutron_worker.NeutronBaseWorker):
@@ -317,13 +270,6 @@ def _start_workers(workers, neutron_api=None):
                           'details.')
 
 
-def start_all_workers(neutron_api=None):
-    workers = _get_rpc_workers() + _get_plugins_workers()
-    launcher = _start_workers(workers, neutron_api)
-    registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
-    return launcher
-
-
 def start_rpc_workers():
     rpc_workers = _get_rpc_workers()
     LOG.debug('Using launcher for rpc, workers=%s (configured rpc_workers=%s)',
@@ -360,23 +306,6 @@ def _get_api_workers():
     if workers is None:
         workers = _get_worker_count()
     return workers
-
-
-def _run_wsgi(app_name):
-    app = config.load_paste_app(app_name)
-    if not app:
-        LOG.error('No known API applications configured.')
-        return
-    return run_wsgi_app(app)
-
-
-def run_wsgi_app(app):
-    server = wsgi.Server("Neutron")
-    server.start(app, cfg.CONF.bind_port, cfg.CONF.bind_host,
-                 workers=_get_api_workers(), desc="api worker")
-    LOG.info("Neutron service started, listening on %(host)s:%(port)s",
-             {'host': cfg.CONF.bind_host, 'port': cfg.CONF.bind_port})
-    return server
 
 
 class Service(n_rpc.Service):

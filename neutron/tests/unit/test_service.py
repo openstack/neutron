@@ -15,9 +15,6 @@
 
 from unittest import mock
 
-from neutron_lib.callbacks import events
-from neutron_lib.callbacks import registry
-from neutron_lib.callbacks import resources
 from oslo_concurrency import processutils
 from oslo_config import cfg
 
@@ -82,41 +79,3 @@ class TestRunRpcWorkers(base.BaseTestCase):
 
     def test_rpc_workers_defined(self):
         self._test_rpc_workers(42, 42)
-
-
-class TestRunWsgiApp(base.BaseTestCase):
-    def setUp(self):
-        super().setUp()
-        self.worker_count = service._get_worker_count()
-
-    def _test_api_workers(self, config_value, expected_passed_value):
-        if config_value is not None:
-            cfg.CONF.set_override('api_workers', config_value)
-        with mock.patch('neutron.api.wsgi.Server') as mock_server:
-            service.run_wsgi_app(mock.sentinel.app)
-        start_call = mock_server.return_value.start.call_args
-        expected_call = mock.call(
-            mock.ANY, mock.ANY, mock.ANY, desc='api worker',
-            workers=expected_passed_value)
-        self.assertEqual(expected_call, start_call)
-
-    def test_api_workers_one(self):
-        self._test_api_workers(1, 1)
-
-    def test_api_workers_default(self):
-        self._test_api_workers(None, self.worker_count)
-
-    def test_api_workers_defined(self):
-        self._test_api_workers(42, 42)
-
-    def test_start_all_workers(self):
-        cfg.CONF.set_override('api_workers', 1)
-        mock.patch.object(service, '_get_rpc_workers').start()
-        mock.patch.object(service, '_get_plugins_workers').start()
-        mock.patch.object(service, '_start_workers').start()
-
-        callback = mock.Mock()
-        registry.subscribe(callback, resources.PROCESS, events.AFTER_SPAWN)
-        service.start_all_workers()
-        callback.assert_called_once_with(
-            resources.PROCESS, events.AFTER_SPAWN, mock.ANY, payload=None)

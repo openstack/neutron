@@ -175,6 +175,14 @@ synchronizer classes (``OvnNbSynchronizer``, ``OvnSbSynchronizer``).
   synchronization.
 
 
+Removals and deprecations
+-------------------------
+
+The ``api.wsgi.Server`` class, based on ``eventlet``, used in the Neutron API
+and the Metadata server to handle multiple WSGI sockets, is removed from the
+repository.
+
+
 References
 ----------
 
