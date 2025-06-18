@@ -15,6 +15,7 @@
 
 import threading
 
+from oslo_utils import uuidutils
 from ovsdbapp import event
 
 from neutron.agent.common import ovs_lib
@@ -52,9 +53,17 @@ class BridgeMonitorTestCase(base.BaseSudoTestCase):
             self.ovs.delete_bridge(bridge)
 
     def test_create_bridges(self):
-        bridges_to_monitor = ['br01', 'br02', 'br03']
-        bridges_to_create = ['br01', 'br02', 'br03', 'br04', 'br05']
+        bridges_to_create = [
+            'br_' + uuidutils.generate_uuid()[:12],
+            'br_' + uuidutils.generate_uuid()[:12],
+            'br_' + uuidutils.generate_uuid()[:12],
+            'br_' + uuidutils.generate_uuid()[:12],
+            'br_' + uuidutils.generate_uuid()[:12],
+        ]
+        bridges_to_monitor = bridges_to_create[:3]
         self.ovs = ovs_lib.BaseOVS()
+        self._delete_bridges(bridges_to_create)
+
         self.ovs.ovsdb.idl_monitor.start_bridge_monitor(bridges_to_monitor)
         self.addCleanup(self._delete_bridges, bridges_to_create)
         event = WaitForBridgesEvent(bridges_to_monitor)
