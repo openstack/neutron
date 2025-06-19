@@ -15,9 +15,10 @@
 #    under the License.
 
 import functools
+import queue
 import secrets
+import threading
 
-import eventlet
 import netaddr
 from neutron_lib import exceptions
 import os_ken.app.ofctl.api as ofctl_api
@@ -25,7 +26,6 @@ from os_ken.app.ofctl import exception as ofctl_exc
 import os_ken.exception as os_ken_exc
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import excutils
 from oslo_utils import timeutils
 import tenacity
 
@@ -90,14 +90,42 @@ class OpenFlowSwitchMixin:
     def _send_msg(self, msg, reply_cls=None, reply_multi=False,
                   active_bundle=None):
         timeout_sec = cfg.CONF.OVS.of_request_timeout
-        timeout = eventlet.Timeout(seconds=timeout_sec)
-        if active_bundle is not None:
-            (dp, ofp, ofpp) = self._get_dp()
-            msg = ofpp.ONFBundleAddMsg(dp, active_bundle['id'],
-                                       active_bundle['bundle_flags'], msg, [])
+        qresult = queue.Queue()
+
+        class _TimeoutException(exceptions.NeutronException):
+            pass
+
+        def worker():
+            try:
+                if active_bundle is not None:
+                    (dp, ofp, ofpp) = self._get_dp()
+                    bundle_msg = ofpp.ONFBundleAddMsg(
+                        dp, active_bundle['id'],
+                        active_bundle['bundle_flags'], msg, [])
+                else:
+                    bundle_msg = msg
+
+                result = self._send_msg_retry(
+                    self._app, bundle_msg, reply_cls, reply_multi)
+                qresult.put(result)
+
+                return True
+            except Exception as e:
+                qresult.put(e)
+
+        def timeout_handler():
+            qresult.put(_TimeoutException())
+
+        worker_thread = threading.Thread(target=worker)
+        worker_thread.start()
+
+        timer = threading.Timer(timeout_sec, timeout_handler)
+        timer.start()
+
         try:
-            result = self._send_msg_retry(self._app, msg, reply_cls,
-                                          reply_multi)
+            result = qresult.get()
+            if isinstance(result, Exception):
+                raise result
         except os_ken_exc.OSKenException as e:
             m = _("ofctl request %(request)s error %(error)s") % {
                 "request": msg,
@@ -106,18 +134,17 @@ class OpenFlowSwitchMixin:
             LOG.error(m)
             # NOTE(yamamoto): use RuntimeError for compat with ovs_lib
             raise RuntimeError(m)
-        except eventlet.Timeout as e:
-            with excutils.save_and_reraise_exception() as ctx:
-                if e is timeout:
-                    ctx.reraise = False
-                    m = _("ofctl request %(request)s timed out") % {
-                        "request": msg,
-                    }
-                    LOG.error(m)
-                    # NOTE(yamamoto): use RuntimeError for compat with ovs_lib
-                    raise RuntimeError(m)
+        except _TimeoutException:
+            m = _("ofctl request %(request)s timed out") % {
+                "request": msg,
+            }
+            LOG.error(m)
+            # NOTE(yamamoto): use RuntimeError for compat with ovs_lib
+            raise RuntimeError(m)
         finally:
-            timeout.cancel()
+            timer.cancel()
+            worker_thread.join()
+
         LOG.debug("ofctl request %(request)s result %(result)s",
                   {"request": msg, "result": result})
         return result
