@@ -19,10 +19,21 @@ from neutron_lib.objects import registry as obj_reg
 from neutron_lib.plugins import utils
 from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import event
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.services.trunk import plugin as trunk_plugin
 from neutron.tests.functional import base
+
+
+class WaitForPortBindingDeleteEvent(event.WaitEvent):
+    event_name = 'WaitForPortBindingDeleteEvent'
+
+    def __init__(self, port_id):
+        table = 'Port_Binding'
+        events = (self.ROW_DELETE, )
+        conditions = (('logical_port', '=', port_id), )
+        super().__init__(events, table, conditions, timeout=10)
 
 
 class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
@@ -117,10 +128,14 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
     def test_subport_delete(self):
         with self.subport() as subport:
             with self.trunk([subport]) as trunk:
+                pb_event = WaitForPortBindingDeleteEvent(subport['port_id'])
+                self.mech_driver.sb_ovn.idl.notify_handler.watch_event(
+                    pb_event)
                 self.trunk_plugin.remove_subports(self.context, trunk['id'],
                                                   {'sub_ports': [subport]})
                 new_trunk = self.trunk_plugin.get_trunk(self.context,
                                                         trunk['id'])
+                self.assertTrue(pb_event.wait())
                 self._verify_trunk_info(new_trunk, has_items=False)
 
     def test_trunk_delete(self):
