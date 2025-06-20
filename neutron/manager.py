@@ -274,16 +274,6 @@ class NeutronManager(metaclass=profiler.TracedMeta):
             resource,
             res_ctrl_mappings.get(resource.replace('-', '_')))
 
-    # TODO(blogan): This isn't used by anything else other than tests and
-    # probably should be removed
-    @classmethod
-    def get_service_plugin_by_path_prefix(cls, path_prefix):
-        service_plugins = directory.get_unique_plugins()
-        for service_plugin in service_plugins:
-            plugin_path_prefix = getattr(service_plugin, 'path_prefix', None)
-            if plugin_path_prefix and plugin_path_prefix == path_prefix:
-                return service_plugin
-
     @classmethod
     def add_resource_for_path_prefix(cls, resource, path_prefix):
         resources = cls.get_instance().path_prefix_resource_mappings[
