@@ -2519,12 +2519,12 @@ class TestDnsmasq(TestBase):
                                                 'client_id': 'client_id',
                                                 'server_id': 'server_id'}
                           })
-        ipw = mock.patch(
-            'neutron.agent.linux.ip_lib.IpNetnsCommand.execute').start()
+        mock_dhcp_release6 = mock.patch.object(priv_dhcp,
+                                               'dhcp_release6').start()
         dnsmasq._IS_DHCP_RELEASE6_SUPPORTED = False
         dnsmasq._release_unused_leases()
         # Verify that dhcp_release6 is not called when it is not present
-        ipw.assert_not_called()
+        mock_dhcp_release6.assert_not_called()
 
     def test_release_unused_leases_with_dhcp_port(self):
         dnsmasq = self._get_dnsmasq(FakeNetworkDhcpPort())
