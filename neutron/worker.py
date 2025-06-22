@@ -44,7 +44,8 @@ class PeriodicWorker(NeutronBaseWorker):
     def start(self):
         super().start(desc="periodic worker")
         if self._loop is None:
-            self._loop = loopingcall.FixedIntervalLoopingCall(self._check_func)
+            self._loop = loopingcall.FixedIntervalLoopingCall(
+                f=self._check_func)
         self._loop.start(interval=self._interval,
                          initial_delay=self._initial_delay)
 

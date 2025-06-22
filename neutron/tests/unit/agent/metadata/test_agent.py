@@ -447,7 +447,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
         server.assert_has_calls([
             mock.call('/the/path', mock.ANY),
             mock.call().serve_forever()])
-        self.looping_mock.assert_called_once_with(p._report_state)
+        self.looping_mock.assert_called_once_with(f=p._report_state)
         self.looping_mock.return_value.start.assert_called_once_with(
             interval=mock.ANY)
 

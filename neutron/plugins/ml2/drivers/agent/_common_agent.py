@@ -104,7 +104,7 @@ class CommonAgentLoop(service.Service):
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
             heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
+                f=self._report_state)
             heartbeat.start(interval=report_interval)
 
         capabilities.notify_init_event(self.agent_type, self)

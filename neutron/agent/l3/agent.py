@@ -1004,7 +1004,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
         report_interval = self.conf.AGENT.report_interval
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
+                f=self._report_state)
             self.heartbeat.start(interval=report_interval)
 
     def after_start(self):

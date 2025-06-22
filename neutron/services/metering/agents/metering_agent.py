@@ -80,7 +80,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
     def init_host(self):
         super().init_host()
         self.metering_loop = loopingcall.FixedIntervalLoopingCall(
-            self._metering_loop
+            f=self._metering_loop
         )
         self.metering_loop.start(interval=self.conf.measure_interval)
 
@@ -371,7 +371,7 @@ class MeteringAgentWithStateReport(MeteringAgent):
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
+                f=self._report_state)
             self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):

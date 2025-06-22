@@ -939,7 +939,7 @@ class NetworkCache:
         self._deleted_ports = set()
         self._deleted_ports_ts = []
         self.cleanup_loop = loopingcall.FixedIntervalLoopingCall(
-            self.cleanup_deleted_ports)
+            f=self.cleanup_deleted_ports)
         self.cleanup_loop.start(DELETED_PORT_MAX_AGE,
                                 initial_delay=DELETED_PORT_MAX_AGE)
 
@@ -1082,7 +1082,7 @@ class DhcpAgentWithStateReport(DhcpAgent):
         report_interval = self.conf.AGENT.report_interval
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
+                f=self._report_state)
             self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
