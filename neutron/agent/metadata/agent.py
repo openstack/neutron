@@ -296,7 +296,7 @@ class UnixDomainMetadataProxy(proxy_base.UnixDomainMetadataProxyBase):
         report_interval = cfg.CONF.AGENT.report_interval
         if report_interval:
             self.heartbeat = loopingcall.FixedIntervalLoopingCall(
-                self._report_state)
+                f=self._report_state)
             self.heartbeat.start(interval=report_interval)
 
     def _report_state(self):
