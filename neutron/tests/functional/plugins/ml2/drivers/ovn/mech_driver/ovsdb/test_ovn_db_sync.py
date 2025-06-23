@@ -1699,7 +1699,8 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver)
+            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver,
+            is_maintenance=True)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_port_qos_policies(ctx)
         self._validate_qos_records()
@@ -1785,7 +1786,8 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver)
+            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver,
+            is_maintenance=True)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_fip_qos_policies(ctx)
         self._validate_qos_records()
