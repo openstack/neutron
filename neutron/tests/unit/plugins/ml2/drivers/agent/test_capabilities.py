@@ -14,11 +14,11 @@
 from unittest import mock
 
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import priority_group
 from neutron_lib import fixture
 
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.tests import base
-from neutron.tests import tools
 
 
 class CapabilitiesTest(base.BaseTestCase):
@@ -42,6 +42,6 @@ class CapabilitiesTest(base.BaseTestCase):
         mock_callback = mock.Mock()
         mock_agent_type = mock.Mock()
         capabilities.register(mock_callback, mock_agent_type)
-        args = tools.get_subscribe_args(
-            mock_callback, mock_agent_type, events.AFTER_INIT)
-        self._mgr.subscribe.assert_called_with(*args)
+        self._mgr.subscribe.assert_called_with(
+            mock_callback, mock_agent_type, events.AFTER_INIT,
+            priority_group.PRIORITY_DEFAULT, False)

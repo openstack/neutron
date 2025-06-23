@@ -19,7 +19,6 @@ import unittest
 
 import fixtures
 import netaddr
-from neutron_lib.callbacks import priority_group
 from neutron_lib import constants
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.utils import helpers
@@ -27,16 +26,6 @@ from neutron_lib.utils import net
 from oslo_utils import netutils
 from oslo_utils import timeutils
 
-
-# NOTE(ykarel): from neutron-lib 3.9.0, cancellable flag was added
-# test the existence of the is_cancellable_event function to check if
-# cancellable flag is supported or not. This compatibility check can
-# be removed once neutron-lib >= 3.9.0 in requirements.txt.
-_CANCELLABLE_FLAG_SUPPORTED = True
-try:
-    from neutron_lib.callbacks.events import is_cancellable_event  # noqa
-except ImportError:
-    _CANCELLABLE_FLAG_SUPPORTED = False
 
 LAST_RANDOM_PORT_RANGE_GENERATED = 1
 
@@ -144,18 +133,6 @@ def make_mock_plugin_json_encodable(plugin_instance_mock):
         __call__, _get_child_mock = _make_magic_method(method_mock)
         method_mock.__call__ = __call__
         method_mock._get_child_mock = _get_child_mock
-
-
-def get_subscribe_args(*args):
-    args = list(args)  # don't modify original list
-    args.append(priority_group.PRIORITY_DEFAULT)
-    # NOTE(ykarel): from neutron-lib 3.9.0, cancellable flag was added.
-    # old signature: (callback, resource, event, priority=PRIORITY_DEFAULT)
-    # new signature: (callback, resource, event, priority=PRIORITY_DEFAULT,
-    # cancellable=False)
-    if len(args) == 4 and _CANCELLABLE_FLAG_SUPPORTED:
-        args.append(False)
-    return args
 
 
 def fail(msg=None):
