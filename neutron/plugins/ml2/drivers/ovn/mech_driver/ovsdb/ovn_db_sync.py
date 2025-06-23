@@ -35,6 +35,7 @@ from neutron.objects.port_forwarding import PortForwarding
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as ovn_qos
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
+from neutron.services.logapi.drivers.ovn import driver as log_driver
 from neutron.services.segments import db as segments_db
 
 
@@ -82,6 +83,18 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             self.segments_plugin = (
                 manager.NeutronManager.load_class_for_provider(
                     'neutron.service_plugins', 'segments')())
+        self.log_plugin = directory.get_plugin(plugin_constants.LOG_API)
+        if not self.log_plugin:
+            self.log_plugin = (
+                manager.NeutronManager.load_class_for_provider(
+                    'neutron.service_plugins', 'log')())
+            directory.add_plugin(plugin_constants.LOG_API, self.log_plugin)
+        for driver in self.log_plugin.driver_manager.drivers:
+            if driver.name == "ovn":
+                self.ovn_log_driver = driver
+        if not hasattr(self, 'ovn_log_driver'):
+            self.ovn_log_driver = log_driver.OVNDriver()
+            self.log_plugin.driver_manager.register_driver(self.ovn_log_driver)
 
     def stop(self):
         if utils.is_ovn_l3(self.l3_plugin):
@@ -233,6 +246,9 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
     def _get_acls_from_port_groups(self):
         ovn_acls = []
+        # Options and label columns are only present for OVN >= 22.03.
+        # Furthermore label is a randint so it cannot be compared with any
+        # expected neutron value. They are added later on the ACL addition.
         acl_columns = (self.ovn_api._tables['ACL'].columns.keys() &
                        set(ovn_const.ACL_EXPECTED_COLUMNS_NBDB))
         acl_columns.discard('external_ids')
@@ -244,7 +260,16 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 acl_string['port_group'] = pg.name
                 if id_key in acl.external_ids:
                     acl_string[id_key] = acl.external_ids[id_key]
+                # This properties are present as lists of one item,
+                # converting them to string.
+                if acl_string['name']:
+                    acl_string['name'] = acl_string['name'][0]
+                if acl_string['meter']:
+                    acl_string['meter'] = acl_string['meter'][0]
+                if acl_string['severity']:
+                    acl_string['severity'] = acl_string['severity'][0]
                 ovn_acls.append(acl_string)
+
         return ovn_acls
 
     def sync_acls(self, ctx):
@@ -274,6 +299,10 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         neutron_default_acls = acl_utils.add_acls_for_drop_port_group(
             ovn_const.OVN_DROP_PORT_GROUP_NAME)
 
+        # Add logging options
+        self.ovn_log_driver.add_logging_options_to_acls(neutron_acls, ctx)
+        self.ovn_log_driver.add_logging_options_to_acls(neutron_default_acls,
+                                                        ctx)
         ovn_acls = self._get_acls_from_port_groups()
         # Sort the acls in the ovn database according to the security
         # group rule id for easy comparison in the future.
@@ -304,14 +333,24 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 o_index += 1
             elif n_id == o_id:
                 if any(item not in na.items() for item in oa.items()):
+                    for item in oa.items():
+                        if item not in na.items():
+                            LOG.warning('Property %(item)s from OVN ACL not '
+                                        'found in Neutron ACL: %(n_acl)s',
+                                        {'item': item,
+                                         'n_acl': na})
                     add_acls.append(na)
                     remove_acls.append(oa)
                 n_index += 1
                 o_index += 1
             elif n_id > o_id:
+                LOG.warning('ACL should not be present in OVN, removing'
+                            '%(acl)s', {'acl': oa})
                 remove_acls.append(oa)
                 o_index += 1
             else:
+                LOG.warning('ACL should be present in OVN but is not, adding:'
+                            '%(acl)s', {'acl': na})
                 add_acls.append(na)
                 n_index += 1
 
@@ -351,32 +390,6 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         if (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR and
                 (num_acls_to_add or num_acls_to_remove)):
             one_time_pg_resync = True
-            while True:
-                try:
-                    with self.ovn_api.transaction(check_error=True) as txn:
-                        for acla in neutron_acls:
-                            LOG.warning('ACL found in Neutron but not in '
-                                        'OVN NB DB for port group %s',
-                                        acla['port_group'])
-                            txn.add(self.ovn_api.pg_acl_add(
-                                **acla, may_exist=True))
-                except idlutils.RowNotFound as row_err:
-                    if row_err.msg.startswith("Cannot find Port_Group"):
-                        if one_time_pg_resync:
-                            LOG.warning('Port group row was not found during '
-                                        'ACLs sync. Will attempt to sync port '
-                                        'groups one more time. The caught '
-                                        'exception is: %s', row_err)
-                            self.sync_port_groups(ctx)
-                            one_time_pg_resync = False
-                            continue
-                        LOG.error('Port group exception during ACL sync '
-                                  'even after one more port group resync. '
-                                  'The caught exception is: %s', row_err)
-                    else:
-                        raise
-                break
-
             with self.ovn_api.transaction(check_error=True) as txn:
                 for aclr in ovn_acls:
                     LOG.warning('ACLs found in OVN NB DB but not in '
@@ -393,6 +406,41 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                         LOG.warning('Removing ACLs from OVN from Logical '
                                     'Switch %s', aclr[0])
                         txn.add(self.ovn_api.acl_del(aclr[0]))
+            while True:
+                try:
+                    with self.ovn_api.transaction(check_error=True) as txn:
+                        for acla in neutron_acls:
+                            LOG.warning('ACL found in Neutron but not in '
+                                        'OVN NB DB for port group %s',
+                                        acla['port_group'])
+                            acl = txn.add(self.ovn_api.pg_acl_add(**acla,
+                                                               may_exist=True))
+                            # We need to do this now since label should be
+                            # random and not 0. We can use options as a way
+                            # to see if label is supported or not.
+                            if acla.get('log'):
+                                self.ovn_log_driver.add_label_related(acla,
+                                                                      ctx)
+                                txn.add(self.ovn_api.db_set('ACL', acl,
+                                    label=acla['label'],
+                                    options=acla['options']))
+
+                except idlutils.RowNotFound as row_err:
+                    if row_err.msg.startswith("Cannot find Port_Group"):
+                        if one_time_pg_resync:
+                            LOG.warning('Port group row was not found during '
+                                        'ACLs sync. Will attempt to sync port '
+                                        'groups one more time. The caught '
+                                        'exception is: %s', row_err)
+                            self.sync_port_groups(ctx)
+                            one_time_pg_resync = False
+                            continue
+                        LOG.error('Port group exception during ACL sync '
+                                  'even after one more port group resync. '
+                                  'The caught exception is: %s', row_err)
+                    else:
+                        raise
+                break
 
         LOG.debug('OVN-NB Sync ACLs completed @ %s', str(datetime.now()))
 

@@ -148,7 +148,8 @@ def add_acls_for_drop_port_group(pg_name):
                "name": [],
                "severity": [],
                "direction": direction,
-               "match": '{} == @{} && ip'.format(p, pg_name)}
+               "match": '{} == @{} && ip'.format(p, pg_name),
+               "meter": []}
         acl_list.append(acl)
     return acl_list
 
@@ -167,6 +168,7 @@ def drop_all_ip_traffic_for_port(port):
                "severity": [],
                "direction": direction,
                "match": '{} == "{}" && ip'.format(p, port['id']),
+               "meter": [],
                "external_ids": {'neutron:lport': port['id']}}
         acl_list.append(acl)
     return acl_list
@@ -187,6 +189,7 @@ def add_sg_rule_acl_for_port_group(port_group, r, stateful, match):
            "severity": [],
            "direction": dir_map[r['direction']],
            "match": match,
+           "meter": [],
            ovn_const.OVN_SG_RULE_EXT_ID_KEY: r['id']}
     return acl
 
