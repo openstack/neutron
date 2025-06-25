@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    Neutron uses a new algorithm to compare the differences between security
+    group rules in Neutron and ACLs in OVN. Before comparison, the data is
+    sorted according to the security group rule ID, then the two ordered
+    arrays are compared. This increases efficiency when larger sets of rules
+    need to be synchronized.
