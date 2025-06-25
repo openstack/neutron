@@ -73,7 +73,6 @@
     experimental:
       jobs:
         - neutron-functional-with-neutron-lib-master
-        - neutron-fullstack-with-neutron-lib-master
         - neutron-ovn-tempest-ovs-release
         - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-loki
@@ -97,9 +96,6 @@
         - neutron-functional-fips
         - neutron-functional-with-pyroute2-master
         - neutron-functional-with-sqlalchemy-master
-        - neutron-fullstack
-        - neutron-fullstack-fips
-        - neutron-fullstack-with-pyroute2-master
         - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
