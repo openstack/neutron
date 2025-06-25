@@ -408,6 +408,80 @@ class OVNDriver(base.DriverBase):
         with self.ovn_nb.transaction(check_error=True) as ovn_txn:
             self._update_log_objs(context, ovn_txn, log_objs)
 
+    def add_logging_options_to_acls(self, neutron_acls, context):
+        log_objs = self._get_logs(context)
+        for log_obj in log_objs:
+            pgs = self._pgs_from_log_obj(context, log_obj)
+            actions_enabled = self._acl_actions_enabled(log_obj)
+            self._set_neutron_acls_log(pgs, context, actions_enabled,
+                                       utils.ovn_name(log_obj.id),
+                                       neutron_acls)
+
+    # This function is a version of set_acls_log meant to change neutron
+    # defined acls, mostly thought for ovndbsync consistency check.
+    def _set_neutron_acls_log(self, pgs, context, actions_enabled, log_name,
+                              neutron_acls):
+        acl_changes, acl_visits = 0, 0
+        for pg in pgs:
+            meter_name = self.meter_name
+            if pg['name'] != ovn_const.OVN_DROP_PORT_GROUP_NAME:
+                sg = sg_obj.SecurityGroup.get_sg_by_id(context,
+                        pg['external_ids'][ovn_const.OVN_SG_EXT_ID_KEY])
+                if not sg:
+                    LOG.warning("Port Group %s is missing a corresponding "
+                                "security group, skipping its network log "
+                                "setting...", pg["name"])
+                    continue
+                if not sg.stateful:
+                    meter_name = meter_name + ("_stateless")
+            # We need to get the OVN ACL because UUID is not listed as a
+            # property on neutron defined ACLs (and it shouldn't), so we need
+            # to check which ACL is that UUID referring to, using match as
+            # differentiating value.
+            for acl in neutron_acls:
+                acl_visits += 1
+                # skip acls used by a different network log
+                n_acl_name = acl['name']
+                if n_acl_name and n_acl_name != log_name:
+                    continue
+                action = acl['action'] in actions_enabled
+                acl['log'] = action
+                acl['meter'] = meter_name
+                acl['name'] = log_name
+                acl['severity'] = "info"
+                if acl.get('options'):
+                    acl["options"] = {'log-related': "true"}
+                # label is not set because the actual number should not
+                # be compared or taken into account, we only need it to be
+                # different from 0.
+                acl_changes += 1
+        LOG.info("Set %d (out of %d visited) Neutron ACLs for network log %s",
+                 acl_changes, acl_visits, log_name)
+
+    def _get_all_log_pgs(self, ctx):
+        """Get all Port Group names associated to a Log Object.
+
+        :param log_plugin: Currently loaded log_plugging.
+        :param ctx: current running context information
+        """
+        log_objs = self._get_logs(ctx)
+        log_pgs = []
+        for log_obj in log_objs:
+            log_pgs.extend(self._pgs_from_log_obj(ctx, log_obj))
+        return log_pgs
+
+    def add_label_related(self, n_acl, ctx):
+        # Get acls to be able to check if label is present in OVN ACLs and
+        # also check old label value for ACL if it was already present.
+        acls = [acl for pg in self._get_all_log_pgs(ctx) for acl in pg["acls"]]
+        if not acls:
+            return
+        acl = self.ovn_nb.lookup("ACL", acls[0], default=None)
+        if not hasattr(acl, 'label'):
+            return
+        n_acl["label"] = random.randrange(1, MAX_INT_LABEL)
+        n_acl["options"] = {'log-related': 'true'}
+
 
 def register(plugin_driver):
     """Register the driver."""

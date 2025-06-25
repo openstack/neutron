@@ -16,6 +16,8 @@ import collections
 from unittest import mock
 
 from neutron_lib import constants as const
+from neutron_lib.services.logapi import constants as log_const
+from oslo_utils import uuidutils
 
 from neutron.common.ovn import acl
 from neutron.common.ovn import constants as ovn_const
@@ -227,7 +229,10 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
               'lswitch': 'lswitch1', 'lport': 'lport1'}],
             'lport2':
             [{'id': 'acl2', 'priority': 00, 'policy': 'drop',
-             'lswitch': 'lswitch2', 'lport': 'lport2'}],
+             'lswitch': 'lswitch2', 'lport': 'lport2'},
+             {'id': 'aclr3', 'priority': 00, 'log': True,
+              'policy': 'drop', 'lswitch': 'lswitch2',
+              'meter': 'acl_log_meter', 'label': 1, 'lport': 'lport2'}],
             # ACLs need to be kept as-is by the sync tool
             'p2n2':
             [{'lport': 'p2n2', 'direction': 'to-lport',
@@ -384,7 +389,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         return {'r1': ['172.16.0.0/24', '172.16.2.0/24'],
                 'r2': ['192.168.2.0/24']}.get(router_id, [])
 
-    def _test_mocks_helper(self, ovn_nb_synchronizer):
+    def _test_mocks_helper(self, ovn_nb_synchronizer, test_logging=False):
         core_plugin = ovn_nb_synchronizer.core_plugin
         ovn_api = ovn_nb_synchronizer.ovn_api
         ovn_driver = ovn_nb_synchronizer.ovn_driver
@@ -415,12 +420,25 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         # 4 acls are returned as current ovn acls,
         # two of which will match with neutron.
         # So, in this example 17 will be added, 2 removed
+
         core_plugin.get_ports = mock.Mock()
         core_plugin.get_ports.return_value = self.ports
         mock.patch.object(acl, '_get_subnet_from_cache',
                           return_value=self.subnet).start()
         mock.patch.object(acl, 'acl_remote_group_id',
                           side_effect=self.matches).start()
+        if test_logging:
+            log_objs = [self._fake_log_obj(
+                event=log_const.DROP_EVENT, resource_id=None, id='1111')]
+            mock.patch.object(ovn_nb_synchronizer.ovn_log_driver, '_get_logs',
+                              return_value=log_objs).start()
+            mock.patch.object(ovn_nb_synchronizer.ovn_log_driver,
+                              '_pgs_from_log_obj', return_value=[
+                                  {'name': 'neutron_pg_drop',
+                                   'external_ids': {},
+                                   'acls': [uuidutils.generate_uuid()]}]
+                              ).start()
+
         core_plugin.get_security_group = mock.MagicMock(
             side_effect=self.security_groups)
         ovn_nb_synchronizer.get_acls = mock.Mock()
@@ -565,8 +583,9 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                  add_subnet_dhcp_options_list,
                                  delete_dhcp_options_list,
                                  add_port_groups_list,
-                                 del_port_groups_list):
-        self._test_mocks_helper(ovn_nb_synchronizer)
+                                 del_port_groups_list,
+                                 test_logging=False):
+        self._test_mocks_helper(ovn_nb_synchronizer, test_logging)
 
         ovn_api = ovn_nb_synchronizer.ovn_api
         mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker').start()
@@ -739,7 +758,24 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_api.delete_dhcp_options.assert_has_calls(
             delete_dhcp_options_calls, any_order=True)
 
-    def test_ovn_nb_sync_mode_repair(self):
+        if test_logging:
+            # 2 times when doing add_logging_options_to_acls and then
+            # 2 times because of the add_label_related used 2 times for the
+            # from-port and to-port drop acls
+            self.assertEqual(4, ovn_nb_synchronizer.ovn_log_driver.
+                             _pgs_from_log_obj.call_count)
+
+    def _fake_log_obj(self, **kwargs):
+        log_obj_defaults_dict = {
+            'uuid': uuidutils.generate_uuid(),
+            'resource_id': None,
+            'target_id': None,
+            'event': log_const.ALL_EVENT,
+        }
+        log_obj_obj_dict = {**log_obj_defaults_dict, **kwargs}
+        return mock.Mock(**log_obj_obj_dict)
+
+    def _test_ovn_nb_sync_mode_repair(self, test_logging=False):
 
         create_network_list = [{'net': {'id': 'n2', 'mtu': 1450},
                                 'ext_ids': {}}]
@@ -865,7 +901,14 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                       add_subnet_dhcp_options_list,
                                       delete_dhcp_options_list,
                                       add_port_groups_list,
-                                      del_port_groups_list)
+                                      del_port_groups_list,
+                                      test_logging)
+
+    def test_ovn_nb_sync_mode_repair(self):
+        self._test_ovn_nb_sync_mode_repair(test_logging=False)
+
+    def test_ovn_nb_sync_mode_repair_logs_created(self):
+        self._test_ovn_nb_sync_mode_repair(test_logging=True)
 
     def test_ovn_nb_sync_mode_log(self):
         create_network_list = []

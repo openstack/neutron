@@ -23,6 +23,7 @@ from neutron_lib.api.definitions import port_security as ps
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.services.qos import constants as qos_const
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -106,7 +107,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
             nb_idl=self.nb_api)
 
     def get_additional_service_plugins(self):
-        return {'qos': 'qos', 'segments': 'segments'}
+        return {'qos': 'qos', 'segments': 'segments', 'log': 'log'}
 
     def _api_for_resource(self, resource):
         if resource in ['security-groups']:
@@ -1075,7 +1076,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
 
     @staticmethod
     def _build_acl_for_pgs(priority, direction, log, name, action,
-                           severity, match, port_group, **kwargs):
+                           severity, match, meter, port_group, **kwargs):
         return {
             'priority': priority,
             'direction': direction,
@@ -1084,6 +1085,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
             'action': action,
             'severity': severity,
             'match': match,
+            'meter': meter,
             'external_ids': kwargs}
 
     def _validate_dhcp_opts(self, should_match=True):
@@ -1156,6 +1158,9 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                 ovn_const.OVN_DROP_PORT_GROUP_NAME):
             db_acls.append(TestOvnNbSync._build_acl_for_pgs(**acl))
 
+        self.ovn_log_driver.add_logging_options_to_acls(db_acls,
+                                                        self.ctx)
+
         # Get the list of ACLs stored in the OVN plugin IDL.
         plugin_acls = []
         for row in _plugin_nb_ovn._tables['Logical_Switch'].rows.values():
@@ -1176,7 +1181,24 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
             for acl in getattr(row, 'acls', []):
                 monitor_acls.append(self._build_acl_to_compare(acl))
 
+        self.ovn_log_driver.add_logging_options_to_acls(monitor_acls,
+                                                        self.ctx)
+        self.ovn_log_driver.add_logging_options_to_acls(plugin_acls,
+                                                        self.ctx)
+
+        # Values taken out from list for comparison, since ACLs from OVN DB
+        # have certain values on a list of just one object
         if should_match:
+            for acl in plugin_acls:
+                if isinstance(acl['severity'], list) and acl['severity']:
+                    acl['severity'] = acl['severity'][0]
+                    acl['name'] = acl['name'][0]
+                    acl['meter'] = acl['meter'][0]
+            for acl in monitor_acls:
+                if isinstance(acl['severity'], list) and acl['severity']:
+                    acl['severity'] = acl['severity'][0]
+                    acl['name'] = acl['name'][0]
+                    acl['meter'] = acl['meter'][0]
             self.assertCountEqual(db_acls, plugin_acls)
             self.assertCountEqual(db_acls, monitor_acls)
         else:
@@ -1770,13 +1792,25 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         self.assertIn('security_group_rule', sgr)
         return sgr['security_group_rule']['id']
 
-    def test_sync_acls(self):
+    def _test_sync_acls_helper(self, test_log=False,
+                               log_event=log_const.ALL_EVENT):
         data = {'security_group': {'name': 'sg1'}}
         sg_req = self.new_create_request('security-groups', data)
         res = sg_req.get_response(self.api)
         sg = self.deserialize(self.fmt, res)['security_group']
 
         sgr_ids = []
+
+        # If we are going to test ACLs with log enabled, set up a log object
+        if test_log:
+            log_data = {'log': {'project_id': self.ctx.project_id,
+            'resource_type': 'security_group',
+            'description': 'test net log',
+            'name': 'logme',
+            'enabled': True,
+            'event': log_event}}
+            log_obj = self.log_plugin.create_log(self.ctx, log_data)
+
         for tcp_port in range(8050, 8055):
             sgr_ids.append(self._create_security_group_rule(
                 sg['id'], 'ingress', tcp_port))
@@ -1806,6 +1840,21 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         self._validate_acls(should_match=False)
         nb_synchronizer.sync_acls(ctx)
         self._validate_acls()
+
+        # Remove log object to avoid overlapping
+        if test_log:
+            log_obj = self.log_plugin.delete_log(self.ctx, log_obj['id'])
+
+    def test_sync_acls(self):
+        self._test_sync_acls_helper()
+
+    def test_sync_acls_with_logging(self):
+        self._test_sync_acls_helper(test_log=True,
+                                    log_event=log_const.ACCEPT_EVENT)
+        self._test_sync_acls_helper(test_log=True,
+                                    log_event=log_const.ALL_EVENT)
+        self._test_sync_acls_helper(test_log=True,
+                                    log_event=log_const.DROP_EVENT)
 
 
 class TestOvnSbSync(base.TestOVNFunctionalBase):

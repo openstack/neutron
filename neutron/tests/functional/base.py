@@ -48,6 +48,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron import service  # noqa
+from neutron.services.logapi.drivers.ovn import driver as log_driver
 from neutron.tests import base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
@@ -171,6 +172,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         self.ovsdb_server_mgr = None
         self._service_plugins = service_plugins
+        log_driver.DRIVER = None
         super(TestOVNFunctionalBase, self).setUp()
         self.test_log_dir = os.path.join(DEFAULT_LOG_DIR, self.id())
         base.setup_test_logging(
@@ -193,6 +195,11 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
                 self.mech_driver.log_driver)
         self.mech_driver.log_driver.plugin_driver = self.mech_driver
         self.mech_driver.log_driver._log_plugin_property = None
+        for driver in self.log_plugin.driver_manager.drivers:
+            if driver.name == "ovn":
+                self.ovn_log_driver = driver
+        if not hasattr(self, 'ovn_log_driver'):
+            self.ovn_log_driver = log_driver.OVNDriver()
         self.ovn_northd_mgr = None
         self.maintenance_worker = maintenance_worker
         mock.patch(
