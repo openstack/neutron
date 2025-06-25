@@ -55,6 +55,7 @@ import neutron.conf.service
 import neutron.conf.services.extdns_designate_driver
 import neutron.conf.services.logging
 import neutron.conf.services.metering_agent
+import neutron.conf.services.provider_configuration
 import neutron.conf.wsgi
 import neutron.db.migration.cli
 import neutron.extensions.l3
@@ -201,7 +202,9 @@ def list_opts():
         ('designate',
          neutron.conf.services.extdns_designate_driver.designate_opts
          ),
-        ('quotas', neutron.conf.quota.core_quota_opts)
+        ('quotas', neutron.conf.quota.core_quota_opts),
+        ('service_providers',
+         neutron.conf.services.provider_configuration.serviceprovider_opts)
     ]
 
 
