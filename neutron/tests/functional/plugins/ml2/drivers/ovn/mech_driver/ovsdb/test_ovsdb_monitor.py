@@ -84,6 +84,22 @@ class WaitForChassisAgentDeleteEvent(event.WaitEvent):
             return False
 
 
+class WaitForPortBindingFIPEvent(event.WaitEvent):
+    event_name = 'WaitForPortBindingFIPEvent'
+
+    def __init__(self, fip):
+        events = (self.ROW_UPDATE, )
+        self._fip = fip
+        super().__init__(events, 'Port_Binding', {}, timeout=15)
+
+    def match_fn(self, event, row, old=None):
+        try:
+            return (row.external_ids[ovn_const.OVN_PORT_FIP_EXT_ID_KEY] ==
+                    self._fip)
+        except (AttributeError, KeyError):
+            return False
+
+
 class DistributedLockTestEvent(event.WaitEvent):
     ONETIME = False
     COUNTER = 0
@@ -245,10 +261,15 @@ class TestNBDbMonitor(testlib_api.MySQLTestCaseMixin,
         port = self.create_port()
 
         # Ensure that the MAC_Binding entry gets deleted after creating a FIP
+        fip_event = WaitForPortBindingFIPEvent('100.0.0.21')
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(fip_event)
         fip = self._create_fip(port, '100.0.0.21')
+        self.assertTrue(fip_event.wait())
+        # TODO(ralonsoh): restore the timeout=15 value (or even lower) once
+        # the eventlet removal finishes.
         n_utils.wait_until_true(
             lambda: not self._check_mac_binding_exists(macb_id),
-            timeout=15, sleep=1)
+            timeout=30, sleep=1)
 
         # Now that the FIP is created, add a new MAC_Binding entry with the
         # same IP address
@@ -257,9 +278,11 @@ class TestNBDbMonitor(testlib_api.MySQLTestCaseMixin,
 
         # Ensure that the MAC_Binding entry gets deleted after deleting the FIP
         self.l3_plugin.delete_floatingip(self.context, fip['id'])
+        # TODO(ralonsoh): restore the timeout=15 value (or even lower) once
+        # the eventlet removal finishes.
         n_utils.wait_until_true(
             lambda: not self._check_mac_binding_exists(macb_id),
-            timeout=15, sleep=1)
+            timeout=30, sleep=1)
 
     def _test_port_binding_and_status(self, port_id, action, status):
         # This function binds or unbinds port to chassis and
