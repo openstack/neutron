@@ -328,3 +328,48 @@ class TestOVNDriver(TestOVNDriverBase):
         self.assertEqual(len(pg_dict["acls"]), info_args[2])
         self.assertEqual(log_name, info_args[3])
         self.assertEqual(1, self._nb_ovn.db_set.call_count)
+
+    def test_add_label_related(self):
+        mock.patch.object(self._log_driver, '_pgs_from_log_obj', return_value=[
+                          {'name': 'neutron_pg_drop',
+                           'external_ids': {},
+                           'acls': [uuidutils.generate_uuid()]}]).start()
+        neutron_acl = {'port_group': 'neutron_pg_drop',
+                       'priority': 1001,
+                       'action': 'drop',
+                       'log': True,
+                       'name': '',
+                       'severity': 'info',
+                       'direction': 'to-lport',
+                       'match': 'outport == @neutron_pg_drop && ip'}
+        log_objs = [self._fake_log_obj(event=log_const.DROP_EVENT)]
+        with mock.patch.object(self._log_driver, '_get_logs',
+                               return_value=log_objs):
+            self._log_driver.add_label_related(neutron_acl, self.context)
+            self.assertNotEqual(neutron_acl['label'], 0)
+
+    def test_add_logging_options_to_acls(self):
+        mock.patch.object(self._log_driver, '_pgs_from_log_obj', return_value=[
+                             {'name': 'neutron_pg_drop', 'external_ids': {},
+                              'acls': [uuidutils.generate_uuid()]}]).start()
+        n_acls = [{'port_group': 'neutron_pg_drop',
+                   'priority': 1001,
+                   'action': 'drop',
+                   'log': False,
+                   'name': '',
+                   'severity': '',
+                   'direction': 'to-lport',
+                   'match': 'outport == @neutron_pg_drop && ip'}]
+        log_objs = [self._fake_log_obj(event=log_const.DROP_EVENT,
+                                       resource_id=None,
+                                       id='1111')]
+
+        with mock.patch.object(self._log_driver, '_get_logs',
+                               return_value=log_objs):
+            self._log_driver.add_logging_options_to_acls(n_acls, self.context)
+            for acl in n_acls:
+                self.assertEqual(acl['severity'], 'info')
+                self.assertTrue(acl['log'])
+                self.assertEqual(acl['name'],
+                                 ovn_utils.ovn_name(log_objs[0].id))
+                self.assertEqual(acl['meter'], self._log_driver.meter_name)

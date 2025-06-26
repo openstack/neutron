@@ -260,7 +260,7 @@ INITIAL_REV_NUM = -1
 
 ACL_EXPECTED_COLUMNS_NBDB = (
     'external_ids', 'direction', 'log', 'priority',
-    'name', 'action', 'severity', 'match')
+    'name', 'action', 'severity', 'match', 'meter')
 
 # Resource types
 TYPE_NETWORKS = 'networks'
