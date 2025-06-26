@@ -58,7 +58,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
     def _populate_new_default_network_segment_ranges(self, ctx, start_time):
         for (physical_network, vlan_ranges) in (
-                self.network_vlan_ranges.items()):
+                self._network_vlan_ranges.items()):
             for vlan_min, vlan_max in vlan_ranges:
                 range_obj.NetworkSegmentRange.new_default(
                     ctx, self.get_type(), physical_network, vlan_min,
@@ -66,13 +66,13 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
 
     def _parse_network_vlan_ranges(self):
         try:
-            self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+            self._network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
                 cfg.CONF.ml2_type_vlan.network_vlan_ranges)
         except Exception:
             LOG.exception("Failed to parse network_vlan_ranges. "
                           "Service terminated!")
             sys.exit(1)
-        LOG.info("Network VLAN ranges: %s", self.network_vlan_ranges)
+        LOG.info("Network VLAN ranges: %s", self._network_vlan_ranges)
 
     @db_api.retry_db_errors
     def _sync_vlan_allocations(self, ctx=None):
@@ -176,11 +176,11 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                 admin_context, start_time)
             self._populate_new_default_network_segment_ranges(
                 admin_context, start_time)
-            # Override self.network_vlan_ranges with the network segment range
+            # Override self._network_vlan_ranges with the network segment range
             # information from DB and then do a sync_allocations since the
             # segment range service plugin has not yet been loaded at this
             # initialization time.
-            self.network_vlan_ranges = (
+            self._network_vlan_ranges = (
                 self._get_network_segment_ranges_from_db(ctx=admin_context))
             self._sync_vlan_allocations(ctx=admin_context)
 
@@ -194,7 +194,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
         ``NETWORK_SEGMENT_RANGE`` service plugin is enabled. Otherwise,
         they will be loaded from the host config file - `ml2_conf.ini`.
         """
-        ranges = self.network_vlan_ranges
+        ranges = self._network_vlan_ranges
         if directory.get_plugin(plugin_constants.NETWORK_SEGMENT_RANGE):
             ranges = self._get_network_segment_ranges_from_db()
 

@@ -48,7 +48,7 @@ class TunnelTypeTestMixin:
     def setUp(self):
         super().setUp()
         self.driver = self.DRIVER_CLASS()
-        self.driver.tunnel_ranges = TUNNEL_RANGES
+        self.driver._tunnel_ranges = TUNNEL_RANGES
         self.driver._sync_allocations()
         self.context = context.Context()
 
@@ -83,7 +83,7 @@ class TunnelTypeTestMixin:
         self.assertIsNone(
             self.driver.get_allocation(self.context, (TUN_MAX + 1)))
 
-        self.driver.tunnel_ranges = UPDATED_TUNNEL_RANGES
+        self.driver._tunnel_ranges = UPDATED_TUNNEL_RANGES
         self.driver._sync_allocations()
 
         self.assertIsNone(
@@ -107,7 +107,7 @@ class TunnelTypeTestMixin:
                    api.SEGMENTATION_ID: tunnel_id}
         self.driver.reserve_provider_segment(self.context, segment)
 
-        self.driver.tunnel_ranges = UPDATED_TUNNEL_RANGES
+        self.driver._tunnel_ranges = UPDATED_TUNNEL_RANGES
         self.driver._sync_allocations()
 
         self.assertTrue(
@@ -294,7 +294,7 @@ class TunnelTypeMultiRangeTestMixin:
     def setUp(self):
         super().setUp()
         self.driver = self.DRIVER_CLASS()
-        self.driver.tunnel_ranges = self.TUNNEL_MULTI_RANGES
+        self.driver._tunnel_ranges = self.TUNNEL_MULTI_RANGES
         self.driver._sync_allocations()
         self.context = context.Context()
 
@@ -501,7 +501,7 @@ class TunnelTypeNetworkSegmentRangeTestMixin:
         self.assertEqual(TUN_MAX, network_segment_range.maximum)
 
     def test__delete_expired_default_network_segment_ranges(self):
-        self.driver.tunnel_ranges = TUNNEL_RANGES
+        self.driver._tunnel_ranges = TUNNEL_RANGES
         self.driver._sync_allocations()
         self.driver._delete_expired_default_network_segment_ranges(
             self.context, self.start_time)

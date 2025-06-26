@@ -65,7 +65,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         cfg.CONF.set_override('network_vlan_ranges',
                               NETWORK_VLAN_RANGES,
                               group='ml2_type_vlan')
-        self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+        self._network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
             NETWORK_VLAN_RANGES)
         self.driver = type_vlan.VlanTypeDriver()
         self.driver._sync_vlan_allocations()
@@ -175,15 +175,15 @@ class VlanTypeTest(testlib_api.SqlTestCase):
             self.assertFalse(
                 self._get_allocation(self.context, segment).allocated)
 
-        check_in_ranges(self.network_vlan_ranges)
+        check_in_ranges(self._network_vlan_ranges)
 
-        self.driver.network_vlan_ranges = UPDATED_VLAN_RANGES
+        self.driver._network_vlan_ranges = UPDATED_VLAN_RANGES
         self.driver._sync_vlan_allocations()
         check_in_ranges(UPDATED_VLAN_RANGES)
 
-        self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES_WITH_UNCONFIG
+        self.driver._network_vlan_ranges = NETWORK_VLAN_RANGES_WITH_UNCONFIG
         self.driver._sync_vlan_allocations()
-        self.driver.network_vlan_ranges = UPDATED_VLAN_RANGES
+        self.driver._network_vlan_ranges = UPDATED_VLAN_RANGES
         with mock.patch.object(type_vlan.LOG, 'debug') as mock_debug:
             self.driver._sync_vlan_allocations()
             mock_debug.assert_called_once_with(
@@ -191,7 +191,7 @@ class VlanTypeTest(testlib_api.SqlTestCase):
                 {UNCONFIGURED_NET})
         check_in_ranges(UPDATED_VLAN_RANGES)
 
-        self.driver.network_vlan_ranges = EMPTY_VLAN_RANGES
+        self.driver._network_vlan_ranges = EMPTY_VLAN_RANGES
         self.driver._sync_vlan_allocations()
 
         vlan_min, vlan_max = UPDATED_VLAN_RANGES[TENANT_NET][0]
@@ -372,7 +372,7 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
                               NETWORK_VLAN_RANGES,
                               group='ml2_type_vlan')
         cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
-        self.network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
+        self._network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
             NETWORK_VLAN_RANGES)
         self.driver = type_vlan.VlanTypeDriver()
         self.driver._sync_vlan_allocations()

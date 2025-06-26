@@ -117,8 +117,8 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
         """
 
     def _initialize(self, raw_tunnel_ranges):
-        self.tunnel_ranges = []
-        self._parse_tunnel_ranges(raw_tunnel_ranges, self.tunnel_ranges)
+        self._tunnel_ranges = []
+        self._parse_tunnel_ranges(raw_tunnel_ranges, self._tunnel_ranges)
         if not range_plugin.is_network_segment_range_enabled():
             # service plugins are initialized/loaded after the ML2 driver
             # initialization. Thus, we base on the information whether
@@ -146,7 +146,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
 
     @db_api.retry_db_errors
     def _populate_new_default_network_segment_ranges(self, ctx, start_time):
-        for tun_min, tun_max in self.tunnel_ranges:
+        for tun_min, tun_max in self._tunnel_ranges:
             range_obj.NetworkSegmentRange.new_default(
                 ctx, self.get_type(), None, tun_min, tun_max, start_time)
 
@@ -174,7 +174,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
             # information from DB and then do a sync_allocations since the
             # segment range service plugin has not yet been loaded at this
             # initialization time.
-            self.tunnel_ranges = self._get_network_segment_ranges_from_db(
+            self._tunnel_ranges = self._get_network_segment_ranges_from_db(
                 ctx=admin_context)
             self._sync_allocations(ctx=admin_context)
 
@@ -262,7 +262,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
         ``NETWORK_SEGMENT_RANGE`` service plugin is enabled. Otherwise,
         they will be loaded from the host config file - `ml2_conf.ini`.
         """
-        ranges = self.tunnel_ranges
+        ranges = self._tunnel_ranges
         if directory.get_plugin(plugin_constants.NETWORK_SEGMENT_RANGE):
             ranges = self._get_network_segment_ranges_from_db()
 
