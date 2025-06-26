@@ -258,6 +258,8 @@
             SECURITYGROUP:
               enable_ipset: false  # Not compatible with nftables
 
+# NOTE(ralonsoh): to be removed in 2026.2, once the OVN Metadata agent
+# replacement finishes. See LP#2112313.
 - job:
     name: neutron-tempest-plugin-ovn-with-ovn-metadata-agent
     parent: neutron-tempest-plugin-ovn
