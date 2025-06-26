@@ -148,15 +148,15 @@ class MetadataProxyHandler(MetadataProxyHandlerBaseSocketServer,
             network_id, router_id = self._get_instance_id(req)
             if network_id and router_id:
                 title = '400 Bad Request'
-                msg = _(f'Both network {network_id} and router {router_id} '
-                        f'defined.')
+                msg = _('Both network %s and router %s '
+                        'defined.') % (network_id, router_id)
             elif network_id:
                 title = '404 Not Found'
-                msg = _(f'Instance was not found on network {network_id}.')
+                msg = _('Instance was not found on network %s.') % network_id
                 LOG.warning(msg)
             else:
                 title = '404 Not Found'
-                msg = _(f'Instance was not found on router {router_id}.')
+                msg = _('Instance was not found on router %s.') % router_id
                 LOG.warning(msg)
             res = common_metadata.encode_http_reponse(title, title, msg)
             self.wfile.write(res)
