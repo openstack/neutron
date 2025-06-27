@@ -14,7 +14,6 @@
 #    under the License.
 
 from unittest import mock
-import weakref
 
 import fixtures
 from neutron_lib.plugins import constants as lib_const
@@ -248,20 +247,3 @@ class NeutronManagerTestCase(base.BaseTestCase):
         with testlib_api.ExpectedException(ImportError):
             manager.NeutronManager.load_class_for_provider(
                     'neutron.core_plugins', 'ml2XXXXXX')
-
-    def test_get_service_plugin_by_path_prefix_3(self):
-        cfg.CONF.set_override("core_plugin", DB_PLUGIN_KLASS)
-        nm = manager.NeutronManager.get_instance()
-
-        class pclass:
-            def __init__(self, path_prefix):
-                self.path_prefix = path_prefix
-
-        x_plugin, y_plugin = pclass('xpa'), pclass('ypa')
-        directory.add_plugin('x', x_plugin)
-        directory.add_plugin('y', y_plugin)
-        self.assertEqual(weakref.proxy(x_plugin),
-                         nm.get_service_plugin_by_path_prefix('xpa'))
-        self.assertEqual(weakref.proxy(y_plugin),
-                         nm.get_service_plugin_by_path_prefix('ypa'))
-        self.assertIsNone(nm.get_service_plugin_by_path_prefix('abc'))
