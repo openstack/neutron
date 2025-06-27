@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    The resource tags are now case sensitive, following the `OpenStack
+    guidelines <https://specs.openstack.org/openstack/api-wg/guidelines/tags.html>`_
+    for tags.
