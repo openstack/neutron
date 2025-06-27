@@ -340,6 +340,31 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertEqual(final_trunk_status, current_trunk.status)
         return trunk, current_trunk
 
+    def test_get_trunk_subport(self):
+
+        with self.port() as parent_port, self.port() as child_port:
+            trunk = self._create_test_trunk(parent_port)
+            subport = create_subport_dict(child_port['port']['id'])
+            self.trunk_plugin.add_subports(
+                self.context, trunk['id'], {'sub_ports': [subport]})
+
+            portid = parent_port['port']['id']
+            pl = directory.get_plugin()
+            res = pl.get_ports(self.context, filters={'id': [portid]})
+
+            expected_trunk_details = {
+                'trunk_id': trunk['id'],
+                'sub_ports': [
+                    {
+                        'segmentation_id': subport['segmentation_id'],
+                        'port_id': subport['port_id'],
+                        'segmentation_type': subport['segmentation_type'],
+                        'mac_address': child_port['port']['mac_address'],
+                    }
+                ]
+            }
+            self.assertEqual(expected_trunk_details, res[0]['trunk_details'])
+
 
 class TrunkPluginCompatDriversTestCase(test_plugin.Ml2PluginV2TestCase):
 

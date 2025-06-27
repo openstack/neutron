@@ -92,7 +92,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
                 for port in ports:
                     subports[port['id']]['mac_address'] = port['mac_address']
             trunk_details = {'trunk_id': port_db.trunk_port.id,
-                             'sub_ports': list(subports.values())}
+                             trunk_apidef.SUB_PORTS: list(subports.values())}
             port_res['trunk_details'] = trunk_details
 
         return port_res
@@ -111,9 +111,10 @@ class TrunkPlugin(service_base.ServicePluginBase):
         subport_ids = []
         trunk_ports = []
         for p in ports_res:
-            if 'trunk_details' in p and 'subports' in p['trunk_details']:
+            if 'trunk_details' in p and \
+                    trunk_apidef.SUB_PORTS in p['trunk_details']:
                 trunk_ports.append(p)
-                for subp in p['trunk_details']['subports']:
+                for subp in p['trunk_details'][trunk_apidef.SUB_PORTS]:
                     subport_ids.append(subp['port_id'])
         if not subport_ids:
             return ports_res
@@ -124,7 +125,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
         subport_macs = {p['id']: p['mac_address'] for p in subports}
 
         for tp in trunk_ports:
-            for subp in tp['trunk_details']['subports']:
+            for subp in tp['trunk_details'][trunk_apidef.SUB_PORTS]:
                 subp['mac_address'] = subport_macs[subp['port_id']]
 
         return ports_res
@@ -202,8 +203,10 @@ class TrunkPlugin(service_base.ServicePluginBase):
         trunk_details['port_id'] = trunk_validator.validate(context)
 
         subports_validator = rules.SubPortsValidator(
-            self._segmentation_types, trunk['sub_ports'], trunk['port_id'])
-        trunk_details['sub_ports'] = subports_validator.validate(context)
+            self._segmentation_types, trunk[trunk_apidef.SUB_PORTS],
+            trunk['port_id'])
+        trunk_details[trunk_apidef.SUB_PORTS] = (
+            subports_validator.validate(context))
         return trunk_details
 
     def get_plugin_description(self):
@@ -239,7 +242,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
             port_id=p['port_id'],
             segmentation_id=p['segmentation_id'],
             segmentation_type=p['segmentation_type'])
-                     for p in trunk['sub_ports']]
+                     for p in trunk[trunk_apidef.SUB_PORTS]]
         admin_state_up = trunk.get('admin_state_up', True)
         # NOTE(status_police): a trunk is created in DOWN status. Depending
         # on the nature of the create request, a driver may set the status
@@ -333,7 +336,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
 
             # Check for basic validation since the request body here is not
             # automatically validated by the API layer.
-            subports = subports['sub_ports']
+            subports = subports[trunk_apidef.SUB_PORTS]
             subports_validator = rules.SubPortsValidator(
                 self._segmentation_types, subports, trunk['port_id'])
             subports = subports_validator.validate(
@@ -363,7 +366,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
                     segmentation_type=subport['segmentation_type'],
                     segmentation_id=subport['segmentation_id'])
                 obj.create()
-                trunk['sub_ports'].append(obj)
+                trunk[trunk_apidef.SUB_PORTS].append(obj)
                 added_subports.append(obj)
             payload = events.DBEventPayload(context, resource_id=trunk_id,
                                             states=(original_trunk, trunk,),
@@ -386,7 +389,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
     @db_base_plugin_common.convert_result_to_dict
     def remove_subports(self, context, trunk_id, subports):
         """Remove one or more subports from trunk."""
-        subports = subports['sub_ports']
+        subports = subports[trunk_apidef.SUB_PORTS]
         with db_api.CONTEXT_WRITER.using(context):
             trunk = self._get_trunk(context, trunk_id)
             original_trunk = copy.deepcopy(trunk)
@@ -445,7 +448,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
     def get_subports(self, context, trunk_id, fields=None):
         """Return subports for the specified trunk."""
         trunk = self.get_trunk(context, trunk_id)
-        return {'sub_ports': trunk['sub_ports']}
+        return {trunk_apidef.SUB_PORTS: trunk[trunk_apidef.SUB_PORTS]}
 
     def _get_trunk(self, context, trunk_id):
         """Return the trunk object or raise if not found."""
