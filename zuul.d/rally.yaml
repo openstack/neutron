@@ -4,7 +4,6 @@
     timeout: 10800
     vars:
       devstack_localrc:
-        USE_PYTHON3: true
         OSPROFILER_COLLECTOR: redis
         OSPROFILER_HMAC_KEYS: "neutron-hmac-key-used-in-zuul-ci"
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
@@ -178,7 +177,6 @@
         # is finished or the mech driver does not call monkey_patch().
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
         Q_ML2_TENANT_NETWORK_TYPE: geneve
-        USE_PYTHON3: true
         PHYSICAL_NETWORK: public
         Q_USE_PROVIDERNET_FOR_PUBLIC: true
         ENABLE_CHASSIS_AS_GW: true

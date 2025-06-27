@@ -532,7 +532,6 @@
           PHYSICAL_NETWORK: public
           ENABLE_CHASSIS_AS_GW: false
           OVN_DBS_LOG_LEVEL: dbg
-          USE_PYTHON3: True
           ENABLE_TLS: True
 
 - job:
