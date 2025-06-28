@@ -67,6 +67,8 @@ designate_opts = [
                help=_('The email address to be used when creating PTR zones. '
                       'If not specified, the email address will be '
                       'admin@<dns_domain>')),
+    cfg.StrOpt('region_name',
+               help=_('Name of designate region to use.')),
 ]
 
 
