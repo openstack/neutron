@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as nlib_consts
 from neutron_lib import exceptions as n_exc
 from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_config import cfg
@@ -25,9 +26,13 @@ from oslo_config import cfg
 from neutron.common.ovn.constants import OVN_ML2_MECH_DRIVER_NAME
 from neutron.objects.ports import Port
 from neutron.objects.ports import PortBinding
+from neutron.objects import trunk as trunk_objects
+from neutron.services.trunk import drivers
 from neutron.services.trunk.drivers.ovn import trunk_driver
+from neutron.services.trunk import plugin as trunk_plugin
 from neutron.tests import base
 from neutron.tests.unit import fake_resources
+from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
 class FakePayload:
@@ -428,6 +433,70 @@ class TestTrunkHandler(base.BaseTestCase):
             self.plugin_driver,
             fake_payload)
         m__unset_sub_ports.assert_not_called()
+
+
+class TestTrunkHandlerWithPlugin(test_plugin.Ml2PluginV2TestCase):
+    def setUp(self):
+        super().setUp()
+        self.drivers_patch = mock.patch.object(drivers, 'register').start()
+        self.compat_patch = mock.patch.object(
+            trunk_plugin.TrunkPlugin, 'check_compatibility').start()
+        self.trunk_plugin = trunk_plugin.TrunkPlugin()
+        self.trunk_plugin.add_segmentation_type('vlan', lambda x: True)
+        self.plugin_driver = mock.Mock()
+        self.trunk_handler = trunk_driver.OVNTrunkHandler(self.plugin_driver)
+
+    def _create_test_trunk(self, port, subports=None):
+        subports = subports if subports else []
+        trunk = {'port_id': port['port']['id'],
+                 'project_id': 'test_tenant',
+                 'sub_ports': subports}
+        response = (
+            self.trunk_plugin.create_trunk(self.context, {'trunk': trunk}))
+        return response
+
+    def _get_trunk_obj(self, trunk_id):
+        return trunk_objects.Trunk.get_object(self.context, id=trunk_id)
+
+    def test_parent_active_triggers_trunk_active(self):
+        with self.port() as new_parent:
+            new_parent['status'] = nlib_consts.PORT_STATUS_ACTIVE
+            old_parent = {'status': nlib_consts.PORT_STATUS_DOWN}
+            old_trunk = self._create_test_trunk(new_parent)
+            old_trunk = self._get_trunk_obj(old_trunk['id'])
+            old_trunk.update(status=trunk_consts.TRUNK_DOWN_STATUS)
+            trunk_details = {'trunk_id': old_trunk.id}
+            new_parent['trunk_details'] = trunk_details
+            old_parent['trunk_details'] = trunk_details
+            self.trunk_handler.port_updated(
+                resources.PORT,
+                events.AFTER_UPDATE,
+                None,
+                payload=events.DBEventPayload(
+                    self.context, states=(old_parent, new_parent)))
+            new_trunk = self._get_trunk_obj(old_trunk.id)
+            self.assertEqual(
+                trunk_consts.TRUNK_ACTIVE_STATUS, new_trunk.status)
+
+    def test_parent_build_does_not_trigger_trunk_active(self):
+        with self.port() as new_parent:
+            new_parent['status'] = nlib_consts.PORT_STATUS_BUILD
+            old_parent = {'status': nlib_consts.PORT_STATUS_DOWN}
+            old_trunk = self._create_test_trunk(new_parent)
+            old_trunk = self._get_trunk_obj(old_trunk['id'])
+            old_trunk.update(status=trunk_consts.TRUNK_DOWN_STATUS)
+            trunk_details = {'trunk_id': old_trunk.id}
+            new_parent['trunk_details'] = trunk_details
+            old_parent['trunk_details'] = trunk_details
+            self.trunk_handler.port_updated(
+                resources.PORT,
+                events.AFTER_UPDATE,
+                None,
+                payload=events.DBEventPayload(
+                    self.context, states=(old_parent, new_parent)))
+            new_trunk = self._get_trunk_obj(old_trunk.id)
+            self.assertNotEqual(
+                trunk_consts.TRUNK_ACTIVE_STATUS, new_trunk.status)
 
 
 class TestTrunkDriver(base.BaseTestCase):
