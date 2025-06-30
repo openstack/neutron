@@ -326,7 +326,7 @@ class Controller:
                     request, obj, parent_id, is_get=True)
                 if policy.check(
                         request.context, self._plugin_handlers[self.SHOW],
-                        obj, plugin=self._plugin, pluralized=self._collection):
+                        obj, pluralized=self._collection):
                     tmp_list.append(obj)
             obj_list = tmp_list
         # Use the first element in the list for discriminating which attributes
