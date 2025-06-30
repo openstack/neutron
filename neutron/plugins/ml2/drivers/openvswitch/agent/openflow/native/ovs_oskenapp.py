@@ -15,6 +15,9 @@
 #    under the License.
 
 import functools
+import queue
+import signal
+import threading
 
 import os_ken.app.ofctl.api  # noqa
 from os_ken.base import app_manager
@@ -36,9 +39,41 @@ from neutron.plugins.ml2.drivers.openvswitch.agent \
 LOG = logging.getLogger(__name__)
 
 
-def agent_main_wrapper(bridge_classes):
+SIGNAL_QUEUE = None
+SIGNAL_HANDLERS = None
+
+
+def signal_handler(sig, frame):
+    global SIGNAL_QUEUE
+    if SIGNAL_QUEUE is None:
+        SIGNAL_QUEUE = queue.Queue()
+    SIGNAL_QUEUE.put(sig)
+
+
+def register_signal(sig, handler):
+    global SIGNAL_QUEUE
+    global SIGNAL_HANDLERS
+    if SIGNAL_HANDLERS is None:
+        SIGNAL_HANDLERS = {}
+    if SIGNAL_QUEUE is None:
+        SIGNAL_QUEUE = queue.Queue()
+    SIGNAL_HANDLERS[sig] = handler
+
+    def listen_queue():
+        while True:
+            captured_sig = SIGNAL_QUEUE.get()
+            if captured_sig in SIGNAL_HANDLERS:
+                SIGNAL_HANDLERS[captured_sig]()
+            if captured_sig in (signal.SIGTERM, signal.SIGINT):
+                break
+
+    thread = threading.Thread(target=listen_queue, daemon=True)
+    thread.start()
+
+
+def agent_main_wrapper(bridge_classes, register_signal=None):
     try:
-        ovs_agent.main(bridge_classes)
+        ovs_agent.main(bridge_classes, register_signal)
     except Exception:
         with excutils.save_and_reraise_exception():
             LOG.exception("Agent main thread died of an exception")
@@ -55,6 +90,11 @@ class OVSNeutronAgentOSKenApp(base_oskenapp.BaseNeutronAgentOSKenApp):
         # Start os-ken event loop thread
         super().start()
 
+        # Initializes signals that can be registered
+        signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGHUP, signal_handler)
+
         def _make_br_cls(br_cls):
             return functools.partial(br_cls, os_ken_app=self)
 
@@ -64,4 +104,5 @@ class OVSNeutronAgentOSKenApp(base_oskenapp.BaseNeutronAgentOSKenApp):
             'br_phys': _make_br_cls(br_phys.OVSPhysicalBridge),
             'br_tun': _make_br_cls(br_tun.OVSTunnelBridge),
         }
-        return hub.spawn(agent_main_wrapper, bridge_classes, raise_error=True)
+        return hub.spawn(agent_main_wrapper, bridge_classes, register_signal,
+                         raise_error=True)

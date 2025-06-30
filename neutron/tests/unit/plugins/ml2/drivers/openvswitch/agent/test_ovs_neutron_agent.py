@@ -14,6 +14,7 @@
 
 import contextlib
 import copy
+import signal
 import sys
 import time
 from unittest import mock
@@ -171,10 +172,13 @@ class TestOvsNeutronAgent:
                     return_value=[]),\
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
+            self.register_signal = mock.MagicMock()
             ext_manager = mock.Mock()
             ext_manager.names = mock.Mock(return_value=[])
-            agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
-                                                   ext_manager, cfg.CONF)
+            agent = self.mod_agent.OVSNeutronAgent(
+                self._bridge_classes(),
+                ext_manager, cfg.CONF,
+                register_signal=self.register_signal)
             agent.tun_br = self.br_tun_cls(br_name='br-tun')
             return agent
 
@@ -2081,6 +2085,19 @@ class TestOvsNeutronAgent:
         mock_loop.assert_called_once_with(polling_manager=mock.ANY)
         mock_idl_monitor.start_bridge_monitor.assert_called()
 
+    def test_daemon_loop_uses_register_signal(self):
+        with mock.patch.object(polling, 'get_polling_manager'), \
+             mock.patch.object(self.agent, 'rpc_loop'), \
+             mock.patch.object(self.agent.plugin_rpc, 'stop'), \
+             mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor'):
+
+            self.agent.daemon_loop()
+
+            self.register_signal.assert_has_calls([
+                mock.call(signal.SIGTERM, self.agent._handle_sigterm),
+                mock.call(signal.SIGHUP, self.agent._handle_sighup),
+            ])
+
     def test_setup_tunnel_port_invalid_ofport(self):
         remote_ip = '1.2.3.4'
         with mock.patch.object(
@@ -2526,7 +2543,7 @@ class TestOvsNeutronAgent:
     def test_set_rpc_timeout(self):
         with mock.patch.object(n_rpc.BackingOffClient,
                                'set_max_timeout') as smt:
-            self.agent._handle_sigterm(None, None)
+            self.agent._handle_sigterm()
             for rpc_client in (self.agent.plugin_rpc.client,
                                self.agent.sg_plugin_rpc.client,
                                self.agent.dvr_plugin_rpc.client,
@@ -2536,7 +2553,7 @@ class TestOvsNeutronAgent:
     def test_set_rpc_timeout_no_value(self):
         self.agent.quitting_rpc_timeout = None
         with mock.patch.object(self.agent, 'set_rpc_timeout') as mock_set_rpc:
-            self.agent._handle_sigterm(None, None)
+            self.agent._handle_sigterm()
         mock_set_rpc.assert_not_called()
 
     def test_arp_spoofing_network_port(self):
