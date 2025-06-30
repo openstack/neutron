@@ -21,6 +21,7 @@ service.init_backend(service.BackendType.THREADING)
 from neutron import server  # noqa: E402
 from neutron.server import api  # noqa: E402
 from neutron.server import ovn_maintenance  # noqa: E402
+from neutron.server import periodic  # noqa: E402
 from neutron.server import rpc  # noqa: E402
 
 
@@ -34,3 +35,7 @@ def main_ovn_maintenance():
 
 def main_rpc():
     server.boot_server(rpc.rpc_server)
+
+
+def main_periodic():
+    server.boot_server(periodic.periodic_workers)

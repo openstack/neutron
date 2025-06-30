@@ -136,8 +136,8 @@ The Neutron API consists of the following executables:
 
 .. note::
 
-  Right now, only the API server and the OVN maintenance task are running
-  without eventlet.
+  Right now, the API server, the OVN maintenance task and the periodic workers
+  taks are running without eventlet.
 
 
 ML2/OVN
