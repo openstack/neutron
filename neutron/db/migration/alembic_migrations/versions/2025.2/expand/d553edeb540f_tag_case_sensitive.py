@@ -14,9 +14,15 @@
 #
 
 from alembic import op
+from oslo_log import log as logging
+from sqlalchemy import exc
 
 
-# Make "tag" resources case sensitive, using collate "utf8mb4_0900_as_cs"
+LOG = logging.getLogger(__name__)
+
+
+# Make "tag" resources case sensitive, using collate/charset
+# "utf8mb4_bin/utf8mb4"
 #
 # Revision ID: d553edeb540f
 # Revises: ad80a9f07c5c
@@ -28,7 +34,14 @@ down_revision = 'ad80a9f07c5c'
 
 
 def upgrade():
-    op.execute('ALTER TABLE tags CONVERT TO CHARACTER SET utf8mb4 '
-               'COLLATE utf8mb4_0900_as_cs')
-    op.execute('ALTER TABLE tags CHARACTER SET utf8mb4 '
-               'COLLATE utf8mb4_0900_as_cs')
+    try:
+        op.execute('ALTER TABLE tags CONVERT TO CHARACTER SET utf8mb4 '
+                   'COLLATE utf8mb4_bin')
+        op.execute('ALTER TABLE tags CHARACTER SET utf8mb4 '
+                   'COLLATE utf8mb4_bin')
+    except exc.OperationalError as _exc:
+        if 'Unknown collation' in str(_exc):
+            LOG.error('Collation "utf8mb4_bin" does not exist; the Neutron '
+                      '"tag" table will remain case insensitive.')
+        else:
+            raise _exc

@@ -3,4 +3,6 @@ features:
   - |
     The resource tags are now case sensitive, following the `OpenStack
     guidelines <https://specs.openstack.org/openstack/api-wg/guidelines/tags.html>`_
-    for tags.
+    for tags. "tag" table is now using case sensitive collate/charset
+    ``utf8mb4_bin``/``utf8mb4``, that are present in all MariaDB releases and
+    since MySQL 5.5.3 (2010).
