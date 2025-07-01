@@ -44,6 +44,10 @@ LOG = logging.getLogger(__name__)
 DEFAULT_WAIT_FOR_PORT_TIMEOUT = 60
 
 
+# Note: this lock is local only to the ovs-agent, but not for
+# the RPC calls to the neutron-server! This can mean that the agent
+# is still working on trunk wiring but in the server the trunk is already
+# deleted.
 def lock_on_bridge_name(required_parameter):
     def func_decor(f):
         try:
@@ -278,6 +282,13 @@ class OVSDBHandler:
             else:
                 subport_ids.append(subport.port_id)
 
+        # Note: update_trunk_metadata tries to add the following fields
+        # to external_ids: bridge_name, trunk_id and subport_ids.
+        # It can happen that this metadata is not filled in time and
+        # the cleanup fails.
+        # As os-vif is responsible for creating these ports and at the time
+        # of creation the metadata is partially available, os-vif can add
+        # at least bridge_name to external_ids.
         try:
             self._update_trunk_metadata(
                 trunk_bridge, parent_port, trunk_id, subport_ids)
