@@ -18,8 +18,8 @@ from concurrent import futures
 import functools
 import os
 import threading
+import time
 
-import eventlet
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
 from neutron_lib import constants
@@ -181,9 +181,12 @@ class DhcpAgent(manager.Manager):
         """Activate the DHCP agent."""
         self.periodic_resync()
         self.start_ready_ports_loop()
-        eventlet.spawn_n(self._process_loop)
+        pr_loop_thread = threading.Thread(target=self._process_loop)
+        pr_loop_thread.start()
         if self.conf.bulk_reload_interval:
-            eventlet.spawn_n(self._reload_bulk_allocations)
+            bulk_thread = threading.Thread(
+                target=self._reload_bulk_allocations)
+            bulk_thread.start()
 
     def _reload_bulk_allocations(self):
         while True:
@@ -196,7 +199,7 @@ class DhcpAgent(manager.Manager):
                 network = self.cache.get_network_by_id(network_id)
                 if network is not None:
                     self.call_driver('bulk_reload_allocations', network)
-            eventlet.greenthread.sleep(self.conf.bulk_reload_interval)
+            time.sleep(self.conf.bulk_reload_interval)
 
     def call_driver(self, action, network, **action_kwargs):
         sid_segment = {}
@@ -293,7 +296,7 @@ class DhcpAgent(manager.Manager):
         # This helps prevent one thread from acquiring the same lock over and
         # over again, in which case no other threads waiting on the
         # "dhcp-agent" lock would make any progress.
-        eventlet.greenthread.sleep(0)
+        time.sleep(0)
 
     @_sync_lock
     def sync_state(self, networks=None):
@@ -375,12 +378,13 @@ class DhcpAgent(manager.Manager):
                 self.dhcp_ready_ports |= ports_to_send
 
         while True:
-            eventlet.sleep(0.2)
+            time.sleep(0.2)
             dhcp_ready_ports_loop()
 
     def start_ready_ports_loop(self):
         """Spawn a thread to push changed ports to server."""
-        eventlet.spawn(self._dhcp_ready_ports_loop)
+        # TODO(lajoskatona): check the usage of ThreadPoolExecutor
+        threading.Thread(target=self._dhcp_ready_ports_loop).start()
 
     @utils.exception_logger()
     def _periodic_resync_helper(self):
@@ -412,7 +416,8 @@ class DhcpAgent(manager.Manager):
 
     def periodic_resync(self):
         """Spawn a thread to periodically resync the dhcp state."""
-        eventlet.spawn(self._periodic_resync_helper)
+        resync_thread = threading.Thread(target=self._periodic_resync_event)
+        resync_thread.start()
 
     def safe_get_network_info(self, network_id):
         try:

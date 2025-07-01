@@ -10,10 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import setproctitle
+from oslo_service import backend
+backend.init_backend(backend.BackendType.THREADING)
 
-from neutron.agent import dhcp_agent
-from neutron_lib import constants
+# pylint: disable=wrong-import-position
+import setproctitle  # noqa: E402
+
+from neutron.agent import dhcp_agent  # noqa: E402
+from neutron_lib import constants  # noqa: E402
 
 
 def main():
