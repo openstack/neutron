@@ -16,22 +16,14 @@
 """
 Utility methods for working with WSGI servers
 """
-import errno
-import socket
-import sys
-import time
-
 import eventlet.wsgi
 from neutron_lib import context
-from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from oslo_service import service as common_service
 from oslo_service import sslutils
-from oslo_service import systemd
 from oslo_service import wsgi
 from oslo_utils import encodeutils
 from oslo_utils import excutils
@@ -97,142 +89,6 @@ class WorkerService(neutron_worker.NeutronBaseWorker):
     @staticmethod
     def reset():
         config.reset_service()
-
-
-class Server:
-    """Server class to manage multiple WSGI sockets and applications."""
-
-    def __init__(self, name, num_threads=None, disable_ssl=False):
-        # Raise the default from 8192 to accommodate large tokens
-        eventlet.wsgi.MAX_HEADER_LINE = CONF.max_header_line
-        self.num_threads = num_threads or CONF.wsgi_default_pool_size
-        self.disable_ssl = disable_ssl
-        # Pool for a greenthread in which wsgi server will be running
-        self.pool = eventlet.GreenPool(1)
-        self.name = name
-        self._server = None
-        # A value of 0 is converted to None because None is what causes the
-        # wsgi server to wait forever.
-        self.client_socket_timeout = CONF.client_socket_timeout or None
-        if CONF.use_ssl and not self.disable_ssl:
-            sslutils.is_enabled(CONF)
-
-    def _get_socket(self, host, port, backlog):
-        bind_addr = (host, port)
-        # TODO(dims): eventlet's green dns/socket module does not actually
-        # support IPv6 in getaddrinfo(). We need to get around this in the
-        # future or monitor upstream for a fix
-        try:
-            info = socket.getaddrinfo(bind_addr[0],
-                                      bind_addr[1],
-                                      socket.AF_UNSPEC,
-                                      socket.SOCK_STREAM)[0]
-            family = info[0]
-            bind_addr = info[-1]
-        except Exception:
-            LOG.exception("Unable to listen on %(host)s:%(port)s",
-                          {'host': host, 'port': port})
-            sys.exit(1)
-
-        sock = None
-        retry_until = time.time() + CONF.retry_until_window
-        while not sock and time.time() < retry_until:
-            try:
-                sock = eventlet.listen(bind_addr,
-                                       backlog=backlog,
-                                       family=family)
-            except OSError as err:
-                with excutils.save_and_reraise_exception() as ctxt:
-                    if err.errno == errno.EADDRINUSE:
-                        ctxt.reraise = False
-                        eventlet.sleep(0.1)
-        if not sock:
-            raise RuntimeError(_("Could not bind to %(host)s:%(port)s "
-                                 "after trying for %(time)d seconds") %
-                               {'host': host,
-                                'port': port,
-                                'time': CONF.retry_until_window})
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # sockets can hang around forever without keepalive
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-
-        # This option isn't available in the OS X version of eventlet
-        if hasattr(socket, 'TCP_KEEPIDLE'):
-            sock.setsockopt(socket.IPPROTO_TCP,
-                            socket.TCP_KEEPIDLE,
-                            CONF.tcp_keepidle)
-
-        return sock
-
-    def start(self, application, port, host='0.0.0.0', workers=0, desc=None):
-        """Run a WSGI server with the given application."""
-        self._host = host
-        self._port = port
-        backlog = CONF.backlog
-
-        self._socket = self._get_socket(self._host,
-                                        self._port,
-                                        backlog=backlog)
-
-        self._launch(application, workers, desc)
-
-    def _launch(self, application, workers=0, desc=None):
-        set_proctitle = "off" if desc is None else CONF.setproctitle
-        service = WorkerService(self, application, set_proctitle,
-                                self.disable_ssl, workers, desc)
-        if workers < 1:
-            # The API service should run in the current process.
-            self._server = service
-            # Dump the initial option values
-            cfg.CONF.log_opt_values(LOG, logging.DEBUG)
-            service.start(desc=desc)
-            systemd.notify_once()
-        else:
-            # dispose the whole pool before os.fork, otherwise there will
-            # be shared DB connections in child processes which may cause
-            # DB errors.
-            db_api.get_context_manager().dispose_pool()
-            # The API service runs in a number of child processes.
-            # Minimize the cost of checking for child exit by extending the
-            # wait interval past the default of 0.01s.
-            self._server = common_service.ProcessLauncher(
-                cfg.CONF, wait_interval=1.0, restart_method='mutate')
-            self._server.launch_service(service,
-                                        workers=service.worker_process_count)
-
-    @property
-    def host(self):
-        return self._socket.getsockname()[0] if self._socket else self._host
-
-    @property
-    def port(self):
-        return self._socket.getsockname()[1] if self._socket else self._port
-
-    def stop(self):
-        self._server.stop()
-
-    def wait(self):
-        """Wait until all servers have completed running."""
-        try:
-            self._server.wait()
-        except KeyboardInterrupt:
-            pass
-
-    def _run(self, application, socket):
-        """Start a WSGI server in a new green thread."""
-        eventlet.wsgi.server(socket, application,
-                             max_size=self.num_threads,
-                             log=LOG,
-                             keepalive=CONF.wsgi_keep_alive,
-                             log_format=CONF.wsgi_log_format,
-                             socket_timeout=self.client_socket_timeout,
-                             debug=CONF.wsgi_server_debug)
-
-    @property
-    def process_launcher(self):
-        if isinstance(self._server, common_service.ProcessLauncher):
-            return self._server
-        return None
 
 
 class Request(wsgi.Request):

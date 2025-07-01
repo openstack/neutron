@@ -21,13 +21,11 @@ import signal
 import traceback
 from unittest import mock
 
-import httplib2
 from neutron_lib import worker as neutron_worker
 from oslo_config import cfg
 from oslo_log import log
 import psutil
 
-from neutron.api import wsgi
 from neutron.common import utils
 from neutron import manager
 from neutron import service
@@ -191,64 +189,6 @@ class TestNeutronServer(base.BaseLoggingTestCase,
         # initial start, and the second one on SIGHUP after children were
         # terminated).
         self.assertEqual(expected_msg, ret_msg)
-
-
-class TestWsgiServer(TestNeutronServer):
-    """Tests for neutron.api.wsgi.Server."""
-
-    def setUp(self):
-        super().setUp()
-        self.port = None
-
-    @staticmethod
-    def application(environ, start_response):
-        """A primitive test application."""
-
-        response_body = 'Response'
-        status = '200 OK'
-        response_headers = [('Content-Type', 'text/plain'),
-                            ('Content-Length', str(len(response_body)))]
-        start_response(status, response_headers)
-        return [response_body]
-
-    def _check_active(self):
-        """Check a wsgi service is active by making a GET request."""
-        port = int(os.read(self.pipein, 5))
-        conn = httplib2.HTTPConnectionWithTimeout("localhost", port)
-        try:
-            conn.request("GET", "/")
-            resp = conn.getresponse()
-            return resp.status == 200
-        except OSError:
-            return False
-
-    def _run_wsgi(self, workers=1):
-        """Start WSGI server with a test application."""
-
-        # Mock start method to check that children are started again on
-        # receiving SIGHUP.
-        with mock.patch(
-            "neutron.api.wsgi.WorkerService.start"
-        ) as start_method, mock.patch(
-            "neutron.api.wsgi.WorkerService.reset"
-        ) as reset_method:
-            start_method.side_effect = self._fake_start
-            reset_method.side_effect = self._fake_reset
-
-            server = wsgi.Server("Test")
-            server.start(self.application, 0, "0.0.0.0",
-                         workers=workers)
-
-            # Memorize a port that was chosen for the service
-            self.port = server.port
-            os.write(self.pipeout, bytes(str(self.port), 'utf-8'))
-
-            server.wait()
-
-    @tests_base.unstable_test('bug 1930367')
-    def test_restart_wsgi_on_sighup_multiple_workers(self):
-        self._test_restart_service_on_sighup(service=self._run_wsgi,
-                                             workers=2)
 
 
 class TestRPCServer(TestNeutronServer):

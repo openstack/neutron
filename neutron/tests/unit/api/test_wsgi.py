@@ -13,16 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-import socket
-import ssl
 from unittest import mock
-import urllib
 
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
-from oslo_utils import netutils
 import testtools
 import webob
 import webob.exc
@@ -31,25 +26,6 @@ from neutron.api import wsgi
 from neutron.tests import base
 
 CONF = cfg.CONF
-
-TEST_VAR_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                               '..', 'var'))
-
-
-def open_no_proxy(*args, **kwargs):
-    # NOTE(jamespage):
-    # Deal with more secure certification chain verification
-    # introduced in python 2.7.9 under PEP-0476
-    # https://github.com/python/peps/blob/master/pep-0476.txt
-    if hasattr(ssl, "_create_unverified_context"):
-        opener = urllib.request.build_opener(
-            urllib.request.ProxyHandler({}),
-            urllib.request.HTTPSHandler(
-                context=ssl._create_unverified_context())
-        )
-    else:
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-    return opener.open(*args, **kwargs)
 
 
 class TestWorkerService(base.BaseTestCase):
@@ -79,136 +55,6 @@ class TestWorkerService(base.BaseTestCase):
 
         worker_service = wsgi.WorkerService(_service, _app, "on")
         self._test_reset(worker_service)
-
-
-class TestWSGIServer(base.BaseTestCase):
-    """WSGI server tests."""
-
-    def test_start_random_port(self):
-        server = wsgi.Server("test_random_port")
-        server.start(None, 0, host="127.0.0.1")
-        self.assertNotEqual(0, server.port)
-        server.stop()
-        server.wait()
-
-    @mock.patch('oslo_service.service.ProcessLauncher')
-    def test_start_multiple_workers(self, ProcessLauncher):
-        launcher = ProcessLauncher.return_value
-
-        server = wsgi.Server("test_multiple_processes")
-        server.start(None, 0, host="127.0.0.1", workers=2)
-        launcher.launch_service.assert_called_once_with(mock.ANY, workers=2)
-
-        server.stop()
-        launcher.stop.assert_called_once_with()
-
-        server.wait()
-        launcher.wait.assert_called_once_with()
-
-    @testtools.skipIf(
-        not netutils.is_ipv6_enabled(),
-        'IPv6 support disabled on host')
-    def test_start_random_port_with_ipv6(self):
-        server = wsgi.Server("test_random_port")
-        server.start(None, 0, host="::1")
-        self.assertEqual("::1", server.host)
-        self.assertNotEqual(0, server.port)
-        server.stop()
-        server.wait()
-
-    def test_ipv6_listen_called_with_scope(self):
-        server = wsgi.Server("test_app")
-
-        with mock.patch.object(wsgi.eventlet, 'listen') as mock_listen:
-            with mock.patch.object(socket, 'getaddrinfo') as mock_get_addr:
-                mock_get_addr.return_value = [
-                    (socket.AF_INET6,
-                     socket.SOCK_STREAM,
-                     socket.IPPROTO_TCP,
-                     '',
-                     ('fe80::204:acff:fe96:da87%eth0', 1234, 0, 2))
-                ]
-                with mock.patch.object(server, 'pool') as mock_pool:
-                    server.start(None,
-                                 1234,
-                                 host="fe80::204:acff:fe96:da87%eth0")
-
-                    mock_get_addr.assert_called_once_with(
-                        "fe80::204:acff:fe96:da87%eth0",
-                        1234,
-                        socket.AF_UNSPEC,
-                        socket.SOCK_STREAM
-                    )
-
-                    mock_listen.assert_called_once_with(
-                        ('fe80::204:acff:fe96:da87%eth0', 1234, 0, 2),
-                        family=socket.AF_INET6,
-                        backlog=cfg.CONF.backlog
-                    )
-
-                    mock_pool.spawn.assert_has_calls([
-                        mock.call(
-                            server._run,
-                            None,
-                            mock_listen.return_value.dup.return_value)
-                    ])
-
-    def test_app(self):
-        greetings = b'Hello, World!!!'
-
-        def hello_world(env, start_response):
-            if env['PATH_INFO'] != '/':
-                start_response('404 Not Found',
-                               [('Content-Type', 'text/plain')])
-                return ['Not Found\r\n']
-            start_response('200 OK', [('Content-Type', 'text/plain')])
-            return [greetings]
-
-        server = wsgi.Server("test_app")
-        server.start(hello_world, 0, host="127.0.0.1")
-
-        response = open_no_proxy('http://127.0.0.1:%d/' % server.port)
-
-        self.assertEqual(greetings, response.read())
-
-        server.stop()
-
-    def test_disable_ssl(self):
-        CONF.set_default('use_ssl', True)
-
-        greetings = 'Hello, World!!!'
-
-        def hello_world(env, start_response):
-            if env['PATH_INFO'] != '/':
-                start_response('404 Not Found',
-                               [('Content-Type', 'text/plain')])
-                return ['Not Found\r\n']
-            start_response('200 OK', [('Content-Type', 'text/plain')])
-            return [greetings]
-
-        server = wsgi.Server("test_app", disable_ssl=True)
-        server.start(hello_world, 0, host="127.0.0.1")
-
-        response = open_no_proxy('http://127.0.0.1:%d/' % server.port)
-
-        self.assertEqual(greetings.encode('utf-8'), response.read())
-
-        server.stop()
-
-    @mock.patch.object(wsgi, 'eventlet')
-    def test__run(self, eventlet_mock):
-        server = wsgi.Server('test')
-        server._run("app", "socket")
-        eventlet_mock.wsgi.server.assert_called_once_with(
-            'socket',
-            'app',
-            max_size=server.num_threads,
-            log=mock.ANY,
-            keepalive=CONF.wsgi_keep_alive,
-            log_format=CONF.wsgi_log_format,
-            socket_timeout=server.client_socket_timeout,
-            debug=False,
-        )
 
 
 class SerializerTest(base.BaseTestCase):
