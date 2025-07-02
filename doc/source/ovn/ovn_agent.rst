@@ -38,7 +38,7 @@ agent configuration file in the "extensions" parameter:
 
 .. code-block:: console
 
-    [DEFAULT]
+    [agent]
     extensions = metadata
 
 
