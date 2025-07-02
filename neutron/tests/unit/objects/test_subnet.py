@@ -179,7 +179,7 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def _create_shared_network_rbac_entry(self, network):
         attrs = {
             'object_id': network['id'],
-            'target_tenant': '*',
+            'target_project': '*',
             'action': rbac_db_models.ACCESS_SHARED
         }
         obj_db_api.create_object(net_obj.NetworkRBAC, self.context, attrs)
