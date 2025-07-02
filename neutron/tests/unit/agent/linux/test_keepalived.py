@@ -96,8 +96,8 @@ class KeepalivedConfBaseMixin:
         config = keepalived.KeepalivedConf()
         instance1 = keepalived.KeepalivedInstance(
             'MASTER', 'eth0', 1, ['169.254.192.0/18'],
-            advert_int=5)
-        instance1.set_authentication('AH', 'pass123')
+            advert_int=5, vrrp_auth_type='AH',
+            vrrp_auth_password='pass123')  # noqa: S106
         instance1.track_interfaces.append("eth0")
 
         vip_address1 = keepalived.KeepalivedVipAddress('192.168.1.0/24',
@@ -222,22 +222,6 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
         instance = config.get_instance(1)
         current_vips = sorted(instance.get_existing_vip_ip_addresses('eth2'))
         self.assertEqual(['192.168.2.0/24', '192.168.3.0/24'], current_vips)
-
-
-class KeepalivedStateExceptionTestCase(KeepalivedBaseTestCase):
-    def test_state_exception(self):
-        invalid_vrrp_state = 'a seal walks'
-        self.assertRaises(keepalived.InvalidInstanceStateException,
-                          keepalived.KeepalivedInstance,
-                          invalid_vrrp_state, 'eth0', 33,
-                          ['169.254.192.0/18'])
-
-        invalid_auth_type = 'into a club'
-        instance = keepalived.KeepalivedInstance('MASTER', 'eth0', 1,
-                                                 ['169.254.192.0/18'])
-        self.assertRaises(keepalived.InvalidAuthenticationTypeException,
-                          instance.set_authentication,
-                          invalid_auth_type, 'some_password')
 
 
 class KeepalivedInstanceRoutesTestCase(KeepalivedBaseTestCase):
