@@ -28,8 +28,6 @@ from neutron.objects import floatingip as fip_obj
 from neutron.objects import network
 from neutron.objects import ports as port_obj
 from neutron.services.externaldns import driver
-from neutron.services.externaldns.drivers.designate.driver_ccloud import\
-    DesignateCcloud
 
 LOG = logging.getLogger(__name__)
 
@@ -49,7 +47,6 @@ class DNSDbMixin(object):
     """Mixin class to add DNS methods to db_base_plugin_v2."""
 
     _dns_driver = None
-    _ccloud_dns_driver_enabled = None
 
     @property
     def dns_driver(self):
@@ -59,9 +56,6 @@ class DNSDbMixin(object):
             return
         try:
             self._dns_driver = driver.ExternalDNSService.get_instance()
-            self._ccloud_dns_driver_enabled = isinstance(
-                self._dns_driver, DesignateCcloud
-            )
             LOG.debug("External DNS driver loaded: %s",
                       cfg.CONF.external_dns_driver)
             return self._dns_driver
@@ -120,7 +114,7 @@ class DNSDbMixin(object):
         self._add_ips_to_external_dns_service(
             context, dns_actions_data.current_dns_domain,
             dns_actions_data.current_dns_name,
-            floatingip_data)
+            [floatingip_data['floating_ip_address']])
 
     def _process_dns_floatingip_update_precommit(self, context,
                                                  floatingip_data):
@@ -180,7 +174,7 @@ class DNSDbMixin(object):
             self._add_ips_to_external_dns_service(
                 context, dns_actions_data.current_dns_domain,
                 dns_actions_data.current_dns_name,
-                floatingip_data)
+                [floatingip_data['floating_ip_address']])
 
     def _process_dns_floatingip_delete(self, context, floatingip_data):
         if not extensions.is_extension_supported(
@@ -246,18 +240,11 @@ class DNSDbMixin(object):
         return None, None
 
     def _add_ips_to_external_dns_service(self, context, dns_domain, dns_name,
-                                         floatingip_data):
-        ips = [str(floatingip_data['floating_ip_address'])]
+                                         records):
+        ips = [str(r) for r in records]
         try:
-            if self._ccloud_dns_driver_enabled:
-                fip_id = floatingip_data.get("id")
-                self.dns_driver.create_record_set(
-                    context, dns_domain, dns_name,
-                    ips, fip_id=fip_id
-                )
-            else:
-                self.dns_driver.create_record_set(context, dns_domain,
-                                                  dns_name, ips)
+            self.dns_driver.create_record_set(context, dns_domain, dns_name,
+                                              ips)
         except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
             LOG.exception("Error publishing floating IP data in external "
                           "DNS service. Name: '%(name)s'. Domain: "
