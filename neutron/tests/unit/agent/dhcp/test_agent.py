@@ -929,6 +929,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                       'DhcpAgent._populate_networks_cache')
         self.mock_init = self.mock_init_p.start()
         self.dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        self._mock_sync_state = mock.patch.object(self.dhcp, 'sync_state')
+        self.mock_sync_state = self._mock_sync_state.start()
         self.dhcp.init_host()
         self.call_driver_p = mock.patch.object(self.dhcp, 'call_driver')
         self.call_driver = self.call_driver_p.start()
