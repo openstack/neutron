@@ -69,6 +69,13 @@ QOS_RULES_4 = {
         qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH: QOS_RULE_MINBW_1}
 }
 
+QOS_RULES_5 = {
+    constants.EGRESS_DIRECTION: {
+        qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1,
+        qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_1,
+        qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH: QOS_RULE_MINBW_1},
+}
+
 
 class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
     def setUp(self, maintenance_worker=False):
@@ -78,7 +85,9 @@ class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
     def _check_rules_qos(self, rules, port_id, network_id, network_type,
                          fip_id=None, ip_address=None, expected_ext_ids=None):
         qos_rules = copy.deepcopy(rules)
-        if network_type in (constants.TYPE_VLAN, constants.TYPE_FLAT):
+        min_bw = qos_rules.get(constants.EGRESS_DIRECTION, {}).get(
+            qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
+        if network_type in constants.TYPE_PHYSICAL and min_bw:
             # Remove the egress max-rate and min-rate rules, these are defined
             # in the LSP.options field for a physical network.
             try:
@@ -135,12 +144,13 @@ class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
                 self.assertEqual(bandwidth, rule.bandwidth)
 
     def _check_rules_lsp(self, rules, port_id, network_type):
-        if network_type not in (constants.TYPE_VLAN, constants.TYPE_FLAT):
+        egress_rules = rules.get(constants.EGRESS_DIRECTION, {})
+        min_bw = egress_rules.get(qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
+        if not (network_type in constants.TYPE_PHYSICAL and min_bw):
             return
 
         # If there are no egress rules, it is checked that there are no
         # QoS parameters in the LSP.options dictionary.
-        egress_rules = rules.get(constants.EGRESS_DIRECTION, {})
         qos_rule_lsp = self.qos_driver._ovn_lsp_rule(egress_rules)
         lsp = self.qos_driver.nb_idl.lsp_get(port_id).execute(
             check_error=True)
@@ -266,6 +276,62 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
             self._check_rules_qos(_qos_rules, port['id'], self.network_1,
                                   constants.TYPE_VLAN)
             self._check_rules_lsp(_qos_rules, port['id'], constants.TYPE_VLAN)
+
+    def test_set_and_update_physical_network_qos(self):
+        # The goal of this test is to check how the OVN QoS registers and
+        # LSP.options are set and deleted, depending on the QoS policy rules.
+        # Check LP#2115952 for more information.
+        port = uuidutils.generate_uuid()
+        self._add_logical_switch_port(port)
+
+        def _apply_rules(qos_rules):
+            with self.nb_api.transaction(check_error=True) as txn:
+                _qos_rules = copy.deepcopy(qos_rules)
+                for direction in constants.VALID_DIRECTIONS:
+                    _qos_rules[direction] = _qos_rules.get(direction, {})
+                self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
+                self.qos_driver._update_port_qos_rules(
+                    txn, port, self.network_1, constants.TYPE_VLAN, 'qos1',
+                    None)
+
+        # Loop this test twice, to check that all the QoS registers and
+        # parameters are correctly created, set or removed, regardless of the
+        # previous state.
+        for _ in range(2):
+            # Apply QOS_RULES_5: egress with max-bw, min-bw and DSCP rules.
+            # * Check the OVN QoS rule created has only DSCP information.
+            # * Check the LSP.options have the correct fields.
+            _apply_rules(QOS_RULES_5)
+            lsp = self.qos_driver.nb_idl.lsp_get(port).execute(
+                check_error=True)
+            for _param in ('qos_max_rate', 'qos_burst', 'qos_min_rate'):
+                self.assertIn(_param, lsp.options)
+            ls = self.qos_driver.nb_idl.lookup(
+                'Logical_Switch', ovn_utils.ovn_name(self.network_1))
+            self.assertEqual(1, len(ls.qos_rules))
+            rule = ls.qos_rules[0]
+            self.assertIn(port, rule.match)
+            self.assertEqual({'dscp': QOS_RULE_DSCP_1['dscp_mark']},
+                             rule.action)
+            self.assertEqual({}, rule.bandwidth)
+
+            # Apply QOS_RULES_3: egress with max-bw only rule.
+            # * Check the OVN QoS rule created has only max-bw information.
+            # * Check the LSP.options has no QoS information.
+            _apply_rules(QOS_RULES_3)
+            lsp = self.qos_driver.nb_idl.lsp_get(port).execute(
+                check_error=True)
+            for _param in ('qos_max_rate', 'qos_burst', 'qos_min_rate'):
+                self.assertNotIn(_param, lsp.options)
+            ls = self.qos_driver.nb_idl.lookup(
+                'Logical_Switch', ovn_utils.ovn_name(self.network_1))
+            self.assertEqual(1, len(ls.qos_rules))
+            rule = ls.qos_rules[0]
+            self.assertIn(port, rule.match)
+            self.assertEqual({}, rule.action)
+            self.assertEqual({'burst': QOS_RULE_BW_1['max_burst_kbps'],
+                              'rate': QOS_RULE_BW_1['max_kbps']},
+                             rule.bandwidth)
 
 
 class TestOVNClientQosExtensionEndToEnd(_TestOVNClientQosExtensionBase):

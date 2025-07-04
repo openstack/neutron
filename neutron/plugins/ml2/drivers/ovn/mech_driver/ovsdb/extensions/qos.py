@@ -348,14 +348,25 @@ class OVNClientQosExtension:
         _qos_rules = (copy.deepcopy(qos_rules) if qos_rules else
                       self._qos_rules(admin_context, qos_policy_id))
         for direction, rules in _qos_rules.items():
+            min_bw = rules.get(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH)
+            # NOTE(ralonsoh): the QoS rules are defined in the LSP.options
+            # dictionary if (1) direction=egress, (2) the network is physical
+            # and (3) there are min-bw rules. Otherwise, the OVN QoS registers
+            # are used (OVN BW policer).
             if (network_type in TYPE_PHYSICAL and
                     direction == constants.EGRESS_DIRECTION):
-                ovn_rule_lsp = self._ovn_lsp_rule(rules)
-                self._update_lsp_qos_options(txn, lsp, port_id, ovn_rule_lsp)
-                # In this particular case, the QoS rules should be defined in
-                # LSP.options. Only DSCP rule will create a QoS entry.
-                rules.pop(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, None)
-                rules.pop(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH, None)
+                if min_bw:
+                    ovn_rule_lsp = self._ovn_lsp_rule(rules)
+                    self._update_lsp_qos_options(txn, lsp, port_id,
+                                                 ovn_rule_lsp)
+                    # In this particular case, the QoS rules should be defined
+                    # in LSP.options. Only DSCP rule will create a QoS entry.
+                    rules.pop(qos_consts.RULE_TYPE_BANDWIDTH_LIMIT, None)
+                    rules.pop(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH, None)
+                else:
+                    # Clear the LSP.options QoS rules.
+                    self._update_lsp_qos_options(txn, lsp, port_id,
+                                                 self._ovn_lsp_rule({}))
 
             ovn_rule_qos = self._ovn_qos_rule(direction, rules, port_id,
                                               network_id)
