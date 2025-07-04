@@ -1061,6 +1061,32 @@ class TestBasicGet(NeutronDbPluginV2TestCase):
             n = plugin._get_network(ctx, net_id)
             self.assertEqual(net_id, n.id)
 
+    def test_list_with_context_with_global_access(self):
+        plugin = neutron.db.db_base_plugin_v2.NeutronDbPluginV2()
+        ctx = context.Context(
+            user_id="auditor", project_id="auditor project",
+            is_admin=False, has_global_access=True)
+        with self.network(project_id='some project') as net1, \
+                self.network(project_id='other project') as net2, \
+                self.network(project_id='auditor project') as own_net:
+            networks = plugin.get_networks(ctx)
+            net_ids = [n['id'] for n in networks]
+            self.assertIn(own_net['network']['id'], net_ids)
+            self.assertIn(net1['network']['id'], net_ids)
+            self.assertIn(net2['network']['id'], net_ids)
+
+    def test_single_get_with_context_with_global_access(self):
+        plugin = neutron.db.db_base_plugin_v2.NeutronDbPluginV2()
+        ctx = context.Context(
+            user_id="auditor", project_id="auditor project",
+            is_admin=False, has_global_access=True)
+        with self.network(project_id='some project') as net1, \
+                self.network(project_id='other project') as net2, \
+                self.network(project_id='auditor project') as own_net:
+            for net in [net1, net2, own_net]:
+                network = plugin._get_network(ctx, net['network']['id'])
+                self.assertEqual(net['network']['id'], network['id'])
+
 
 class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
     def test_create_returns_201(self):

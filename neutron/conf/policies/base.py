@@ -103,6 +103,10 @@ rules = [
         'role:admin',
         description='Rule for cloud admin access'),
     policy.RuleDefault(
+        'context_with_global_access',
+        '!',
+        description='Rule for context with global access to the resources'),
+    policy.RuleDefault(
         "service_api",
         "role:service",
         description="Default rule for the service-to-service APIs."),

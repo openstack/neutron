@@ -9,3 +9,4 @@ Configuration Guide
 
    config
    policy
+   custom_policy_roles
