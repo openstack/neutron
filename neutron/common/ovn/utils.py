@@ -466,7 +466,9 @@ def validate_and_get_data_from_binding_profile(port):
         if pbp_param_set.vnic_type:
             if pbp_param_set.vnic_type != vnic_type:
                 continue
-            if capabilities and pbp_param_set.capability not in capabilities:
+            if (capabilities and
+                    pbp_param_set.capability is not None and
+                    pbp_param_set.capability not in capabilities):
                 continue
         param_set = pbp_param_set.param_set
         param_keys = param_set.keys()
