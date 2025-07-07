@@ -135,10 +135,12 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
         # Check the metadata extension is registered.
         chassis_id = uuid.UUID(self.chassis_name)
         agent_id = uuid.uuid5(chassis_id, 'metadata_agent')
+        ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: str(agent_id),
+                   ovn_const.OVN_AGENT_OVN_BRIDGE: 'br-int',
+                   ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '0',
+                   }
         ch_private = self.sb_api.lookup('Chassis_Private', self.chassis_name)
-        self.assertEqual(
-            ch_private.external_ids[ovn_const.OVN_AGENT_METADATA_ID_KEY],
-            str(agent_id))
+        self.assertEqual(ext_ids, ch_private.external_ids)
 
         # Check Unix proxy is running.
         metadata_extension = self.ovn_agent[METADATA_EXTENSION]
