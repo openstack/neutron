@@ -386,8 +386,13 @@ class TestOVNClient(testlib_api.MySQLTestCaseMixin,
                     # GW network MTU=1400
                     self.assertEqual(1400, int(lrp.options['gateway_mtu']))
 
-    def test_update_port_with_qos(self):
-        def _check_bw(port_id, max_kbps=None, max_burst_kbps=None):
+    def test_update_port_with_qos_in_lsp_options(self):
+        # The goal of this test is to check that a Neutron port that has a
+        # QoS policy defined in the LSP.options (physical network, egress
+        # rules, max+min BW rules) is correctly updated and the LSP.options
+        # are defined when the Neutron port is updated (see LP#2106231).
+        def _check_bw(port_id, max_kbps=None, max_burst_kbps=None,
+                      min_kbps=None):
             lsp = self.nb_api.lookup('Logical_Switch_Port', port_id)
             if max_kbps:
                 self.assertEqual(
@@ -403,37 +408,47 @@ class TestOVNClient(testlib_api.MySQLTestCaseMixin,
             else:
                 self.assertNotIn(ovn_const.LSP_OPTIONS_QOS_BURST,
                                  lsp.options)
+            if min_kbps:
+                self.assertEqual(
+                    '{}'.format(min_kbps * 1000),
+                    lsp.options[ovn_const.LSP_OPTIONS_QOS_MIN_RATE])
+            else:
+                self.assertNotIn(ovn_const.LSP_OPTIONS_QOS_MIN_RATE,
+                                 lsp.options)
 
         res = self._create_qos_policy(self.fmt, is_admin=True)
         qos = self.deserialize(self.fmt, res)['policy']
-        max_kbps, max_burst_kbps = 1000, 800
+        max_kbps, max_burst_kbps, min_kbps = 1000, 800, 600
+
         self._create_qos_rule(self.fmt, qos['id'],
                               qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
                               max_kbps=max_kbps, max_burst_kbps=max_burst_kbps,
                               is_admin=True)
+        self._create_qos_rule(self.fmt, qos['id'],
+                              qos_const.RULE_TYPE_MINIMUM_BANDWIDTH,
+                              min_kbps=min_kbps, is_admin=True)
         net_args = {provider_net.NETWORK_TYPE: 'flat',
                     provider_net.PHYSICAL_NETWORK: 'datacentre'}
         with self.network(uuidutils.generate_uuid(),
                           arg_list=tuple(net_args.keys()), as_admin=True,
                           **net_args) as net:
-            with self.subnet(net) as subnet:
-                with self.port(subnet) as port:
-                    port_data = port['port']
-                    # Check no QoS options.
-                    _check_bw(port_data['id'])
+            with self.subnet(net) as subnet, self.port(subnet) as port:
+                port_data = port['port']
+                # Check no QoS options.
+                _check_bw(port_data['id'])
 
-                    # Add QoS policy.
-                    req = self.new_update_request(
-                        'ports',
-                        {'port': {'qos_policy_id': qos['id']}},
-                        port_data['id'])
-                    req.get_response(self.api)
-                    _check_bw(port_data['id'], max_kbps, max_burst_kbps)
+                # Add QoS policy.
+                req = self.new_update_request(
+                    'ports',
+                    {'port': {'qos_policy_id': qos['id']}},
+                    port_data['id'])
+                req.get_response(self.api)
+                _check_bw(port_data['id'], max_kbps, max_burst_kbps, min_kbps)
 
-                    # Update port.
-                    req = self.new_update_request(
-                        'ports',
-                        {'port': {'name': uuidutils.generate_uuid()}},
-                        port_data['id'])
-                    req.get_response(self.api)
-                    _check_bw(port_data['id'], max_kbps, max_burst_kbps)
+                # Update port.
+                req = self.new_update_request(
+                    'ports',
+                    {'port': {'name': uuidutils.generate_uuid()}},
+                    port_data['id'])
+                req.get_response(self.api)
+                _check_bw(port_data['id'], max_kbps, max_burst_kbps, min_kbps)

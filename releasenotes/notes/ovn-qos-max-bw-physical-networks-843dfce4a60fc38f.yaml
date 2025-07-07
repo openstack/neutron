@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    When using the ML2/OVN mechanism driver, the QoS policies with maximum
+    bandwidth rules only are always enforced using the internal OVN policers,
+    regardless of the direction and network type. It is not relevant if the
+    QoS policy has or not DSCP rules.
