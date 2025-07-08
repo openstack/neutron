@@ -1089,6 +1089,49 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             sg_removed_mock.assert_called_once_with(1)
             delete_sg_mock.assert_called_once_with(1)
 
+    def test__cleanup_stale_sg_members_and_ports(self):
+        self._prepare_security_group()
+        self.firewall.sg_to_delete = {1}
+        new_members = {constants.IPv4: [1]}
+        self.firewall.update_security_group_members(1, new_members)
+        port_dict = {'device': 'port-id',
+                     'security_groups': [1]}
+        self.firewall.prepare_port_filter(port_dict)
+        with mock.patch.object(self.firewall.conj_ip_manager,
+                               'sg_removed') as sg_removed_mock,\
+            mock.patch.object(self.firewall.sg_port_map,
+                              'delete_sg') as delete_sg_mock:
+            self.firewall._cleanup_stale_sg()
+            sg_removed_mock.assert_not_called()
+            delete_sg_mock.assert_not_called()
+
+    def test__cleanup_stale_sg_just_members(self):
+        self._prepare_security_group()
+        self.firewall.sg_to_delete = {1}
+        new_members = {constants.IPv4: [1]}
+        self.firewall.update_security_group_members(1, new_members)
+        with mock.patch.object(self.firewall.conj_ip_manager,
+                               'sg_removed') as sg_removed_mock,\
+            mock.patch.object(self.firewall.sg_port_map,
+                              'delete_sg') as delete_sg_mock:
+            self.firewall._cleanup_stale_sg()
+            sg_removed_mock.assert_not_called()
+            delete_sg_mock.assert_not_called()
+
+    def test__cleanup_stale_sg_just_ports(self):
+        self._prepare_security_group()
+        self.firewall.sg_to_delete = {1}
+        port_dict = {'device': 'port-id',
+                     'security_groups': [1]}
+        self.firewall.prepare_port_filter(port_dict)
+        with mock.patch.object(self.firewall.conj_ip_manager,
+                               'sg_removed') as sg_removed_mock,\
+            mock.patch.object(self.firewall.sg_port_map,
+                              'delete_sg') as delete_sg_mock:
+            self.firewall._cleanup_stale_sg()
+            sg_removed_mock.assert_not_called()
+            delete_sg_mock.assert_not_called()
+
     def test_get_ovs_port(self):
         ovs_port = self.firewall.get_ovs_port('port_id')
         self.assertEqual(self.fake_ovs_port, ovs_port)

@@ -868,7 +868,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         for sg_id in sg_to_delete:
             sec_group = self.sg_port_map.get_sg(sg_id)
-            if sec_group.members and sec_group.ports:
+            if sec_group.members or sec_group.ports:
                 # sec_group is still in use
                 continue
 
