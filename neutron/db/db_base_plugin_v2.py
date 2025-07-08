@@ -831,14 +831,16 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         # if below IPv4 minimum we fail early
         if mtu < constants.IPV4_MIN_MTU:
-            raise mtu_exc.NetworkMTUSubnetConflict(net_id=network.id, mtu=mtu)
+            raise mtu_exc.NetworkMTUSubnetConflict(
+                net_id=network.id, mtu=constants.IPV4_MIN_MTU)
 
         # We do not need to check IPv4 subnets as they will have been
         # caught by above IPV4_MIN_MTU check
         ip_version = subnet.get('ip_version')
         if (ip_version == constants.IP_VERSION_6 and
                 mtu < constants.IPV6_MIN_MTU):
-            raise mtu_exc.NetworkMTUSubnetConflict(net_id=network.id, mtu=mtu)
+            raise mtu_exc.NetworkMTUSubnetConflict(
+                net_id=network.id, mtu=constants.IPV6_MIN_MTU)
 
     def _update_router_gw_ports(self, context, network, subnet):
         l3plugin = directory.get_plugin(plugin_constants.L3)
