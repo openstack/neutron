@@ -335,7 +335,7 @@ class Service(n_rpc.Service):
         self.manager.init_host()
         super().start()
         if self.report_interval:
-            pulse = loopingcall.FixedIntervalLoopingCall(self.report_state)
+            pulse = loopingcall.FixedIntervalLoopingCall(f=self.report_state)
             pulse.start(interval=self.report_interval,
                         initial_delay=self.report_interval)
             self.timers.append(pulse)
@@ -348,7 +348,7 @@ class Service(n_rpc.Service):
                 initial_delay = None
 
             periodic = loopingcall.FixedIntervalLoopingCall(
-                self.periodic_tasks)
+                f=self.periodic_tasks)
             periodic.start(interval=self.periodic_interval,
                            initial_delay=initial_delay)
             self.timers.append(periodic)
