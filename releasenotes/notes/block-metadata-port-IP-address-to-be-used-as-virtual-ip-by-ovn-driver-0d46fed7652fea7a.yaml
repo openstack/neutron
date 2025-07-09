@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    When ML2/OVN backend is used, usage of the metadata port IP address as a
+    virtual IP address is blocked. That means that setting such IP address as
+    allowed_address_pair for other port is not allowed and API will return 400
+    error in such case. For more information, see bug
+    `2116249 <https://bugs.launchpad.net/neutron/+bug/2116249>`_.
