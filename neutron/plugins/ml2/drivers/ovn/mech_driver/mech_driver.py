@@ -23,6 +23,7 @@ import threading
 import types
 import uuid
 
+import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import segment as segment_def
@@ -305,6 +306,11 @@ class OVNMechanismDriver(api.MechanismDriver):
         registry.subscribe(self.delete_segment_provnet_port,
                            resources.SEGMENT,
                            events.AFTER_DELETE)
+        # TODO(slaweq): use constant from neutron_lib.callbacks.resources once
+        # it will be available and released
+        registry.subscribe(self._validate_allowed_address_pairs,
+                           'allowed_address_pair',
+                           events.BEFORE_CREATE)
 
         # Handle security group/rule or address group notifications
         if self.sg_enabled:
@@ -622,6 +628,49 @@ class OVNMechanismDriver(api.MechanismDriver):
                     max_tunid
                 )
                 raise n_exc.InvalidInput(error_message=m)
+
+    def _validate_allowed_address_pairs(self, resource, event, trigger,
+                                        payload):
+        context = payload.desired_state['context']
+        allowed_address_pairs = payload.desired_state['allowed_address_pairs']
+        network_id = payload.desired_state['network_id']
+        if not allowed_address_pairs:
+            return
+
+        port_allowed_address_pairs_ip_addresses = [
+            netaddr.IPNetwork(pair['ip_address'])
+            for pair in allowed_address_pairs]
+
+        distributed_ports = self._plugin.get_ports(
+            context.elevated(),
+            filters={'device_owner': [const.DEVICE_OWNER_DISTRIBUTED],
+                     'network_id': [network_id]})
+        if not distributed_ports:
+            return
+
+        def _get_common_ips(ip_addresses, ip_networks):
+            common_ips = set()
+            for ip_address in ip_addresses:
+                if any(ip_address in ip_net for ip_net in ip_networks):
+                    common_ips.add(str(ip_address))
+            return common_ips
+
+        for distributed_port in distributed_ports:
+            distributed_port_ip_addresses = [
+                netaddr.IPAddress(fixed_ip['ip_address']) for fixed_ip in
+                distributed_port.get('fixed_ips', [])]
+
+            common_ips = _get_common_ips(
+                distributed_port_ip_addresses,
+                port_allowed_address_pairs_ip_addresses)
+
+            if common_ips:
+                err_msg = (
+                    _("IP addresses '%s' already used by the '%s' port(s) in "
+                      "the same network" % (";".join(common_ips),
+                                            const.DEVICE_OWNER_DISTRIBUTED))
+                )
+                raise n_exc.InvalidInput(error_message=err_msg)
 
     def create_segment_provnet_port(self, resource, event, trigger,
                                     payload=None):
