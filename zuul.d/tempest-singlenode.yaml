@@ -485,6 +485,7 @@
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
         Q_AGENT: ovn
+        OVN_AGENT_EXTENSIONS: 'metadata'
         ML2_L3_PLUGIN: ovn-router,trunk
         # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
         # driver has been removed from this list. Re-add it once the removal
@@ -530,7 +531,8 @@
         n-novnc-cell1: true
         n-sch: true
         n-super-cond: true
-        q-ovn-metadata-agent: true
+        q-ovn-metadata-agent: false
+        q-ovn-agent: true
         ovn-controller: true
         ovn-northd: true
         ovs-vswitchd: true
