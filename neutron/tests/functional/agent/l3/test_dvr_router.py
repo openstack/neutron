@@ -32,6 +32,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.common import utils
+from neutron.tests import base as test_base
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
@@ -2191,6 +2192,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         test_machine1.assert_no_ping(test_machine2.ip)
         test_machine2.assert_no_ping(test_machine1.ip)
 
+    @test_base.unstable_test('bug 2115026')
     def test_fip_connection_for_address_scope(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         (machine_same_scope, machine_diff_scope,
