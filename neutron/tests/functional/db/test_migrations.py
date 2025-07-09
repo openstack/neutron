@@ -505,7 +505,7 @@ class TestWalkDowngrade(oslotest_base.BaseTestCase):
             return True
 
 
-class _BaseTestWalkMigrations(object):
+class _BaseTestWalkMigrations:
 
     BUILD_SCHEMA = False
 
