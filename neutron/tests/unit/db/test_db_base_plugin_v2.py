@@ -658,7 +658,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                    as_admin=False, **kwargs):
         res = self._create_port(fmt, net_id, expected_res_status,
                                 is_admin=as_admin, **kwargs)
-        self._check_http_response(res)
+        if not expected_res_status:
+            self._check_http_response(res)
+        else:
+            self.assertEqual(expected_res_status, res.status_int)
         return self.deserialize(fmt, res)
 
     def _make_security_group(self, fmt, name=None, expected_res_status=None,
