@@ -39,3 +39,4 @@ Testing
    template_model_sync_test
    coverage
    db_transient_failure_injection
+   neutron_wsgi_api_server
