@@ -52,7 +52,8 @@
         override-checkout: 4.1.0
       - name: openstack/rally-openstack
         override-checkout: 3.0.0
-      - openstack/osprofiler
+      - name: openstack/osprofiler
+        override-checkout: 4.3.0
     irrelevant-files:
       - ^\.pylintrc$
       - ^test-requirements.txt$
