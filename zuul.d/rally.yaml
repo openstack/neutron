@@ -50,7 +50,8 @@
     required-projects:
       - openstack/rally
       - openstack/rally-openstack
-      - openstack/osprofiler
+      - name: openstack/osprofiler
+        override-checkout: 4.3.0
     irrelevant-files:
       - ^\.pylintrc$
       - ^test-requirements.txt$
