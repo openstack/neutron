@@ -39,14 +39,6 @@
             vars:
               configure_swap_size: 4096
             irrelevant-files:  *irrelevant-files
-    check-arm64:
-      jobs:
-        - openstack-tox-py39-arm64: # from openstack-python3-jobs-arm64 template
-            timeout: 4800
-            irrelevant-files:  *irrelevant-files
-        - openstack-tox-py312-arm64: # from openstack-python3-jobs-arm64 template
-            timeout: 4800
-            irrelevant-files:  *irrelevant-files
     gate:
       jobs:
         - openstack-tox-py39:  # from openstack-python3-jobs template
