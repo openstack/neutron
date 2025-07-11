@@ -61,7 +61,6 @@ from neutron.db.models import l3 as l3_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
-from neutron.exceptions import mtu as mtu_exc
 from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import network as network_obj
@@ -7308,7 +7307,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
 
         # This should fail with any subnets present
         self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU - 1
-        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+        with testlib_api.ExpectedException(lib_exc.NetworkMTUSubnetConflict):
             self.plugin.update_network(self.context, net['id'], self.net_data)
 
     def test_update_network_invalid_mtu_ipv4_ipv6(self):
@@ -7329,13 +7328,13 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         self.plugin.update_network(self.context, net['id'], self.net_data)
 
         # These should all fail with both subnets present
-        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+        with testlib_api.ExpectedException(lib_exc.NetworkMTUSubnetConflict):
             self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU - 1
             self.plugin.update_network(self.context, net['id'], self.net_data)
-        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+        with testlib_api.ExpectedException(lib_exc.NetworkMTUSubnetConflict):
             self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU
             self.plugin.update_network(self.context, net['id'], self.net_data)
-        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+        with testlib_api.ExpectedException(lib_exc.NetworkMTUSubnetConflict):
             self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU - 1
             self.plugin.update_network(self.context, net['id'], self.net_data)
 
