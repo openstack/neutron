@@ -3654,9 +3654,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             'tenant_id': 'some_tenant'}}
 
         def mock_fail__update_router_gw_info(ctx, router_id, info,
-                                             router=None):
+                                             request_body, router=None):
             # Fail with breaking transaction
-            with db_api.CONTEXT_WRITER.using(self.ctx):
+            with db_api.CONTEXT_WRITER.using(ctx):
                 raise n_exc.NeutronException
 
         mock.patch.object(plugin, '_update_router_gw_info',
@@ -3685,7 +3685,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             'tenant_id': 'some_tenant'}}
 
         def mock_fail__update_router_gw_info(ctx, router_id, info,
-                                             router=None):
+                                             request_body, router=None):
             # Fail with breaking transaction
             with db_api.CONTEXT_WRITER.using(ctx):
                 raise n_exc.NeutronException
