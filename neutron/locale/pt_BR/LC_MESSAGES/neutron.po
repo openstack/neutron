@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2025-03-17 10:43+0000\n"
+"POT-Creation-Date: 2025-07-11 07:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -410,12 +410,6 @@ msgstr ""
 #, python-format
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "O valor conflitante ethertype %(ethertype)s para CIDR %(cidr)s"
-
-#, python-format
-msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
-msgstr ""
-"Não foi possível associar-se à %(host)s:%(port)s após tentar por %(time)d "
-"segundos"
 
 msgid "Could not deserialize data"
 msgstr "Não foi possível desserializar dados"

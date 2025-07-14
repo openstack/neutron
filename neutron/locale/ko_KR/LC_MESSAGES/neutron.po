@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2025-03-17 10:43+0000\n"
+"POT-Creation-Date: 2025-07-11 07:53+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -397,10 +397,6 @@ msgstr "쉼표로 분리된 DNS 서버의 목록이며 전달자로 사용됩니
 #, python-format
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s에 대한 충돌하는 값 ethertype %(ethertype)s"
-
-#, python-format
-msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
-msgstr "%(time)d후 시도한 다음 %(host)s:%(port)s에 바인딩할 수 없습니다"
 
 msgid "Could not deserialize data"
 msgstr "데이터를 직렬화 해제할 수 없음"
