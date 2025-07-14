@@ -251,6 +251,12 @@ class Notifier(object):
         self.batch_notifier.queue_event(event)
         port._notify_event = None
 
+    def send_custom_port_status(self, event):
+        if not isinstance(event, dict):
+            raise exc.InvalidInput(
+                error_message="Custom port status event must be a dict")
+        self.batch_notifier.queue_event(event)
+
     def notify_port_active_direct(self, port):
         """Notify nova about active port
 
