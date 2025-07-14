@@ -73,10 +73,12 @@ class OvnDbSynchronizer(metaclass=abc.ABCMeta):
 class OvnNbSynchronizer(OvnDbSynchronizer):
     """Synchronizer class for NB."""
 
-    def __init__(self, core_plugin, ovn_api, sb_ovn, mode, ovn_driver):
+    def __init__(self, core_plugin, ovn_api, sb_ovn, mode, ovn_driver,
+                 is_maintenance=False):
         super().__init__(
             core_plugin, ovn_api, ovn_driver)
         self.mode = mode
+        self.is_maintenance = is_maintenance
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         self.pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)
         if not self.pf_plugin:
@@ -125,6 +127,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self.sync_routers_and_rports(ctx)
         self.sync_port_qos_policies(ctx)
         self.sync_fip_qos_policies(ctx)
+        self.sync_fip_dnat_rules()
 
         LOG.debug("OVN-Northbound DB sync process completed @ %s",
                   str(datetime.now()))
@@ -1382,6 +1385,34 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 ovn_qos_ext.create_floatingip(txn, fip)
 
         LOG.debug('OVN-NB Sync Floating IP QoS policies completed @ %s',
+                  str(datetime.now()))
+
+    def sync_fip_dnat_rules(self):
+        """Sync all FIPs NAT rules, setting the configured stateless option"""
+        LOG.debug('OVN-NB Sync Floating IP NAT rules started @ %s',
+                  str(datetime.now()))
+        stateless_nat = ('true' if ovn_conf.is_stateless_nat_enabled() else
+                         'false')
+        nat_rules = []
+        for nat_rule in self.ovn_api.get_floatingips():
+            if nat_rule.get('options', {}).get('stateless') != stateless_nat:
+                nat_rules.append(nat_rule)
+
+        if not nat_rules:
+            # Nothing to do.
+            pass
+        elif not (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR or
+                  self.is_maintenance):
+            LOG.warning('The floating IP NAT rules must be updated to match '
+                        'the ``stateless_nat_enabled`` configuration flag.')
+        else:
+            with self.ovn_api.transaction(check_error=True) as txn:
+                for nat_rule in nat_rules:
+                    txn.add(self.ovn_api.db_set(
+                        'NAT', nat_rule['_uuid'],
+                        ('options', {'stateless': stateless_nat})))
+
+        LOG.debug('OVN-NB Sync Floating IP NAT rules completed @ %s',
                   str(datetime.now()))
 
 

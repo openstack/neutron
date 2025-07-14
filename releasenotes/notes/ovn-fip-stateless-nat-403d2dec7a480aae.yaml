@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    The ML2/OVN driver can now use stateless NAT for floating IP addresses.
+    This functionality is configurable using the new boolean config option
+    ``[ovn]stateless_nat_enabled``. By default, this option is disabled,
+    keeping the current behaviour. This functionality improves the performance
+    in some deployments (DPDK based, for example) by avoiding hitting
+    conntrack OVN actions.

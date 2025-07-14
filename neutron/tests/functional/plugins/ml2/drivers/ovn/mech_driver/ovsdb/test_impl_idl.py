@@ -895,6 +895,47 @@ class TestNbApi(BaseOvnIdlTest):
         lrp = self.nbapi.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual(hcg.uuid, lrp.ha_chassis_group[0].uuid)
 
+    def test_get_floatingips(self):
+        lr_name = uuidutils.generate_uuid()
+        self.nbapi.lr_add(lr_name).execute(check_error=True)
+        # SNAT rule
+        nat = {'external_ip': '10.0.0.1', 'logical_ip': '10.10.0.1',
+               'type': 'snat'}
+        self.nbapi.add_nat_rule_in_lrouter(lr_name, **nat).execute(
+            check_error=True)
+
+        # DNAT rule
+        nat = {'external_ip': '10.0.0.2', 'logical_ip': '10.10.0.2',
+               'type': 'dnat'}
+        self.nbapi.add_nat_rule_in_lrouter(lr_name, **nat).execute(
+            check_error=True)
+
+        # DNAT_AND_SNAT rule, not external_ids reference
+        nat = {'external_ip': '10.0.0.3', 'logical_ip': '10.10.0.3',
+               'type': 'dnat_and_snat'}
+        self.nbapi.add_nat_rule_in_lrouter(lr_name, **nat).execute(
+            check_error=True)
+
+        # DNAT_AND_SNAT rules with external_ids reference
+        nat = {'external_ip': '10.0.0.4', 'logical_ip': '10.10.0.4',
+               'type': 'dnat_and_snat',
+               'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'id1'}}
+        self.nbapi.add_nat_rule_in_lrouter(lr_name, **nat).execute(
+            check_error=True)
+        nat = {'external_ip': '10.0.0.5', 'logical_ip': '10.10.0.5',
+               'type': 'dnat_and_snat',
+               'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'id2'}}
+        self.nbapi.add_nat_rule_in_lrouter(lr_name, **nat).execute(
+            check_error=True)
+
+        nat_fips = self.nbapi.get_floatingips()
+        self.assertEqual(2, len(nat_fips))
+        for nat_fip in nat_fips:
+            self.assertIn(
+                nat_fip['external_ids'][ovn_const.OVN_FIP_EXT_ID_KEY],
+                ('id1', 'id2')
+            )
+
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
     @classmethod

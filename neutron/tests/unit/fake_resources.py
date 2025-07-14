@@ -114,6 +114,8 @@ class FakeOvsdbNbOvnIdl:
         self.ls_set_dns_records = mock.Mock()
         self.get_floatingip = mock.Mock()
         self.get_floatingip.return_value = None
+        self.get_floatingips = mock.Mock()
+        self.get_floatingips.return_value = []
         self.check_revision_number = mock.Mock()
         self.lookup = mock.MagicMock()
         self.get_router_floatingip_lbs = mock.Mock()

@@ -1157,7 +1157,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     def test_create_floatingip_distributed(self):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
@@ -1187,7 +1189,9 @@ class BaseTestOVNL3RouterPluginMixin():
             'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10', external_mac='00:01:02:03:04:05',
             logical_port='port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     def test_create_floatingip_distributed_logical_port_down(self):
         # Check that when the port is down, the external_mac field is not
@@ -1221,7 +1225,9 @@ class BaseTestOVNL3RouterPluginMixin():
             'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     def test_create_floatingip_external_ip_present_in_nat_rule(self):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
@@ -1252,7 +1258,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     def test_create_floatingip_external_ip_present_type_snat(self):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
@@ -1284,7 +1292,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     def test_create_floatingip_lsp_external_id(self):
         foo_lport = fake_resources.FakeOvsdbRow.create_one_ovsdb_row()
@@ -1335,7 +1345,9 @@ class BaseTestOVNL3RouterPluginMixin():
             external_ip='192.168.0.10',
             logical_ip='10.0.0.10',
             type='dnat_and_snat',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     def test_create_floatingip_lb_vip_fip(self):
         config.cfg.CONF.set_override(
@@ -1372,7 +1384,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.0.0.10',
             logical_port='port_id',
             type='dnat_and_snat',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
         self.l3_inst._nb_ovn.db_find_rows.assert_called_with(
             'NAT', ('external_ids', '=', {ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
                                           self.member_lsp.name}))
@@ -1425,7 +1439,9 @@ class BaseTestOVNL3RouterPluginMixin():
                 external_ip='192.168.0.10',
                 logical_port='port_id',
                 external_ids=expected_ext_ids,
-                gateway_port=lrp.uuid)
+                gateway_port=lrp.uuid,
+                options={'stateless': 'false'},
+            )
         else:
             _nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
                 'neutron-router-id',
@@ -1433,7 +1449,9 @@ class BaseTestOVNL3RouterPluginMixin():
                 logical_ip='10.0.0.10',
                 external_ip='192.168.0.10',
                 logical_port='port_id',
-                external_ids=expected_ext_ids)
+                external_ids=expected_ext_ids,
+                options={'stateless': 'false'},
+            )
 
     def test_create_floatingip_with_gateway_port(self):
         self._test_create_floatingip_gateway_port_option(True)
@@ -1550,7 +1568,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='new-port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     @mock.patch.object(extraroute_db.ExtraRoute_dbonly_mixin,
                        'update_floatingip')
@@ -1607,7 +1627,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='new-port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_network')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
@@ -1649,7 +1671,9 @@ class BaseTestOVNL3RouterPluginMixin():
             'neutron-new-router-id', type='dnat_and_snat',
             logical_ip='10.10.10.10', external_ip='192.168.0.10',
             external_mac='00:01:02:03:04:05', logical_port='new-port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
@@ -1691,7 +1715,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='foo',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
@@ -1735,7 +1761,9 @@ class BaseTestOVNL3RouterPluginMixin():
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids)
+            external_ids=expected_ext_ids,
+            options={'stateless': 'false'},
+        )
 
     @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
                 'update_floatingip_status')
