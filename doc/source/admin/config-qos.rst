@@ -55,15 +55,15 @@ traffic directions (from the VM point of view).
 
 .. table:: **Networking back ends, supported rules, and traffic direction**
 
-    ====================  =============================  =======================  ===================
+    ====================  =============================  =======================  ======================
      Rule \\ back end      Open vSwitch                  SR-IOV                   OVN
-    ====================  =============================  =======================  ===================
+    ====================  =============================  =======================  ======================
      Bandwidth limit       Egress \\ Ingress             Egress (1)               Egress \\ Ingress
      Packet rate limit     Egress \\ Ingress             -                        -
-     Minimum bandwidth     Egress \\ Ingress (2)         Egress \\ Ingress (2)    -
+     Minimum bandwidth     Egress \\ Ingress (2)         Egress \\ Ingress (2)    Egress \\ Ingress (2)
      Minimum packet rate   -                             -                        -
      DSCP marking          Egress                        -                        Egress
-    ====================  =============================  =======================  ===================
+    ====================  =============================  =======================  ======================
 
 .. note::
 
@@ -74,12 +74,12 @@ traffic directions (from the VM point of view).
 
 .. table:: **Neutron backends, supported directions and enforcement types for Minimum Bandwidth rule**
 
-    ============================  ====================  ====================  =====
+    ============================  ====================  ====================  ====================
      Enforcement type \ Backend    Open vSwitch          SR-IOV                OVN
-    ============================  ====================  ====================  =====
-     Dataplane                     Egress (3)            Egress (1)            -
-     Placement                     Egress/Ingress (2)    Egress/Ingress (2)    -
-    ============================  ====================  ====================  =====
+    ============================  ====================  ====================  ====================
+     Dataplane                     Egress (3)            Egress (1)            Egress (4)
+     Placement                     Egress/Ingress (2)    Egress/Ingress (2)    Egress/Ingress (4)
+    ============================  ====================  ====================  ====================
 
 .. note::
 
@@ -88,6 +88,7 @@ traffic directions (from the VM point of view).
     (3) Open vSwitch minimum bandwidth support is only implemented for egress
         direction and only for networks without tunneled traffic (only VLAN and
         flat network types).
+    (4) Since Zed
 
 .. note:: The SR-IOV agent does not support dataplane enforcement for ports
   with ``direct-physical`` vnic_type. However since Yoga the Placement
