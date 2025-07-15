@@ -56,7 +56,7 @@ class FailedToInitMetadataPathExtension(n_exc.NeutronException):
                 "metadata path, error: %(msg)s")
 
 
-class MetadataPathExtensionPortInfoAPI():
+class MetadataPathExtensionPortInfoAPI:
 
     def __init__(self, cache_api):
         self.cache_api = cache_api

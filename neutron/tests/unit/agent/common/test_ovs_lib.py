@@ -517,7 +517,7 @@ class OVS_Lib_Test(base.BaseTestCase):
             ovs_row = []
             r["data"].append(ovs_row)
             for cell in row:
-                if isinstance(cell, (str, int, list)):
+                if isinstance(cell, str | int | list):
                     ovs_row.append(cell)
                 elif isinstance(cell, dict):
                     ovs_row.append(["map", cell.items()])

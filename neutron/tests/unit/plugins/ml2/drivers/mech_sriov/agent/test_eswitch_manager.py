@@ -744,7 +744,7 @@ class TestPciOsWrapper(base.BaseTestCase):
                 esm.PciOsWrapper.NUMVFS_PATH % 'dev1')
 
     def test_get_numvfs_no_file(self):
-        with mock.patch("builtins.open", side_effect=IOError()) as mock_open:
+        with mock.patch("builtins.open", side_effect=OSError()) as mock_open:
             self.assertEqual(-1, esm.PciOsWrapper.get_numvfs('dev1'))
             mock_open.assert_called_once_with(
                 esm.PciOsWrapper.NUMVFS_PATH % 'dev1')

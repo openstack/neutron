@@ -2852,7 +2852,8 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
     PHYSDEV_EGRESS = 'physdev-in'
 
     def setUp(self, defer_refresh_firewall=False):
-        clear_mgrs = lambda: ip_conntrack.CONTRACK_MGRS.clear()
+        def clear_mgrs():
+            return ip_conntrack.CONTRACK_MGRS.clear()
         self.addCleanup(clear_mgrs)
         clear_mgrs()  # clear before start in case other tests didn't clean up
         super().setUp()

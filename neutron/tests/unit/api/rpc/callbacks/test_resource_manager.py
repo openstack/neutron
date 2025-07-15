@@ -49,14 +49,16 @@ class ResourceCallbacksManagerTestCaseMixin:
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
     def test_unregister_unregisters_callback(self, *mocks):
-        callback = lambda: None
+        def callback():
+            return None
         self.mgr.register(callback, 'TYPE')
         self.mgr.unregister(callback, 'TYPE')
         self.assertEqual([], self.mgr.get_subscribed_types())
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
     def test___init___does_not_reset_callbacks(self, *mocks):
-        callback = lambda: None
+        def callback():
+            return None
         self.mgr.register(callback, 'TYPE')
         resource_manager.ProducerResourceCallbacksManager()
         self.assertEqual(['TYPE'], self.mgr.get_subscribed_types())
@@ -71,7 +73,8 @@ class ProducerResourceCallbacksManagerTestCase(
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
     def test_register_registers_callback(self, *mocks):
-        callback = lambda: None
+        def callback():
+            return None
         self.mgr.register(callback, 'TYPE')
         self.assertEqual(callback, self.mgr.get_callback('TYPE'))
 
@@ -96,8 +99,10 @@ class ProducerResourceCallbacksManagerTestCase(
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
     def test_get_callback_returns_proper_callback(self, *mocks):
-        callback1 = lambda: None
-        callback2 = lambda: None
+        def callback1():
+            return None
+        def callback2():
+            return None
         self.mgr.register(callback1, 'TYPE1')
         self.mgr.register(callback2, 'TYPE2')
         self.assertEqual(callback1, self.mgr.get_callback('TYPE1'))
@@ -113,14 +118,17 @@ class ConsumerResourceCallbacksManagerTestCase(
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
     def test_register_registers_callback(self, *mocks):
-        callback = lambda: None
+        def callback():
+            return None
         self.mgr.register(callback, 'TYPE')
         self.assertEqual({callback}, self.mgr.get_callbacks('TYPE'))
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
     def test_register_succeeds_on_multiple_calls(self, *mocks):
-        callback1 = lambda: None
-        callback2 = lambda: None
+        def callback1():
+            return None
+        def callback2():
+            return None
         self.mgr.register(callback1, 'TYPE')
         self.mgr.register(callback2, 'TYPE')
 
@@ -132,8 +140,10 @@ class ConsumerResourceCallbacksManagerTestCase(
 
     @mock.patch(IS_VALID_RESOURCE_TYPE, return_value=True)
     def test_get_callbacks_returns_proper_callbacks(self, *mocks):
-        callback1 = lambda: None
-        callback2 = lambda: None
+        def callback1():
+            return None
+        def callback2():
+            return None
         self.mgr.register(callback1, 'TYPE1')
         self.mgr.register(callback2, 'TYPE2')
         self.assertEqual({callback1}, self.mgr.get_callbacks('TYPE1'))

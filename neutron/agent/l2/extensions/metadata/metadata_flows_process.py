@@ -26,7 +26,7 @@ METADATA_V4_IP = constants.METADATA_V4_IP
 METADATA_V4_PORT = constants.METADATA_PORT
 
 
-class MetadataDataPathFlows():
+class MetadataDataPathFlows:
 
     def set_path_br(self, path_br):
         self.path_br = path_br

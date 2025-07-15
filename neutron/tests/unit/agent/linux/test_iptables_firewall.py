@@ -103,7 +103,8 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
         # initial data has 1, 2, and 9 in use, see RAW_TABLE_OUTPUT above.
         self._dev_zone_map = {'61634509-31': 4098, '8f46cf18-12': 4105,
                               '95c24827-02': 4098, 'e804433b-61': 4097}
-        get_rules_for_table_func = lambda x: RAW_TABLE_OUTPUT.split('\n')
+        def get_rules_for_table_func(x):
+            return RAW_TABLE_OUTPUT.split('\n')
         filtered_ports = {port_id: self._fake_port()
                           for port_id in self._dev_zone_map}
         self.firewall.ipconntrack = ip_conntrack.IpConntrackManager(

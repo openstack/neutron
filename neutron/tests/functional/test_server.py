@@ -127,7 +127,8 @@ class TestNeutronServer(base.BaseLoggingTestCase,
                 raise exception
 
         # Wait at most 10 seconds to spawn workers
-        condition = lambda: self.workers == len(get_workers_pid())
+        def condition():
+            return self.workers == len(get_workers_pid())
         utils.wait_until_true(condition, timeout=timeout, sleep=0.5,
                               exception=exception)
         return get_workers_pid()

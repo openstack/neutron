@@ -20,7 +20,7 @@ import ovs.ovsuuid
 # Temporarily fix ovs.db.idl.Transaction._substitute_uuids to support handling
 # the persist_uuid feature
 def _substitute_uuids(self, json):
-    if isinstance(json, (list, tuple)):
+    if isinstance(json, list | tuple):
         if (len(json) == 2 and
                 json[0] == 'uuid' and
                 ovs.ovsuuid.is_valid_string(json[1])):

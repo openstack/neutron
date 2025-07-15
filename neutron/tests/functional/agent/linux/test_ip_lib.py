@@ -936,11 +936,13 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
                       not_in=False):
         routes = self.device.route.list_routes(ip_version, table=table)
         if not_in:
-            fn = lambda: cmp not in routes
+            def fn():
+                return cmp not in routes
             msg = 'Route found: %s\nRoutes present: {routes}'.format(
                 routes=routes)
         else:
-            fn = lambda: cmp in routes
+            def fn():
+                return cmp in routes
             msg = 'Route not found: %s\nRoutes present: {routes}'.format(
                 routes=routes)
 

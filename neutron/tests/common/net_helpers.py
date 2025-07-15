@@ -420,7 +420,8 @@ class Pinger:
         self.interval = interval
 
     def _wait_for_death(self):
-        is_dead = lambda: self.proc.poll() is not None
+        def is_dead():
+            return self.proc.poll() is not None
         common_utils.wait_until_true(
             is_dead, timeout=self.TIMEOUT, exception=RuntimeError(
                 "Ping command hasn't ended after %d seconds." % self.TIMEOUT))

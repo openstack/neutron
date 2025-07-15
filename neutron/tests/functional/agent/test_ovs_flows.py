@@ -96,11 +96,17 @@ class ARPSpoofTestCase(OVSAgentTestBase):
         self.addOnException(self.collect_flows_and_ports)
 
     def collect_flows_and_ports(self, exc_info):
-        nicevif = lambda x: [f'{k}={getattr(x, k)}'
-                             for k in ['ofport', 'port_name', 'switch',
-                                       'vif_id', 'vif_mac']]
-        nicedev = lambda x: [f'{k}={getattr(x, k)}'
-                             for k in ['name', 'namespace']] + x.addr.list()
+        def nicevif(x):
+            return [
+                f'{k}={getattr(x, k)}'
+                for k in ['ofport', 'port_name', 'switch', 'vif_id', 'vif_mac']
+            ]
+
+        def nicedev(x):
+            return [
+                f'{k}={getattr(x, k)}' for k in ['name', 'namespace']
+            ] + x.addr.list()
+
         details = {'flows': self.br.dump_all_flows(),
                    'vifs': map(nicevif, self.br.get_vif_ports()),
                    'src_ip': self.src_addr,

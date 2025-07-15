@@ -519,12 +519,12 @@ class QoSPlugin(qos.QoSPluginBase):
         # Filter out rules that can't have resources allocated in Placement
         original_rules = [
             r for r in original_rules
-            if (isinstance(r, (rule_object.QosMinimumBandwidthRule,
-                               rule_object.QosMinimumPacketRateRule)))]
+            if (isinstance(r, rule_object.QosMinimumBandwidthRule |
+                              rule_object.QosMinimumPacketRateRule))]
         desired_rules = [
             r for r in desired_rules
-            if (isinstance(r, (rule_object.QosMinimumBandwidthRule,
-                               rule_object.QosMinimumPacketRateRule)))]
+            if (isinstance(r, rule_object.QosMinimumBandwidthRule |
+                              rule_object.QosMinimumPacketRateRule))]
         if not original_rules and not desired_rules:
             return
 

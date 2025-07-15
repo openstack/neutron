@@ -130,7 +130,7 @@ class RemoteResourceCache:
             for key, values in filters.items():
                 for value in values:
                     attr = getattr(obj, key)
-                    if isinstance(attr, (list, tuple, set)):
+                    if isinstance(attr, list | tuple | set):
                         # attribute is a list so we check if value is in
                         # list
                         if value in attr:

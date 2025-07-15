@@ -51,7 +51,7 @@ from neutron.tests.unit import fake_resources
 from neutron.tests.unit.plugins.ml2 import test_plugin as test_mech_driver
 
 
-class BaseTestOVNL3RouterPluginMixin():
+class BaseTestOVNL3RouterPluginMixin:
 
     _mechanism_drivers = ['ovn']
     l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'

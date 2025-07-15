@@ -51,7 +51,8 @@ class BridgeLibTest(base.BaseTestCase):
         self.execute.reset_mock()
 
     def test_is_bridged_interface(self):
-        exists = lambda path: path == "/sys/class/net/tapOK/brport"
+        def exists(path):
+            return path == "/sys/class/net/tapOK/brport"
         with mock.patch('os.path.exists', side_effect=exists):
             self.assertTrue(bridge_lib.is_bridged_interface("tapOK"))
             self.assertFalse(bridge_lib.is_bridged_interface("tapKO"))
@@ -72,7 +73,8 @@ class BridgeLibTest(base.BaseTestCase):
 
     def test_owns_interface(self):
         br = bridge_lib.BridgeDevice('br-int')
-        exists = lambda path: path == "/sys/class/net/br-int/brif/abc"
+        def exists(path):
+            return path == "/sys/class/net/br-int/brif/abc"
         with mock.patch('os.path.exists', side_effect=exists):
             self.assertTrue(br.owns_interface("abc"))
             self.assertFalse(br.owns_interface("def"))

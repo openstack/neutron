@@ -147,7 +147,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                        'DhcpAgentNotifyAPI').start()
         # Update the plugin
         self.setup_coreplugin(plugin, load_plugins=False)
-        if isinstance(service_plugins, (list, tuple)):
+        if isinstance(service_plugins, list | tuple):
             # Sometimes we needs these test service_plugins to be ordered.
             cfg.CONF.set_override('service_plugins', service_plugins)
         else:
@@ -402,7 +402,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             "json", 200, subnet['network_id']).json['ports']
         used_ips = set()
         if exclude:
-            if isinstance(exclude, (list, set, tuple)):
+            if isinstance(exclude, list | set | tuple):
                 used_ips = set(exclude)
             else:
                 used_ips.add(exclude)
@@ -5463,11 +5463,11 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 gateway_ip='10.0.1.1',
                                 cidr='10.0.1.0/24') as v2:
                 subnets = (v1, v2)
-                query_params = ('project_id={0}'.
+                query_params = ('project_id={}'.
                                 format(network['network']['project_id']))
                 self._test_list_resources('subnet', subnets,
                                           query_params=query_params)
-                query_params = ('project_id={0}'.
+                query_params = ('project_id={}'.
                                 format(uuidutils.generate_uuid()))
                 self._test_list_resources('subnet', [],
                                           query_params=query_params)

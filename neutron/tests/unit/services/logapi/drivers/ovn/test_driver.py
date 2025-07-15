@@ -41,8 +41,9 @@ class TestOVNDriverBase(base.BaseTestCase):
         self.plugin_driver.nb_ovn = fake_resources.FakeOvsdbNbOvnIdl()
 
         self.log_plugin = mock.Mock()
-        get_mock_log_plugin = lambda alias: self.log_plugin if (
-                alias == plugin_constants.LOG_API) else None
+        def get_mock_log_plugin(alias):
+            return self.log_plugin if (
+                        alias == plugin_constants.LOG_API) else None
         self.fake_get_dir_object = mock.patch(
             "neutron_lib.plugins.directory.get_plugin",
             side_effect=get_mock_log_plugin).start()
@@ -119,7 +120,7 @@ class TestOVNDriver(TestOVNDriverBase):
         driver2 = self._log_driver_reinit()
         self.assertEqual(test_log_base, driver2.meter_name)
 
-    class _fake_acl():
+    class _fake_acl:
         def __init__(self, name=None, **acl_dict):
             acl_defaults_dict = {
                 "name": [name] if name else [],
