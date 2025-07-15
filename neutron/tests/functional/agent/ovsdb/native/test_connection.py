@@ -25,7 +25,7 @@ class WaitForBridgesEvent(event.RowEvent):
     event_name = 'WaitForBridgesEvent'
     ONETIME = True
 
-    def __init__(self, bridges, timeout=5):
+    def __init__(self, bridges, timeout=20):
         self.bridges_not_seen = set(bridges)
         self.timeout = timeout
         self.event = threading.Event()
