@@ -34,6 +34,7 @@ from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
+from neutron_lib.placement import constants as place_const
 from neutron_lib.placement import utils as place_utils
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
@@ -80,9 +81,6 @@ from neutron.services.trunk.drivers.ovn import trunk_driver
 
 LOG = log.getLogger(__name__)
 OVN_MIN_GENEVE_MAX_HEADER_SIZE = 38
-
-# TODO(ralonsoh): rehome this to ``neutron_lib.placement.constants``.
-ALLOCATION = 'allocation'
 
 
 class OVNPortUpdateError(n_exc.BadRequest):
@@ -1474,7 +1472,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         if uuid_ns is None:
             return False
         try:
-            allocation = context.current['binding:profile'][ALLOCATION]
+            allocation = context.current['binding:profile'][
+                place_const.ALLOCATION]
         except KeyError:
             return False
 
