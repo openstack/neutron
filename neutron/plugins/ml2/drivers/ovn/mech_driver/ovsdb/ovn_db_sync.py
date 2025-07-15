@@ -1362,12 +1362,25 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         LOG.debug('OVN-NB Sync port QoS policies started @ %s',
                   str(datetime.now()))
         ovn_qos_ext = ovn_qos.OVNClientQosExtension(nb_idl=self.ovn_api)
-        with db_api.CONTEXT_READER.using(ctx), \
-                self.ovn_api.transaction(check_error=True) as txn:
+        _ports = []
+        with db_api.CONTEXT_READER.using(ctx):
             for port in self.core_plugin.get_ports(ctx):
                 if not ovn_qos_ext.port_effective_qos_policy_id(port)[0]:
                     continue
-                ovn_qos_ext.create_port(txn, port, None)
+                _ports.append(port)
+
+        if not _ports:
+            # Nothing to do.
+            pass
+        elif not (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR or
+                  self.is_maintenance):
+            for port in _ports:
+                LOG.warning('Port QoS policy missing in OVN NB DB, port_id=%s',
+                            port['id'])
+        else:
+            with self.ovn_api.transaction(check_error=True) as txn:
+                for port in _ports:
+                    ovn_qos_ext.create_port(txn, port, None)
 
         LOG.debug('OVN-NB Sync port QoS policies completed @ %s',
                   str(datetime.now()))
@@ -1377,12 +1390,25 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         LOG.debug('OVN-NB Sync Floating IP QoS policies started @ %s',
                   str(datetime.now()))
         ovn_qos_ext = ovn_qos.OVNClientQosExtension(nb_idl=self.ovn_api)
-        with db_api.CONTEXT_READER.using(ctx), \
-                self.ovn_api.transaction(check_error=True) as txn:
+        _fips = []
+        with db_api.CONTEXT_READER.using(ctx):
             for fip in self.l3_plugin.get_floatingips(ctx):
                 if not fip.get('qos_policy_id'):
                     continue
-                ovn_qos_ext.create_floatingip(txn, fip)
+                _fips.append(fip)
+
+        if not _fips:
+            # Nothing to do.
+            pass
+        elif not (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR or
+                  self.is_maintenance):
+            for fip in _fips:
+                LOG.warning('Floating IP QoS policy missing in OVN NB DB, '
+                            'fip_id=%s', fip['id'])
+        else:
+            with self.ovn_api.transaction(check_error=True) as txn:
+                for fip in _fips:
+                    ovn_qos_ext.create_floatingip(txn, fip)
 
         LOG.debug('OVN-NB Sync Floating IP QoS policies completed @ %s',
                   str(datetime.now()))
