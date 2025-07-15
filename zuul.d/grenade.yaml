@@ -432,3 +432,13 @@
       grenade_from_branch: stable/2024.2
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
+
+# NOTE(ralonsoh): to be removed in 2026.2, once the OVN Metadata agent
+# replacement finishes. See LP#2112313.
+- job:
+    name: neutron-ovn-grenade-multinode-ovn-metadata-agent
+    parent: neutron-ovn-grenade-multinode
+    vars:
+      devstack_services:
+        q-ovn-metadata-agent: true
+        q-ovn-agent: false
