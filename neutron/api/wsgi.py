@@ -16,7 +16,6 @@
 """
 Utility methods for working with WSGI servers
 """
-import eventlet.wsgi
 from neutron_lib import context
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
@@ -78,13 +77,10 @@ class WorkerService(neutron_worker.NeutronBaseWorker):
                                                 dup_sock)
 
     def wait(self):
-        if isinstance(self._server, eventlet.greenthread.GreenThread):
-            self._server.wait()
+        pass
 
     def stop(self):
-        if isinstance(self._server, eventlet.greenthread.GreenThread):
-            self._server.kill()
-            self._server = None
+        pass
 
     @staticmethod
     def reset():
