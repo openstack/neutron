@@ -35,7 +35,7 @@ class AgentUtilsExecuteTest(base.BaseTestCase):
         super().setUp()
         self.test_file = self.get_temp_file_path('test_execute.tmp')
         open(self.test_file, 'w').close()
-        self.process = mock.patch('eventlet.green.subprocess.Popen').start()
+        self.process = mock.patch('subprocess.Popen').start()
         self.process.return_value.returncode = 0
         self.mock_popen = self.process.return_value.communicate
 
