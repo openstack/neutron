@@ -21,10 +21,10 @@ import pwd
 import shlex
 import socket
 import socketserver
+import subprocess
 import threading
 import time
 
-from eventlet.green import subprocess
 from neutron_lib import exceptions
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -81,9 +81,14 @@ def create_process(cmd, run_as_root=False, addl_env=None):
         # execution is done.
         cmd = shlex.split(config.get_root_helper(cfg.CONF)) + cmd
     LOG.debug("Running command: %s", cmd)
-    obj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+    # pylint: disable=consider-using-with
+    obj = subprocess.Popen(  # noqa: S603
+        cmd,
+        shell=False,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
     return obj, cmd
 
 
