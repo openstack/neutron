@@ -818,7 +818,6 @@ class OvnIdlDistributedLock(BaseOvnIdl):
         self._node_uuid = self.driver.node_uuid
         self._hash_ring = hash_ring_manager.HashRingManager(
             self.driver.hash_ring_group)
-        self._last_touch = None
 
     def notify(self, event, row, updates=None):
         try:
@@ -834,11 +833,9 @@ class OvnIdlDistributedLock(BaseOvnIdl):
 
             # If the worker hasn't been health checked by the maintenance
             # thread (see bug #1834498), indicate that it's alive here
-            self._last_touch = node_last_touch
-            time_now = timeutils.utcnow()
-            touch_timeout = time_now - datetime.timedelta(
+            touch_timeout = timeutils.utcnow() - datetime.timedelta(
                 seconds=ovn_const.HASH_RING_TOUCH_INTERVAL)
-            if not self._last_touch or touch_timeout >= self._last_touch:
+            if not node_last_touch or touch_timeout >= node_last_touch:
                 # NOTE(lucasagomes): Guard the db operation with an exception
                 # handler. If heartbeating fails for whatever reason, log
                 # the error and continue with processing the event
