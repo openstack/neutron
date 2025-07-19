@@ -18,8 +18,8 @@ import contextlib
 import copy
 import itertools
 import re
+import time
 
-import eventlet
 import netaddr
 from neutron_lib.agent.common import constants as agent_consts
 from neutron_lib.callbacks import events as callbacks_events
@@ -885,8 +885,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         for port_id in port_ids:
             self._initialize_egress_no_port_security(port_id,
                                                      ovs_ports=ovs_ports)
-            # yield to let other greenthreads proceed
-            eventlet.sleep(0)
+            # yield to let other threads proceed
+            time.sleep(0)
 
     def remove_trusted_ports(self, port_ids):
         for port_id in port_ids:
