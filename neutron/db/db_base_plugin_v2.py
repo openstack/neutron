@@ -63,7 +63,6 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import rbac_db_models
 from neutron.db import standardattrdescription_db as stattr_db
-from neutron.exceptions import mtu as mtu_exc
 from neutron.extensions import subnetpool_prefix_ops
 from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
@@ -550,7 +549,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         # at least one subnet present, if below IPv4 minimum we fail early
         if mtu < constants.IPV4_MIN_MTU:
-            raise mtu_exc.NetworkMTUSubnetConflict(
+            raise exc.NetworkMTUSubnetConflict(
                 net_id=id, mtu=constants.IPV4_MIN_MTU)
 
         # We do not need to check IPv4 subnets as they will have been
@@ -558,7 +557,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         for subnet in subnets:
             if (subnet.ip_version == constants.IP_VERSION_6 and
                     mtu < constants.IPV6_MIN_MTU):
-                raise mtu_exc.NetworkMTUSubnetConflict(
+                raise exc.NetworkMTUSubnetConflict(
                     net_id=id, mtu=constants.IPV6_MIN_MTU)
 
     def _ensure_network_not_in_use(self, context, net_id):
@@ -831,7 +830,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         # if below IPv4 minimum we fail early
         if mtu < constants.IPV4_MIN_MTU:
-            raise mtu_exc.NetworkMTUSubnetConflict(
+            raise exc.NetworkMTUSubnetConflict(
                 net_id=network.id, mtu=constants.IPV4_MIN_MTU)
 
         # We do not need to check IPv4 subnets as they will have been
@@ -839,7 +838,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         ip_version = subnet.get('ip_version')
         if (ip_version == constants.IP_VERSION_6 and
                 mtu < constants.IPV6_MIN_MTU):
-            raise mtu_exc.NetworkMTUSubnetConflict(
+            raise exc.NetworkMTUSubnetConflict(
                 net_id=network.id, mtu=constants.IPV6_MIN_MTU)
 
     def _update_router_gw_ports(self, context, network, subnet):
