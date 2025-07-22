@@ -1257,7 +1257,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         )
         # For packets from patch ports.
         self._add_flow(
-            flow_group_id=dst_port,
             table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
             priority=12,
             dl_dst=mac,
