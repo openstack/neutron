@@ -469,9 +469,10 @@ class AgentExtRpcCallback:
         1.1 - report_state now returns agent state.
         1.2 - add method has_alive_neutron_server.
         1.3 - has_alive_neutron_server tests db connection.
+        1.4 - add methods get_agents and delete_agent.
     """
 
-    target = oslo_messaging.Target(version='1.3',
+    target = oslo_messaging.Target(version='1.4',
                                    namespace=constants.RPC_NAMESPACE_STATE)
     START_TIME = timeutils.utcnow()
 
@@ -527,6 +528,41 @@ class AgentExtRpcCallback:
             context, agent_state, time)
         self._update_local_agent_resource_versions(context, agent_state)
         return agent_status
+
+    @db_api.retry_if_session_inactive()
+    def delete_agent(self, context, **kwargs):
+        """Delete agent on server
+
+        Deletes the agent on the server, if it exists.
+        """
+        try:
+            host = kwargs['host']
+            agent_type = kwargs['agent_type']
+        except KeyError:
+            LOG.warning("Insufficient arguments: %s for delete_agent; "
+                        "both 'host' and 'agent_type' are mandatory.",
+                        kwargs)
+            return
+        agent = agent_obj.Agent.get_object(context, **kwargs)
+        if not agent:
+            LOG.debug("No agent found for host: %(host)s with agent_type: "
+                      "%(agent_type)s, host already removed",
+                      {'host': host, 'agent_type': agent_type})
+            return
+        agent.delete()
+
+    @db_api.retry_if_session_inactive()
+    def get_agents(self, context, **filters):
+        """Get filtered list of agents.
+
+        Returns list of agents
+        """
+        is_active = filters.pop('is_active', None)
+        agents = agent_obj.Agent.get_objects(context, **filters)
+        if is_active is not None:
+            is_active = converters.convert_to_boolean(is_active)
+            agents = [a for a in agents if a.is_active == is_active]
+        return agents
 
     def _update_local_agent_resource_versions(self, context, agent_state):
         resource_versions_dict = agent_state.get('resource_versions')
