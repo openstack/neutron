@@ -19,6 +19,7 @@ from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
@@ -44,10 +45,8 @@ class AllowedAddressPairsMixin:
             'network_id': port['network_id'],
             'allowed_address_pairs': allowed_address_pairs,
         }
-        # TODO(slaweq): use constant from neutron_lib.callbacks.resources once
-        # it will be available and released
         registry.publish(
-            'allowed_address_pair', events.BEFORE_CREATE, self,
+            resources.ALLOWED_ADDRESS_PAIR, events.BEFORE_CREATE, self,
             payload=events.DBEventPayload(
                 context,
                 resource_id=port['id'],

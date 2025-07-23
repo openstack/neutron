@@ -305,10 +305,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         registry.subscribe(self.delete_segment_provnet_port,
                            resources.SEGMENT,
                            events.AFTER_DELETE)
-        # TODO(slaweq): use constant from neutron_lib.callbacks.resources once
-        # it will be available and released
         registry.subscribe(self._validate_allowed_address_pairs,
-                           'allowed_address_pair',
+                           resources.ALLOWED_ADDRESS_PAIR,
                            events.BEFORE_CREATE)
 
         # Handle security group/rule or address group notifications
