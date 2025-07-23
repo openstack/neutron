@@ -17,6 +17,8 @@ import collections
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api import validators
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
@@ -36,6 +38,20 @@ class AllowedAddressPairsMixin:
                                               allowed_address_pairs):
         if not validators.is_attr_set(allowed_address_pairs):
             return []
+
+        desired_state = {
+            'context': context,
+            'network_id': port['network_id'],
+            'allowed_address_pairs': allowed_address_pairs,
+        }
+        # TODO(slaweq): use constant from neutron_lib.callbacks.resources once
+        # it will be available and released
+        registry.publish(
+            'allowed_address_pair', events.BEFORE_CREATE, self,
+            payload=events.DBEventPayload(
+                context,
+                resource_id=port['id'],
+                desired_state=desired_state))
         try:
             with db_api.CONTEXT_WRITER.using(context):
                 for address_pair in allowed_address_pairs:
