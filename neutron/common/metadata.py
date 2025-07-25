@@ -45,6 +45,7 @@ global
     user        %(user)s
     group       %(group)s
     maxconn     1024
+    nbthread    2
     pidfile     %(pidfile)s
     daemon
 

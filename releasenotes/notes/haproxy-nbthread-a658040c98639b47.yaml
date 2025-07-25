@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Limit the number of threads used by the metadata haproxy service to 2 using
+    the nbthread configuration. This prevents haproxy from spreading across many
+    threads when the process lacks other restrictions like CPU affinity.
+    For more information, see bug
+    `2120668 <https://bugs.launchpad.net/neutron/+bug/2120668>`_.
