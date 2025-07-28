@@ -756,3 +756,97 @@ class TestChassisEvent(base.BaseTestCase):
         # after it became a Gateway chassis
         self._test_handle_ha_chassis_group_changes_create(
             self.event.ROW_UPDATE)
+
+
+class TestChassisOVNAgentWriteEvent(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.driver = mock.MagicMock()
+        self.event = ovsdb_monitor.ChassisOVNAgentWriteEvent(self.driver)
+
+        self.chassis_private_table = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'name': 'Chassis_Private'})
+        self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+
+    def test_match_fn_no_agent_id(self):
+        # Should not match if no agent ID
+        row = self.ovsdb_row(attrs={'external_ids': {}})
+        self.assertFalse(self.event.match_fn(self.event.ROW_CREATE, row))
+
+    def test_match_fn_create_event(self):
+        # Should match CREATE events with valid agent ID
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123'}})
+        self.assertTrue(self.event.match_fn(self.event.ROW_CREATE, row))
+
+    def test_match_fn_update_no_chassis(self):
+        # Should not match UPDATE events if no chassis
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123'},
+                   'chassis': None})
+        old = self.ovsdb_row(attrs={'external_ids': {}})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_update_no_old_external_ids(self):
+        # Should not match UPDATE events if old row has no external_ids
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123'},
+                   'chassis': 'chassis-1'})
+        old = self.ovsdb_row(attrs={})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_update_sb_cfg_changed(self):
+        # Should match UPDATE events when sb_cfg changes
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123',
+                ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '456'},
+                   'chassis': 'chassis-1'})
+        old = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123',
+                ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '123'}})
+        self.assertTrue(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_update_sb_cfg_unchanged(self):
+        # Should not match UPDATE events when sb_cfg is unchanged
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123',
+                ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '123'},
+                   'chassis': 'chassis-1'})
+        old = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123',
+                ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '123'}})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_run_ovn_neutron_agent(self):
+        # Test run method with neutron agent
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123'}})
+
+        with mock.patch('neutron.plugins.ml2.drivers.ovn.agent.neutron_agent.'
+                        'AgentCache') as agent_cache:
+            self.event.run(self.event.ROW_CREATE, row, None)
+            agent_cache.assert_has_calls([
+                mock.call().update(
+                    ovn_const.OVN_NEUTRON_AGENT, row, clear_down=True)])
+
+    def test_run_metadata_agent(self):
+        # Test run method with metadata agent
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_AGENT_METADATA_ID_KEY: 'metadata-456'}})
+
+        with mock.patch('neutron.plugins.ml2.drivers.ovn.agent.neutron_agent.'
+                        'AgentCache') as agent_cache:
+            self.event.run(self.event.ROW_CREATE, row, None)
+            agent_cache.assert_has_calls([
+                mock.call().update(
+                    ovn_const.OVN_METADATA_AGENT, row, clear_down=True)])

@@ -138,9 +138,9 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
 
         # Check the metadata extension is registered.
         chassis_id = uuid.UUID(self.chassis_name)
-        agent_id = uuid.uuid5(chassis_id, 'metadata_agent')
-        ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: str(agent_id),
-                   ovn_const.OVN_AGENT_OVN_BRIDGE: 'br-int',
+        ovn_agent_id = uuid.uuid5(chassis_id, 'ovn_agent')
+        ext_ids = {ovn_const.OVN_AGENT_OVN_BRIDGE: 'br-int',
+                   ovn_const.OVN_AGENT_NEUTRON_ID_KEY: str(ovn_agent_id),
                    ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '0',
                    }
         n_utils.wait_until_true(

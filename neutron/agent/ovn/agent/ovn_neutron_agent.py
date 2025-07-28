@@ -150,6 +150,15 @@ class OVNNeutronAgent(service.Service):
         return ovsdb.MonitorAgentOvnSbIdl(tables, events,
                                           chassis=self.chassis).start()
 
+    def register_ovn_agent(self):
+        # NOTE(lucasagomes): db_add() will not overwrite the UUID if
+        # it's already set.
+        # Generate unique, but consistent ovn agent id for chassis name
+        agent_id = uuid.uuid5(self.chassis_id, 'ovn_agent')
+        ext_ids = {ovn_const.OVN_AGENT_NEUTRON_ID_KEY: str(agent_id)}
+        self.sb_idl.db_add('Chassis_Private', self.chassis, 'external_ids',
+                           ext_ids).execute(check_error=True)
+
     def update_neutron_sb_cfg_key(self):
         nb_cfg = self.sb_idl.db_get('Chassis_Private',
                                     self.chassis, 'nb_cfg').execute()
@@ -167,6 +176,7 @@ class OVNNeutronAgent(service.Service):
         self.ext_manager_api.nb_idl = self._load_nb_idl()
         self.ext_manager.start()
 
+        self.register_ovn_agent()
         self.update_neutron_sb_cfg_key()
         LOG.info('OVN Neutron Agent started')
 
