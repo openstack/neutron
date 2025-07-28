@@ -3,7 +3,6 @@ OpenStack Neutron
 =================
 
 .. image:: https://governance.openstack.org/tc/badges/neutron.svg
-    :target: https://governance.openstack.org/tc/reference/tags/index.html
 
 .. Change things from this point on
 
