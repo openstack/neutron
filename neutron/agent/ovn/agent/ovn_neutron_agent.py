@@ -159,6 +159,24 @@ class OVNNeutronAgent(service.Service):
         self.sb_idl.db_add('Chassis_Private', self.chassis, 'external_ids',
                            ext_ids).execute(check_error=True)
 
+    def _cleanup_previous_tags(self):
+        """Remove any existing tag related to the OVN Metadata agent
+
+        The OVN Metadata agent is deprecated and marked for removal in 2026.2.
+        This code should stay during the following SLURP release (2027.1) and
+        be removed in the next release (2027.2).
+
+        While both agents can provide the same functionality (OVN Metadata
+        agent and OVN agent with the metadata extension), it is needed to
+        provide a cleanup method for any leftover tag from the other agent.
+        """
+        metadata_keys = (ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY,
+                         ovn_const.OVN_AGENT_METADATA_DESC_KEY,
+                         ovn_const.OVN_AGENT_METADATA_ID_KEY)
+        self.sb_idl.db_remove(
+            'Chassis_Private', self.chassis, 'external_ids',
+            *metadata_keys, if_exists=True).execute(check_error=True)
+
     def update_neutron_sb_cfg_key(self):
         nb_cfg = self.sb_idl.db_get('Chassis_Private',
                                     self.chassis, 'nb_cfg').execute()
@@ -176,6 +194,7 @@ class OVNNeutronAgent(service.Service):
         self.ext_manager_api.nb_idl = self._load_nb_idl()
         self.ext_manager.start()
 
+        self._cleanup_previous_tags()
         self.register_ovn_agent()
         self.update_neutron_sb_cfg_key()
         LOG.info('OVN Neutron Agent started')

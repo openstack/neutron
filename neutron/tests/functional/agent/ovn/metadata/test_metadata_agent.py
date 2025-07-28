@@ -689,3 +689,26 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                     timeout=1,
                     exception=NoDatapathProvision(
                         "Provisioning wasn't triggered"))
+
+    def test__cleanup_previous_tags(self):
+        external_ids = {
+            ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '1',
+            ovn_const.OVN_AGENT_NEUTRON_DESC_KEY: 'description',
+            ovn_const.OVN_AGENT_NEUTRON_ID_KEY: uuidutils.generate_uuid()}
+        self.sb_api.db_set(
+            'Chassis_Private', self.chassis_name,
+            ('external_ids', external_ids)).execute(check_error=True)
+
+        self.agent._cleanup_previous_tags()
+        external_ids = self.sb_api.db_get(
+            'Chassis_Private', self.chassis_name,
+            'external_ids').execute(check_error=True)
+        for _key in (ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY,
+                     ovn_const.OVN_AGENT_NEUTRON_DESC_KEY,
+                     ovn_const.OVN_AGENT_NEUTRON_ID_KEY):
+            self.assertNotIn(_key, external_ids)
+
+        # Just in case, check that we are NOT deleting the needed tags.
+        for _key in (ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY,
+                     ovn_const.OVN_AGENT_METADATA_ID_KEY):
+            self.assertIn(_key, external_ids)

@@ -150,3 +150,26 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
         # Check Unix proxy is running.
         metadata_extension = self.ovn_agent[METADATA_EXTENSION]
         self.assertIsNotNone(metadata_extension._proxy._server)
+
+    def test__cleanup_previous_tags(self):
+        external_ids = {
+            ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: '1',
+            ovn_const.OVN_AGENT_METADATA_DESC_KEY: 'description',
+            ovn_const.OVN_AGENT_METADATA_ID_KEY: uuidutils.generate_uuid()}
+        self.ovn_agent.sb_idl.db_set(
+            'Chassis_Private', self.ovn_agent.chassis,
+            ('external_ids', external_ids)).execute(check_error=True)
+
+        self.ovn_agent._cleanup_previous_tags()
+        external_ids = self.ovn_agent.sb_idl.db_get(
+            'Chassis_Private', self.ovn_agent.chassis,
+            'external_ids').execute(check_error=True)
+        for _key in (ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY,
+                     ovn_const.OVN_AGENT_METADATA_DESC_KEY,
+                     ovn_const.OVN_AGENT_METADATA_ID_KEY):
+            self.assertNotIn(_key, external_ids)
+
+        # Just in case, check that we are NOT deleting the needed tags.
+        # NOTE(ralonsoh): OVN_AGENT_METADATA_ID_KEY is missing here, there is
+        # a bug to add it (LP#2118876)
+        self.assertIn(ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY, external_ids)
