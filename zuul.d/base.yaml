@@ -51,51 +51,6 @@
         '{{ devstack_base_dir }}/logs/dsvm-functional-logs': logs
 
 - job:
-    name: neutron-fullstack
-    parent: neutron-functional
-    vars:
-      tox_envlist: dsvm-fullstack-gate
-      zuul_copy_output:
-        # We need to copy directory with logs to have it in job artifacts also,
-        # /opt/stack/logs is default logs directory defined in neutron's
-        # tox.ini file
-        '{{ devstack_base_dir }}/logs/dsvm-fullstack-logs': logs
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^releasenotes/.*$
-      - ^doc/.*$
-      - ^setup.cfg$
-      - ^.*\.rst$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^tools/.*$
-      - ^neutron/agent/ovn/.*$
-      - ^neutron/agent/windows/.*$
-      - ^neutron/plugins/ml2/drivers/macvtap/.*$
-      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
-      - ^neutron/plugins/ml2/drivers/ovn/.*$
-      # Ignore everything except for zuul.d/project.yaml
-      - ^zuul.d/base.yaml
-      - ^zuul.d/grenade.yaml
-      - ^zuul.d/job-templates.yaml
-      - ^zuul.d/rally.yaml
-      - ^zuul.d/tempest-multinode.yaml
-      - ^zuul.d/tempest-singlenode.yaml
-
-- job:
-    name: neutron-fullstack-with-uwsgi
-    parent: neutron-fullstack
-    vars:
-      devstack_localrc:
-        NEUTRON_DEPLOY_MOD_WSGI: true
-      # Because this job uses neutron defined tox env (defined in base job),
-      # we need to set zuul_work_dir to neutron so that it can be used by
-      # other projects. Currently devstack run this job. Not setting this
-      # in base neutron-functional job as that is being used by neutron
-      # stadium projects where they need to use stadium project as working dir.
-      zuul_work_dir: src/opendev.org/openstack/neutron
-
-- job:
     name: neutron-functional-with-uwsgi
     parent: neutron-functional
     vars:

@@ -14,7 +14,6 @@
     check:
       jobs:
         - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade-ovn:
@@ -48,7 +47,6 @@
     gate:
       jobs:
         - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
         - neutron-tempest-with-uwsgi
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
@@ -64,4 +62,3 @@
     periodic-weekly:
       jobs:
         - neutron-functional
-        - neutron-fullstack
