@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context as n_context
 from neutron_lib.services.logapi import constants as log_const
 
 from neutron.services.logapi.common import db_api
@@ -23,14 +24,16 @@ class SecurityGroupRuleCallBack(manager.ResourceCallBackBase):
 
     def handle_event(self, resource, event, trigger, payload):
         context = payload.context
+        admin_context = n_context.get_admin_context()
         sg_rule = payload.latest_state
         if sg_rule:
             sg_id = sg_rule.get('security_group_id')
         else:
             sg_id = payload.resource_id
 
+        # Log resources can only be fetched from admin context.
         log_resources = db_api.get_logs_bound_sg(
-            context, sg_id=sg_id, project_id=context.project_id)
+            admin_context, sg_id=sg_id, project_id=context.project_id)
         if log_resources:
             self.resource_push_api(
                 log_const.RESOURCE_UPDATE, context, log_resources)
