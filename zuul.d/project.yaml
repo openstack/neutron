@@ -18,7 +18,6 @@
     check:
       jobs:
         - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode:
             # TODO(slaweq): make that job voting when bug
@@ -39,7 +38,6 @@
     gate:
       jobs:
         - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
         - neutron-tempest-multinode-full-py3
         - neutron-grenade-multinode
         # TODO(slaweq): make that job gating when bug

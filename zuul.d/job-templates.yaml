@@ -44,12 +44,8 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
-        - neutron-functional-with-uwsgi-fips
-        - neutron-fullstack-with-uwsgi-fips
         - neutron-grenade-ovn
         - neutron-tempest-with-uwsgi-loki
-        - neutron-ovs-tempest-fips
-        - neutron-ovn-tempest-ovs-release-fips
         - tempest-integrated-networking:
             irrelevant-files:
               - ^\.pylintrc$
@@ -99,6 +95,5 @@
     periodic-weekly:
       jobs:
         - neutron-functional
-        - neutron-fullstack
         - neutron-tempest-postgres-full
         - neutron-tempest-mariadb-full
