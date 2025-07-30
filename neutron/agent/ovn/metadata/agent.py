@@ -90,7 +90,8 @@ class PortBindingEvent(extension_manager.OVNExtensionEvent,
                        row_event.RowEvent):
     def __init__(self, agent):
         table = 'Port_Binding'
-        super().__init__((self.__class__.EVENT,), table, None)
+        super().__init__((self.__class__.EVENT,), table, None,
+                         extension_name='metadata')
         self._agent = agent
         self.event_name = self.__class__.__name__
         self._log_msg = (

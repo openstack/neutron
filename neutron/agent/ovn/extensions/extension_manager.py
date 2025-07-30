@@ -34,6 +34,11 @@ class ConfigException(exceptions.NeutronException):
     message = _('Error configuring the OVN Neutron Agent: %(description)s.')
 
 
+class OVNExtensionEventEmptyExtensionName(exceptions.NeutronException):
+    """OVNExtensionEvent class without a mandatory extension name defined"""
+    message = _('The class %(class_name)s has no extension name defined.')
+
+
 class OVNExtensionEvent(metaclass=abc.ABCMeta):
     """Implements a method to retrieve the correct caller agent
 
@@ -43,10 +48,14 @@ class OVNExtensionEvent(metaclass=abc.ABCMeta):
     by the OVN agent (with the "metadata" extension) and this class removed,
     keeping only the compatibility with the OVN agent (to be removed in C+2).
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, extension_name=None, **kwargs):
+        if extension_name is None:
+            raise OVNExtensionEventEmptyExtensionName(
+                class_name=self.__class__.__name__)
         super().__init__(*args, **kwargs)
         self._agent_or_extension = None
         self._agent = None
+        self._extension_name = extension_name
 
     @property
     def agent(self):
@@ -57,7 +66,7 @@ class OVNExtensionEvent(metaclass=abc.ABCMeta):
         """
         if not self._agent_or_extension:
             if isinstance(self._agent, service.Service):
-                self._agent_or_extension = self._agent['metadata']
+                self._agent_or_extension = self._agent[self._extension_name]
             else:
                 self._agent_or_extension = self._agent
         return self._agent_or_extension
