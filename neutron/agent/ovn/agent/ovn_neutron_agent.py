@@ -13,8 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import secrets
+import threading
 import uuid
 
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import service
 from ovsdbapp.backend.ovs_idl import event as row_event
@@ -42,9 +45,27 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
         events = (self.ROW_UPDATE, )
         super().__init__(events, table, None)
         self.event_name = self.__class__.__name__
+        self._first_run = True
 
     def run(self, event, row, old):
-        self.ovn_agent.update_neutron_sb_cfg_key(nb_cfg=row.nb_cfg)
+        def _update_chassis(self, row):
+            self.ovn_agent.update_neutron_sb_cfg_key(nb_cfg=row.nb_cfg)
+
+        delay = 0
+        if self._first_run:
+            self._first_run = False
+        else:
+            # We occasionally see port binding failed errors due to
+            # the ML2 driver refusing to bind the port to a dead agent.
+            # If all agents heartbeat at the same time, they will all
+            # cause a load spike on the server. To mitigate that it is needed
+            # to spread out the load by introducing a random delay.
+            max_delay = max(min(cfg.CONF.agent_down_time // 3, 10), 3)
+            delay = secrets.SystemRandom().randint(0, max_delay)
+
+        LOG.debug('Delaying updating chassis table for %s seconds', delay)
+        timer = threading.Timer(delay, _update_chassis, [self, row])
+        timer.start()
 
 
 class ChassisPrivateCreateEvent(row_event.RowEvent):
