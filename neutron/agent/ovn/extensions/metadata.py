@@ -115,8 +115,6 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
     def sb_idl_events(self):
         return [metadata_agent.PortBindingUpdatedEvent,
                 metadata_agent.PortBindingDeletedEvent,
-                metadata_agent.SbGlobalUpdateEvent,
-                metadata_agent.ChassisPrivateCreateEvent,
                 ]
 
     # NOTE(ralonsoh): the following properties are needed during the migration
@@ -162,7 +160,6 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
         """
         self.agent_api.load_config()
         self._update_chassis_private_config()
-        self.agent_api.update_neutron_sb_cfg_key()
         self.sync()
 
     def start(self):
