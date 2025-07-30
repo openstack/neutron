@@ -139,6 +139,7 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
     def sb_idl_events(self):
         return [metadata_agent.PortBindingUpdatedEvent,
                 metadata_agent.PortBindingDeletedEvent,
+                metadata_agent.PortBindingCreateWithChassis,
                 ChassisPrivateCreateEvent,
                 ]
 
@@ -197,7 +198,7 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
         self._proxy.run()
 
         # Do the initial sync.
-        self.sync()
+        self.sync(provision=False)
 
         # Register the agent with its corresponding Chassis
         self._update_chassis_private_config()
