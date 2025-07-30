@@ -44,9 +44,7 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
         self.event_name = self.__class__.__name__
 
     def run(self, event, row, old):
-        ext_ids = {ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: str(row.nb_cfg)}
-        self.ovn_agent.sb_idl.db_set('Chassis_Private', self.ovn_agent.chassis,
-                                     ('external_ids', ext_ids)).execute()
+        self.ovn_agent.update_neutron_sb_cfg_key(nb_cfg=row.nb_cfg)
 
 
 class ChassisPrivateCreateEvent(row_event.RowEvent):
@@ -73,6 +71,7 @@ class ChassisPrivateCreateEvent(row_event.RowEvent):
         # Re-register the OVN agent with the local chassis in case its
         # entry was re-created (happens when restarting the ovn-controller)
         self.ovn_agent.register_ovn_agent()
+        self.ovn_agent.update_neutron_sb_cfg_key()
 
 
 class OVNNeutronAgent(service.Service):
@@ -205,9 +204,10 @@ class OVNNeutronAgent(service.Service):
             'Chassis_Private', self.chassis, 'external_ids',
             *metadata_keys, if_exists=True).execute(check_error=True)
 
-    def update_neutron_sb_cfg_key(self):
-        nb_cfg = self.sb_idl.db_get('Chassis_Private',
-                                    self.chassis, 'nb_cfg').execute()
+    def update_neutron_sb_cfg_key(self, nb_cfg=None):
+        nb_cfg = (nb_cfg or
+                  self.sb_idl.db_get('Chassis_Private',
+                                     self.chassis, 'nb_cfg').execute())
         external_ids = {ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: str(nb_cfg)}
         self.sb_idl.db_set(
             'Chassis_Private', self.chassis,

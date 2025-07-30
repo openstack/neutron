@@ -105,8 +105,13 @@ class TestOVNNeutronAgent(TestOVNNeutronAgentBase):
                 ext_ids = self.ovn_agent.sb_idl.db_get(
                     'Chassis_Private', self.chassis_name,
                     'external_ids').execute(check_error=True)
-                return (ext_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY)
-                        is not None)
+                neutron_id = (ext_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY)
+                              is not None)
+                agt_cfg = (ext_ids.get(ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY)
+                           is not None)
+                bridge = (ext_ids.get(ovn_const.OVN_AGENT_OVN_BRIDGE)
+                          is not None)
+                return neutron_id and agt_cfg and bridge
             except idlutils.RowNotFound:
                 return False
 
@@ -115,6 +120,7 @@ class TestOVNNeutronAgent(TestOVNNeutronAgentBase):
         self.ovn_agent.sb_idl.chassis_del(self.chassis_name).execute(
             check_error=True)
         self.add_fake_chassis(self.host_name, name=self.chassis_name)
+
         n_utils.wait_until_true(_check_chassis_private, timeout=10)
 
 
