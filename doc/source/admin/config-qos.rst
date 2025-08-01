@@ -138,11 +138,20 @@ Valid DSCP mark values are even numbers between 0 and 56, except 2-6, 42, and
 L3 QoS support
 ~~~~~~~~~~~~~~
 
-The Neutron L3 services have implemented their own QoS extensions. Currently
-only bandwidth limit QoS is provided. This is the L3 QoS extension list:
+The Neutron L3 services have implemented their own QoS extensions. It is
+possible to apply QoS policies to the floating IPs and to the routers; in the
+last one (routers), the QoS policy will be applied on the gateway port.
 
-* Floating IP bandwidth limit: the rate limit is applied per floating IP
-  address independently.
+The rule support depends on the ML2 backend used.
+
+
+ML2/OVS
+-------
+
+The ML2/OVS L3 QoS supports only rate limit rules:
+
+* Floating IP bandwidth limit: rate limit is applied per floating IP address
+  independently.
 
 * Gateway IP bandwidth limit: the rate limit is applied in the router namespace
   gateway port (or in the SNAT namespace in case of DVR edge router). The rate
@@ -150,7 +159,42 @@ only bandwidth limit QoS is provided. This is the L3 QoS extension list:
   will be limited. This rate limit does not apply to the floating IP traffic.
 
 
-L3 services that provide QoS extensions:
+ML2/OVN
+-------
+
+The ML2/OVN L3 QoS supports both rate limit and DSCP rules. Both floating IP
+and gateway port QoS policies are applied using the QoS metering rules.
+
+* Floating IP: the traffic should match the gateway port and the floating IP
+  address. The port can be centralized or distributed.
+
+* Gateway port: the traffic should match the gateway chassis port.
+
+
+Because both floating IP and router can have QoS policies and both QoS policies
+will match the same traffic, the floating IP policy has a higher priority and
+will match this one only. In case of having port policies, that will apply to
+the virtual machine private port, the private port rule will be applied first.
+This is the QoS rules precedence and result:
+
+* Rate limit rules: if both private port QoS and router/floating IP rules are
+  applied, because both will be executed, the minimum rate limit value will
+  apply.
+
+* DSCP rules: if both private port QoS and router/floating IP rules are
+  applied, the router/floating IP DSCP mark will be applied on the egress
+  packet.
+
+
+.. note::
+
+   In case of having both router and floating IP QoS policies, the floating IP
+   QoS policy has precedence always over the router QoS one. See `[OVN] Change
+   the OVN QoS rule priority for floating IPs <https://review.opendev.org/q/If01a8783ac998b2a1f1249ab6f555dd1a5148ea8>`_.
+
+
+L3 services that provide QoS extensions
+---------------------------------------
 
 * L3 router: implements the rate limit using `Linux TC
   <https://man7.org/linux/man-pages/man8/tc.8.html>`_.
@@ -162,14 +206,29 @@ L3 services that provide QoS extensions:
 The following table shows the L3 service, the QoS supported extension, and
 traffic directions (from the VM point of view) for **bandwidth limiting**.
 
-.. table:: **L3 service, supported extension, and traffic direction**
+.. table:: **L3 service, supported extension and traffic direction for
+           bandwidth limiting**
 
     ====================  ===================  ===================
-     Rule \\ L3 service    L3 router            OVN L3
+     L3 service            L3 router            OVN L3
     ====================  ===================  ===================
      Floating IP           Egress \\ Ingress    Egress \\ Ingress
      Gateway IP            Egress \\ Ingress    Egress \\ Ingress
     ====================  ===================  ===================
+
+
+The following table shows the L3 service, the QoS supported extension, and
+traffic directions (from the VM point of view) for **DSCP marking**.
+
+.. table:: **L3 service, supported extension and traffic direction for
+           DSCP marking**
+
+    ====================  =========== ========
+     L3 service            L3 router   OVN L3
+    ====================  =========== ========
+     Floating IP           -           Egress
+     Gateway IP            -           Egress
+    ====================  =========== ========
 
 
 Configuration
