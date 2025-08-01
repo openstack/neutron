@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import abc
 import collections
 import functools
 import re
@@ -31,7 +30,7 @@ from ovsdbapp.backend.ovs_idl import vlog
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
-from neutron.agent.ovn.agent import ovn_neutron_agent
+from neutron.agent.ovn.extensions import extension_manager
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.agent.ovn.metadata import ovsdb
 from neutron.agent.ovn.metadata import server_socket as metadata_server
@@ -87,36 +86,8 @@ class ConfigException(Exception):
     """
 
 
-class _OVNExtensionEvent(metaclass=abc.ABCMeta):
-    """Implements a method to retrieve the correct caller agent
-
-    The events inheriting from this class could be called from the OVN metadata
-    agent or as part of an extension of the OVN agent ("metadata" extension,
-    for example). In future releases, the OVN metadata agent will be superseded
-    by the OVN agent (with the "metadata" extension) and this class removed,
-    keeping only the compatibility with the OVN agent (to be removed in C+2).
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._agent_or_extension = None
-        self._agent = None
-
-    @property
-    def agent(self):
-        """This method provide support for the OVN agent
-
-        This event can be used in the OVN metadata agent and in the OVN
-        agent metadata extension.
-        """
-        if not self._agent_or_extension:
-            if isinstance(self._agent, ovn_neutron_agent.OVNNeutronAgent):
-                self._agent_or_extension = self._agent['metadata']
-            else:
-                self._agent_or_extension = self._agent
-        return self._agent_or_extension
-
-
-class PortBindingEvent(_OVNExtensionEvent, row_event.RowEvent):
+class PortBindingEvent(extension_manager.OVNExtensionEvent,
+                       row_event.RowEvent):
     def __init__(self, agent):
         table = 'Port_Binding'
         super().__init__((self.__class__.EVENT,), table, None)
@@ -301,7 +272,7 @@ class PortBindingDeletedEvent(PortBindingEvent):
         return True
 
 
-class ChassisPrivateCreateEvent(_OVNExtensionEvent, row_event.RowEvent):
+class ChassisPrivateCreateEvent(row_event.RowEvent):
     """Row create event - Chassis name == our_chassis.
 
     On connection, we get a dump of all chassis so if we catch a creation
@@ -314,9 +285,7 @@ class ChassisPrivateCreateEvent(_OVNExtensionEvent, row_event.RowEvent):
         self.first_time = True
         events = (self.ROW_CREATE,)
         super().__init__(events, 'Chassis_Private', None)
-        # NOTE(ralonsoh): ``self._agent`` needs to be assigned before being
-        # used in the property ``self.agent``.
-        self._agent = agent
+        self.agent = agent
         self.conditions = (('name', '=', self.agent.chassis),)
         self.event_name = self.__class__.__name__
 
@@ -332,14 +301,14 @@ class ChassisPrivateCreateEvent(_OVNExtensionEvent, row_event.RowEvent):
             self.agent.sync()
 
 
-class SbGlobalUpdateEvent(_OVNExtensionEvent, row_event.RowEvent):
+class SbGlobalUpdateEvent(row_event.RowEvent):
     """Row update event on SB_Global table."""
 
     def __init__(self, agent):
         table = 'SB_Global'
         events = (self.ROW_UPDATE,)
         super().__init__(events, table, None)
-        self._agent = agent
+        self.agent = agent
         self.event_name = self.__class__.__name__
         self.first_run = True
 

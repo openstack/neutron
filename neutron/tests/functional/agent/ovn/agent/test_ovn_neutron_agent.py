@@ -18,6 +18,7 @@ import uuid
 
 from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.ovn.agent import ovn_neutron_agent
 from neutron.agent.ovn.agent import ovsdb as agent_ovsdb
@@ -92,6 +93,29 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
         if agt.ext_manager_api.nb_idl:
             self.addCleanup(agt.ext_manager_api.nb_idl.ovsdb_connection.stop)
         return agt
+
+
+class TestOVNNeutronAgent(TestOVNNeutronAgentBase):
+    def setUp(self, **kwargs):
+        super().setUp(extensions=[METADATA_EXTENSION], **kwargs)
+
+    def test_chassis_private_create_event(self):
+        def _check_chassis_private():
+            try:
+                ext_ids = self.ovn_agent.sb_idl.db_get(
+                    'Chassis_Private', self.chassis_name,
+                    'external_ids').execute(check_error=True)
+                return (ext_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY)
+                        is not None)
+            except idlutils.RowNotFound:
+                return False
+
+        # If the "Chassis_Private" register is deleted and created again,
+        # the agent should be able to re-register itself.
+        self.ovn_agent.sb_idl.chassis_del(self.chassis_name).execute(
+            check_error=True)
+        self.add_fake_chassis(self.host_name, name=self.chassis_name)
+        n_utils.wait_until_true(_check_chassis_private, timeout=10)
 
 
 class TestOVNNeutronAgentFakeAgent(TestOVNNeutronAgentBase):

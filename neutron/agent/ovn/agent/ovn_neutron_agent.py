@@ -49,6 +49,32 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
                                      ('external_ids', ext_ids)).execute()
 
 
+class ChassisPrivateCreateEvent(row_event.RowEvent):
+    """Row create event - Chassis name == our_chassis.
+
+    On connection, we get a dump of all chassis so if we catch a creation
+    of our own chassis it has to be a reconnection. In this case, we need
+    to do a full sync to make sure that we capture all changes while the
+    connection to OVSDB was down.
+    """
+    def __init__(self, ovn_agent):
+        self._first_time = True
+        self.ovn_agent = ovn_agent
+        events = (self.ROW_CREATE,)
+        super().__init__(events, 'Chassis_Private', None)
+        self.conditions = (('name', '=', self.ovn_agent.chassis),)
+        self.event_name = self.__class__.__name__
+
+    def run(self, event, row, old):
+        if self._first_time:
+            self._first_time = False
+            return
+
+        # Re-register the OVN agent with the local chassis in case its
+        # entry was re-created (happens when restarting the ovn-controller)
+        self.ovn_agent.register_ovn_agent()
+
+
 class OVNNeutronAgent(service.Service):
 
     def __init__(self, conf):
@@ -139,7 +165,9 @@ class OVNNeutronAgent(service.Service):
         return ovsdb.MonitorAgentOvnNbIdl(tables, events).start()
 
     def _load_sb_idl(self):
-        events = [SbGlobalUpdateEvent]
+        events = [SbGlobalUpdateEvent,
+                  ChassisPrivateCreateEvent,
+                  ]
         tables = ['SB_Global', 'Chassis_Private']
         for extension in self.ext_manager:
             events += extension.obj.sb_idl_events
