@@ -42,7 +42,7 @@ repos:
     rev: 7.0.0
     hooks:
       - id: hacking
-        additional_dependencies: ['neutron', 'neutron-lib']
+        additional_dependencies: ['neutron-lib>=3.21.1']
         exclude: '^(doc|releasenotes|tools)/.*$'
   - repo: https://github.com/hhatto/autopep8
     rev: v2.3.2
