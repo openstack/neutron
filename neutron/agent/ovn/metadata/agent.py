@@ -446,6 +446,22 @@ class MetadataAgent:
             'Chassis_Private', self.chassis,
             ('external_ids', external_ids)).execute(check_error=True)
 
+    def _cleanup_previous_tags(self):
+        """Remove any existing tag related to the OVN agent
+
+        The OVN Metadata agent is deprecated and marked for removal in 2026.2.
+
+        While both agents can provide the same functionality (OVN Metadata
+        agent and OVN agent with the metadata extension), it is needed to
+        provide a cleanup method for any leftover tag from the other agent.
+        """
+        metadata_keys = (ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY,
+                         ovn_const.OVN_AGENT_NEUTRON_DESC_KEY,
+                         ovn_const.OVN_AGENT_NEUTRON_ID_KEY)
+        self.sb_idl.db_remove(
+            'Chassis_Private', self.chassis, 'external_ids',
+            *metadata_keys, if_exists=True).execute(check_error=True)
+
     @_sync_lock
     def resync(self):
         """Resync the agent.
@@ -488,6 +504,7 @@ class MetadataAgent:
         self.sync(provision=False)
 
         # Register the agent with its corresponding Chassis
+        self._cleanup_previous_tags()
         self.register_metadata_agent()
         self._update_chassis_private_config()
         self._update_metadata_sb_cfg_key()
