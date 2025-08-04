@@ -27,7 +27,7 @@ MAC_CHAIN_PREFIX = 'neutronMAC-'
 
 
 def setup_arp_spoofing_protection(vif, port_details):
-    if not port_details.get('port_security_enabled', True):
+    if not port_details.get('port_security_enabled', False):
         # clear any previous entries related to this port
         delete_arp_spoofing_protection([vif])
         LOG.info("Skipping ARP spoofing rules for port '%s' because "
