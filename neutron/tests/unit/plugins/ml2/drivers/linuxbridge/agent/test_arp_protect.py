@@ -25,10 +25,12 @@ from neutron.tests import base
 VIF = 'vif_tap0'
 PORT_NO_SEC = {'port_security_enabled': False}
 PORT_TRUSTED = {'device_owner': constants.DEVICE_OWNER_ROUTER_GW}
-PORT = {'fixed_ips': [{'ip_address': '10.1.1.1'}],
+PORT = {'port_security_enabled': True,
+        'fixed_ips': [{'ip_address': '10.1.1.1'}],
         'device_owner': 'nobody',
         'mac_address': '00:11:22:33:44:55'}
-PORT_ADDR_PAIR = {'fixed_ips': [{'ip_address': '10.1.1.1'}],
+PORT_ADDR_PAIR = {'port_security_enabled': True,
+                  'fixed_ips': [{'ip_address': '10.1.1.1'}],
                   'device_owner': 'nobody',
                   'mac_address': '00:11:22:33:44:55',
                   'allowed_address_pairs': [
