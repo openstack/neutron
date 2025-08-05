@@ -24,6 +24,7 @@ from neutron.agent.ovn.agent import ovn_neutron_agent
 from neutron.agent.ovn.agent import ovsdb as agent_ovsdb
 from neutron.agent.ovn.metadata import agent as metadata_agent
 from neutron.agent.ovn.metadata import server_socket
+from neutron.agent.ovsdb import impl_idl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
 from neutron.tests.common import net_helpers
@@ -47,6 +48,7 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
         self.mock_chassis_name = mock.patch.object(
             agent_ovsdb, 'get_own_chassis_name',
             return_value=self.chassis_name).start()
+        self.ovs_idl_events = []
         with mock.patch.object(metadata_agent.MetadataAgent,
                                '_get_own_chassis_name',
                                return_value=self.chassis_name):
@@ -57,6 +59,21 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
             loaded_ext = ovn_agent[_ext]
             self.assertEqual(EXTENSION_NAMES.get(_ext), loaded_ext.name)
             self.assertTrue(loaded_ext.is_started)
+
+    def _create_ovs_idl(self, ovn_agent):
+        for extension in ovn_agent.ext_manager:
+            self.ovs_idl_events += extension.obj.ovs_idl_events
+        self.ovs_idl_events = [e(ovn_agent) for e in
+                                         set(self.ovs_idl_events)]
+        ovsdb = impl_idl.api_factory()
+        ovsdb.idl.notify_handler.watch_events(self.ovs_idl_events)
+
+        ovn_agent.ext_manager_api.ovs_idl = ovsdb
+        return ovsdb
+
+    def _clear_events_ovs_idl(self):
+        self.ovn_agent.ovs_idl.idl_monitor.notify_handler.unwatch_events(
+            self.ovs_idl_events)
 
     def _start_ovn_neutron_agent(self):
         conf = self.useFixture(fixture_config.Config()).conf
@@ -76,7 +93,10 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
         # Once eventlet is completely removed, this mock can be deleted.
         with mock.patch.object(ovn_neutron_agent.OVNNeutronAgent, 'wait'), \
                 mock.patch.object(server_socket.UnixDomainMetadataProxy,
-                                  'wait'):
+                                  'wait'), \
+                mock.patch.object(ovn_neutron_agent.OVNNeutronAgent,
+                                  '_load_ovs_idl') as mock_load_ovs_idl:
+            mock_load_ovs_idl.return_value = self._create_ovs_idl(agt)
             agt.start()
             external_ids = agt.sb_idl.db_get(
                 'Chassis_Private', agt.chassis, 'external_ids').execute(
@@ -86,8 +106,7 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
                 '0')
 
         self._check_loaded_and_started_extensions(agt)
-
-        self.addCleanup(agt.ext_manager_api.ovs_idl.ovsdb_connection.stop)
+        self.addCleanup(self._clear_events_ovs_idl)
         if agt.ext_manager_api.sb_idl:
             self.addCleanup(agt.ext_manager_api.sb_idl.ovsdb_connection.stop)
         if agt.ext_manager_api.nb_idl:
