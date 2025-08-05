@@ -40,3 +40,4 @@ git+https://github.com/sapcc/openstack-rate-limit-middleware.git#egg=rate-limit-
 -e git+https://github.com/sapcc/networking-interconnection@stable/2024.1-m3#egg=networking_interconnection
 -e git+https://github.com/sapcc/networking-ccloud@stable/2024.1-m3#egg=networking_ccloud
 -e git+https://github.com/sapcc/neutron-fwaas@stable/2024.1-m3#egg=neutron_fwaas
+-e git+https://github.com/sapcc/neutron-vpnaas@stable/2024.1-m3#egg=neutron_vpnaas
