@@ -1403,11 +1403,10 @@ class TestAgentApi(base.TestOVNFunctionalBase):
     def _check_chassis_registers(self, present=True):
         chassis = self.sb_api.lookup('Chassis', self.chassis, default=None)
         chassis_name = chassis.name if chassis else None
-        if self.sb_api.is_table_present('Chassis_Private'):
-            ch_private = self.sb_api.lookup(
-                'Chassis_Private', self.chassis, default=None)
-            ch_private_name = ch_private.name if ch_private else None
-            self.assertEqual(chassis_name, ch_private_name)
+        ch_private = self.sb_api.lookup(
+            'Chassis_Private', self.chassis, default=None)
+        ch_private_name = ch_private.name if ch_private else None
+        self.assertEqual(chassis_name, ch_private_name)
         if present:
             self.assertEqual(self.chassis, chassis_name)
         else:
