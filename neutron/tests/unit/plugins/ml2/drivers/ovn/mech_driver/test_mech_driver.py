@@ -3183,6 +3183,47 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_node_uuid_no_worker_id(self, *args):
         self.assertEqual(123456789, self.mech_driver.node_uuid)
 
+    def test_create_port_with_allowed_address_pairs(self):
+        with self.network() as network:
+            with self.subnet(network, cidr='10.0.0.0/24'):
+                self._make_port(
+                    self.fmt, network['network']['id'],
+                    device_owner=const.DEVICE_OWNER_DISTRIBUTED,
+                    fixed_ips=[{'ip_address': '10.0.0.2'}],
+                    as_admin=True,
+                    arg_list=('device_owner', 'fixed_ips'))
+                port1 = self._make_port(
+                    self.fmt, network['network']['id'],
+                    allowed_address_pairs=[{'ip_address': '10.0.0.3'}],
+                    as_admin=True,
+                    arg_list=('allowed_address_pairs',))['port']
+                self.assertEqual(
+                    [{'ip_address': '10.0.0.3',
+                      'mac_address': port1['mac_address']}],
+                    port1['allowed_address_pairs'])
+                self._make_port(
+                    self.fmt, network['network']['id'],
+                    allowed_address_pairs=[{'ip_address': '10.0.0.2'}],
+                    expected_res_status=exc.HTTPBadRequest.code,
+                    arg_list=('allowed_address_pairs',))
+                port2 = self._show('ports', port1['id'])['port']
+                self.assertEqual(
+                    [{'ip_address': '10.0.0.3',
+                      'mac_address': port2['mac_address']}],
+                    port2['allowed_address_pairs'])
+
+                # Now test the same but giving a subnet as allowed address pair
+                self._make_port(
+                    self.fmt, network['network']['id'],
+                    allowed_address_pairs=[{'ip_address': '10.0.0.2/26'}],
+                    expected_res_status=exc.HTTPBadRequest.code,
+                    arg_list=('allowed_address_pairs',))
+                port3 = self._show('ports', port1['id'])['port']
+                self.assertEqual(
+                    [{'ip_address': '10.0.0.3',
+                      'mac_address': port3['mac_address']}],
+                    port3['allowed_address_pairs'])
+
 
 class OVNMechanismDriverTestCase(MechDriverSetupBase,
                                  test_plugin.Ml2PluginV2TestCase):
