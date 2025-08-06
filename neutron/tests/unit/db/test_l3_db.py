@@ -1081,6 +1081,11 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                           self.mixin, payload=mock.ANY),
                 mock.call(resources.PORT, events.BEFORE_CREATE,
                           mock.ANY, payload=mock.ANY),
+                # TODO(slaweq): use constant from
+                # neutron_lib.callbacks.resources once it will be available
+                # and released
+                mock.call('allowed_address_pair', events.BEFORE_CREATE,
+                          mock.ANY, payload=mock.ANY),
                 mock.call(resources.PORT, events.PRECOMMIT_CREATE,
                           mock.ANY, payload=mock.ANY),
                 mock.call(resources.PORT, events.AFTER_CREATE,
