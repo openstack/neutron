@@ -552,7 +552,7 @@ class MetadataAgent:
                              ns not in metadata_namespaces]
         for ns in unused_namespaces:
             try:
-                self.teardown_datapath(self._get_datapath_name(ns))
+                self.teardown_datapath(self._get_network_name(ns))
             except Exception:
                 LOG.exception('Error unable to destroy namespace: %s', ns)
 
@@ -569,7 +569,7 @@ class MetadataAgent:
                                 datapath[:10], i) for i in [0, 1]]
 
     @staticmethod
-    def _get_datapath_name(namespace):
+    def _get_network_name(namespace):
         return namespace[len(NS_PREFIX):]
 
     @staticmethod
