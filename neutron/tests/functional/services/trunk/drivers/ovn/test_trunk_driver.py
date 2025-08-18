@@ -36,6 +36,24 @@ class WaitForPortBindingDeleteEvent(event.WaitEvent):
         super().__init__(events, table, conditions, timeout=10)
 
 
+class WaitForLSPSubportEvent(event.WaitEvent):
+    event_name = 'WaitForLSPSubportEvent'
+
+    def __init__(self, port_id):
+        table = 'Logical_Switch_Port'
+        events = (self.ROW_UPDATE, self.ROW_CREATE)
+        conditions = (('name', '=', port_id), )
+        super().__init__(events, table, conditions, timeout=10)
+
+    def matches(self, event, row, old=None):
+        # Check the "conditions" defined (name=port_id)
+        if not super().matches(event, row, old):
+            return False
+        device_owner = row.external_ids.get(
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY)
+        return device_owner == trunk_consts.TRUNK_SUBPORT_OWNER
+
+
 class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
 
     def setUp(self):
@@ -127,7 +145,12 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
 
     def test_subport_delete(self):
         with self.subport() as subport:
+            lsp_subport = WaitForLSPSubportEvent(subport['port_id'])
+            self.mech_driver.nb_ovn.idl.notify_handler.watch_event(
+                lsp_subport)
             with self.trunk([subport]) as trunk:
+                # Wait for the subport LSP to be assigned as a subport.
+                self.assertTrue(lsp_subport.wait())
                 pb_event = WaitForPortBindingDeleteEvent(subport['port_id'])
                 self.mech_driver.sb_ovn.idl.notify_handler.watch_event(
                     pb_event)
@@ -135,6 +158,7 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
                                                   {'sub_ports': [subport]})
                 new_trunk = self.trunk_plugin.get_trunk(self.context,
                                                         trunk['id'])
+                # Wait for the subport LSP to be unbound.
                 self.assertTrue(pb_event.wait())
                 self._verify_trunk_info(new_trunk, has_items=False)
 
