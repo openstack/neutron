@@ -789,7 +789,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # Tries to create 5 routers with a gateway. Since we're using
         # physnet4, the chassis candidates will be chassis4 initially.
         num_routers = len(self._create_routers_wait_pb(
-            1, 20, gw_info=gw_info, bind_chassis=chassis4))
+            1, 5, gw_info=gw_info, bind_chassis=chassis4))
         self.l3_plugin.schedule_unhosted_gateways()
         expected = {chassis4: {1: num_routers}}
         self.assertEqual(expected, self._get_gwc_dict())
