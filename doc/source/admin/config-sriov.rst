@@ -354,9 +354,6 @@ Enable neutron-sriov-nic-agent (Compute)
 
    .. code-block:: ini
 
-      [securitygroup]
-      firewall_driver = noop
-
       [sriov_nic]
       physical_device_mappings = physnet2:eth3
       exclude_devices =
@@ -368,6 +365,10 @@ Enable neutron-sriov-nic-agent (Compute)
       same physical network to more than one NIC. For example, if ``physnet2``
       is connected to ``eth3`` and ``eth4``, then
       ``physnet2:eth3,physnet2:eth4`` is a valid option.
+
+   .. note::
+
+      The SR-IOV agent does not implement any kind of firewall driver.
 
    The ``exclude_devices`` parameter is empty, therefore, all the VFs
    associated with eth3 may be configured by the agent. To exclude specific

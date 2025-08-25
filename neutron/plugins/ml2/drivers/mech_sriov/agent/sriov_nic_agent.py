@@ -38,9 +38,7 @@ from neutron._i18n import _
 from neutron.agent.common import utils
 from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
 from neutron.agent import rpc as agent_rpc
-from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
-from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config as common_config
 from neutron.common import profiler as setup_profiler
 from neutron.common import utils as n_utils
@@ -56,7 +54,7 @@ from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 LOG = logging.getLogger(__name__)
 
 
-class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
+class SriovNicSwitchRpcCallbacks:
 
     # Set RPC API version to 1.0 by default.
     # history
@@ -66,14 +64,16 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     #       (works with NoopFirewallDriver)
     #   1.4 Added support for network_update
     #   1.5 Added support for binding_activate and binding_deactivate
+    #   1.6 Removed Security Group RPC; the SR-IOV agent no longer receives
+    #       security group events. That must be reverted if a firewall is
+    #       implemented.
 
-    target = oslo_messaging.Target(version='1.5')
+    target = oslo_messaging.Target(version='1.6')
 
-    def __init__(self, context, agent, sg_agent):
+    def __init__(self, context, agent):
         super().__init__()
         self.context = context
         self.agent = agent
-        self.sg_agent = sg_agent
 
     def port_update(self, context, **kwargs):
         LOG.debug("port_update received")
@@ -176,9 +176,6 @@ class SriovNicSwitchAgent:
 
         self.context = context.get_admin_context_without_session()
         self.plugin_rpc = agent_rpc.PluginApi(topics.PLUGIN)
-        self.sg_plugin_rpc = sg_rpc.SecurityGroupServerRpcApi(topics.PLUGIN)
-        self.sg_agent = agent_sg_rpc.SecurityGroupAgentRpc(
-            self.context, self.sg_plugin_rpc)
         self._setup_rpc()
         self.ext_manager = self._create_agent_extension_manager(
             self.connection)
@@ -230,14 +227,14 @@ class SriovNicSwitchAgent:
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         # RPC network init
         # Handle updates from service
-        self.endpoints = [SriovNicSwitchRpcCallbacks(self.context, self,
-                                                     self.sg_agent)]
+        self.endpoints = [SriovNicSwitchRpcCallbacks(self.context, self),
+                          ]
         # Define the listening consumers for the agent
         consumers = [[topics.PORT, topics.UPDATE],
                      [topics.NETWORK, topics.UPDATE],
-                     [topics.SECURITY_GROUP, topics.UPDATE],
                      [topics.PORT_BINDING, topics.DEACTIVATE],
-                     [topics.PORT_BINDING, topics.ACTIVATE]]
+                     [topics.PORT_BINDING, topics.ACTIVATE],
+                     ]
         self.connection = agent_rpc.create_consumers(self.endpoints,
                                                      self.topic,
                                                      consumers,
@@ -292,10 +289,6 @@ class SriovNicSwitchAgent:
         resync_a = False
         resync_b = False
 
-        self.sg_agent.prepare_devices_filter(device_info.get('added'))
-
-        if device_info.get('updated'):
-            self.sg_agent.refresh_firewall()
         # Updated devices are processed the same as new ones, as their
         # admin_state_up may have changed. The set union prevents duplicating
         # work when a device is new and updated in the same polling iteration.
