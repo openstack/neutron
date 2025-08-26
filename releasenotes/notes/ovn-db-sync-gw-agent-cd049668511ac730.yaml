@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    ``ovn-db-sync`` skipped chassis that were also gateways for syncing the
+    segment host mappings but all other operations included them so add syncing
+    them to ``ovn-db-sync``. For more information see bug
+    `2116960 <https://bugs.launchpad.net/neutron/+bug/2116960>`_.
