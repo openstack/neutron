@@ -147,7 +147,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                        'security_group_id': 'sg2'}],
              'name': 'all-tcpe'}]
 
-        self.sg_port_groups_ovn = [mock.Mock(), mock.Mock(), mock.Mock()]
+        self.sg_port_groups_ovn = [mock.Mock(), mock.Mock(), mock.Mock(), mock.Mock()]
         self.sg_port_groups_ovn[0].configure_mock(
             name='pg_sg1',
             external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg1'},
@@ -159,8 +159,13 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             ports=[],
             acls=[])
         self.sg_port_groups_ovn[2].configure_mock(
-            name='neutron_pg_drop',
-            external_ids=[],
+            name=ovn_const.OVN_DROP_PORT_GROUP_NAME,
+            external_ids={},
+            ports=[],
+            acls=[])
+        self.sg_port_groups_ovn[3].configure_mock(
+            name='external_pg',
+            external_ids={'owner': 'not-owned-by-neutron'},
             ports=[],
             acls=[])
 

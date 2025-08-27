@@ -339,11 +339,17 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             if ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY not in (
                     lrouter.external_ids):
                 continue
-            lrports = {lrport.name.replace('lrp-', ''): lrport.networks
-                       for lrport in getattr(lrouter, 'ports', [])}
-            sroutes = [{'destination': sroute.ip_prefix,
-                        'nexthop': sroute.nexthop}
-                       for sroute in getattr(lrouter, 'static_routes', [])]
+            lrports = {
+                lrport.name.replace('lrp-', ''): lrport.networks
+                for lrport in getattr(lrouter, 'ports', [])
+                if ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY in lrport.external_ids
+            }
+            sroutes = [
+                {'destination': route.ip_prefix, 'nexthop': route.nexthop}
+                for route in getattr(lrouter, 'static_routes', [])
+                if any(eid.startswith(constants.DEVICE_OWNER_NEUTRON_PREFIX)
+                       for eid in route.external_ids)
+            ]
 
             dnat_and_snats = []
             snat = []

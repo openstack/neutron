@@ -109,6 +109,12 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         self.expected_dns_records = []
         self.expected_ports_with_unknown_addr = []
         self.expected_qos_records = []
+        # Set of externally managed resources that should not
+        # be cleaned up by the sync_db
+        self.create_ext_port_groups = []
+        self.create_ext_lrouter_ports = []
+        self.create_ext_lrouter_routes = []
+
         self.ctx = context.get_admin_context()
         ovn_config.cfg.CONF.set_override('ovn_metadata_enabled', True,
                                          group='ovn')
@@ -526,6 +532,9 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         self.create_lrouter_routes.append(('neutron-' + r1['id'],
                                            '10.13.0.0/24',
                                            '20.0.0.13'))
+        self.create_ext_lrouter_routes.append(('neutron-' + r1['id'],
+                                               '10.14.0.0/24',
+                                               '20.0.0.14'))
         self.delete_lrouter_routes.append(('neutron-' + r1['id'],
                                            '10.10.0.0/24',
                                            '20.0.0.10'))
@@ -673,10 +682,18 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                                           'neutron-' + r1['id']))
         self.create_lrouter_ports.append(('lrp-' + uuidutils.generate_uuid(),
                                           'neutron-' + r1['id']))
+        self.create_ext_lrouter_ports.append(
+            ('ext-lrp-' + uuidutils.generate_uuid(), 'neutron-' + r1['id'])
+        )
+        self.create_ext_lrouter_ports.append(
+            ('ext-lrp-' + uuidutils.generate_uuid(), 'neutron-' + r1['id'])
+        )
         self.delete_lrouters.append('neutron-' + r2['id'])
 
         self.create_port_groups.extend([{'name': 'pg1', 'acls': []},
                                         {'name': 'pg2', 'acls': []}])
+        self.create_ext_port_groups.extend([{'name': 'ext-pg1', 'acls': []},
+                                            {'name': 'ext-pg2', 'acls': []}])
         self.delete_port_groups.append(
             utils.ovn_port_group_name(n1_prtr['port']['security_groups'][0]))
         # Create a network and subnet with orphaned OVN resources.
@@ -801,7 +818,14 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                 txn.add(self.nb_api.lr_del(lrouter_name, if_exists=True))
 
             for lrport, lrouter_name in self.create_lrouter_ports:
-                txn.add(self.nb_api.add_lrouter_port(lrport, lrouter_name))
+                external_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                                lrouter_name}
+                txn.add(self.nb_api.add_lrouter_port(
+                    lrport, lrouter_name, True, external_ids=external_ids))
+
+            for lrport, lrouter_name in self.create_ext_lrouter_ports:
+                txn.add(self.nb_api.add_lrouter_port(
+                    lrport, lrouter_name, True))
 
             for lrport, lrouter_name, networks in self.update_lrouter_ports:
                 txn.add(self.nb_api.update_lrouter_port(
@@ -818,6 +842,10 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                                                      ip_prefix=ip_prefix,
                                                      nexthop=nexthop,
                                                      **columns))
+            for lr_name, ip_prefix, nexthop in self.create_ext_lrouter_routes:
+                txn.add(self.nb_api.add_static_route(lr_name,
+                                                     ip_prefix=ip_prefix,
+                                                     nexthop=nexthop))
             routers = defaultdict(list)
             for lrouter_name, ip_prefix, nexthop in self.delete_lrouter_routes:
                 routers[lrouter_name].append((ip_prefix, nexthop))
@@ -850,7 +878,12 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                 txn.add(self.nb_api.delete_acl(lswitch_name,
                                                lport_name, True))
 
+            columns = {
+                'external_ids': {ovn_const.OVN_SG_EXT_ID_KEY: 'sg_uuid'},
+            }
             for pg in self.create_port_groups:
+                txn.add(self.nb_api.pg_add(**pg, **columns))
+            for pg in self.create_ext_port_groups:
                 txn.add(self.nb_api.pg_add(**pg))
             for pg in self.delete_port_groups:
                 txn.add(self.nb_api.pg_del(pg))
@@ -1321,6 +1354,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                     self.ctx, port))
             return ipv6_ra_configs
 
+        neutron_prefix = constants.DEVICE_OWNER_NEUTRON_PREFIX
         for router_id in db_router_ids:
             r_ports = self._list('ports',
                                  query_params='device_id=%s' % (router_id))
@@ -1339,18 +1373,27 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                 lrouter = idlutils.row_by_value(
                     self.mech_driver.nb_ovn.idl, 'Logical_Router', 'name',
                     'neutron-' + str(router_id), None)
-                lports = getattr(lrouter, 'ports', [])
+                all_lports = getattr(lrouter, 'ports', [])
+                managed_lports = [
+                        lport for lport in all_lports
+                        if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY in
+                            lport.external_ids)
+                        ]
+
                 plugin_lrouter_port_ids = [lport.name.replace('lrp-', '')
-                                           for lport in lports]
+                                           for lport in managed_lports]
                 plugin_lport_networks = {
                     lport.name.replace('lrp-', ''): lport.networks
-                    for lport in lports}
+                    for lport in managed_lports}
                 plugin_lport_ra_configs = {
                     lport.name.replace('lrp-', ''): lport.ipv6_ra_configs
-                    for lport in lports}
+                    for lport in managed_lports}
                 sroutes = getattr(lrouter, 'static_routes', [])
-                plugin_routes = [sroute.ip_prefix + sroute.nexthop
-                                 for sroute in sroutes]
+                plugin_routes = []
+                for sroute in sroutes:
+                    if any(e_id.startswith(neutron_prefix)
+                           for e_id in sroute.external_ids):
+                        plugin_routes.append(sroute.ip_prefix + sroute.nexthop)
                 nats = getattr(lrouter, 'nat', [])
                 plugin_nats = [
                     nat.external_ip + nat.logical_ip + nat.type +
@@ -1366,18 +1409,29 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                 lrouter = idlutils.row_by_value(
                     self.nb_api.idl, 'Logical_Router', 'name',
                     'neutron-' + router_id, None)
-                lports = getattr(lrouter, 'ports', [])
+                all_lports = getattr(lrouter, 'ports', [])
+                managed_lports = [
+                        lport for lport in all_lports
+                        if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY in
+                            lport.external_ids)
+                        ]
                 monitor_lrouter_port_ids = [lport.name.replace('lrp-', '')
-                                            for lport in lports]
+                                            for lport in managed_lports]
                 monitor_lport_networks = {
                     lport.name.replace('lrp-', ''): lport.networks
-                    for lport in lports}
+                    for lport in managed_lports}
                 monitor_lport_ra_configs = {
                     lport.name.replace('lrp-', ''): lport.ipv6_ra_configs
-                    for lport in lports}
+                    for lport in managed_lports}
                 sroutes = getattr(lrouter, 'static_routes', [])
-                monitor_routes = [sroute.ip_prefix + sroute.nexthop
-                                  for sroute in sroutes]
+                monitor_routes = []
+                for sroute in sroutes:
+                    if any(e_id.startswith(neutron_prefix)
+                           for e_id in sroute.external_ids):
+                        monitor_routes.append(
+                            sroute.ip_prefix + sroute.nexthop
+                        )
+
                 nats = getattr(lrouter, 'nat', [])
                 monitor_nats = [
                     nat.external_ip + nat.logical_ip + nat.type +
@@ -1535,7 +1589,9 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
 
         mn_pgs = []
         for row in self.nb_api.tables['Port_Group'].rows.values():
-            mn_pgs.append(getattr(row, 'name', ''))
+            if (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids or
+                    row.name == ovn_const.OVN_DROP_PORT_GROUP_NAME):
+                mn_pgs.append(getattr(row, 'name', ''))
 
         if should_match:
             self.assertCountEqual(nb_pgs, db_pgs)
@@ -1641,6 +1697,46 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
 
         self._sync_resources(mode)
         self._validate_resources(should_match=should_match_after_sync)
+        if not restart_ovsdb_processes:
+            # Restarting ovsdb-server removes all its previous content.
+            # We can not expect to find external resources in the DB
+            # if it was wiped out.
+            self._validate_external_resources()
+
+    def _validate_external_resources(self):
+        """Ensure that resources not owned by Neutron are in the OVN DB.
+
+        This function is useful to validate that external resources survived
+        ovn_db_sync.
+        """
+        db_routers = self._list('routers')
+        db_router_ids = [router['id'] for router in db_routers['routers']]
+
+        pgs = []
+        for pg in self.nb_api.tables['Port_Group'].rows.values():
+            pgs.append(pg.name)
+
+        lrports = []
+        sroutes = []
+        for router_id in db_router_ids:
+            lrouter = idlutils.row_by_value(
+                self.mech_driver.nb_ovn.idl, 'Logical_Router', 'name',
+                'neutron-' + str(router_id), None)
+
+            for lrport in getattr(lrouter, 'ports', []):
+                lrports.append(lrport.name)
+
+            for route in getattr(lrouter, 'static_routes', []):
+                sroutes.append(route.ip_prefix + route.nexthop)
+
+        for port_name, _ in self.create_ext_lrouter_ports:
+            self.assertIn(port_name, lrports)
+
+        for _, prefix, next_hop in self.create_ext_lrouter_routes:
+            self.assertIn(prefix + next_hop, sroutes)
+
+        for ext_pg in self.create_ext_port_groups:
+            self.assertIn(ext_pg['name'], pgs)
 
     def test_ovn_nb_sync_repair(self):
         self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_REPAIR)
