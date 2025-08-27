@@ -101,6 +101,7 @@ conntrack_helper = "neutron.services.conntrack_helper.plugin:Plugin"
 ovn-router = "neutron.services.ovn_l3.plugin:OVNL3RouterPlugin"
 local_ip = "neutron.services.local_ip.local_ip_plugin:LocalIPPlugin"
 ndp_proxy = "neutron.services.ndp_proxy.plugin:NDPProxyPlugin"
+ovn-bgp = "neutron.services.bgp.plugin:BGPServicePlugin"
 
 [project.entry-points."neutron.ml2.type_drivers"]
 flat = "neutron.plugins.ml2.drivers.type_flat:FlatTypeDriver"
