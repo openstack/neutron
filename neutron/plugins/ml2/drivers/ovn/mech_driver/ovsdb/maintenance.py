@@ -533,6 +533,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         cmds = []
         for ls in self._nb_idl.ls_list().execute(check_error=True):
+            if ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY not in ls.external_ids:
+                continue
             snooping = ls.other_config.get(ovn_const.MCAST_SNOOP)
             flood = ls.other_config.get(ovn_const.MCAST_FLOOD_UNREGISTERED)
 
@@ -572,9 +574,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         context = n_context.get_admin_context()
         with self._nb_idl.transaction(check_error=True) as txn:
             for port in external_ports:
-                network_id = port.external_ids[
-                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
+                network_id = port.external_ids.get(
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY, '').replace(
                         ovn_const.OVN_NAME_PREFIX, '')
+                if not network_id:
+                    continue
                 ha_ch_grp, high_prio_ch = utils.sync_ha_chassis_group_network(
                     context, self._nb_idl, self._sb_idl, port.name,
                     network_id, txn)
@@ -1005,6 +1009,9 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                         for seg in net_segments}
         cmds = []
         for ls in self._nb_idl.ls_list().execute(check_error=True):
+            if ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY not in ls.external_ids:
+                continue
+
             if ovn_const.OVN_NETTYPE_EXT_ID_KEY not in ls.external_ids:
                 net_id = utils.get_neutron_name(ls.name)
                 external_ids = {
