@@ -596,6 +596,11 @@ class DhcpAgent(manager.Manager):
 
     def _process_resource_update(self):
         for tmp, update in self._queue.each_update_to_next_resource():
+            LOG.debug("Starting processing update %s, action %s, priority %s, "
+                      "update_id %s. Wait time elapsed: %.3f",
+                      update.id, update.action, update.priority,
+                      update.update_id,
+                      update.time_elapsed_since_create)
             method = getattr(self, update.action)
             method(update.resource)
             LOG.debug('Pending events to be processed: %s', self._queue.qsize)
