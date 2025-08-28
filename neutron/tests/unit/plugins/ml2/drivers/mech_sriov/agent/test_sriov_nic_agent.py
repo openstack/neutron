@@ -217,15 +217,11 @@ class TestSriovAgent(base.BaseTestCase):
                        'added': {DEV3, DEV4},
                        'updated': {DEV2, DEV3},
                        'removed': {DEV1}}
-        agent.sg_agent.prepare_devices_filter = mock.Mock()
-        agent.sg_agent.refresh_firewall = mock.Mock()
         agent.treat_devices_added_updated = mock.Mock(return_value=False)
         agent.treat_devices_removed = mock.Mock(return_value=False)
 
         agent.process_network_devices(device_info)
 
-        agent.sg_agent.prepare_devices_filter.assert_called_with({DEV3, DEV4})
-        self.assertTrue(agent.sg_agent.refresh_firewall.called)
         agent.treat_devices_added_updated.assert_called_with(
             {DEV2, DEV3, DEV4})
         agent.treat_devices_removed.assert_called_with({DEV1})
@@ -471,9 +467,8 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
         super().setUp()
         self.context = object()
         self.agent = FakeAgent()
-        sg_agent = object()
         self.sriov_rpc_callback = sriov_nic_agent.SriovNicSwitchRpcCallbacks(
-            self.context, self.agent, sg_agent)
+            self.context, self.agent)
         self.device_info = agent_rpc.DeviceInfo(DEVICE_MAC, PCI_SLOT)
 
     def _create_fake_port(self):

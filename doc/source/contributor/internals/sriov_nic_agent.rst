@@ -44,8 +44,11 @@ Agent manages Virtual Functions admin state. Quality of service is partially
 implemented with the bandwidth limit and minimum bandwidth rules. In the future
 it will manage additional settings, such as additional
 quality of service rules, rate limit settings, spoofcheck and more.
-Network node will be usually deployed with either Open vSwitch or Linux Bridge
+
+Network node will be usually deployed with either ML2 Open vSwitch or ML2 OVN
 to support network node functionality.
+
+The SR-IOV network agent does not implement any port firewalling.
 
 
 Further Reading

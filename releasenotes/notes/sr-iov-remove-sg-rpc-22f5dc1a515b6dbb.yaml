@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    The ML2 SR-IOV agent has removed the security group RPC events registration
+    and the firewall logic.
