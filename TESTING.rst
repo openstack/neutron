@@ -449,7 +449,7 @@ to run.
 To restrict the pylint check to only the files altered by the latest patch
 changes::
 
-    tox -e pep8 HEAD~1
+    tox -e pep8 -- HEAD~1
 
 To run only the unit tests::
 

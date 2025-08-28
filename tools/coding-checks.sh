@@ -28,7 +28,10 @@ process_options () {
 run_pylint () {
     local target="${scriptargs:-all}"
 
+    echo "Running pylint..."
+
     if [ "$target" = "all" ]; then
+        echo "You can speed this up by running it on 'HEAD~[0-9]' (e.g. HEAD~1, this change only)..."
         files="neutron"
     else
         case "$target" in
@@ -36,9 +39,6 @@ run_pylint () {
             *) echo "$target is an unrecognized basecommit"; exit 1;;
         esac
     fi
-
-    echo "Running pylint..."
-    echo "You can speed this up by running it on 'HEAD~[0-9]' (e.g. HEAD~1, this change only)..."
     echo ""
     echo "Consider using the 'pre-commit' tool instead."
     echo ""
