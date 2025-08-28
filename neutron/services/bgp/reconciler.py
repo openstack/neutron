@@ -15,6 +15,8 @@
 
 from oslo_log import log
 
+from neutron.services.bgp import commands
+
 LOG = log.getLogger(__name__)
 
 
@@ -48,7 +50,14 @@ class BGPTopologyReconciler:
     def full_sync(self):
         if not self.nb_ovn.ovsdb_connection.idl.is_lock_contended:
             LOG.info("Full BGP topology synchronization started")
-            # TODO(jlibosva): Implement full sync
+            # First make sure all chassis are indexed
+            chassis = commands.IndexAllChassis(
+                self.sb_ovn).execute(check_error=True)
+            commands.FullSyncBGPTopologyCommand(
+                self.nb_ovn,
+                self.sb_ovn,
+                chassis,
+            ).execute(check_error=True)
             LOG.info(
                 "Full BGP topology synchronization completed successfully")
         else:
