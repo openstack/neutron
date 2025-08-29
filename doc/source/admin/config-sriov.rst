@@ -633,14 +633,7 @@ Known limitations
 * When using Quality of Service (QoS), ``max_burst_kbps`` (burst over
   ``max_kbps``) is not supported. In addition, ``max_kbps`` is rounded to
   Mbps.
-* Security groups are not supported when using SR-IOV, thus, the firewall
-  driver must be disabled. This can be done in the ``neutron.conf`` file.
-
-  .. code-block:: ini
-
-     [securitygroup]
-     firewall_driver = noop
-
+* Security groups are not supported when using SR-IOV.
 * SR-IOV is not integrated into the OpenStack Dashboard (horizon). Users must
   use the CLI or API to configure SR-IOV interfaces.
 * Live migration support has been added to the Libvirt Nova virt-driver in the
