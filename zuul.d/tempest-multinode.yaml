@@ -1,12 +1,12 @@
 - nodeset:
-    name: neutron-three-node-jammy
+    name: neutron-three-node-noble
     nodes:
       - name: controller
-        label: ubuntu-jammy
+        label: ubuntu-noble
       - name: compute1
-        label: ubuntu-jammy
+        label: ubuntu-noble
       - name: compute2
-        label: ubuntu-jammy
+        label: ubuntu-noble
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -35,7 +35,7 @@
 - job:
     name: neutron-ovs-tempest-dvr-ha-multinode-full
     parent: tempest-multinode-full-py3
-    nodeset: neutron-three-node-jammy
+    nodeset: neutron-three-node-noble
     timeout: 10800
     roles:
       - zuul: openstack/neutron-tempest-plugin
