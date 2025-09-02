@@ -41,6 +41,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2 import db as ml2_db
+from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests.functional import base
 from neutron.tests.unit.extensions import test_securitygroup as test_sg
@@ -1450,6 +1451,13 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         self.assertCountEqual(list(self.agent_types.values()), agent_ids)
 
     def test_agent_delete(self):
+        agent_cache = n_agent.AgentCache(mock.ANY)
+
+        def wait_until_removed(agent_id):
+            n_utils.wait_until_true(
+                lambda: agent_cache.agents.get(agent_id) is None,
+                timeout=5)
+
         # Non OVN agent deletion.
         agent_id = self.agent_types[self.TEST_AGENT]
         self.plugin.delete_agent(self.context, agent_id)
@@ -1465,6 +1473,7 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         self._check_chassis_registers()
         self.plugin.delete_agent(self.context, controller_id)
         self._check_chassis_registers(present=False)
+        wait_until_removed(controller_id)
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, controller_id)
         self.assertEqual(
@@ -1472,6 +1481,7 @@ class TestAgentApi(base.TestOVNFunctionalBase):
             self.plugin.get_agent(self.context, metadata_id)['id'])
 
         self.plugin.delete_agent(self.context, metadata_id)
+        wait_until_removed(metadata_id)
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, metadata_id)
 
