@@ -14,6 +14,7 @@
 
 from collections import defaultdict
 from collections import namedtuple
+from unittest import mock
 
 import netaddr
 from neutron_lib.api.definitions import dns as dns_apidef
@@ -39,7 +40,9 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.services.portforwarding.drivers.ovn.driver import \
     OVNPortForwarding as ovn_pf
 from neutron.services.revisions import revision_plugin
@@ -57,6 +60,13 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
     _extension_drivers = ['port_security', 'dns', 'qos', 'revision_plugin']
 
     def setUp(self, *args):
+        self._mock_has_lock = mock.patch.object(
+            maintenance.DBInconsistenciesPeriodics, 'has_lock',
+            mock.PropertyMock(return_value=True))
+        self.mock_has_lock = self._mock_has_lock.start()
+        self._mock_set_lock =mock.patch.object(
+            ovsdb_monitor.BaseOvnIdl, 'set_lock')
+        self.mock_set_lock = self._mock_set_lock.start()
         super().setUp(maintenance_worker=True)
         self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
