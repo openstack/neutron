@@ -408,9 +408,8 @@ class OVNClient:
                                                  port_fixed_ips,
                                                  self._plugin))
             p_type, virtual_ip, virtual_parents = (
-                utils.get_port_type_virtual_and_parents(
-                    subnets_by_id, port_fixed_ips, port['network_id'],
-                    port['id'], self._nb_idl))
+                utils.get_port_type_virtual_and_parents(context,
+                    subnets_by_id, port_fixed_ips, port['id']))
             if p_type:
                 port_type = ovn_const.LSP_TYPE_VIRTUAL
                 options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = virtual_ip

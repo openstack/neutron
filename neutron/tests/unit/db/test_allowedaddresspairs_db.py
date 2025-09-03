@@ -16,6 +16,7 @@
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
+from neutron_lib import context as ctx
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -25,6 +26,7 @@ from neutron.db import allowedaddresspairs_db as addr_pair_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.extensions import securitygroup as secgroup
+from neutron.objects import ports as portsdb
 from neutron.tests.common import test_db_base_plugin_v2
 
 
@@ -120,6 +122,71 @@ class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):
             self.assertEqual(port['port'][addr_apidef.ADDRESS_PAIRS],
                              address_pairs)
             self._delete('ports', port['port']['id'])
+
+    def _test_aap_filter(self, aap_mac, aap_ip, filter_mac=None,
+                         filter_ip=None, matches=True):
+        with self.network() as net:
+            # create a non-matching port
+            self._create_port(self.fmt, net["network"]["id"])
+            address_pairs = [{'mac_address': aap_mac,
+                              'ip_address': aap_ip}]
+            res = self._create_port(self.fmt, net["network"]["id"],
+                                    arg_list=(addr_apidef.ADDRESS_PAIRS,),
+                                    allowed_address_pairs=address_pairs)
+            port = self.deserialize(self.fmt, res)
+            self.assertEqual(port['port'][addr_apidef.ADDRESS_PAIRS],
+                             address_pairs)
+            filters = {}
+            aap_filter = {'allowed_address_pairs': filters}
+            if filter_mac:
+                filters["mac_address"] = filter_mac
+            if filter_ip:
+                filters["ip_address"] = filter_ip
+
+            def do_test():
+                # Test both get_ports and get_objects as get_objects
+                # can modify the filter
+                ports = self.plugin.get_ports(ctx.get_admin_context(),
+                                              filters=aap_filter)
+                if matches:
+                    self.assertEqual(1, len(ports))
+                    self.assertEqual(port["port"]["id"], ports[0]['id'])
+                else:
+                    self.assertEqual(0, len(ports))
+                ports = portsdb.Port.get_objects(ctx.get_admin_context(),
+                                                 **aap_filter)
+                if matches:
+                    self.assertEqual(1, len(ports))
+                    self.assertEqual(port["port"]["id"], ports[0].id)
+                else:
+                    self.assertEqual(0, len(ports))
+
+            do_test()
+            # ensure that format {'ip_address': [xxx]} also works
+            for k, v in filters.items():
+                if isinstance(v, str):
+                    filters[k] = [v]
+            do_test()
+
+    def test_filter_ports_by_allowed_address_pairs_ip(self):
+        mac, ip = ("00:00:00:00:00:01", "10.0.0.1")
+        self._test_aap_filter(mac, ip, filter_ip=ip)
+
+    def test_filter_ports_by_allowed_address_pairs_mac(self):
+        mac, ip = ("00:00:00:00:00:01", "10.0.0.1")
+        self._test_aap_filter(mac, ip, filter_mac=mac)
+
+    def test_filter_ports_by_allowed_address_pairs_ip_and_mac(self):
+        mac, ip = ("00:00:00:00:00:01", "10.0.0.1")
+        self._test_aap_filter(mac, ip, filter_mac=mac, filter_ip=ip)
+
+    def test_filter_ports_by_allowed_address_pairs_multi_ip(self):
+        mac, ip = ("00:00:00:00:00:01", "10.0.0.1")
+        self._test_aap_filter(mac, ip, filter_ip=[ip, "10.0.0.2"])
+
+    def test_filter_ports_by_allowed_address_pairs_no_match(self):
+        mac, ip = ("00:00:00:00:00:01", "10.0.0.1")
+        self._test_aap_filter(mac, ip, filter_ip=["10.0.0.2"], matches=False)
 
     def test_create_port_security_true_allowed_address_pairs(self):
         if self._skip_port_security:
