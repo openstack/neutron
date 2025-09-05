@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import socketserver
 
 from oslo_config import cfg
 from oslo_log import log as logging
-import webob
 
-from neutron._i18n import _
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import proxy_base
 from neutron.common import metadata as common_metadata
@@ -30,8 +27,7 @@ LOG = logging.getLogger(__name__)
 
 
 class MetadataProxyHandler(
-        common_metadata.MetadataProxyHandlerBaseSocketServer,
-        socketserver.StreamRequestHandler):
+        common_metadata.MetadataProxyHandlerBaseSocketServer):
     NETWORK_ID_HEADER = 'X-OVN-Network-ID'
     ROUTER_ID_HEADER = ''
     _conf = None
@@ -41,37 +37,6 @@ class MetadataProxyHandler(
     def __init__(self, request, client_address, server):
         super().__init__(self._conf, has_cache=False, request=request,
                          client_address=client_address, server=server)
-
-    def handle(self):
-        try:
-            request = self.request.recv(4096)
-            LOG.debug('Request: %s', request.decode('utf-8'))
-            f_request = io.BytesIO(request)
-            req = webob.Request.from_file(f_request)
-            instance_id, project_id = self._get_instance_and_project_id(req)
-            if instance_id:
-                res = self._proxy_request(instance_id, project_id, req)
-                self.wfile.write(res)
-                return
-
-            network_id, router_id = self._get_instance_id(req)
-            if network_id and router_id:
-                title = '400 Bad Request'
-                msg = _('Both network %s and router %s '
-                        'defined.') % (network_id, router_id)
-            elif network_id:
-                title = '404 Not Found'
-                msg = _('Instance was not found on network %s.') % network_id
-                LOG.warning(msg)
-            else:
-                title = '404 Not Found'
-                msg = _('Instance was not found on router %s.') % router_id
-                LOG.warning(msg)
-            res = common_metadata.encode_http_reponse(title, title, msg)
-            self.wfile.write(res)
-        except Exception as exc:
-            LOG.exception('Error while receiving data.')
-            raise exc
 
     @property
     def sb_idl(self):

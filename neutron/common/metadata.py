@@ -12,6 +12,8 @@
 #    under the License.
 
 import abc
+import io
+import socketserver
 from urllib import parse
 
 import jinja2
@@ -157,6 +159,7 @@ def encode_http_reponse(http_code, title, message):
 
 class MetadataProxyHandlerBaseSocketServer(
         proxy_base.MetadataProxyHandlerBase,
+        socketserver.StreamRequestHandler,
         metaclass=abc.ABCMeta):
     @staticmethod
     def _http_response(http_response, request):
@@ -247,3 +250,35 @@ class MetadataProxyHandlerBaseSocketServer(
             # TODO(ralonsoh): add info in the returned HTTP message to the VM.
             return self._http_response(resp, req)
         raise Exception(_('Unexpected response code: %s') % resp.status_code)
+
+    def handle(self):
+        try:
+            request = self.request.recv(4096)
+            LOG.debug('Request: %s', request.decode('utf-8'))
+            f_request = io.BytesIO(request)
+            req = webob.Request.from_file(f_request)
+            instance_id, project_id = self._get_instance_and_project_id(req)
+            if instance_id:
+                res = self._proxy_request(instance_id, project_id, req)
+                self.wfile.write(res)
+                return
+
+            network_id, router_id = self._get_instance_id(req)
+            if network_id and router_id:
+                title = '400 Bad Request'
+                msg = _('Both network %s and router %s '
+                        'defined.') % (network_id, router_id)
+                LOG.warning(msg)
+            elif network_id:
+                title = '404 Not Found'
+                msg = _('Instance was not found on network %s.') % network_id
+                LOG.warning(msg)
+            else:
+                title = '404 Not Found'
+                msg = _('Instance was not found on router %s.') % router_id
+                LOG.warning(msg)
+            res = encode_http_reponse(title, title, msg)
+            self.wfile.write(res)
+        except Exception as exc:
+            LOG.exception('Error while receiving data.')
+            raise exc
