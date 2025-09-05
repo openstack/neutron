@@ -63,16 +63,12 @@ class MetadataAgentHealthEvent(event.WaitEvent):
             ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, 0)) >= self.sb_cfg
 
 
-class MetadataPortCreateEvent(event.WaitEvent):
-    event_name = 'MetadataPortCreateEvent'
-
-    def __init__(self, metadata_port, timeout=5):
+class PortBindingUpdateEvent(event.WaitEvent):
+    def __init__(self, lsp, timeout=5):
         table = 'Port_Binding'
-        events = (self.ROW_CREATE,)
-        conditions = (('logical_port', '=', metadata_port),)
-        super().__init__(
-            events, table, conditions, timeout=timeout
-        )
+        events = (self.ROW_UPDATE,)
+        conditions = (('logical_port', '=', lsp),)
+        super().__init__(events, table, conditions, timeout=timeout)
 
 
 class TestMetadataAgent(base.TestOVNFunctionalBase):
@@ -494,9 +490,12 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
         lswitchport_name, lswitch_name = self._create_logical_switch_port()
 
+        pb_event = PortBindingUpdateEvent(lswitchport_name)
+        self.agent.sb_idl.idl.notify_handler.watch_event(pb_event)
         self.sb_api.lsp_bind(
             lswitchport_name, agent_chassis.name).execute(
                 check_error=True, log_errors=True)
+        self.assertTrue(pb_event.wait())
         pb = idlutils.row_by_value(
             self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
 
@@ -670,9 +669,12 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
         lswitchport_name, lswitch_name = self._create_logical_switch_port()
 
+        pb_event = PortBindingUpdateEvent(lswitchport_name)
+        self.agent.sb_idl.idl.notify_handler.watch_event(pb_event)
         self.sb_api.lsp_bind(
             lswitchport_name, agent_chassis.name).execute(
                 check_error=True, log_errors=True)
+        self.assertTrue(pb_event.wait())
         pb = idlutils.row_by_value(
             self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
 
