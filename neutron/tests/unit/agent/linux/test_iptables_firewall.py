@@ -2118,6 +2118,95 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                  mock.call.add_rule('sg-chain', '-j ACCEPT')]
         self.v4filter_inst.assert_has_calls(calls)
 
+    def test_no_ip_spoofing_filter_with_multiple_ips(self):
+        # this is the modified test_ip_spoofing_filter_with_multiple_ips which
+        # allows spoofing and thus has less rules than the previous test
+        port = {'device': 'tapfake_dev',
+                'mac_address': 'ff:ff:ff:ff:ff:ff',
+                'network_id': 'fake_net',
+                'fixed_ips': ['10.0.0.1', 'fe80::1', '10.0.0.2']}
+        self.firewall.enable_anti_spoofing_rules = False
+        self.firewall.prepare_port_filter(port)
+        calls = [mock.call.add_chain('sg-fallback'),
+                 mock.call.add_rule(
+                     'sg-fallback', '-j DROP',
+                     comment=ic.UNMATCH_DROP),
+                 mock.call.add_chain('sg-chain'),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING', mock.ANY,  # zone set
+                                    comment=None),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-out tapfake_dev '
+                                    '-j ACCEPT',
+                                    top=False, comment=ic.TRUSTED_ACCEPT),
+                 mock.call.add_rule('PREROUTING',
+                                    '-m physdev --physdev-in tapfake_dev '
+                                    '-j ACCEPT',
+                                    top=False, comment=ic.TRUSTED_ACCEPT),
+                 mock.call.add_chain('ifake_dev'),
+                 mock.call.add_rule('FORWARD',
+                                    '-m physdev --physdev-out tapfake_dev '
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
+                 mock.call.add_rule('sg-chain',
+                                    '-m physdev --physdev-out tapfake_dev '
+                                    '--physdev-is-bridged -j $ifake_dev',
+                                    top=False, comment=ic.SG_TO_VM_SG),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state RELATED,ESTABLISHED -j RETURN',
+                     top=False, comment=None),
+                 mock.call.add_rule(
+                     'ifake_dev',
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
+                 mock.call.add_rule('ifake_dev',
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
+                 mock.call.add_chain('ofake_dev'),
+                 mock.call.add_rule('FORWARD',
+                                    '-m physdev --physdev-in tapfake_dev '
+                                    '--physdev-is-bridged -j $sg-chain',
+                                    top=True, comment=ic.VM_INT_SG),
+                 mock.call.add_rule('sg-chain',
+                                    '-m physdev --physdev-in tapfake_dev '
+                                    '--physdev-is-bridged -j $ofake_dev',
+                                    top=False, comment=ic.SG_TO_VM_SG),
+                 mock.call.add_rule('INPUT',
+                                    '-m physdev --physdev-in tapfake_dev '
+                                    '--physdev-is-bridged -j $ofake_dev',
+                                    top=False, comment=ic.INPUT_TO_SG),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 68 --dport 67 -j RETURN',
+                     top=False, comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-d %s -p tcp -m tcp --dport 80 -j RETURN' %
+                     constants.METADATA_V4_CIDR,
+                     top=False, comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-p udp -m udp --sport 67 --dport 68 -j DROP',
+                     top=False, comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-m state --state RELATED,ESTABLISHED -j RETURN',
+                     top=False, comment=None),
+                 mock.call.add_rule(
+                     'ofake_dev',
+                     '-m state --state INVALID -j DROP',
+                     top=False, comment=None),
+                 mock.call.add_rule('ofake_dev',
+                                    '-j $sg-fallback',
+                                    top=False, comment=None),
+                 mock.call.add_rule('sg-chain', '-j ACCEPT')]
+        self.firewall.enable_anti_spoofing_rules = True
+        self.v4filter_inst.assert_has_calls(calls)
+
     def test_ip_spoofing_no_fixed_ips(self):
         port = {'device': 'tapfake_dev',
                 'mac_address': 'ff:ff:ff:ff:ff:ff',

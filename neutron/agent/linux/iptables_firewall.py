@@ -90,6 +90,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
             lambda: collections.defaultdict(list))
         self.pre_sg_members = None
         self.enable_ipset = cfg.CONF.SECURITYGROUP.enable_ipset
+        self.enable_anti_spoofing_rules = \
+            cfg.CONF.SECURITYGROUP.enable_anti_spoofing_rules
         self.updated_rule_sg_ids = set()
         self.updated_sg_members = set()
         self.devices_with_updated_sg_members = collections.defaultdict(list)
@@ -574,6 +576,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                        mac_ipv4_pairs, ipv4_rules)
         self._setup_spoof_filter_chain(port, self.iptables.ipv6['filter'],
                                        mac_ipv6_pairs, ipv6_rules)
+        # TODO(toanju): Add allow rules to reach the metadata server
         # Fixed rules for traffic after source address is verified
         # Allow dhcp client renewal and rebinding
         ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
@@ -584,6 +587,27 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                     comment=ic.IPV6_RA_DROP)]
         ipv6_rules += [comment_rule('-p ipv6-icmp -j RETURN',
                                     comment=ic.IPV6_ICMP_ALLOW)]
+        ipv6_rules += [comment_rule('-p udp -m udp --sport 546 '
+                                    '--dport 547 '
+                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
+
+    def _non_spoofing_rule(self, ipv4_rules, ipv6_rules):
+        # Allow dhcp client discovery and request
+        ipv4_rules += [comment_rule('-p udp -m udp --sport 68 --dport 67 '
+                                    '-j RETURN', comment=ic.DHCP_CLIENT)]
+        # Allow http to the metadata server for v4
+        ipv4_rules += [comment_rule('-d %s -p tcp -m tcp --dport 80 '
+                                    '-j RETURN' % constants.METADATA_V4_CIDR,
+                                    comment=ic.IPV4_METADATA_ALLOW)]
+        # Allow http to the metadata server for v6
+        ipv6_rules += [comment_rule('-d %s -p tcp -m tcp --dport 80 '
+                                    '-j RETURN' % constants.METADATA_V6_CIDR,
+                                    comment=ic.IPV6_METADATA_ALLOW)]
+        # Allow all icmp v6 traffic including the RAs that are blocked in the
+        # anti-spoofing case above
+        ipv6_rules += [comment_rule('-p ipv6-icmp -j RETURN',
+                                    comment=ic.IPV6_ICMP_ALLOW)]
+        # Allow DHCPv6 client messages
         ipv6_rules += [comment_rule('-p udp -m udp --sport 546 '
                                     '--dport 547 '
                                     '-j RETURN', comment=ic.DHCP_CLIENT)]
@@ -688,9 +712,13 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _add_fixed_egress_rules(self, port, ipv4_iptables_rules,
                                 ipv6_iptables_rules):
-        self._spoofing_rule(port,
-                            ipv4_iptables_rules,
-                            ipv6_iptables_rules)
+        if self.enable_anti_spoofing_rules:
+            self._spoofing_rule(port,
+                                ipv4_iptables_rules,
+                                ipv6_iptables_rules)
+        else:
+            self._non_spoofing_rule(ipv4_iptables_rules,
+                                    ipv6_iptables_rules)
         self._drop_dhcp_rule(ipv4_iptables_rules, ipv6_iptables_rules)
 
     def _generate_ipset_rule_args(self, sg_rule, remote_gid):

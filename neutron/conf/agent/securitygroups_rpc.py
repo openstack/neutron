@@ -42,7 +42,11 @@ security_group_opts = [
         default=[],
         help=_('Comma-separated list of ethertypes to be permitted, in '
                'hexadecimal (starting with "0x"). For example, "0x4008" '
-               'to permit InfiniBand.'))
+               'to permit InfiniBand.')),
+    cfg.BoolOpt(
+        'enable_anti_spoofing_rules',
+        default=True,
+        help=_('Enable anti spoofing rules.')),
 ]
 
 
