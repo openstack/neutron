@@ -17,6 +17,8 @@ from alembic import op
 from oslo_log import log as logging
 from sqlalchemy import exc
 
+from neutron.db import migration
+
 
 LOG = logging.getLogger(__name__)
 
@@ -31,6 +33,9 @@ LOG = logging.getLogger(__name__)
 # revision identifiers, used by Alembic.
 revision = 'd553edeb540f'
 down_revision = 'ad80a9f07c5c'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2025_2]
 
 
 def upgrade():
