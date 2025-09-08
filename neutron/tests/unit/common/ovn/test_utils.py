@@ -606,6 +606,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'neutron_lib.plugins.directory.get_plugin').start()
         self.VNIC_FAKE_NORMAL = 'fake-vnic-normal'
         self.VNIC_FAKE_OTHER = 'fake-vnic-other'
+        self.VNIC_FAKE_THIRD = 'fake-vnic-third'
 
         # Replace constants.OVN_PORT_BINDING_PROFILE_PARAMS to allow synthesis
         _params = constants.OVN_PORT_BINDING_PROFILE_PARAMS.copy()
@@ -614,15 +615,15 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
                 {'key': [str, type(None)]},
                 self.VNIC_FAKE_NORMAL, None),
             constants.OVNPortBindingProfileParamSet(
-                {'key': [str], 'other_key': [str]},
-                self.VNIC_FAKE_OTHER, None),
-            constants.OVNPortBindingProfileParamSet(
                 {
                     'key': [str],
                     'other_key': [int],
                     'third_key': [str]
                 },
                 self.VNIC_FAKE_OTHER, constants.PORT_CAP_SWITCHDEV),
+            constants.OVNPortBindingProfileParamSet(
+                {'key': [str], 'other_key': [str]},
+                self.VNIC_FAKE_THIRD, None),
         ])
         self.OVN_PORT_BINDING_PROFILE_PARAMS = mock.patch.object(
             constants,
@@ -737,6 +738,27 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
                 {portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
                  constants.OVN_PORT_BINDING_PROFILE: expect}))
 
+    def test_valid_input_surplus_capabilities(self):
+        capabilities = ['rx', 'tx', 'sg', 'tso', 'gso', 'gro', 'rxvlan',
+                        'txvlan', 'rxhash', 'rdma', 'txudptnl']
+        binding_profile = {
+            'pci_vendor_info': 'dead:beef',
+            'pci_slot': '0000:ca:fe.42',
+            'physical_network': 'physnet1',
+            'card_serial_number': 'AB2000X00042',
+            'pf_mac_address': '00:53:00:00:00:42',
+            'vf_num': 42,
+            constants.PORT_CAP_PARAM: capabilities
+        }
+        expect = binding_profile.copy()
+        del(expect[constants.PORT_CAP_PARAM])
+        self.assertEqual(
+            utils.BPInfo(expect, portbindings.VNIC_REMOTE_MANAGED,
+                         capabilities),
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
+
     def test_valid_input_surplus_keys(self):
         # Confirm that extra keys are allowed
         binding_profile = {
@@ -810,12 +832,12 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
-        # It is valid for VNIC_FAKE_OTHER
+        # It is valid for VNIC_FAKE_THIRD
         expected_bp = binding_profile.copy()
         self.assertEqual(
-            utils.BPInfo(expected_bp, self.VNIC_FAKE_OTHER, []),
+            utils.BPInfo(expected_bp, self.VNIC_FAKE_THIRD, []),
             utils.validate_and_get_data_from_binding_profile(
-                {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_THIRD,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
 
     def test_overlapping_param_set_different_vnic_type_and_capability(self):
@@ -825,13 +847,13 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'other_key': 42,
             'third_key': 'value',
         }
-        # This param set is not valid for VNIC_FAKE_OTHER without capability
+        # This param set is not valid for VNIC_FAKE_THIRD without capability
         expect = binding_profile.copy()
         del(expect['third_key'])
         self.assertRaises(
             neutron_lib.exceptions.InvalidInput,
             utils.validate_and_get_data_from_binding_profile,
-            {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
+            {portbindings.VNIC_TYPE: self.VNIC_FAKE_THIRD,
              constants.OVN_PORT_BINDING_PROFILE: binding_profile})
         # This param set is also not valid as the capabilities do not match
         binding_profile = {

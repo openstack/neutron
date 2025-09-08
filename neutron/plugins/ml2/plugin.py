@@ -492,6 +492,34 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             return True
         return False
 
+    @registry.receives(resources.AGENT, [events.AFTER_DELETE])
+    def delete_agent_notified(self, resource, event, trigger,
+                              payload=None):
+        context = payload.context
+        agent = payload.states[0]
+        if agent.binary != const.AGENT_PROCESS_OVS:
+            return
+        tunnel_id = payload.resource_id
+        tunnel_ip = agent.configurations.get('tunneling_ip')
+        tunnel_types = agent.configurations.get('tunnel_types')
+        if not tunnel_ip or not tunnel_types:
+            return
+        LOG.debug('Deleting tunnel id %s, and endpoints associated with '
+                  'it (tunnel_ip: %s  tunnel_types: %s)',
+                  tunnel_id, tunnel_ip, tunnel_types)
+        for t_type in tunnel_types:
+            self.notifier.tunnel_delete(
+                context=context,
+                tunnel_ip=tunnel_ip,
+                tunnel_type=t_type)
+            try:
+                driver = self.type_manager.drivers.get(t_type)
+            except KeyError:
+                LOG.warning('Tunnel type %s is not registered, cannot '
+                            'delete tunnel endpoint for it.', t_type)
+            else:
+                driver.obj.delete_endpoint(tunnel_ip)
+
     @registry.receives(resources.AGENT, [events.AFTER_UPDATE])
     def _retry_binding_revived_agents(self, resource, event, trigger,
                                       payload=None):

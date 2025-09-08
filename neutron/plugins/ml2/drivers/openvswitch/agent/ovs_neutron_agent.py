@@ -901,7 +901,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     @profiler.trace("rpc")
     def tunnel_delete(self, context, **kwargs):
-        LOG.debug("tunnel_delete received")
+        LOG.debug("tunnel_delete received: %s", kwargs)
         if not self.enable_tunneling:
             return
         tunnel_ip = kwargs.get('tunnel_ip')
