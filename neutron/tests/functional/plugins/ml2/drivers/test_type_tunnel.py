@@ -14,6 +14,7 @@
 #    under the License.
 
 from concurrent import futures
+import random
 import time
 
 from neutron_lib import constants
@@ -37,11 +38,11 @@ def _initialize_network_segment_range_support(type_driver, start_time):
     # DB transaction.
     admin_context = context.get_admin_context()
     with db_api.CONTEXT_WRITER.using(admin_context):
+        time.sleep(random.randrange(1000) / 1000)
         type_driver._delete_expired_default_network_segment_ranges(
             admin_context, start_time)
         type_driver._populate_new_default_network_segment_ranges(
             admin_context, start_time)
-        time.sleep(1)
 
 
 class TunnelTypeDriverBaseTestCase(testlib_api.SqlTestCase):
