@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from neutron_lib.services.logapi import constants as log_const
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
@@ -29,8 +30,9 @@ LOG = logging.getLogger(__name__)
 
 def _check_port_bound_sg(context, sg_id, port_id):
     try:
-        db_utils.model_query(context, sg_db.SecurityGroupPortBinding)\
-            .filter_by(security_group_id=sg_id, port_id=port_id).one()
+        with db_api.CONTEXT_READER.using(context):
+            db_utils.model_query(context, sg_db.SecurityGroupPortBinding)\
+                .filter_by(security_group_id=sg_id, port_id=port_id).one()
     except orm_exc.NoResultFound:
         raise log_exc.InvalidResourceConstraint(
             resource=log_const.SECURITY_GROUP,
