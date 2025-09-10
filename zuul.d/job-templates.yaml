@@ -3,6 +3,7 @@
     check:
       jobs:
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
+            ansible-version: 9
             timeout: 3600
             irrelevant-files:  &irrelevant-files
               - ^.*\.conf\.sample$
@@ -34,6 +35,7 @@
     gate:
       jobs:
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
+            ansible-version: 9
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py38:  # from openstack-python3-xena-jobs template
