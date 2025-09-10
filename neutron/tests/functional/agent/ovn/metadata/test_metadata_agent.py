@@ -71,6 +71,14 @@ class PortBindingUpdateEvent(event.WaitEvent):
         super().__init__(events, table, conditions, timeout=timeout)
 
 
+class ChassisPrivateUpdateEvent(event.WaitEvent):
+    def __init__(self, chassis_private, timeout=5):
+        table = 'Chassis_Private'
+        events = (self.ROW_UPDATE,)
+        conditions = (('name', '=', chassis_private),)
+        super().__init__(events, table, conditions, timeout=timeout)
+
+
 class TestMetadataAgent(base.TestOVNFunctionalBase):
     OVN_BRIDGE = 'br-int'
     FAKE_CHASSIS_HOST = 'ovn-host-fake'
@@ -701,7 +709,11 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             'Chassis_Private', self.chassis_name,
             ('external_ids', external_ids)).execute(check_error=True)
 
+        cp_event = ChassisPrivateUpdateEvent(self.chassis_name)
+        self.agent.sb_idl.idl.notify_handler.watch_event(cp_event)
         self.agent._cleanup_previous_tags()
+        self.assertTrue(cp_event.wait())
+
         external_ids = self.sb_api.db_get(
             'Chassis_Private', self.chassis_name,
             'external_ids').execute(check_error=True)

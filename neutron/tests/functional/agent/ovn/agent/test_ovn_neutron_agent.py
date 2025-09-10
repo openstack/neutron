@@ -18,6 +18,7 @@ import uuid
 
 from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.ovn.agent import ovn_neutron_agent
@@ -36,6 +37,14 @@ METADATA_EXTENSION = 'metadata'
 EXTENSION_NAMES = {TEST_EXTENSION: 'Fake OVN agent extension',
                    METADATA_EXTENSION: 'Metadata OVN agent extension',
                    }
+
+
+class ChassisPrivateUpdateEvent(event.WaitEvent):
+    def __init__(self, chassis_private, timeout=5):
+        table = 'Chassis_Private'
+        events = (self.ROW_UPDATE,)
+        conditions = (('name', '=', chassis_private),)
+        super().__init__(events, table, conditions, timeout=timeout)
 
 
 class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
@@ -209,7 +218,11 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
             'Chassis_Private', self.ovn_agent.chassis,
             ('external_ids', external_ids)).execute(check_error=True)
 
+        cp_event = ChassisPrivateUpdateEvent(self.chassis_name)
+        self.ovn_agent.sb_idl.idl.notify_handler.watch_event(cp_event)
         self.ovn_agent._cleanup_previous_tags()
+        self.assertTrue(cp_event.wait())
+
         external_ids = self.ovn_agent.sb_idl.db_get(
             'Chassis_Private', self.ovn_agent.chassis,
             'external_ids').execute(check_error=True)
