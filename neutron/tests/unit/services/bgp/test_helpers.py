@@ -15,6 +15,7 @@
 
 import netaddr
 
+from neutron.services.bgp import constants
 from neutron.services.bgp import helpers
 from neutron.tests import base
 
@@ -39,3 +40,29 @@ class GetMacAddressFromLrpNameTestCase(base.BaseTestCase):
         mac1 = helpers.get_mac_address_from_lrp_name(lrp_name)
         mac2 = helpers.get_mac_address_from_lrp_name(lrp_name)
         self.assertEqual(mac1, mac2)
+
+
+class GetChassisBgpBridgesTestCase(base.BaseTestCase):
+    class FakeChassis:
+        def __init__(self, name, external_ids):
+            self.name = name
+            self.external_ids = external_ids
+
+    def test_get_chassis_bgp_bridges(self):
+        chassis = self.FakeChassis(
+            name='test-chassis',
+            external_ids={constants.CHASSIS_BGP_BRIDGES_EXT_ID_KEY: 'br1,br2'})
+        self.assertEqual(['br1', 'br2'],
+                         sorted(helpers.get_chassis_bgp_bridges(chassis)))
+
+    def test_get_chassis_bgp_bridges_no_bridges(self):
+        chassis = self.FakeChassis(
+            name='test-chassis',
+            external_ids={})
+        self.assertEqual([], helpers.get_chassis_bgp_bridges(chassis))
+
+    def test_get_chassis_bgp_bridges_empty_bridges(self):
+        chassis = self.FakeChassis(
+            name='test-chassis',
+            external_ids={constants.CHASSIS_BGP_BRIDGES_EXT_ID_KEY: ''})
+        self.assertEqual([], helpers.get_chassis_bgp_bridges(chassis))
