@@ -182,3 +182,15 @@ def get_port_qos(nb_idl, port_id):
             int(lsp.options.get(ovn_const.LSP_OPTIONS_QOS_MIN_RATE, 0)),
             constants.SI_BASE)
     return max_kbps, min_kbps
+
+
+def set_ovn_bridge_mapping(ovs_idl, bridge_mapping):
+    """Set the OVN bridge mapping in the Open_vSwitch table.
+
+    This method will replace the existing mapping if it exists.
+    """
+    new_bridge_mappings = ','.join(bridge_mapping)
+    ovs_idl.db_set(
+        'Open_vSwitch', '.',
+        external_ids={'ovn-bridge-mappings': new_bridge_mappings}
+    ).execute(check_error=True)
