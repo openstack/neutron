@@ -1928,6 +1928,13 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
 class TestOvnSbSync(base.TestOVNFunctionalBase):
 
     def setUp(self):
+        self._mock_has_lock = mock.patch.object(
+            maintenance.DBInconsistenciesPeriodics, 'has_lock',
+            mock.PropertyMock(return_value=True))
+        self.mock_has_lock = self._mock_has_lock.start()
+        self._mock_set_lock =mock.patch.object(
+            ovsdb_monitor.BaseOvnIdl, 'set_lock')
+        self.mock_set_lock = self._mock_set_lock.start()
         super().setUp(maintenance_worker=True)
         self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
             self.plugin, self.mech_driver.sb_ovn, self.mech_driver)
