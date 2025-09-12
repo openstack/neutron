@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    The WSGI script ``neutron-api`` has been removed. Deployment tooling
+    should instead reference the Python module path for this service,
+    ``neutron.wsgi.api``, if their chosen WSGI server supports this (gunicorn,
+    uWSGI) or implement a ``.wsgi`` script themselves if not (mod_wsgi).

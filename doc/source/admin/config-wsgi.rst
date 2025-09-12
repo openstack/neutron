@@ -21,7 +21,7 @@ WSGI Application
 ----------------
 
 The function ``neutron.server.get_application`` will setup a WSGI application
-to run behind uwsgi and mod_wsgi.
+to run behind a WSGI server like uwsgi or mod_wsgi.
 
 Neutron API behind uwsgi
 ------------------------
@@ -33,20 +33,20 @@ Create a ``/etc/neutron/neutron-api-uwsgi.ini`` file with the content below:
     [uwsgi]
     chmod-socket = 666
     socket = /var/run/uwsgi/neutron-api.socket
+    start-time = %t
     lazy-apps = true
     add-header = Connection: close
     buffer-size = 65535
     hook-master-start = unix_signal:15 gracefully_kill_them_all
     thunder-lock = true
-    plugins = python
+    plugins = http,python3
     enable-threads = true
-    worker-reload-mercy = 90
+    worker-reload-mercy = 80
     exit-on-reload = false
     die-on-term = true
     master = true
     processes = 2
-    wsgi-file = <path-to-neutron-bin-dir>/neutron-api
-    start-time = %t
+    module = neutron.wsgi.api:application
 
 .. end
 
@@ -55,63 +55,6 @@ Start neutron-api:
 .. code-block:: console
 
     # uwsgi --procname-prefix neutron-api --ini /etc/neutron/neutron-api-uwsgi.ini
-
-.. end
-
-Neutron API behind mod_wsgi
----------------------------
-
-Create ``/etc/apache2/neutron.conf`` with content below:
-
-.. code-block:: ini
-
-    Listen 9696
-    LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\" %D(us)" neutron_combined
-
-    <Directory /usr/local/bin>
-        Require all granted
-    </Directory>
-
-    <VirtualHost *:9696>
-        WSGIDaemonProcess neutron-server processes=1 threads=1 user=stack display-name=%{GROUP}
-        WSGIProcessGroup neutron-server
-        WSGIScriptAlias / <path-to-neutron-bin-dir>/neutron-api
-        WSGIApplicationGroup %{GLOBAL}
-        WSGIPassAuthorization On
-        ErrorLogFormat "%M"
-        ErrorLog /var/log/neutron/neutron.log
-        CustomLog /var/log/neutron/neutron_access.log neutron_combined
-    </VirtualHost>
-
-    Alias /networking <path-to-neutron-bin-dir>/neutron-api
-    <Location /networking>
-        SetHandler wsgi-script
-        Options +ExecCGI
-        WSGIProcessGroup neutron-server
-        WSGIApplicationGroup %{GLOBAL}
-        WSGIPassAuthorization On
-    </Location>
-
-    WSGISocketPrefix /var/run/apache2
-
-.. end
-
-For deb-based systems copy or symlink the file to
-``/etc/apache2/sites-available``. Then enable the neutron site:
-
-.. code-block:: console
-
-    # a2ensite neutron
-    # systemctl reload apache2.service
-
-.. end
-
-For rpm-based systems copy the file to ``/etc/httpd/conf.d``. Then enable the
-neutron site:
-
-.. code-block:: console
-
-    # systemctl reload httpd.service
 
 .. end
 
