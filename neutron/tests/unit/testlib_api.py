@@ -130,8 +130,15 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
             self.engine = self.test.engine = self.test.db.engine
 
     def _cleanup_resources(self):
-        testresources.tearDownResources(
-            self.test, self.test.resources, testresources._get_result())
+        # TODO(ralonsoh): this is a workaround until the issue is found. During
+        # the DB teardown process, randomly the connection is broken, raising
+        # a ``DBConnectionError`` exception. The root cause of this problem
+        # must be debugged and fixed.
+        try:
+            testresources.tearDownResources(
+                self.test, self.test.resources, testresources._get_result())
+        except oslodb_exception.DBConnectionError:
+            pass
 
         if self.test.CLEAN_DB_AFTER_TEST:
             self.test._database_resources.pop(self.test.DRIVER)
