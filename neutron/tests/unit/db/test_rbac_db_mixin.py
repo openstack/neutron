@@ -83,12 +83,9 @@ class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
                                             tenant,
                                             rbac_db_models.ACCESS_SHARED)
             self.plugin.create_rbac_policy(self.context, policy)
-            # Give server maximum of 10 seconds to make sure we don't hit DB
-            # retry mechanism when resource already exists
-            with self.assert_max_execution_time(10):
-                with testtools.ExpectedException(
-                        ext_rbac.DuplicateRbacPolicy):
-                    self.plugin.create_rbac_policy(self.context, policy)
+            with testtools.ExpectedException(
+                    ext_rbac.DuplicateRbacPolicy):
+                self.plugin.create_rbac_policy(self.context, policy)
 
     def test_update_network_rbac_external_valid(self):
         orig_target = 'test-tenant-2'

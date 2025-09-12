@@ -17,7 +17,6 @@
 """
 
 import abc
-import contextlib
 import functools
 import inspect
 import logging
@@ -28,7 +27,6 @@ import threading
 from unittest import mock
 import warnings
 
-import eventlet.timeout
 import fixtures
 from neutron_lib.callbacks import manager as registry_manager
 from neutron_lib.db import api as db_api
@@ -176,8 +174,6 @@ def _catch_errors(f):
     def func(self, *args, **kwargs):
         try:
             return f(self, *args, **kwargs)
-        except eventlet.Timeout as e:
-            self.fail('Execution of this test timed out: %s' % e)
         except db_exceptions.DBReferenceError:
             # TODO(ralonsoh): fix the ``DBReferenceError`` issues in the functional
             # tests. This is retrying the test execution once more. If it fails
@@ -200,10 +196,6 @@ class _CatchErrorsMetaclass(abc.ABCMeta):
                 setattr(cls, name, _catch_errors(method))
 
 
-# Test worker cannot survive eventlet's Timeout exception, which effectively
-# kills the whole worker, with all test cases scheduled to it. This metaclass
-# makes all test cases convert Timeout exceptions into unittest friendly
-# failure mode (self.fail).
 class DietTestCase(base.BaseTestCase, metaclass=_CatchErrorsMetaclass):
     """Same great taste, less filling.
 
@@ -304,13 +296,6 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchErrorsMetaclass):
                 raise exc_info[1]
             # This makes sys.exit(0) still a failure
             self.force_failure = True
-
-    @contextlib.contextmanager
-    def assert_max_execution_time(self, max_execution_time=5):
-        with eventlet.Timeout(max_execution_time, False):
-            yield
-            return
-        self.fail('Execution of this test timed out')
 
     def assertOrderedEqual(self, expected, actual):
         expect_val = self.sort_dict_lists(expected)

@@ -14,21 +14,12 @@
 
 from unittest import mock
 
-from ovsdbapp import exceptions
 from ovsdbapp.schema.open_vswitch import impl_idl
-import testtools
 
 from neutron.tests import base
 
 
 class TransactionTestCase(base.BaseTestCase):
-    def test_commit_raises_exception_on_timeout(self):
-        transaction = impl_idl.OvsVsctlTransaction(mock.sentinel,
-                                                   mock.Mock(), 1)
-        with self.assert_max_execution_time(10):
-            with testtools.ExpectedException(exceptions.TimeoutException):
-                transaction.commit()
-
     def test_post_commit_does_not_raise_exception(self):
         with mock.patch.object(impl_idl.OvsVsctlTransaction,
                                "do_post_commit", side_effect=Exception):
