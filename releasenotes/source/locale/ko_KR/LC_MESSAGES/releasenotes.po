@@ -1,0 +1,106 @@
+# Ian Y. Choi <ianyrchoi@gmail.com>, 2016. #zanata
+# jtjang <jang.jitae@gmail.com>, 2016. #zanata
+msgid ""
+msgstr ""
+"Project-Id-Version: Neutron Release Notes\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-11 15:47+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: 2016-08-06 12:14+0000\n"
+"Last-Translator: Ian Y. Choi <ianyrchoi@gmail.com>\n"
+"Language-Team: Korean (South Korea)\n"
+"Language: ko_KR\n"
+"X-Generator: Zanata 4.3.3\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+
+msgid "7.0.1"
+msgstr "7.0.1"
+
+msgid "7.0.3"
+msgstr "7.0.3"
+
+msgid "7.0.4"
+msgstr "7.0.4"
+
+msgid "7.1.0"
+msgstr "7.1.0"
+
+msgid "8.0.0"
+msgstr "8.0.0"
+
+msgid "8.1.0"
+msgstr "8.1.0"
+
+msgid "9.0.0.0b2"
+msgstr "9.0.0.0b2"
+
+msgid ""
+"A DHCP agent is assigned to an availability zone; the network will be hosted "
+"by the DHCP agent with availability zone specified by the user."
+msgstr ""
+"DHCP 에이전트를 가용성 존에 할당합니다. DHCP 에이전트가 사용자에 의해 명시된 "
+"가용성 존과 함께 해당 네트워크를 호스트할 것입니다."
+
+msgid ""
+"A new API endpoint /v2.0/network-ip-availabilities that allows an admin to "
+"quickly get counts of used_ips and total_ips for network(s) is available. "
+"New endpoint allows filtering by network_id, network_name, tenant_id, and "
+"ip_version. Response returns network and nested subnet data that includes "
+"used and total IPs."
+msgstr ""
+"관리자가 네트워크에 대해 used_ip 및 total_ip 개수를 빠르게 가져오도록 허용하"
+"는 새로운 API 엔드포인트 /v2.0/network-ip-availabilities 를 사용 가능합니다. "
+"새로운 엔드포인트는 network_id, network_name, tenant_id, 그리고 ip_version으"
+"로 필터링을 할 수 있습니다. 응답은 사용한 그리고 전체 IP를 포함하는 네트워크 "
+"및 둘러싸인 서브넷 데이터를 반환합니다."
+
+msgid ""
+"A new rule has been added to the API that allows for tagging traffic with "
+"DSCP values. This is currently supported by the Open vSwitch QoS driver."
+msgstr ""
+"DSCP값과 함께 태깅 트래픽을 허용하는 새로운 규칙이 API에 추가되었다. 이것은 "
+"현재 OpenvSwitch QoS 드라이버에 의해 지원된다."
+
+msgid "API sorting and pagination features are now enabled by default."
+msgstr "API 정렬 및 페이징 기능이 이제 기본으로 활성화됩니다."
+
+msgid "Bug Fixes"
+msgstr "버그 수정"
+
+msgid "Current Series Release Notes"
+msgstr "현재 시리즈에 대한 릴리즈 노트"
+
+msgid "Deprecation Notes"
+msgstr "사용하지 않는 기능"
+
+msgid "Fixes bug 1537734"
+msgstr "버그 1537734를 수정합니다"
+
+msgid "Fixes bug 1572670"
+msgstr "버그 1572670를 수정합니다"
+
+msgid "Known Issues"
+msgstr "알려진 이슈"
+
+msgid "Liberty Series Release Notes"
+msgstr "Liberty 시리즈에 대한 릴리즈 노트"
+
+msgid "Mitaka Series Release Notes"
+msgstr "Mitaka 시리즈에 대한 릴리즈 노트"
+
+msgid "Neutron Release Notes"
+msgstr "Neutron 릴리즈 노트"
+
+msgid "New Features"
+msgstr "새로운 기능"
+
+msgid "Other Notes"
+msgstr "기타 기능"
+
+msgid "Security Issues"
+msgstr "보안 이슈"
+
+msgid "Upgrade Notes"
+msgstr "업그레이드 노트"
