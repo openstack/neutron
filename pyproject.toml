@@ -328,8 +328,8 @@ packages = [
 
 [tool.setuptools.data-files]
 "etc/neutron" = [
-    "etc/api-paste.ini",
-    "etc/rootwrap.conf",
+    "etc/neutron/api-paste.ini",
+    "etc/neutron/rootwrap.conf",
 ]
 "etc/neutron/rootwrap.d" = [
     "etc/neutron/rootwrap.d/*",
