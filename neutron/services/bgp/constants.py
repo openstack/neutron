@@ -28,3 +28,5 @@ CHASSIS_BGP_BRIDGES_EXT_ID_KEY = 'neutron-bgp-bridges'
 
 AGENT_BGP_PEER_BRIDGES = 'neutron-bgp-peer-bridges'
 AGENT_BGP_EXT_NAME = 'ovn-bgp'
+
+BGP_BRIDGE_NIC_TYPES = ('', 'system')
