@@ -40,8 +40,8 @@ class OVNGatewayScheduler(metaclass=abc.ABCMeta):
         scheduled.
         """
 
-    def filter_existing_chassis(self, nb_idl, gw_chassis,
-                                physnet, chassis_physnets,
+    @staticmethod
+    def filter_existing_chassis(gw_chassis, physnet, chassis_physnets,
                                 existing_chassis, az_hints, chassis_with_azs):
         chassis_list = copy.copy(existing_chassis)
         for chassis_name in existing_chassis or []:

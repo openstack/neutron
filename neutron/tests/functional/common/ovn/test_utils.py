@@ -13,6 +13,7 @@
 #    under the License.
 
 import ddt
+from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
@@ -321,3 +322,76 @@ class TestOvnContext(base.TestOVNFunctionalBase):
     def test_needed_parameters(self, method):
         self.assertRaises(RuntimeError, method, uuidutils.generate_uuid(),
                           None, None)
+
+
+class TestGetLogicalRouterPortHAChassis(base.TestOVNFunctionalBase):
+    def _create_network_and_port(self):
+        kwargs = {external_net.EXTERNAL: True, 'as_admin': True}
+        net = self._make_network(self.fmt, 'n1', True, **kwargs)['network']
+        port_data = {'port': {'network_id': net['id'],
+                              'tenant_id': self._tenant_id,}}
+        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_res = port_req.get_response(self.api)
+        return self.deserialize(self.fmt, port_res)['port']
+
+    def _create_gw_chassis(self, num_chassis):
+        chassis = []
+        for _ in range(num_chassis):
+            chassis.append(self.add_fake_chassis(
+                uuidutils.generate_uuid(), azs=[],
+                enable_chassis_as_gw=True))
+        return chassis
+
+    def _create_router(self, network_id):
+        gw_info = {'network_id': network_id}
+        router = {'router': {'name': uuidutils.generate_uuid(),
+                             'admin_state_up': True,
+                             'tenant_id': self._tenant_id,
+                             'external_gateway_info': gw_info}}
+        return self.l3_plugin.create_router(self.context, router)
+
+    def _set_lrp_hcg(self, gw_port_id, hcg):
+        lrp_name = utils.ovn_lrouter_port_name(gw_port_id)
+        self.nb_api.db_set(
+            'Logical_Router_Port', lrp_name,
+            ('ha_chassis_group', hcg.uuid)).execute()
+        return self.nb_api.lookup('Logical_Router_Port', lrp_name)
+
+    def _get_router_hcg(self, router_id):
+        hcg_name = utils.ovn_name(router_id)
+        return self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+
+    def _check_chassis(self, ha_chassis, expected_chassis, priorities=None):
+        length = len(priorities) if priorities else len(expected_chassis)
+        self.assertEqual(length, len(ha_chassis))
+        ch_priorities = set([])
+        for hc in ha_chassis:
+            self.assertIn(hc[0], expected_chassis)
+            ch_priorities.add(hc[1])
+        self.assertEqual(length, len(ch_priorities))
+        if priorities:
+            for ch_priority in ch_priorities:
+                self.assertIn(ch_priority, priorities)
+
+    def test_get_ha_chassis(self):
+        port = self._create_network_and_port()
+        ch_list = self._create_gw_chassis(5)
+        router = self._create_router(port['network_id'])
+        hcg = self._get_router_hcg(router['id'])
+        lrp = self._set_lrp_hcg(router['gw_port_id'], hcg)
+
+        ha_chassis = utils.get_logical_router_port_ha_chassis(self.nb_api, lrp)
+        self._check_chassis(ha_chassis, ch_list)
+
+    def test_get_ha_chassis_priorities(self):
+        port = self._create_network_and_port()
+        ch_list = self._create_gw_chassis(5)
+        router = self._create_router(port['network_id'])
+        hcg = self._get_router_hcg(router['id'])
+        lrp = self._set_lrp_hcg(router['gw_port_id'], hcg)
+
+        prio = [ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY,
+                ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY - 1]
+        ha_chassis = utils.get_logical_router_port_ha_chassis(
+            self.nb_api, lrp, priorities=prio)
+        self._check_chassis(ha_chassis, ch_list, priorities=prio)

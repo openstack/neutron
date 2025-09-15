@@ -27,6 +27,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as lib_l3_exc
+from neutron_lib.utils import net as net_utils
 from oslo_utils import uuidutils
 from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 
@@ -1479,6 +1480,44 @@ class TestMaintenance(_TestMaintenanceHelper):
                 self.assertEqual(fip_prio, qos_rule.priority)
             else:
                 self.assertEqual(def_prio, qos_rule.priority)
+
+    def test_migrate_lrp_gateway_chassis_to_ha_chassis_group(self):
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        networks = ['192.0.2.0/24']
+        lr_name = uuidutils.generate_uuid()
+        lrp_name = uuidutils.generate_uuid()
+        gateway_chassis = ['gw_ch1', 'gw_ch2', 'gw_ch3']
+
+        self.nb_api.lr_add(lr_name).execute(check_error=True)
+        ext_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lr_name}
+        self.nb_api.add_lrouter_port(
+            lrp_name, lr_name, mac=mac,
+            networks=networks, gateway_chassis=gateway_chassis,
+            external_ids=ext_ids).execute(check_error=True)
+
+        hcg = self.nb_api.lookup('HA_Chassis_Group', lr_name, default=None)
+        self.assertIsNone(hcg)
+        lr = self.nb_api.lookup('Logical_Router_Port', lrp_name)
+        chassis_prio = {}
+        for gc in lr.gateway_chassis:
+            chassis_prio[gc.chassis_name] = gc.priority
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.migrate_lrp_gateway_chassis_to_ha_chassis_group)
+
+        hcg = self.nb_api.lookup('HA_Chassis_Group', lr_name, default=None)
+        self.assertEqual(len(chassis_prio), len(hcg.ha_chassis))
+        for ha_chassis in hcg.ha_chassis:
+            try:
+                # The priority and the chassis_name of the former
+                # Gateway_Chassis registers must match the new HA_Chassis ones.
+                self.assertEqual(ha_chassis.priority,
+                                 chassis_prio.pop(ha_chassis.chassis_name))
+            except KeyError:
+                self.fail(f'HA_Chassis with chassis name '
+                          f'{ha_chassis.chassis_name} not present in the '
+                          f'chassis list')
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,
