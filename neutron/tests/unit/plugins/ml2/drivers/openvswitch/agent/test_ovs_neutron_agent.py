@@ -4083,6 +4083,7 @@ class TestOvsDvrNeutronAgent:
             self, device_owner, ip_version=n_const.IP_VERSION_4, aaps=False):
         self._setup_for_dvr_test()
         port_obj = {"id": "fake-port-uuid"}
+        local_port_obj = {"id": "fake-port-uuid"}
         aap_mac = 'aa:bb:cc:dd:ee:ff'
         aap_mac2 = 'aa:bb:cc:dd:ee:fe'
         aap_mac3 = 'aa:bb:cc:dd:ee:fd'
@@ -4107,7 +4108,7 @@ class TestOvsDvrNeutronAgent:
                      'mac_address': aap_mac},
                     {'ip_address': '2001:100::11',
                      'mac_address': aap_mac2},
-                    {'ip_address': '2001:100::0/0',
+                    {'ip_address': '::/0',
                      'mac_address': aap_mac3}
                 ]
         self._port.dvr_mac = self.agent.dvr_agent.dvr_mac_address
@@ -4186,6 +4187,9 @@ class TestOvsDvrNeutronAgent:
                                       'failed_devices_up': [],
                                       'failed_devices_down': []}),\
                 mock.patch.object(self.agent.dvr_agent.plugin_rpc,
+                                  'get_ports_on_host_by_subnet',
+                                  return_value=[local_port_obj]),\
+                mock.patch.object(self.agent.dvr_agent.plugin_rpc,
                                   'get_ports',
                                   return_value=[port_obj]),\
                 mock.patch.object(self.agent, 'int_br', new=int_br),\
@@ -4223,6 +4227,11 @@ class TestOvsDvrNeutronAgent:
             device_owner=DEVICE_OWNER_COMPUTE)
         self._test_treat_devices_removed_for_dvr(
             device_owner=DEVICE_OWNER_COMPUTE, ip_version=n_const.IP_VERSION_6)
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=DEVICE_OWNER_COMPUTE, aaps=True)
+        self._test_treat_devices_removed_for_dvr(
+            device_owner=DEVICE_OWNER_COMPUTE, ip_version=n_const.IP_VERSION_6,
+            aaps=True)
 
     def test_treat_devices_removed_for_dvr_with_dhcp_ports(self):
         self._test_treat_devices_removed_for_dvr(

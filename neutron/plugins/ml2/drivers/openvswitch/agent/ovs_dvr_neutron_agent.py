@@ -805,7 +805,7 @@ class OVSDVRNeutronAgent:
                         self.context, self.host, sub_uuid))
                 local_aap_macs = set()
                 for lport in local_compute_ports:
-                    if lport.id != port.vif_id:
+                    if lport['id'] != port.vif_id:
                         local_aap_macs.update({
                             aap["mac_address"] for aap in lport.get(
                                 "allowed_address_pairs", [])})
