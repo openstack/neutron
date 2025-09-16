@@ -1,6 +1,338 @@
 [build-system]
-requires = ["pbr>=6.0.0", "setuptools>=64.0.0"]
+requires = ["pbr>=6.1.1"]
 build-backend = "pbr.build"
+
+[project]
+name = "neutron"
+description = "OpenStack Networking"
+authors = [
+    {name = "OpenStack", email = "openstack-discuss@lists.openstack.org"},
+]
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = {text = "Apache-2.0"}
+dynamic = ["version", "dependencies"]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: OpenStack",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+[project.optional-dependencies]
+osprofiler = [
+    "osprofiler>=1.4.0", # Apache-2.0
+]
+zvm = [
+    "zVMCloudConnector>=1.3.0;sys_platform!='win32'",  # Apache 2.0 License
+]
+vmware = [
+    "oslo.vmware>=3.6.0", # Apache-2.0
+]
+
+[project.urls]
+"Bug Tracker" = "https://bugs.launchpad.net/neutron"
+"Documentation" = "https://docs.openstack.org/neutron"
+"Source Code" = "https://opendev.org/openstack/neutron"
+
+[project.entry-points."oslo.config.opts"]
+"designate.auth" = "neutron.opts:list_designate_auth_opts"
+"ironic.auth" = "neutron.opts:list_ironic_auth_opts"
+"neutron" = "neutron.opts:list_opts"
+"neutron.agent" = "neutron.opts:list_agent_opts"
+"neutron.az.agent" = "neutron.opts:list_az_agent_opts"
+"neutron.base.agent" = "neutron.opts:list_base_agent_opts"
+"neutron.db" = "neutron.opts:list_db_opts"
+"neutron.dhcp.agent" = "neutron.opts:list_dhcp_agent_opts"
+"neutron.experimental" = "neutron.opts:list_experimental_opts"
+"neutron.extensions" = "neutron.opts:list_extension_opts"
+"neutron.l3.agent" = "neutron.opts:list_l3_agent_opts"
+"neutron.metadata.agent" = "neutron.opts:list_metadata_agent_opts"
+"neutron.metering.agent" = "neutron.opts:list_metering_agent_opts"
+"neutron.ml2" = "neutron.opts:list_ml2_conf_opts"
+"neutron.ml2.macvtap.agent" = "neutron.opts:list_macvtap_opts"
+"neutron.ml2.ovn" = "neutron.conf.plugins.ml2.drivers.ovn.ovn_conf:list_opts"
+"neutron.ml2.ovs.agent" = "neutron.opts:list_ovs_opts"
+"neutron.ml2.sriov.agent" = "neutron.opts:list_sriov_agent_opts"
+"neutron.ml2.ovn.agent" = "neutron.conf.agent.ovn.ovn_neutron_agent.config:list_ovn_neutron_agent_opts"
+"neutron.ovn.metadata.agent" = "neutron.conf.agent.ovn.metadata.config:list_metadata_agent_opts"
+"nova.auth" = "neutron.opts:list_nova_auth_opts"
+"placement.auth" = "neutron.opts:list_placement_auth_opts"
+
+[project.entry-points."oslo.config.opts.defaults"]
+neutron = "neutron.common.config:set_config_defaults"
+
+[project.entry-points."oslo.policy.enforcer"]
+neutron = "neutron.policy:get_enforcer"
+
+[project.entry-points."oslo.policy.policies"]
+neutron = "neutron.conf.policies:list_rules"
+
+[project.entry-points."neutron.core_plugins"]
+ml2 = "neutron.plugins.ml2.plugin:Ml2Plugin"
+
+[project.entry-points."neutron.service_plugins"]
+dummy = "neutron.tests.unit.dummy_plugin:DummyServicePlugin"
+router = "neutron.services.l3_router.l3_router_plugin:L3RouterPlugin"
+metering = "neutron.services.metering.metering_plugin:MeteringPlugin"
+qos = "neutron.services.qos.qos_plugin:QoSPlugin"
+tag = "neutron.services.tag.tag_plugin:TagPlugin"
+flavors = "neutron.services.flavors.flavors_plugin:FlavorsPlugin"
+auto_allocate = "neutron.services.auto_allocate.plugin:Plugin"
+segments = "neutron.services.segments.plugin:Plugin"
+network_ip_availability = "neutron.services.network_ip_availability.plugin:NetworkIPAvailabilityPlugin"
+network_segment_range = "neutron.services.network_segment_range.plugin:NetworkSegmentRangePlugin"
+revisions = "neutron.services.revisions.revision_plugin:RevisionPlugin"
+timestamp = "neutron.services.timestamp.timestamp_plugin:TimeStampPlugin"
+trunk = "neutron.services.trunk.plugin:TrunkPlugin"
+loki = "neutron.services.loki.loki_plugin:LokiPlugin"
+log = "neutron.services.logapi.logging_plugin:LoggingPlugin"
+port_forwarding = "neutron.services.portforwarding.pf_plugin:PortForwardingPlugin"
+placement = "neutron.services.placement_report.plugin:PlacementReportPlugin"
+conntrack_helper = "neutron.services.conntrack_helper.plugin:Plugin"
+ovn-router = "neutron.services.ovn_l3.plugin:OVNL3RouterPlugin"
+local_ip = "neutron.services.local_ip.local_ip_plugin:LocalIPPlugin"
+ndp_proxy = "neutron.services.ndp_proxy.plugin:NDPProxyPlugin"
+
+[project.entry-points."neutron.ml2.type_drivers"]
+flat = "neutron.plugins.ml2.drivers.type_flat:FlatTypeDriver"
+local = "neutron.plugins.ml2.drivers.type_local:LocalTypeDriver"
+vlan = "neutron.plugins.ml2.drivers.type_vlan:VlanTypeDriver"
+geneve = "neutron.plugins.ml2.drivers.type_geneve:GeneveTypeDriver"
+gre = "neutron.plugins.ml2.drivers.type_gre:GreTypeDriver"
+vxlan = "neutron.plugins.ml2.drivers.type_vxlan:VxlanTypeDriver"
+
+[project.entry-points."neutron.ml2.mechanism_drivers"]
+logger = "neutron.tests.unit.plugins.ml2.drivers.mechanism_logger:LoggerMechanismDriver"
+test = "neutron.tests.unit.plugins.ml2.drivers.mechanism_test:TestMechanismDriver"
+test_with_agent = "neutron.tests.unit.plugins.ml2.drivers.mechanism_test:TestMechanismDriverWithAgent"
+macvtap = "neutron.plugins.ml2.drivers.macvtap.mech_driver.mech_macvtap:MacvtapMechanismDriver"
+openvswitch = "neutron.plugins.ml2.drivers.openvswitch.mech_driver.mech_openvswitch:OpenvswitchMechanismDriver"
+l2population = "neutron.plugins.ml2.drivers.l2pop.mech_driver:L2populationMechanismDriver"
+sriovnicswitch = "neutron.plugins.ml2.drivers.mech_sriov.mech_driver.mech_driver:SriovNicSwitchMechanismDriver"
+ovn = "neutron.plugins.ml2.drivers.ovn.mech_driver.mech_driver:OVNMechanismDriver"
+ovn-sync = "neutron.cmd.ovn.neutron_ovn_db_sync_util:OVNMechanismDriver"
+fake_agent = "neutron.tests.unit.plugins.ml2.drivers.mech_fake_agent:FakeAgentMechanismDriver"
+fake_agent_l3 = "neutron.tests.unit.plugins.ml2.drivers.mech_fake_agent:FakeAgentMechanismDriverL3"
+another_fake_agent = "neutron.tests.unit.plugins.ml2.drivers.mech_fake_agent:AnotherFakeAgentMechanismDriver"
+faulty_agent = "neutron.tests.unit.plugins.ml2.drivers.mech_faulty_agent:FaultyAgentMechanismDriver"
+
+[project.entry-points."neutron.ml2.extension_drivers"]
+test = "neutron.tests.unit.plugins.ml2.drivers.ext_test:TestExtensionDriver"
+testdb = "neutron.tests.unit.plugins.ml2.drivers.ext_test:TestDBExtensionDriver"
+port_security = "neutron.plugins.ml2.extensions.port_security:PortSecurityExtensionDriver"
+qos = "neutron.plugins.ml2.extensions.qos:QosExtensionDriver"
+dns = "neutron.plugins.ml2.extensions.dns_integration:DNSExtensionDriverML2"
+data_plane_status = "neutron.plugins.ml2.extensions.data_plane_status:DataPlaneStatusExtensionDriver"
+dns_domain_ports = "neutron.plugins.ml2.extensions.dns_integration:DNSDomainPortsExtensionDriver"
+port_device_profile = "neutron.plugins.ml2.extensions.port_device_profile:PortDeviceProfileExtensionDriver"
+port_hardware_offload_type = "neutron.plugins.ml2.extensions.port_hardware_offload_type:PortHardwareOffloadTypeExtensionDriver"
+port_numa_affinity_policy = "neutron.plugins.ml2.extensions.port_numa_affinity_policy:PortNumaAffinityPolicyExtensionDriver"
+port_trusted = "neutron.plugins.ml2.extensions.port_trusted:PortTrustedExtensionDriver"
+uplink_status_propagation = "neutron.plugins.ml2.extensions.uplink_status_propagation:UplinkStatusPropagationExtensionDriver"
+uplink_status_propagation_updatable = "neutron.plugins.ml2.extensions.uplink_status_propagation_updatable:UplinkStatusPropagationUpdatableExtensionDriver"
+tag_ports_during_bulk_creation = "neutron.plugins.ml2.extensions.tag_ports_during_bulk_creation:TagPortsDuringBulkCreationExtensionDriver"
+subnet_dns_publish_fixed_ip = "neutron.plugins.ml2.extensions.subnet_dns_publish_fixed_ip:SubnetDNSPublishFixedIPExtensionDriver"
+dns_domain_keywords = "neutron.plugins.ml2.extensions.dns_domain_keywords:DnsDomainKeywordsExtensionDriver"
+port_hints = "neutron.plugins.ml2.extensions.port_hints:PortHintsExtensionDriver"
+port_hint_ovs_tx_steering = "neutron.plugins.ml2.extensions.port_hint_ovs_tx_steering:PortHintOvsTxSteeringExtensionDriver"
+
+[project.entry-points."neutron.ipam_drivers"]
+fake = "neutron.tests.unit.ipam.fake_driver:FakeDriver"
+internal = "neutron.ipam.drivers.neutrondb_ipam.driver:NeutronDbPool"
+
+[project.entry-points."neutron.agent.l2.extensions"]
+qos = "neutron.agent.l2.extensions.qos:QosAgentExtension"
+fdb = "neutron.agent.l2.extensions.fdb_population:FdbPopulationAgentExtension"
+log = "neutron.services.logapi.agent.log_extension:LoggingExtension"
+dhcp = "neutron.agent.l2.extensions.dhcp.extension:DHCPAgentExtension"
+local_ip = "neutron.agent.l2.extensions.local_ip:LocalIPAgentExtension"
+metadata_path = "neutron.agent.l2.extensions.metadata.metadata_path:MetadataPathAgentExtension"
+
+[project.entry-points."neutron.agent.l3.extensions"]
+fip_qos = "neutron.agent.l3.extensions.qos.fip:FipQosAgentExtension"
+gateway_ip_qos = "neutron.agent.l3.extensions.qos.gateway_ip:RouterGatewayIPQosAgentExtension"
+port_forwarding = "neutron.agent.l3.extensions.port_forwarding:PortForwardingAgentExtension"
+snat_log = "neutron.agent.l3.extensions.snat_log:SNATLoggingExtension"
+conntrack_helper = "neutron.agent.l3.extensions.conntrack_helper:ConntrackHelperAgentExtension"
+ndp_proxy = "neutron.agent.l3.extensions.ndp_proxy:NDPProxyAgentExtension"
+
+[project.entry-points."neutron.agent.ovn.extensions"]
+metadata = "neutron.agent.ovn.extensions.metadata:MetadataExtension"
+qos_hwol = "neutron.agent.ovn.extensions.qos_hwol:QoSHardwareOffloadExtension"
+noop = "neutron.agent.ovn.extensions.noop:NoopOVNAgentExtension"
+testing = "neutron.tests.functional.agent.ovn.agent.fake_ovn_agent_extension:FakeOVNAgentExtension"
+
+[project.entry-points."neutron.services.logapi.drivers"]
+ovs = "neutron.services.logapi.drivers.openvswitch.ovs_firewall_log:OVSFirewallLoggingDriver"
+
+[project.entry-points."neutron.qos.agent_drivers"]
+ovs = "neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers.qos_driver:QosOVSAgentDriver"
+sriov = "neutron.plugins.ml2.drivers.mech_sriov.agent.extension_drivers.qos_driver:QosSRIOVAgentDriver"
+
+[project.entry-points."neutron.services.external_dns_drivers"]
+designate = "neutron.services.externaldns.drivers.designate.driver:Designate"
+
+[project.entry-points."neutron.policies"]
+neutron = "neutron.conf.policies:list_rules"
+
+[project.entry-points."neutron.db.alembic_migrations"]
+neutron = "neutron.db.migration:alembic_migrations"
+
+[project.entry-points."neutron.interface_drivers"]
+null = "neutron.agent.linux.interface:NullDriver"
+openvswitch = "neutron.agent.linux.interface:OVSInterfaceDriver"
+
+[project.entry-points."neutron.agent.firewall_drivers"]
+noop = "neutron.agent.firewall:NoopFirewallDriver"
+iptables = "neutron.agent.linux.iptables_firewall:IptablesFirewallDriver"
+iptables_hybrid = "neutron.agent.linux.iptables_firewall:OVSHybridIptablesFirewallDriver"
+openvswitch = "neutron.agent.linux.openvswitch_firewall:OVSFirewallDriver"
+
+[project.entry-points."neutron.services.metering_drivers"]
+noop = "neutron.services.metering.drivers.noop.noop_driver:NoopMeteringDriver"
+iptables = "neutron.services.metering.drivers.iptables.iptables_driver:IptablesMeteringDriver"
+
+[project.entry-points."neutron.objects"]
+AddressScope = "neutron.objects.address_scope:AddressScope"
+AllowedAddressPair = "neutron.objects.port.extensions.allowedaddresspairs:AllowedAddressPair"
+Agent = "neutron.objects.agent:Agent"
+AutoAllocatedTopology = "neutron.objects.auto_allocate:AutoAllocatedTopology"
+ConntrackHelper = "neutron.objects.conntrack_helper:ConntrackHelper"
+PortDataPlaneStatus = "neutron.objects.port.extensions.data_plane_status:PortDataPlaneStatus"
+DefaultSecurityGroup = "neutron.objects.securitygroup:DefaultSecurityGroup"
+DistributedPortBinding = "neutron.objects.ports:DistributedPortBinding"
+DNSNameServer = "neutron.objects.subnet:DNSNameServer"
+DVRMacAddress = "neutron.objects.router:DVRMacAddress"
+ExternalNetwork = "neutron.objects.network:ExternalNetwork"
+ExtraDhcpOpt = "neutron.objects.port.extensions.extra_dhcp_opt:ExtraDhcpOpt"
+Flavor = "neutron.objects.flavor:Flavor"
+FlavorServiceProfileBinding = "neutron.objects.flavor:FlavorServiceProfileBinding"
+FloatingIP = "neutron.objects.router:FloatingIP"
+FloatingIPDNS = "neutron.objects.floatingip:FloatingIPDNS"
+IPAllocation = "neutron.objects.ports:IPAllocation"
+IPAllocationPool = "neutron.objects.subnet:IPAllocationPool"
+IpamAllocation = "neutron.objects.ipam:IpamAllocation"
+IpamAllocationPool = "neutron.objects.ipam:IpamAllocationPool"
+IpamSubnet = "neutron.objects.ipam:IpamSubnet"
+Log = "neutron.objects.logapi.logging_resource:Log"
+LocalIP = "neutron.objects.local_ip:LocalIP"
+LocalIPAssociation = "neutron.objects.local_ip:LocalIPAssociation"
+L3HARouterAgentPortBinding = "neutron.objects.l3_hamode:L3HARouterAgentPortBinding"
+L3HARouterNetwork = "neutron.objects.l3_hamode:L3HARouterNetwork"
+L3HARouterVRIdAllocation = "neutron.objects.l3_hamode:L3HARouterVRIdAllocation"
+MeteringLabel = "neutron.objects.metering:MeteringLabel"
+MeteringLabelRule = "neutron.objects.metering:MeteringLabelRule"
+NDPProxy = "neutron.objects.ndp_proxy:NDPProxy"
+Network = "neutron.objects.network:Network"
+NetworkDNSDomain = "neutron.objects.network:NetworkDNSDomain"
+NetworkDhcpAgentBinding = "neutron.objects.network:NetworkDhcpAgentBinding"
+NetworkPortSecurity = "neutron.objects.network:NetworkPortSecurity"
+NetworkRBAC = "neutron.objects.network:NetworkRBAC"
+NetworkSegment = "neutron.objects.network:NetworkSegment"
+NetworkSegmentRange = "neutron.objects.network_segment_range:NetworkSegmentRange"
+Port = "neutron.objects.ports:Port"
+PortBinding = "neutron.objects.ports:PortBinding"
+PortBindingLevel = "neutron.objects.ports:PortBindingLevel"
+PortDNS = "neutron.objects.ports:PortDNS"
+PortForwarding = "neutron.objects.port_forwarding:PortForwarding"
+PortSecurity = "neutron.objects.port.extensions.port_security:PortSecurity"
+ProviderResourceAssociation = "neutron.objects.servicetype:ProviderResourceAssociation"
+ProvisioningBlock = "neutron.objects.provisioning_blocks:ProvisioningBlock"
+QosBandwidthLimitRule = "neutron.objects.qos.rule:QosBandwidthLimitRule"
+QosDscpMarkingRule = "neutron.objects.qos.rule:QosDscpMarkingRule"
+QosMinimumBandwidthRule = "neutron.objects.qos.rule:QosMinimumBandwidthRule"
+QosMinimumPacketRateRule = "neutron.objects.qos.rule:QosMinimumPacketRateRule"
+QosPacketRateLimitRule = "neutron.objects.qos.rule:QosPacketRateLimitRule"
+QosPolicy = "neutron.objects.qos.policy:QosPolicy"
+QosPolicyDefault = "neutron.objects.qos.policy:QosPolicyDefault"
+QosPolicyFloatingIPBinding = "neutron.objects.qos.binding:QosPolicyFloatingIPBinding"
+QosPolicyNetworkBinding = "neutron.objects.qos.binding:QosPolicyNetworkBinding"
+QosPolicyPortBinding = "neutron.objects.qos.binding:QosPolicyPortBinding"
+QosPolicyRBAC = "neutron.objects.qos.policy:QosPolicyRBAC"
+QosPolicyRouterGatewayIPBinding = "neutron.objects.qos.binding:QosPolicyRouterGatewayIPBinding"
+QosRule = "neutron.objects.qos.rule:QosRule"
+QosRuleType = "neutron.objects.qos.rule_type:QosRuleType"
+QosRuleTypeDriver = "neutron.objects.qos.rule_type:QosRuleTypeDriver"
+Quota = "neutron.objects.quota:Quota"
+QuotaUsage = "neutron.objects.quota:QuotaUsage"
+Reservation = "neutron.objects.quota:Reservation"
+ResourceDelta = "neutron.objects.quota:ResourceDelta"
+Route = "neutron.objects.subnet:Route"
+Router = "neutron.objects.router:Router"
+RouterExtraAttributes = "neutron.objects.router:RouterExtraAttributes"
+RouterL3AgentBinding = "neutron.objects.l3agent:RouterL3AgentBinding"
+RouterNDPProxyState = "neutron.objects.ndp_proxy:RouterNDPProxyState"
+RouterPort = "neutron.objects.router:RouterPort"
+RouterRoute = "neutron.objects.router:RouterRoute"
+SecurityGroup = "neutron.objects.securitygroup:SecurityGroup"
+SecurityGroupPortBinding = "neutron.objects.ports:SecurityGroupPortBinding"
+SecurityGroupRule = "neutron.objects.securitygroup:SecurityGroupRule"
+SegmentHostMapping = "neutron.objects.network:SegmentHostMapping"
+ServiceProfile = "neutron.objects.flavor:ServiceProfile"
+StandardAttribute = "neutron.objects.stdattrs:StandardAttribute"
+Subnet = "neutron.objects.subnet:Subnet"
+SubnetPool = "neutron.objects.subnetpool:SubnetPool"
+SubnetPoolPrefix = "neutron.objects.subnetpool:SubnetPoolPrefix"
+SubPort = "neutron.objects.trunk:SubPort"
+SubnetServiceType = "neutron.objects.subnet:SubnetServiceType"
+Tag = "neutron.objects.tag:Tag"
+Trunk = "neutron.objects.trunk:Trunk"
+
+[project.entry-points."neutron.status.upgrade.checks"]
+neutron = "neutron.cmd.upgrade_checks.checks:CoreChecks"
+
+[project.scripts]
+neutron-db-manage = "neutron.db.migration.cli:main"
+neutron-dhcp-agent = "neutron.cmd.agents.dhcp:main"
+neutron-keepalived-state-change = "neutron.cmd.keepalived_state_change:main"
+neutron-ipset-cleanup = "neutron.cmd.ipset_cleanup:main"
+neutron-l3-agent = "neutron.cmd.agents.l3:main"
+neutron-macvtap-agent = "neutron.cmd.plugins.macvtap_neutron_agent:main"
+neutron-metadata-agent = "neutron.cmd.agents.metadata:main"
+neutron-netns-cleanup = "neutron.cmd.netns_cleanup:main"
+neutron-openvswitch-agent = "neutron.cmd.agents.ovs_neutron_agent:main"
+neutron-ovs-cleanup = "neutron.cmd.ovs_cleanup:main"
+neutron-rpc-server = "neutron.cmd.server:main_rpc"
+neutron-rootwrap = "oslo_rootwrap.cmd:main"
+neutron-rootwrap-daemon = "oslo_rootwrap.cmd:daemon"
+neutron-usage-audit = "neutron.cmd.usage_audit:main"
+neutron-metering-agent = "neutron.cmd.services.metering_agent:main"
+neutron-sriov-nic-agent = "neutron.cmd.plugins.sriov_nic_neutron_agent:main"
+neutron-sanity-check = "neutron.cmd.sanity_check:main"
+neutron-periodic-workers = "neutron.cmd.server:main_periodic"
+neutron-status = "neutron.cmd.status:main"
+neutron-ovn-agent = "neutron.cmd.agents.ovn_neutron_agent:main"
+neutron-ovn-maintenance-worker = "neutron.cmd.server:main_ovn_maintenance"
+neutron-ovn-metadata-agent = "neutron.cmd.agents.ovn_metadata:main"
+neutron-ovn-migration-mtu = "neutron.cmd.ovn.migration_mtu:main"
+neutron-ovn-db-sync-util = "neutron.cmd.ovn.neutron_ovn_db_sync_util:main"
+neutron-sanitize-port-binding-profile-allocation = "neutron.cmd.sanitize_port_binding_profile_allocation:main"
+neutron-sanitize-port-mac-addresses = "neutron.cmd.sanitize_port_mac_addresses:main"
+neutron-remove-duplicated-port-bindings = "neutron.cmd.remove_duplicated_port_bindings:main"
+ml2ovn-trace = "neutron.cmd.ovn.ml2ovn_trace:main"
+
+[tool.setuptools]
+packages = [
+    "neutron"
+]
+
+[tool.setuptools.data-files]
+"etc/neutron" = [
+    "etc/api-paste.ini",
+    "etc/rootwrap.conf",
+]
+"etc/neutron/rootwrap.d" = [
+    "etc/neutron/rootwrap.d/*",
+]
 
 [tool.mypy]
 incremental = true
