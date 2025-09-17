@@ -54,7 +54,9 @@ models_map = {
 @base.NeutronObjectRegistry.register
 class NetworkSegmentRange(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Add unique constraint and make 'physical_network' not
+    #              nullable
+    VERSION = '1.1'
 
     db_model = range_model.NetworkSegmentRange
 
@@ -68,7 +70,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
         'project_id': obj_fields.StringField(nullable=True),
         'network_type': common_types.NetworkSegmentRangeNetworkTypeEnumField(
             nullable=False),
-        'physical_network': obj_fields.StringField(nullable=True),
+        'physical_network': obj_fields.StringField(nullable=False),
         'minimum': obj_fields.IntegerField(nullable=True),
         'maximum': obj_fields.IntegerField(nullable=True)
     }
@@ -131,6 +133,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
             return [segmentation_id for (segmentation_id,) in alloc_available]
 
     def _get_used_allocation_mapping(self):
+        phys_net = self.physical_network or None
         with self.db_context_reader(self.obj_context):
             query = self.obj_context.session.query(
                 segments_model.NetworkSegment.segmentation_id,
@@ -138,8 +141,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
             alloc_used = (query.filter(and_(
                 segments_model.NetworkSegment.network_type ==
                 self.network_type,
-                segments_model.NetworkSegment.physical_network ==
-                self.physical_network,
+                segments_model.NetworkSegment.physical_network == phys_net,
                 segments_model.NetworkSegment.segmentation_id >= self.minimum,
                 segments_model.NetworkSegment.segmentation_id <= self.maximum))
                           .filter(segments_model.NetworkSegment.network_id ==
@@ -253,6 +255,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
     @classmethod
     def new_default(cls, context, network_type, physical_network,
                     minimum, maximum, start_time):
+        physical_network = physical_network or ''
         model = models_map.get(network_type)
         if not model:
             msg = (_("network_type '%s' unknown for getting allocation "
