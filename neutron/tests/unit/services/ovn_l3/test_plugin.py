@@ -118,6 +118,7 @@ class BaseTestOVNL3RouterPluginMixin:
                             'name': 'router',
                             'admin_state_up': False,
                             'flavor_id': None,
+                            'enable_snat': True,
                             'routes': [{'destination': '1.1.1.0/24',
                                         'nexthop': '10.0.0.2',
                                         'external_ids':
@@ -140,6 +141,7 @@ class BaseTestOVNL3RouterPluginMixin:
             'name': 'router',
             'admin_state_up': True,
             'flavor_id': None,
+            'enable_snat': True,
             'external_gateway_info': self.fake_external_fixed_ips,
             'external_gateways': [self.fake_external_fixed_ips],
             'gw_port_id': 'gw-port-id'
@@ -148,6 +150,7 @@ class BaseTestOVNL3RouterPluginMixin:
             'id': 'router-id',
             'name': 'router',
             'admin_state_up': True,
+            'enable_snat': True,
         }
         self.fake_ext_subnet = {'id': 'ext-subnet-id',
                                 'ip_version': 4,
@@ -752,8 +755,8 @@ class BaseTestOVNL3RouterPluginMixin:
             self, ari, grps):
         router_id = 'router-id'
         ari.return_value = self.fake_router_interface_info
-        get_router = self.fake_router_with_ext_gw
-        get_router['external_gateway_info']['enable_snat'] = False
+        get_router = copy.deepcopy(self.fake_router_with_ext_gw)
+        get_router['enable_snat'] = False
         self.get_router.return_value = get_router
 
         payload = self._create_payload_for_router_interface(router_id)
@@ -1038,7 +1041,7 @@ class BaseTestOVNL3RouterPluginMixin:
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         grps.return_value = self.fake_router_ports
         ur.return_value = self.fake_router_with_ext_gw
-        ur.return_value['external_gateway_info']['enable_snat'] = False
+        ur.return_value['enable_snat'] = False
         self.get_subnet.side_effect = lambda ctx, sid: {
             'ext-subnet-id': self.fake_ext_subnet}.get(sid, self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port
@@ -1108,7 +1111,7 @@ class BaseTestOVNL3RouterPluginMixin:
         mock_ext_ips.return_value = False
         self.get_router.return_value = self.fake_router_with_ext_gw
         ur.return_value = copy.deepcopy(self.fake_router_with_ext_gw)
-        ur.return_value['external_gateway_info']['enable_snat'] = False
+        ur.return_value['enable_snat'] = False
         self.get_subnet.side_effect = lambda ctx, sid: {
             'ext-subnet-id': self.fake_ext_subnet}.get(sid, self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port

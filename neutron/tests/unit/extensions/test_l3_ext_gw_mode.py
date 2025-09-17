@@ -334,7 +334,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.assertEqual(1, len(routers))
         router = routers[0]
         self.assertIsNone(router.get('gw_port'))
-        self.assertIsNone(router.get('enable_snat'))
+        self.assertTrue(router['enable_snat'])
 
     def test_build_routers_list_with_ext_gw(self):
         router_dict = self.target_object._make_router_dict(self.router)
@@ -345,7 +345,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         router = routers[0]
         self.assertIsNotNone(router.get('gw_port'))
         self.assertEqual(FAKE_GW_PORT_ID, router['gw_port']['id'])
-        self.assertTrue(router.get('enable_snat'))
+        self.assertTrue(router['enable_snat'])
 
     def test_build_routers_list_with_ext_gw_snat_disabled(self):
         self.router.enable_snat = False
@@ -357,7 +357,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         router = routers[0]
         self.assertIsNotNone(router.get('gw_port'))
         self.assertEqual(FAKE_GW_PORT_ID, router['gw_port']['id'])
-        self.assertFalse(router.get('enable_snat'))
+        self.assertFalse(router['enable_snat'])
 
     def test_build_routers_list_with_gw_port_mismatch(self):
         router_dict = self.target_object._make_router_dict(self.router)
@@ -366,7 +366,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.assertEqual(1, len(routers))
         router = routers[0]
         self.assertIsNone(router.get('gw_port'))
-        self.assertIsNone(router.get('enable_snat'))
+        self.assertTrue(router['enable_snat'])
 
 
 class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,

@@ -261,6 +261,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                          'destination': '12.0.0.0/24',
                          'external_ids': {}}],
                          'gw_port_id': 'gpr1',
+                         'enable_snat': True,
                          'external_gateway_info': {
                              'network_id': "ext-net", 'enable_snat': True,
                              'external_fixed_ips': [
@@ -270,6 +271,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                          'destination': '30.0.0.0/24',
                                                  'external_ids': {}}],
                          'gw_port_id': 'gpr2',
+                         'enable_snat': True,
                          'external_gateway_info': {
                              'network_id': "ext-net", 'enable_snat': True,
                              'external_fixed_ips': [
@@ -821,6 +823,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                 {'nexthop': '40.0.0.100', 'destination': '30.0.0.0/24',
                  'external_ids': {}}],
             'gw_port_id': 'gpr2',
+            'enable_snat': True,
             'external_gateway_info': {
                 'network_id': "ext-net", 'enable_snat': True,
                 'external_fixed_ips': [{
