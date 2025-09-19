@@ -117,9 +117,6 @@ class ChassisEvent(row_event.RowEvent):
         This method handles the inclusion and removal of Chassis to/from
         the default HA Chassis Group.
         """
-        if not self.driver._ovn_client.is_external_ports_supported():
-            return
-
         is_gw_chassis = utils.is_gateway_chassis(row)
         # If the Chassis being created is not a gateway, ignore it
         if not is_gw_chassis and event == self.ROW_CREATE:

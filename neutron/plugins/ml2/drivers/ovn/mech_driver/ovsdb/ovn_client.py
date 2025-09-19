@@ -142,10 +142,6 @@ class OVNClient:
             for cmd in commands:
                 txn.add(cmd)
 
-    def is_external_ports_supported(self):
-        return self._nb_idl.is_col_present(
-            'Logical_Switch_Port', 'ha_chassis_group')
-
     def _get_allowed_addresses_from_port(self, port):
         if not port.get(psec.PORTSECURITY):
             return [], []
@@ -440,12 +436,8 @@ class OVNClient:
                 port_type = ovn_const.LSP_TYPE_LOCALPORT
 
             if utils.is_port_external(port):
-                if self.is_external_ports_supported():
-                    port_type = ovn_const.LSP_TYPE_EXTERNAL
-                else:
-                    LOG.warning('The version of OVN used does not support '
-                                'the "external ports" feature used for '
-                                'SR-IOV ports with OVN native DHCP')
+                port_type = ovn_const.LSP_TYPE_EXTERNAL
+
             addresses = []
             port_security, new_macs = (
                 self._get_allowed_addresses_from_port(port))
@@ -619,8 +611,7 @@ class OVNClient:
                 'dhcpv6_options': dhcpv6_options
             }
 
-            if (self.is_external_ports_supported() and
-                    port_info.type == ovn_const.LSP_TYPE_EXTERNAL):
+            if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
                 kwargs['ha_chassis_group'], _ = (
                     utils.sync_ha_chassis_group_network(
                         context, self._nb_idl, self._sb_idl, port['id'],
@@ -752,15 +743,14 @@ class OVNClient:
                     portbindings.VIF_TYPE_UNBOUND):
                 columns_dict['addresses'] = []
 
-            if self.is_external_ports_supported():
-                if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
-                    columns_dict['ha_chassis_group'], _ = (
-                        utils.sync_ha_chassis_group_network(
-                            context, self._nb_idl, self._sb_idl, port['id'],
-                            port['network_id'], txn))
-                else:
-                    # Clear the ha_chassis_group field
-                    columns_dict['ha_chassis_group'] = []
+            if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
+                columns_dict['ha_chassis_group'], _ = (
+                    utils.sync_ha_chassis_group_network(
+                        context, self._nb_idl, self._sb_idl, port['id'],
+                        port['network_id'], txn))
+            else:
+                # Clear the ha_chassis_group field
+                columns_dict['ha_chassis_group'] = []
 
             addr_pairs_diff = utils.compute_address_pairs_diff(ovn_port, port)
 
@@ -2203,11 +2193,6 @@ class OVNClient:
 
         Check for changes in the HA Chassis Groups upon a network update.
         """
-        # If there are no external ports in this network, there's
-        # no need to check the AZs
-        if self.is_external_ports_supported():
-            return
-
         # Check for changes in the network Availability Zones
         ovn_ls_azs = lswitch.external_ids.get(
             ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')

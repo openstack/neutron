@@ -600,11 +600,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
     def check_for_ha_chassis_group(self):
-        # If external ports is not supported stop running
-        # this periodic task
-        if not self._ovn_client.is_external_ports_supported():
-            raise periodics.NeverAgain()
-
         external_ports = self._nb_idl.db_find_rows(
             'Logical_Switch_Port', ('type', '=', ovn_const.LSP_TYPE_EXTERNAL)
         ).execute(check_error=True)
@@ -821,11 +816,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         Update baremetal ports DHCP options based on the
         "disable_ovn_dhcp_for_baremetal_ports" configuration option.
         """
-        # If external ports is not supported stop running
-        # this periodic task
-        if not self._ovn_client.is_external_ports_supported():
-            raise periodics.NeverAgain()
-
         context = n_context.get_admin_context()
         ports = ports_obj.Port.get_ports_by_vnic_type_and_host(
             context, portbindings.VNIC_BAREMETAL)

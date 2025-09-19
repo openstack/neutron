@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Removed support for OVN versions under v20.03.0. The "ha_chassis_group"
+    field is expected in the "Logical_Router_Port" Northbound table. For more
+    information, see commit `ovn: Support a new Logical_Switch_Port.type -
+    'external' <https://github.com/ovn-org/ovn/commit/b31c76000bef314b68e776d318d1ce4cf152450b>`_.
