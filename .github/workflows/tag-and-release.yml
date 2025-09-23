@@ -1,0 +1,12 @@
+---
+name: Tag & Release
+'on':
+  push:
+    branches:
+      - stackhpc/2025.1
+permissions:
+  actions: read
+  contents: write
+jobs:
+  tag-and-release:
+    uses: stackhpc/.github/.github/workflows/tag-and-release.yml@main
