@@ -27,13 +27,37 @@ from neutron.tests.functional import base
 
 
 class WaitForPortBindingDeleteEvent(event.WaitEvent):
-    event_name = 'WaitForPortBindingDeleteEvent'
-
     def __init__(self, port_id):
         table = 'Port_Binding'
         events = (self.ROW_DELETE, )
         conditions = (('logical_port', '=', port_id), )
         super().__init__(events, table, conditions, timeout=10)
+
+
+class WaitForPortBindingCreateEvent(event.WaitEvent):
+    def __init__(self, port_id):
+        table = 'Port_Binding'
+        events = (self.ROW_CREATE, )
+        conditions = (('logical_port', '=', port_id), )
+        super().__init__(events, table, conditions, timeout=10)
+
+
+class WaitForLSPSubportEvent(event.WaitEvent):
+    event_name = 'WaitForLSPSubportEvent'
+
+    def __init__(self, port_id):
+        table = 'Logical_Switch_Port'
+        events = (self.ROW_UPDATE, self.ROW_CREATE)
+        conditions = (('name', '=', port_id), )
+        super().__init__(events, table, conditions, timeout=10)
+
+    def matches(self, event, row, old=None):
+        # Check the "conditions" defined (name=port_id)
+        if not super().matches(event, row, old):
+            return False
+        device_owner = row.external_ids.get(
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY)
+        return device_owner == trunk_consts.TRUNK_SUBPORT_OWNER
 
 
 class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
@@ -127,15 +151,26 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
 
     def test_subport_delete(self):
         with self.subport() as subport:
+            lsp_subport = WaitForLSPSubportEvent(subport['port_id'])
+            self.mech_driver.nb_ovn.idl.notify_handler.watch_event(
+                lsp_subport)
+            pb_create = WaitForPortBindingCreateEvent(subport['port_id'])
+            self.mech_driver.sb_ovn.idl.notify_handler.watch_event(
+                pb_create)
             with self.trunk([subport]) as trunk:
-                pb_event = WaitForPortBindingDeleteEvent(subport['port_id'])
+                # Wait for the subport LSP to be assigned as a subport.
+                self.assertTrue(lsp_subport.wait())
+                self.assertTrue(pb_create.wait())
+
+                pb_delete = WaitForPortBindingDeleteEvent(subport['port_id'])
                 self.mech_driver.sb_ovn.idl.notify_handler.watch_event(
-                    pb_event)
+                    pb_delete)
                 self.trunk_plugin.remove_subports(self.context, trunk['id'],
                                                   {'sub_ports': [subport]})
                 new_trunk = self.trunk_plugin.get_trunk(self.context,
                                                         trunk['id'])
-                self.assertTrue(pb_event.wait())
+                # Wait for the subport LSP to be unbound.
+                self.assertTrue(pb_delete.wait())
                 self._verify_trunk_info(new_trunk, has_items=False)
 
     def test_trunk_delete(self):
