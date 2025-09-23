@@ -358,7 +358,7 @@ def get_lsp_dhcp_opts(port, ip_version):
 
             if edo['opt_name'] not in mapping:
                 LOG.warning('The DHCP option %(opt_name)s on port %(port)s '
-                            'is not suppported by OVN, ignoring it',
+                            'is not supported by OVN, ignoring it',
                             {'opt_name': edo['opt_name'], 'port': port['id']})
                 continue
 
