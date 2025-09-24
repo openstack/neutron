@@ -1599,6 +1599,29 @@ class OVNClient:
                           'Error: %(error)s', {'router': router_id,
                                                'error': e})
 
+    def update_router_ha_chassis_group(self, context, router_id):
+        """If the router has GW, bind all external ports to the same GW chassis
+
+        If a router receives or removes the gateway, this method checks all
+        the connected internal ports and collects its networks. Then it updates
+        each network, depending on the presence or not of the router gateway.
+        See LP#2125553.
+        """
+        # Retrieve all internal networks (aka: ext_ids=neutron:is_ext_gw=False)
+        # connected to this router.
+        lr_name = utils.ovn_name(router_id)
+        lr = self._nb_idl.lr_get(lr_name).execute(check_error=True)
+        network_ids = set()
+        for lrp in lr.ports:
+            ext_gw = lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW)
+            if not strutils.bool_from_string(ext_gw):
+                net_name = lrp.external_ids[
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
+                network_ids.add(utils.get_neutron_name(net_name))
+
+        for network_id in network_ids:
+            self.link_network_ha_chassis_group(context, network_id, router_id)
+
     def delete_router(self, context, router_id):
         """Delete a logical router."""
         lrouter_name = utils.ovn_name(router_id)
@@ -1809,6 +1832,21 @@ class OVNClient:
                 port['id'], lrouter_port_name, is_gw_port=is_gw_port,
                 lsp_address=lsp_address))
         self._transaction(commands, txn=txn)
+
+    def get_router_port(self, port_id):
+        try:
+            return self._nb_idl.lrp_get(
+                utils.ovn_lrouter_port_name(port_id)).execute(
+                check_errors=True)
+        except idlutils.RowNotFound:
+            return
+
+    def get_router_gateway_ports(self, router_id):
+        lrps = self._nb_idl.lrp_list(utils.ovn_name(router_id)).execute(
+            check_errors=True)
+        return [lrp for lrp in lrps if
+                strutils.bool_from_string(
+                    lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW))]
 
     def create_router_port(self, context, router_id, router_interface):
         port = self._plugin.get_port(context, router_interface['port_id'])
@@ -2283,6 +2321,66 @@ class OVNClient:
 
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)
+
+    def unlink_network_ha_chassis_group(self, network_id):
+        """Unlink the network HCG to the router
+
+        If the network (including all subnets) has been detached from the
+        router, the "HA_Chassis_Group" in unlinked from the router by removing
+        the router_id tag from the external_ids dictionary.
+        """
+        name = utils.ovn_name(network_id)
+        hcg = self._nb_idl.lookup('HA_Chassis_Group', name, default=None)
+        if hcg:
+            self._nb_idl.db_remove(
+                'HA_Chassis_Group', name, 'external_ids',
+                ovn_const.OVN_ROUTER_ID_EXT_ID_KEY).execute(
+                    check_error=True)
+
+    def link_network_ha_chassis_group(self, context, network_id, router_id):
+        """Link a unified HCG for all network ext. ports if connected to router
+
+        If a network is connected to a router, this method checks if the router
+        has a gateway port and the corresponding "Gateway_Chassis" registers.
+        In that case, it creates a unified "HA_Chassis_Group" for this network
+        and assign it to all external ports. That will collocate the external
+        ports in the same gateway chassis as the router gateway port, allowing
+        N/S communication. See LP#2125553
+        """
+        gw_lrps = self.get_router_gateway_ports(router_id)
+        if not gw_lrps:
+            # The router has no GW ports. Remove the "neutron:router_id" tag
+            # from the "HA_Chassis_Group" associated, if any.
+            self.unlink_network_ha_chassis_group(network_id)
+            return
+
+        # Retrieve all "Gateway_Chassis" and build the "chassis_prio"
+        # dictionary.
+        chassis_prio = {}
+        for gc in gw_lrps[0].gateway_chassis:
+            chassis_prio[gc.chassis_name] = gc.priority
+
+        with self._nb_idl.transaction(check_error=True) as txn:
+            # Create the "HA_Chassis_Group" associated to this network.
+            hcg, _ = utils.sync_ha_chassis_group_network_unified(
+                context, self._nb_idl, self._sb_idl, network_id, router_id,
+                chassis_prio, txn)
+
+            # Retrieve all LSPs from external ports in this network.
+            ls = self._nb_idl.lookup('Logical_Switch',
+                                     utils.ovn_name(network_id))
+            for lsp in (lsp for lsp in ls.ports if
+                        lsp.type == ovn_const.LSP_TYPE_EXTERNAL):
+                # NOTE(ralonsoh): this is a protection check but all external
+                # ports must have "HA_Chassis_Group". If the "HA_Chassis_Group"
+                # register is for this port only, remove it.
+                group_name = utils.ovn_extport_chassis_group_name(lsp.name)
+                if (lsp.ha_chassis_group and
+                        lsp.ha_chassis_group[0].name == group_name):
+                    txn.add(self._nb_idl.ha_chassis_group_del(
+                        lsp.ha_chassis_group[0].name, if_exists=True))
+                txn.add(self._nb_idl.db_set('Logical_Switch_Port', lsp.uuid,
+                                            ('ha_chassis_group', hcg)))
 
     def _add_subnet_dhcp_options(self, context, subnet, network,
                                  ovn_dhcp_options=None):
