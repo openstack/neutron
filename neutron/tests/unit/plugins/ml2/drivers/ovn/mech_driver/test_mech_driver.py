@@ -2884,7 +2884,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.sb_ovn.get_extport_chassis_from_cms_options.return_value = []
         self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
             ch0, ch1, ch2, ch3, ch4, ch5]
-
+        expected_ignore_chassis = [ch4.name, ch5.name]
+        self.sb_ovn.get_chassis_host_for_port.return_value = set(
+            expected_ignore_chassis)
         ovn_utils.sync_ha_chassis_group_network(
             self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
             fake_net['id'], None)
@@ -2898,7 +2900,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.assertEqual(expected_ch_list,
                          hcg_info.chassis_list)
         self.assertEqual(expected_az_hints, hcg_info.az_hints)
-        self.assertEqual(set(), hcg_info.ignore_chassis)
+        self.assertEqual(sorted(expected_ignore_chassis),
+                         sorted(hcg_info.ignore_chassis))
 
     @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
     def test_sync_ha_chassis_group_router(self, mock_sync_hcg):
