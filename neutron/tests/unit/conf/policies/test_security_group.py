@@ -389,28 +389,24 @@ class SecurityGroupRuleAPITestCase(base.PolicyBaseTestCase):
         super().setUp()
         self.sg = {
             'id': uuidutils.generate_uuid(),
-            'project_id': self.project_id,
-            'tenant_id': self.project_id}
+            'project_id': self.project_id}
         self.alt_sg = {
             'id': uuidutils.generate_uuid(),
-            'project_id': self.alt_project_id,
-            'tenant_id': self.alt_project_id}
+            'project_id': self.alt_project_id}
 
         self.target = {
             'project_id': self.project_id,
-            'tenant_id': self.project_id,
             'security_group_id': self.sg['id'],
-            'ext_parent:tenant_id': self.sg['id'],
+            'ext_parent:project_id': self.sg['id'],
             'ext_parent_security_group_id': self.sg['id']}
         self.alt_target = {
             'project_id': self.alt_project_id,
-            'tenant_id': self.alt_project_id,
             'security_group_id': self.alt_sg['id'],
-            'ext_parent:tenant_id': self.alt_sg['id'],
+            'ext_parent:project_id': self.alt_sg['id'],
             'ext_parent_security_group_id': self.alt_sg['id']}
 
         def get_security_group_mock(context, id,
-                                    fields=None, tenant_id=None):
+                                    fields=None, project_id=None):
             if id == self.alt_sg['id']:
                 return self.alt_sg
             return self.sg
@@ -559,7 +555,7 @@ class ProjectManagerSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
         # Test for the SG_OWNER different then current user case:
         target = copy.copy(self.target)
         target['security_group_id'] = self.alt_sg['id']
-        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent:project_id'] = self.alt_sg['project_id']
         target['ext_parent_security_group_id'] = self.alt_sg['id']
         self.plugin_mock.get_security_group.return_value = self.alt_sg
         self.assertRaises(
@@ -600,7 +596,7 @@ class ProjectManagerSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
         # Test for the SG_OWNER different then current user case:
         target = copy.copy(self.target)
         target['security_group_id'] = self.alt_sg['id']
-        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent:project_id'] = self.alt_sg['project_id']
         target['ext_parent_security_group_id'] = self.alt_sg['id']
         self.plugin_mock.get_security_group.return_value = self.alt_sg
         self.assertRaises(
@@ -646,7 +642,7 @@ class ProjectReaderSecurityGroupRuleTests(ProjectMemberSecurityGroupRuleTests):
         # Test for the SG_OWNER different then current user case:
         target = copy.copy(self.target)
         target['security_group_id'] = self.alt_sg['id']
-        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent:project_id'] = self.alt_sg['project_id']
         target['ext_parent_security_group_id'] = self.alt_sg['id']
         self.plugin_mock.get_security_group.return_value = self.alt_sg
         self.assertRaises(
@@ -666,7 +662,7 @@ class ProjectReaderSecurityGroupRuleTests(ProjectMemberSecurityGroupRuleTests):
         # Test for the SG_OWNER different then current user case:
         target = copy.copy(self.target)
         target['security_group_id'] = self.alt_sg['id']
-        target['ext_parent:tenant_id'] = self.alt_sg['tenant_id']
+        target['ext_parent:project_id'] = self.alt_sg['project_id']
         target['ext_parent_security_group_id'] = self.alt_sg['id']
         self.plugin_mock.get_security_group.return_value = self.alt_sg
         self.assertRaises(

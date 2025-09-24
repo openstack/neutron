@@ -88,7 +88,7 @@ ADMIN_OR_NET_OWNER_READER = (
 # above. We should probably deprecate SG_OWNER rules and use PARENT_OWNER
 # instead but this can be done later
 # TODO(slaweq): Deprecate SG_OWNER rules and replace them with PARENT_OWNER
-# rules but for that, 'ext_parent_owner:tenant_id' needs to be added to the SG
+# rules but for that, 'ext_parent_owner:project_id' needs to be added to the SG
 # rule target dict
 SG_OWNER_MEMBER = 'role:member and ' + RULE_SG_OWNER
 SG_OWNER_READER = 'role:reader and ' + RULE_SG_OWNER
@@ -112,7 +112,7 @@ rules = [
         description="Default rule for the service-to-service APIs."),
     policy.RuleDefault(
         'owner',
-        'tenant_id:%(tenant_id)s',
+        'project_id:%(project_id)s',
         description='Rule for resource owner access'),
     policy.RuleDefault(
         'admin_or_owner',
@@ -129,7 +129,7 @@ rules = [
     policy.RuleDefault(
         'admin_or_network_owner',
         neutron_policy.policy_or('rule:context_is_admin',
-                                 'tenant_id:%(network:tenant_id)s'),
+                                 'project_id:%(network:project_id)s'),
         description='Rule for admin or network owner access'),
     policy.RuleDefault(
         'admin_owner_or_network_owner',
@@ -139,7 +139,7 @@ rules = [
                      'admin or network owner access')),
     policy.RuleDefault(
         'network_owner',
-        'tenant_id:%(network:tenant_id)s',
+        'project_id:%(network:project_id)s',
         description='Rule for network owner access'),
     policy.RuleDefault(
         'admin_only',
@@ -161,15 +161,15 @@ rules = [
     policy.RuleDefault(
         'admin_or_ext_parent_owner',
         neutron_policy.policy_or('rule:context_is_admin',
-                                 'tenant_id:%(ext_parent:tenant_id)s'),
+                                 'project_id:%(ext_parent:project_id)s'),
         description='Rule for common parent owner check'),
     policy.RuleDefault(
         'ext_parent_owner',
-        'tenant_id:%(ext_parent:tenant_id)s',
+        'project_id:%(ext_parent:project_id)s',
         description='Rule for common parent owner check'),
     policy.RuleDefault(
         name='sg_owner',
-        check_str='tenant_id:%(security_group:tenant_id)s',
+        check_str='project_id:%(security_group:project_id)s',
         description='Rule for security group owner access'),
 ]
 

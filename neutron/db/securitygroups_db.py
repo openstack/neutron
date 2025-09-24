@@ -345,10 +345,13 @@ class SecurityGroupDbMixin(
             rbac_entries = security_group['rbac_entries']
             shared = rbac_db_obj.RbacNeutronDbObjectMixin.is_network_shared(
                 context, rbac_entries)
+        # TODO(slaweq): Remove 'tenant_id' in the 2027.1 cycle, when it will
+        # not be registered for OwnerCheck anymore.
         res = {'id': security_group['id'],
                'name': security_group['name'],
                'stateful': security_group['stateful'],
                'tenant_id': security_group['tenant_id'],
+               'project_id': security_group['project_id'],
                'description': security_group['description'],
                'standard_attr_id': security_group.standard_attr_id,
                'shared': shared,

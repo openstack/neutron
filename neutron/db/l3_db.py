@@ -1242,8 +1242,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                if floatingip.floating_ip_address else None)
         fixed_ip_address = (str(floatingip.fixed_ip_address)
                             if floatingip.fixed_ip_address else None)
+        # TODO(slaweq): Remove 'tenant_id' in the 2027.1 cycle, when it will
+        # not be registered for OwnerCheck anymore.
         res = {'id': floatingip.id,
                'tenant_id': floatingip.project_id,
+               'project_id': floatingip.project_id,
                'floating_ip_address': floating_ip_address,
                'floating_network_id': floatingip.floating_network_id,
                'router_id': floatingip.router_id,

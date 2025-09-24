@@ -29,19 +29,15 @@ class PortAPITestCase(base.PolicyBaseTestCase):
 
         self.network = {
             'id': uuidutils.generate_uuid(),
-            'tenant_id': self.project_id,
             'project_id': self.project_id}
         self.alt_network = {
             'id': uuidutils.generate_uuid(),
-            'tenant_id': self.alt_project_id,
             'project_id': self.alt_project_id}
         self.target = {
-            'tenant_id': self.project_id,
             'project_id': self.project_id,
             'network_id': self.network['id'],
             'ext_parent_network_id': self.network['id']}
         self.alt_target = {
-            'tenant_id': self.project_id,
             'project_id': self.alt_project_id,
             'network_id': self.alt_network['id'],
             'ext_parent_network_id': self.alt_network['id']}

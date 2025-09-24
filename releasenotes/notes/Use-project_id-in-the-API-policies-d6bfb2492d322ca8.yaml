@@ -1,0 +1,5 @@
+---
+deprecations:
+  - |
+    Usage of ``tenant_id`` in the API policy rules is deprecated and will be
+    removed in the 2027.1 release. Please use ``project_id`` instead.
