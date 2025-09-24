@@ -48,8 +48,10 @@
             DEFAULT:
               enable_code_profiling: True
     required-projects:
-      - openstack/rally
-      - openstack/rally-openstack
+      - name: openstack/rally
+        override-checkout: 4.1.0
+      - name: openstack/rally-openstack
+        override-checkout: 3.0.0
       - openstack/osprofiler
     irrelevant-files:
       - ^\.pylintrc$
@@ -96,7 +98,9 @@
     required-projects:
       - name: openstack/devstack
       - name: openstack/rally
+        override-checkout: 4.1.0
       - name: openstack/rally-openstack
+        override-checkout: 3.0.0
     irrelevant-files:
       - ^\.pylintrc$
       - ^test-requirements.txt$
