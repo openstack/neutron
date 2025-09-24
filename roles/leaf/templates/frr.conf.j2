@@ -1,0 +1,72 @@
+hostname {{ ansible_hostname }}
+log file /var/log/frr/frr.log
+service integrated-vtysh-config
+line vty
+frr version 7.0
+
+debug bfd peer
+debug bfd network
+debug bfd zebra
+
+debug bgp graceful-restart
+debug bgp neighbor-events
+debug bgp updates
+debug bgp update-groups
+
+router bgp 64999
+  bgp log-neighbor-changes
+  bgp graceful-shutdown
+
+  bgp graceful-restart
+  bgp graceful-restart notification
+  bgp graceful-restart restart-time 60
+  bgp graceful-restart preserve-fw-state
+  ! bgp long-lived-graceful-restart stale-time 15
+
+  neighbor downlink peer-group
+  neighbor downlink remote-as internal
+  neighbor downlink bfd
+  neighbor downlink bfd profile devstack
+  neighbor downlink password f00barZ
+  ! neighbor downlink capability extended-nexthop
+  neighbor controller-port interface peer-group downlink
+
+  neighbor uplink peer-group
+  neighbor uplink remote-as external
+  neighbor uplink bfd
+  neighbor uplink bfd profile devstack
+  ! neighbor uplink capability extended-nexthop
+  neighbor spine-port interface peer-group uplink
+
+  address-family ipv4 unicast
+    redistribute connected
+    neighbor downlink route-reflector-client
+    neighbor downlink next-hop-self
+    neighbor downlink default-originate
+    neighbor downlink prefix-list only-host-prefixes out
+    neighbor uplink allowas-in origin
+    neighbor uplink prefix-list only-host-prefixes in
+  exit-address-family
+
+  address-family ipv6 unicast
+    redistribute connected
+    neighbor downlink activate
+    neighbor downlink route-reflector-client
+    neighbor downlink next-hop-self
+    neighbor downlink default-originate
+    neighbor uplink activate
+    neighbor uplink allowas-in origin
+    neighbor uplink prefix-list only-host-prefixes in
+  exit-address-family
+
+ip prefix-list only-host-prefixes permit 0.0.0.0/0 ge 32
+
+ipv6 prefix-list only-host-prefixes permit ::/0 ge 128
+
+ip nht resolve-via-default
+
+bfd
+  profile devstack
+    detect-multiplier 10
+    transmit-interval 500
+    receive-interval 500

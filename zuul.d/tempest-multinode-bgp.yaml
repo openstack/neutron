@@ -1,0 +1,135 @@
+- nodeset:
+    name: neutron-four-node-noble-bgp
+    nodes:
+      - name: controller
+        label: ubuntu-noble
+      - name: leaf-1
+        label: ubuntu-noble
+      - name: leaf-2
+        label: ubuntu-noble
+      - name: spine
+        label: ubuntu-noble
+    groups:
+      - name: controller
+        nodes:
+          - controller
+      - name: subnode
+        nodes:
+          - spine
+      - name: leafs
+        nodes:
+          - leaf-1
+          - leaf-2
+      - name: tempest
+        nodes:
+          - spine
+
+- job:
+    name: neutron-ovn-bgp-tempest-multinode
+    parent: neutron-tempest-plugin-ovn
+    nodeset: neutron-four-node-noble-bgp
+    timeout: 10800
+    post-timeout: 9600
+    required-projects:
+      - openstack/devstack
+    vars:
+      devstack_localrc:
+        ENABLE_TLS: True
+        PUBLIC_SUBNET_ENABLE_DHCP: True
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: v26.03.0
+        OVS_BRANCH: v3.7.0
+        FRR_USE_BFD: True
+        ENABLE_FRR: True
+        OVN_AGENT_EXTENSIONS: 'metadata,ovn-bgp'
+        NEUTRON_BGP_PEER_BRIDGES: 'br-bgp-0,br-bgp-1'
+        Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false
+      devstack_services:
+        q-ovn-bgp: true
+        tls-proxy: true
+        tempest: false
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron
+        neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
+      devstack_local_conf:
+        post-config:
+          "/$NEUTRON_CORE_PLUGIN_CONF":
+            ovn:
+              enable_distributed_floating_ip: True
+    pre-run: playbooks/configure_bgp_networking.yaml
+    group-vars:
+      subnode:
+        devstack_localrc:
+          LIBS_FROM_GIT: neutron-tempest-plugin
+          OVN_BUILD_FROM_SOURCE: False
+          Q_PLUGIN: "noop"
+          SERVICES_FOR_TEMPEST: neutron,nova,keystone,glance
+          IMAGE_URLS: https://cloud-images.ubuntu.com/minimal/releases/jammy/release/ubuntu-22.04-minimal-cloudimg-amd64.img
+          ADVANCED_IMAGE_NAME: ubuntu-22.04-minimal-cloudimg-amd64
+          ADVANCED_INSTANCE_TYPE: ntp_image_256M
+          ADVANCED_INSTANCE_USER: ubuntu
+          CUSTOMIZE_IMAGE: true
+          BUILD_TIMEOUT: 784
+        devstack_plugins:
+          neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
+        devstack_services:
+          tls-proxy: true
+          tempest: true
+          etcd3: false
+          mysql: false
+          c-api: false
+          c-bak: false
+          c-sch: false
+          c-vol: false
+          cinder: false
+          n-api: false
+          n-api-meta: false
+          n-cond: false
+          n-cpu: false
+          n-novnc: false
+          n-sch: false
+          placement-api: false
+          br-ex-tcpdump: false
+          br-int-flows: false
+          q-ovn-metadata-agent: false
+          q-ovn-agent: false
+          ovn-bgp: false
+          ovn-controller: false
+          ovn-northd: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          neutron-dns: false
+          neutron-log: false
+          neutron-qos: false
+          neutron-segments: false
+          neutron-trunk: false
+          neutron-uplink-status-propagation: false
+          neutron-network-segment-range: false
+          neutron-port-forwarding: false
+          neutron-conntrack-helper: false
+          neutron-tag-ports-during-bulk-creation: false
+          neutron-ndp-proxy: false
+          neutron-subnet-external-network: false
+          neutron-port-trusted-vif: false
+        devstack_local_conf:
+          post-config: {}
+          test-config:
+            $TEMPEST_CONFIG:
+              service_available:
+                neutron: True
+                nova: True
+                glance: True
+                key: True
+              neutron_plugin_options:
+                firewall_driver: ovn
+        tempest_concurrency: 4
+        tempest_test_regex: "\
+          (^neutron_tempest_plugin.scenario)|\
+          (^tempest.scenario.test_server_basic_ops.TestServerBasicOps)|\
+          (^tempest.scenario.test_network_v6)"
+        # features not supported with BGP yet
+        tempest_exclude_regex: "\
+          (^neutron_tempest_plugin.scenario.test_port_forwardings)|\
+          (^neutron_tempest_plugin.scenario.test_multiple_gws)|\
+          (^neutron_tempest_plugin.scenario.test_floatingip.DefaultSnatToExternal.test_snat_external_ip)|\
+          (^neutron_tempest_plugin.scenario.*test_default_sec_grp_scenarios)"

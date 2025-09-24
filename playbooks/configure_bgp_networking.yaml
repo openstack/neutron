@@ -1,0 +1,174 @@
+- name: Install dependencies on all nodes
+  hosts: leafs,spine
+  tasks:
+    - name: Install openvswitch
+      become: true
+      ansible.builtin.package:
+         name: "openvswitch-switch"
+         state: present
+
+- name: Figure out VXLAN endpoints
+  hosts: controller,leafs,spine
+  tasks:
+    - name: Set local IP for VXLAN tunnels
+      ansible.builtin.set_fact:
+        vxlan_local_ip: "{{ nodepool.private_ipv4 | ipv4 | default(nodepool.public_ipv4) }} "
+
+- name: Create tunnels between the controller and the leafs
+  hosts: controller
+  tasks:
+    - name: Create local.sh script to create tunnels
+      vars:
+        # todo: get this from a variable
+        top_dir: "/opt/stack/devstack"
+      become: true
+      copy:
+        dest: "{{ top_dir }}/local.sh"
+        owner: stack
+        group: stack
+        mode: '0755'
+        content: |
+          #!/bin/bash
+
+          set -ex
+
+          function configure_vxlan_endpoint() {
+            local loop_index=$1
+            local remote_ip=$2
+
+            local local_ip={{ vxlan_local_ip }}
+            local tunnel_iface=leaf${loop_index}-tunnel
+            local veth_in=veth${loop_index}-in
+            local veth_bgp=veth${loop_index}-bgp
+            local vlan_tag=100${loop_index}
+            local bgp_bridge=br-bgp-${loop_index}
+
+            sudo ip link add $veth_in type veth peer name $veth_bgp
+            sudo ip link set dev $veth_in up
+            sudo ip link set dev $veth_bgp up
+
+            sudo ovs-vsctl add-port br-infra $tunnel_iface \
+                 -- set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
+                    options:key=1000${loop_index} options:local_ip=$local_ip \
+                 -- set Port $tunnel_iface tag=$vlan_tag
+
+            sudo ovs-vsctl add-br $bgp_bridge
+            sudo ovs-vsctl add-port $bgp_bridge $veth_bgp
+
+            sudo ovs-vsctl add-port br-infra $veth_in \
+                 -- set Port $veth_in tag=$vlan_tag
+
+            sudo ip link set dev $bgp_bridge up
+
+            sudo iptables -I FORWARD 1 -i $bgp_bridge -j ACCEPT
+            sudo ip6tables -I INPUT 1 -i $bgp_bridge -j ACCEPT
+            sudo ip6tables -I INPUT 1 -i $veth_in -j ACCEPT
+          }
+
+          sudo ovs-vsctl --may-exist add-br br-infra
+
+          {% for leaf in groups['leafs'] %}
+          configure_vxlan_endpoint {{ loop.index0 }}  {{ hostvars[leaf].vxlan_local_ip }}
+          {% endfor %}
+
+          sudo iptables -I FORWARD 1 -i br-ex -j ACCEPT
+
+          # When FRR started before the peer interfaces did not exist
+          sudo systemctl restart frr
+
+    - name: "Create VXLAN tunnel from {{ item.1 }} to the controller"
+      ansible.builtin.shell: |
+        set -e
+
+        tunnel_iface=controller-tunnel
+        port_iface=controller-port
+        local_ip={{ hostvars[item.1].vxlan_local_ip }}
+        remote_ip={{ vxlan_local_ip }}
+        vlan_tag=100{{ item.0 }}
+
+        ovs-vsctl --may-exist add-br br-infra -- \
+        add-port br-infra $tunnel_iface -- \
+        set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
+        options:key=1000{{ item.0 }} options:local_ip=$local_ip -- \
+        set Port $tunnel_iface tag=$vlan_tag -- \
+        add-port br-infra $port_iface -- \
+        set Interface $port_iface type=internal -- \
+        set Port $port_iface tag=$vlan_tag
+
+        ip link set dev $port_iface up
+
+        iptables -I FORWARD 1 -i $port_iface -j ACCEPT
+        ip6tables -I INPUT 1 -i $port_iface -p tcp --dport 179 -j ACCEPT
+      with_indexed_items: "{{ groups['leafs'] }}"
+      delegate_to: "{{ item.1 }}"
+      become: true
+
+- name: Create tunnels between the spine and the leafs
+  hosts: spine
+  become: true
+  tasks:
+    - name: "Create VXLAN tunnels from the spine to {{ item.1 }}"
+      ansible.builtin.shell: |
+        set -e
+
+        tunnel_iface=leaf{{ item.0 }}-tunnel
+        port_iface=leaf{{ item.0 }}-port
+        local_ip={{ vxlan_local_ip }}
+        remote_ip={{ hostvars[item.1].vxlan_local_ip }}
+        vlan_tag=200{{ item.0 }}
+
+        ovs-vsctl --may-exist add-br br-infra -- \
+        add-port br-infra $tunnel_iface -- \
+        set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
+        options:key=1001{{ item.0 }} options:local_ip=$local_ip -- \
+        set Port $tunnel_iface tag=$vlan_tag -- \
+        add-port br-infra $port_iface -- \
+        set Interface $port_iface type=internal -- \
+        set Port $port_iface tag=$vlan_tag
+
+        ip link set dev $port_iface up
+
+        iptables -I FORWARD 1 -i $port_iface -j ACCEPT
+        ip6tables -I INPUT 1 -i $port_iface -j ACCEPT
+      with_indexed_items: "{{ groups['leafs'] }}"
+
+    - name: "Create VXLAN tunnel from {{ item.1 }} to the spine"
+      ansible.builtin.shell: |
+        set -e
+
+        tunnel_iface=spine-tunnel
+        port_iface=spine-port
+        local_ip={{ hostvars[item.1].vxlan_local_ip }}
+        remote_ip={{ vxlan_local_ip }}
+        vlan_tag=200{{ item.0 }}
+
+        ovs-vsctl --may-exist add-br br-infra -- \
+        add-port br-infra $tunnel_iface -- \
+        set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
+        options:key=1001{{ item.0 }} options:local_ip=$local_ip -- \
+        set Port $tunnel_iface tag=$vlan_tag -- \
+        add-port br-infra $port_iface -- \
+        set Interface $port_iface type=internal -- \
+        set Port $port_iface tag=$vlan_tag
+
+        ip link set dev $port_iface up
+
+        iptables -I FORWARD 1 -i $port_iface -j ACCEPT
+        ip6tables -I INPUT 1 -i $port_iface -j ACCEPT
+      with_indexed_items: "{{ groups['leafs'] }}"
+      delegate_to: "{{ item.1 }}"
+
+    - name: "Add loopback IPs for the Spine"
+      ansible.builtin.shell: |
+        ip a a 172.31.1.1/32 dev lo
+        # TODO ipv6
+
+- name: Configure the spine switch
+  hosts: spine
+  roles:
+    - spine
+
+- name: Configure the leafs switches
+  hosts: leafs
+  roles:
+    - leaf

@@ -20,6 +20,7 @@ source $LIBDIR/octavia
 source $LIBDIR/loki
 source $LIBDIR/local_ip
 source $LIBDIR/port_trusted_vif
+source $LIBDIR/frr
 
 # source the OVS/OVN compilation helper methods
 source $TOP_DIR/lib/neutron_plugins/ovs_source
@@ -31,6 +32,11 @@ function is_ovn_enabled {
     return 1
 }
 
+function is_frr_enabled {
+    [[ $ENABLE_FRR == "True" ]] && return 0
+    return 1
+}
+
 if [ -f $LIBDIR/${NEUTRON_AGENT}_agent ]; then
     source $LIBDIR/${NEUTRON_AGENT}_agent
 fi
@@ -38,6 +44,10 @@ fi
 if [[ "$1" == "stack" ]]; then
     case "$2" in
         install)
+            if is_frr_enabled; then
+                install_frr
+                configure_frr
+            fi
             ;;
         post-config)
             if is_service_enabled neutron-tag-ports-during-bulk-creation; then
@@ -141,6 +151,9 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled br-int-flows ; then
                 run_process br-int-flows "/bin/sh -c \"set +e; while true; do echo ovs-ofctl dump-flows br-int; ovs-ofctl dump-flows br-int ; sleep 30; done; \"" "$STACK_GROUP" root
             fi
+            if is_frr_enabled; then
+                init_frr
+            fi
             ;;
     esac
 elif [[ "$1" == "unstack" ]]; then
@@ -150,5 +163,12 @@ elif [[ "$1" == "unstack" ]]; then
     if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
        [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
         stop_new_ovs
+    fi
+    if is_frr_enabled; then
+        stop_frr
+    fi
+elif [[ "$1" == "clean" ]]; then
+    if is_frr_enabled; then
+        cleanup_frr
     fi
 fi

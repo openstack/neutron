@@ -1,0 +1,53 @@
+hostname {{ ansible_hostname }}
+log file /var/log/frr/frr.log
+service integrated-vtysh-config
+line vty
+frr version 7.0
+
+debug bfd peer
+debug bfd network
+debug bfd zebra
+
+debug bgp graceful-restart
+debug bgp neighbor-events
+debug bgp updates
+debug bgp update-groups
+
+router bgp 65000
+  bgp log-neighbor-changes
+  bgp graceful-shutdown
+
+  neighbor downlink peer-group
+  neighbor downlink remote-as external
+  neighbor downlink bfd
+  neighbor downlink bfd profile devstack
+  ! neighbor downlink capability extended-nexthop
+  neighbor leaf0-port interface peer-group downlink
+  neighbor leaf1-port interface peer-group downlink
+
+  address-family ipv4 unicast
+    redistribute connected
+    neighbor downlink route-map ipv4-set-src in
+  exit-address-family
+
+  address-family ipv6 unicast
+    redistribute connected
+    neighbor downlink activate
+    neighbor downlink prefix-list only-host-prefixes in
+  exit-address-family
+
+route-map ipv4-set-src permit 10
+ match ip address prefix-list only-host-prefixes
+ set src {{ datapath_spine_ipv4 }}
+
+ip prefix-list only-host-prefixes permit 0.0.0.0/0 ge 32
+
+ipv6 prefix-list only-host-prefixes permit ::/0 ge 128
+
+ip nht resolve-via-default
+
+bfd
+  profile devstack
+    detect-multiplier 10
+    transmit-interval 500
+    receive-interval 500

@@ -66,6 +66,12 @@
               - ^zuul.d/rally.yaml
               - ^zuul.d/tempest-multinode.yaml
               - ^zuul.d/tempest-singlenode.yaml
+        - neutron-ovn-bgp-tempest-multinode:
+            # neutron-ovn-bgp-tempest-multinode inherits irrelevant-files from
+            # its parent job neutron-tempest-plugin-ovn, defined in
+            # neutron-tempest-plugin, which are identical to this file's
+            # ovn-irrelevant-files
+            voting: false
 
     gate:
       jobs:

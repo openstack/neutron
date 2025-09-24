@@ -12,3 +12,11 @@ if is_neutron_legacy_enabled; then
     NEUTRON_CORE_PLUGIN_CONF_PATH=etc/neutron/plugins/ml2
     NEUTRON_CORE_PLUGIN_CONF=$NEUTRON_CORE_PLUGIN_CONF_PATH/ml2_conf.ini
 fi
+
+# FRR configurations
+ENABLE_FRR=$(trueorfalse False ENABLE_FRR)
+FRR_CONF_DIR=${FRR_CONF_DIR:-/etc/frr}
+FRR_SYSTEMD_SERVICE="frr.service"
+FRR_CONF_FILE=$FRR_CONF_DIR/frr.conf
+FRR_DAEMON_CONF_FILE=$FRR_CONF_DIR/daemons
+FRR_USE_BFD=$(trueorfalse False FRR_USE_BFD)
