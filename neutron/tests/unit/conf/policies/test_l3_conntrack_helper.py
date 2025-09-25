@@ -29,18 +29,29 @@ class L3ConntrackHelperAPITestCase(base.PolicyBaseTestCase):
         self.router = {
             'id': uuidutils.generate_uuid(),
             'project_id': self.project_id}
+        self.alt_router = {
+            'id': uuidutils.generate_uuid(),
+            'project_id': self.alt_project_id}
+
         self.target = {
             'project_id': self.project_id,
             'router_id': self.router['id'],
             'ext_parent_router_id': self.router['id']}
-
         self.alt_target = {
             'project_id': self.alt_project_id,
-            'router_id': self.router['id'],
-            'ext_parent_router_id': self.router['id']}
+            'router_id': self.alt_router['id'],
+            'ext_parent_router_id': self.alt_router['id']}
+
+        routers = {
+            self.router['id']: self.router,
+            self.alt_router['id']: self.alt_router,
+        }
+
+        def get_router(context, router_id, fields=None):
+            return routers[router_id]
 
         self.plugin_mock = mock.Mock()
-        self.plugin_mock.get_router.return_value = self.router
+        self.plugin_mock.get_router.side_effect = get_router
         mock.patch(
             'neutron_lib.plugins.directory.get_plugin',
             return_value=self.plugin_mock).start()
