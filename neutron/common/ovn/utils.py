@@ -1130,42 +1130,39 @@ def _sync_ha_chassis_group(nb_idl, hcg_info, txn):
     high_prio_ch_name = None
 
     # Check if the HA Chassis Group existed before. If so, re-calculate
-    # the canditates in case something changed and keep the highest priority
+    # the candidates in case something changed and keep the highest priority
     # chassis in the group (if it's an eligible candidate) with the highest
     # priority to avoid external ports from moving around
-    if ha_ch_grp:
-        # Remove any chassis that no longer belongs to the AZ hints
-        # or is ignored
-        all_ch = {ch.chassis_name for ch in ha_ch_grp.ha_chassis}
-        ch_to_del = all_ch - candidates
-        for ch in ch_to_del:
-            txn.add(nb_idl.ha_chassis_group_del_chassis(
-                hcg_info.group_name, ch, if_exists=True))
+    ch_existing_dict = {
+        ha_chassis.chassis_name: ha_chassis.priority for
+        ha_chassis in ha_ch_grp.ha_chassis} if ha_ch_grp else {}
+    ch_delete = set(ch_existing_dict) - candidates
+    ch_keep = set(ch_existing_dict) & candidates
+    # The number of chassis to add will depend on the chassis to keep and the
+    # maximum chassis number.
+    ch_add_list = list(candidates - set(ch_existing_dict))
+    if ch_add_list:
+        num_to_add = min(max_chassis_number - len(ch_keep), len(ch_add_list))
+        ch_add_list = random.sample(ch_add_list, num_to_add)
 
-        # Find the highest priority chassis in the HA Chassis Group
-        high_prio_ch = max(ha_ch_grp.ha_chassis, key=lambda x: x.priority,
-                           default=None)
-        if (high_prio_ch and
-                high_prio_ch.chassis_name in candidates):
-            # If found, keep it as the highest priority chassis in the group
-            high_prio_ch_name = high_prio_ch.chassis_name
-            txn.add(nb_idl.ha_chassis_group_add_chassis(
-                hcg_info.group_name, high_prio_ch.chassis_name,
-                priority=priority))
-            candidates.remove(high_prio_ch.chassis_name)
-            priority -= 1
-            max_chassis_number -= 1
-            LOG.debug('Keeping chassis %s as the highest priority chassis '
-                      'for HA Chassis Group %s', high_prio_ch.chassis_name,
-                      hcg_info.group_name)
+    # Delete chassis.
+    for ch in ch_delete:
+        txn.add(nb_idl.ha_chassis_group_del_chassis(
+            hcg_info.group_name, ch, if_exists=True))
 
-    # random.sample() second parameter needs to be <= the list size,
-    # that's why we need to check for the max value here
-    max_chassis_number = min(max_chassis_number, len(candidates))
-    # Limit the number of members and randomize the order so each group,
-    # even if they belonging to the same availability zones do not
-    # necessarily end up with the same Chassis as the highest priority one.
-    for ch in random.sample(list(candidates), max_chassis_number):
+    # Create an ordered list (by priority) of chassis names. This list will
+    # contain:
+    # * First the current chassis to be kept and this list will be ordered
+    #   with the current order; if the highest priority chassis is present,
+    #   it will keep the highest priority again.
+    # * Second, the new chassis to be added. Because "ch_add" has been randomly
+    #   generated, this order will be used.
+    for _delete in ch_delete:
+        ch_existing_dict.pop(_delete)
+    ch_ordered_list = sorted(list(ch_existing_dict.items()),
+                             key=lambda x: x[1], reverse=True)
+    ch_ordered_list = [ch[0] for ch in ch_ordered_list] + ch_add_list
+    for ch in ch_ordered_list:
         txn.add(nb_idl.ha_chassis_group_add_chassis(
             hcg_info.group_name, ch, priority=priority))
         priority -= 1

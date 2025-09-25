@@ -3062,6 +3062,147 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             expected_calls, any_order=True)
 
+    @staticmethod
+    def _create_fake_hcg(name, chassis_prio):
+        ha_chassis = []
+        for chassis_name, prio in chassis_prio.items():
+            hc = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+                attrs={'chassis_name': chassis_name, 'priority': prio})
+            ha_chassis.append(hc)
+
+        hcg_attrs = {'name': name, 'ha_chassis': ha_chassis}
+        return fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs=hcg_attrs)
+
+    def test__sync_ha_chassis_group_no_hcg(self):
+        network_id = uuidutils.generate_uuid()
+        hcg_info = self._build_hcg_info(network_id=network_id)
+        self.nb_ovn.lookup.return_value = None
+        ovn_utils._sync_ha_chassis_group(self.nb_ovn, hcg_info, mock.Mock())
+        self.nb_ovn.ha_chassis_group_add.assert_called_once_with(
+            hcg_info.group_name, may_exist=True,
+            external_ids=hcg_info.external_ids)
+        self.nb_ovn.ha_chassis_group_del_chassis.assert_not_called()
+        add_calls = [
+            mock.call(hcg_info.group_name, 'ch0', priority=mock.ANY),
+            mock.call(hcg_info.group_name, 'ch1', priority=mock.ANY),
+            mock.call(hcg_info.group_name, 'ch2', priority=mock.ANY),
+            mock.call(hcg_info.group_name, 'ch3', priority=mock.ANY),
+        ]
+        self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
+            add_calls, any_order=True)
+
+    def test__sync_ha_chassis_group_hcg_no_delete(self):
+        network_id = uuidutils.generate_uuid()
+        hcg_info = self._build_hcg_info(network_id=network_id)
+        max_prio = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+        chassis_prio = {
+            'ch0': max_prio, 'ch1': max_prio - 1,
+            'ch2': max_prio - 2, 'ch3': max_prio - 3,
+        }
+        hcg = self._create_fake_hcg(hcg_info.group_name, chassis_prio)
+        self.nb_ovn.lookup.return_value = hcg
+        hcg_uuid, prio_chassis = ovn_utils._sync_ha_chassis_group(
+            self.nb_ovn, hcg_info, mock.Mock())
+
+        self.assertEqual(hcg.uuid, hcg_uuid)
+        self.assertEqual(prio_chassis, 'ch0')
+        self.nb_ovn.ha_chassis_group_del_chassis.assert_not_called()
+        add_calls = [
+            mock.call(hcg_info.group_name, 'ch0', priority=max_prio),
+            mock.call(hcg_info.group_name, 'ch1', priority=max_prio - 1),
+            mock.call(hcg_info.group_name, 'ch2', priority=max_prio - 2),
+            mock.call(hcg_info.group_name, 'ch3', priority=max_prio - 3),
+        ]
+        self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
+            add_calls, any_order=True)
+
+    def test__sync_ha_chassis_group_hcg_delete(self):
+        network_id = uuidutils.generate_uuid()
+        hcg_info = self._build_hcg_info(network_id=network_id,
+                                        with_ignore_chassis=True)
+        max_prio = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+        chassis_prio = {
+            'ch0': max_prio, 'ch1': max_prio - 1,
+            'ch2': max_prio - 2, 'ch3': max_prio - 3,
+        }
+        hcg = self._create_fake_hcg(hcg_info.group_name, chassis_prio,)
+        self.nb_ovn.lookup.return_value = hcg
+        hcg_uuid, prio_chassis = ovn_utils._sync_ha_chassis_group(
+            self.nb_ovn, hcg_info, mock.Mock())
+
+        self.assertEqual(hcg.uuid, hcg_uuid)
+        self.assertEqual(prio_chassis, 'ch0')
+        del_calls = [
+            mock.call(hcg_info.group_name, 'ch1', if_exists=True),
+            mock.call(hcg_info.group_name, 'ch2', if_exists=True),
+        ]
+        self.nb_ovn.ha_chassis_group_del_chassis.assert_has_calls(
+            del_calls, any_order=True)
+        add_calls = [
+            mock.call(hcg_info.group_name, 'ch0', priority=max_prio),
+            mock.call(hcg_info.group_name, 'ch3', priority=max_prio - 1),
+        ]
+        self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
+            add_calls, any_order=True)
+
+    def test__sync_ha_chassis_group_hcg_new_chassis(self):
+        network_id = uuidutils.generate_uuid()
+        hcg_info = self._build_hcg_info(network_id=network_id)
+        max_prio = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+        chassis_prio = {
+            'ch0': max_prio, 'ch1': max_prio - 1,
+        }
+        hcg = self._create_fake_hcg(hcg_info.group_name, chassis_prio)
+        self.nb_ovn.lookup.return_value = hcg
+        hcg_uuid, prio_chassis = ovn_utils._sync_ha_chassis_group(
+            self.nb_ovn, hcg_info, mock.Mock())
+
+        self.assertEqual(hcg.uuid, hcg_uuid)
+        self.assertEqual(prio_chassis, 'ch0')
+        self.nb_ovn.ha_chassis_group_del_chassis.assert_not_called()
+        add_calls = [
+            mock.call(hcg_info.group_name, 'ch0', priority=max_prio),
+            mock.call(hcg_info.group_name, 'ch1', priority=max_prio - 1),
+            mock.call(hcg_info.group_name, 'ch2', priority=mock.ANY),
+            mock.call(hcg_info.group_name, 'ch3', priority=mock.ANY),
+        ]
+        self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
+            add_calls, any_order=True)
+
+    def test__sync_ha_chassis_group_hcg_new_chassis_remove_highest(self):
+        network_id = uuidutils.generate_uuid()
+        hcg_info = self._build_hcg_info(network_id=network_id,
+                                        with_ignore_chassis=True)
+        max_prio = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+        # NOTE: the highest priority chassis (ch1) is removed. A new highest
+        # priority chassis is assigned.
+        chassis_prio = {
+            'ch0': max_prio - 1, 'ch1': max_prio,
+            'ch2': max_prio - 2,
+        }
+        hcg = self._create_fake_hcg(hcg_info.group_name, chassis_prio,)
+        self.nb_ovn.lookup.return_value = hcg
+        hcg_uuid, prio_chassis = ovn_utils._sync_ha_chassis_group(
+            self.nb_ovn, hcg_info, mock.Mock())
+
+        self.assertEqual(hcg.uuid, hcg_uuid)
+        self.assertEqual(prio_chassis, 'ch0')
+        del_calls = [
+            mock.call(hcg_info.group_name, 'ch1', if_exists=True),
+            mock.call(hcg_info.group_name, 'ch2', if_exists=True),
+        ]
+        self.nb_ovn.ha_chassis_group_del_chassis.assert_has_calls(
+            del_calls, any_order=True)
+        # NOTE: because the chassis list already present in the HCG keeps the
+        # same order, ch0 will receive the highest priority.
+        add_calls = [
+            mock.call(hcg_info.group_name, 'ch0', priority=max_prio),
+            mock.call(hcg_info.group_name, 'ch3', priority=max_prio - 1),
+        ]
+        self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
+            add_calls, any_order=True)
+
     @mock.patch.object(mech_driver, 'LOG')
     def test_responsible_for_ports_allocation(self, mock_log):
         rp1 = str(place_utils.device_resource_provider_uuid(
