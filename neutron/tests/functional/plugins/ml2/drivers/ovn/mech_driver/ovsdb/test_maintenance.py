@@ -1077,26 +1077,6 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert load balancer for port forwarding is gone
         self.assertFalse(self._find_pf_lb(router_id, fip_id))
 
-    def test_check_for_ha_chassis_group(self):
-        net1 = self._create_network('network1test', external=False)
-        self._create_subnet('subnet1test', net1['id'])
-        p1 = self._create_port('testp1', net1['id'], vnic_type='direct')
-
-        # Remove the HA Chassis Group register, created during the port
-        # creation.
-        self.nb_api.set_lswitch_port(p1['id'], ha_chassis_group=[]).execute(
-            check_error=True)
-        hcg_uuid = next(iter(self.nb_api._tables['HA_Chassis_Group'].rows))
-        self.nb_api.ha_chassis_group_del(hcg_uuid).execute(check_error=True)
-        lsp = self.nb_api.lookup('Logical_Switch_Port', p1['id'])
-        self.assertEqual([], lsp.ha_chassis_group)
-
-        self.assertRaises(periodics.NeverAgain,
-                          self.maint.check_for_ha_chassis_group)
-        hcg_uuid = next(iter(self.nb_api._tables['HA_Chassis_Group'].rows))
-        lsp = self.nb_api.lookup('Logical_Switch_Port', p1['id'])
-        self.assertEqual(hcg_uuid, lsp.ha_chassis_group[0].uuid)
-
     def _test_check_provider_distributed_ports(
             self, is_distributed_fip, net_type, expected_value=None):
         cfg.CONF.set_override(

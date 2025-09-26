@@ -601,33 +601,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
-    def check_for_ha_chassis_group(self):
-        external_ports = self._nb_idl.db_find_rows(
-            'Logical_Switch_Port', ('type', '=', ovn_const.LSP_TYPE_EXTERNAL)
-        ).execute(check_error=True)
-
-        context = n_context.get_admin_context()
-        with self._nb_idl.transaction(check_error=True) as txn:
-            for port in external_ports:
-                network_id = port.external_ids.get(
-                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY, '').replace(
-                        ovn_const.OVN_NAME_PREFIX, '')
-                if not network_id:
-                    continue
-                ha_ch_grp, high_prio_ch = utils.sync_ha_chassis_group_network(
-                    context, self._nb_idl, self._sb_idl, port.name,
-                    network_id, txn)
-                txn.add(self._nb_idl.set_lswitch_port(
-                    port.name, ha_chassis_group=ha_ch_grp))
-
-        raise periodics.NeverAgain()
-
-    # A static spacing value is used here, but this method will only run
-    # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(
-        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
-        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
-        run_immediately=True)
     def check_localnet_port_has_learn_fdb(self):
         ports = self._nb_idl.db_find_rows(
             "Logical_Switch_Port", ("type", "=", ovn_const.LSP_TYPE_LOCALNET)
