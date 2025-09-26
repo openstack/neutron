@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    It is assumed now that OVN supports external ports. This functionality
+    was added in OVN v20.03.0.
