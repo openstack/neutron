@@ -715,14 +715,27 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_configure_dhcp_for_network(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         dhcp.init_host()
+        new_fake_network = copy.deepcopy(fake_network)
+        new_fake_network.ports.append(fake_dhcp_port)
         with mock.patch.object(
-                dhcp, 'update_isolated_metadata_proxy') as ump, \
+                dhcp, 'call_driver', return_value=True) as call_driver_mock, \
             mock.patch.object(
-                dhcp, 'call_driver', return_value=True):
+                dhcp,
+                'safe_get_network_info',
+                return_value=new_fake_network
+            ), \
+            mock.patch.object(
+                dhcp, 'update_isolated_metadata_proxy') as ump:
             dhcp.configure_dhcp_for_network(fake_network)
 
-        ump.assert_called_once_with(fake_network)
+        call_driver_mock.assert_called_once_with('enable', fake_network)
+        ump.assert_called_once_with(new_fake_network)
         self.assertIn(fake_network.id, dhcp.cache.get_network_ids())
+        self.assertIn(fake_port1.id, dhcp.cache.get_port_ids(fake_network.id))
+        self.assertIn(
+            fake_dhcp_port.id,
+            dhcp.cache.get_port_ids(fake_network.id)
+        )
         self.assertIn(fake_port1.id, dhcp.dhcp_ready_ports)
 
     def test_configure_dhcp_for_network_no_subnets_with_dhcp_enabled(self):
