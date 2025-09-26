@@ -189,14 +189,16 @@ SUPPORTED_DHCP_OPTS_MAPPING = {
         '210': 'path_prefix',
         '150': 'tftp_server_address',
         '255': 'next_server'},
-    6: {'server-id': 'server_id',
+    6: {'bootfile-name': 'bootfile_name',
+        'server-id': 'server_id',
         'dns-server': 'dns_server',
         'domain-search': 'domain_search',
         'ia-addr': 'ia_addr',
         '2': 'server_id',
         '5': 'ia_addr',
         '24': 'domain_search',
-        '23': 'dns_server'},
+        '23': 'dns_server',
+        '59': 'bootfile_name'},
 }
 
 # Baremetal specific DHCP options for VNIC_BAREMETAL ports
