@@ -2993,8 +2993,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             'fake-net-id', fake_txn)
 
         # Assert it creates the HA Chassis Group
-        ext_ids = {ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
-                   ','.join(hcg_info.az_hints)}
+        ext_ids = {
+            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(hcg_info.az_hints),
+            ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: 'fake-net-id',
+        }
         self.nb_ovn.ha_chassis_group_add.assert_called_once_with(
             hcg_info.group_name, may_exist=True, external_ids=ext_ids)
 

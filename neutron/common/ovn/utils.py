@@ -16,6 +16,7 @@ import functools
 import inspect
 import os
 import random
+import typing
 
 import netaddr
 from neutron_lib.api.definitions import external_net
@@ -64,11 +65,32 @@ PortExtraDHCPValidation = collections.namedtuple(
 BPInfo = collections.namedtuple(
     'BPInfo', ['bp_param', 'vnic_type', 'capabilities'])
 
-HAChassisGroupInfo = collections.namedtuple(
-    'HAChassisGroupInfo', ['group_name', 'chassis_list', 'az_hints',
-                           'ignore_chassis', 'external_ids'])
-
 _OVS_PERSIST_UUID = _SENTINEL = object()
+
+
+class HAChassisGroupInfo:
+    def __init__(self,
+                 group_name: str,
+                 chassis_list: list[typing.Any],
+                 az_hints: list[str],
+                 ignore_chassis: set[str],
+                 external_ids: dict[str, typing.Any],
+                 priority: dict[str, typing.Any] | None = None):
+        if priority:
+            # If present, the "priority" dictionary must contain all the
+            # chassis names present in "chassis_list".
+            ch_name_list = [ch.name for ch in chassis_list]
+            if sorted(ch_name_list) != sorted(list(priority.keys())):
+                raise RuntimeError(_(
+                    'In a "HAChassisGroupInfo", the "chassis_list" must have '
+                    'the same chassis as the "priority" dictionary'))
+
+        self.group_name = group_name
+        self.chassis_list = chassis_list
+        self.az_hints = az_hints
+        self.ignore_chassis = ignore_chassis
+        self.external_ids = external_ids
+        self.priority = priority
 
 
 class OvsdbClientCommand:
@@ -1112,6 +1134,16 @@ def _sync_ha_chassis_group(nb_idl, hcg_info, txn):
     :returns: The HA Chassis Group UUID or the HA Chassis Group command object,
               The name of the Chassis with the highest priority (could be None)
     """
+    def get_priority(ch_name):
+        nonlocal priority
+        nonlocal hcg_info
+        if hcg_info.priority:
+            return hcg_info.priority[ch_name]
+
+        _priority = int(priority)
+        priority -= 1
+        return _priority
+
     # If there are Chassis marked for hosting external ports create a HA
     # Chassis Group per external port, otherwise do it at the network level
     candidates = _filter_candidates_for_ha_chassis_group(hcg_info)
@@ -1164,8 +1196,7 @@ def _sync_ha_chassis_group(nb_idl, hcg_info, txn):
     ch_ordered_list = [ch[0] for ch in ch_ordered_list] + ch_add_list
     for ch in ch_ordered_list:
         txn.add(nb_idl.ha_chassis_group_add_chassis(
-            hcg_info.group_name, ch, priority=priority))
-        priority -= 1
+            hcg_info.group_name, ch, priority=get_priority(ch)))
         if not high_prio_ch_name:
             high_prio_ch_name = ch
 
@@ -1222,10 +1253,57 @@ def sync_ha_chassis_group_network(context, nb_idl, sb_idl, port_id,
     plugin = directory.get_plugin()
     resource = plugin.get_network(context, network_id)
     az_hints = common_utils.get_az_hints(resource)
-    external_ids = {constants.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints)}
+    external_ids = {constants.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints),
+                    constants.OVN_NETWORK_ID_EXT_ID_KEY: network_id,
+                    }
     hcg_info = HAChassisGroupInfo(
         group_name=group_name, chassis_list=chassis_list, az_hints=az_hints,
         ignore_chassis=ignore_chassis, external_ids=external_ids)
+    return _sync_ha_chassis_group(nb_idl, hcg_info, txn)
+
+
+@ovn_context(idl_var_name='nb_idl')
+def sync_ha_chassis_group_network_unified(context, nb_idl, sb_idl, network_id,
+                                          router_id, chassis_prio, txn):
+    """Creates a single HA_Chassis_Group for a given network
+
+    This method creates a single HA_Chassis_Group for a network. This method
+    is called when a network with external ports is connected to a router;
+    in order to provide N/S connectivity all external ports need to be bound
+    to the same chassis as the gateway Logical_Router_Port.
+
+    The chassis list and the priority is already provided. This method checks
+    if all gateway chassis provided have external connectivity to this network.
+    """
+    chassis_physnets = sb_idl.get_chassis_and_physnets()
+    group_name = ovn_name(network_id)
+    ls = nb_idl.get_lswitch(group_name)
+
+    # It is expected to be called for a non-tunnelled network with a physical
+    # network assigned.
+    physnet = ls.external_ids.get(constants.OVN_PHYSNET_EXT_ID_KEY)
+    if physnet:
+        missing_mappings = set()
+        for ch_name in chassis_prio:
+            if physnet not in chassis_physnets[ch_name]:
+                missing_mappings.add(ch_name)
+
+        if missing_mappings:
+            LOG.warning('The following chassis do not have mapped the '
+                        f'physical network {physnet}: {missing_mappings}')
+
+    chassis_list = [sb_idl.lookup('Chassis', ch_name, None)
+                    for ch_name in chassis_prio.keys()]
+    plugin = directory.get_plugin()
+    resource = plugin.get_network(context, network_id)
+    az_hints = common_utils.get_az_hints(resource)
+    external_ids = {constants.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints),
+                    constants.OVN_NETWORK_ID_EXT_ID_KEY: network_id,
+                    constants.OVN_ROUTER_ID_EXT_ID_KEY: router_id,
+                    }
+    hcg_info = HAChassisGroupInfo(
+        group_name=group_name, chassis_list=chassis_list, az_hints=az_hints,
+        ignore_chassis=set(), external_ids=external_ids, priority=chassis_prio)
     return _sync_ha_chassis_group(nb_idl, hcg_info, txn)
 
 

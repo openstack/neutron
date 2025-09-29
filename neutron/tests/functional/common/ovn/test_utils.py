@@ -15,6 +15,7 @@
 import ddt
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
@@ -211,6 +212,54 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             idlutils.RowNotFound,
             self.nb_api.ha_chassis_group_get(hcg_name).execute,
             check_error=True)
+
+    def _test_sync_unify_ha_chassis_group_network(self, create_hcg=False):
+        physnet = 'physnet1'
+        net_ext_args = {provider_net.NETWORK_TYPE: 'vlan',
+                        provider_net.PHYSICAL_NETWORK: physnet,
+                        external_net.EXTERNAL: True}
+        net_ext = self._make_network(self.fmt, 'test-ext-net', True,
+                                     as_admin=True,
+                                     arg_list=tuple(net_ext_args.keys()),
+                                     **net_ext_args)['network']
+        other_config = {'ovn-bridge-mappings': physnet + ':br-ex'}
+        ch1 = self.add_fake_chassis('host1', azs=[], enable_chassis_as_gw=True,
+                                    other_config=other_config)
+        ch2 = self.add_fake_chassis('host2', azs=[], enable_chassis_as_gw=True,
+                                    other_config=other_config)
+        ch3 = self.add_fake_chassis('host3', azs=[], enable_chassis_as_gw=True)
+        group_name = utils.ovn_name(net_ext['id'])
+
+        # Create a pre-existing HCG.
+        if create_hcg:
+            chassis_list = [self.sb_api.lookup('Chassis', ch2)]
+            hcg_info = utils.HAChassisGroupInfo(
+                group_name=group_name, chassis_list=chassis_list,
+                az_hints=[], ignore_chassis=set(), external_ids={})
+            with self.nb_api.transaction(check_error=True) as txn:
+                utils._sync_ha_chassis_group(self.nb_api, hcg_info, txn)
+            hcg = self.nb_api.lookup('HA_Chassis_Group', group_name)
+            self.assertEqual(1, len(hcg.ha_chassis))
+            self.assertEqual(ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY,
+                             hcg.ha_chassis[0].priority)
+
+        # Invoke the sync method
+        chassis_prio = {ch1: 10, ch2: 20, ch3: 30}
+        with self.nb_api.transaction(check_error=True) as txn:
+            utils.sync_ha_chassis_group_network_unified(
+                self.context, self.nb_api, self.sb_api, net_ext['id'],
+                'router-id', chassis_prio, txn)
+
+        hcg = self.nb_api.lookup('HA_Chassis_Group', group_name)
+        self.assertEqual(3, len(hcg.ha_chassis))
+        for hc in hcg.ha_chassis:
+            self.assertEqual(chassis_prio[hc.chassis_name], hc.priority)
+
+    def test_sync_unify_ha_chassis_group_network_no_hcg(self):
+        self._test_sync_unify_ha_chassis_group_network()
+
+    def test_sync_unify_ha_chassis_group_network_existing_hcg(self):
+        self._test_sync_unify_ha_chassis_group_network(create_hcg=True)
 
 
 @utils.ovn_context()
