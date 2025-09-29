@@ -30,6 +30,7 @@ from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt
 from neutron_lib.api.definitions import extraroute
+from neutron_lib.api.definitions import extraroute_atomic
 from neutron_lib.api.definitions import filter_validation
 from neutron_lib.api.definitions import fip_pf_description
 from neutron_lib.api.definitions import fip_pf_detail
@@ -114,6 +115,7 @@ from neutron.extensions import security_groups_default_rules
 ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     l3.ALIAS,
     extraroute.ALIAS,
+    extraroute_atomic.ALIAS,
     l3_ext_gw_mode.ALIAS,
     fip_pf_detail.ALIAS,
     fip_port_details.ALIAS,
