@@ -185,6 +185,11 @@ ovs_opts = [
                      "limit features which will add meter kbps rules "
                      "and apply them to the OpenFlow flow table "
                      "BANDWIDTH_RATE_LIMIT for VM ports."),
+    cfg.BoolOpt('trunk_enabled', default=True,
+                help=_('Enable agent side trunk extension. If you do not '
+                       'need the trunk extension, you can safely set '
+                       'config option to False, it will avoid the agent '
+                       'to declare some queues.')),
 ]
 
 agent_opts = [

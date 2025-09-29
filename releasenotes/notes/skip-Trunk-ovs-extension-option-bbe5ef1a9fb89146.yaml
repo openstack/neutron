@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    An new option name ``trunk_enabled`` has been added to
+    ``neutron-openvswitch-agent`` under ``OVS`` group. This new option can be
+    set to ``False`` in order to disable loading the ``trunk`` extension on
+    agent side. The default value for this option is ``True`` to keep backward
+    compatibility with previous deployments. The recommendation is to set this
+    option to ``False`` if you do not use the ``trunk`` extension, so that
+    the number of queues created by the RPCServer will reduce. This can have
+    a very good impact on large-scale scenario using RabbitMQ message broker.
