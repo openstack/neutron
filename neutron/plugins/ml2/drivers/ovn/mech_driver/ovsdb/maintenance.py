@@ -999,26 +999,32 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    # TODO(ralonsoh): Remove this method in the E+2 cycle (SLURP release)
+    # TODO(ralonsoh): Remove this method in the G+4 cycle (SLURP release)
     @has_lock_periodic(
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
-    def set_network_type(self):
-        """Add the network type to the Logical_Switch registers"""
+    def set_network_type_and_physnet(self):
+        """Add the network type and physnet to the Logical_Switch registers"""
         context = n_context.get_admin_context()
         net_segments = network_obj.NetworkSegment.get_objects(context)
-        net_segments = {seg.network_id: seg.network_type
-                        for seg in net_segments}
+        net_type = {seg.network_id: seg.network_type for seg in net_segments}
+        net_physnet = {seg.network_id: seg.physical_network
+                       for seg in net_segments}
         cmds = []
         for ls in self._nb_idl.ls_list().execute(check_error=True):
             if ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY not in ls.external_ids:
                 continue
 
-            if ovn_const.OVN_NETTYPE_EXT_ID_KEY not in ls.external_ids:
-                net_id = utils.get_neutron_name(ls.name)
+            net_id = utils.get_neutron_name(ls.name)
+            physnet = net_physnet[net_id]
+            if (ovn_const.OVN_NETTYPE_EXT_ID_KEY not in ls.external_ids or
+                    (ovn_const.OVN_PHYSNET_EXT_ID_KEY not in ls.external_ids
+                     and physnet)):
                 external_ids = {
-                    ovn_const.OVN_NETTYPE_EXT_ID_KEY: net_segments[net_id]}
+                    ovn_const.OVN_NETTYPE_EXT_ID_KEY: net_type[net_id]}
+                if physnet:
+                    external_ids[ovn_const.OVN_PHYSNET_EXT_ID_KEY] = physnet
                 cmds.append(self._nb_idl.db_set(
                     'Logical_Switch', ls.uuid, ('external_ids', external_ids)))
 

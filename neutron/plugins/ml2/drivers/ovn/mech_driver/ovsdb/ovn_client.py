@@ -2117,6 +2117,8 @@ class OVNClient:
             # NOTE(twilson): in the case of multiple segments, or when all
             # segments are removed, NETWORK_TYPE=None, which is invalid ovsdb
             ovn_const.OVN_NETTYPE_EXT_ID_KEY: network.get(pnet.NETWORK_TYPE),
+            ovn_const.OVN_PHYSNET_EXT_ID_KEY:
+                network.get(pnet.PHYSICAL_NETWORK),
         }
 
         # Enable IGMP snooping if igmp_snooping_enable is enabled in Neutron

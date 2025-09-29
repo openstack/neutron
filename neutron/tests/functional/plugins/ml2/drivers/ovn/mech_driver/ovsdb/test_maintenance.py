@@ -1257,20 +1257,42 @@ class TestMaintenance(_TestMaintenanceHelper):
         lr = self.nb_api.lookup('Logical_Router', utils.ovn_name(router['id']))
         self.assertEqual([], lr.ports[0].gateway_chassis)
 
-    def test_set_network_type(self):
+    def test_set_network_type_and_physnet(self):
         net1 = self._create_network(uuidutils.generate_uuid())
-        ls_name = utils.ovn_name(net1['id'])
-        self.nb_api.db_remove(
-            'Logical_Switch', ls_name, 'external_ids',
-            ovn_const.OVN_NETTYPE_EXT_ID_KEY).execute(check_error=True)
-        ls = self.nb_api.lookup('Logical_Switch', ls_name)
-        self.assertIsNone(ls.external_ids.get(
-            ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+        net2 = self._create_network(uuidutils.generate_uuid(),
+                                    provider='physnet1', net_type='vlan')
+        ls1_name = utils.ovn_name(net1['id'])
+        ls2_name = utils.ovn_name(net2['id'])
+        for _ls_name in (ls1_name, ls2_name):
+            self.nb_api.db_remove(
+                'Logical_Switch', _ls_name, 'external_ids',
+                ovn_const.OVN_NETTYPE_EXT_ID_KEY).execute(check_error=True)
+            self.nb_api.db_remove(
+                'Logical_Switch', _ls_name, 'external_ids',
+                ovn_const.OVN_PHYSNET_EXT_ID_KEY).execute(check_error=True)
+            ls = self.nb_api.lookup('Logical_Switch', _ls_name)
+            self.assertIsNone(ls.external_ids.get(
+                ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+            self.assertIsNone(ls.external_ids.get(
+                ovn_const.OVN_PHYSNET_EXT_ID_KEY))
 
-        self.assertRaises(periodics.NeverAgain, self.maint.set_network_type)
-        ls = self.nb_api.lookup('Logical_Switch', ls_name)
-        self.assertEqual(net1[provnet_apidef.NETWORK_TYPE],
-                         ls.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.set_network_type_and_physnet)
+        ls1 = self.nb_api.lookup('Logical_Switch', ls1_name)
+        self.assertEqual(
+            net1[provnet_apidef.NETWORK_TYPE],
+            ls1.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+        self.assertNotIn(
+            ovn_const.OVN_PHYSNET_EXT_ID_KEY,
+            ls1.external_ids.get)
+
+        ls2 = self.nb_api.lookup('Logical_Switch', ls2_name)
+        self.assertEqual(
+            net2[provnet_apidef.NETWORK_TYPE],
+            ls2.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+        self.assertEqual(
+            net2[provnet_apidef.PHYSICAL_NETWORK],
+            ls2.external_ids.get(ovn_const.OVN_PHYSNET_EXT_ID_KEY))
 
     def test_check_network_broadcast_arps_to_all_routers(self):
         net = self._create_network('net', external=True)
