@@ -53,11 +53,15 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
 
     @property
     def sb_idl_tables(self):
-        return []
+        return [
+            'Port_Binding',
+        ]
 
     @property
     def sb_idl_events(self):
-        return []
+        return [
+            events.PortBindingLrpMacEvent,
+        ]
 
     def create_bgp_bridge(self, bridge_name):
         bgp_bridge = bridge.BGPChassisBridge(self, bridge_name)

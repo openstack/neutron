@@ -18,6 +18,7 @@ from ovsdbapp.backend.ovs_idl import event as row_event
 
 from neutron._i18n import _
 from neutron.agent.ovn.agent import ovsdb
+from neutron.common.ovn import constants as ovn_const
 from neutron.services.bgp import constants
 
 LOG = log.getLogger(__name__)
@@ -163,3 +164,41 @@ class NewBgpBridgeEvent(BGPAgentEvent):
 
     def run(self, event, row, old):
         self.bgp_agent.create_bgp_bridge(row.name)
+
+
+class PortBindingLrpMacEvent(BGPAgentEvent):
+    """Port_Binding update event - set LRP MAC."""
+    TABLE = 'Port_Binding'
+    EVENTS = (BGPAgentEvent.ROW_CREATE, BGPAgentEvent.ROW_UPDATE,)
+
+    def __init__(self, agent_api):
+        super().__init__(agent_api)
+        self.chassis = ovsdb.get_own_chassis_name(agent_api.ovs_idl)
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        if row.chassis and row.chassis[0].name != self.chassis:
+            return False
+        if row.type != ovn_const.PB_TYPE_L3GATEWAY:
+            return False
+        if constants.LRP_NETWORK_NAME_EXT_ID_KEY not in row.external_ids:
+            return False
+        try:
+            # Only check if the MAC is populated
+            row.mac[0].split(' ', 1)[0]
+        except IndexError:
+            LOG.error("Failed to get MAC address from port binding %s",
+                      row)
+            return False
+        return True
+
+    def run(self, event, row, old):
+        lrp_mac = row.mac[0].split(' ', 1)[0]
+        network_name = row.external_ids[constants.LRP_NETWORK_NAME_EXT_ID_KEY]
+        try:
+            bridge = self.bgp_agent.bgp_bridges[network_name]
+        except KeyError:
+            LOG.warning("No BGP bridge found for network %s", network_name)
+            return
+        bridge.lrp_mac = lrp_mac
