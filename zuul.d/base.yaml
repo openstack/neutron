@@ -165,7 +165,7 @@
 
 - job:
     name: neutron-ovs-tempest-plugin-iptables_hybrid-nftables
-    parent: neutron-tempest-plugin-openvswitch-iptables_hybrid
+    parent: neutron-tempest-plugin-openvswitch-iptables_hybrid-2025-2
     pre-run: playbooks/install_nftables.yaml
     vars:
       devstack_local_conf:
@@ -178,7 +178,7 @@
 # replacement finishes. See LP#2112313.
 - job:
     name: neutron-tempest-plugin-ovn-with-ovn-metadata-agent
-    parent: neutron-tempest-plugin-ovn
+    parent: neutron-tempest-plugin-ovn-2025-2
     vars:
       devstack_services:
         q-ovn-metadata-agent: true
