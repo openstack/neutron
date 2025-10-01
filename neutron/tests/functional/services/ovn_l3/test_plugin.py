@@ -896,3 +896,108 @@ class TestRouter(base.TestOVNFunctionalBase):
             {'chassis-01': {1: 2, 2: 2},
              'chassis-02': {1: 2, 2: 2}},
             self._get_gwc_dict())
+
+    def test_update_subnet_gateway_ipv6(self):
+        """Test updating IPv6 subnet gateway updates OVN routes correctly.
+
+        Bug #2100294: When updating an IPv6 subnet's gateway, the default
+        route in OVN should be updated with the correct IPv6 prefix (::/0)
+        instead of IPv4 prefix (0.0.0.0/0).
+        """
+        # Create external network with IPv6 subnet
+        net_arg = {pnet.NETWORK_TYPE: 'flat',
+                   external_net.EXTERNAL: True,
+                   pnet.PHYSICAL_NETWORK: 'physnet1'}
+        network = self._make_network(
+            self.fmt, 'ext_net', True, as_admin=True,
+            arg_list=(pnet.NETWORK_TYPE, external_net.EXTERNAL,
+                      pnet.PHYSICAL_NETWORK),
+            **net_arg)
+
+        # Create IPv6 subnet with initial gateway
+        subnet = self._make_subnet(
+            self.fmt, network, gateway='fd00::1', cidr='fd00::/64',
+            allocation_pools=[{'start': 'fd00::10', 'end': 'fd00::100'}],
+            ip_version=n_consts.IP_VERSION_6,
+            ipv6_ra_mode=n_consts.IPV6_SLAAC,
+            ipv6_address_mode=n_consts.IPV6_SLAAC)['subnet']
+
+        # Create router with external gateway
+        gw_info = {'network_id': network['network']['id']}
+        router = self._create_router('test_router', gw_info=gw_info)
+
+        # Get the logical router from OVN
+        lr = self.nb_api.lr_get(ovn_utils.ovn_name(router['id'])).execute()
+
+        # Verify initial default route exists with correct IPv6 prefix
+        routes = ovn_utils.get_lrouter_ext_gw_static_route(lr)
+        self.assertEqual(len(routes), 1)
+        self.assertEqual(routes[0].ip_prefix, n_consts.IPv6_ANY)
+        self.assertEqual(routes[0].nexthop, 'fd00::1')
+
+        # Update subnet gateway
+        new_gateway = 'fd00::2'
+        data = {'subnet': {'gateway_ip': new_gateway}}
+        req = self.new_update_request('subnets', data, subnet['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(new_gateway, res['subnet']['gateway_ip'])
+
+        # Refresh logical router
+        lr = self.nb_api.lr_get(ovn_utils.ovn_name(router['id'])).execute()
+
+        # Verify the default route was updated with new gateway
+        routes = ovn_utils.get_lrouter_ext_gw_static_route(lr)
+        self.assertEqual(len(routes), 1)
+        self.assertEqual(routes[0].ip_prefix, n_consts.IPv6_ANY)
+        self.assertEqual(routes[0].nexthop, 'fd00::2')
+
+    def test_update_subnet_gateway_ipv4(self):
+        """Test updating IPv4 subnet gateway updates OVN routes correctly.
+
+        This test ensures IPv4 gateway updates continue to work correctly
+        with the fix for bug #2100294.
+        """
+        # Create external network with IPv4 subnet
+        net_arg = {pnet.NETWORK_TYPE: 'flat',
+                   external_net.EXTERNAL: True,
+                   pnet.PHYSICAL_NETWORK: 'physnet1'}
+        network = self._make_network(
+            self.fmt, 'ext_net', True, as_admin=True,
+            arg_list=(pnet.NETWORK_TYPE, external_net.EXTERNAL,
+                      pnet.PHYSICAL_NETWORK),
+            **net_arg)
+
+        # Create IPv4 subnet with initial gateway
+        subnet = self._make_subnet(
+            self.fmt, network, gateway='120.0.0.1', cidr='120.0.0.0/24',
+            allocation_pools=[{'start': '120.0.0.11', 'end': '120.0.0.20'}],
+            ip_version=n_consts.IP_VERSION_4)['subnet']
+
+        # Create router with external gateway
+        gw_info = {'network_id': network['network']['id']}
+        router = self._create_router('test_router', gw_info=gw_info)
+
+        # Get the logical router from OVN
+        lr = self.nb_api.lr_get(ovn_utils.ovn_name(router['id'])).execute()
+
+        # Verify initial default route exists with correct IPv4 prefix
+        routes = ovn_utils.get_lrouter_ext_gw_static_route(lr)
+        self.assertEqual(len(routes), 1)
+        self.assertEqual(routes[0].ip_prefix, n_consts.IPv4_ANY)
+        self.assertEqual(routes[0].nexthop, '120.0.0.1')
+
+        # Update subnet gateway
+        new_gateway = '120.0.0.2'
+        data = {'subnet': {'gateway_ip': new_gateway}}
+        req = self.new_update_request('subnets', data, subnet['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(new_gateway, res['subnet']['gateway_ip'])
+
+        # Refresh logical router
+        lr = self.nb_api.lr_get(ovn_utils.ovn_name(router['id'])).execute()
+
+        # Verify the default route was updated with new gateway
+        routes = ovn_utils.get_lrouter_ext_gw_static_route(lr)
+        self.assertEqual(len(routes), 1)
+        self.assertEqual(routes[0].ip_prefix, n_consts.IPv4_ANY)
+        self.assertEqual(routes[0].nexthop, '120.0.0.2')

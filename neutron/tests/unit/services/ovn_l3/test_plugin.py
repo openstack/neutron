@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.exceptions import l3 as l3_exc
@@ -2251,10 +2252,23 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
         gr.return_value = {'flavor_id': None}
         super(). \
             test_update_subnet_gateway_for_external_net()
+
+        # Get the subnet_id from the gateway port created by the parent test
+        ctx = n_context.get_admin_context()
+        gw_ports = self.l3_inst._plugin.get_ports(
+            ctx, filters={
+                'device_owner': [constants.DEVICE_OWNER_ROUTER_GW],
+                'device_id': ['fake_device']
+            })
+        subnet_id = \
+                gw_ports[0]['fixed_ips'][0]['subnet_id'] if gw_ports else None
+
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-fake_device', ip_prefix=constants.IPv4_ANY,
             nexthop='120.0.0.2',
-            external_ids={'neutron:is_static_route': 'true'})
+            external_ids={'neutron:is_ext_gw': 'true',
+                          'neutron:subnet_id': subnet_id,
+                          'neutron:is_static_route': 'true'})
         self.l3_inst._nb_ovn.delete_static_routes.assert_called_once_with(
             'neutron-fake_device', [(constants.IPv4_ANY, '120.0.0.1')])
 
