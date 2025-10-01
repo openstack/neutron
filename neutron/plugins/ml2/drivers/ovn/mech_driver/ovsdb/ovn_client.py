@@ -848,15 +848,6 @@ class OVNClient:
                             ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY, ''):
                         txn.add(cmd(lsp.name, port_id, if_exists=True))
 
-        # NOTE(lucasagomes): We need to delete the LSP before we attempt
-        # to remove the HA Chassis Group or it will fail with a violation
-        # error due to the LSP reference in the group
-        with self._nb_idl.transaction(check_error=True) as txn:
-            if ovn_port.type == ovn_const.LSP_TYPE_EXTERNAL:
-                ha_ch_grp_name = utils.ovn_extport_chassis_group_name(port_id)
-                txn.add(self._nb_idl.ha_chassis_group_del(
-                    ha_ch_grp_name, if_exists=True))
-
     # TODO(lucasagomes): The ``port_object`` parameter was added to
     # keep things backward compatible. Remove it in the Rocky release.
     def delete_port(self, context, port_id, port_object=None):

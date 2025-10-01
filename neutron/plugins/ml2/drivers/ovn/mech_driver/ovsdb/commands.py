@@ -386,6 +386,14 @@ class DelLSwitchPortCommand(command.BaseCommand):
         for uuid_ in cur_port_dhcp_opts:
             self.api._tables['DHCP_Options'].rows[uuid_].delete()
 
+        # Delete the HA_Chassis_Group associated to an external port.
+        if (lport.type == ovn_const.LSP_TYPE_EXTERNAL and
+                lport.ha_chassis_group):
+            hcg = lport.ha_chassis_group[0]
+            lport.delvalue('ha_chassis_group', hcg)
+            if hcg.name == utils.ovn_extport_chassis_group_name(lport.name):
+                hcg.delete()
+
         _delvalue_from_list(lswitch, 'ports', lport)
         self.api._tables['Logical_Switch_Port'].rows[lport.uuid].delete()
 

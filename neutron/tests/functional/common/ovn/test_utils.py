@@ -156,9 +156,13 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
 
         # Invoke the sync method
         with self.nb_api.transaction(check_error=True) as txn:
-            utils.sync_ha_chassis_group_network(
+            hcg, _ = utils.sync_ha_chassis_group_network(
                 self.context, self.nb_api, self.sb_api, port['id'],
                 net['id'], txn)
+            # It is needed to assign the HCG to the LSP. When the port is
+            # deleted, the external port HCG associated will be deleted too.
+            txn.add(
+                self.nb_api.set_lswitch_port(port['id'], ha_chassis_group=hcg))
 
         # Assert only the eligible chassis are present in HA Chassis
         ha_chassis = self.nb_api.db_find('HA_Chassis').execute(

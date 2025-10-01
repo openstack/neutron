@@ -402,7 +402,10 @@ class TestDelLSwitchPortCommand(TestBaseCommand):
             attrs={'name': 'lsp',
                    'external_ids': ext_ids,
                    'dhcpv4_options': [fake_dhcpv4_options],
-                   'dhcpv6_options': [fake_dhcpv6_options]})
+                   'dhcpv6_options': [fake_dhcpv6_options],
+                   'type': '',
+                   },
+        )
         self.ovn_api._tables['Logical_Switch_Port'].rows[fake_lsp.uuid] = \
             fake_lsp
         fake_lswitch = fakes.FakeOvsdbRow.create_one_ovsdb_row(

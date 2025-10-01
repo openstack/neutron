@@ -20,6 +20,7 @@ import time
 from unittest import mock
 import uuid
 
+import ddt
 import netaddr
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
@@ -704,6 +705,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
                          ovn_vport.options)
 
 
+@ddt.ddt
 class TestExternalPorts(base.TestOVNFunctionalBase):
 
     def setUp(self):
@@ -720,7 +722,12 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         rows = cmd.execute(check_error=True)
         return rows[0] if rows else None
 
-    def _test_external_port_create(self, vnic_type):
+    def _test_external_port_create_and_delete(
+            self, vnic_type, enable_as_gw):
+        for host in ('host1', 'host2', 'host3'):
+            self.add_fake_chassis(
+                host, enable_chassis_as_gw=enable_as_gw,
+                enable_chassis_as_extport=not enable_as_gw)
         net_id = self.n1['network']['id']
         port_data = {
             'port': {'network_id': net_id,
@@ -732,10 +739,25 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         port = self.deserialize(self.fmt, port_res)['port']
 
         ovn_port = self._find_port_row_by_name(port['id'])
+        hcg_name = str(ovn_port.ha_chassis_group[0].name)
         self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
         self.assertEqual(1, len(ovn_port.ha_chassis_group))
-        self.assertEqual(utils.ovn_name(net_id),
-                         str(ovn_port.ha_chassis_group[0].name))
+        group_name = (utils.ovn_name(net_id) if enable_as_gw else
+                      utils.ovn_extport_chassis_group_name(port['id']))
+        self.assertEqual(group_name, hcg_name)
+        hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+        self.assertEqual(hcg_name, hcg.name)
+
+        port_req = self.new_delete_request('ports', port['id'])
+        port_req.get_response(self.api)
+        hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name, None)
+        if enable_as_gw:
+            self.assertEqual(hcg_name, hcg.name)
+        else:
+            # If the HCG has been created only for this port (that happens
+            # when there are chassis for external ports), it should be deleted
+            # along with the port.
+            self.assertIsNone(hcg)
 
     def _create_router_port(self, vnic_type):
         net_id = self.n1['network']['id']
@@ -808,14 +830,21 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         n_utils.wait_until_true(lambda: test_up_event.get_count() == 1,
                                 timeout=10)
 
-    def test_external_port_create_vnic_direct(self):
-        self._test_external_port_create(portbindings.VNIC_DIRECT)
+    @ddt.data(True, False)
+    def test_external_port_create_and_delete_vnic_direct(self, enable_as_gw):
+        self._test_external_port_create_and_delete(
+            portbindings.VNIC_DIRECT, enable_as_gw)
 
-    def test_external_port_create_vnic_direct_physical(self):
-        self._test_external_port_create(portbindings.VNIC_DIRECT_PHYSICAL)
+    @ddt.data(True, False)
+    def test_external_port_create_and_delete_direct_physical(
+            self, enable_as_gw):
+        self._test_external_port_create_and_delete(
+            portbindings.VNIC_DIRECT_PHYSICAL, enable_as_gw)
 
-    def test_external_port_create_vnic_macvtap(self):
-        self._test_external_port_create(portbindings.VNIC_MACVTAP)
+    @ddt.data(True, False)
+    def test_external_port_create_and_delete_vnic_macvtap(self, enable_as_gw):
+        self._test_external_port_create_and_delete(
+            portbindings.VNIC_MACVTAP, enable_as_gw)
 
     def _test_external_port_update(self, vnic_type):
         net_id = self.n1['network']['id']
