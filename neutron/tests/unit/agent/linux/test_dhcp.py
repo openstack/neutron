@@ -1700,12 +1700,11 @@ class TestDnsmasq(TestBase):
             dm._output_init_lease_file()
         self.safe.assert_called_once_with('/foo/leases', expected)
 
-    @mock.patch('time.time')
-    def test_output_init_lease_file(self, tmock):
+    def test_output_init_lease_file(self):
         self.conf.set_override('dhcp_lease_duration', 500)
-        tmock.return_value = 1000000
-        # lease duration should be added to current time
-        timestamp = 1000000 + 500
+        # lease duration should be initialized as infinite,
+        # regardless of configuration
+        timestamp = 0
         self._test_output_init_lease_file(timestamp)
 
     def test_output_init_lease_file_infinite_duration(self):
@@ -1714,9 +1713,8 @@ class TestDnsmasq(TestBase):
         timestamp = 0
         self._test_output_init_lease_file(timestamp)
 
-    @mock.patch('time.time')
     @mock.patch('os.path.isfile', return_value=True)
-    def test_output_init_lease_file_existing(self, isfile, tmock):
+    def test_output_init_lease_file_existing(self, isfile):
 
         duid = 'duid 00:01:00:01:27:da:58:97:fa:16:3e:6c:ad:c1'
         ipv4_leases = (
@@ -1740,8 +1738,9 @@ class TestDnsmasq(TestBase):
         existing_leases = '\n'.join((ipv4_leases, duid, ipv6_lease_v6_port,
                                      additional_ipv6_leases))
 
-        # lease duration should be added to current time
-        timestamp = 1000000 + 500
+        # lease duration should be initialized as infinite,
+        # regardless of configuration
+        timestamp = 0
         # The expected lease file contains:
         # * The DHCPv6 servers DUID
         # * A lease for all IPv4 addresses
@@ -1760,7 +1759,6 @@ class TestDnsmasq(TestBase):
         ) % (duid, timestamp, ipv6_lease_v6_port, timestamp, timestamp)
 
         self.conf.set_override('dhcp_lease_duration', 500)
-        tmock.return_value = 1000000
 
         with mock.patch.object(dhcp.Dnsmasq, 'get_conf_file_name') as conf_fn:
             conf_fn.return_value = '/foo/leases'

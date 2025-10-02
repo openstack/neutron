@@ -846,15 +846,17 @@ class Dnsmasq(DhcpLocalProcess):
         buf = io.StringIO()
 
         LOG.debug('Building initial lease file: %s', filename)
-        # we make up a lease time for the database entry
-        if self.conf.dhcp_lease_duration == -1:
-            # Even with an infinite lease, a client may choose to renew a
-            # previous lease on reboot or interface bounce so we should have
-            # an entry for it.
-            # Dnsmasq timestamp format for an infinite lease is 0.
-            timestamp = 0
-        else:
-            timestamp = int(time.time()) + self.conf.dhcp_lease_duration
+        # Initialize the lease duration to 0 which represents an infinite
+        # duration in dnsmasq. This ensures that if a client chooses to renew
+        # a previous lease on reboot or interface bounce there is an entry
+        # for all valid ports. This also prevents a NAK from being sent by
+        # dnsmasq on renewal of a previous lease for a valid port in the
+        # event the lease duration config value is reduced. In this case,
+        # dnsmasq can expire the lease server-side before the client has
+        # had an opportunity to renew and pick up the new, shorter duration.
+        # Upon renewal, dnsmasq will update the lease duration to a finite
+        # time according to the configured lease duration value.
+        timestamp = 0
         dhcpv4_enabled_subnet_ids = [
             s.id for s in self._get_all_subnets(self.network)
             if s.enable_dhcp and s.ip_version == constants.IP_VERSION_4]
