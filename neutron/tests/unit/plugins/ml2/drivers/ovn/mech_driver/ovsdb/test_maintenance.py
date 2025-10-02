@@ -473,17 +473,9 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         ]
         nb_idl.db_set.assert_has_calls(expected_calls)
 
-    def test_check_for_ha_chassis_group_not_supported(self):
-        self.fake_ovn_client.is_external_ports_supported.return_value = False
-        self.assertRaises(periodics.NeverAgain,
-                          self.periodic.check_for_ha_chassis_group)
-        self.assertFalse(
-            self.fake_ovn_client._nb_idl.ha_chassis_group_add.called)
-
     @mock.patch.object(utils, 'sync_ha_chassis_group_network')
     def test_check_for_ha_chassis_group_no_external_ports(
             self, mock_sync_ha_chassis_group_network):
-        self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
         nb_idl.db_find_rows.return_value.execute.return_value = []
         self.assertRaises(periodics.NeverAgain,
@@ -493,7 +485,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
     @mock.patch.object(utils, 'sync_ha_chassis_group_network')
     def test_check_for_ha_chassis_group(self,
                                         mock_sync_ha_chassis_group_network):
-        self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
 
         hcg0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
@@ -782,7 +773,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
     def _test_check_baremetal_ports_dhcp_options(self, dhcp_disabled=False):
         cfg.CONF.set_override('disable_ovn_dhcp_for_baremetal_ports',
                               dhcp_disabled, group='ovn')
-        self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
         self.fake_ovn_client._get_port_options.return_value = 'fake-port-opts'
 

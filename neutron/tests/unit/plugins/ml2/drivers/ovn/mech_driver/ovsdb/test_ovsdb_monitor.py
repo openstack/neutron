@@ -655,7 +655,6 @@ class TestChassisEvent(base.BaseTestCase):
         super().setUp()
         self.driver = mock.MagicMock()
         self.nb_ovn = self.driver.nb_ovn
-        self.driver._ovn_client.is_external_ports_supported.return_value = True
         self.event = ovsdb_monitor.ChassisEvent(self.driver)
         self.is_gw_ch_mock = mock.patch.object(
             utils, 'is_gateway_chassis').start()

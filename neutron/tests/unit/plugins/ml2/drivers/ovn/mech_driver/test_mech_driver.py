@@ -1155,6 +1155,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         mock_is_ext.return_value = is_extport_present
         self.sb_ovn.get_extport_chassis_from_cms_options.return_value = [
             mock.Mock()]
+        mock_sync.return_value = (mock.ANY, mock.ANY)
         with self.network() as net1, \
                 self.subnet(network=net1) as subnet1, \
                 self.port(subnet=subnet1, is_admin=True,
@@ -1189,9 +1190,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             ulsp.assert_called_once_with(mock.ANY, mock.ANY)
 
             if is_extport_present:
-                mock_sync.assert_called_once_with(
+                # Method "sync_ha_chassis_group_network" called twice: when the
+                # port is created and when the port is set to UP.
+                calls = [mock.call(
                     mock.ANY, self.nb_ovn, self.sb_ovn, port1['port']['id'],
-                    port1['port']['network_id'], mock.ANY)
+                    port1['port']['network_id'], mock.ANY)] * 2
+                mock_sync.assert_has_calls(calls)
             else:
                 mock_sync.assert_not_called()
 
@@ -4434,9 +4438,6 @@ class TestOVNMechanismDriverSecurityGroup(
             self.assertEqual(
                 3, self.mech_driver.nb_ovn.pg_add_ports.call_count)
 
-    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
-                'ovn_client.OVNClient.is_external_ports_supported',
-                lambda *_: True)
     @mock.patch.object(ovn_utils, 'sync_ha_chassis_group_network')
     def _test_create_port_with_vnic_type(self, vnic_type, sync_mock):
         fake_grp = 'fake-default-ha-group-uuid'
