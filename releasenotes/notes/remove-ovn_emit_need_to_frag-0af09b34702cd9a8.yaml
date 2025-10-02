@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The ``ovn_emit_need_to_frag`` option has been removed as it is
+    no longer necessary with newer Linux kernels (version >= 5.2).

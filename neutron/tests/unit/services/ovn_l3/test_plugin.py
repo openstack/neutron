@@ -2078,11 +2078,6 @@ class BaseTestOVNL3RouterPluginMixin:
 class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
                             test_mech_driver.Ml2PluginV2TestCase):
 
-    def setUp(self):
-        super().setUp()
-        config.cfg.CONF.set_override(
-            'ovn_emit_need_to_frag', True, group='ovn')
-
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_network')
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_networks')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
@@ -2139,18 +2134,6 @@ class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
         self.bump_rev_p.assert_called_with(
             mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
-
-
-# Run the same tests for ovn_emit_need_to_frag = False
-# TODO(mjozefcz): Find out a way to not inherit from Ml2PluginV2TestCase.
-class TestOVNL3RouterPluginEmitNeedToFrag(
-        BaseTestOVNL3RouterPluginMixin, test_mech_driver.Ml2PluginV2TestCase):
-
-    def setUp(self):
-        super().setUp()
-        config.cfg.CONF.set_override(
-            'ovn_emit_need_to_frag', False, group='ovn')
-        self.fake_ext_gw_port_assert['options'] = {}
 
 
 class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,

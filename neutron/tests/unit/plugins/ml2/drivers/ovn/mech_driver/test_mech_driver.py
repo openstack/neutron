@@ -2719,20 +2719,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     lrp_name, if_exists=True, **expected_opts)
 
     def test_update_network_need_to_frag_enabled(self):
-        ovn_conf.cfg.CONF.set_override('ovn_emit_need_to_frag', True,
-                                       group='ovn')
         new_mtu = 1234
         expected_opts = {ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
                          str(new_mtu)}
-        self._test_update_network_fragmentation(new_mtu, expected_opts)
-
-    def test_update_network_need_to_frag_disabled(self):
-        ovn_conf.cfg.CONF.set_override('ovn_emit_need_to_frag', False,
-                                       group='ovn')
-        new_mtu = 1234
-        # Assert that the options column is empty (cleaning up an '
-        # existing value if set before)
-        expected_opts = {}
         self._test_update_network_fragmentation(new_mtu, expected_opts)
 
     def test_ping_all_chassis(self):
