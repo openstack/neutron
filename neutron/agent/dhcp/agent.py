@@ -416,7 +416,7 @@ class DhcpAgent(manager.Manager):
 
     def periodic_resync(self):
         """Spawn a thread to periodically resync the dhcp state."""
-        resync_thread = threading.Thread(target=self._periodic_resync_event)
+        resync_thread = threading.Thread(target=self._periodic_resync_helper)
         resync_thread.start()
 
     def safe_get_network_info(self, network_id):
