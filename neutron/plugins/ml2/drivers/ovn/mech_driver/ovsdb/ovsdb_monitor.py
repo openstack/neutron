@@ -716,8 +716,10 @@ class HAChassisGroupRouterEvent(row_event.RowEvent):
         self.event_name = 'HAChassisGroupRouterEvent'
 
     def match_fn(self, event, row, old):
-        if (ovn_const.OVN_ROUTER_ID_EXT_ID_KEY in row.external_ids or
-                hasattr(old, 'ha_chassis')):
+        if ovn_const.OVN_ROUTER_ID_EXT_ID_KEY not in row.external_ids:
+            # This is not a router "HA_Chassis_Group".
+            return False
+        if hasattr(old, 'ha_chassis'):
             # "HA_Chassis_Group" has been assigned to a router or there are
             # changes in the "ha_chassis" list.
             return True
