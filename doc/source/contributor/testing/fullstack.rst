@@ -25,6 +25,11 @@
 Full Stack Testing
 ==================
 
+ .. warning::
+    Full Stack testing was disabled as a side effect of the Eventlet
+    removal process, see the related patch:
+    https://review.opendev.org/c/openstack/neutron/+/953295
+
 How?
 ++++
 
