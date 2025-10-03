@@ -29,6 +29,9 @@ class LocalIPAssociationAPITestCase(base.PolicyBaseTestCase):
         self.local_ip = {
             'id': uuidutils.generate_uuid(),
             'project_id': self.project_id}
+        self.alt_local_ip = {
+            'id': uuidutils.generate_uuid(),
+            'project_id': self.alt_project_id}
 
         self.target = {
             'project_id': self.project_id,
@@ -36,11 +39,19 @@ class LocalIPAssociationAPITestCase(base.PolicyBaseTestCase):
             'ext_parent_local_ip_id': self.local_ip['id']}
         self.alt_target = {
             'project_id': self.alt_project_id,
-            'local_ip_id': self.local_ip['id'],
-            'ext_parent_local_ip_id': self.local_ip['id']}
+            'local_ip_id': self.alt_local_ip['id'],
+            'ext_parent_local_ip_id': self.alt_local_ip['id']}
+
+        local_ips = {
+            self.local_ip['id']: self.local_ip,
+            self.alt_local_ip['id']: self.alt_local_ip,
+        }
+
+        def get_local_ip(context, lip_id, fields=None):
+            return local_ips[lip_id]
 
         self.plugin_mock = mock.Mock()
-        self.plugin_mock.get_local_ip.return_value = self.local_ip
+        self.plugin_mock.get_local_ip.side_effect = get_local_ip
         mock.patch(
             'neutron_lib.plugins.directory.get_plugin',
             return_value=self.plugin_mock).start()
