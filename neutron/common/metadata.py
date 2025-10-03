@@ -35,7 +35,10 @@ LOG = logging.getLogger(__name__)
 PROXY_SERVICE_NAME = 'haproxy'
 PROXY_SERVICE_CMD = 'haproxy'
 
-CONTENT_ENCODERS = ('gzip', 'deflate')
+CONTENT_ENCODERS = {
+    'gzip': b'\x1f\x8b\x08',
+    'deflate': b'\x1f\x8b\x08'
+}
 
 
 class InvalidUserOrGroupException(Exception):
@@ -163,15 +166,21 @@ class MetadataProxyHandlerBaseSocketServer(
         metaclass=abc.ABCMeta):
     @staticmethod
     def _http_response(http_response, request):
+        headerlist = list(http_response.headers.items())
+        # We detect if content is compressed by magic signature,
+        # when `content-encoding` is not present.
+        if not http_response.headers.get('content-encoding'):
+            if http_response.content[:3] == CONTENT_ENCODERS['gzip']:
+                headerlist.append(('content-encoding', 'gzip'))
+
         _res = webob.Response(
             body=http_response.content,
             status=http_response.status_code,
-            content_type=http_response.headers['content-type'],
-            charset=http_response.encoding)
+            headerlist=headerlist)
         # The content of the response is decoded depending on the
         # "Context-Enconding" header, if present. The operation is limited to
         # ("gzip", "deflate"), as is in the ``webob.response.Response`` class.
-        if _res.content_encoding in CONTENT_ENCODERS:
+        if _res.content_encoding in CONTENT_ENCODERS.keys():
             _res.decode_content()
 
         # NOTE(ralonsoh): there should be a better way to format the HTTP
