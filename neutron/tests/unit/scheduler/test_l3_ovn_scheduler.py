@@ -118,7 +118,8 @@ class TestOVNGatewayScheduler(base.BaseTestCase):
 
     def filter_existing_chassis(self, *args, **kwargs):
         return self.l3_scheduler.filter_existing_chassis(
-            gw_chassis=kwargs.pop('gw_chassis'), physnet=kwargs.pop('physnet'),
+            nb_idl=kwargs.pop('nb_idl'), gw_chassis=kwargs.pop('gw_chassis'),
+            physnet=kwargs.pop('physnet'),
             chassis_physnets=kwargs.pop('chassis_physnets'),
             existing_chassis=kwargs.pop('existing_chassis'),
             az_hints=kwargs.pop('az_hints', []),
@@ -170,24 +171,26 @@ class OVNGatewayChanceScheduler(TestOVNGatewayScheduler):
         # it from Base class didnt seem right. Also, there is no need to have
         # another test in LeastLoadedScheduler.
         chassis_physnets = {'temp': ['phys-network-0', 'phys-network-1']}
+        nb_idl = FakeOVNGatewaySchedulerNbOvnIdl(
+            self.fake_chassis_gateway_mappings['None'], 'g1')
         # Check if invalid chassis is removed
         self.assertEqual(
             ['temp'], self.filter_existing_chassis(
-                gw_chassis=["temp"],
+                nb_idl=nb_idl, gw_chassis=["temp"],
                 physnet='phys-network-1',
                 chassis_physnets=chassis_physnets,
                 existing_chassis=['temp', None]))
         # Check if invalid is removed -II
         self.assertFalse(
             self.filter_existing_chassis(
-                gw_chassis=["temp"],
+                nb_idl=nb_idl, gw_chassis=["temp"],
                 physnet='phys-network-1',
                 chassis_physnets=chassis_physnets,
                 existing_chassis=None))
         # Check if chassis removed when physnet doesnt exist
         self.assertFalse(
             self.filter_existing_chassis(
-                gw_chassis=["temp"],
+                nb_idl=nb_idl, gw_chassis=["temp"],
                 physnet='phys-network-2',
                 chassis_physnets=chassis_physnets,
                 existing_chassis=['temp']))
@@ -195,7 +198,7 @@ class OVNGatewayChanceScheduler(TestOVNGatewayScheduler):
         # or in chassis_physnets
         self.assertFalse(
             self.filter_existing_chassis(
-                gw_chassis=["temp1"],
+                nb_idl=nb_idl, gw_chassis=["temp1"],
                 physnet='phys-network-2',
                 chassis_physnets=chassis_physnets,
                 existing_chassis=['temp']))
