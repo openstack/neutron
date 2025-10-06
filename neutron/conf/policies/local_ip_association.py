@@ -29,7 +29,7 @@ rules = [
         name='create_local_ip_port_association',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_PARENT_OWNER),
+            base.PARENT_OWNER_MEMBER),
         scope_types=['project'],
         description='Create a Local IP port association',
         operations=[
@@ -48,7 +48,7 @@ rules = [
         name='get_local_ip_port_association',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
-            base.RULE_PARENT_OWNER),
+            base.PARENT_OWNER_READER),
         scope_types=['project'],
         description='Get a Local IP port association',
         operations=[
@@ -71,7 +71,7 @@ rules = [
         name='delete_local_ip_port_association',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_PARENT_OWNER),
+            base.PARENT_OWNER_MEMBER),
         scope_types=['project'],
         description='Delete a Local IP port association',
         operations=[

@@ -16,6 +16,7 @@
 
 from unittest import mock
 
+from neutron_lib import constants as lib_constants
 from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -47,6 +48,75 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         self.addCleanup(conn_patcher.stop)
         self.setup_bridge_mock('br-tun', self.br_tun_cls)
         self.stamp = self.br.default_cookie
+
+    def _get_learn_flows(self, ofpp, patch_int_ofport):
+        (dp, ofp, ofpp) = self._get_dp()
+        # flows_data is list of tuples (priority, match)
+        flows_data = [
+            (2, ofpp.OFPMatch(
+                eth_type=self.ether_types.ETH_TYPE_ARP,
+                arp_tha=lib_constants.BROADCAST_MAC
+            )),
+            (2, ofpp.OFPMatch(
+                eth_type=self.ether_types.ETH_TYPE_IPV6,
+                ip_proto=self.in_proto.IPPROTO_ICMPV6,
+                icmpv6_type=self.icmpv6.ND_ROUTER_ADVERT
+            )),
+            (2, ofpp.OFPMatch(
+                eth_type=self.ether_types.ETH_TYPE_IPV6,
+                ip_proto=self.in_proto.IPPROTO_ICMPV6,
+                icmpv6_type=self.icmpv6.ND_NEIGHBOR_ADVERT
+            )),
+            (1, ofpp.OFPMatch())
+        ]
+        learn_flows = []
+        for priority, match in flows_data:
+            learn_flows.append(
+                call._send_msg(
+                    ofpp.OFPFlowMod(
+                        dp,
+                        cookie=self.stamp,
+                        instructions=[
+                            ofpp.OFPInstructionActions(
+                                ofp.OFPIT_APPLY_ACTIONS, [
+                                    ofpp.NXActionLearn(
+                                        cookie=self.stamp,
+                                        hard_timeout=300,
+                                        priority=1,
+                                        specs=[
+                                            ofpp.NXFlowSpecMatch(
+                                                dst=('vlan_tci', 0),
+                                                n_bits=12,
+                                                src=('vlan_tci', 0)),
+                                            ofpp.NXFlowSpecMatch(
+                                                dst=('eth_dst', 0),
+                                                n_bits=48,
+                                                src=('eth_src', 0)),
+                                            ofpp.NXFlowSpecLoad(
+                                                dst=('vlan_tci', 0),
+                                                n_bits=16,
+                                                src=0),
+                                            ofpp.NXFlowSpecLoad(
+                                                dst=('tunnel_id', 0),
+                                                n_bits=64,
+                                                src=('tunnel_id', 0)),
+                                            ofpp.NXFlowSpecOutput(
+                                                dst='',
+                                                n_bits=32,
+                                                src=('in_port', 0)),
+                                        ],
+                                        table_id=20),
+                                    ofpp.OFPActionOutput(patch_int_ofport, 0),
+                                ]
+                            ),
+                        ],
+                        match=match,
+                        priority=priority,
+                        table_id=10),
+                    active_bundle=None
+                )
+            )
+        return learn_flows
 
     def test_setup_default_table(self):
         patch_int_ofport = 5555
@@ -110,47 +180,9 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                                            instructions=[],
                                            match=ofpp.OFPMatch(),
                                            priority=0, table_id=6),
-                           active_bundle=None),
-            call._send_msg(
-                ofpp.OFPFlowMod(
-                    dp,
-                    cookie=self.stamp,
-                    instructions=[
-                        ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
-                            ofpp.NXActionLearn(
-                                cookie=self.stamp,
-                                hard_timeout=300,
-                                priority=1,
-                                specs=[
-                                    ofpp.NXFlowSpecMatch(
-                                        dst=('vlan_tci', 0),
-                                        n_bits=12,
-                                        src=('vlan_tci', 0)),
-                                    ofpp.NXFlowSpecMatch(
-                                        dst=('eth_dst', 0),
-                                        n_bits=48,
-                                        src=('eth_src', 0)),
-                                    ofpp.NXFlowSpecLoad(
-                                        dst=('vlan_tci', 0),
-                                        n_bits=16,
-                                        src=0),
-                                    ofpp.NXFlowSpecLoad(
-                                        dst=('tunnel_id', 0),
-                                        n_bits=64,
-                                        src=('tunnel_id', 0)),
-                                    ofpp.NXFlowSpecOutput(
-                                        dst='',
-                                        n_bits=32,
-                                        src=('in_port', 0)),
-                                ],
-                                table_id=20),
-                            ofpp.OFPActionOutput(patch_int_ofport, 0),
-                        ]),
-                    ],
-                    match=ofpp.OFPMatch(),
-                    priority=1,
-                    table_id=10),
-                active_bundle=None),
+                           active_bundle=None)]
+        expected += self._get_learn_flows(ofpp, patch_int_ofport)
+        expected += [
             call._send_msg(
                 ofpp.OFPFlowMod(dp,
                                 cookie=self.stamp,
@@ -243,47 +275,9 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                                            instructions=[],
                                            match=ofpp.OFPMatch(),
                                            priority=0, table_id=6),
-                           active_bundle=None),
-            call._send_msg(
-                ofpp.OFPFlowMod(
-                    dp,
-                    cookie=self.stamp,
-                    instructions=[
-                        ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
-                            ofpp.NXActionLearn(
-                                cookie=self.stamp,
-                                hard_timeout=300,
-                                priority=1,
-                                specs=[
-                                    ofpp.NXFlowSpecMatch(
-                                        dst=('vlan_tci', 0),
-                                        n_bits=12,
-                                        src=('vlan_tci', 0)),
-                                    ofpp.NXFlowSpecMatch(
-                                        dst=('eth_dst', 0),
-                                        n_bits=48,
-                                        src=('eth_src', 0)),
-                                    ofpp.NXFlowSpecLoad(
-                                        dst=('vlan_tci', 0),
-                                        n_bits=16,
-                                        src=0),
-                                    ofpp.NXFlowSpecLoad(
-                                        dst=('tunnel_id', 0),
-                                        n_bits=64,
-                                        src=('tunnel_id', 0)),
-                                    ofpp.NXFlowSpecOutput(
-                                        dst='',
-                                        n_bits=32,
-                                        src=('in_port', 0)),
-                                ],
-                                table_id=20),
-                            ofpp.OFPActionOutput(patch_int_ofport, 0),
-                        ]),
-                    ],
-                    match=ofpp.OFPMatch(),
-                    priority=1,
-                    table_id=10),
-                active_bundle=None),
+                           active_bundle=None)]
+        expected += self._get_learn_flows(ofpp, patch_int_ofport)
+        expected += [
             call._send_msg(
                 ofpp.OFPFlowMod(dp,
                                 cookie=self.stamp,

@@ -15,8 +15,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as lib_constants
 from neutron_lib.plugins.ml2 import ovs_constants as constants
 from os_ken.lib.packet import ether_types
+from os_ken.lib.packet import icmpv6
+from os_ken.lib.packet import in_proto
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_dvr_process
@@ -32,6 +35,62 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
     dvr_process_table_id = constants.DVR_PROCESS
     dvr_process_next_table_id = constants.PATCH_LV_TO_TUN
     of_tables = constants.TUN_BR_ALL_TABLES
+
+    def _setup_learn_flows(self, ofpp, patch_int_ofport):
+        flow_specs = [
+            ofpp.NXFlowSpecMatch(src=('vlan_tci', 0),
+                                 dst=('vlan_tci', 0),
+                                 n_bits=12),
+            ofpp.NXFlowSpecMatch(src=('eth_src', 0),
+                                 dst=('eth_dst', 0),
+                                 n_bits=48),
+            ofpp.NXFlowSpecLoad(src=0,
+                                dst=('vlan_tci', 0),
+                                n_bits=16),
+            ofpp.NXFlowSpecLoad(src=('tunnel_id', 0),
+                                dst=('tunnel_id', 0),
+                                n_bits=64),
+            ofpp.NXFlowSpecOutput(src=('in_port', 0),
+                                  dst='',
+                                  n_bits=32),
+        ]
+        actions = [
+            ofpp.NXActionLearn(table_id=constants.UCAST_TO_TUN,
+                               cookie=self.default_cookie,
+                               priority=1,
+                               hard_timeout=300,
+                               specs=flow_specs),
+            ofpp.OFPActionOutput(patch_int_ofport, 0),
+        ]
+
+        arp_match = ofpp.OFPMatch(
+            eth_type=ether_types.ETH_TYPE_ARP,
+            arp_tha=lib_constants.BROADCAST_MAC
+        )
+        ipv6_ra_match = ofpp.OFPMatch(
+            eth_type=ether_types.ETH_TYPE_IPV6,
+            ip_proto=in_proto.IPPROTO_ICMPV6,
+            icmpv6_type=icmpv6.ND_ROUTER_ADVERT)  # icmp_type=134
+        ipv6_na_match = ofpp.OFPMatch(
+            eth_type=ether_types.ETH_TYPE_IPV6,
+            ip_proto=in_proto.IPPROTO_ICMPV6,
+            icmpv6_type=icmpv6.ND_NEIGHBOR_ADVERT)  # icmp_type=136
+
+        self.install_apply_actions(table_id=constants.LEARN_FROM_TUN,
+                                   priority=2,
+                                   match=arp_match,
+                                   actions=actions)
+        self.install_apply_actions(table_id=constants.LEARN_FROM_TUN,
+                                   priority=2,
+                                   match=ipv6_ra_match,
+                                   actions=actions)
+        self.install_apply_actions(table_id=constants.LEARN_FROM_TUN,
+                                   priority=2,
+                                   match=ipv6_na_match,
+                                   actions=actions)
+        self.install_apply_actions(table_id=constants.LEARN_FROM_TUN,
+                                   priority=1,
+                                   actions=actions)
 
     def setup_default_table(
             self, patch_int_ofport, arp_responder_enabled, dvr_enabled):
@@ -81,34 +140,7 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
         # dynamically set-up flows in UCAST_TO_TUN corresponding to remote mac
         # addresses (assumes that lvid has already been set by a previous flow)
         # Once remote mac addresses are learnt, output packet to patch_int
-        flow_specs = [
-            ofpp.NXFlowSpecMatch(src=('vlan_tci', 0),
-                                 dst=('vlan_tci', 0),
-                                 n_bits=12),
-            ofpp.NXFlowSpecMatch(src=('eth_src', 0),
-                                 dst=('eth_dst', 0),
-                                 n_bits=48),
-            ofpp.NXFlowSpecLoad(src=0,
-                                dst=('vlan_tci', 0),
-                                n_bits=16),
-            ofpp.NXFlowSpecLoad(src=('tunnel_id', 0),
-                                dst=('tunnel_id', 0),
-                                n_bits=64),
-            ofpp.NXFlowSpecOutput(src=('in_port', 0),
-                                  dst='',
-                                  n_bits=32),
-        ]
-        actions = [
-            ofpp.NXActionLearn(table_id=constants.UCAST_TO_TUN,
-                               cookie=self.default_cookie,
-                               priority=1,
-                               hard_timeout=300,
-                               specs=flow_specs),
-            ofpp.OFPActionOutput(patch_int_ofport, 0),
-        ]
-        self.install_apply_actions(table_id=constants.LEARN_FROM_TUN,
-                                   priority=1,
-                                   actions=actions)
+        self._setup_learn_flows(ofpp, patch_int_ofport)
 
         # Egress unicast will be handled in table UCAST_TO_TUN, where remote
         # mac addresses will be learned. For now, just add a default flow that
