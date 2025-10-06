@@ -275,17 +275,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             if revision_mismatch_raise:
                 raise e
 
-    def ls_add(self, switch=None, may_exist=False, network_id=None, **columns):
-        if network_id is None:
-            return super().ls_add(switch, may_exist, **columns)
-        return cmd.AddNetworkCommand(self, network_id, may_exist=may_exist,
-                                     **columns)
-
     def create_lswitch_port(self, lport_name, lswitch_name, may_exist=True,
-                            network_id=None, **columns):
+                            **columns):
         return cmd.AddLSwitchPortCommand(self, lport_name, lswitch_name,
-                                         may_exist, network_id=network_id,
-                                         **columns)
+                                         may_exist, **columns)
 
     def set_lswitch_port(self, lport_name, external_ids_update=None,
                          if_exists=True, **columns):
@@ -525,30 +518,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             if rc:
                 chassis.append((rc, 0))
         # make sure that chassis are sorted by priority
-        return sorted(chassis, reverse=True, key=lambda x: x[1])
-
-    @staticmethod
-    def _get_logical_router_port_ha_chassis_group(lrp, priorities=None):
-        """Get the list of chassis hosting this gateway port.
-
-        @param   lrp: logical router port
-        @type    lrp: Logical_Router_Port row
-        @param   priorities: a list of gateway chassis priorities to search for
-        @type    priorities: list of int
-        @return: List of tuples (chassis_name, priority) sorted by priority. If
-                 ``priorities`` is set then only chassis matching of these
-                 priorities are returned.
-        """
-        chassis = []
-        hcg = getattr(lrp, 'ha_chassis_group', None)
-        if not hcg:
-            return chassis
-
-        for hc in hcg[0].ha_chassis:
-            if priorities is not None and hc.priority not in priorities:
-                continue
-            chassis.append((hc.chassis_name, hc.priority))
-        # Make sure that chassis are sorted by priority (highest prio first)
         return sorted(chassis, reverse=True, key=lambda x: x[1])
 
     def get_all_chassis_gateway_bindings(self,
@@ -936,12 +905,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         # Set the MAC_Binding age limit on OVN Logical Routers
         return cmd.SetLRouterMacAgeLimitCommand(
             self, router, cfg.get_ovn_mac_binding_age_threshold())
-
-    def ha_chassis_group_with_hc_add(self, name, chassis_priority,
-                                     may_exist=False, **columns):
-        return cmd.HAChassisGroupWithHCAddCommand(
-            self, name, chassis_priority, may_exist=may_exist,
-            **columns)
 
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
