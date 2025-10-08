@@ -1209,19 +1209,20 @@ def sync_ha_chassis_group_network(context, nb_idl, sb_idl, port_id,
     chassis_list = sb_idl.get_extport_chassis_from_cms_options()
     if chassis_list:
         group_name = ovn_extport_chassis_group_name(port_id)
+        # Check if the port is bound to a chassis and if so, ignore that
+        # chassis when building the HA Chassis Group to ensure the
+        # external port is bound to a different chassis than the VM
+        ignore_chassis = sb_idl.get_chassis_host_for_port(port_id)
         LOG.debug('HA Chassis Group %s is based on external port %s '
                   '(network %s)', group_name, port_id, network_id)
     else:
         chassis_list = sb_idl.get_gateway_chassis_from_cms_options(
             name_only=False)
         group_name = ovn_name(network_id)
+        ignore_chassis = set()
         LOG.debug('HA Chassis Group %s is based on network %s',
                   group_name, network_id)
 
-    # Check if the port is bound to a chassis and if so, ignore that
-    # chassis when building the HA Chassis Group to ensure the
-    # external port is bound to a different chassis than the VM
-    ignore_chassis = sb_idl.get_chassis_host_for_port(port_id)
     plugin = directory.get_plugin()
     resource = plugin.get_network(context, network_id)
     az_hints = common_utils.get_az_hints(resource)
