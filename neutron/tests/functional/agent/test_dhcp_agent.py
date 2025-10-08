@@ -93,10 +93,14 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             # to start to avoid an endless thread.
             self.agent = agent.DhcpAgentWithStateReport('localhost')
         self.agent.init_host()
+        self.addCleanup(self._stop_agent, self.agent)
 
         self.ovs_driver = interface.OVSInterfaceDriver(self.conf)
         mock.patch('neutron.agent.common.ovs_lib.'
                    'OVSBridge._set_port_dead').start()
+
+    def _stop_agent(self, _agent):
+        _agent.cache.cleanup_loop.stop()
 
     def network_dict_for_dhcp(self, dhcp_enabled=True,
                               ip_version=lib_const.IP_VERSION_4,
