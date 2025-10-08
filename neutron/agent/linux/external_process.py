@@ -227,6 +227,7 @@ class ProcessMonitor:
 
         self._monitored_processes = {}
 
+        self._stopping_event = threading.Event()
         self._checking_thread = None
         if self._config.AGENT.check_child_processes_interval:
             self._checking_thread = self._spawn_checking_thread()
@@ -278,8 +279,9 @@ class ProcessMonitor:
         process will be stopped.
         """
         self._monitor_processes = False
+        self._stopping_event.set()
         if self._checking_thread:
-            self._checking_thread.join()
+            self._checking_thread.join(timeout=5)
 
     def _spawn_checking_thread(self):
         self._monitor_processes = True
@@ -293,6 +295,8 @@ class ProcessMonitor:
         # we build the list of keys before iterating in the loop to cover
         # the case where other threads add or remove items from the
         # dictionary which otherwise will cause a RuntimeError
+        if self._stopping_event.is_set():
+            return
         for service_id in list(self._monitored_processes):
             pm = self._monitored_processes.get(service_id)
 
