@@ -2152,14 +2152,8 @@ class OVNClient:
         return network
 
     def delete_network(self, context, network_id):
-        with self._nb_idl.transaction(check_error=True) as txn:
-            ls_name = utils.ovn_name(network_id)
-            ls, ls_dns_record = self._nb_idl.get_ls_and_dns_record(ls_name)
-
-            txn.add(self._nb_idl.ls_del(ls_name, if_exists=True))
-            if ls_dns_record:
-                txn.add(self._nb_idl.dns_del(ls_dns_record.uuid))
-            txn.add(self._nb_idl.ha_chassis_group_del(ls_name, if_exists=True))
+        self._nb_idl.ls_del(utils.ovn_name(network_id),
+                            if_exists=True).execute(check_error=True)
         db_rev.delete_revision(
             context, network_id, ovn_const.TYPE_NETWORKS)
 

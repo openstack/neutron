@@ -452,3 +452,41 @@ class TestOVNClient(testlib_api.MySQLTestCaseMixin,
                     port_data['id'])
                 req.get_response(self.api)
                 _check_bw(port_data['id'], max_kbps, max_burst_kbps, min_kbps)
+
+    def test_delete_network(self):
+        with self.network(uuidutils.generate_uuid()) as net:
+            # Add a DNS register and a HA_Chassis_Group.
+            ls_name = ovn_utils.ovn_name(net['network']['id'])
+            self.nb_api.ha_chassis_group_add(ls_name).execute(
+                check_error=True)
+            self.nb_api.dns_add(
+                external_ids={'ls_name': ls_name}).execute(check_error=True)
+            dns = self.nb_api.db_find(
+                'DNS', ('external_ids', '=', {'ls_name': ls_name})).execute(
+                check_error=True)[0]
+            self.nb_api.db_set(
+                'Logical_Switch', ls_name,
+                ('dns_records', [dns['_uuid']])).execute(check_error=True)
+
+        self.assertIsNotNone(self.nb_api.lookup('Logical_Switch', ls_name))
+        self.assertIsNotNone(self.nb_api.lookup('HA_Chassis_Group', ls_name))
+        self.assertEqual(
+            1,
+            len(self.nb_api.db_find(
+                'DNS', ('external_ids', '=', {'ls_name': ls_name})).execute(
+                check_error=True))
+        )
+
+        # Delete the network
+        req = self.new_delete_request('networks', net['network']['id'])
+        req.get_response(self.api)
+        self.assertIsNone(
+            self.nb_api.lookup('Logical_Switch', ls_name, default=None))
+        self.assertIsNone(
+            self.nb_api.lookup('HA_Chassis_Group', ls_name, default=None))
+        self.assertEqual(
+            0,
+            len(self.nb_api.db_find(
+                'DNS', ('external_ids', '=', {'ls_name': ls_name})).execute(
+                check_error=True))
+        )
