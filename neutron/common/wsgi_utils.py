@@ -18,7 +18,7 @@ from oslo_utils import timeutils
 from neutron.common import utils
 
 
-FIRST_WORKER_ID = None
+FIRST_WORKER_ID = 1
 
 
 def get_start_time(default=None, current_time=False):
