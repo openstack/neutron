@@ -28,7 +28,7 @@ class SecurityGroupDefaultRule(standard_attr.HasStandardAttributes,
                                   constants.EGRESS_DIRECTION,
                                   name='defaultsecuritygrouprules_direction'),
                           nullable=False)
-    ethertype = sa.Column(sa.String(40))
+    ethertype = sa.Column(sa.String(db_const.ETHERTYPE_FIELD_SIZE))
     remote_group_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE))
     protocol = sa.Column(sa.String(40))
     port_range_min = sa.Column(sa.Integer)
