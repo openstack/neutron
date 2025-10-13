@@ -592,7 +592,7 @@ class TestDhcpAgent(base.BaseTestCase):
                 mock_t.return_value = None
                 dhcp.periodic_resync()
                 mock_t.assert_called_once_with(
-                    target=dhcp._periodic_resync_event)
+                    target=dhcp._periodic_resync_helper)
 
     def test_start_ready_ports_loop(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
