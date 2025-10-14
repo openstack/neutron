@@ -1110,7 +1110,8 @@ class TestArpPing(TestIPCmdBase):
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2],
                                       privsep_exec=True),
             mock.call().netns.execute(mock.ANY, extra_ok_codes=[1, 2],
-                                      privsep_exec=True)])
+                                      privsep_exec=True)],
+            any_order=True)
 
         ip_wrapper = mIPWrapper(namespace=mock.sentinel.ns_name)
 
