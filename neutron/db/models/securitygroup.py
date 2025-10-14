@@ -82,7 +82,7 @@ class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
     revises_on_change = ('security_group', )
     direction = sa.Column(sa.Enum('ingress', 'egress',
                                   name='securitygrouprules_direction'))
-    ethertype = sa.Column(sa.String(40))
+    ethertype = sa.Column(sa.String(db_const.ETHERTYPE_FIELD_SIZE))
     protocol = sa.Column(sa.String(40))
     port_range_min = sa.Column(sa.Integer)
     port_range_max = sa.Column(sa.Integer)

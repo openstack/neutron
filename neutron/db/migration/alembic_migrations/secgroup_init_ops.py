@@ -15,6 +15,7 @@
 
 # Initial operations for security group extension
 from alembic import op
+from neutron_lib.db import constants
 import sqlalchemy as sa
 
 
@@ -40,7 +41,9 @@ def upgrade():
         sa.Column('security_group_id', sa.String(length=36), nullable=False),
         sa.Column('remote_group_id', sa.String(length=36), nullable=True),
         sa.Column('direction', rule_direction_enum, nullable=True),
-        sa.Column('ethertype', sa.String(length=40), nullable=True),
+        sa.Column('ethertype',
+                  sa.String(length=constants.ETHERTYPE_FIELD_SIZE),
+                  nullable=True),
         sa.Column('protocol', sa.String(length=40), nullable=True),
         sa.Column('port_range_min', sa.Integer(), nullable=True),
         sa.Column('port_range_max', sa.Integer(), nullable=True),
