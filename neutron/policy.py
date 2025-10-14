@@ -253,6 +253,9 @@ def _build_match_rule(action, target, pluralized):
 # This will prevent us from having to handling backward compatibility
 # for policy.yaml
 # TODO(salv-orlando): Reinstate GenericCheck for simple tenant_id checks
+@policy.register('project_id')
+# TODO(slaweq): Remove registering of the 'tenant_id' for OwnerCheck in
+# the 2027.1 cycle
 @policy.register('tenant_id')
 class OwnerCheck(policy.Check):
     """Resource ownership check.
@@ -264,6 +267,11 @@ class OwnerCheck(policy.Check):
     resource and perform the check.
     """
     def __init__(self, kind, match):
+        if kind == 'tenant_id':
+            LOG.warning(
+                "Using 'tenant_id' in the API policy rules is deprecated "
+                "since 2026.1 release and will be removed in "
+                "the 2027.1. Please use 'project_id' instead.")
         self._orig_kind = kind
         self._orig_match = match
 

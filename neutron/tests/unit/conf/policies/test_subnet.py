@@ -37,15 +37,12 @@ class SubnetAPITestCase(base.PolicyBaseTestCase):
 
         self.network = {
             'id': uuidutils.generate_uuid(),
-            'tenant_id': self.project_id,
             'project_id': self.project_id}
         self.alt_network = {
             'id': uuidutils.generate_uuid(),
-            'tenant_id': self.alt_project_id,
             'project_id': self.alt_project_id}
         self.ext_alt_network = {
             'id': uuidutils.generate_uuid(),
-            'tenant_id': self.alt_project_id,
             'project_id': self.alt_project_id}
 
         networks = {
@@ -56,26 +53,22 @@ class SubnetAPITestCase(base.PolicyBaseTestCase):
 
         self.target = {
             'project_id': self.project_id,
-            'tenant_id': self.project_id,
             'network_id': self.network['id'],
             'ext_parent_network_id': self.network['id']}
         # This subnet belongs to "project_id", but not the network that
         # belongs to "alt_project_id".
         self.target_net_alt_target = {
             'project_id': self.project_id,
-            'tenant_id': self.project_id,
             'network_id': self.alt_network['id'],
             'ext_parent_network_id': self.alt_network['id']}
         self.alt_target = {
             'project_id': self.alt_project_id,
-            'tenant_id': self.alt_project_id,
             'network_id': self.alt_network['id'],
             'ext_parent_network_id': self.alt_network['id']}
         # Both the subnet and the network belongs to "alt_project_id" and the
         # network is external.
         self.target_net_ext_alt_target = {
             'project_id': self.alt_project_id,
-            'tenant_id': self.alt_project_id,
             'network_id': self.ext_alt_network['id'],
             'ext_parent_network_id': self.ext_alt_network['id'],
             'router:external': True}
@@ -83,7 +76,6 @@ class SubnetAPITestCase(base.PolicyBaseTestCase):
         # the subnet.
         self.alt_target_own_net = {
             'project_id': self.alt_project_id,
-            'tenant_id': self.alt_project_id,
             'network_id': self.network['id'],
             'ext_parent_network_id': self.network['id']}
 

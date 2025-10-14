@@ -145,22 +145,22 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
                      'is_visible': True, 'default': ''},
             'restricted_attr': {'allow_post': True, 'allow_put': True,
                                 'is_visible': True, 'default': ''},
-            'tenant_id': {'allow_post': True, 'allow_put': False,
-                          'required_by_policy': True,
-                          'validate': {'type:string':
-                                       db_const.PROJECT_ID_FIELD_SIZE},
-                          'is_visible': True}
+            'project_id': {'allow_post': True, 'allow_put': False,
+                           'required_by_policy': True,
+                           'validate': {'type:string':
+                                        db_const.PROJECT_ID_FIELD_SIZE},
+                           'is_visible': True}
         },
         'admin_mehs': {
             'id': {'allow_post': False, 'allow_put': False,
                    'is_visible': True, 'primary_key': True},
             'foo': {'allow_post': True, 'allow_put': True,
                     'is_visible': True, 'default': ''},
-            'tenant_id': {'allow_post': True, 'allow_put': False,
-                          'required_by_policy': True,
-                          'validate': {'type:string':
-                                       db_const.PROJECT_ID_FIELD_SIZE},
-                          'is_visible': True}
+            'project_id': {'allow_post': True, 'allow_put': False,
+                           'required_by_policy': True,
+                           'validate': {'type:string':
+                                        db_const.PROJECT_ID_FIELD_SIZE},
+                           'is_visible': True}
         }
     }
 
@@ -211,7 +211,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'xxx',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}
+            'project_id': 'tenid'}
         response = self.app.post_json('/v2.0/mehs.json',
                                       params={'meh': {'attr': 'meh'}},
                                       headers={'X-Project-Id': 'tenid'})
@@ -227,7 +227,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'xxx',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}
+            'project_id': 'tenid'}
         # The policy engine should trigger an exception in 'before', and the
         # plugin method should not be called at all
         response = self.app.put_json('/v2.0/mehs/xxx.json',
@@ -246,7 +246,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'yyy',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}
+            'project_id': 'tenid'}
         response = self.app.put_json('/v2.0/mehs/yyy.json',
                                      params={'meh': {'attr': 'meh'}},
                                      headers={'X-Project-Id': 'tenid'},
@@ -263,7 +263,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'xxx',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}
+            'project_id': 'tenid'}
         # The policy engine should trigger an exception in 'before', and the
         # plugin method should not be called
         response = self.app.delete_json('/v2.0/mehs/xxx.json',
@@ -281,7 +281,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'yyy',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}
+            'project_id': 'tenid'}
         # The policy engine should trigger an exception in 'after', and the
         # plugin method should be called
         response = self.app.get('/v2.0/mehs/yyy.json',
@@ -295,7 +295,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'xxx',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}
+            'project_id': 'tenid'}
         response = self.app.get('/v2.0/mehs/xxx.json',
                                 headers={'X-Project-Id': 'tenid'})
         self.assertEqual(200, response.status_int)
@@ -307,7 +307,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'xxx',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}]
+            'project_id': 'tenid'}]
         response = self.app.get('/v2.0/mehs',
                                 headers={'X-Project-Id': 'tenid'})
         self.assertEqual(200, response.status_int)
@@ -319,7 +319,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
             'id': 'xxx',
             'attr': 'meh',
             'restricted_attr': '',
-            'tenant_id': 'tenid'}]
+            'project_id': 'tenid'}]
         policy.reset()
         response = self.app.get('/v2.0/mehs',
                                 headers={'X-Project-Id': 'tenid'})

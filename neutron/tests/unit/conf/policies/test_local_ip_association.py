@@ -28,11 +28,9 @@ class LocalIPAssociationAPITestCase(base.PolicyBaseTestCase):
         super().setUp()
         self.local_ip = {
             'id': uuidutils.generate_uuid(),
-            'tenant_id': self.project_id,
             'project_id': self.project_id}
         self.alt_local_ip = {
             'id': uuidutils.generate_uuid(),
-            'tenant_id': self.alt_project_id,
             'project_id': self.alt_project_id}
 
         self.target = {

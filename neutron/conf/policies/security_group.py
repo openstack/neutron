@@ -55,7 +55,7 @@ rules = [
         name='admin_or_sg_owner',
         check_str=neutron_policy.policy_or(
             'rule:context_is_admin',
-            'tenant_id:%(security_group:tenant_id)s'),
+            'project_id:%(security_group:project_id)s'),
         description='Rule for admin or security group owner access'),
     policy.RuleDefault(
         name='admin_owner_or_sg_owner',
