@@ -171,10 +171,11 @@ ovn_opts = [
                        "automatically set on each subnet upon creation and "
                        "on all existing subnets when Neutron starts.\n"
                        "An empty value for a DHCP option will cause that "
-                       "option to be unset globally.\n"
+                       "option to be unset globally. Multiple values should "
+                       "be separated by semi-colon.\n"
                        "EXAMPLES:\n"
-                       "- ntp_server:1.2.3.4,wpad:1.2.3.5 - Set ntp_server "
-                       "and wpad\n"
+                       "- ntp_server:1.2.3.4,wpad:1.2.3.5;1.2.3.6 - Set "
+                       "ntp_server and wpad\n"
                        "- ntp_server:,wpad:1.2.3.5 - Unset ntp_server and "
                        "set wpad\n"
                        "See the ovn-nb(5) man page for available options.")),
@@ -184,7 +185,8 @@ ovn_opts = [
                        "automatically set on each subnet upon creation and "
                        "on all existing subnets when Neutron starts.\n"
                        "An empty value for a DHCPv6 option will cause that "
-                       "option to be unset globally.\n"
+                       "option to be unset globally. Multiple values should "
+                       "be separated by semi-colon.\n"
                        "See the ovn-nb(5) man page for available options.")),
     cfg.BoolOpt('ovn_emit_need_to_frag',
                 default=True,
