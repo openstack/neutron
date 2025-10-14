@@ -490,3 +490,16 @@ class TestOVNClient(testlib_api.MySQLTestCaseMixin,
                 'DNS', ('external_ids', '=', {'ls_name': ls_name})).execute(
                 check_error=True))
         )
+
+    def test_create_subnet_with_dhcp_options(self):
+        cfg.CONF.set_override('ovn_dhcp4_global_options',
+                              'ntp_server:1.2.3.4;1.2.3.5,wpad:1.2.3.6',
+                              group='ovn')
+        with self.network('test-ovn-client') as net:
+            with self.subnet(net):
+                dhcp_options = self.nb_api.dhcp_options_list().execute(
+                    check_error=True)[0]
+                self.assertEqual('{1.2.3.4, 1.2.3.5}',
+                                 dhcp_options.options['ntp_server'])
+                self.assertEqual('1.2.3.6',
+                                 dhcp_options.options['wpad'])

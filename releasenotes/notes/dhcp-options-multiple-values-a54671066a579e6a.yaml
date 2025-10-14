@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The configuration parameters ``ovn_dhcp4_global_options`` and
+    ``ovn_dhcp6_global_options`` allow multiple values per key, separated by
+    a semi-colon character. E.g.: ntp_server:1.2.3.4,wpad:1.2.3.5;1.2.3.6

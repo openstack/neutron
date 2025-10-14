@@ -2336,7 +2336,12 @@ class OVNClient:
             # If the value is null (i.e. config ntp_server:), treat it as
             # a request to remove the option
             if value:
-                options[option] = value
+                # Example: ntp_server='{1.2.3.4, 1.2.3.5}'. A single value is
+                # also allowed but in shake of readability, it is printed as a
+                # single string.
+                _value = value.split(';')
+                options[option] = (_value[0] if len(_value) == 1 else
+                                   '{%s}' % ', '.join(_value))
             else:
                 try:
                     del options[option]
