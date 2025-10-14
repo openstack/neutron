@@ -131,6 +131,7 @@
         - neutron-ovn-tempest-ovs-release-with-oslo-master
         - neutron-tempest-plugin-ovn-with-ovn-metadata-agent
         - neutron-ovn-grenade-multinode-ovn-metadata-agent
+        - ironic-tempest-ovn-uefi-ipmi-pxe
     experimental:
       jobs: *neutron-periodic-jobs
 
