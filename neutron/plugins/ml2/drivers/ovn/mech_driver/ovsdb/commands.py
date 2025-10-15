@@ -187,6 +187,36 @@ class AddNetworkCommand(command.AddCommand):
         self.result = ls.uuid
 
 
+class DelLogicalSwitchCommand(command.BaseCommand):
+    def __init__(self, api, ls_name, if_exists):
+        super().__init__(api)
+        self.ls_name = ls_name
+        self.if_exists = if_exists
+
+    def run_idl(self, txn):
+        try:
+            ls = self.api.lookup('Logical_Switch', self.ls_name)
+        except idlutils.RowNotFound as e:
+            if self.if_exists:
+                return
+            msg = "Logical Switch %s does not exist" % self.ls_name
+            raise RuntimeError(msg) from e
+
+        # Delete the DNS record associated to this Neutron network.
+        for dns_row in ls.dns_records:
+            if dns_row.external_ids.get('ls_name') == self.ls_name:
+                dns_row.delete()
+                break
+
+        # Delete the Logical_Switch register.
+        ls.delete()
+
+        # Delete the HA_Chassis_Group register associated, if exists.
+        hcg = self.api.lookup('HA_Chassis_Group', self.ls_name, default=None)
+        if hcg:
+            hcg.delete()
+
+
 class AddLSwitchPortCommand(command.BaseCommand):
     def __init__(self, api, lport, lswitch, may_exist, network_id=None,
                  **columns):

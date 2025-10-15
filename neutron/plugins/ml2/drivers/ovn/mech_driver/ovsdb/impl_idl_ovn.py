@@ -281,6 +281,9 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.AddNetworkCommand(self, network_id, may_exist=may_exist,
                                      **columns)
 
+    def ls_del(self, switch, if_exists=False):
+        return cmd.DelLogicalSwitchCommand(self, switch, if_exists)
+
     def create_lswitch_port(self, lport_name, lswitch_name, may_exist=True,
                             network_id=None, **columns):
         return cmd.AddLSwitchPortCommand(self, lport_name, lswitch_name,
