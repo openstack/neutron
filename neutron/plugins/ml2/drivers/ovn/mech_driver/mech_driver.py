@@ -1639,7 +1639,8 @@ def validate_availability_zones(cls, context, resource_type,
 
 
 def get_network_availability_zones(cls, network, _driver):
-    lswitch = _driver._nb_ovn.get_lswitch(network['id'])
+    ls_name = ovn_utils.ovn_name(network['id'])
+    lswitch = _driver._nb_ovn.get_lswitch(ls_name)
     if not lswitch:
         return []
 

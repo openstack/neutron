@@ -767,12 +767,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return lsp.parent_name
 
     def get_lswitch(self, lswitch_name):
-        # FIXME(lucasagomes): We should refactor those get_*()
-        # methods. Some of 'em require the name, others IDs etc... It can
-        # be confusing.
-        if uuidutils.is_uuid_like(lswitch_name):
-            lswitch_name = utils.ovn_name(lswitch_name)
-
         try:
             return self.lookup('Logical_Switch', lswitch_name)
         except idlutils.RowNotFound:
