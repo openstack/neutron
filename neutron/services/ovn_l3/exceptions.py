@@ -19,3 +19,8 @@ from neutron_lib import exceptions as n_exc
 class MechanismDriverNotFound(n_exc.NotFound):
     message = _("None of the supported mechanism drivers found: "
                 "%(mechanism_drivers)s. Check your configuration.")
+
+
+class MechanismDriverOVNNotReady(n_exc.ServiceUnavailable):
+    message = _('Mechanism driver OVN connection not ready. This service '
+                'plugin must be initialized after the mechanism driver.')
