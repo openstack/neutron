@@ -579,22 +579,17 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         # Check for ipv6_ra_configs changes
         db_lrport_ra = db_router_port['ipv6_ra_configs']
-        lrport_ra = {}
-        ipv6_ra_supported = self.ovn_api.is_col_present(
-            'Logical_Router_Port', 'ipv6_ra_configs')
-        if ipv6_ra_supported:
-            lrp_name = utils.ovn_lrouter_port_name(db_router_port['id'])
-            try:
-                ovn_lrport = self.ovn_api.lrp_get(
-                    lrp_name).execute(check_error=True)
-            except idlutils.RowNotFound:
-                # If the port is not found in the OVN database the
-                # ovn-db-sync script will recreate this port later
-                # and it will have the latest information. No need
-                # to update it.
-                return False
-            lrport_ra = ovn_lrport.ipv6_ra_configs
-
+        lrp_name = utils.ovn_lrouter_port_name(db_router_port['id'])
+        try:
+            ovn_lrport = self.ovn_api.lrp_get(
+                lrp_name).execute(check_error=True)
+        except idlutils.RowNotFound:
+            # If the port is not found in the OVN database the
+            # ovn-db-sync script will recreate this port later
+            # and it will have the latest information. No need
+            # to update it.
+            return False
+        lrport_ra = ovn_lrport.ipv6_ra_configs
         return db_lrport_ra != lrport_ra
 
     def sync_routers_and_rports(self, ctx):

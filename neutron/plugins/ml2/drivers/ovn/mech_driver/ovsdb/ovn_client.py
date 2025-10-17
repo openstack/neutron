@@ -1276,8 +1276,6 @@ class OVNClient:
         port_fixed_ips = port['fixed_ips']
         networks = set()
         ipv6_ra_configs = {}
-        ipv6_ra_configs_supported = self._nb_idl.is_col_present(
-            'Logical_Router_Port', 'ipv6_ra_configs')
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
 
@@ -1288,8 +1286,7 @@ class OVNClient:
             networks.add("{}/{}".format(fixed_ip['ip_address'],
                                         str(cidr.prefixlen)))
 
-            if subnet.get('ipv6_address_mode') and not ipv6_ra_configs and (
-                    ipv6_ra_configs_supported):
+            if subnet.get('ipv6_address_mode') and not ipv6_ra_configs:
                 ipv6_ra_configs['address_mode'] = (
                     utils.get_ovn_ipv6_address_mode(
                         subnet['ipv6_address_mode']))
