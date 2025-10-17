@@ -1352,13 +1352,10 @@ class OVNClient:
     def _check_external_ips_changed(self, ovn_snats,
                                     ovn_static_routes, router):
         context = n_context.get_admin_context()
-        ovn_gw_subnets = None
-        if self._nb_idl.is_col_present('Logical_Router_Static_Route',
-                                       'external_ids'):
-            ovn_gw_subnets = [
-                getattr(route, 'external_ids', {}).get(
-                    ovn_const.OVN_SUBNET_EXT_ID_KEY) for route in
-                ovn_static_routes]
+        ovn_gw_subnets = [
+            getattr(route, 'external_ids', {}).get(
+                ovn_const.OVN_SUBNET_EXT_ID_KEY) for route in
+            ovn_static_routes]
 
         for gw_port in self._get_router_gw_ports(context, router['id']):
             gw_infos = self._get_gw_info(context, gw_port)
