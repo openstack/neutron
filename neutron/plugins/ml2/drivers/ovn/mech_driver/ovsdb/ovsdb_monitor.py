@@ -89,6 +89,15 @@ class ChassisEvent(row_event.RowEvent):
                 'HA_Chassis_Group').execute(check_error=True):
             if not hcg.name.startswith(ovn_const.OVN_NAME_PREFIX):
                 continue
+
+            net_id = hcg.external_ids.get(ovn_const.OVN_NETWORK_ID_EXT_ID_KEY)
+            router_id = hcg.external_ids.get(
+                ovn_const.OVN_ROUTER_ID_EXT_ID_KEY)
+            if net_id and router_id:
+                # This HA_Chassis_Group is linked to a router, it will be
+                # updated matching the router Gateway_Chassis registers.
+                continue
+
             # The filter() is to get rid of the empty string in
             # the list that is returned because of split()
             azs = {az for az in
