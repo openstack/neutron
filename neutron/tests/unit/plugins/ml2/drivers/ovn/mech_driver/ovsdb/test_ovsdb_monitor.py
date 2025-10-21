@@ -187,9 +187,9 @@ class TestOvnConnection(base.BaseTestCase):
 
     def test_connection_nb_start(self):
         ovn_conf.cfg.CONF.set_override('ovn_nb_private_key', 'foo-key', 'ovn')
-        Stream.ssl_set_private_key_file = mock.Mock()
-        Stream.ssl_set_certificate_file = mock.Mock()
-        Stream.ssl_set_ca_cert_file = mock.Mock()
+        mock.patch.object(Stream, 'ssl_set_private_key_file').start()
+        mock.patch.object(Stream, 'ssl_set_certificate_file').start()
+        mock.patch.object(Stream, 'ssl_set_ca_cert_file').start()
 
         self._test_connection_start(idl_class=ovsdb_monitor.OvnNbIdl,
                                     schema='OVN_Northbound')
