@@ -28,17 +28,17 @@ class L3ConntrackHelperAPITestCase(base.PolicyBaseTestCase):
         super().setUp()
         self.router = {
             'id': uuidutils.generate_uuid(),
+            'tenant_id': self.project_id,
             'project_id': self.project_id}
         self.alt_router = {
             'id': uuidutils.generate_uuid(),
+            'tenant_id': self.alt_project_id,
             'project_id': self.alt_project_id}
 
         self.target = {
-            'project_id': self.project_id,
             'router_id': self.router['id'],
             'ext_parent_router_id': self.router['id']}
         self.alt_target = {
-            'project_id': self.alt_project_id,
             'router_id': self.alt_router['id'],
             'ext_parent_router_id': self.alt_router['id']}
 

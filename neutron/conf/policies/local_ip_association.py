@@ -27,9 +27,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_local_ip_port_association',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_MEMBER,
-            base.PARENT_OWNER_MEMBER),
+        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Create a Local IP port association',
         operations=[
@@ -46,9 +44,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_local_ip_port_association',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
-            base.PARENT_OWNER_READER),
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a Local IP port association',
         operations=[
@@ -69,9 +65,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_local_ip_port_association',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_MEMBER,
-            base.PARENT_OWNER_MEMBER),
+        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Delete a Local IP port association',
         operations=[
