@@ -107,8 +107,7 @@ class _AddBaseCommand:
 
 class TestCaseWithOutputPort(bgp.BaseBgpNbIdlTestCase):
     def _is_bgp_supported(self):
-        return idlutils.table_has_column(
-            self.nb_api.idl, 'Logical_Router_Policy', 'output_port')
+        return bgp.is_policy_output_port_column_supported(self.nb_api.idl)
 
 
 class LsAddCommandTestCase(bgp.BaseBgpNbIdlTestCase, _AddBaseCommand):
