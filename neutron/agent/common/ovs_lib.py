@@ -29,6 +29,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import command as ovs_cmd
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import exceptions as ovs_exceptions
 
@@ -666,6 +667,10 @@ class OVSBridge(BaseOVS):
     def get_iface_name_list(self):
         # get the interface name list for this bridge
         return self.ovsdb.list_ifaces(self.br_name).execute(check_error=True)
+
+    def get_iface_ofports_by_type(self, type_):
+        return _GetBridgeInterfacesOfportsByTypeCommand(
+            self.ovsdb, self.br_name, type_).execute(check_error=True)
 
     def get_port_name_list(self):
         # get the port name list for this bridge
@@ -1391,6 +1396,20 @@ class DeferredOVSBridge:
         else:
             LOG.exception("OVS flows could not be applied on bridge %s",
                           self.br.br_name)
+
+
+class _GetBridgeInterfacesOfportsByTypeCommand(ovs_cmd.ReadOnlyCommand):
+    def __init__(self, api, bridge_name, type_):
+        super().__init__(api)
+        self.bridge_name = bridge_name
+        self.type = type_
+
+    def run_idl(self, txn):
+        br = idlutils.row_by_value(
+            self.api.idl, 'Bridge', 'name', self.bridge_name)
+        self.result = [
+            i.ofport[0] for p in br.ports if p.name != self.bridge_name
+            for i in p.interfaces if i.type == self.type and i.ofport]
 
 
 def _build_flow_expr_str(flow_dict, cmd, strict):
