@@ -28,7 +28,6 @@ from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api.definitions import qinq as qinq_apidef
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants as const
-from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -366,8 +365,8 @@ class OVNClient:
                 (7, 0, 4))
         return self._is_ipxe_over_ipv6_supported
 
-    def _get_port_options(self, port):
-        context = n_context.get_admin_context()
+    def _get_port_options(self, context, port):
+        admin_context = context.elevated()
         bp_info = utils.validate_and_get_data_from_binding_profile(port)
         vtep_physical_switch = bp_info.bp_param.get('vtep-physical-switch')
 
@@ -400,11 +399,11 @@ class OVNClient:
                 for ip in port_fixed_ips
                 if 'subnet_id' in ip
             ]
-            subnets = self._plugin.get_subnets(
-                context, filters={'id': subnet_ids})
+            subnets = self._plugin.get_subnets(admin_context,
+                                               filters={'id': subnet_ids})
             subnets_by_id = {subnet['id']: subnet for subnet in subnets}
             address4_scope_id, address6_scope_id = (
-                utils.get_subnets_address_scopes(context, subnets_by_id,
+                utils.get_subnets_address_scopes(admin_context, subnets_by_id,
                                                  port_fixed_ips,
                                                  self._plugin))
             p_type, virtual_ip, virtual_parents = (
@@ -467,8 +466,8 @@ class OVNClient:
         if port_type != ovn_const.LSP_TYPE_EXTERNAL:
             if (bp_info.vnic_type == portbindings.VNIC_REMOTE_MANAGED and
                     ovn_const.VIF_DETAILS_PF_MAC_ADDRESS in bp_info.bp_param):
-                port_net = self._plugin.get_network(
-                    context, port['network_id'])
+                port_net = self._plugin.get_network(admin_context,
+                                                    port['network_id'])
                 mtu = str(port_net['mtu'])
                 options.update({
                     ovn_const.LSP_OPTIONS_VIF_PLUG_TYPE_KEY: 'representor',
@@ -546,8 +545,8 @@ class OVNClient:
 
         return (dhcpv4_options, dhcpv6_options)
 
-    def get_external_ids_from_port(self, port):
-        port_info = self._get_port_options(port)
+    def get_external_ids_from_port(self, context, port):
+        port_info = self._get_port_options(context, port)
         external_ids = {
             ovn_const.OVN_PORT_NAME_EXT_ID_KEY: port['name'],
             ovn_const.OVN_DEVID_EXT_ID_KEY: port['device_id'],
@@ -574,7 +573,8 @@ class OVNClient:
         if utils.is_lsp_ignored(port):
             return
 
-        port_info, external_ids = self.get_external_ids_from_port(port)
+        port_info, external_ids = self.get_external_ids_from_port(
+            context, port)
         lswitch_name = utils.ovn_name(port['network_id'])
 
         # It's possible to have a network created on one controller and then a
@@ -684,7 +684,9 @@ class OVNClient:
         if utils.is_lsp_ignored(port):
             return
 
-        port_info, external_ids = self.get_external_ids_from_port(port)
+        admin_context = context.elevated()
+        port_info, external_ids = self.get_external_ids_from_port(
+            context, port)
 
         check_rev_cmd = self._nb_idl.check_revision_number(
             port['id'], port, ovn_const.TYPE_PORTS)
@@ -706,7 +708,7 @@ class OVNClient:
                 # LogicalSwitchPortUpdateDownEvent, that will most likely
                 # cause a revision conflict.
                 # https://bugs.launchpad.net/neutron/+bug/1955578
-                router_obj = router.Router.get_object(context,
+                router_obj = router.Router.get_object(admin_context,
                                                       id=port['device_id'])
                 if utils.is_ovn_provider_router(router_obj):
                     columns_dict['type'] = ovn_const.LSP_TYPE_ROUTER
@@ -720,8 +722,8 @@ class OVNClient:
                 port_info, txn=txn)
 
             if utils.is_ovn_metadata_port(port):
-                context = n_context.get_admin_context()
-                network = self._plugin.get_network(context, port['network_id'])
+                network = self._plugin.get_network(admin_context,
+                                                   port['network_id'])
                 subnet_ids = [
                     _ip['subnet_id']
                     for _ip in port['fixed_ips']
@@ -729,10 +731,11 @@ class OVNClient:
                 ]
 
                 for subnet in self._plugin.get_subnets(
-                        context, filters={'id': subnet_ids}):
+                        admin_context, filters={'id': subnet_ids}):
                     if not subnet['enable_dhcp']:
                         continue
-                    self._update_subnet_dhcp_options(subnet, network, txn)
+                    self._update_subnet_dhcp_options(
+                        context, subnet, network, txn)
 
             # NOTE(mjozefcz): Do not set addresses if the port is not
             # bound, has no device_owner and it is OVN LB VIP port.
@@ -746,7 +749,7 @@ class OVNClient:
             if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
                 columns_dict['ha_chassis_group'], _ = (
                     utils.sync_ha_chassis_group_network(
-                        context, self._nb_idl, self._sb_idl, port['id'],
+                        admin_context, self._nb_idl, self._sb_idl, port['id'],
                         port['network_id'], txn))
             else:
                 # Clear the ha_chassis_group field
@@ -872,7 +875,7 @@ class OVNClient:
                           '%(error)s', {'port': port_id, 'error': e})
         db_rev.delete_revision(context, port_id, ovn_const.TYPE_PORTS)
 
-    def _create_or_update_floatingip(self, floatingip, txn=None):
+    def _create_or_update_floatingip(self, context, floatingip, txn=None):
         router_id = floatingip.get('router_id')
         if not router_id:
             return
@@ -890,7 +893,7 @@ class OVNClient:
             return
 
         commands = []
-        admin_context = n_context.get_admin_context()
+        admin_context = context.elevated()
         fip_db = self._l3_plugin._get_floatingip(
             admin_context, floatingip['id'])
         port_db = self._plugin.get_port(
@@ -1104,7 +1107,7 @@ class OVNClient:
                             'NAT', nat.uuid,
                             ('external_mac', port['mac_address']))
 
-    def _delete_floatingip(self, fip, lrouter, txn=None):
+    def _delete_floatingip(self, context, fip, lrouter, txn=None):
         commands = [self._nb_idl.delete_nat_rule_in_lrouter(
             lrouter, type='dnat_and_snat',
             logical_ip=fip['logical_ip'],
@@ -1122,7 +1125,7 @@ class OVNClient:
                             (ovn_const.OVN_PORT_FIP_EXT_ID_KEY)))
                     commands.extend(
                         self._handle_lb_fip_cmds(
-                            n_context.get_admin_context(),
+                            context.elevated(),
                             private_lsp,
                             action=ovn_const.FIP_ACTION_DISASSOCIATE))
         except KeyError:
@@ -1143,7 +1146,7 @@ class OVNClient:
     def create_floatingip(self, context, floatingip):
         try:
             with self._nb_idl.transaction(check_error=True) as txn:
-                self._create_or_update_floatingip(floatingip, txn=txn)
+                self._create_or_update_floatingip(context, floatingip, txn=txn)
                 self._qos_driver.create_floatingip(txn, floatingip)
         except Exception as e:
             with excutils.save_and_reraise_exception():
@@ -1158,7 +1161,7 @@ class OVNClient:
         # https://bugs.launchpad.net/networking-ovn/+bug/1657693
         if floatingip.get('router_id'):
             self._l3_plugin.update_floatingip_status(
-                n_context.get_admin_context(), floatingip['id'],
+                context.elevated(), floatingip['id'],
                 const.FLOATINGIP_STATUS_ACTIVE)
 
     def update_floatingip(self, context, floatingip, fip_request=None):
@@ -1179,11 +1182,12 @@ class OVNClient:
                     lrouter = ovn_fip['external_ids'].get(
                         ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY,
                         utils.ovn_name(router_id))
-                    self._delete_floatingip(ovn_fip, lrouter, txn=txn)
+                    self._delete_floatingip(context, ovn_fip, lrouter, txn=txn)
                     fip_status = const.FLOATINGIP_STATUS_DOWN
 
                 if floatingip.get('port_id'):
-                    self._create_or_update_floatingip(floatingip, txn=txn)
+                    self._create_or_update_floatingip(context, floatingip,
+                                                      txn=txn)
                     fip_status = const.FLOATINGIP_STATUS_ACTIVE
 
             self._qos_driver.update_floatingip(txn, floatingip)
@@ -1208,7 +1212,7 @@ class OVNClient:
             fip_dict = {'floating_network_id': fip_net_id, 'id': fip_id}
             try:
                 with self._nb_idl.transaction(check_error=True) as txn:
-                    self._delete_floatingip(ovn_fip, lrouter, txn=txn)
+                    self._delete_floatingip(context, ovn_fip, lrouter, txn=txn)
                     self._qos_driver.delete_floatingip(txn, fip_dict)
             except Exception as e:
                 with excutils.save_and_reraise_exception():
@@ -1216,11 +1220,11 @@ class OVNClient:
                               'router. Error: %s', e)
         db_rev.delete_revision(context, fip_id, ovn_const.TYPE_FLOATINGIPS)
 
-    def disassociate_floatingip(self, floatingip, router_id):
+    def disassociate_floatingip(self, context, floatingip, router_id):
         lrouter = utils.ovn_name(router_id)
         try:
             with self._nb_idl.transaction(check_error=True) as txn:
-                self._delete_floatingip(floatingip, lrouter, txn=txn)
+                self._delete_floatingip(context, floatingip, lrouter, txn=txn)
                 self._qos_driver.delete_floatingip(txn, floatingip)
         except Exception as e:
             with excutils.save_and_reraise_exception():
@@ -1245,14 +1249,15 @@ class OVNClient:
                 else const.IPv6_ANY))
         return gateways_info
 
-    def _delete_router_ext_gw(self, router_id, txn):
-        context = n_context.get_admin_context()
-        cidrs = self._get_snat_cidrs_for_external_router(context, router_id)
+    def _delete_router_ext_gw(self, context, router_id, txn):
+        admin_context = context.elevated()
+        cidrs = self._get_snat_cidrs_for_external_router(admin_context,
+                                                         router_id)
         gw_lrouter_name = utils.ovn_name(router_id)
         deleted_ports = []
-        for gw_port in self._get_router_gw_ports(context, router_id):
+        for gw_port in self._get_router_gw_ports(admin_context, router_id):
             routes_to_delete = []
-            for gw_info in self._get_gw_info(context, gw_port):
+            for gw_info in self._get_gw_info(admin_context, gw_port):
                 routes_to_delete.append((gw_info.ip_prefix,
                                          gw_info.gateway_ip))
 
@@ -1343,19 +1348,20 @@ class OVNClient:
 
         # 3. Add necessary snat rule(s) in lrouter if snat is enabled
         if utils.is_snat_enabled(router):
-            self.update_nat_rules(router['id'], enable_snat=True, txn=txn)
+            self.update_nat_rules(context, router['id'], enable_snat=True,
+                                  txn=txn)
         return added_ports
 
-    def _check_external_ips_changed(self, ovn_snats,
+    def _check_external_ips_changed(self, context, ovn_snats,
                                     ovn_static_routes, router):
-        context = n_context.get_admin_context()
+        admin_context = context.elevated()
         ovn_gw_subnets = [
             getattr(route, 'external_ids', {}).get(
                 ovn_const.OVN_SUBNET_EXT_ID_KEY) for route in
             ovn_static_routes]
 
-        for gw_port in self._get_router_gw_ports(context, router['id']):
-            gw_infos = self._get_gw_info(context, gw_port)
+        for gw_port in self._get_router_gw_ports(admin_context, router['id']):
+            gw_infos = self._get_gw_info(admin_context, gw_port)
             if not gw_infos:
                 # The router is attached to a external network without a subnet
                 lrp = self._nb_idl.get_lrouter_port(
@@ -1533,7 +1539,7 @@ class OVNClient:
                     txn.add(self._nb_idl.delete_lrouter_ext_gw(router_name))
                     if router_object:
                         deleted_gw_port_ids = self._delete_router_ext_gw(
-                            router_object['id'], txn)
+                            context, router_object['id'], txn)
                 elif gateway_new and gateway_old:
                     # Check if external gateway has changed, if yes, delete
                     # the old gateway and add the new gateway
@@ -1546,12 +1552,12 @@ class OVNClient:
                     ]
                     if (len(gateway_new) != len(ovn_router_ext_gw_lrps) or
                         self._check_external_ips_changed(
-                            ovn_snats, gateway_old, new_router)):
+                            context, ovn_snats, gateway_old, new_router)):
                         txn.add(self._nb_idl.delete_lrouter_ext_gw(
                             router_name))
                         if router_object:
                             deleted_gw_port_ids = self._delete_router_ext_gw(
-                                router_object['id'], txn)
+                                context, router_object['id'], txn)
                         added_gw_ports = self._add_router_ext_gw(
                             context, new_router, txn)
                     else:
@@ -1559,8 +1565,8 @@ class OVNClient:
                         new_snat_state = utils.is_snat_enabled(new_router)
                         if bool(ovn_snats) != new_snat_state:
                             self.update_nat_rules(
-                                new_router['id'], enable_snat=new_snat_state,
-                                txn=txn)
+                                context, new_router['id'],
+                                enable_snat=new_snat_state, txn=txn)
 
                 update = {'external_ids': self._gen_router_ext_ids(new_router)}
                 update['enabled'] = new_router.get('admin_state_up') or False
@@ -1664,8 +1670,8 @@ class OVNClient:
                 utils.ovn_name(router_id),
         }
 
-    def _get_reside_redir_for_gateway_port(self, device_id):
-        admin_context = n_context.get_admin_context()
+    def _get_reside_redir_for_gateway_port(self, context, device_id):
+        admin_context = context.elevated()
         reside_redir_ch = 'true'
         if ovn_conf.is_ovn_distributed_floating_ip():
             reside_redir_ch = 'false'
@@ -1689,9 +1695,9 @@ class OVNClient:
                         for net in networks) else 'false'
         return reside_redir_ch
 
-    def _gen_router_port_options(self, port):
+    def _gen_router_port_options(self, context, port):
         options = {}
-        admin_context = n_context.get_admin_context()
+        admin_context = context.elevated()
         ls_name = utils.ovn_name(port['network_id'])
         ls = self._nb_idl.ls_get(ls_name).execute(check_error=True)
         network_type = ls.external_ids[ovn_const.OVN_NETTYPE_EXT_ID_KEY]
@@ -1702,7 +1708,7 @@ class OVNClient:
         # https://github.com/openvswitch/ovs/commit/85706c34d53d4810f54bec1de662392a3c06a996
         if network_type in [const.TYPE_VLAN, const.TYPE_FLAT]:
             reside_redir_ch = self._get_reside_redir_for_gateway_port(
-                port['device_id'])
+                admin_context, port['device_id'])
             options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = reside_redir_ch
 
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
@@ -1757,7 +1763,7 @@ class OVNClient:
         lrouter_port_name = utils.ovn_lrouter_port_name(port['id'])
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get('device_owner')
         columns = {}
-        columns['options'] = self._gen_router_port_options(port)
+        columns['options'] = self._gen_router_port_options(context, port)
 
         lsp_address = ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER
         if ipv6_ra_configs:
@@ -1776,7 +1782,7 @@ class OVNClient:
 
         if is_gw_port:
             port_net = self._plugin.get_network(
-                n_context.get_admin_context(), port['network_id'])
+                context.elevated(), port['network_id'])
             physnet = self._get_physnet(port_net)
             if physnet is None:
                 # The external network is tunnelled, pin the router to a
@@ -1841,7 +1847,7 @@ class OVNClient:
                             continue
                         if subnet['ip_version'] == const.IP_VERSION_4:
                             self.update_nat_rules(
-                                router['id'], cidrs=[subnet['cidr']],
+                                context, router['id'], cidrs=[subnet['cidr']],
                                 enable_snat=True, txn=txn)
                             break  # TODO(ihar): handle multiple ipv4 ips?
 
@@ -1873,7 +1879,7 @@ class OVNClient:
             self._nb_idl.update_lrouter_port(
                 name=lrp_name,
                 external_ids=self._gen_router_port_ext_ids(port, router_id),
-                options=self._gen_router_port_options(port),
+                options=self._gen_router_port_options(context, port),
                 if_exists=if_exists,
                 **update),
             self._nb_idl.set_lrouter_port_in_lswitch_port(
@@ -1988,7 +1994,7 @@ class OVNClient:
                         continue
                     if subnet['ip_version'] == const.IP_VERSION_4:
                         self.update_nat_rules(
-                            router['id'], cidrs=[subnet['cidr']],
+                            context, router['id'], cidrs=[subnet['cidr']],
                             enable_snat=False, txn=txn)
                         break  # TODO(ihar): handle multiple ipv4 ips?
 
@@ -2017,7 +2023,8 @@ class OVNClient:
             if gw_info.ip_version != const.IP_VERSION_6
         )
 
-    def update_nat_rules(self, router_id, enable_snat, cidrs=None, txn=None):
+    def update_nat_rules(self, context, router_id, enable_snat, cidrs=None,
+                         txn=None):
         if enable_snat:
             idl_func = self._nb_idl.add_nat_rule_in_lrouter
         else:
@@ -2025,14 +2032,14 @@ class OVNClient:
         func = functools.partial(
             idl_func, utils.ovn_name(router_id), type='snat')
 
-        context = n_context.get_admin_context()
+        admin_context = context.elevated()
         cidrs = (
             cidrs or
-            self._get_snat_cidrs_for_external_router(context, router_id)
+            self._get_snat_cidrs_for_external_router(admin_context, router_id)
         )
         commands = [
             func(logical_ip=cidr, external_ip=router_ip)
-            for router_ip in self._iter_ipv4_gw_addrs(context, router_id)
+            for router_ip in self._iter_ipv4_gw_addrs(admin_context, router_id)
             for cidr in cidrs
         ]
         if not commands:
@@ -2040,7 +2047,7 @@ class OVNClient:
 
         self._transaction(commands, txn=txn)
 
-    def create_provnet_port(self, network_id, segment, txn=None,
+    def create_provnet_port(self, context, network_id, segment, txn=None,
                             network=None):
         tag = segment.get(segment_def.SEGMENTATION_ID, [])
         physnet = segment.get(segment_def.PHYSICAL_NETWORK)
@@ -2054,7 +2061,7 @@ class OVNClient:
                 ovs_conf.get_igmp_flood(),
             ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: fdb_enabled}
         network = network or self._plugin.get_network(
-            n_context.get_admin_context(), network_id)
+            context.elevated(), network_id)
         if self._get_vlan_passthru(network):
             vlan_ethtype = self._get_vlan_ethtype(network)
             if vlan_ethtype == ovn_const.ETHTYPE_8021ad:
@@ -2139,8 +2146,8 @@ class OVNClient:
                                         **lswitch_params, may_exist=True))
             for segment in segments:
                 if segment.get(segment_def.PHYSICAL_NETWORK):
-                    self.create_provnet_port(network['id'], segment, txn=txn,
-                                             network=network)
+                    self.create_provnet_port(context, network['id'], segment,
+                                             txn=txn, network=network)
         db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)
         self.create_metadata_port(context, network)
         return network
@@ -2161,7 +2168,7 @@ class OVNClient:
         commands = []
         for port in ports:
             lrp_name = utils.ovn_lrouter_port_name(port['id'])
-            options = self._gen_router_port_options(port)
+            options = self._gen_router_port_options(context, port)
             # Do not fail for cases where logical router port get deleted
             commands.append(self._nb_idl.lrp_set_options(lrp_name,
                                                          if_exists=True,
@@ -2261,8 +2268,7 @@ class OVNClient:
                 if utils.is_external_network(network):
                     # make sure to use admin context as this is a external
                     # network
-                    self.set_gateway_mtu(n_context.get_admin_context(),
-                                         network, txn=txn)
+                    self.set_gateway_mtu(context.elevated(), network, txn=txn)
 
             self._check_network_changes_in_ha_chassis_groups(
                 context, lswitch, lswitch_params, txn)
@@ -2281,13 +2287,14 @@ class OVNClient:
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)
 
-    def _add_subnet_dhcp_options(self, subnet, network,
+    def _add_subnet_dhcp_options(self, context, subnet, network,
                                  ovn_dhcp_options=None):
         if utils.is_dhcp_options_ignored(subnet):
             return
 
         if not ovn_dhcp_options:
-            ovn_dhcp_options = self._get_ovn_dhcp_options(subnet, network)
+            ovn_dhcp_options = self._get_ovn_dhcp_options(context, subnet,
+                                                          network)
 
         with self._nb_idl.transaction(check_error=True) as txn:
             rev_num = {ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
@@ -2296,7 +2303,7 @@ class OVNClient:
             txn.add(self._nb_idl.add_dhcp_options(subnet['id'],
                                                   **ovn_dhcp_options))
 
-    def _get_ovn_dhcp_options(self, subnet, network, server_mac=None):
+    def _get_ovn_dhcp_options(self, context, subnet, network, server_mac=None):
         external_ids = {
             'subnet_id': subnet['id'],
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
@@ -2307,7 +2314,7 @@ class OVNClient:
         if subnet['enable_dhcp']:
             if subnet['ip_version'] == const.IP_VERSION_4:
                 dhcp_options['options'] = self._get_ovn_dhcpv4_opts(
-                    subnet, network, server_mac=server_mac)
+                    context, subnet, network, server_mac=server_mac)
             else:
                 dhcp_options['options'] = self._get_ovn_dhcpv6_opts(
                     subnet, server_id=server_mac)
@@ -2338,9 +2345,9 @@ class OVNClient:
                     # Option not present, job done
                     pass
 
-    def _get_ovn_dhcpv4_opts(self, subnet, network, server_mac=None):
+    def _get_ovn_dhcpv4_opts(self, context, subnet, network, server_mac=None):
         metadata_port_ip = self._find_metadata_port_ip(
-            n_context.get_admin_context(), subnet)
+            context.elevated(), subnet)
         # TODO(dongj): Currently the metadata port is created only when
         # ovn_metadata_enabled is true, therefore this is a restriction for
         # supporting DHCP of subnet without gateway IP.
@@ -2436,16 +2443,15 @@ class OVNClient:
         for opt in dhcp_options['ports']:
             txn.add(self._nb_idl.delete_dhcp_options(opt['uuid']))
 
-    def _enable_subnet_dhcp_options(self, subnet, network, txn):
+    def _enable_subnet_dhcp_options(self, context, subnet, network, txn):
         if utils.is_dhcp_options_ignored(subnet):
             return
 
         filters = {'fixed_ips': {'subnet_id': [subnet['id']]}}
-        all_ports = self._plugin.get_ports(n_context.get_admin_context(),
-                                           filters=filters)
+        all_ports = self._plugin.get_ports(context.elevated(), filters=filters)
         ports = [p for p in all_ports if not utils.is_network_device_port(p)]
 
-        dhcp_options = self._get_ovn_dhcp_options(subnet, network)
+        dhcp_options = self._get_ovn_dhcp_options(context, subnet, network)
         subnet_dhcp_cmd = self._nb_idl.add_dhcp_options(subnet['id'],
                                                         **dhcp_options)
         subnet_dhcp_option = txn.add(subnet_dhcp_cmd)
@@ -2473,7 +2479,7 @@ class OVNClient:
             txn.add(self._nb_idl.set_lswitch_port(
                 lport_name=port['id'], **columns))
 
-    def _update_subnet_dhcp_options(self, subnet, network, txn):
+    def _update_subnet_dhcp_options(self, context, subnet, network, txn):
         if utils.is_dhcp_options_ignored(subnet):
             return
         original_options = self._nb_idl.get_subnet_dhcp_options(
@@ -2484,7 +2490,7 @@ class OVNClient:
                 mac = original_options['options'].get('server_id')
             else:
                 mac = original_options['options'].get('server_mac')
-        new_options = self._get_ovn_dhcp_options(subnet, network, mac)
+        new_options = self._get_ovn_dhcp_options(context, subnet, network, mac)
         # Check whether DHCP changed
         if (original_options and
                 original_options['cidr'] == new_options['cidr'] and
@@ -2528,14 +2534,16 @@ class OVNClient:
             if subnet['ip_version'] == const.IP_VERSION_6 or not mport_updated:
                 # NOTE(ralonsoh): if IPv4 but the metadata port has not been
                 # updated, the DHPC options register has not been created.
-                self._add_subnet_dhcp_options(subnet, network)
+                self._add_subnet_dhcp_options(context, subnet, network)
         db_rev.bump_revision(context, subnet, ovn_const.TYPE_SUBNETS)
 
-    def _modify_subnet_dhcp_options(self, subnet, ovn_subnet, network, txn):
+    def _modify_subnet_dhcp_options(self, context, subnet, ovn_subnet, network,
+                                    txn):
         if subnet['enable_dhcp'] and not ovn_subnet:
-            self._enable_subnet_dhcp_options(subnet, network, txn)
+            self._enable_subnet_dhcp_options(context, subnet, network, txn)
         elif subnet['enable_dhcp'] and ovn_subnet:
-            self._update_subnet_dhcp_options(subnet, network, txn)
+            self._update_subnet_dhcp_options(
+                context, subnet, network, txn)
         elif not subnet['enable_dhcp'] and ovn_subnet:
             self._remove_subnet_dhcp_options(subnet['id'], txn)
 
@@ -2551,10 +2559,11 @@ class OVNClient:
         if not txn:
             with self._nb_idl.transaction(check_error=True) as txn_n:
                 txn_n.add(check_rev_cmd)
-                self._modify_subnet_dhcp_options(subnet, ovn_subnet, network,
-                                                 txn_n)
+                self._modify_subnet_dhcp_options(context, subnet, ovn_subnet,
+                                                 network, txn_n)
         else:
-            self._modify_subnet_dhcp_options(subnet, ovn_subnet, network, txn)
+            self._modify_subnet_dhcp_options(context, subnet, ovn_subnet,
+                                             network, txn)
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, subnet, ovn_const.TYPE_SUBNETS)
 
@@ -2609,20 +2618,19 @@ class OVNClient:
             db_rev.delete_revisions(context, sg_rule_ids,
                                     ovn_const.TYPE_SECURITY_GROUP_RULES)
 
-    def _process_security_group_rule(self, rule, is_add_acl=True):
-        admin_context = n_context.get_admin_context()
+    def _process_security_group_rule(self, context, rule, is_add_acl=True):
         ovn_acl.update_acls_for_security_group(
-            self._plugin, admin_context, self._nb_idl,
+            self._plugin, context.elevated(), self._nb_idl,
             rule['security_group_id'], rule,
             is_add_acl=is_add_acl)
 
     def create_security_group_rule(self, context, rule):
-        self._process_security_group_rule(rule)
+        self._process_security_group_rule(context, rule)
         db_rev.bump_revision(
             context, rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
     def delete_security_group_rule(self, context, rule):
-        self._process_security_group_rule(rule, is_add_acl=False)
+        self._process_security_group_rule(context, rule, is_add_acl=False)
         db_rev.delete_revision(
             context, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
 
@@ -2770,8 +2778,8 @@ class OVNClient:
             port = {'id': metadata_port['id'],
                     'port': {'network_id': network_id,
                              'fixed_ips': wanted_fixed_ips}}
-            self._plugin.update_port(n_context.get_admin_context(),
-                                     metadata_port['id'], port)
+            self._plugin.update_port(
+                context.elevated(), metadata_port['id'], port)
 
         if not ovn_conf.is_ovn_metadata_enabled():
             return False

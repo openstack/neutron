@@ -869,7 +869,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                             fip['del'])
                         for nat in fip['del']:
                             self._ovn_client._delete_floatingip(
-                                nat, utils.ovn_name(fip['id']), txn=txn)
+                                ctx, nat, utils.ovn_name(fip['id']), txn=txn)
                 if fip['add']:
                     LOG.warning("Router %(id)s floating IPs %(fip)s "
                                 "found in Neutron but not in OVN NB DB",
@@ -879,7 +879,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                                     fip['add'])
                         for nat in fip['add']:
                             self._ovn_client._create_or_update_floatingip(
-                                nat, txn=txn)
+                                ctx, nat, txn=txn)
 
             for pf in update_pfs_list:
                 if pf['del']:
@@ -960,7 +960,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 else:
                     server_mac = ovn_dhcp_opts['options'].get('server_mac')
                 dhcp_options = self._ovn_client._get_ovn_dhcp_options(
-                    db_subnets[subnet_id], network, server_mac=server_mac)
+                    ctx, db_subnets[subnet_id], network, server_mac=server_mac)
                 # Verify that the cidr and options are also in sync.
                 if dhcp_options['cidr'] == ovn_dhcp_opts['cidr'] and (
                         dhcp_options['options'] == ovn_dhcp_opts['options']):
@@ -992,7 +992,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     # a new row in DHCP_Options if the row already exists.
                     # See commands.AddDHCPOptionsCommand.
                     self._ovn_client._add_subnet_dhcp_options(
-                        subnet, network, subnet.get('ovn_dhcp_options'))
+                        ctx, subnet, network, subnet.get('ovn_dhcp_options'))
                 except RuntimeError:
                     LOG.warning('Adding/Updating DHCP options for subnet '
                                 '%s failed in OVN NB DB', subnet_id)
@@ -1268,7 +1268,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                                 'OVN NB DB',
                                 utils.ovn_provnet_port_name(segment['id']))
                     self._ovn_client.create_provnet_port(
-                        network['id'], segment, txn=txn, network=network)
+                        ctx, network['id'], segment, txn=txn, network=network)
 
             for provnet_port_info in del_provnet_ports_list:
                 network = provnet_port_info['network']
