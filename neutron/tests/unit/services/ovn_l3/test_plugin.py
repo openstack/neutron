@@ -1593,7 +1593,8 @@ class BaseTestOVNL3RouterPluginMixin:
                                                     self, payload)
         nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
         nb_ovn.add_nat_rule_in_lrouter.assert_not_called()
-        ufip.assert_called_once_with(mock.ANY, self.fake_floating_ip_new)
+        ufip.assert_called_once_with(
+            mock.ANY, mock.ANY, self.fake_floating_ip_new)
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')

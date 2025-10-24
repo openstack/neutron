@@ -208,7 +208,8 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
                     _qos_rules[direction] = _qos_rules.get(direction, {})
                 self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
                 self.qos_driver._update_port_qos_rules(
-                    txn, port, self.network_1, network_type, 'qos1', None)
+                    self.context, txn, port, self.network_1, network_type,
+                    'qos1', None)
             self._check_rules_qos(qos_rules, port, self.network_1,
                                   network_type)
             self._check_rules_lsp(qos_rules, port, network_type)
@@ -226,7 +227,7 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
             for direction in constants.VALID_DIRECTIONS:
                 _qos_rules[direction] = _qos_rules.get(direction, {})
             self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
-            self.qos_driver.update_floatingip(txn, fip)
+            self.qos_driver.update_floatingip(self.context, txn, fip)
         self._check_rules_qos(qos_rules, self.gw_port_id, self.network_1,
                               '', fip_id='fip_id', ip_address='1.2.3.4')
 
@@ -291,8 +292,8 @@ class TestOVNClientQosExtension(_TestOVNClientQosExtensionBase):
                     _qos_rules[direction] = _qos_rules.get(direction, {})
                 self.mock_qos_rules.return_value = copy.deepcopy(_qos_rules)
                 self.qos_driver._update_port_qos_rules(
-                    txn, port, self.network_1, constants.TYPE_VLAN, 'qos1',
-                    None)
+                    self.context, txn, port, self.network_1,
+                    constants.TYPE_VLAN, 'qos1', None)
 
         # Loop this test twice, to check that all the QoS registers and
         # parameters are correctly created, set or removed, regardless of the

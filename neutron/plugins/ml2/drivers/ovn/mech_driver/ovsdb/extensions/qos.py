@@ -19,7 +19,6 @@ from neutron.objects.qos import rule as qos_rule
 from neutron_lib.api.definitions import l3 as l3_api
 from neutron_lib.api.definitions import provider_net as pnet_api
 from neutron_lib import constants
-from neutron_lib import context as n_context
 from neutron_lib.plugins import constants as plugins_const
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
@@ -337,11 +336,11 @@ class OVNClientQosExtension:
             self._update_lsp_qos_options(txn, lsp, port_id,
                                          self._ovn_lsp_rule({}))
 
-    def _add_port_qos_rules(self, txn, port_id, network_id, network_type,
-                            qos_policy_id, qos_rules, lsp=None):
-        # NOTE(ralonsoh): we don't use the transaction context because the
-        # QoS policy could belong to another user (network QoS policy).
-        admin_context = n_context.get_admin_context()
+    def _add_port_qos_rules(self, context, txn, port_id, network_id,
+                            network_type, qos_policy_id, qos_rules, lsp=None):
+        # NOTE(ralonsoh): the QoS policy could belong to another user (network
+        # QoS policy), admin permissions are needed.
+        admin_context = context.elevated()
 
         # TODO(ralonsoh): for update_network and update_policy operations,
         # the QoS rules can be retrieved only once.
@@ -372,23 +371,25 @@ class OVNClientQosExtension:
                                               network_id)
             self._apply_ovn_rule_qos(txn, rules, ovn_rule_qos)
 
-    def _update_port_qos_rules(self, txn, port_id, network_id, network_type,
-                               qos_policy_id, qos_rules, lsp=None):
+    def _update_port_qos_rules(self, context, txn, port_id, network_id,
+                               network_type, qos_policy_id, qos_rules,
+                               lsp=None):
         if not qos_policy_id:
             self._delete_port_qos_rules(txn, port_id, network_id, network_type,
                                         lsp=lsp)
         else:
-            self._add_port_qos_rules(txn, port_id, network_id, network_type,
-                                     qos_policy_id, qos_rules, lsp=lsp)
+            self._add_port_qos_rules(context, txn, port_id, network_id,
+                                     network_type, qos_policy_id, qos_rules,
+                                     lsp=lsp)
 
-    def create_port(self, txn, port, lsp):
-        self.update_port(txn, port, None, reset=True, lsp=lsp)
+    def create_port(self, context, txn, port, lsp):
+        self.update_port(context, txn, port, None, reset=True, lsp=lsp)
 
-    def delete_port(self, txn, port):
-        self.update_port(txn, port, None, delete=True)
+    def delete_port(self, context, txn, port):
+        self.update_port(context, txn, port, None, delete=True)
 
-    def update_port(self, txn, port, original_port, reset=False, delete=False,
-                    qos_rules=None, lsp=None):
+    def update_port(self, context, txn, port, original_port, reset=False,
+                    delete=False, qos_rules=None, lsp=None):
         if utils.is_port_external(port):
             # External ports (SR-IOV) QoS is handled by the SR-IOV agent QoS
             # extension.
@@ -412,12 +413,12 @@ class OVNClientQosExtension:
         net_name = utils.ovn_name(port['network_id'])
         ls = self.nb_idl.ls_get(net_name).execute(check_errors=True)
         network_type = ls.external_ids[ovn_const.OVN_NETTYPE_EXT_ID_KEY]
-        self._update_port_qos_rules(txn, port['id'], port['network_id'],
-                                    network_type, qos_policy_id, qos_rules,
-                                    lsp=lsp)
+        self._update_port_qos_rules(
+            context, txn, port['id'], port['network_id'], network_type,
+            qos_policy_id, qos_rules, lsp=lsp)
 
-    def update_network(self, txn, network, original_network, reset=False,
-                       qos_rules=None):
+    def update_network(self, context, txn, network, original_network,
+                       reset=False, qos_rules=None):
         updated_port_ids = set()
         updated_fip_ids = set()
         updated_router_ids = set()
@@ -433,17 +434,18 @@ class OVNClientQosExtension:
                 # No QoS policy change
                 return updated_port_ids, updated_fip_ids, updated_router_ids
 
-        # NOTE(ralonsoh): we don't use the transaction context because some
-        # ports can belong to other projects.
-        admin_context = n_context.get_admin_context()
+        # NOTE(ralonsoh): some ports can belong to other projects,
+        # admin permissions are needed.
+        admin_context = context.elevated()
         for port in qos_binding.QosPolicyPortBinding.get_ports_by_network_id(
                 admin_context, network['id']):
             if (utils.is_network_device_port(port) or
                     utils.is_port_external(port)):
                 continue
             network_type = network[pnet_api.NETWORK_TYPE]
-            self._update_port_qos_rules(txn, port['id'], network['id'],
-                                        network_type, qos_policy_id, qos_rules)
+            self._update_port_qos_rules(
+                context, txn, port['id'], network['id'], network_type,
+                qos_policy_id, qos_rules)
             updated_port_ids.add(port['id'])
 
         fips = qos_binding.QosPolicyFloatingIPBinding.get_fips_by_network_id(
@@ -451,14 +453,14 @@ class OVNClientQosExtension:
         fip_ids = [fip.id for fip in fips]
         for floatingip in self._plugin_l3.get_floatingips(
                 admin_context, filters={'id': fip_ids}):
-            self.update_floatingip(txn, floatingip)
+            self.update_floatingip(admin_context, txn, floatingip)
             updated_fip_ids.add(floatingip['id'])
 
         for router in (qos_binding.QosPolicyRouterGatewayIPBinding.
                        get_routers_by_network_id(admin_context,
                                                  network['id'])):
             router_dict = self._plugin_l3._make_router_dict(router)
-            self.update_router(txn, router_dict)
+            self.update_router(admin_context, txn, router_dict)
             updated_router_ids.add(router.id)
 
         return updated_port_ids, updated_fip_ids, updated_router_ids
@@ -470,10 +472,10 @@ class OVNClientQosExtension:
                 lswitch_name,
                 {ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}))
 
-    def create_floatingip(self, txn, floatingip):
-        self.update_floatingip(txn, floatingip)
+    def create_floatingip(self, context, txn, floatingip):
+        self.update_floatingip(context, txn, floatingip)
 
-    def update_floatingip(self, txn, floatingip):
+    def update_floatingip(self, context, txn, floatingip):
         router_id = floatingip.get('router_id')
         qos_policy_id = (floatingip.get('qos_policy_id') or
                          floatingip.get('qos_network_policy_id'))
@@ -482,7 +484,7 @@ class OVNClientQosExtension:
             return self._delete_fip_qos_rules(
                 txn, floatingip['id'], floatingip['floating_network_id'])
 
-        admin_context = n_context.get_admin_context()
+        admin_context = context.elevated()
         router_db = self._plugin_l3._get_router(admin_context, router_id)
         gw_port_id = router_db.get('gw_port_id')
         if not gw_port_id:
@@ -505,16 +507,16 @@ class OVNClientQosExtension:
                 resident_port=resident_port)
             self._apply_ovn_rule_qos(txn, rules, ovn_rule_qos)
 
-    def delete_floatingip(self, txn, floatingip):
-        self.update_floatingip(txn, floatingip)
+    def delete_floatingip(self, context, txn, floatingip):
+        self.update_floatingip(context, txn, floatingip)
 
-    def disassociate_floatingip(self, txn, floatingip):
-        self.delete_floatingip(txn, floatingip)
+    def disassociate_floatingip(self, context, txn, floatingip):
+        self.delete_floatingip(context, txn, floatingip)
 
-    def create_router(self, txn, router):
-        self.update_router(txn, router)
+    def create_router(self, context, txn, router):
+        self.update_router(context, txn, router)
 
-    def update_router(self, txn, router):
+    def update_router(self, context, txn, router):
         gw_info = router.get(l3_api.EXTERNAL_GW_INFO) or {}
         qos_policy_id = n_utils.effective_qos_policy_id(router)
         router_id = router.get('id')
@@ -528,7 +530,7 @@ class OVNClientQosExtension:
                       router_id)
             return
 
-        admin_context = n_context.get_admin_context()
+        admin_context = context.elevated()
         qos_rules = self._qos_rules(admin_context, qos_policy_id)
         for direction, rules in qos_rules.items():
             ovn_rule_qos = self._ovn_qos_rule(
@@ -558,7 +560,7 @@ class OVNClientQosExtension:
                            pnet_api.NETWORK_TYPE: net_type,
                            }
                 port_ids, fip_ids, router_ids = self.update_network(
-                    txn, network, {}, reset=True, qos_rules=qos_rules)
+                    context, txn, network, {}, reset=True, qos_rules=qos_rules)
                 updated_port_ids.update(port_ids)
                 updated_fip_ids.update(fip_ids)
                 updated_router_ids.update(router_ids)
@@ -569,7 +571,7 @@ class OVNClientQosExtension:
             if port_ids:
                 for port in self._plugin.get_ports(context,
                                                    filters={'id': port_ids}):
-                    self.update_port(txn, port, {}, reset=True,
+                    self.update_port(context, txn, port, {}, reset=True,
                                      qos_rules=qos_rules)
 
             # Update each FIP bound to this policy, not handled previously in
@@ -578,11 +580,11 @@ class OVNClientQosExtension:
             if fip_ids:
                 for fip in self._plugin_l3.get_floatingips(
                         context, filters={'id': fip_ids}):
-                    self.update_floatingip(txn, fip)
+                    self.update_floatingip(context, txn, fip)
 
             router_ids = [r for r in bound_routers if
                           r not in updated_router_ids]
             if router_ids:
                 for router in self._plugin_l3.get_routers(
                         context, filters={'id': router_ids}):
-                    self.update_router(txn, router)
+                    self.update_router(context, txn, router)

@@ -495,11 +495,12 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _delete_security_group_precommit(self, resource, event, trigger,
                                          payload):
-        context = n_context.get_admin_context()
+        context = payload.context
         security_group_id = payload.resource_id
         for sg_rule in self._plugin.get_security_group_rules(
                 context, filters={'remote_group_id': [security_group_id]}):
-            self._ovn_client.delete_security_group_rule(context, sg_rule)
+            self._ovn_client.delete_security_group_rule(
+                context.elevated(), sg_rule)
 
     def _delete_security_group(self, resource, event, trigger, payload):
         context = payload.context
@@ -547,18 +548,19 @@ class OVNMechanismDriver(api.MechanismDriver):
                 return
 
             if sg_rule.get('remote_ip_prefix') is not None:
-                if self._sg_has_rules_with_same_normalized_cidr(sg_rule):
+                if self._sg_has_rules_with_same_normalized_cidr(
+                        context, sg_rule):
                     return
             self._ovn_client.delete_security_group_rule(
                 context,
                 sg_rule)
 
-    def _sg_has_rules_with_same_normalized_cidr(self, sg_rule):
+    def _sg_has_rules_with_same_normalized_cidr(self, context, sg_rule):
         compare_keys = [
             'ethertype', 'direction', 'protocol',
             'port_range_min', 'port_range_max']
         sg_rules = self._plugin.get_security_group_rules(
-            n_context.get_admin_context(),
+            context.elevated(),
             {'security_group_id': [sg_rule['security_group_id']]})
 
         def _rules_equal(rule1, rule2):
@@ -883,9 +885,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             provisioning_blocks.L2_AGENT_ENTITY
         )
 
-    def _notify_dhcp_updated(self, port_id):
+    def _notify_dhcp_updated(self, context, port_id):
         """Notifies Neutron that the DHCP has been update for port."""
-        admin_context = n_context.get_admin_context()
+        admin_context = context.elevated()
         if provisioning_blocks.is_object_blocked(
                 admin_context, port_id, resources.PORT):
             provisioning_blocks.provisioning_complete(
@@ -951,7 +953,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         port = copy.deepcopy(context.current)
         port['network'] = context.network.current
         self._ovn_client.create_port(context.plugin_context, port)
-        self._notify_dhcp_updated(port['id'])
+        self._notify_dhcp_updated(context.plugin_context, port['id'])
 
     def update_port_precommit(self, context):
         """Update resources of a port.
@@ -1034,7 +1036,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         self._ovn_update_port(context.plugin_context, port, original_port,
                               retry_on_revision_mismatch=True)
-        self._notify_dhcp_updated(port['id'])
+        self._notify_dhcp_updated(context.plugin_context, port['id'])
 
     def delete_port_postcommit(self, context):
         """Delete a port.
