@@ -429,25 +429,30 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                    'other_config': {
                        constants.MCAST_SNOOP: 'false',
                        constants.MCAST_FLOOD_UNREGISTERED: 'false'},
-                   'external_ids': {constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port0'}})
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port0'}})
         ls1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'ls1',
                    'other_config': {},
-                   'external_ids': {constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port1'}})
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port1'}})
         ls2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'ls2',
                    'other_config': {
-                        constants.MCAST_SNOOP: 'true',
-                        constants.MCAST_FLOOD_UNREGISTERED: 'false'},
-                   'external_ids': {constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port2'}})
+                       constants.MCAST_SNOOP: 'true',
+                       constants.MCAST_FLOOD_UNREGISTERED: 'false'},
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port2'}})
         ls3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': '',
                    'other_config': {},
-                   'external_ids': {constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port3'}})
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port3'}})
         ls4 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': '',
                    'other_config': {constants.MCAST_SNOOP: 'false'},
-                   'external_ids': {constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port4'}})
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port4'}})
         ls5 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'ls5',
                    'other_config': {},

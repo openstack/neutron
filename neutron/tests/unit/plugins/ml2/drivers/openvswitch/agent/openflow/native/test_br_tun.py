@@ -77,36 +77,38 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                         dp,
                         cookie=self.stamp,
                         instructions=[
-                            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
-                                ofpp.NXActionLearn(
-                                    cookie=self.stamp,
-                                    hard_timeout=300,
-                                    priority=1,
-                                    specs=[
-                                        ofpp.NXFlowSpecMatch(
-                                            dst=('vlan_tci', 0),
-                                            n_bits=12,
-                                            src=('vlan_tci', 0)),
-                                        ofpp.NXFlowSpecMatch(
-                                            dst=('eth_dst', 0),
-                                            n_bits=48,
-                                            src=('eth_src', 0)),
-                                        ofpp.NXFlowSpecLoad(
-                                            dst=('vlan_tci', 0),
-                                            n_bits=16,
-                                            src=0),
-                                        ofpp.NXFlowSpecLoad(
-                                            dst=('tunnel_id', 0),
-                                            n_bits=64,
-                                            src=('tunnel_id', 0)),
-                                        ofpp.NXFlowSpecOutput(
-                                            dst='',
-                                            n_bits=32,
-                                            src=('in_port', 0)),
-                                    ],
-                                    table_id=20),
-                                ofpp.OFPActionOutput(patch_int_ofport, 0),
-                            ]),
+                            ofpp.OFPInstructionActions(
+                                ofp.OFPIT_APPLY_ACTIONS, [
+                                    ofpp.NXActionLearn(
+                                        cookie=self.stamp,
+                                        hard_timeout=300,
+                                        priority=1,
+                                        specs=[
+                                            ofpp.NXFlowSpecMatch(
+                                                dst=('vlan_tci', 0),
+                                                n_bits=12,
+                                                src=('vlan_tci', 0)),
+                                            ofpp.NXFlowSpecMatch(
+                                                dst=('eth_dst', 0),
+                                                n_bits=48,
+                                                src=('eth_src', 0)),
+                                            ofpp.NXFlowSpecLoad(
+                                                dst=('vlan_tci', 0),
+                                                n_bits=16,
+                                                src=0),
+                                            ofpp.NXFlowSpecLoad(
+                                                dst=('tunnel_id', 0),
+                                                n_bits=64,
+                                                src=('tunnel_id', 0)),
+                                            ofpp.NXFlowSpecOutput(
+                                                dst='',
+                                                n_bits=32,
+                                                src=('in_port', 0)),
+                                        ],
+                                        table_id=20),
+                                    ofpp.OFPActionOutput(patch_int_ofport, 0),
+                                ]
+                            ),
                         ],
                         match=match,
                         priority=priority,

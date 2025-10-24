@@ -186,4 +186,5 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         self._search_in_file(self.log_file, 'Notified agent router')
 
         # Check there are no conntrack messages
-        self.assertNotIn('conntrack', open(self.log_file).read())
+        with open(self.log_file) as fd:
+            self.assertNotIn('conntrack', fd.read())

@@ -1294,7 +1294,8 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_create_port_with_mac_address(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_port:mac_address', self.target))
+            policy.enforce(
+                self.context, 'create_port:mac_address', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'create_port:mac_address',
@@ -1310,7 +1311,8 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_create_port_with_fixed_ips_and_ip_address(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_port:fixed_ips:ip_address', self.target))
+            policy.enforce(
+                self.context, 'create_port:fixed_ips:ip_address', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'create_port:fixed_ips:ip_address',
@@ -1318,7 +1320,8 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_create_port_with_fixed_ips_and_subnet_id(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_port:fixed_ips:subnet_id', self.target))
+            policy.enforce(
+                self.context, 'create_port:fixed_ips:subnet_id', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'create_port:fixed_ips:subnet_id',
@@ -1326,7 +1329,9 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_create_port_with_port_security_enabled(self):
         self.assertTrue(
-            policy.enforce(self.context, 'create_port:port_security_enabled', self.target))
+            policy.enforce(
+                self.context, 'create_port:port_security_enabled',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'create_port:port_security_enabled',
@@ -1335,7 +1340,8 @@ class ProjectMemberTests(ProjectManagerTests):
     def test_create_port_with_allowed_address_pairs(self):
         self.assertTrue(
             policy.enforce(
-                self.context, 'create_port:allowed_address_pairs', self.target))
+                self.context, 'create_port:allowed_address_pairs',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -1345,7 +1351,8 @@ class ProjectMemberTests(ProjectManagerTests):
     def test_create_port_with_allowed_address_pairs_and_mac_address(self):
         self.assertTrue(
             policy.enforce(
-                self.context, 'create_port:allowed_address_pairs:mac_address', self.target))
+                self.context, 'create_port:allowed_address_pairs:mac_address',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -1355,7 +1362,8 @@ class ProjectMemberTests(ProjectManagerTests):
     def test_create_port_with_allowed_address_pairs_and_ip_address(self):
         self.assertTrue(
             policy.enforce(
-                self.context, 'create_port:allowed_address_pairs:ip_address', self.target))
+                self.context, 'create_port:allowed_address_pairs:ip_address',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -1410,7 +1418,9 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_update_port_with_port_security_enabled(self):
         self.assertTrue(
-            policy.enforce(self.context, 'update_port:port_security_enabled', self.target))
+            policy.enforce(
+                self.context, 'update_port:port_security_enabled',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'update_port:port_security_enabled',
@@ -1418,7 +1428,9 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_update_port_with_allowed_address_pairs(self):
         self.assertTrue(
-            policy.enforce(self.context, 'update_port:allowed_address_pairs', self.target))
+            policy.enforce(
+                self.context, 'update_port:allowed_address_pairs',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -1427,7 +1439,9 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_update_port_with_allowed_address_pairs_and_mac_address(self):
         self.assertTrue(
-            policy.enforce(self.context, 'update_port:allowed_address_pairs:mac_address', self.target))
+            policy.enforce(
+                self.context, 'update_port:allowed_address_pairs:mac_address',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -1436,7 +1450,9 @@ class ProjectMemberTests(ProjectManagerTests):
 
     def test_update_port_with_allowed_address_pairs_and_ip_address(self):
         self.assertTrue(
-            policy.enforce(self.context, 'update_port:allowed_address_pairs:ip_address', self.target))
+            policy.enforce(
+                self.context, 'update_port:allowed_address_pairs:ip_address',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,

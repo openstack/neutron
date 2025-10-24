@@ -1,8 +1,35 @@
 # The format of this file isn't really documented; just use --generate-rcfile
 [MAIN]
-# Add <file or directory> to the black list. It should be a base name, not a
-# path. You may set this option multiple times.
-ignore=.git,tests
+# Files or directories to be skipped. They should be base names, not paths.
+ignore=.git
+
+# Add files or directories matching the regex patterns to the ignore-list. The
+# regex matches against paths and can be in Posix or Windows format.
+ignore-paths=
+ neutron/tests/base.py,
+ neutron/tests/common/helpers.py,
+ neutron/tests/fullstack/.*,
+ neutron/tests/functional/agent/linux/test_iptables.py,
+ neutron/tests/functional/agent/linux/test_utils.py,
+ neutron/tests/functional/agent/l3/test_keepalived_state_change.py,
+ neutron/tests/functional/agent/l3/test_legacy_router.py,
+ neutron/tests/functional/common/ovn/test_utils.py,
+ neutron/tests/functional/resources/process.py,
+ neutron/tests/functional/plugins/ml2/drivers/ovn/mech_driver/ovsdb/test_ovsdb_monitor.py,
+ neutron/tests/unit/agent/common/test_resource_processing_queue.py,
+ neutron/tests/unit/agent/linux/test_external_process.py,
+ neutron/tests/unit/agent/linux/test_dhcp.py,
+ neutron/tests/unit/agent/linux/test_utils.py,
+ neutron/tests/unit/extensions/test_external_net.py,
+ neutron/tests/unit/extensions/test_l3.py,
+ neutron/tests/unit/ipam/fake_driver.py,
+ neutron/tests/unit/objects/.*.py,
+ neutron/tests/unit/plugins/ml2/test_security_group.py,
+ neutron/tests/unit/plugins/ml2/drivers/test_type_vlan.py,
+ neutron/tests/unit/plugins/ml2/drivers/openvswitch/agent/test_ovs_tunnel.py,
+ neutron/tests/unit/privileged/agent/linux/test_ip_lib.py,
+ neutron/tests/unit/services/qos/drivers/test_manager.py,
+ neutron/tests/unit/services/logapi/drivers/test_manager.py
 
 # List of plugins (as comma separated values of python module names) to load,
 # usually to register additional checkers.
