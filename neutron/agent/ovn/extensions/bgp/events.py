@@ -166,6 +166,10 @@ class NewBgpBridgeEvent(BGPAgentEvent):
     def run(self, event, row, old):
         bgp_bridge = self.bgp_agent.create_bgp_bridge(row.name)
         self.bgp_agent.watch_port_created_event(bgp_bridge, 'patch')
+        # Empty string is for the NIC connecting to the leaf switch
+        self.bgp_agent.watch_port_created_event(bgp_bridge, '')
+        if bgp_bridge.check_requirements_for_flows_met():
+            bgp_bridge.configure_flows()
 
 
 class PortBindingLrpMacEvent(BGPAgentEvent):
@@ -195,14 +199,12 @@ class PortBindingLrpMacEvent(BGPAgentEvent):
         return True
 
     def run(self, event, row, old):
-        lrp_mac = ovn_utils.get_mac_and_ips_from_port_binding(row)[0]
         network_name = row.external_ids[constants.LRP_NETWORK_NAME_EXT_ID_KEY]
         try:
             bridge = self.bgp_agent.bgp_bridges[network_name]
         except KeyError:
             LOG.warning("No BGP bridge found for network %s", network_name)
             return
-        bridge.lrp_mac = lrp_mac
         if bridge.check_requirements_for_flows_met():
             bridge.configure_flows()
 
