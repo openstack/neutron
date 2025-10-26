@@ -14,17 +14,16 @@
 #    under the License.
 
 # NOTE(ralonsoh): remove once the default backend is ``BackendType.THREADING``
-import os
 from oslo_service import backend as oslo_service_backend
+import warnings
 try:
-    _backend = os.getenv('OSLO_SERVICE_BACKEND', 'threading')
-    if _backend.lower() == 'eventlet':
-        _backend = oslo_service_backend.BackendType.EVENTLET
-    else:
-        _backend = oslo_service_backend.BackendType.THREADING
-    oslo_service_backend.init_backend(_backend)
+    oslo_service_backend.init_backend(
+        oslo_service_backend.BackendType.THREADING)
 except oslo_service_backend.exceptions.BackendAlreadySelected:
-    pass
+    # NOTE(ralonsoh): this code could be called by other services, like
+    # ``oslo-config-generator``, still not migrated.
+    warnings.warn('The selected oslo_service backend is "eventlet"')
+
 
 # pylint: disable=wrong-import-position
 import builtins  # noqa: E402
