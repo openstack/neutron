@@ -55,28 +55,6 @@ other locations. Developers responsible for those agents are welcome to apply
 the guideline above.
 
 
-Interacting with Eventlet
--------------------------
-
-Neutron extensively utilizes the eventlet library to provide asynchronous
-concurrency model to its services. To utilize it correctly, the following
-should be kept in mind.
-
-If a service utilizes the eventlet library, then it should not call
-eventlet.monkey_patch() directly but instead maintain its entry point main()
-function under neutron/cmd/eventlet/... If that is the case, the standard
-Python library will be automatically patched for the service on entry point
-import (monkey patching is done inside `python package file
-<http://opendev.org/openstack/neutron/src/neutron/cmd/eventlet/__init__.py>`_).
-
-Note: an entry point 'main()' function may just be an indirection to a real
-callable located elsewhere, as is done for reference services such as DHCP, L3
-and the neutron-server.
-
-For more info on the rationale behind the code tree setup, see `the
-corresponding cross-project spec <https://review.opendev.org/154642>`_.
-
-
 Connecting to the Database
 --------------------------
 

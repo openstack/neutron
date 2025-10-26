@@ -33,23 +33,14 @@ Server Gateway Interface (WSGI) - defined in `PEP 333 <http://legacy.python.org/
 Startup
 -------
 
-Neutron's WSGI server is started from the `server module <http://opendev.org/openstack/neutron/src/neutron/server/__init__.py>`_
-and the entry point `serve_wsgi` is called to build an instance of the
-`NeutronApiService`_, which is then returned to the server module,
-which spawns a `Eventlet`_ `GreenPool`_ that will run the WSGI
-application and respond to requests from clients.
-
-
-.. _NeutronApiService: http://opendev.org/openstack/neutron/src/neutron/service.py
-
-.. _Eventlet: http://eventlet.net/
-
-.. _GreenPool: http://eventlet.net/doc/modules/greenpool.html
+Neutron's WSGI server is started from then module pointed in the
+``neutron-api-uwsgi.ini`` file. By default is ``neutron.wsgi.api:application``
+and starts in the `API server <https://opendev.org/openstack/neutron/src/branch/master/neutron/server/api.py>`_.
 
 WSGI Application
 ----------------
 
-During the building of the NeutronApiService, the `_run_wsgi` function
+During the building of the NeutronApiService, the `api_server` function
 creates a WSGI application using the `load_paste_app` function inside
 `config.py`_ - which parses `api-paste.ini`_ - in order to create a WSGI app
 using `Paste`_'s `deploy`_.
