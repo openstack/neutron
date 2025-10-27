@@ -29,6 +29,7 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
+from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 
 from neutron.agent.linux import utils
 from neutron.api import extensions as exts
@@ -56,6 +57,7 @@ from neutron.tests.common import helpers
 from neutron.tests.functional.resources import process
 from neutron.tests.unit.extensions import test_securitygroup
 from neutron.tests.unit.plugins.ml2 import test_plugin
+from neutron.tests.unit import testlib_api
 
 LOG = log.getLogger(__name__)
 
@@ -134,7 +136,8 @@ class BaseSudoTestCase(BaseLoggingTestCase):
                           new=ovs_agent_decorator).start()
 
 
-class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
+class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
+                            test_plugin.Ml2PluginV2TestCase,
                             BaseLoggingTestCase):
 
     OVS_DISTRIBUTION = 'openvswitch'
@@ -177,6 +180,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self._service_plugins = service_plugins
         log_driver.DRIVER = None
         super().setUp()
+        self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
         self.test_log_dir = os.path.join(DEFAULT_LOG_DIR, self.id())
         base.setup_test_logging(
             cfg.CONF, self.test_log_dir, "testrun.txt")

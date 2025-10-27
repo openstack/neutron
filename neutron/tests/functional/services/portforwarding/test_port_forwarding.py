@@ -25,9 +25,11 @@ from neutron.services.portforwarding.common import exceptions as pf_exc
 from neutron.services.portforwarding import pf_plugin
 from neutron.tests.functional import base as functional_base
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
+from neutron.tests.unit import testlib_api
 
 
-class PortForwardingTestCaseBase(ml2_test_base.ML2TestFramework,
+class PortForwardingTestCaseBase(testlib_api.MySQLTestCaseMixin,
+                                 ml2_test_base.ML2TestFramework,
                                  functional_base.BaseLoggingTestCase):
     def setUp(self):
         super().setUp()

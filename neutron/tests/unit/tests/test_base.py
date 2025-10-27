@@ -18,8 +18,6 @@
 import sys
 import unittest
 
-import eventlet.timeout
-
 from neutron.tests import base
 
 
@@ -72,20 +70,3 @@ class SystemExitTestCase(base.DietTestCase):
         self.assertEqual([], result.errors)
         self.assertCountEqual({id(t) for t in expectedFails},
                               {id(t) for (t, traceback) in result.failures})
-
-
-class CatchTimeoutTestCase(base.DietTestCase):
-    # Embedded to hide from the regular test discovery
-    class MyTestCase(base.DietTestCase):
-        def test_case(self):
-            raise eventlet.Timeout()
-
-        def runTest(self):
-            return self.test_case()
-
-    def test_catch_timeout(self):
-        try:
-            result = self.MyTestCase().run()
-            self.assertFalse(result.wasSuccessful())
-        except eventlet.Timeout:
-            self.fail('Timeout escaped!')

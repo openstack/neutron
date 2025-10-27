@@ -18,14 +18,14 @@ from unittest import mock
 from oslo_concurrency import processutils
 from oslo_config import cfg
 
-from neutron import service
+from neutron import service as neutron_service
 from neutron.tests import base
 
 
 class TestServiceHelpers(base.BaseTestCase):
 
     def test_get_workers(self):
-        num_workers = service._get_worker_count()
+        num_workers = neutron_service._get_worker_count()
         self.assertGreaterEqual(num_workers, 1)
         self.assertLessEqual(num_workers, processutils.get_worker_count())
 
@@ -43,21 +43,21 @@ class TestRpcWorker(base.BaseTestCase):
     def test_reset(self):
         _plugin = mock.Mock()
 
-        rpc_worker = service.RpcWorker(_plugin)
+        rpc_worker = neutron_service.RpcWorker(_plugin)
         self._test_reset(rpc_worker)
 
 
 class TestRunRpcWorkers(base.BaseTestCase):
     def setUp(self):
         super().setUp()
-        self.worker_count = service._get_worker_count()
+        self.worker_count = neutron_service._get_worker_count()
 
     def _test_rpc_workers(self, config_value, expected_passed_value):
         if config_value is not None:
             cfg.CONF.set_override('rpc_workers', config_value)
         with mock.patch('neutron.service.RpcWorker') as mock_rpc_worker:
             with mock.patch('neutron.service.RpcReportsWorker'):
-                service._get_rpc_workers(plugin=mock.Mock())
+                neutron_service._get_rpc_workers(plugin=mock.Mock())
         init_call = mock_rpc_worker.call_args
         if expected_passed_value > 0:
             expected_call = mock.call(

@@ -15,6 +15,7 @@
 
 from unittest import mock
 
+from neutron.agent.linux import ip_conntrack
 from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux.openvswitch_firewall import iptables
 from neutron.agent.linux import utils
@@ -118,7 +119,9 @@ class TestHybridIptablesHelper(base.BaseTestCase):
                 mock.patch("neutron.agent.linux.ip_conntrack."
                            "IpConntrackManager._populate_initial_zone_map"), \
                 mock.patch.object(iptables_firewall.IptablesFirewallDriver,
-                                  '_check_netfilter_for_bridges'):
+                                  '_check_netfilter_for_bridges'), \
+                mock.patch.object(ip_conntrack.IpConntrackManager,
+                                  '_process_queue_worker'):
             firewall = iptables.get_iptables_driver_instance()
             firewall._remove_conntrack_entries_from_port_deleted(None)
             rcefpd.assert_not_called()

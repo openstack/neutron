@@ -119,6 +119,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         self.mock_ka_notifications = mock.patch.object(
             l3_ha.AgentMixin, '_start_keepalived_notifications_server')
         self.mock_ka_notifications.start()
+        cfg.CONF.set_override('check_child_processes_interval', 0.1,
+                              group='AGENT')
 
     def test_after_router_updated_called_on_agent_process_update(self):
         with mock.patch.object(metadata_driver, 'after_router_updated') as f,\

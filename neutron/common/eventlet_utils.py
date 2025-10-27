@@ -33,7 +33,7 @@ def monkey_patch():
         # This environment variable will be used in eventlet 0.39.0
         # https://github.com/eventlet/eventlet/commit/
         # b754135b045306022a537b5797f2cb2cf47ba49b
-        if os.getenv('EVENTLET_MONKEYPATCH') == '1':
+        if os.getenv('EVENTLET_MONKEYPATCH', '1') == '1':
             IS_MONKEY_PATCHED = True
             return
 

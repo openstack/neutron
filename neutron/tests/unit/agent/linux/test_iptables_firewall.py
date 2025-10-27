@@ -95,6 +95,8 @@ class BaseIptablesFirewallTestCase(base.BaseTestCase):
 
         self.iptables_inst.get_rules_for_table.return_value = (
             RAW_TABLE_OUTPUT.splitlines())
+        mock.patch.object(ip_conntrack.IpConntrackManager,
+                          '_process_queue_worker').start()
         self.firewall = iptables_firewall.IptablesFirewallDriver()
         self.utils_exec.reset_mock()
         self.firewall.iptables = self.iptables_inst

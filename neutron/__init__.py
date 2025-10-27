@@ -13,10 +13,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import builtins
-import gettext
+# NOTE(ralonsoh): remove once the default backend is ``BackendType.THREADING``
+import os
+from oslo_service import backend as oslo_service_backend
+try:
+    _backend = os.getenv('OSLO_SERVICE_BACKEND', 'threading')
+    if _backend.lower() == 'eventlet':
+        _backend = oslo_service_backend.BackendType.EVENTLET
+    else:
+        _backend = oslo_service_backend.BackendType.THREADING
+    oslo_service_backend.init_backend(_backend)
+except oslo_service_backend.exceptions.BackendAlreadySelected:
+    pass
 
-from neutron._i18n import _ as n_under
+# pylint: disable=wrong-import-position
+import builtins  # noqa: E402
+import gettext  # noqa: E402
+
+from neutron._i18n import _ as n_under  # noqa: E402
 
 
 gettext.install('neutron')

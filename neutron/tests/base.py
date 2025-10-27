@@ -358,6 +358,8 @@ class ProcessMonitorFixture(fixtures.Fixture):
         p.start()
         self.instances = []
         self.addCleanup(self.stop)
+        cfg.CONF.set_override('check_child_processes_interval', 0.1,
+                              group='AGENT')
 
     def stop(self):
         for instance in self.instances:

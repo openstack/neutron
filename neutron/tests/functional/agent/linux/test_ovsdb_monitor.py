@@ -21,6 +21,7 @@ Tests in this module will be skipped unless:
 
  - sudo testing is enabled (see neutron.tests.functional.base for details)
 """
+import signal
 import time
 
 from oslo_config import cfg
@@ -84,8 +85,11 @@ class TestSimpleInterfaceMonitor(BaseMonitorTest):
         super().setUp()
 
         self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
-        self.addCleanup(self.monitor.stop)
+        self.addCleanup(self._monitor_stop)
         self.monitor.start(block=True, timeout=60)
+
+    def _monitor_stop(self):
+        self.monitor.stop(kill_signal=signal.SIGTERM)
 
     def test_has_updates(self):
         utils.wait_until_true(lambda: self.monitor.has_updates)
