@@ -788,7 +788,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                 events = (self.ROW_UPDATE,)
                 super().__init__(
                     events, table, (('up', '=', True),),
-                    old_conditions=(('up', '=', False),))
+                    old_conditions=(('up', '!=', True),))
 
             def run(self, event, row, old):
                 self.count += 1
@@ -802,7 +802,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                 table = 'Logical_Switch_Port'
                 events = (self.ROW_UPDATE,)
                 super().__init__(
-                    events, table, (('up', '=', False),),
+                    events, table, (('up', '!=', True),),
                     old_conditions=(('up', '=', True),))
 
             def run(self, event, row, old):
