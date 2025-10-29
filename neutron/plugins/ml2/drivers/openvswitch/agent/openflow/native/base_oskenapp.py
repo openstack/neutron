@@ -24,7 +24,10 @@ LOG = logging.getLogger(__name__)
 
 class BaseNeutronAgentOSKenApp(app_manager.OSKenApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
-    packet_in_handlers = []
+
+    def __init__(self):
+        super().__init__()
+        self.packet_in_handlers = []
 
     def register_packet_in_handler(self, caller):
         self.packet_in_handlers.append(caller)
