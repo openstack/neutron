@@ -139,8 +139,8 @@ class SubnetRequest(metaclass=abc.ABCMeta):
         if ipam_utils.check_gateway_invalid_in_subnet(subnet_cidr, gateway_ip):
             raise ipam_exc.IpamValueInvalid(_(
                 'Gateway IP %(gateway_ip)s cannot be the network or broadcast '
-                'IP address %(subnet_cidr)s' % {'gateway_ip': gateway_ip,
-                                                'subnet_cidr': subnet_cidr}))
+                'IP address %(subnet_cidr)s') % {'gateway_ip': gateway_ip,
+                                                 'subnet_cidr': subnet_cidr})
 
 
 class AnySubnetRequest(SubnetRequest):

@@ -3013,9 +3013,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def _validate_rp_pkt_processing_cfg(self):
         if self.rp_pp_with_direction and self.rp_pp_without_direction:
             raise ValueError(_(
-                '%s and %s configuration options are mutually exclusive.') %
-                             (n_const.RP_PP_WITHOUT_DIRECTION,
-                              n_const.RP_PP_WITH_DIRECTION))
+                '%(without)s and %(with)s configuration options are '
+                'mutually exclusive.') %
+                 {'without': n_const.RP_PP_WITHOUT_DIRECTION,
+                  'with': n_const.RP_PP_WITH_DIRECTION})
 
 
 def validate_local_ip(local_ip):

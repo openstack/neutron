@@ -142,7 +142,7 @@ class ConntrackdManager:
         pid = utils.pgrep(cmd)
 
         if not pid:
-            raise RuntimeError(_('No process for "%s" found.' % cmd))
+            raise RuntimeError(_('No process for "%s" found.') % cmd)
 
         file_utils.replace_file(pid_file, pid)
 

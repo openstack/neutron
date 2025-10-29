@@ -586,7 +586,7 @@ def create_netns(name, **kwargs):
             os._exit(1)
         os._exit(0)
     if os.waitpid(pid, 0)[1]:
-        raise RuntimeError(_('Error creating namespace %s' % name))
+        raise RuntimeError(_('Error creating namespace %s') % name)
 
 
 @privileged.namespace_cmd.entrypoint

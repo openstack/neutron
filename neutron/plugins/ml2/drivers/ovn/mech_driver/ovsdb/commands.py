@@ -111,7 +111,7 @@ def _sync_ha_chassis_group(txn, nb_api, name, chassis_priority,
     hcg = nb_api.lookup(table_name, name, default=None)
     if hcg:
         if not may_exist:
-            raise RuntimeError(_('HA_Chassis_Group %s exists' % name))
+            raise RuntimeError(_('HA_Chassis_Group %s exists') % name)
     else:
         hcg = txn.insert(nb_api._tables[table_name])
         hcg.name = name
@@ -868,9 +868,10 @@ class UpdateObjectExtIdsCommand(command.BaseCommand, metaclass=abc.ABCMeta):
         except idlutils.RowNotFound:
             if self.if_exists:
                 return
-            msg = _("%s %s does not exist. "
-                    "Can't update external IDs") % (self.table, self.record)
-            raise RuntimeError(msg)
+            raise RuntimeError(
+                _("%(table)s %(record)s does not exist. "
+                  "Cannot update external IDs") %
+                  {'table': self.table, 'record': self.record})
 
         for ext_id_key, ext_id_value in self.external_ids.items():
             obj.setkey('external_ids', ext_id_key, ext_id_value)

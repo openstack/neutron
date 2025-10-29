@@ -478,15 +478,16 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 continue
 
             existing_port = port_forwarding_registry.get(port_key)
-            err_msg = _("There is a port collision with the %s. The "
-                        "following ranges collides: %s and %s")
 
             if self._range_collides(existing_port, port):
-                raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
-                                         msg=err_msg % (
-                                             port_key,
-                                             existing_port,
-                                             port))
+                raise lib_exc.BadRequest(
+                    resource=apidef.RESOURCE_NAME,
+                    msg=_("There is a port collision with the %(key)s. The "
+                          "following ranges collide: %(existing)s and "
+                          "%(port)s") %
+                          {'key': port_key,
+                           'existing': existing_port,
+                           'port': port})
 
     def _check_port_collisions(self, context, floatingip_id, pf_dict,
                                id=None, internal_port_id=None,

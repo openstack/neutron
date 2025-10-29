@@ -127,13 +127,15 @@ class OvsdbClientCommand:
             db = command[0]
         except IndexError:
             raise KeyError(
-                _("{} or {} schema must be specified in the command {}".format(
-                    cls.OVN_Northbound, cls.OVN_Southbound, command)))
+                _("{} or {} schema must be specified in the "
+                  "command {}").format(
+                    cls.OVN_Northbound, cls.OVN_Southbound, command))
 
         if db not in (cls.OVN_Northbound, cls.OVN_Southbound):
             raise KeyError(
-                _("{} or {} schema must be specified in the command {}".format(
-                    cls.OVN_Northbound, cls.OVN_Southbound, command)))
+                _("{} or {} schema must be specified in the "
+                  "command {}").format(
+                    cls.OVN_Northbound, cls.OVN_Southbound, command))
 
         cmd = ['ovsdb-client',
                cls.COMMAND,
@@ -172,10 +174,10 @@ def ovn_context(txn_var_name='txn', idl_var_name='idl'):
         signature = inspect.signature(f)
         if (txn_var_name not in signature.parameters or
                 idl_var_name not in signature.parameters):
-            msg = (_('Could not find variables %s and %s in the method '
-                     'signature') %
-                   (txn_var_name, idl_var_name))
-            raise RuntimeError(msg)
+            raise RuntimeError(
+                _('Could not find variables %(txn)s and %(idl)s in the method '
+                  'signature') %
+                  {'txn': txn_var_name, 'idl': idl_var_name})
 
         def retrieve_parameter(param_name, _args, _kwargs):
             # Position of the parameter "param_name" in the "args" tuple.

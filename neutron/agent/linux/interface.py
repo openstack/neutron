@@ -341,9 +341,10 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         current_mac = converters.convert_to_sanitized_mac_address(
             device.link.address)
         if current_mac != mac_address:
-            msg = _("Failed to set mac address to: %s; "
-                    "Current mac: %s") % (mac_address, current_mac)
-            raise RuntimeError(msg)
+            raise RuntimeError(
+                _("Failed to set mac address to: %(mac)s; "
+                  "Current mac: %(current_mac)s") %
+                  {'mac': mac_address, 'current_mac': current_mac})
 
     def _ensure_device_address(self, device, mac_address):
         mac_address = converters.convert_to_sanitized_mac_address(mac_address)

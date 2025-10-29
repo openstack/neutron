@@ -232,9 +232,10 @@ class MetadataPathAgentExtension(
         try:
             ns_dev.link.set_address(DEFAULT_META_GATEWAY_MAC)
         except RuntimeError as e:
-            msg = _("Failed to set mac address "
-                    "for dev %s, error: %s") % (self.META_DEV_NAME, e)
-            raise RuntimeError(msg)
+            raise RuntimeError(
+                _("Failed to set mac address "
+                  "for dev %(dev)s, error: %(error)s") %
+                  {'dev': self.META_DEV_NAME, 'error': e})
 
         cidr = "{}/{}".format(
             self.provider_gateway_ip,

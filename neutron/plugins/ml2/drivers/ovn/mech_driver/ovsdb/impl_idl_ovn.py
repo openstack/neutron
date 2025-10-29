@@ -1019,11 +1019,11 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                     in utils.get_ovn_chassis_other_config(ch).get(
                         ovn_const.OVN_CMS_OPTIONS, '').split(',')):
                 return ch
-        msg = _('Chassis with %s %s %s does not exist'
-                ) % (ovn_const.OVN_CMS_OPTIONS,
-                     ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
-                     card_serial_number)
-        raise RuntimeError(msg)
+        raise RuntimeError(
+            _('Chassis with %(options)s %(serial)s %(num)s does not exist') %
+            {'options': ovn_const.OVN_CMS_OPTIONS,
+             'serial': ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
+             'num': card_serial_number})
 
     def get_metadata_port(self, datapath_uuid):
         # TODO(twilson) This function should really just take a Row/RowView

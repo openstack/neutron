@@ -568,7 +568,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if non_auto_ports.count():
             ports = [port.id for port in non_auto_ports.all()]
             reason = _("There are one or more ports still in use on the "
-                       "network, id for these ports is: %s" % ",".join(ports))
+                       "network, id for these ports is: %s") % ",".join(ports)
             raise exc.NetworkInUse(net_id=net_id, reason=reason)
 
     @db_api.retry_if_session_inactive()

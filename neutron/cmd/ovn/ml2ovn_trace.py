@@ -104,7 +104,7 @@ class ServerInterface(Interface):
         if len(matching_vms) < 1:
             raise Exception(_('Server not found'))
         if len(matching_vms) > 1:
-            raise Exception(_('Multiple VMs match %s' % self.query))
+            raise Exception(_('Multiple VMs match %s') % self.query)
         return matching_vms[0]
 
     @cached_property

@@ -266,8 +266,9 @@ class MetadataProxyHandlerBaseSocketServer(
             network_id, router_id = self._get_instance_id(req)
             if network_id and router_id:
                 title = '400 Bad Request'
-                msg = _('Both network %s and router %s '
-                        'defined.') % (network_id, router_id)
+                msg = (_('Both network %(network)s and router %(router)s '
+                         'defined.') %
+                         {'network': network_id, 'router': router_id})
                 LOG.warning(msg)
             elif network_id:
                 title = '404 Not Found'

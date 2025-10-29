@@ -134,10 +134,10 @@ def upgrade():
         if len(missed_tables) == len(tables_to_drop):
             raise Exception(_('The following tables have not been dropped '
                               'from the Neutron database: %(missed_tables)s.\n'
-                              'List of errors: %(errors)s' %
+                              'List of errors: %(errors)s') %
                               {'missed_tables': ', '.join(missed_tables),
                                'errors': '\n'.join(errors)}
-                              ))
+                              )
 
         tables_to_drop = missed_tables
 
