@@ -737,7 +737,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         run_immediately=True)
     def check_fdb_aging_settings(self):
         """Check FDB aging settings
-        Ensure FDB aging settings are enforced.
+
+        Ensure FDB aging settings are enforced. This method should NOT be
+        removed. It will be executed anytime the maintenance task is restarted.
+        If the ``fdb_age_threshold`` configuration parameter changes, this
+        method will update the ``Logical_Switch`` configuration.
         """
         context = n_context.get_admin_context()
         cmds = [self._nb_idl.set_nb_global_options(
