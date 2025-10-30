@@ -46,6 +46,7 @@ Configuration
    config-subnet-pools
    config-trunking
    config-wsgi
+   data-center-networks
 
 .. note::
 
