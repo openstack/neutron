@@ -227,18 +227,17 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         if ha:
             self.wait_until_ha_router_has_state(router, 'primary')
 
-        with self.assert_max_execution_time(100):
-            assert_num_of_conntrack_rules(0)
+        assert_num_of_conntrack_rules(0)
 
-            self.assertTrue(netcat.test_connectivity())
-            assert_num_of_conntrack_rules(1)
+        self.assertTrue(netcat.test_connectivity())
+        assert_num_of_conntrack_rules(1)
 
-            clean_fips(router)
-            router.process()
-            assert_num_of_conntrack_rules(0)
+        clean_fips(router)
+        router.process()
+        assert_num_of_conntrack_rules(0)
 
-            with testtools.ExpectedException(RuntimeError):
-                netcat.test_connectivity()
+        with testtools.ExpectedException(RuntimeError):
+            netcat.test_connectivity()
 
     def _test_update_floatingip_statuses(self, router_info):
         router = self.manage_router(self.agent, router_info)

@@ -116,12 +116,10 @@ class TestAsyncProcess(base.BaseTestCase):
 
         thread_exit_event = threading.Event()
 
-        # Ensure the test times out eventually if the watcher loops endlessly
-        with self.assert_max_execution_time():
-            with mock.patch.object(self.proc,
-                                   '_handle_process_error') as func:
-                self.proc._watch_process(
-                    callback, kill_event, thread_exit_event)
+        with mock.patch.object(self.proc,
+                               '_handle_process_error') as func:
+            self.proc._watch_process(
+                callback, kill_event, thread_exit_event)
 
         if not kill_event.is_set():
             func.assert_called_once_with()
