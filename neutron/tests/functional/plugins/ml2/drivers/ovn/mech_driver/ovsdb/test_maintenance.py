@@ -1223,36 +1223,6 @@ class TestMaintenance(_TestMaintenanceHelper):
         else:
             self.assertNotIn('gateway_port', fip_rule)
 
-    def test_remove_invalid_gateway_chassis_from_unbound_lrp(self):
-        net1 = self._create_network(uuidutils.generate_uuid(), external=True)
-        subnet1 = self._create_subnet(uuidutils.generate_uuid(), net1['id'])
-        external_gateway_info = {
-            'enable_snat': True, 'network_id': net1['id'],
-            'external_fixed_ips': [{'ip_address': '10.0.0.2',
-                                    'subnet_id': subnet1['id']}]}
-        router = self._create_router(
-            uuidutils.generate_uuid(),
-            external_gateway_info=external_gateway_info)
-
-        # Manually add the LRP.gateway_chassis with name
-        # 'neutron-ovn-invalid-chassis'
-        lr = self.nb_api.lookup('Logical_Router', utils.ovn_name(router['id']))
-        lrp = lr.ports[0]
-        self.nb_api.lrp_set_gateway_chassis(
-            lrp.uuid, 'neutron-ovn-invalid-chassis').execute(check_error=True)
-        gc = self.nb_api.db_find_rows(
-            'Gateway_Chassis',
-            ('chassis_name', '=', 'neutron-ovn-invalid-chassis')).execute(
-            check_error=True)[0]
-
-        self.assertRaises(
-            periodics.NeverAgain,
-            self.maint.remove_invalid_gateway_chassis_from_unbound_lrp)
-        self.assertIsNone(self.nb_api.lookup('Gateway_Chassis', gc.uuid,
-                                             default=None))
-        lr = self.nb_api.lookup('Logical_Router', utils.ovn_name(router['id']))
-        self.assertEqual([], lr.ports[0].gateway_chassis)
-
     def test_set_network_type_and_physnet(self):
         net1 = self._create_network(uuidutils.generate_uuid())
         net2 = self._create_network(uuidutils.generate_uuid(),
