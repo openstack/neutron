@@ -80,6 +80,7 @@ from neutron_lib.api.definitions import quota_check_limit
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups
 from neutron_lib.api.definitions import router_availability_zone as raz_def
+from neutron_lib.api.definitions import router_enable_snat
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import \
@@ -138,6 +139,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     l3_enable_default_route_bfd.ALIAS,
     l3_enable_default_route_ecmp.ALIAS,
     l3_ext_ha_mode.ALIAS,
+    router_enable_snat.ALIAS,
 ]
 ML2_SUPPORTED_API_EXTENSIONS = [
     address_group.ALIAS,

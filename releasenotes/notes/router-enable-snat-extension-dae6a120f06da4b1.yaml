@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    The new ``router-enable-snat`` extension API definition has been added. This
+    extension makes public the router "enable_snat" boolean field. This field
+    can be set during the router creation or updated when adding/updating the
+    router gateways. Although the API allows to define a different value per
+    gateway port (a router can have multiple gateways), only the first one will
+    apply (this is a router level configuration flag).
