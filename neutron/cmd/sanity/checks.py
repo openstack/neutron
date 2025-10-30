@@ -58,7 +58,6 @@ DNSMASQ_VERSION_HOST_ADDR6_LIST = '2.81'
 DNSMASQ_VERSION_SEGFAULT_ISSUE = '2.86'
 DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
-OVN_NB_DB_SCHEMA_GATEWAY_CHASSIS = '5.7.0'
 OVN_NB_DB_SCHEMA_PORT_GROUP = '5.11.0'
 OVN_NB_DB_SCHEMA_STATELESS_NAT = '5.17.0'
 OVN_SB_DB_SCHEMA_VIRTUAL_PORT = '2.5.0'
@@ -635,20 +634,6 @@ def ovn_sb_db_schema_virtual_port_supported():
         ver = _get_ovn_version(OVNCheckType.sb_db_schema)
         minver = versionutils.convert_version_to_tuple(
             OVN_SB_DB_SCHEMA_VIRTUAL_PORT)
-        if ver < minver:
-            return False
-    except (OSError, RuntimeError, ValueError) as e:
-        LOG.debug('Exception while checking OVN DB schema version. '
-                  'Exception: %s', e)
-        return False
-    return True
-
-
-def ovn_nb_db_schema_gateway_chassis_supported():
-    try:
-        ver = _get_ovn_version(OVNCheckType.nb_db_schema)
-        minver = versionutils.convert_version_to_tuple(
-            OVN_NB_DB_SCHEMA_GATEWAY_CHASSIS)
         if ver < minver:
             return False
     except (OSError, RuntimeError, ValueError) as e:

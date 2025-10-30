@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    Since v2.12, OVN supports the table ``Gateway_Chassis``. It is no longer
+    needed to check its presence or the OVN version used.
