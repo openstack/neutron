@@ -18,9 +18,10 @@ import copy
 import functools
 import itertools
 import random
+import threading
+import time
 from unittest import mock
 
-import eventlet
 import netaddr
 from neutron_lib.api.definitions import external_net as enet_api
 from neutron_lib.callbacks import exceptions
@@ -6976,11 +6977,12 @@ class DbModelMixin:
                     return thing
 
         with lock():
-            coro = eventlet.spawn(_lock_blocked_name_update)
+            coro = threading.Thread(target=_lock_blocked_name_update)
+            coro.start()
             # wait for the coroutine to get blocked on the lock before
             # we proceed to update the record underneath it
             while not self._blocked_on_lock:
-                eventlet.sleep(0)
+                time.sleep(0)
             ctx = context.get_admin_context()
             with db_api.CONTEXT_WRITER.using(ctx):
                 thing = ctx.session.query(model).filter_by(id=dbid).one()
@@ -6992,7 +6994,7 @@ class DbModelMixin:
             # the coroutine should have encountered a stale data error because
             # the status update thread would have bumped the revision number
             # while it was waiting to commit
-            coro.wait()
+            coro.join()
         # another attempt should work fine
         thing = _lock_blocked_name_update()
         self.assertEqual('a description', thing.description)
@@ -7119,21 +7121,22 @@ class DbModelMixin:
             try:
                 with db_api.CONTEXT_WRITER.using(ctx):
                     thing = ctx.session.query(model).filter_by(id=dbid).one()
-                    eventlet.sleep(0)
+                    time.sleep(0)
                     ctx.session.delete(thing)
             except orm.exc.StaleDataError as e:
                 if e and "confirm_deleted_rows" in str(e):
                     self.fail("Meets bug 1916889")
 
         with lock():
-            coro = eventlet.spawn(_lock_blocked_object_delete)
+            coro = threading.Thread(target=_lock_blocked_object_delete)
+            coro.start()
             ctx = context.get_admin_context()
             with db_api.CONTEXT_WRITER.using(ctx):
                 thing = ctx.session.query(model).filter_by(id=dbid).one()
-                eventlet.sleep(0)
+                time.sleep(0)
                 ctx.session.delete(thing)
 
-        coro.wait()
+        coro.join()
 
         # The DB object with its standard_attr should be deleted
         with testtools.ExpectedException(orm.exc.NoResultFound):

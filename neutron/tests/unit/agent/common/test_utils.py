@@ -77,7 +77,7 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
 
 class TestGetHypervisorHostname(base.BaseTestCase):
 
-    @mock.patch.object(utils._SocketWrapper, 'getaddrinfo')
+    @mock.patch.object(socket, 'getaddrinfo')
     @mock.patch('socket.gethostname')
     def test_get_hypervisor_hostname_gethostname_fqdn(self, hostname_mock,
                                                       addrinfo_mock):
@@ -87,7 +87,7 @@ class TestGetHypervisorHostname(base.BaseTestCase):
             utils.get_hypervisor_hostname())
         addrinfo_mock.assert_not_called()
 
-    @mock.patch.object(utils._SocketWrapper, 'getaddrinfo')
+    @mock.patch.object(socket, 'getaddrinfo')
     @mock.patch('socket.gethostname')
     def test_get_hypervisor_hostname_gethostname_localhost(self, hostname_mock,
                                                            addrinfo_mock):
@@ -97,7 +97,7 @@ class TestGetHypervisorHostname(base.BaseTestCase):
             utils.get_hypervisor_hostname())
         addrinfo_mock.assert_not_called()
 
-    @mock.patch.object(utils._SocketWrapper, 'getaddrinfo')
+    @mock.patch.object(socket, 'getaddrinfo')
     @mock.patch('socket.gethostname')
     def test_get_hypervisor_hostname_getaddrinfo(self, hostname_mock,
                                                  addrinfo_mock):
@@ -110,7 +110,7 @@ class TestGetHypervisorHostname(base.BaseTestCase):
             host='host', port=None, family=socket.AF_UNSPEC,
             flags=socket.AI_CANONNAME)
 
-    @mock.patch.object(utils._SocketWrapper, 'getaddrinfo')
+    @mock.patch.object(socket, 'getaddrinfo')
     @mock.patch('socket.gethostname')
     def test_get_hypervisor_hostname_getaddrinfo_no_canonname(self,
                                                               hostname_mock,
@@ -124,7 +124,7 @@ class TestGetHypervisorHostname(base.BaseTestCase):
             host='host', port=None, family=socket.AF_UNSPEC,
             flags=socket.AI_CANONNAME)
 
-    @mock.patch.object(utils._SocketWrapper, 'getaddrinfo')
+    @mock.patch.object(socket, 'getaddrinfo')
     @mock.patch('socket.gethostname')
     def test_get_hypervisor_hostname_getaddrinfo_localhost(self, hostname_mock,
                                                            addrinfo_mock):
@@ -138,7 +138,7 @@ class TestGetHypervisorHostname(base.BaseTestCase):
             host='host', port=None, family=socket.AF_UNSPEC,
             flags=socket.AI_CANONNAME)
 
-    @mock.patch.object(utils._SocketWrapper, 'getaddrinfo')
+    @mock.patch.object(socket, 'getaddrinfo')
     @mock.patch('socket.gethostname')
     def test_get_hypervisor_hostname_getaddrinfo_fail(self, hostname_mock,
                                                       addrinfo_mock):
