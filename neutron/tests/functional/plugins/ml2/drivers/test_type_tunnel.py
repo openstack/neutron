@@ -14,6 +14,7 @@
 #    under the License.
 
 from concurrent import futures
+import time
 
 from neutron_lib import constants
 from neutron_lib import context
@@ -29,14 +30,18 @@ from neutron.plugins.ml2.drivers import type_geneve
 from neutron.tests.unit import testlib_api
 
 
-def _initialize_network_segment_range_support(type_driver, start_time):
+def _initialize_network_segment_range_support(type_driver, worker_num,
+                                              same_init_time):
     # This method is similar to
     # ``_TunnelTypeDriverBase.initialize_network_segment_range_support``.
     # The method first deletes the existing default network ranges and then
     # creates the new ones. It also adds an extra second before closing the
     # DB transaction.
+    #
+    start_time = worker_num if not same_init_time else 0
     admin_context = context.get_admin_context()
     try:
+        time.sleep(worker_num / 4)
         with db_api.CONTEXT_WRITER.using(admin_context):
             type_driver._delete_expired_default_network_segment_ranges(
                 admin_context, start_time)
@@ -84,17 +89,10 @@ class TunnelTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
         max_workers = 3
         _futures = []
         with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            if same_init_time:
-                # All workers are started at the same init time.
+            for idx in range(max_workers):
                 _futures.append(executor.submit(
                     _initialize_network_segment_range_support,
-                    self.type_driver, 0))
-            else:
-                # All workers have different init times.
-                for idx in range(max_workers):
-                    _futures.append(executor.submit(
-                        _initialize_network_segment_range_support,
-                        self.type_driver, idx))
+                    self.type_driver, idx, same_init_time))
             for _future in _futures:
                 _future.result()
 
