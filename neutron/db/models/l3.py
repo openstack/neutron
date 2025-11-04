@@ -16,6 +16,7 @@ from neutron_lib.db import model_base
 from neutron_lib.db import standard_attr
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy import sql
 
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
@@ -55,6 +56,8 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
     gw_port = orm.relationship(models_v2.Port, lazy='joined')
     flavor_id = sa.Column(sa.String(36),
                           sa.ForeignKey("flavors.id"), nullable=True)
+    enable_snat = sa.Column(sa.Boolean, default=True,
+                            server_default=sql.true(), nullable=False)
     attached_ports = orm.relationship(
         RouterPort,
         backref=orm.backref('router', load_on_pending=True),

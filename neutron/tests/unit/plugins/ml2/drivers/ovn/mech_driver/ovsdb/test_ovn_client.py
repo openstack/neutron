@@ -44,9 +44,8 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
     def test_snat_on_nested_off(self):
         fake_router = {
             'id': 'fake-id',
-            l3.EXTERNAL_GW_INFO: {
-                'enable_snat': True,
-            },
+            'enable_snat': True,
+            l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
         # ovn_router_indirect_snat default is False
         self.assertTrue(ovn_client._has_separate_snat_per_subnet(fake_router))
@@ -54,9 +53,8 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
     def test_snat_off_nested_off(self):
         fake_router = {
             'id': 'fake-id',
-            l3.EXTERNAL_GW_INFO: {
-                'enable_snat': False,
-            },
+            'enable_snat': False,
+            l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
         # ovn_router_indirect_snat default is False
         self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
@@ -64,9 +62,8 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
     def test_snat_on_nested_on(self):
         fake_router = {
             'id': 'fake-id',
-            l3.EXTERNAL_GW_INFO: {
-                'enable_snat': True,
-            },
+            'enable_snat': True,
+            l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
         cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
         self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
@@ -74,9 +71,8 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
     def test_snat_off_nested_on(self):
         fake_router = {
             'id': 'fake-id',
-            l3.EXTERNAL_GW_INFO: {
-                'enable_snat': False,
-            },
+            'enable_snat': False,
+            l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
         cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
         self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
@@ -116,6 +112,7 @@ class TestOVNClient(TestOVNClientBase):
         router = {
             'id': 'fake-router-id',
             'gw_port_id': 'fake-port-id',
+            'enable_snat': True,
         }
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
@@ -159,6 +156,7 @@ class TestOVNClient(TestOVNClientBase):
             'id': 'fake-router-id',
             'gw_port_id': 'fake-port-id',
             'enable_default_route_ecmp': True,
+            'enable_snat': True,
         }
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
@@ -220,6 +218,7 @@ class TestOVNClient(TestOVNClientBase):
                         'ip_address': '10.42.0.42'}],
             },
             'gw_port_id': 'fake-port-id',
+            'enable_snat': True,
         }
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()

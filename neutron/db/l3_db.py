@@ -79,7 +79,13 @@ EXTERNAL_GW_INFO = l3_apidef.EXTERNAL_GW_INFO
 # API parameter name and Database column names may differ.
 # Useful to keep the filtering between API and Database.
 API_TO_DB_COLUMN_MAP = {'port_id': 'fixed_port_id'}
-CORE_ROUTER_ATTRS = ('id', 'name', 'tenant_id', 'admin_state_up', 'status')
+CORE_ROUTER_ATTRS = ('id',
+                     'name',
+                     'tenant_id',
+                     'admin_state_up',
+                     'status',
+                     'enable_snat',
+                     )
 FIP_ASSOC_MSG = ('Floating IP %(fip_id)s %(assoc)s. External IP: %(ext_ip)s, '
                  'port: %(port_id)s.')
 

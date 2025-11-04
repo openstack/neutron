@@ -21,7 +21,6 @@ import typing
 import netaddr
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
-from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
@@ -443,7 +442,7 @@ def is_lsp_up(lsp):
 
 
 def is_snat_enabled(router):
-    return router.get(l3.EXTERNAL_GW_INFO, {}).get('enable_snat', True)
+    return router['enable_snat']
 
 
 def is_port_security_enabled(port):
