@@ -64,6 +64,7 @@ from neutron.db import models_v2
 from neutron.db import rbac_db_models
 from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
+from neutron.notifiers import batch_notifier
 from neutron.objects import network as network_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
@@ -138,6 +139,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         # loading extensions
         self.useFixture(fixture.APIDefinitionFixture())
         self._tenant_id = TEST_TENANT_ID
+        # Do not call any method of ``batch_notifier.BatchNotifier`` in the
+        # ML2 plugin test cases. Remove MissingAuthPlugin exception from logs.
+        self.patch_notifier = mock.patch.object(
+            batch_notifier.BatchNotifier, '_notify')
+        self.patch_notifier.start()
 
         if not plugin:
             plugin = DB_PLUGIN_KLASS
