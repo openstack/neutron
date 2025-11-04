@@ -16,8 +16,8 @@
 # NOTE(ralonsoh): remove once the default backend is ``BackendType.THREADING``
 import os
 
-import oslo_service.backend as service
-service.init_backend(service.BackendType.THREADING)
+from oslo_service import backend as oslo_service_backend
+oslo_service_backend.init_backend(oslo_service_backend.BackendType.THREADING)
 
 # NOTE: the environment variable "OSKEN_HUB_TYPE" defines the ``os-ken``
 # hub type to be used. The default value is now "eventlet". Once the

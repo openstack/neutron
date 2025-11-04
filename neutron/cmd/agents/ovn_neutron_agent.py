@@ -11,8 +11,8 @@
 #    under the License.
 
 # NOTE(haleyb): remove once the default backend is ``BackendType.THREADING``
-import oslo_service.backend as service
-service.init_backend(service.BackendType.THREADING)
+from oslo_service import backend as oslo_service_backend
+oslo_service_backend.init_backend(oslo_service_backend.BackendType.THREADING)
 
 # pylint: disable=wrong-import-position
 import setproctitle  # noqa: E402
