@@ -16,6 +16,7 @@ import ddt
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
+from oslo_log import log as logging
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
@@ -23,6 +24,9 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.tests.functional import base
+
+
+LOG = logging.getLogger(__name__)
 
 
 class WaitForPortGroupDropEvent(event.WaitEvent):
@@ -218,6 +222,12 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             check_error=True)
 
     def _test_sync_unify_ha_chassis_group_network(self, create_hcg=False):
+        def print_error(hcg):
+            LOG.error('HA_Chassis in HCG %s', hcg.name)
+            for hc in hcg.ha_chassis:
+                LOG.error('  - Chassis name: %s, priority: %s',
+                          hc.chassis_name, hc.priority)
+
         physnet = 'physnet1'
         net_ext_args = {provider_net.NETWORK_TYPE: 'vlan',
                         provider_net.PHYSICAL_NETWORK: physnet,
@@ -243,9 +253,13 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             with self.nb_api.transaction(check_error=True) as txn:
                 utils._sync_ha_chassis_group(self.nb_api, hcg_info, txn)
             hcg = self.nb_api.lookup('HA_Chassis_Group', group_name)
-            self.assertEqual(1, len(hcg.ha_chassis))
-            self.assertEqual(ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY,
-                             hcg.ha_chassis[0].priority)
+            try:
+                self.assertEqual(1, len(hcg.ha_chassis))
+                self.assertEqual(ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY,
+                                 hcg.ha_chassis[0].priority)
+            except AssertionError as exc:
+                print_error(hcg)
+                raise exc
 
         # Invoke the sync method
         chassis_prio = {ch1: 10, ch2: 20, ch3: 30}
@@ -255,9 +269,13 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
                 'router-id', chassis_prio, txn)
 
         hcg = self.nb_api.lookup('HA_Chassis_Group', group_name)
-        self.assertEqual(3, len(hcg.ha_chassis))
-        for hc in hcg.ha_chassis:
-            self.assertEqual(chassis_prio[hc.chassis_name], hc.priority)
+        try:
+            self.assertEqual(3, len(hcg.ha_chassis))
+            for hc in hcg.ha_chassis:
+                self.assertEqual(chassis_prio[hc.chassis_name], hc.priority)
+        except AssertionError as exc:
+            print_error(hcg)
+            raise exc
 
     def test_sync_unify_ha_chassis_group_network_no_hcg(self):
         self._test_sync_unify_ha_chassis_group_network()
