@@ -52,9 +52,6 @@ class BaseTestProcessMonitor(base.BaseTestCase):
                                     "LOG.error")
         self.error_log = self.log_patch.start()
 
-        self.spawn_patch = mock.patch("eventlet.spawn")
-        self.eventlent_spawn = self.spawn_patch.start()
-
         # create a default process monitor
         self.create_child_process_monitor('respawn')
 

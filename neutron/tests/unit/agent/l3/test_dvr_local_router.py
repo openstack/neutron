@@ -50,7 +50,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        mock.patch('eventlet.spawn').start()
         self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
         log.register_options(self.conf)

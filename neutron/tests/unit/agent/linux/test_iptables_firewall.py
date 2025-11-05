@@ -70,7 +70,6 @@ COMMIT
 class BaseIptablesFirewallTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
-        mock.patch('eventlet.spawn_n').start()
         security_config.register_securitygroups_opts()
         agent_config.register_root_helper(cfg.CONF)
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
