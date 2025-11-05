@@ -54,7 +54,6 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        mock.patch('eventlet.spawn').start()
         self.delete_if_exists = mock.patch.object(linux_utils,
                                                   'delete_if_exists').start()
 
