@@ -30,6 +30,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils
+from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -176,7 +177,8 @@ class TestOvnConnection(base.BaseTestCase):
         impl_idl_ovn.Backend.schema = schema
         helper = impl_idl_ovn.OvsdbNbOvnIdl.schema_helper
         _idl = idl_class.from_server('punix:/fake', helper, mock.Mock())
-        self.ovn_connection = connection.Connection(_idl, mock.Mock())
+        with mock.patch.object(connection, 'TransactionQueue'):
+            self.ovn_connection = connection.Connection(_idl, mock.Mock())
         with mock.patch.object(poller, 'Poller'), \
                 mock.patch('threading.Thread'):
             self.ovn_connection.start()
@@ -571,36 +573,55 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.sb_idl.notify(event, row, updates=old_row)
         # Add a STOP EVENT to the queue
         self.sb_idl.notify_handler.shutdown()
-        # Execute the notifications queued
-        self.sb_idl.notify_handler.notify_loop()
+        # The ``notify_handler.notify_loop()`` call is done by the
+        # ``notify_handler.start()`` method, that is a ``OvnDbNotifyHandler``
+        # instance class, inheriting from ``ovsdbapp.event.RowEventHandler``.
+
+    def _wait_update_segment_host_mapping(self, *args):
+        def called():
+            try:
+                (self.mech_driver.update_segment_host_mapping.
+                 assert_called_once_with(*args))
+                return True
+            except AssertionError:
+                return False
+
+        n_utils.wait_until_true(called, timeout=10)
+
+    def _wait_schedule_unhosted_gateways(self, *args, **kwargs):
+        def called():
+            try:
+                (self.l3_plugin.schedule_unhosted_gateways.
+                 assert_called_once_with(*args, **kwargs))
+                return True
+            except AssertionError:
+                return False
+
+        n_utils.wait_until_true(called, timeout=10)
 
     def test_chassis_create_event(self):
         old_row_json = {'other_config': ['map', []]}
         self._test_chassis_helper('create', self.row_json,
                                   old_row_json=old_row_json)
-        self.mech_driver.update_segment_host_mapping.assert_called_once_with(
+        self._wait_update_segment_host_mapping(
             'fake-hostname', ['fake-phynet1'])
-        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
-            event_from_chassis=None)
+        self._wait_schedule_unhosted_gateways(event_from_chassis=None)
 
     def test_chassis_delete_event(self):
         old_row_json = {'other_config': ['map', []]}
         self._test_chassis_helper('delete', self.row_json,
                                   old_row_json=old_row_json)
-        self.mech_driver.update_segment_host_mapping.assert_called_once_with(
-            'fake-hostname', [])
-        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
-            event_from_chassis='fake-name')
+        self._wait_update_segment_host_mapping('fake-hostname', [])
+        self._wait_schedule_unhosted_gateways(event_from_chassis='fake-name')
 
     def test_chassis_update_event(self):
         old_row_json = copy.deepcopy(self.row_json)
         old_row_json['other_config'][1][0][1] = (
             "fake-phynet2:fake-br2")
         self._test_chassis_helper('update', self.row_json, old_row_json)
-        self.mech_driver.update_segment_host_mapping.assert_called_once_with(
+        self._wait_update_segment_host_mapping(
             'fake-hostname', ['fake-phynet1'])
-        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
-            event_from_chassis=None)
+        self._wait_schedule_unhosted_gateways(event_from_chassis=None)
 
     def test_chassis_update_event_reschedule_not_needed(self):
         self.row_json['other_config'][1].append(['foo_field', 'foo_value_new'])
@@ -615,26 +636,23 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         old_row_json = copy.deepcopy(self.row_json)
         self.row_json['other_config'][1][0][1] = ''
         self._test_chassis_helper('update', self.row_json, old_row_json)
-        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
-            event_from_chassis='fake-name')
+        self._wait_schedule_unhosted_gateways(event_from_chassis='fake-name')
 
     def test_chassis_update_event_reschedule_add_physnet(self):
         old_row_json = copy.deepcopy(self.row_json)
         self.row_json['other_config'][1][0][1] += ',foo_physnet:foo_br'
         self._test_chassis_helper('update', self.row_json, old_row_json)
-        self.mech_driver.update_segment_host_mapping.assert_called_once_with(
+        self._wait_update_segment_host_mapping(
             'fake-hostname', ['fake-phynet1', 'foo_physnet'])
-        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
-            event_from_chassis=None)
+        self._wait_schedule_unhosted_gateways(event_from_chassis=None)
 
     def test_chassis_update_event_reschedule_add_and_remove_physnet(self):
         old_row_json = copy.deepcopy(self.row_json)
         self.row_json['other_config'][1][0][1] = 'foo_physnet:foo_br'
         self._test_chassis_helper('update', self.row_json, old_row_json)
-        self.mech_driver.update_segment_host_mapping.assert_called_once_with(
+        self._wait_update_segment_host_mapping(
             'fake-hostname', ['foo_physnet'])
-        self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
-            event_from_chassis=None)
+        self._wait_schedule_unhosted_gateways(event_from_chassis=None)
 
     def test_chassis_update_empty_no_external_ids(self):
         old_row_json = copy.deepcopy(self.row_json)
