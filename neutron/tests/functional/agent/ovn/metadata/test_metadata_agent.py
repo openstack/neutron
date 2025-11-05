@@ -71,14 +71,6 @@ class PortBindingUpdateEvent(event.WaitEvent):
         super().__init__(events, table, conditions, timeout=timeout)
 
 
-class ChassisPrivateUpdateEvent(event.WaitEvent):
-    def __init__(self, chassis_private, timeout=5):
-        table = 'Chassis_Private'
-        events = (self.ROW_UPDATE,)
-        conditions = (('name', '=', chassis_private),)
-        super().__init__(events, table, conditions, timeout=timeout)
-
-
 class TestMetadataAgent(base.TestOVNFunctionalBase):
     OVN_BRIDGE = 'br-int'
     FAKE_CHASSIS_HOST = 'ovn-host-fake'
@@ -701,6 +693,24 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                         "Provisioning wasn't triggered"))
 
     def test__cleanup_previous_tags(self):
+        def check_tags():
+            try:
+                external_ids = self.sb_api.db_get(
+                    'Chassis_Private', self.chassis_name,
+                    'external_ids').execute(check_error=True)
+                for _key in (ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY,
+                             ovn_const.OVN_AGENT_NEUTRON_DESC_KEY,
+                             ovn_const.OVN_AGENT_NEUTRON_ID_KEY):
+                    self.assertNotIn(_key, external_ids)
+
+                # Just in case, check that we are NOT deleting the needed tags.
+                for _key in (ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY,
+                             ovn_const.OVN_AGENT_METADATA_ID_KEY):
+                    self.assertIn(_key, external_ids)
+                return True
+            except Exception:
+                return False
+
         external_ids = {
             ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY: '1',
             ovn_const.OVN_AGENT_NEUTRON_DESC_KEY: 'description',
@@ -709,20 +719,5 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             'Chassis_Private', self.chassis_name,
             ('external_ids', external_ids)).execute(check_error=True)
 
-        cp_event = ChassisPrivateUpdateEvent(self.chassis_name)
-        self.agent.sb_idl.idl.notify_handler.watch_event(cp_event)
         self.agent._cleanup_previous_tags()
-        self.assertTrue(cp_event.wait())
-
-        external_ids = self.sb_api.db_get(
-            'Chassis_Private', self.chassis_name,
-            'external_ids').execute(check_error=True)
-        for _key in (ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY,
-                     ovn_const.OVN_AGENT_NEUTRON_DESC_KEY,
-                     ovn_const.OVN_AGENT_NEUTRON_ID_KEY):
-            self.assertNotIn(_key, external_ids)
-
-        # Just in case, check that we are NOT deleting the needed tags.
-        for _key in (ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY,
-                     ovn_const.OVN_AGENT_METADATA_ID_KEY):
-            self.assertIn(_key, external_ids)
+        n_utils.wait_until_true(check_tags, timeout=10)
