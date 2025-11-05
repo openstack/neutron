@@ -83,10 +83,6 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin=None):
         config.register_common_config_options()
-        # Remove MissingAuthPlugin exception from logs
-        self.patch_notifier = mock.patch(
-            'neutron.notifiers.batch_notifier.BatchNotifier._notify')
-        self.patch_notifier.start()
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
         service_plugins = {'segments_plugin_name': SERVICE_PLUGIN_KLASS}
@@ -104,6 +100,11 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                       service_plugins=service_plugins)
         ml2_plugin.MAX_BIND_TRIES = 0
         self.addCleanup(self._cleanup)
+        # Do not call the logic behind the update/create Nova inventory.
+        self.mock_nova_inventory = mock.patch.object(
+            seg_plugin.NovaSegmentNotifier,
+            '_create_or_update_nova_inventory')
+        self.mock_nova_inventory.start()
 
     def _cleanup(self):
         ml2_plugin.MAX_BIND_TRIES = 10
@@ -2042,6 +2043,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                               self.send_events_interval)
         # Need notifier here
         self.patch_notifier.stop()
+        self.mock_nova_inventory.stop()
         self._mock_keystone_auth()
         self.segments_plugin = directory.get_plugin(seg_apidef.COLLECTION_NAME)
 
