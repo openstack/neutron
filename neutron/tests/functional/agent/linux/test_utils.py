@@ -18,6 +18,7 @@ import signal
 import tempfile
 
 from oslo_utils import fileutils
+import psutil
 import testscenarios
 
 from neutron.agent.common import async_process
@@ -153,12 +154,25 @@ class TestFindChildPids(functional_base.BaseSudoTestCase):
     def _stop_process(self, process):
         process.stop(kill_signal=signal.SIGKILL)
 
+    def _check_child_pids(self, pid, process_pid=None):
+        # There could be running child process left by previous tests. The
+        # retrieval of the child process with and without recursiveness is
+        # repeated just to avoid these interferences.
+        try:
+            child_pids = utils.find_child_pids(pid)
+            child_pids_recursive = utils.find_child_pids(pid, recursive=True)
+            if process_pid:
+                child_pids_recursive.append(process_pid)
+            for _pid in child_pids:
+                self.assertIn(_pid, child_pids_recursive)
+            return True
+        except (psutil.NoSuchProcess, AssertionError):
+            return False
+
     def test_find_child_pids(self):
         pid = os.getppid()
-        child_pids = utils.find_child_pids(pid)
-        child_pids_recursive = utils.find_child_pids(pid, recursive=True)
-        for _pid in child_pids:
-            self.assertIn(_pid, child_pids_recursive)
+        _check = functools.partial(self._check_child_pids, pid)
+        common_utils.wait_until_true(_check, timeout=10)
 
         cmd = ['sleep', '100']
         process = async_process.AsyncProcess(cmd)
@@ -166,12 +180,9 @@ class TestFindChildPids(functional_base.BaseSudoTestCase):
         common_utils.wait_until_true(lambda: process._process.pid,
                                      sleep=0.5, timeout=10)
         self.addCleanup(self._stop_process, process)
-
-        child_pids_after = utils.find_child_pids(pid)
-        child_pids_recursive_after = utils.find_child_pids(pid, recursive=True)
-        self.assertEqual(child_pids, child_pids_after)
-        for _pid in child_pids + [process.pid]:
-            self.assertIn(_pid, child_pids_recursive_after)
+        _check = functools.partial(self._check_child_pids, pid,
+                                   process_pid=process.pid)
+        common_utils.wait_until_true(_check, timeout=10)
 
     def test_find_non_existing_process(self):
         with open('/proc/sys/kernel/pid_max') as fd:
