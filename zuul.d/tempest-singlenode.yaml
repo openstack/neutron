@@ -779,6 +779,7 @@
         br-ex-tcpdump: true
         br-int-flows: true
       devstack_localrc:
+        TEMPEST_BRANCH: 45.0.0
         TEMPEST_VENV_UPPER_CONSTRAINTS: '/opt/stack/requirements/upper-constraints.txt'
       devstack_local_conf:
         test-config:
@@ -797,6 +798,7 @@
       nslookup_target: 'opendev.org'
       configure_swap_size: 4096
       devstack_localrc:
+        TEMPEST_BRANCH: 45.0.0
         TEMPEST_VENV_UPPER_CONSTRAINTS: '/opt/stack/requirements/upper-constraints.txt'
       devstack_local_conf:
         test-config:
