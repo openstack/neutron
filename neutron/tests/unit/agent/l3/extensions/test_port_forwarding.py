@@ -69,6 +69,7 @@ class PortForwardingExtensionBaseTestCase(
 
         self.mock_ka_notifications = mock.patch.object(
             l3_ha.AgentMixin, '_start_keepalived_notifications_server')
+        self.mock_ka_notifications.start()
         self.agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.agent.init_host()
         self.ex_gw_port = {'id': _uuid()}
