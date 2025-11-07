@@ -78,7 +78,6 @@ FIP_PRI = 32768
 class BasicRouterOperationsFramework(base.BaseTestCase):
     def setUp(self):
         super().setUp()
-        mock.patch('eventlet.spawn').start()
         # NOTE(ralonsoh): this mock can be removed once the backend used for
         # testing is "threading" and eventlet is removed.
         self.mock_scserver_wait = mock.patch.object(
@@ -153,6 +152,9 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
                                                   'add_ip_rule').start()
         self.mock_add_ip_rule = mock.patch.object(ip_lib,
                                                   'delete_ip_rule').start()
+        self.mock_spawn_monitor = mock.patch.object(
+            metadata_driver_base.MetadataDriverBase,
+            'spawn_monitored_metadata_proxy').start()
 
         ip_dev = mock.patch('neutron.agent.linux.ip_lib.IPDevice').start()
         self.mock_ip_dev = mock.MagicMock()
@@ -230,6 +232,7 @@ class IptablesFixture(fixtures.Fixture):
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def setUp(self):
         super().setUp()
+        agent_config.register_agent_state_opts_helper(cfg.CONF)
         cfg.CONF.set_override('report_interval', 0, group='AGENT')
         self.useFixture(IptablesFixture())
         self._mock_load_fip = mock.patch.object(
