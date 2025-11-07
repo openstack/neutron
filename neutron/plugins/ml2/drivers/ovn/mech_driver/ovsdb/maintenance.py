@@ -1124,7 +1124,13 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
     def set_fip_distributed_flag(self):
-        """Set the NB_Global.external_ids:fip-distributed flag."""
+        """Set the NB_Global.external_ids:fip-distributed flag.
+
+        This method should NOT be removed. It will be executed anytime the
+        maintenance task is restarted. If the
+        ``enable_distributed_floating_ip`` configuration parameter changes,
+        this method will update the ``NB_Global`` register.
+        """
         distributed = ovn_conf.is_ovn_distributed_floating_ip()
         LOG.debug(
             "Setting fip-distributed flag in NB_Global to %s", distributed)
