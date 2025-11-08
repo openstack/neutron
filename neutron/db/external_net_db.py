@@ -38,7 +38,6 @@ from neutron.objects import router as l3_obj
 
 
 EXTERNAL_NETWORK_RBAC_ACTIONS = {constants.ACCESS_SHARED,
-                                 constants.ACCESS_READONLY,
                                  constants.ACCESS_EXTERNAL}
 
 
