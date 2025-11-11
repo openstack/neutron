@@ -14,6 +14,8 @@
 # limitations under the License.
 
 import copy
+import shutil
+
 from unittest import mock
 
 from oslo_policy import policy as base_policy
@@ -418,6 +420,12 @@ class SecurityGroupRuleAPITestCase(base.PolicyBaseTestCase):
             'neutron_lib.plugins.directory.get_plugin',
             return_value=self.plugin_mock).start()
 
+    def _delete_temp_dir(self, temp_dir):
+        try:
+            shutil.rmtree(temp_dir)
+        except FileNotFoundError:
+            pass
+
     def override_create_security_group_rule(self):
         self._override_security_group_rule('create_security_group_rule')
 
@@ -430,7 +438,8 @@ class SecurityGroupRuleAPITestCase(base.PolicyBaseTestCase):
         rule = {rule_name:
                 'role:admin or (role:member and project_id:%(project_id)s '
                 'and not rule:rule_default_sg)'}
-        policy_file = base.write_policies(rule)
+        temp_dir, policy_file = base.write_policies(rule)
+        self.addCleanup(self._delete_temp_dir, temp_dir)
         self.target['belongs_to_default_sg'] = 'True'
         base.reload_policies(policy_file)
         self.plugin_mock.get_default_security_group.return_value = (

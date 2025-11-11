@@ -135,7 +135,7 @@ def write_policies(policies):
     with tempfile.NamedTemporaryFile('w+', dir=env_path,
                                      delete=False) as policy_file:
         policy_file.write(str(policies))
-    return policy_file.name
+    return env_path, policy_file.name
 
 
 def reload_policies(policy_file):
