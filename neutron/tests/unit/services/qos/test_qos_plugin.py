@@ -24,6 +24,7 @@ from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import placement as pl_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.objects import utils as obj_utils
+from neutron_lib.placement import constants as pl_constants
 from neutron_lib.placement import utils as pl_utils
 from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
@@ -34,7 +35,6 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
-from neutron.common import _constants as n_const
 from neutron.extensions import qos_pps_minimum_rule_alias
 from neutron.extensions import qos_rules_alias
 from neutron import manager
@@ -133,7 +133,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.ctxt, **self.rule_data['minimum_packet_rate_rule'])
 
         self._rp_tun_name = cfg.CONF.ml2.tunnelled_network_rp_name
-        self._rp_tun_trait = n_const.TRAIT_NETWORK_TUNNEL
+        self._rp_tun_trait = pl_constants.TRAIT_NETWORK_TUNNEL
 
         self.network_id = uuidutils.generate_uuid()
 

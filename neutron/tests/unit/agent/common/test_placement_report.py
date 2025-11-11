@@ -15,10 +15,10 @@
 from unittest import mock
 import uuid
 
+from neutron_lib.placement import constants as pl_constants
 from oslo_config import cfg
 
 from neutron.agent.common import placement_report
-from neutron.common import _constants as n_const
 from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.tests import base
 
@@ -242,7 +242,7 @@ class PlacementStateTestCase(base.BaseTestCase):
             self.client_mock.update_resource_provider_traits.call_args_list]
         self.assertEqual(
             [{'CUSTOM_PHYSNET_PHYSNET0', 'CUSTOM_VNIC_TYPE_NORMAL'},
-             {n_const.TRAIT_NETWORK_TUNNEL, 'CUSTOM_VNIC_TYPE_NORMAL'},
+             {pl_constants.TRAIT_NETWORK_TUNNEL, 'CUSTOM_VNIC_TYPE_NORMAL'},
              {'CUSTOM_VNIC_TYPE_NORMAL'}],
             actual_traits)
 
@@ -283,7 +283,7 @@ class PlacementStateTestCase(base.BaseTestCase):
             set(args[1]['traits']) for args in
             self.client_mock.update_resource_provider_traits.call_args_list]
         self.assertEqual(
-            [{n_const.TRAIT_NETWORK_TUNNEL, 'CUSTOM_PHYSNET_PHYSNET0',
+            [{pl_constants.TRAIT_NETWORK_TUNNEL, 'CUSTOM_PHYSNET_PHYSNET0',
               'CUSTOM_VNIC_TYPE_NORMAL'},
              {'CUSTOM_VNIC_TYPE_NORMAL'}],
             actual_traits)

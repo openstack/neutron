@@ -42,6 +42,7 @@ from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.placement import client as pl_client
+from neutron_lib.placement import constants as pl_constants
 from neutron_lib.placement import utils as pl_utils
 from neutron_lib.services.qos import constants as qos_consts
 import os_resource_classes as orc
@@ -49,7 +50,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.common import _constants as n_const
 from neutron.db import db_base_plugin_common
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
@@ -259,7 +259,7 @@ class QoSPlugin(qos.QoSPluginBase):
         if not first_segment.physical_network:
             # If there is no physical network this is because this is an
             # overlay network (tunnelled network).
-            net_trait = n_const.TRAIT_NETWORK_TUNNEL
+            net_trait = pl_constants.TRAIT_NETWORK_TUNNEL
         else:
             net_trait = pl_utils.physnet_trait(first_segment.physical_network)
 
