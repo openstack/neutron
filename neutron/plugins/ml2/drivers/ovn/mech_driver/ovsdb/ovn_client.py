@@ -1714,8 +1714,7 @@ class OVNClient:
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
 
-        if is_gw_port and (ovn_conf.is_ovn_distributed_floating_ip() or
-                           ovn_conf.is_ovn_emit_need_to_frag_enabled()):
+        if is_gw_port:
             try:
                 router_ports = self._get_router_ports(admin_context,
                                                       port['device_id'])
@@ -1724,16 +1723,15 @@ class OVNClient:
                 LOG.debug("Router %s not found", port['device_id'])
             else:
                 network_ids = {port['network_id'] for port in router_ports}
-                if ovn_conf.is_ovn_emit_need_to_frag_enabled():
-                    # If this method is called during a port creation, the port
-                    # won't be present yet in the router ports list. It is
-                    # needed not to modify the ``network_ids`` set.
-                    _network_ids = network_ids.union({port['network_id']})
-                    networks = self._plugin.get_networks(
-                        admin_context, filters={'id': _network_ids})
-                    # Set the lower MTU of all networks connected to the router
-                    min_mtu = str(min(net['mtu'] for net in networks))
-                    options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = min_mtu
+                # If this method is called during a port creation, the port
+                # won't be present yet in the router ports list. It is
+                # needed not to modify the ``network_ids`` set.
+                _network_ids = network_ids.union({port['network_id']})
+                networks = self._plugin.get_networks(
+                    admin_context, filters={'id': _network_ids})
+                # Set the lower MTU of all networks connected to the router
+                min_mtu = str(min(net['mtu'] for net in networks))
+                options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = min_mtu
                 if ovn_conf.is_ovn_distributed_floating_ip():
                     # NOTE(ltomasbo): For VLAN type networks connected through
                     # the gateway port there is a need to set the redirect-type
@@ -1830,12 +1828,11 @@ class OVNClient:
 
             gw_ports = self._get_router_gw_ports(context, router_id)
             if gw_ports:
-                if ovn_conf.is_ovn_emit_need_to_frag_enabled():
-                    for gw_port in gw_ports:
-                        provider_net = self._plugin.get_network(
-                            context, gw_port['network_id'])
-                        self.set_gateway_mtu(context, provider_net, txn=txn,
-                                             router_id=router_id)
+                for gw_port in gw_ports:
+                    provider_net = self._plugin.get_network(
+                        context, gw_port['network_id'])
+                    self.set_gateway_mtu(context, provider_net, txn=txn,
+                                         router_id=router_id)
 
                 if _has_separate_snat_per_subnet(router):
                     for fixed_ip in port['fixed_ips']:
@@ -1979,11 +1976,10 @@ class OVNClient:
             elif port:
                 subnet_ids = utils.get_port_subnet_ids(port)
 
-            if ovn_conf.is_ovn_emit_need_to_frag_enabled():
-                for gw_port in gw_ports:
-                    provider_net = self._plugin.get_network(
-                        context, gw_port['network_id'])
-                    self.set_gateway_mtu(context, provider_net, txn=txn,
+            for gw_port in gw_ports:
+                provider_net = self._plugin.get_network(
+                    context, gw_port['network_id'])
+                self.set_gateway_mtu(context, provider_net, txn=txn,
                                          router_id=router_id)
 
             if _has_separate_snat_per_subnet(router):

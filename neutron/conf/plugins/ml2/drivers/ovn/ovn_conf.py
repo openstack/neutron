@@ -188,19 +188,6 @@ ovn_opts = [
                        "option to be unset globally. Multiple values should "
                        "be separated by semi-colon.\n"
                        "See the ovn-nb(5) man page for available options.")),
-    cfg.BoolOpt('ovn_emit_need_to_frag',
-                default=True,
-                deprecated_for_removal=True,
-                deprecated_since='2025.1',
-                deprecated_reason=("The option is useful only on very old "
-                                   "Linux kernels (version < 5.2)."),
-                help=_('Configure OVN to emit "need to frag" packets in '
-                       'case of MTU mismatches.\n'
-                       'You may have to disable this option if you are '
-                       'running an old host kernel (version < 5.2). You may '
-                       'check the output of the following command:\n'
-                       'ovs-appctl -t ovs-vswitchd dpif/show-dp-features '
-                       'br-int | grep "Check pkt length action".')),
     cfg.BoolOpt('disable_ovn_dhcp_for_baremetal_ports',
                 default=False,
                 help=_('Disable OVN\'s built-in DHCP for baremetal ports '
@@ -398,10 +385,6 @@ def get_global_dhcpv4_opts():
 
 def get_global_dhcpv6_opts():
     return cfg.CONF.ovn.ovn_dhcp6_global_options
-
-
-def is_ovn_emit_need_to_frag_enabled():
-    return cfg.CONF.ovn.ovn_emit_need_to_frag
 
 
 def is_ovn_dhcp_disabled_for_baremetal():
