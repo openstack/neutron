@@ -226,7 +226,7 @@ class OvnDriver(base.L3ServiceProvider,
                 }
                 try:
                     self.l3plugin._ovn_client.disassociate_floatingip(
-                        update_fip, router_id)
+                        payload.context, update_fip, router_id)
                     self.l3plugin.update_floatingip_status(
                         payload.context, old_fip['id'],
                         constants.FLOATINGIP_STATUS_DOWN)

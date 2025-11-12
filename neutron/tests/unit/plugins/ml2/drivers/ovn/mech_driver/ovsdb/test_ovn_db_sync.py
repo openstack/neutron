@@ -369,7 +369,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         p.update({'segments': 'neutron.services.segments.plugin.Plugin'})
         return p
 
-    def _fake_get_ovn_dhcp_options(self, subnet, network, server_mac=None):
+    def _fake_get_ovn_dhcp_options(self, context, subnet, network,
+                                   server_mac=None):
         if subnet['id'] == 'n1-s1':
             return {'cidr': '10.0.0.0/24',
                     'options': {'server_id': '10.0.0.1',
@@ -658,6 +659,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
         create_provnet_port_calls = [
             mock.call(
+                mock.ANY,
                 network['id'],
                 self.segments_map[network['id']],
                 txn=mock.ANY,
@@ -709,7 +711,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         self.assertEqual(len(add_snat_list),
                          ovn_api.add_nat_rule_in_lrouter.call_count)
 
-        add_fip_calls = [mock.call(nat, txn=mock.ANY)
+        add_fip_calls = [mock.call(mock.ANY, nat, txn=mock.ANY)
                          for nat in add_floating_ip_list]
         (ovn_nb_synchronizer._ovn_client._create_or_update_floatingip.
             assert_has_calls(add_fip_calls))
@@ -724,8 +726,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         self.assertEqual(len(del_snat_list),
                          ovn_api.delete_nat_rule_in_lrouter.call_count)
 
-        del_fip_calls = [mock.call(nat, mock.ANY, txn=mock.ANY) for nat in
-                         del_floating_ip_list]
+        del_fip_calls = [mock.call(mock.ANY, nat, mock.ANY, txn=mock.ANY)
+                         for nat in del_floating_ip_list]
         ovn_nb_synchronizer._ovn_client._delete_floatingip.assert_has_calls(
             del_fip_calls, any_order=True)
         self.assertEqual(
@@ -779,7 +781,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             ovn_nb_synchronizer._ovn_client._add_subnet_dhcp_options.
             call_count)
         add_subnet_dhcp_options_calls = [
-            mock.call(subnet, net, mock.ANY)
+            mock.call(mock.ANY, subnet, net, mock.ANY)
             for (subnet, net) in add_subnet_dhcp_options_list]
         ovn_nb_synchronizer._ovn_client._add_subnet_dhcp_options. \
             assert_has_calls(add_subnet_dhcp_options_calls, any_order=True)

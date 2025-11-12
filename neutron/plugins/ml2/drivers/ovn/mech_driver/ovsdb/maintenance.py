@@ -714,7 +714,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         for rp in router_ports:
             expected_value = (
                 self._ovn_client._get_reside_redir_for_gateway_port(
-                    rp['device_id']))
+                    context, rp['device_id']))
             lrp_name = utils.ovn_lrouter_port_name(rp['id'])
             lrp = self._nb_idl.get_lrouter_port(lrp_name)
             if lrp and lrp.options.get(
@@ -820,7 +820,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                         update_dhcp = True
 
                 if update_dhcp:
-                    port_info = self._ovn_client._get_port_options(port)
+                    port_info = self._ovn_client._get_port_options(
+                        context, port)
                     dhcpv4_options, dhcpv6_options = (
                         self._ovn_client.update_port_dhcp_options(
                             port_info, txn))

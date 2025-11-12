@@ -1583,7 +1583,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with mock.patch.object(self.mech_driver._ovn_client,
                                '_get_ovn_dhcp_options') as get_opts:
             self.mech_driver._ovn_client._add_subnet_dhcp_options(
-                subnet, mock.ANY, ovn_dhcp_opts)
+                self.context, subnet, mock.ANY, ovn_dhcp_opts)
             self.assertEqual(call_get_dhcp_opts, get_opts.called)
             self.assertEqual(
                 call_add_dhcp_opts,
@@ -1630,7 +1630,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         txn.add.return_value = dhcp_option_command
 
         self.mech_driver._ovn_client._enable_subnet_dhcp_options(
-            subnet, network, txn)
+            self.context, subnet, network, txn)
         # Check adding DHCP_Options rows
         subnet_dhcp_options = {
             'external_ids': {'subnet_id': subnet['id'],
@@ -1711,7 +1711,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         txn.add.return_value = dhcp_option_command
 
         self.mech_driver._ovn_client._enable_subnet_dhcp_options(
-            subnet, network, txn)
+            self.context, subnet, network, txn)
         # Check adding DHCP_Options rows
         subnet_dhcp_options = {
             'external_ids': {'subnet_id': subnet['id'],
@@ -1760,7 +1760,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         network = {'id': 'network-id'}
 
         self.mech_driver._ovn_client._enable_subnet_dhcp_options(
-            subnet, network, mock.Mock())
+            self.context, subnet, network, mock.Mock())
         self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
         self.mech_driver.nb_ovn.set_lswitch_port.assert_not_called()
 
@@ -1804,7 +1804,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             orignal_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
-            subnet, network, mock.Mock())
+            self.context, subnet, network, mock.Mock())
         new_options = {
             'external_ids': {'subnet_id': subnet['id'],
                              ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1'},
@@ -1837,7 +1837,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             orignal_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
-            subnet, network, mock.Mock())
+            self.context, subnet, network, mock.Mock())
         self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
     def test_update_subnet_dhcp_options_in_ovn_ipv6(self):
@@ -1855,7 +1855,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
             orignal_options
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
-            subnet, network, mock.Mock())
+            self.context, subnet, network, mock.Mock())
 
         new_options = {
             'external_ids': {'subnet_id': subnet['id'],
@@ -1884,7 +1884,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             orignal_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
-            subnet, network, mock.Mock())
+            self.context, subnet, network, mock.Mock())
         self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
     def test_update_subnet_dhcp_options_in_ovn_ipv6_slaac(self):
@@ -1892,7 +1892,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                   'ipv6_address_mode': 'slaac'}
         network = {'id': 'network-id'}
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
-            subnet, network, mock.Mock())
+            self.context, subnet, network, mock.Mock())
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.assert_not_called()
         self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
@@ -1935,7 +1935,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'update_metadata_port') as umd:
             self.mech_driver.update_subnet_postcommit(context)
             esd.assert_called_once_with(
-                context.current, context.network.current, mock.ANY)
+                mock.ANY, context.current, context.network.current, mock.ANY)
             umd.assert_called_once_with(mock.ANY, context.network.current,
                                         subnet=subnet)
 
@@ -1970,7 +1970,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'update_metadata_port') as umd:
             self.mech_driver.update_subnet_postcommit(context)
             usd.assert_called_once_with(
-                context.current, context.network.current, mock.ANY)
+                mock.ANY, context.current, context.network.current, mock.ANY)
             umd.assert_called_once_with(mock.ANY, context.network.current,
                                         subnet=subnet)
 
@@ -1992,7 +1992,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 ip['subnet_id']
                 for ip in port.get('fixed_ips')
             ]
-            self.mech_driver._ovn_client._get_port_options(port)
+            self.mech_driver._ovn_client._get_port_options(self.context, port)
             mock_get_subnets.assert_called_once_with(
                 mock.ANY,
                 filters={'id': subnet_ids})
@@ -2039,7 +2039,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     "address_scope_id": "address_scope_v6",
                 },
             ]
-            options = self.mech_driver._ovn_client._get_port_options(port)
+            options = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
             mock_get_subnets.assert_called_once_with(
                 mock.ANY, filters={"id": subnet_ids}
             )
@@ -2067,7 +2068,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 ovn_const.MIGRATING_ATTR: 'fake-dest',
             }
         }
-        options = self.mech_driver._ovn_client._get_port_options(port)
+        options = self.mech_driver._ovn_client._get_port_options(
+            self.context, port)
         self.assertEqual('fake-src', options.options['requested-chassis'])
 
     def test__get_port_options_migrating_additional_chassis_missing(self):
@@ -2082,7 +2084,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 ovn_const.MIGRATING_ATTR: 'fake-dest',
             }
         }
-        options = self.mech_driver._ovn_client._get_port_options(port)
+        options = self.mech_driver._ovn_client._get_port_options(
+            self.context, port)
         self.assertNotIn('activation-strategy', options.options)
         self.assertEqual('fake-src', options.options['requested-chassis'])
 
@@ -2102,7 +2105,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with mock.patch.object(
                 self.mech_driver._ovn_client._sb_idl, 'is_col_present',
                 return_value=True):
-            options = self.mech_driver._ovn_client._get_port_options(port)
+            options = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
         self.assertEqual('rarp', options.options['activation-strategy'])
         self.assertEqual('fake-src,fake-dest',
                          options.options['requested-chassis'])
@@ -2123,7 +2127,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with mock.patch.object(
                 self.mech_driver._ovn_client._sb_idl, 'is_col_present',
                 return_value=True):
-            options = self.mech_driver._ovn_client._get_port_options(port)
+            options = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
         self.assertNotIn('activation-strategy', options.options)
         self.assertEqual('fake-src,fake-dest',
                          options.options['requested-chassis'])
@@ -2147,7 +2152,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with mock.patch.object(
             self.mech_driver._ovn_client._sb_idl, 'is_col_present',
                 return_value=True):
-            options = self.mech_driver._ovn_client._get_port_options(port)
+            options = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
         self.assertNotIn('activation-strategy', options.options)
         self.assertEqual('fake-src,fake-dest',
                          options.options['requested-chassis'])
@@ -2165,7 +2171,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with mock.patch.object(
                 self.mech_driver._ovn_client._sb_idl, 'is_col_present',
                 return_value=True):
-            options = self.mech_driver._ovn_client._get_port_options(port)
+            options = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
         self.assertNotIn('activation-strategy', options.options)
         self.assertEqual('fake-src',
                          options.options['requested-chassis'])
@@ -2707,7 +2714,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 # Let's update the MTU to something different
                 network['network']['mtu'] = new_mtu
                 fake_ctx = mock.MagicMock(current=network['network'])
-                fake_ctx.plugin_context.session.is_active = False
+                fake_ctx.plugin_context = self.context
                 external_ids = {
                     ovn_const.OVN_NETTYPE_EXT_ID_KEY: const.TYPE_GENEVE,
                     ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(new_mtu),
@@ -3824,7 +3831,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                                           expected_dhcp_options,
                                           service_mac=None):
         dhcp_options = self.mech_driver._ovn_client._get_ovn_dhcp_options(
-            subnet, network, service_mac)
+            self.context, subnet, network, service_mac)
         self.assertEqual(expected_dhcp_options, dhcp_options)
 
     def test_get_ovn_dhcp_options(self):
@@ -4964,7 +4971,8 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
                           "vtep-physical-switch": "psw1"}
         }
         ovn_port_info = (
-            self.mech_driver._ovn_client._get_port_options(port))
+            self.mech_driver._ovn_client._get_port_options(
+                self.context, port))
         self.assertEqual(port[OVN_PROFILE]["vtep-physical-switch"],
                          ovn_port_info.options["vtep-physical-switch"])
         self.assertEqual(port[OVN_PROFILE]["vtep-logical-switch"],
@@ -4996,7 +5004,8 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
                                    'ip_address': '10.0.0.55'}],
                     portbindings.PROFILE: {},
                     }
-            port_info = self.mech_driver._ovn_client._get_port_options(port)
+            port_info = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
             self.assertEqual(ovn_const.LSP_TYPE_VIRTUAL, port_info.type)
             self.assertEqual(
                 '10.0.0.55',

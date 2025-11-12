@@ -679,7 +679,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         segment = payload.latest_state
         if not segment.get(segment_def.PHYSICAL_NETWORK):
             return
-        self._ovn_client.create_provnet_port(segment['network_id'], segment)
+        self._ovn_client.create_provnet_port(payload.context,
+                                             segment['network_id'], segment)
 
     def delete_segment_provnet_port(self, resource, event, trigger,
                                     payload):
