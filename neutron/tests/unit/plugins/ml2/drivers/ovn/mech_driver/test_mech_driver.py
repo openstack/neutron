@@ -492,7 +492,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 self.assertEqual(
                     expected_result,
                     self.mech_driver._sg_has_rules_with_same_normalized_cidr(
-                        rule))
+                        self.context, rule))
 
     def test_port_invalid_binding_profile(self):
         invalid_binding_profiles = [
@@ -2368,14 +2368,14 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_notify_dhcp_updated(self, mock_prov_complete, mock_is_obj_block):
         port_id = 'fake-port-id'
         mock_is_obj_block.return_value = True
-        self.mech_driver._notify_dhcp_updated(port_id)
+        self.mech_driver._notify_dhcp_updated(self.context, port_id)
         mock_prov_complete.assert_called_once_with(
             mock.ANY, port_id, resources.PORT,
             provisioning_blocks.DHCP_ENTITY)
 
         mock_is_obj_block.return_value = False
         mock_prov_complete.reset_mock()
-        self.mech_driver._notify_dhcp_updated(port_id)
+        self.mech_driver._notify_dhcp_updated(self.context, port_id)
         mock_prov_complete.assert_not_called()
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
@@ -2390,7 +2390,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         passed_fake_port = copy.deepcopy(fake_port)
         passed_fake_port['network'] = fake_ctx.network.current
         mock_create_port.assert_called_once_with(mock.ANY, passed_fake_port)
-        mock_notify_dhcp.assert_called_once_with(fake_port['id'])
+        mock_notify_dhcp.assert_called_once_with(mock.ANY, fake_port['id'])
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        '_is_port_provisioning_required', lambda *_: True)
@@ -2410,7 +2410,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
         mock_update_port.assert_called_once_with(
             mock.ANY, passed_fake_port, port_object=passed_fake_port_orig)
-        mock_notify_dhcp.assert_called_once_with(fake_port['id'])
+        mock_notify_dhcp.assert_called_once_with(mock.ANY, fake_port['id'])
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        '_is_port_provisioning_required', lambda *_: True)
@@ -2469,7 +2469,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.plugin.get_port.assert_called_once_with(
             mock.ANY, fake_port['id'])
         self.assertEqual(2, mock_update_port.call_count)
-        mock_notify_dhcp.assert_called_with(fake_port['id'])
+        mock_notify_dhcp.assert_called_with(mock.ANY, fake_port['id'])
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        '_is_port_provisioning_required', lambda *_: True)
@@ -2507,7 +2507,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.plugin.get_port.assert_called_once_with(
             mock.ANY, fake_port['id'])
         self.assertEqual(2, mock_update_port.call_count)
-        mock_notify_dhcp.assert_called_with(fake_port['id'])
+        mock_notify_dhcp.assert_called_with(mock.ANY, fake_port['id'])
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        '_is_port_provisioning_required', lambda *_: True)
@@ -2548,7 +2548,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.plugin.update_port_status.assert_not_called()
         self.plugin.get_port.assert_not_called()
         self.assertEqual(1, mock_update_port.call_count)
-        mock_notify_dhcp.assert_called_with(fake_port['id'])
+        mock_notify_dhcp.assert_called_with(mock.ANY, fake_port['id'])
 
     def test_update_port_postcommit_revision_mismatch_not_after_live_migration(
             self):

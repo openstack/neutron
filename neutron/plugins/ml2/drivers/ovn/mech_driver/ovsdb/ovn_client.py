@@ -651,7 +651,7 @@ class OVNClient:
             if self.is_dns_required_for_port(port):
                 self.add_txns_to_sync_port_dns_records(txn, port)
 
-            self._qos_driver.create_port(txn, port, port_cmd)
+            self._qos_driver.create_port(context, txn, port, port_cmd)
 
         db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
@@ -810,7 +810,7 @@ class OVNClient:
                   utils.is_lsp_trusted(port)):
                 self._del_port_from_drop_port_group(port['id'], txn)
 
-            self._qos_driver.update_port(txn, port, port_object)
+            self._qos_driver.update_port(context, txn, port, port_object)
 
             if self.is_dns_required_for_port(port):
                 self.add_txns_to_sync_port_dns_records(
@@ -822,7 +822,7 @@ class OVNClient:
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
-    def _delete_port(self, port_id, port_object=None):
+    def _delete_port(self, context, port_id, port_object=None):
         ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port_id)
         ovn_network_name = ovn_port.external_ids.get(
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
@@ -834,7 +834,7 @@ class OVNClient:
 
             p_object = ({'id': port_id, 'network_id': network_id}
                         if not port_object else port_object)
-            self._qos_driver.delete_port(txn, p_object)
+            self._qos_driver.delete_port(context, txn, p_object)
 
             if port_object and self.is_dns_required_for_port(port_object):
                 self.add_txns_to_remove_port_dns_records(txn, port_object)
@@ -855,7 +855,7 @@ class OVNClient:
     # keep things backward compatible. Remove it in the Rocky release.
     def delete_port(self, context, port_id, port_object=None):
         try:
-            self._delete_port(port_id, port_object=port_object)
+            self._delete_port(context, port_id, port_object=port_object)
         except idlutils.RowNotFound:
             # NOTE(dalvarez): At this point the port doesn't exist in the OVN
             # database or, most likely, this worker IDL hasn't been updated
@@ -1147,7 +1147,7 @@ class OVNClient:
         try:
             with self._nb_idl.transaction(check_error=True) as txn:
                 self._create_or_update_floatingip(context, floatingip, txn=txn)
-                self._qos_driver.create_floatingip(txn, floatingip)
+                self._qos_driver.create_floatingip(context, txn, floatingip)
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 LOG.error('Unable to create floating ip in gateway '
@@ -1190,7 +1190,7 @@ class OVNClient:
                                                       txn=txn)
                     fip_status = const.FLOATINGIP_STATUS_ACTIVE
 
-            self._qos_driver.update_floatingip(txn, floatingip)
+            self._qos_driver.update_floatingip(context, txn, floatingip)
 
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(
@@ -1213,7 +1213,7 @@ class OVNClient:
             try:
                 with self._nb_idl.transaction(check_error=True) as txn:
                     self._delete_floatingip(context, ovn_fip, lrouter, txn=txn)
-                    self._qos_driver.delete_floatingip(txn, fip_dict)
+                    self._qos_driver.delete_floatingip(context, txn, fip_dict)
             except Exception as e:
                 with excutils.save_and_reraise_exception():
                     LOG.error('Unable to delete floating ip in gateway '
@@ -1225,7 +1225,7 @@ class OVNClient:
         try:
             with self._nb_idl.transaction(check_error=True) as txn:
                 self._delete_floatingip(context, floatingip, lrouter, txn=txn)
-                self._qos_driver.delete_floatingip(txn, floatingip)
+                self._qos_driver.delete_floatingip(context, txn, floatingip)
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 LOG.error('Unable to disassociate floating ip in gateway '
@@ -1499,7 +1499,7 @@ class OVNClient:
                     added_gw_ports = self._add_router_ext_gw(
                         context, router, txn)
 
-            self._qos_driver.create_router(txn, router)
+            self._qos_driver.create_router(context, txn, router)
 
         for gw_port in added_gw_ports:
             db_rev.bump_revision(context, gw_port,
@@ -1579,7 +1579,7 @@ class OVNClient:
                     old_routes, routes)
                 self.update_router_routes(
                     context, router_id, added, removed, txn=txn)
-                self._qos_driver.update_router(txn, new_router)
+                self._qos_driver.update_router(context, txn, new_router)
 
             if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
                 db_rev.bump_revision(context, new_router,
@@ -2282,7 +2282,8 @@ class OVNClient:
                 txn.add(self._nb_idl.set_lswitch_port(lport_name=lport_name,
                                                       tag=tag, if_exists=True))
 
-            self._qos_driver.update_network(txn, network, original_network)
+            self._qos_driver.update_network(context, txn, network,
+                                            original_network)
 
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)

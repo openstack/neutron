@@ -1379,7 +1379,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         else:
             with self.ovn_api.transaction(check_error=True) as txn:
                 for port in _ports:
-                    ovn_qos_ext.create_port(txn, port, None)
+                    ovn_qos_ext.create_port(ctx, txn, port, None)
 
         LOG.debug('OVN-NB Sync port QoS policies completed @ %s',
                   str(datetime.now()))
@@ -1407,7 +1407,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         else:
             with self.ovn_api.transaction(check_error=True) as txn:
                 for fip in _fips:
-                    ovn_qos_ext.create_floatingip(txn, fip)
+                    ovn_qos_ext.create_floatingip(ctx, txn, fip)
 
         LOG.debug('OVN-NB Sync Floating IP QoS policies completed @ %s',
                   str(datetime.now()))
