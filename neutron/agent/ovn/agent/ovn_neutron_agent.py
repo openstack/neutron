@@ -58,9 +58,8 @@ class OVNNeutronAgent(service.Service):
         self._chassis = None
         self._chassis_id = None
         self._ovn_bridge = None
-        self.ext_manager_api = ext_mgr.OVNAgentExtensionAPI()
-        self.ext_manager = ext_mgr.OVNAgentExtensionManager(self._conf)
-        self.ext_manager.initialize(None, 'ovn', self)
+        self.ext_manager_api = None
+        self.ext_manager = None
 
     def __getitem__(self, name):
         """Return the named extension objet from ``self.ext_manager``"""
@@ -159,7 +158,22 @@ class OVNNeutronAgent(service.Service):
             'Chassis_Private', self.chassis,
             ('external_ids', external_ids)).execute(check_error=True)
 
+    def _initialize_ext_manager(self):
+        """Initialize the externsion manager and the extension manager API.
+
+        This method must be called once, outside the ``__init__`` method and
+        at the beginning of the ``start`` method.
+        """
+        if not self.ext_manager:
+            self.ext_manager_api = ext_mgr.OVNAgentExtensionAPI()
+            self.ext_manager = ext_mgr.OVNAgentExtensionManager(self._conf)
+            self.ext_manager.initialize(None, 'ovn', self)
+
     def start(self):
+        # This must be the first operation in the `start` method.
+        self._initialize_ext_manager()
+
+        # Extension manager configuration.
         self.ext_manager_api.ovs_idl = self._load_ovs_idl()
         self.load_config()
         # Before executing "_load_sb_idl", is is needed to execute
