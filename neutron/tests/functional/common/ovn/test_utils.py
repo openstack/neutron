@@ -39,6 +39,16 @@ class WaitForPortGroupDropEvent(event.WaitEvent):
         super().__init__(events, table, conditions, timeout=5)
 
 
+class WaitForChassisCreate(event.WaitEvent):
+    event_name = 'WaitForChassisCreate'
+
+    def __init__(self, hostname):
+        table = 'Chassis'
+        events = (self.ROW_CREATE, )
+        conditions = (('hostname', '=', hostname),)
+        super().__init__(events, table, conditions, timeout=5)
+
+
 class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
     def _create_and_check_pg_drop(self, wait_event=True):
         pg_event = WaitForPortGroupDropEvent()
@@ -89,15 +99,37 @@ class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
 
 class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
 
+    def _add_fake_chassis_and_wait(self, hostnames,
+                                   enable_chassis_as_gw=None,
+                                   enable_chassis_as_extport=None,
+                                   other_config=None):
+        ch_list = []
+        for idx, hostname in enumerate(hostnames):
+            # NOTE(ralonsoh): wait until the "Chassis" are created and the
+            # event received, to avoid the "HA_Chassis_Group" mangling done in
+            # ``ovsdb_monitor.ChassisEvent`` during the next operations.
+            ch_event = WaitForChassisCreate(hostname)
+            self.sb_api.idl.notify_handler.watch_event(ch_event)
+            kwargs = {'azs': []}
+            if enable_chassis_as_gw and enable_chassis_as_gw[idx]:
+                kwargs['enable_chassis_as_gw'] = True
+            if enable_chassis_as_extport and enable_chassis_as_extport[idx]:
+                kwargs['enable_chassis_as_extport'] = True
+            if other_config and other_config[idx]:
+                kwargs['other_config'] = other_config[idx]
+            ch_list.append(
+                self.add_fake_chassis(hostname, **kwargs))
+            ch_event.wait()
+
+        return ch_list
+
     def test_sync_ha_chassis_group_network(self):
         net = self._make_network(self.fmt, 'n1', True)['network']
         port_id = 'fake-port-id'
         hcg_name = utils.ovn_name(net['id'])
-        chassis1 = self.add_fake_chassis('host1', azs=[],
-                                         enable_chassis_as_gw=True)
-        chassis2 = self.add_fake_chassis('host2', azs=[],
-                                         enable_chassis_as_gw=True)
-        self.add_fake_chassis('host3')
+        ch_list = self._add_fake_chassis_and_wait(
+            ('host1', 'host2', 'host3'),
+            enable_chassis_as_gw=[True, True, False])
 
         with self.nb_api.transaction(check_error=True) as txn:
             utils.sync_ha_chassis_group_network(
@@ -108,7 +140,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             check_error=True)
         ha_chassis_names = [hc['chassis_name'] for hc in ha_chassis]
         self.assertEqual(2, len(ha_chassis))
-        self.assertEqual(sorted([chassis1, chassis2]),
+        self.assertEqual(sorted([ch_list[0], ch_list[1]]),
                          sorted(ha_chassis_names))
 
         hcg = self.nb_api.ha_chassis_group_get(hcg_name).execute(
@@ -121,7 +153,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         # Delete one GW chassis and resync the HA chassis group associated to
         # the same network. The method will now not create again the existing
         # HA Chassis Group register but will update the "ha_chassis" list.
-        self.del_fake_chassis(chassis2)
+        self.del_fake_chassis(ch_list[1])
         with self.nb_api.transaction(check_error=True) as txn:
             utils.sync_ha_chassis_group_network(
                 self.context, self.nb_api, self.sb_api, port_id,
@@ -131,7 +163,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             check_error=True)
         ha_chassis_names = [hc['chassis_name'] for hc in ha_chassis]
         self.assertEqual(1, len(ha_chassis))
-        self.assertEqual([chassis1], ha_chassis_names)
+        self.assertEqual([ch_list[0]], ha_chassis_names)
 
         hcg = self.nb_api.ha_chassis_group_get(hcg_name).execute(
             check_error=True)
@@ -152,11 +184,9 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         port = self.deserialize(self.fmt, port_res)['port']
 
         # Add 3 chassis, two eligible for hosting the external port
-        chassis1 = self.add_fake_chassis('host1', azs=[],
-                                         enable_chassis_as_extport=True)
-        chassis2 = self.add_fake_chassis('host2', azs=[],
-                                         enable_chassis_as_extport=True)
-        self.add_fake_chassis('host3')
+        ch_list = self._add_fake_chassis_and_wait(
+            ('host1', 'host2', 'host3'),
+            enable_chassis_as_extport=[True, True, False])
 
         # Invoke the sync method
         with self.nb_api.transaction(check_error=True) as txn:
@@ -173,7 +203,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             check_error=True)
         ha_chassis_names = [hc['chassis_name'] for hc in ha_chassis]
         self.assertEqual(2, len(ha_chassis))
-        self.assertEqual(sorted([chassis1, chassis2]),
+        self.assertEqual(sorted([ch_list[0], ch_list[1]]),
                          sorted(ha_chassis_names))
 
         # Assert the HA Chassis Group has the correct name and the
@@ -189,7 +219,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         # Delete one eligible Chassis and resync the HA chassis group
         # associated to the external port. The method should not re-create
         # the existing HA Chassis Group but only update the "ha_chassis" list
-        self.del_fake_chassis(chassis2)
+        self.del_fake_chassis(ch_list[1])
         with self.nb_api.transaction(check_error=True) as txn:
             utils.sync_ha_chassis_group_network(
                 self.context, self.nb_api, self.sb_api, port['id'],
@@ -201,7 +231,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             check_error=True)
         ha_chassis_names = [hc['chassis_name'] for hc in ha_chassis]
         self.assertEqual(1, len(ha_chassis))
-        self.assertEqual([chassis1], ha_chassis_names)
+        self.assertEqual([ch_list[0]], ha_chassis_names)
 
         hcg = self.nb_api.ha_chassis_group_get(hcg_name).execute(
             check_error=True)
@@ -237,16 +267,15 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
                                      arg_list=tuple(net_ext_args.keys()),
                                      **net_ext_args)['network']
         other_config = {'ovn-bridge-mappings': physnet + ':br-ex'}
-        ch1 = self.add_fake_chassis('host1', azs=[], enable_chassis_as_gw=True,
-                                    other_config=other_config)
-        ch2 = self.add_fake_chassis('host2', azs=[], enable_chassis_as_gw=True,
-                                    other_config=other_config)
-        ch3 = self.add_fake_chassis('host3', azs=[], enable_chassis_as_gw=True)
-        group_name = utils.ovn_name(net_ext['id'])
+        ch_list = self._add_fake_chassis_and_wait(
+            ('host1', 'host2', 'host3'),
+            enable_chassis_as_gw=[True, True, True],
+            other_config=[other_config, other_config, None])
 
         # Create a pre-existing HCG.
+        group_name = utils.ovn_name(net_ext['id'])
         if create_hcg:
-            chassis_list = [self.sb_api.lookup('Chassis', ch2)]
+            chassis_list = [self.sb_api.lookup('Chassis', ch_list[1])]
             hcg_info = utils.HAChassisGroupInfo(
                 group_name=group_name, chassis_list=chassis_list,
                 az_hints=[], ignore_chassis=set(), external_ids={})
@@ -262,7 +291,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
                 raise exc
 
         # Invoke the sync method
-        chassis_prio = {ch1: 10, ch2: 20, ch3: 30}
+        chassis_prio = {ch_list[0]: 10, ch_list[1]: 20, ch_list[2]: 30}
         with self.nb_api.transaction(check_error=True) as txn:
             utils.sync_ha_chassis_group_network_unified(
                 self.context, self.nb_api, self.sb_api, net_ext['id'],
