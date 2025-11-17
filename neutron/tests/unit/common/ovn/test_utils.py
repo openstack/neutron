@@ -1303,3 +1303,33 @@ class ValidatePortForwardingConfigurationTestCase(base.BaseTestCase):
         self.assertRaises(
             ovn_exc.InvalidPortForwardingConfiguration,
             utils.validate_port_forwarding_configuration)
+
+
+class GetMacAndIpsFromPortBindingTestCase(base.BaseTestCase):
+    class FakePB:
+        def __init__(self, mac_column):
+            self.mac = mac_column
+
+    def test_get_mac_and_ips_from_port_binding(self):
+        pb = self.FakePB(mac_column=[
+            '00:00:00:00:00:00 10.0.0.1 10.0.0.2/24 2001:db8::1/64'])
+        mac, ips = utils.get_mac_and_ips_from_port_binding(pb)
+        self.assertEqual('00:00:00:00:00:00', mac)
+        self.assertEqual(['10.0.0.1', '10.0.0.2/24', '2001:db8::1/64'], ips)
+
+    def test_get_mac_and_ips_from_port_binding_empty_mac(self):
+        pb = self.FakePB(mac_column=[])
+        self.assertRaises(
+            ValueError, utils.get_mac_and_ips_from_port_binding, pb)
+
+    def test_get_mac_and_ips_from_port_binding_invalid_mac(self):
+        pb = self.FakePB(mac_column=[
+            '00:00:00:00:00:000 10.0.0.1 10.0.0.2/24 2001:db8::1/64'])
+        self.assertRaises(
+            ValueError, utils.get_mac_and_ips_from_port_binding, pb)
+
+    def test_get_mac_and_ips_from_port_binding_empty_ips(self):
+        pb = self.FakePB(mac_column=['00:00:00:00:00:00'])
+        mac, ips = utils.get_mac_and_ips_from_port_binding(pb)
+        self.assertEqual('00:00:00:00:00:00', mac)
+        self.assertEqual([], ips)

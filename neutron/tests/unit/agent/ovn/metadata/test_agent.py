@@ -444,7 +444,7 @@ class TestMetadataAgent(base.BaseTestCase):
         datapath = DatapathInfo(uuid='test123',
                                 external_ids={'name': f'neutron-{network_id}'})
         datapath_ports = [makePort(datapath,
-                                   mac=[f'fa:16:3e:e7:ac {port_ip}'])]
+                                   mac=[f'fa:16:3e:e7:ac:ab {port_ip}'])]
         metadadata_port = makePort(datapath,
                                    mac=[
                                        f'{metada_port_mac} 10.204.0.1'
