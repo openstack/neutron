@@ -367,6 +367,33 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 add_acls.append(na)
                 n_index += 1
 
+        # Check any ACLs we found to add against existing ACLs, ignoring the
+        # SG rule ID key. This eliminates any false-positives where the
+        # normalized cidr for two SG rules is the same value, since there
+        # will only be a single ACL that matches exactly with the SG rule ID.
+        if add_acls:
+            def copy_acl_rem_id_key(acl):
+                acl_copy = acl.copy()
+                del acl_copy[ovn_const.OVN_SG_RULE_EXT_ID_KEY]
+                return acl_copy
+
+            add_rem_acls = []
+            # Make a list of non-default rule ACLs (they have a security group
+            # rule id). See ovn_default_acls code/comment above for more info.
+            nd_ovn_acls = [copy_acl_rem_id_key(oa) for oa in ovn_acls
+                           if ovn_const.OVN_SG_RULE_EXT_ID_KEY in oa]
+            # We must copy here since we need to keep the original
+            # 'add_acl' intact for removal
+            for add_acl in add_acls:
+                add_acl_copy = copy_acl_rem_id_key(add_acl)
+                if add_acl_copy in nd_ovn_acls:
+                    add_rem_acls.append(add_acl)
+
+            # Remove any of the false-positive ACLs
+            LOG.warning('False-positive ACLs to remove: (%s)', add_rem_acls)
+            for add_rem in add_rem_acls:
+                add_acls.remove(add_rem)
+
         if n_index < neutron_num:
             # We didn't find the OVN ACLs matching the Neutron ACLs
             # in "ovn_acls" and we are just adding the pending Neutron ACLs.
