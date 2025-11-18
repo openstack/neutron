@@ -16,6 +16,7 @@ import copy
 import datetime
 import os
 from unittest import mock
+import uuid
 
 from neutron_lib.plugins import constants as n_const
 from neutron_lib.plugins import directory
@@ -419,7 +420,7 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 
     def _test_lsp_helper(self, event, new_row_json, old_row_json=None,
                          table=None):
-        row_uuid = uuidutils.generate_uuid()
+        row_uuid = uuid.UUID(uuidutils.generate_uuid())
         if not table:
             table = self.lp_table
         lp_row = ovs_idl.Row.from_json(self.idl, table,
@@ -562,7 +563,7 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self._mock_hash_ring.start()
 
     def _test_chassis_helper(self, event, new_row_json, old_row_json=None):
-        row_uuid = uuidutils.generate_uuid()
+        row_uuid = uuid.UUID(uuidutils.generate_uuid())
         table = self.chassis_table
         row = ovs_idl.Row.from_json(self.sb_idl, table, row_uuid, new_row_json)
         if old_row_json:
