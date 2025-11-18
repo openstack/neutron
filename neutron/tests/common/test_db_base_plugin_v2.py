@@ -80,7 +80,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 DEVICE_OWNER_NOT_COMPUTE = constants.DEVICE_OWNER_DHCP
 
-TEST_TENANT_ID = '46f70361-ba71-4bd0-9769-3573fd227c4b'
+TEST_TENANT_ID = TEST_PROJECT_ID = '46f70361-ba71-4bd0-9769-3573fd227c4b'
 
 
 def optional_ctx(obj, fallback, **kwargs):
@@ -138,7 +138,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         # Save the attributes map in case the plugin will alter it
         # loading extensions
         self.useFixture(fixture.APIDefinitionFixture())
-        self._tenant_id = TEST_TENANT_ID
+        self._tenant_id = self._project_id = TEST_PROJECT_ID
         # Do not call any method of ``batch_notifier.BatchNotifier`` in the
         # ML2 plugin test cases. Remove MissingAuthPlugin exception from logs.
         self.patch_notifier = mock.patch.object(
@@ -256,7 +256,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _admin_req(self, method, resource, data=None, fmt=None, id=None,
                    params=None, action=None, subresource=None, sub_id=None,
                    ctx=None, headers=None, tenant_id=None):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         req = self._req(method, resource, data, fmt, id, params, action,
                         subresource, sub_id, ctx, headers)
         req.environ['neutron.context'] = context.Context(
@@ -277,7 +277,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _member_req(self, method, resource, data=None, fmt=None, id=None,
                     params=None, action=None, subresource=None, sub_id=None,
                     ctx=None, headers=None, tenant_id=None):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         req = self._req(method, resource, data, fmt, id, params, action,
                         subresource, sub_id, ctx, headers)
         req.environ['neutron.context'] = context.Context(
@@ -287,7 +287,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _reader_req(self, method, resource, data=None, fmt=None, id=None,
                     params=None, action=None, subresource=None, sub_id=None,
                     ctx=None, headers=None, tenant_id=None):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         req = self._req(method, resource, data, fmt, id, params, action,
                         subresource, sub_id, ctx, headers)
         req.environ['neutron.context'] = context.Context(
@@ -311,7 +311,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def new_create_request(self, resource, data, fmt=None, id=None,
                            subresource=None, context=None, tenant_id=None,
                            as_admin=False, as_service=False):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         if as_admin:
             return self._admin_req(
                 'POST', resource, data, fmt, id=id,
@@ -327,7 +327,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def new_list_request(self, resource, fmt=None, params=None,
                          subresource=None, parent_id=None, tenant_id=None,
                          as_admin=False):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         if as_admin:
             return self._admin_req(
                 'GET', resource, None, fmt, params=params, id=parent_id,
@@ -341,7 +341,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def new_show_request(self, resource, id, fmt=None,
                          subresource=None, fields=None, sub_id=None,
                          tenant_id=None, as_admin=False):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         if fields:
             params = "&".join(["fields=%s" % x for x in fields])
         else:
@@ -357,7 +357,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
                            sub_id=None, data=None, headers=None,
                            tenant_id=None, as_admin=False):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         if as_admin:
             return self._admin_req('DELETE', resource, data, fmt, id=id,
                                    subresource=subresource, sub_id=sub_id,
@@ -370,7 +370,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                            subresource=None, context=None, sub_id=None,
                            headers=None, as_admin=False, as_service=False,
                            tenant_id=None):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         if as_admin:
             return self._admin_req(
                 'PUT', resource, data, fmt, id=id, subresource=subresource,
@@ -389,7 +389,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def new_action_request(self, resource, data, id, action, fmt=None,
                            subresource=None, sub_id=None, tenant_id=None,
                            as_admin=False):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         if as_admin:
             return self._admin_req('PUT', resource, data, fmt, id=id,
                                    action=action, subresource=subresource,
@@ -438,7 +438,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                      tenant_id=None, as_admin=False, as_service=False,
                      **kwargs):
         """Creates a bulk request for any kind of resource."""
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         objects = []
         collection = "%ss" % resource
         for i in range(number):
@@ -457,7 +457,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, tenant_id=None, as_admin=False,
                         **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         data = {'network': {'name': name,
                             'admin_state_up': admin_state_up,
                             'tenant_id': tenant_id}}
@@ -476,12 +476,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_network_bulk(self, fmt, number, name,
                              admin_state_up, **kwargs):
         base_data = {'network': {'admin_state_up': admin_state_up,
-                                 'tenant_id': self._tenant_id}}
+                                 'tenant_id': self._project_id}}
         return self._create_bulk(fmt, number, 'network', base_data, **kwargs)
 
     def _create_subnet(self, fmt, net_id, cidr, expected_res_status=None,
                        tenant_id=None, as_admin=False, **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         data = {'subnet': {'network_id': net_id,
                            'ip_version': constants.IP_VERSION_4,
                            'tenant_id': tenant_id}}
@@ -513,7 +513,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                             ip_version=constants.IP_VERSION_4, **kwargs):
         base_data = {'subnet': {'network_id': net_id,
                                 'ip_version': ip_version,
-                                'tenant_id': self._tenant_id}}
+                                'tenant_id': self._project_id}}
         if 'ipv6_mode' in kwargs:
             base_data['subnet']['ipv6_ra_mode'] = kwargs['ipv6_mode']
             base_data['subnet']['ipv6_address_mode'] = kwargs['ipv6_mode']
@@ -530,7 +530,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_subnetpool(self, fmt, prefixes,
                            expected_res_status=None, admin=False,
                            tenant_id=None, **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         subnetpool = {'subnetpool': {'prefixes': prefixes}}
         for k, v in kwargs.items():
             subnetpool['subnetpool'][k] = str(v)
@@ -548,7 +548,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_port(self, fmt, net_id, expected_res_status=None,
                      arg_list=None, is_admin=False, is_service=False,
                      tenant_id=None, **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         data = {'port': {'network_id': net_id,
                          'tenant_id': tenant_id}}
 
@@ -673,7 +673,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _make_security_group(self, fmt, name=None, expected_res_status=None,
                              project_id=None, is_admin=False):
         name = name or f'sg-{uuidutils.generate_uuid()}'
-        project_id = project_id or self._tenant_id
+        project_id = project_id or self._project_id
         data = {'security_group': {'name': name,
                                    'description': name,
                                    'project_id': project_id}}
@@ -696,7 +696,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self.assertIn(rule_type, [qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
                                   qos_const.RULE_TYPE_DSCP_MARKING,
                                   qos_const.RULE_TYPE_MINIMUM_BANDWIDTH])
-        project_id = project_id or self._tenant_id
+        project_id = project_id or self._project_id
         type_req = rule_type + '_rule'
         data = {type_req: {}}
         if rule_type == qos_const.RULE_TYPE_BANDWIDTH_LIMIT:
@@ -721,7 +721,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_qos_policy(self, fmt, qos_policy_name=None,
                            expected_res_status=None, project_id=None,
                            is_admin=False):
-        project_id = project_id or self._tenant_id
+        project_id = project_id or self._project_id
         name = qos_policy_name or uuidutils.generate_uuid()
         data = {'policy': {'name': name,
                            'project_id': project_id}}
@@ -1880,7 +1880,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  res['port']['fixed_ips'])
 
     def test_create_ports_native_quotas(self):
-        self._tenant_id = uuidutils.generate_uuid()
         _set_temporary_quota('port', 1)
         with self.network() as network:
             res = self._create_port(self.fmt, network['network']['id'])
@@ -1893,7 +1892,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.skipTest("Plugin does not support native bulk port create")
         quota = 4
         _set_temporary_quota('port', quota)
-        self._tenant_id = uuidutils.generate_uuid()
         with self.network() as network:
             res = self._create_port_bulk(self.fmt, quota + 1,
                                          network['network']['id'],
@@ -3045,7 +3043,6 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
     def test_create_networks_native_quotas(self):
         quota = 1
         _set_temporary_quota('network', quota)
-        self._tenant_id = uuidutils.generate_uuid()
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
         self._check_http_response(res, webob.exc.HTTPCreated.code)
@@ -3058,7 +3055,6 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk network create")
         quota = 4
         _set_temporary_quota('network', quota)
-        self._tenant_id = uuidutils.generate_uuid()
         res = self._create_network_bulk(self.fmt, quota + 1, 'test', True)
         self._validate_behavior_on_bulk_failure(
             res, 'networks',
@@ -3069,11 +3065,11 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk network create")
         quota = 2
         _set_temporary_quota('network', quota)
-        self._tenant_id = uuidutils.generate_uuid()
+        self._project_id = uuidutils.generate_uuid()
         networks = [{'network': {'name': 'n1',
-                                 'tenant_id': self._tenant_id}},
+                                 'tenant_id': self._project_id}},
                     {'network': {'name': 'n2',
-                                 'tenant_id': self._tenant_id}},
+                                 'tenant_id': self._project_id}},
                     {'network': {'name': 'n1',
                                  'tenant_id': 't1'}},
                     {'network': {'name': 'n2',
@@ -3088,15 +3084,15 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk network create")
         quota = 2
         _set_temporary_quota('network', quota)
-        self._tenant_id = uuidutils.generate_uuid()
+        self._project_id = uuidutils.generate_uuid()
         networks = [{'network': {'name': 'n1',
-                                 'tenant_id': self._tenant_id}},
+                                 'tenant_id': self._project_id}},
                     {'network': {'name': 'n2',
-                                 'tenant_id': self._tenant_id}},
+                                 'tenant_id': self._project_id}},
                     {'network': {'name': 'n1',
                                  'tenant_id': 't1'}},
                     {'network': {'name': 'n3',
-                                 'tenant_id': self._tenant_id}},
+                                 'tenant_id': self._project_id}},
                     {'network': {'name': 'n2',
                                  'tenant_id': 't1'}}]
 
@@ -3365,7 +3361,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         for v in value:
             data = {'network': {'name': 'net',
                                 'admin_state_up': v[0],
-                                'tenant_id': self._tenant_id}}
+                                'tenant_id': self._project_id}}
             network_req = self.new_create_request('networks', data)
             req = network_req.get_response(self.api)
             self._check_http_response(req, v[2])
@@ -5346,7 +5342,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnets_native_quotas(self):
         quota = 1
         _set_temporary_quota('subnet', quota)
-        self._tenant_id = uuidutils.generate_uuid()
         with self.network() as network:
             res = self._create_subnet(
                 self.fmt, network['network']['id'], '10.0.0.0/24',
@@ -5362,7 +5357,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self.skipTest("Plugin does not support native bulk subnet create")
         quota = 4
         _set_temporary_quota('subnet', quota)
-        self._tenant_id = uuidutils.generate_uuid()
         with self.network() as network:
             res = self._create_subnet_bulk(self.fmt, quota + 1,
                                            network['network']['id'],
@@ -6022,7 +6016,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def _test_create_subnetpool(self, prefixes, expected=None,
                                 admin=False, **kwargs):
         keys = kwargs.copy()
-        keys.setdefault('tenant_id', self._tenant_id)
+        keys.setdefault('tenant_id', self._project_id)
         with self.subnetpool(prefixes, admin, **keys) as subnetpool:
             self._validate_resource(subnetpool, keys, 'subnetpool')
             if expected:
@@ -6046,7 +6040,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                           self._test_create_subnetpool,
                           [],
                           name=self._POOL_NAME,
-                          tenant_id=self._tenant_id,
+                          tenant_id=self._project_id,
                           min_prefixlen='21')
 
     def test_create_default_subnetpools(self):
@@ -6054,7 +6048,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                     ['10.10.10.0/24', '24']):
             pool = self._test_create_subnetpool([cidr],
                                                 admin=True,
-                                                tenant_id=self._tenant_id,
+                                                tenant_id=self._project_id,
                                                 name=self._POOL_NAME,
                                                 min_prefixlen=min_prefixlen,
                                                 is_default=True)
@@ -6067,7 +6061,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
             pool = self._test_create_subnetpool([cidr1],
                                                 admin=True,
-                                                tenant_id=self._tenant_id,
+                                                tenant_id=self._project_id,
                                                 name=self._POOL_NAME,
                                                 min_prefixlen=min_prefixlen,
                                                 is_default=True)
@@ -6076,7 +6070,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                               self._test_create_subnetpool,
                               [cidr2],
                               admin=True,
-                              tenant_id=self._tenant_id,
+                              tenant_id=self._project_id,
                               name=self._POOL_NAME,
                               min_prefixlen=min_prefixlen,
                               is_default=True)
@@ -6085,7 +6079,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         subnet = netaddr.IPNetwork('10.10.10.0/24')
         subnetpool = self._test_create_subnetpool([subnet.cidr],
                                                   name=self._POOL_NAME,
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   min_prefixlen='21')
         self._validate_default_prefix('21', subnetpool)
         self._validate_min_prefix('21', subnetpool)
@@ -6094,7 +6088,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         subnet = netaddr.IPNetwork('10.10.10.0/21')
         subnetpool = self._test_create_subnetpool([subnet.cidr],
                                                   name=self._POOL_NAME,
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   min_prefixlen='21')
         self._validate_default_prefix('21', subnetpool)
         self._validate_min_prefix('21', subnetpool)
@@ -6104,7 +6098,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         self.assertRaises(webob.exc.HTTPClientError,
                           self._test_create_subnetpool,
                           [subnet.cidr],
-                          tenant_id=self._tenant_id,
+                          tenant_id=self._project_id,
                           name=self._POOL_NAME,
                           min_prefixlen='21',
                           default_prefixlen='20')
@@ -6114,7 +6108,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         self.assertRaises(webob.exc.HTTPClientError,
                           self._test_create_subnetpool,
                           [subnet.cidr],
-                          tenant_id=self._tenant_id,
+                          tenant_id=self._project_id,
                           name=self._POOL_NAME,
                           max_prefixlen=24,
                           default_prefixlen='32')
@@ -6122,7 +6116,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_create_subnetpool_ipv4_default_prefix_bounds(self):
         subnet = netaddr.IPNetwork('10.10.10.0/21')
         subnetpool = self._test_create_subnetpool([subnet.cidr],
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME)
         self._validate_min_prefix('8', subnetpool)
         self._validate_default_prefix('8', subnetpool)
@@ -6131,7 +6125,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_create_subnetpool_ipv6_default_prefix_bounds(self):
         subnet = netaddr.IPNetwork('fe80::/48')
         subnetpool = self._test_create_subnetpool([subnet.cidr],
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME)
         self._validate_min_prefix('64', subnetpool)
         self._validate_default_prefix('64', subnetpool)
@@ -6140,7 +6134,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_create_subnetpool_ipv4_supported_default_prefix(self):
         subnet = netaddr.IPNetwork('10.10.10.0/21')
         subnetpool = self._test_create_subnetpool([subnet.cidr],
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME,
                                                   min_prefixlen='21',
                                                   default_prefixlen='26')
@@ -6149,7 +6143,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_create_subnetpool_ipv4_supported_min_prefix(self):
         subnet = netaddr.IPNetwork('10.10.10.0/24')
         subnetpool = self._test_create_subnetpool([subnet.cidr],
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME,
                                                   min_prefixlen='26')
         self._validate_min_prefix('26', subnetpool)
@@ -6160,7 +6154,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         self.assertRaises(webob.exc.HTTPClientError,
                           self._test_create_subnetpool,
                           [subnet.cidr],
-                          tenant_id=self._tenant_id,
+                          tenant_id=self._project_id,
                           name=self._POOL_NAME,
                           default_prefixlen='22',
                           min_prefixlen='23')
@@ -6171,14 +6165,14 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
         self.assertRaises(webob.exc.HTTPClientError,
                           self._test_create_subnetpool,
                           [subnet_v4.cidr, subnet_v6.cidr],
-                          tenant_id=self._tenant_id,
+                          tenant_id=self._project_id,
                           name=self._POOL_NAME,
                           min_prefixlen='21')
 
     def test_create_subnetpool_ipv6_with_defaults(self):
         subnet = netaddr.IPNetwork('fe80::/48')
         subnetpool = self._test_create_subnetpool([subnet.cidr],
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME,
                                                   min_prefixlen='48')
         self._validate_default_prefix('48', subnetpool)
@@ -6186,7 +6180,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_get_subnetpool(self):
         subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME,
                                                   min_prefixlen='24')
         req = self.new_show_request('subnetpools',
@@ -6198,7 +6192,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_get_subnetpool_different_tenants_not_shared(self):
         subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
                                                   shared=False,
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME,
                                                   min_prefixlen='24')
         req = self.new_show_request('subnetpools',
@@ -6217,7 +6211,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                                   shared=True)
         req = self.new_show_request('subnetpools',
                                     subnetpool['subnetpool']['id'])
-        neutron_context = context.Context('', self._tenant_id)
+        neutron_context = context.Context('', self._project_id)
         req.environ['neutron.context'] = neutron_context
         res = self.deserialize(self.fmt, req.get_response(self.api))
         self.assertEqual(subnetpool['subnetpool']['id'],
@@ -6261,7 +6255,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_delete_subnetpool(self):
         subnetpool = self._test_create_subnetpool(['10.10.10.0/24'],
-                                                  tenant_id=self._tenant_id,
+                                                  tenant_id=self._project_id,
                                                   name=self._POOL_NAME,
                                                   min_prefixlen='24')
         req = self.new_delete_request('subnetpools',
@@ -6277,7 +6271,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_prefix_list_append(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.8.0/21'], tenant_id=self._tenant_id,
+            ['10.10.8.0/21'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24')
 
         data = {'subnetpool': {'prefixes': ['10.10.8.0/21', '3.3.3.0/24',
@@ -6291,7 +6285,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_prefix_list_compaction(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24')
 
         data = {'subnetpool': {'prefixes': ['10.10.10.0/24',
@@ -6305,7 +6299,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_illegal_subnetpool_prefix_list_update(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24')
 
         data = {'subnetpool': {'prefixes': ['10.10.11.0/24']}}
@@ -6317,7 +6311,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_default_prefix(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.8.0/21'], tenant_id=self._tenant_id,
+            ['10.10.8.0/21'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24')
 
         data = {'subnetpool': {'default_prefixlen': '26'}}
@@ -6329,7 +6323,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_min_prefix(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24')
 
         data = {'subnetpool': {'min_prefixlen': '21'}}
@@ -6340,7 +6334,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_min_prefix_larger_than_max(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='21', max_prefixlen='24')
 
         data = {'subnetpool': {'min_prefixlen': '28'}}
@@ -6351,7 +6345,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_max_prefix(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='21', max_prefixlen='24')
 
         data = {'subnetpool': {'max_prefixlen': '26'}}
@@ -6362,7 +6356,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_max_prefix_less_than_min(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24')
 
         data = {'subnetpool': {'max_prefixlen': '21'}}
@@ -6373,7 +6367,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_max_prefix_less_than_default(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='21', default_prefixlen='24')
 
         data = {'subnetpool': {'max_prefixlen': '22'}}
@@ -6384,7 +6378,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_default_prefix_less_than_min(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='21')
 
         data = {'subnetpool': {'default_prefixlen': '20'}}
@@ -6395,7 +6389,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_default_prefix_larger_than_max(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='21', max_prefixlen='24')
 
         data = {'subnetpool': {'default_prefixlen': '28'}}
@@ -6406,7 +6400,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_prefix_list_mixed_ip_version(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24')
 
         data = {'subnetpool': {'prefixes': ['fe80::/48']}}
@@ -6417,7 +6411,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
     def test_update_subnetpool_default_quota(self):
         initial_subnetpool = self._test_create_subnetpool(
-            ['10.10.10.0/24'], tenant_id=self._tenant_id,
+            ['10.10.10.0/24'], tenant_id=self._project_id,
             name=self._POOL_NAME, min_prefixlen='24', default_quota=10)
 
         self.assertEqual(10,
@@ -6431,7 +6425,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_subnet_bad_gateway(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/8'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               default_prefixlen='24')
 
@@ -6448,7 +6442,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_any_subnet_with_prefixlen(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6472,7 +6466,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_any_subnet_with_default_prefixlen(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6491,7 +6485,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_any_subnet_with_default_prefixlen_no_gateway_ip(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6513,7 +6507,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_with_mismatch_prefixlen(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6530,7 +6524,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_with_matching_prefixlen(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6547,7 +6541,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6567,7 +6561,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_non_existent_prefix(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6584,7 +6578,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_already_allocated(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.10.0/24'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6606,7 +6600,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_prefix_too_small(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6623,7 +6617,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_prefix_specific_gw(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6641,7 +6635,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_prefix_allocation_pools(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6665,7 +6659,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_any_subnet_prefix_allocation_pools(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.10.0/24'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6685,7 +6679,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_prefix_too_large(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21',
                                               max_prefixlen='21')
@@ -6703,7 +6697,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_specific_subnet_no_gateway_ip(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6726,7 +6720,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_delete_subnetpool_existing_allocations(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21')
 
@@ -6745,7 +6739,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_subnet_over_quota(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['10.10.0.0/16'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME,
                                               min_prefixlen='21',
                                               default_quota=2048)
@@ -6768,7 +6762,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
     def test_allocate_any_ipv4_subnet_ipv6_pool(self):
         with self.network() as network:
             sp = self._test_create_subnetpool(['2001:db8:1:2::/63'],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME)
 
             # Request a specific subnet allocation
@@ -6784,7 +6778,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                             nameservers):
         with self.network() as network:
             sp = self._test_create_subnetpool([pool_cidr],
-                                              tenant_id=self._tenant_id,
+                                              tenant_id=self._project_id,
                                               name=self._POOL_NAME)
 
             # Specify a DNS nameserver of the wrong IP version
@@ -7254,14 +7248,14 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         self.net_data = {'network': {'id': self.net_id,
                                      'name': 'net1',
                                      'admin_state_up': True,
-                                     'tenant_id': TEST_TENANT_ID,
+                                     'tenant_id': TEST_PROJECT_ID,
                                      'shared': False}}
 
     def test_create_network_with_default_status(self):
         net = self.plugin.create_network(self.context, self.net_data)
         default_net_create_status = 'ACTIVE'
         expected = [('id', self.net_id), ('name', 'net1'),
-                    ('admin_state_up', True), ('tenant_id', TEST_TENANT_ID),
+                    ('admin_state_up', True), ('tenant_id', TEST_PROJECT_ID),
                     ('shared', False), ('status', default_net_create_status)]
         for k, v in expected:
             self.assertEqual(net[k], v)
@@ -7377,7 +7371,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
 class TestNetworks(testlib_api.SqlTestCase):
     def setUp(self):
         super().setUp()
-        self._tenant_id = TEST_TENANT_ID
+        self._tenant_id = self._project_id = TEST_PROJECT_ID
 
         # Update the plugin
         self.setup_coreplugin(DB_PLUGIN_KLASS)
@@ -7386,7 +7380,7 @@ class TestNetworks(testlib_api.SqlTestCase):
         network = {'network': {'name': 'net',
                                'shared': shared,
                                'admin_state_up': True,
-                               'tenant_id': self._tenant_id}}
+                               'tenant_id': self._project_id}}
         created_network = plugin.create_network(ctx, network)
         return (network, created_network['id'])
 
@@ -7412,7 +7406,7 @@ class TestNetworks(testlib_api.SqlTestCase):
                           ctx,
                           net_id,
                           device_owner,
-                          self._tenant_id + '1')
+                          self._project_id + '1')
 
         network['network']['shared'] = False
 
