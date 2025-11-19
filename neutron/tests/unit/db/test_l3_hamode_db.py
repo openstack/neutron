@@ -104,7 +104,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         # API calls don't share a session with possible stale objects
         return context.get_admin_context()
 
-    def _create_router(self, ha=True, tenant_id='tenant1', distributed=None,
+    def _create_router(self, ha=True, tenant_id='project1', distributed=None,
                        ctx=None, admin_state_up=True):
         if ctx is None:
             ctx = self.admin_ctx
@@ -471,12 +471,12 @@ class L3HATestCase(L3HATestFramework):
         self.assertIsNone(interface)
 
     def test_unique_ha_network_per_tenant(self):
-        tenant1 = _uuid()
-        tenant2 = _uuid()
-        self._create_router(tenant_id=tenant1)
-        self._create_router(tenant_id=tenant2)
-        ha_network1 = self.plugin.get_ha_network(self.admin_ctx, tenant1)
-        ha_network2 = self.plugin.get_ha_network(self.admin_ctx, tenant2)
+        project1 = _uuid()
+        project2 = _uuid()
+        self._create_router(tenant_id=project1)
+        self._create_router(tenant_id=project2)
+        ha_network1 = self.plugin.get_ha_network(self.admin_ctx, project1)
+        ha_network2 = self.plugin.get_ha_network(self.admin_ctx, project2)
         self.assertNotEqual(
             ha_network1['network_id'], ha_network2['network_id'])
 
@@ -865,7 +865,7 @@ class L3HATestCase(L3HATestFramework):
     def test_ha_network_deleted_if_no_ha_router_present_two_tenants(self):
         # Create two routers in different tenants.
         router1 = self._create_router()
-        router2 = self._create_router(tenant_id='tenant2')
+        router2 = self._create_router(tenant_id='project2')
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
         # Check that HA networks created for each tenant
@@ -947,9 +947,9 @@ class L3HATestCase(L3HATestFramework):
             orm.exc.ObjectDeletedError(None))
 
     def test_ha_router_create_failed_no_ha_network_delete(self):
-        tenant_id = "foo_tenant_id"
+        project_id = "foo_project_id"
         nets_before = self.core_plugin.get_networks(self.admin_ctx)
-        self.assertNotIn('HA network tenant %s' % tenant_id,
+        self.assertNotIn('HA network tenant %s' % project_id,
                          nets_before)
 
         # Unable to create HA network
@@ -958,12 +958,12 @@ class L3HATestCase(L3HATestFramework):
             e = self.assertRaises(c_exc.CallbackFailure,
                                   self._create_router,
                                   True,
-                                  tenant_id)
+                                  project_id)
             self.assertIsInstance(e.inner_exceptions[0],
                                   n_exc.NoNetworkAvailable)
             nets_after = self.core_plugin.get_networks(self.admin_ctx)
             self.assertEqual(nets_before, nets_after)
-            self.assertNotIn('HA network tenant %s' % tenant_id,
+            self.assertNotIn('HA network tenant %s' % project_id,
                              nets_after)
 
     def test_update_port_status_port_bingding_deleted_concurrently(self):
@@ -979,7 +979,7 @@ class L3HATestCase(L3HATestFramework):
 class L3HAModeDbTestCase(L3HATestFramework):
 
     def _create_network(self, plugin, ctx, name='net',
-                        tenant_id='tenant1', external=False, ha=False):
+                        tenant_id='project1', external=False, ha=False):
         network = {'network': {'name': name,
                                'shared': False,
                                'admin_state_up': True,
@@ -991,7 +991,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         return plugin.create_network(ctx, network)['id']
 
     def _create_subnet(self, plugin, ctx, network_id, cidr='10.0.0.0/8',
-                       name='subnet', tenant_id='tenant1'):
+                       name='subnet', tenant_id='project1'):
         subnet = {'subnet': {'name': name,
                   'ip_version': constants.IP_VERSION_4,
                              'network_id': network_id,

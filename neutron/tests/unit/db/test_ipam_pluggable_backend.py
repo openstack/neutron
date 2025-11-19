@@ -89,7 +89,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                 'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX + 'None'
             },
             'subnet_request': ipam_req.SpecificSubnetRequest(
-                self._tenant_id,
+                self._project_id,
                 self.subnet_id,
                 '10.0.0.0/24',
                 '10.0.0.1',

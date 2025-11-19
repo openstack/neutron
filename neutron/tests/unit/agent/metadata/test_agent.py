@@ -108,7 +108,7 @@ class _TestMetadataProxyHandlerCacheMixin:
         req = mock.Mock()
         with mock.patch.object(self.handler,
                                '_get_instance_and_project_id') as get_ids:
-            get_ids.return_value = ('instance_id', 'tenant_id')
+            get_ids.return_value = ('instance_id', 'project_id')
             with mock.patch.object(self.handler, '_proxy_request') as proxy:
                 proxy.return_value = 'value'
 
@@ -190,9 +190,9 @@ class _TestMetadataProxyHandlerCacheMixin:
         network_id = 'network-id'
         router_id = 'router-id'
         remote_address = 'remote-address'
-        expected = ('device1', 'tenant1')
+        expected = ('device1', 'project1')
         ports = [
-            {'device_id': 'device1', 'tenant_id': 'tenant1',
+            {'device_id': 'device1', 'tenant_id': 'project1',
              'network_id': 'network1'}
         ]
         networks = (network_id,)
@@ -215,9 +215,9 @@ class _TestMetadataProxyHandlerCacheMixin:
     def test_get_port_router_id(self):
         router_id = 'router-id'
         remote_address = 'remote-address'
-        expected = ('device1', 'tenant1')
+        expected = ('device1', 'project1')
         ports = [
-            {'device_id': 'device1', 'tenant_id': 'tenant1',
+            {'device_id': 'device1', 'tenant_id': 'project1',
              'network_id': 'network1'}
         ]
         networks = ('network1', 'network2')
@@ -239,9 +239,9 @@ class _TestMetadataProxyHandlerCacheMixin:
     def test_get_port_no_id(self):
         self.assertRaises(TypeError, self.handler.get_port, 'remote_address')
 
-    def _get_instance_and_tenant_id_helper(self, headers, list_ports_retval,
-                                           networks=None, router_id=None,
-                                           remote_address='192.168.1.1'):
+    def _get_instance_and_project_id_helper(self, headers, list_ports_retval,
+                                            networks=None, router_id=None,
+                                            remote_address='192.168.1.1'):
         headers['X-Forwarded-For'] = remote_address
         req = mock.Mock(headers=headers)
 
@@ -249,12 +249,13 @@ class _TestMetadataProxyHandlerCacheMixin:
             return list_ports_retval.pop(0)
 
         self.handler.plugin_rpc.get_ports.side_effect = mock_get_ports
-        instance_id, tenant_id = self.handler._get_instance_and_project_id(req)
+        instance_id, project_id = (
+            self.handler._get_instance_and_project_id(req))
 
         expected = []
 
         if networks and router_id:
-            return (instance_id, tenant_id)
+            return (instance_id, project_id)
 
         if router_id:
             expected.append(
@@ -285,7 +286,7 @@ class _TestMetadataProxyHandlerCacheMixin:
 
         self.handler.plugin_rpc.get_ports.assert_has_calls(expected)
 
-        return (instance_id, tenant_id)
+        return (instance_id, project_id)
 
     @ddt.data('192.168.1.1', '::ffff:192.168.1.1', 'fe80::5054:ff:fede:5bbf')
     def test_get_instance_id_router_id(self, remote_address):
@@ -297,13 +298,13 @@ class _TestMetadataProxyHandlerCacheMixin:
         networks = ('net1', 'net2')
         ports = [
             [{'network_id': 'net1'}, {'network_id': 'net2'}],
-            [{'device_id': 'device_id', 'tenant_id': 'tenant_id',
+            [{'device_id': 'device_id', 'tenant_id': 'project_id',
               'network_id': 'net1'}]
         ]
 
         self.assertEqual(
-            ('device_id', 'tenant_id'),
-            self._get_instance_and_tenant_id_helper(
+            ('device_id', 'project_id'),
+            self._get_instance_and_project_id_helper(
                 headers, ports, networks=networks, router_id=router_id,
                 remote_address=remote_address)
         )
@@ -322,7 +323,7 @@ class _TestMetadataProxyHandlerCacheMixin:
         ]
         self.assertEqual(
             (None, None),
-            self._get_instance_and_tenant_id_helper(
+            self._get_instance_and_project_id_helper(
                 headers, ports, networks=networks, router_id=router_id,
                 remote_address=remote_address)
         )
@@ -336,13 +337,13 @@ class _TestMetadataProxyHandlerCacheMixin:
 
         ports = [
             [{'device_id': 'device_id',
-              'tenant_id': 'tenant_id',
+              'tenant_id': 'project_id',
               'network_id': 'the_id'}]
         ]
 
         self.assertEqual(
-            ('device_id', 'tenant_id'),
-            self._get_instance_and_tenant_id_helper(
+            ('device_id', 'project_id'),
+            self._get_instance_and_project_id_helper(
                 headers, ports, networks=('the_id',),
                 remote_address=remote_address)
         )
@@ -358,7 +359,7 @@ class _TestMetadataProxyHandlerCacheMixin:
 
         self.assertEqual(
             (None, None),
-            self._get_instance_and_tenant_id_helper(
+            self._get_instance_and_project_id_helper(
                 headers, ports, networks=('the_id',),
                 remote_address=remote_address)
         )
@@ -376,13 +377,13 @@ class _TestMetadataProxyHandlerCacheMixin:
         # The call should never do a port lookup, but mock it to verify
         ports = [
             [{'device_id': 'device_id',
-              'tenant_id': 'tenant_id',
+              'tenant_id': 'project_id',
               'network_id': network_id}]
         ]
 
         self.assertEqual(
             (None, None),
-            self._get_instance_and_tenant_id_helper(
+            self._get_instance_and_project_id_helper(
                 headers, ports, networks=(network_id,), router_id=router_id,
                 remote_address=remote_address)
         )

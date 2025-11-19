@@ -50,16 +50,16 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _create_address_scope(self, fmt, ip_version=constants.IP_VERSION_4,
                               expected_res_status=None, admin=False,
-                              tenant_id=None, **kwargs):
+                              project_id=None, **kwargs):
         address_scope = {'address_scope': {}}
         address_scope['address_scope']['ip_version'] = ip_version
-        tenant_id = tenant_id or self._tenant_id
+        project_id = project_id or self._project_id
         for k, v in kwargs.items():
             address_scope['address_scope'][k] = str(v)
 
         address_scope_req = self.new_create_request('address-scopes',
                                                     address_scope, fmt,
-                                                    tenant_id=tenant_id,
+                                                    tenant_id=project_id,
                                                     as_admin=admin)
 
         address_scope_res = address_scope_req.get_response(self.ext_api)
@@ -67,27 +67,27 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertEqual(expected_res_status, address_scope_res.status_int)
         return address_scope_res
 
-    def _make_address_scope(self, fmt, ip_version, admin=False, tenant_id=None,
-                            **kwargs):
+    def _make_address_scope(self, fmt, ip_version, admin=False,
+                            project_id=None, **kwargs):
         res = self._create_address_scope(fmt, ip_version,
-                                         admin=admin, tenant_id=tenant_id,
+                                         admin=admin, project_id=project_id,
                                          **kwargs)
         self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     @contextlib.contextmanager
     def address_scope(self, ip_version=constants.IP_VERSION_4,
-                      admin=False, tenant_id=None, **kwargs):
-        tenant_id = tenant_id if tenant_id else kwargs.pop(
-            'tenant_id', None)
+                      admin=False, project_id=None, **kwargs):
+        project_id = project_id if project_id else kwargs.pop(
+            'project_id', None)
         addr_scope = self._make_address_scope(self.fmt, ip_version,
-                                              admin, tenant_id, **kwargs)
+                                              admin, project_id, **kwargs)
         yield addr_scope
 
     def _test_create_address_scope(self, ip_version=constants.IP_VERSION_4,
                                    admin=False, expected=None, **kwargs):
         keys = kwargs.copy()
-        keys.setdefault('tenant_id', self._tenant_id)
+        keys.setdefault('project_id', self._project_id)
         with self.address_scope(ip_version,
                                 admin=admin, **keys) as addr_scope:
             keys['ip_version'] = ip_version
@@ -97,10 +97,10 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         return addr_scope
 
     def _test_update_address_scope(self, addr_scope_id, data, admin=False,
-                                   expected=None, tenant_id=None):
+                                   expected=None, project_id=None):
         update_req = self.new_update_request(
             'address-scopes', data, addr_scope_id,
-            tenant_id=tenant_id or self._tenant_id,
+            tenant_id=project_id or self._project_id,
             as_admin=admin)
 
         update_res = update_req.get_response(self.ext_api)
@@ -129,7 +129,7 @@ class TestAddressScope(AddressScopeTestCase):
 
     def test_create_address_scope_ipv4(self):
         expected_addr_scope = {'name': 'foo-address-scope',
-                               'tenant_id': self._tenant_id,
+                               'project_id': self._project_id,
                                'shared': False,
                                'ip_version': constants.IP_VERSION_4}
         self._test_create_address_scope(name='foo-address-scope',
@@ -137,7 +137,7 @@ class TestAddressScope(AddressScopeTestCase):
 
     def test_create_address_scope_ipv6(self):
         expected_addr_scope = {'name': 'foo-address-scope',
-                               'tenant_id': self._tenant_id,
+                               'project_id': self._project_id,
                                'shared': False,
                                'ip_version': constants.IP_VERSION_6}
         self._test_create_address_scope(constants.IP_VERSION_6,
@@ -146,7 +146,7 @@ class TestAddressScope(AddressScopeTestCase):
 
     def test_create_address_scope_empty_name(self):
         expected_addr_scope = {'name': '',
-                               'tenant_id': self._tenant_id,
+                               'project_id': self._project_id,
                                'shared': False}
         self._test_create_address_scope(name='', expected=expected_addr_scope)
 
@@ -161,7 +161,7 @@ class TestAddressScope(AddressScopeTestCase):
 
     def test_created_address_scope_shared_non_admin(self):
         res = self._create_address_scope(self.fmt, name='foo-address-scope',
-                                         tenant_id=self._tenant_id,
+                                         project_id=self._project_id,
                                          admin=False, shared=True)
         self.assertEqual(webob.exc.HTTPForbidden.code, res.status_int)
 
@@ -226,7 +226,7 @@ class TestAddressScope(AddressScopeTestCase):
                                                      shared=True, admin=True)
         req = self.new_show_request('address-scopes',
                                     addr_scope['address_scope']['id'])
-        neutron_context = context.Context('', 'test-tenant-2')
+        neutron_context = context.Context('', 'test-project-2')
         req.environ['neutron.context'] = neutron_context
         res = self.deserialize(self.fmt, req.get_response(self.ext_api))
         self.assertEqual(addr_scope['address_scope']['id'],
@@ -268,7 +268,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
     def _test_create_subnetpool(self, prefixes, expected=None,
                                 admin=False, **kwargs):
         keys = kwargs.copy()
-        keys.setdefault('tenant_id', self._tenant_id)
+        keys.setdefault('tenant_id', self._project_id)
         with self.subnetpool(prefixes, admin, **keys) as subnetpool:
             self._validate_resource(subnetpool, keys, 'subnetpool')
             if expected:

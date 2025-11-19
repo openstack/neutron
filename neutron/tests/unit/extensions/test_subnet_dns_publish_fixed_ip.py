@@ -66,11 +66,11 @@ class SubnetDNSPublishFixedIPExtensionTestCase(
 
         cidr = cidr or '192.0.2.0/24'
         network_id = network['network']['id']
-        tenant_id = network['network']['tenant_id']
+        project_id = network['network']['tenant_id']
         data = {'subnet': {
                     'network_id': network_id,
                     'ip_version': str(ip_version),
-                    'tenant_id': tenant_id,
+                    'tenant_id': project_id,
                     'cidr': cidr}}
         data['subnet'].update(kwargs)
         subnet_req = self.new_create_request('subnets', data)

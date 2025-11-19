@@ -84,7 +84,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
 
         manager.init()
         self.pf_plugin = directory.get_plugin(lib_plugin_conts.PORTFORWARDING)
-        self.ctxt = context.Context('admin', 'fake_tenant')
+        self.ctxt = context.Context('admin', 'fake_project')
         mock.patch.object(self.ctxt.session, 'refresh').start()
         mock.patch.object(self.ctxt.session, 'expunge').start()
 

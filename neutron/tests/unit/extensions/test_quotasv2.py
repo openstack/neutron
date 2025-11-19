@@ -304,11 +304,11 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
 
     @mock.patch.object(driver_nolock.DbQuotaNoLockDriver, 'get_resource_usage')
     def test_update_quotas_force(self, mock_get_resource_usage):
-        tenant_id = 'tenant_id1'
-        env = test_base._get_neutron_env(tenant_id, as_admin=True)
+        project_id = 'project_id1'
+        env = test_base._get_neutron_env(project_id, as_admin=True)
         # force=True; no resource usage check
         quotas = {'quota': {'network': 100, 'force': True}}
-        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+        res = self.api.put(_get_path('quotas', id=project_id, fmt=self.fmt),
                            self.serialize(quotas), extra_environ=env,
                            expect_errors=False)
         self.assertEqual(200, res.status_int)
@@ -316,7 +316,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         # force=False; before the quota is set, there is a resource usage check
         quotas = {'quota': {'network': 50}}  # force=False by default
         mock_get_resource_usage.return_value = 51
-        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+        res = self.api.put(_get_path('quotas', id=project_id, fmt=self.fmt),
                            self.serialize(quotas), extra_environ=env,
                            expect_errors=True)
         self.assertEqual(400, res.status_int)

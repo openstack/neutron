@@ -61,15 +61,15 @@ class TestExtraRouteL3NatServicePlugin(test_l3.TestL3NatServicePlugin,
 class ExtraRouteDBTestCaseBase:
     def _routes_update_prepare(
             self, router_id, subnet_id,
-            port_id, routes, skip_add=False, tenant_id=None, as_admin=False):
+            port_id, routes, skip_add=False, project_id=None, as_admin=False):
         if not skip_add:
             self._router_interface_action(
-                'add', router_id, subnet_id, port_id, tenant_id=tenant_id,
+                'add', router_id, subnet_id, port_id, project_id=project_id,
                 as_admin=as_admin)
-        tenant_id = tenant_id or self._tenant_id
+        project_id = project_id or self._project_id
         self._update('routers', router_id, {'router': {'routes': routes}},
-                     request_tenant_id=tenant_id, as_admin=as_admin)
-        return self._show('routers', router_id, tenant_id=tenant_id)
+                     request_tenant_id=project_id, as_admin=as_admin)
+        return self._show('routers', router_id, tenant_id=project_id)
 
     def _routes_update_cleanup(self, port_id, subnet_id, router_id, routes):
         self._update('routers', router_id, {'router': {'routes': routes}})
@@ -89,7 +89,7 @@ class ExtraRouteDBTestCaseBase:
                                                 None, r['router']['id'], [])
 
     def test_route_update_with_external_route(self):
-        my_tenant = 'tenant1'
+        my_project = 'project1'
         with self.subnet(cidr='10.0.1.0/24', tenant_id='notme') as ext_subnet,\
                 self.port(subnet=ext_subnet,
                           tenant_id='notme') as nexthop_port:
@@ -99,23 +99,23 @@ class ExtraRouteDBTestCaseBase:
             self._set_net_external(ext_subnet['subnet']['network_id'])
             ext_info = {'network_id': ext_subnet['subnet']['network_id']}
             with self.router(
-                    external_gateway_info=ext_info, tenant_id=my_tenant) as r:
+                    external_gateway_info=ext_info, tenant_id=my_project) as r:
                 body = self._routes_update_prepare(
                     r['router']['id'], None, None, routes, skip_add=True,
-                    tenant_id=my_tenant)
+                    project_id=my_project)
                 self.assertEqual(routes, body['router']['routes'])
 
     def test_route_update_with_route_via_another_tenant_subnet(self):
-        my_tenant = 'tenant1'
+        my_project = 'project1'
         with self.subnet(cidr='10.0.1.0/24', tenant_id='notme') as subnet,\
                 self.port(subnet=subnet, tenant_id='notme') as nexthop_port:
             nexthop_ip = nexthop_port['port']['fixed_ips'][0]['ip_address']
             routes = [{'destination': '135.207.0.0/16',
                        'nexthop': nexthop_ip}]
-            with self.router(tenant_id=my_tenant) as r:
+            with self.router(tenant_id=my_project) as r:
                 body = self._routes_update_prepare(
                     r['router']['id'], subnet['subnet']['id'], None, routes,
-                    tenant_id=my_tenant, as_admin=True)
+                    project_id=my_project, as_admin=True)
                 self.assertEqual(routes, body['router']['routes'])
 
     def test_route_clear_routes_with_None(self):

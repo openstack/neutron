@@ -48,7 +48,6 @@ class ExtendL3ConntrackHelperExtensionManager:
 
 class L3NConntrackHelperTestCase(test_l3.L3BaseForIntTests,
                                  test_l3.L3NatTestCaseMixin):
-    tenant_id = _uuid()
     fmt = "json"
 
     def setUp(self):

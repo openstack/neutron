@@ -40,7 +40,7 @@ class TestNeutronDbIpamMixin:
         network = {'network': {'name': 'net',
                                'shared': shared,
                                'admin_state_up': True,
-                               'tenant_id': self._tenant_id}}
+                               'tenant_id': self._project_id}}
         created_network = plugin.create_network(ctx, network)
         return (created_network, created_network['id'])
 
@@ -59,7 +59,7 @@ class TestNeutronDbIpamMixin:
                              'ipv6_address_mode': v6_address_mode,
                              'ipv6_ra_mode': constants.ATTR_NOT_SPECIFIED,
                              'network_id': network_id,
-                             'tenant_id': self._tenant_id}}
+                             'tenant_id': self._project_id}}
         return plugin.create_subnet(ctx, subnet)
 
 
@@ -69,7 +69,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
 
     def setUp(self):
         super().setUp()
-        self._tenant_id = 'test-tenant'
+        self._project_id = 'test-project'
 
         # Configure plugin for tests
         self.setup_coreplugin(test_db_plugin.DB_PLUGIN_KLASS)
@@ -85,7 +85,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
 
     def _verify_ipam_subnet_details(self, ipam_subnet,
                                     cidr=None,
-                                    tenant_id=None,
+                                    project_id=None,
                                     gateway_ip=None,
                                     allocation_pools=None):
         ipam_subnet_details = ipam_subnet.get_details()
@@ -95,7 +95,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
             gateway_ip_address = netaddr.IPAddress(gateway_ip)
         if cidr:
             cidr_ip_network = netaddr.IPNetwork(cidr)
-        self.assertEqual(tenant_id, ipam_subnet_details.tenant_id)
+        self.assertEqual(project_id, ipam_subnet_details.tenant_id)
         self.assertEqual(gateway_ip_address, ipam_subnet_details.gateway_ip)
         self.assertEqual(cidr_ip_network, ipam_subnet_details.subnet_cidr)
         self.assertEqual(allocation_pools,
@@ -106,7 +106,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         allocation_pools = [netaddr.IPRange('10.0.0.100', '10.0.0.150'),
                             netaddr.IPRange('10.0.0.200', '10.0.0.250')]
         subnet_req = ipam_req.SpecificSubnetRequest(
-            self._tenant_id,
+            self._project_id,
             None,
             cidr,
             allocation_pools=allocation_pools,
@@ -114,7 +114,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         ipam_subnet = self.ipam_pool.allocate_subnet(subnet_req)
         self._verify_ipam_subnet_details(ipam_subnet,
                                          cidr,
-                                         self._tenant_id,
+                                         self._project_id,
                                          '10.0.0.101',
                                          allocation_pools)
 
@@ -122,7 +122,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         subnet = self._create_subnet(
             self.plugin, self.ctx, self.net_id, cidr)
         subnet_req = ipam_req.SpecificSubnetRequest(
-            self._tenant_id,
+            self._project_id,
             subnet['id'],
             cidr,
             gateway_ip=subnet['gateway_ip'])
@@ -134,14 +134,14 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         ipam_subnet = self.ipam_pool.allocate_subnet(subnet_req)
         self._verify_ipam_subnet_details(
             ipam_subnet,
-            cidr, self._tenant_id, subnet['gateway_ip'],
+            cidr, self._project_id, subnet['gateway_ip'],
             [netaddr.IPRange('10.0.0.2', '10.0.0.254')])
 
     def test_allocate_any_subnet_fails(self):
         self.assertRaises(
             ipam_exc.InvalidSubnetRequestType,
             self.ipam_pool.allocate_subnet,
-            ipam_req.AnySubnetRequest(self._tenant_id, 'meh',
+            ipam_req.AnySubnetRequest(self._project_id, 'meh',
                                       constants.IPv4, 24))
 
     def _test_update_subnet_pools(self, allocation_pools, expected_pools=None):
@@ -151,7 +151,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         subnet, subnet_req = self._prepare_specific_subnet_request(cidr)
         self.ipam_pool.allocate_subnet(subnet_req)
         update_subnet_req = ipam_req.SpecificSubnetRequest(
-            self._tenant_id,
+            self._project_id,
             subnet['id'],
             cidr,
             gateway_ip=subnet['gateway_ip'],
@@ -160,7 +160,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         ipam_subnet = self.ipam_pool.get_subnet(subnet['id'])
         self._verify_ipam_subnet_details(
             ipam_subnet,
-            cidr, self._tenant_id, subnet['gateway_ip'], expected_pools)
+            cidr, self._project_id, subnet['gateway_ip'], expected_pools)
 
     def test_update_subnet_pools(self):
         allocation_pools = [netaddr.IPRange('10.0.0.100', '10.0.0.150'),
@@ -186,7 +186,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         ipam_subnet = self.ipam_pool.get_subnet(subnet['id'])
         self._verify_ipam_subnet_details(
             ipam_subnet,
-            cidr, self._tenant_id, subnet['gateway_ip'],
+            cidr, self._project_id, subnet['gateway_ip'],
             [netaddr.IPRange('10.0.0.2', '10.0.0.254')])
 
     def test_get_non_existing_subnet_fails(self):
@@ -210,7 +210,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
         cidr = '10.0.0.0/24'
         non_existent_id = uuidutils.generate_uuid()
         subnet_req = ipam_req.SpecificSubnetRequest(
-            self._tenant_id,
+            self._project_id,
             non_existent_id,
             cidr)
         self.ipam_pool.allocate_subnet(subnet_req)
@@ -234,7 +234,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
     def _create_and_allocate_ipam_subnet(
             self, cidr, allocation_pools=constants.ATTR_NOT_SPECIFIED,
             ip_version=constants.IP_VERSION_4, v6_auto_address=False,
-            tenant_id=None):
+            project_id=None):
         v6_address_mode = constants.ATTR_NOT_SPECIFIED
         if v6_auto_address:
             # set ip version to 6 regardless of what's been passed to the
@@ -252,7 +252,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
             pool['start'], pool['end']) for pool in
             subnet['allocation_pools']]
         subnet_req = ipam_req.SpecificSubnetRequest(
-            tenant_id,
+            project_id,
             subnet['id'],
             cidr,
             gateway_ip=subnet['gateway_ip'],
@@ -262,7 +262,7 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
 
     def setUp(self):
         super().setUp()
-        self._tenant_id = 'test-tenant'
+        self._project_id = 'test-project'
 
         # Configure plugin for tests
         self.setup_coreplugin(test_db_plugin.DB_PLUGIN_KLASS)
@@ -431,10 +431,10 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         # This test should pass because ipam subnet is no longer
         # have foreign key relationship with neutron subnet.
         # Creating ipam subnet before neutron subnet is a valid case.
-        tenant_id = uuidutils.generate_uuid()
+        project_id = uuidutils.generate_uuid()
         subnet_id = uuidutils.generate_uuid()
         subnet_req = ipam_req.SpecificSubnetRequest(
-            tenant_id, subnet_id, '192.168.0.0/24')
+            project_id, subnet_id, '192.168.0.0/24')
         self.ipam_pool.allocate_subnet(subnet_req)
 
     def test_update_allocation_pools_with_no_pool_change(self):

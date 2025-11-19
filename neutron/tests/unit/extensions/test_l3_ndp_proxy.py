@@ -65,7 +65,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                          test_l3.L3BaseForIntTests,
                          test_l3.L3NatTestCaseMixin):
     fmt = 'json'
-    _tenant_id = _uuid()
+    _project_id = _uuid()
 
     def setUp(self):
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'
@@ -80,7 +80,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
         self.address_scope_id = self._make_address_scope(
             self.fmt, constants.IP_VERSION_6,
-            **{'tenant_id': self._tenant_id})['address_scope']['id']
+            **{'tenant_id': self._project_id})['address_scope']['id']
         self.subnetpool_id = self._make_subnetpool(
             self.fmt, ['2001::0/96'],
             **{'address_scope_id': self.address_scope_id,
@@ -102,7 +102,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             ipv6_ra_mode=constants.DHCPV6_STATEFUL,
             ipv6_address_mode=constants.DHCPV6_STATEFUL)
         self._ext_subnet_v6_id = self._ext_subnet_v6['subnet']['id']
-        self.router1 = self._make_router(self.fmt, self._tenant_id)
+        self.router1 = self._make_router(self.fmt, self._project_id)
         self.router1_id = self.router1['router']['id']
         self.private_net = self._make_network(self.fmt, 'private-net', True)
         self.private_subnet = self._make_subnet(
@@ -124,7 +124,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                           description=None, fmt=None, tenant_id=None,
                           expected_code=exc.HTTPCreated.code,
                           expected_message=None):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         data = {'ndp_proxy': {
             "port_id": port_id,
             "router_id": router_id}
@@ -149,7 +149,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                           tenant_id=None, fmt=None,
                           expected_code=exc.HTTPOk.code,
                           expected_message=None, **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         data = {}
         for k, v in kwargs.items():
             data[k] = v
@@ -204,7 +204,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def _update_router(self, router_id, update_date, tenant_id=None,
                        fmt=None, expected_code=exc.HTTPOk.code,
                        expected_message=None):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         data = {'router': update_date}
         router_req = self.new_update_request(
             'routers', id=router_id, data=data,
@@ -270,7 +270,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 ipv6_address_mode=constants.DHCPV6_STATEFUL):
             self._set_net_external(ext_net['network']['id'])
             res = self._make_router(
-                self.fmt, self._tenant_id,
+                self.fmt, self._project_id,
                 external_gateway_info={'network_id': ext_net['network']['id']},
                 **{'enable_ndp_proxy': True})
             expected_msg = (
@@ -279,7 +279,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 "scope.") % ext_net['network']['id']
             self.assertIn(expected_msg, res['NeutronError']['message'])
             router = self._make_router(
-                self.fmt, self._tenant_id,
+                self.fmt, self._project_id,
                 external_gateway_info={'network_id': ext_net['network']['id']})
             expected_msg = (
                 "Can not enable ndp proxy on router %s, The router has no "
@@ -468,19 +468,19 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def test_create_ndp_proxy_with_different_address_scope(self):
         with self.address_scope(
             ip_version=constants.IP_VERSION_6,
-            tenant_id=self._tenant_id) as addr_scope, \
+            tenant_id=self._project_id) as addr_scope, \
                 self.subnetpool(
                     ['2001::100:0:0/100'],
                     **{'address_scope_id': addr_scope['address_scope']['id'],
                        'default_prefixlen': 112, 'name': 'test1',
-                       'tenant_id': self._tenant_id}) as subnetpool, \
+                       'tenant_id': self._project_id}) as subnetpool, \
                 self.subnet(
                     cidr='2001::100:1:0/112',
                     ip_version=constants.IP_VERSION_6,
                     ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                     ipv6_address_mode=constants.DHCPV6_STATEFUL,
                     subnetpool_id=subnetpool['subnetpool']['id'],
-                    tenant_id=self._tenant_id) as subnet, \
+                    tenant_id=self._project_id) as subnet, \
                 self.port(subnet) as port:
             subnet_id = subnet['subnet']['id']
             port_id = port['port']['id']

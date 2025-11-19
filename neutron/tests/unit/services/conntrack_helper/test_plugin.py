@@ -71,7 +71,7 @@ class TestConntrackHelperPlugin(testlib_api.SqlTestCase):
                                                   "conntrack_helper"])
         manager.init()
         self.cth_plugin = directory.get_plugin(plugin_consts.CONNTRACKHELPER)
-        self.ctxt = context.Context('admin', 'fake_tenant')
+        self.ctxt = context.Context('admin', 'fake_project')
         mock.patch.object(self.ctxt.session, 'refresh').start()
         mock.patch.object(self.ctxt.session, 'expunge').start()
 

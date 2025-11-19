@@ -49,7 +49,7 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
         req = self.new_create_request('address-groups', address_group)
         neutron_context = context.Context('', kwargs.get('tenant_id',
-                                                         self._tenant_id))
+                                                         self._project_id))
         req.environ['neutron.context'] = neutron_context
         res = req.get_response(self.ext_api)
         self._check_http_response(res)
@@ -57,7 +57,7 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _test_create_address_group(self, expected=None, **kwargs):
         keys = kwargs.copy()
-        keys.setdefault('tenant_id', self._tenant_id)
+        keys.setdefault('tenant_id', self._project_id)
         res = self._create_address_group(**keys)
         ag = self.deserialize(self.fmt, res)
         self._validate_resource(ag, keys, 'address_group')
@@ -66,11 +66,11 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         return ag
 
     def _test_update_address_group(self, addr_group_id, data,
-                                   expected=None, tenant_id=None):
+                                   expected=None, project_id=None):
         update_req = self.new_update_request(
             'address-groups', data, addr_group_id)
         update_req.environ['neutron.context'] = context.Context(
-            '', tenant_id or self._tenant_id)
+            '', project_id or self._project_id)
 
         update_res = update_req.get_response(self.ext_api)
         if expected:
@@ -81,10 +81,10 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         return update_res
 
     def _test_address_group_actions(self, addr_group_id, data, action,
-                                    expected=None, tenant_id=None):
+                                    expected=None, project_id=None):
         act_req = self.new_action_request(
             'address-groups', data, addr_group_id, action,
-            tenant_id=tenant_id or self._tenant_id)
+            tenant_id=project_id or self._project_id)
 
         act_res = act_req.get_response(self.ext_api)
         if expected:
@@ -121,7 +121,7 @@ class TestAddressGroup(AddressGroupTestCase):
 
     def test_create_address_group_without_description_or_addresses(self):
         expected_ag = {'name': 'foo',
-                       'tenant_id': self._tenant_id,
+                       'tenant_id': self._project_id,
                        'description': '',
                        'addresses': []}
         self._test_create_address_group(name='foo',
@@ -130,7 +130,7 @@ class TestAddressGroup(AddressGroupTestCase):
     def test_create_address_group_with_description_and_addresses(self):
         expected_ag = {'name': 'foo',
                        'description': 'bar',
-                       'tenant_id': self._tenant_id,
+                       'tenant_id': self._project_id,
                        'addresses': ['10.0.1.0/24', '192.168.0.1/32']}
         self._test_create_address_group(name='foo', description='bar',
                                         addresses=['10.0.1.0/24',

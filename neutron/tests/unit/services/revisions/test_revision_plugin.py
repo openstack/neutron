@@ -50,7 +50,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.cp = directory.get_plugin()
         self.l3p = directory.get_plugin(constants.L3)
         self._ctx = nctx.get_admin_context()
-        self._tenant_id = uuidutils.generate_uuid()
+        self._project_id = uuidutils.generate_uuid()
 
     @property
     def ctx(self):
@@ -207,14 +207,14 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(rev + 1, new_rev)
 
     def test_security_group_rule_ops_bump_security_group(self):
-        s = {'security_group': {'tenant_id': 'some_tenant', 'name': '',
+        s = {'security_group': {'tenant_id': 'some_project', 'name': '',
                                 'description': 's'}}
         sg = self.cp.create_security_group(self.ctx, s)
         s['security_group']['name'] = 'hello'
         updated = self.cp.update_security_group(self.ctx, sg['id'], s)
         self.assertGreater(updated['revision_number'], sg['revision_number'])
         # ensure rule changes bump parent SG
-        r = {'security_group_rule': {'tenant_id': 'some_tenant',
+        r = {'security_group_rule': {'tenant_id': 'some_project',
                                      'port_range_min': 80, 'protocol': 6,
                                      'port_range_max': 90,
                                      'remote_ip_prefix': n_const.IPv4_ANY,
@@ -233,7 +233,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.assertGreater(updated['revision_number'], sg['revision_number'])
 
     def test_router_interface_ops_bump_router(self):
-        r = {'router': {'name': 'myrouter', 'tenant_id': 'some_tenant',
+        r = {'router': {'name': 'myrouter', 'tenant_id': 'some_project',
                         'admin_state_up': True}}
         router = self.l3p.create_router(self.ctx, r)
         r['router']['name'] = 'yourrouter'
@@ -241,7 +241,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.assertGreater(updated['revision_number'],
                            router['revision_number'])
         # add an intf and make sure it bumps rev
-        with self.subnet(tenant_id='some_tenant', cidr='10.0.1.0/24') as s:
+        with self.subnet(tenant_id='some_project', cidr='10.0.1.0/24') as s:
             interface_info = {'subnet_id': s['subnet']['id']}
         self.l3p.add_router_interface(self.ctx, router['id'],
                                       interface_info)

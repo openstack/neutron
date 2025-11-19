@@ -79,7 +79,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
     def _create_port(self, fmt, net_id, expected_res_status=None,
                      arg_list=None, set_context=False, tenant_id=None,
                      **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         data = {'port': {'network_id': net_id,
                          'tenant_id': tenant_id}}
 

@@ -40,6 +40,6 @@ class ML2TestFramework(test_plugin.Ml2PluginV2TestCase):
             {'router':
              {'name': 'router',
               'admin_state_up': admin_state_up,
-              'tenant_id': self._tenant_id,
+              'tenant_id': self._project_id,
               'ha': ha,
               'distributed': distributed}})
