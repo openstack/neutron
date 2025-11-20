@@ -119,14 +119,12 @@ def execute_rootwrap_daemon(cmd, process_input, addl_env):
 
     _stdout = helpers.safe_decode_utf8(_stdout)
     _stderr = helpers.safe_decode_utf8(_stderr)
-    return _stdout, _stderr, returncode, client._process, client._manager
+    return _stdout, _stderr, returncode
 
 
 def execute(cmd, process_input=None, addl_env=None,
             check_exit_code=True, return_stderr=False, log_fail_as_error=True,
             extra_ok_codes=None, run_as_root=False, privsep_exec=False):
-    rw_proc = None
-    rw_manager = None
     try:
         if process_input is not None:
             _process_input = encodeutils.to_utf8(process_input)
@@ -137,9 +135,8 @@ def execute(cmd, process_input=None, addl_env=None,
             _stdout, _stderr, returncode = priv_utils.execute_process(
                 cmd, _process_input, addl_env)
         elif run_as_root and cfg.CONF.AGENT.root_helper_daemon:
-            (_stdout, _stderr, returncode,
-             rw_proc, rw_manager) = execute_rootwrap_daemon(
-                 cmd, process_input, addl_env)
+            _stdout, _stderr, returncode = execute_rootwrap_daemon(
+                cmd, process_input, addl_env)
         else:
             _stdout, _stderr, returncode = _execute_process(
                 cmd, _process_input, addl_env, run_as_root)
@@ -168,10 +165,6 @@ def execute(cmd, process_input=None, addl_env=None,
         #               it two execute calls in a row hangs the second one
         time.sleep(0)
 
-    if run_as_root and cfg.CONF.AGENT.root_helper_daemon:
-        return (_stdout, _stderr, rw_proc,
-                rw_manager) if return_stderr else (_stdout,
-                                                   rw_proc, rw_manager)
     return (_stdout, _stderr) if return_stderr else _stdout
 
 
