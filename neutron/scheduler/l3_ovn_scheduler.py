@@ -159,34 +159,6 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
                                       candidates, existing_chassis,
                                       target_lrouter)
 
-    def _lrp_anti_affinity_score(self, nb_idl, target_lrouter, lrp_name):
-        """Provide elevated score if LRP is part of LR with multiple LRPs.
-
-        The artificial score can be added to chassis load to make it less
-        likely that the chassis is selected for scheduling.
-
-        :param nb_idl:         IDL for the OVN NB API
-        :type nb_idl:          :class:`OvsdbNbOvnIdl`
-        :param target_lrouter: Logical Router object
-        :type target_lrouter:  :class:`RowView`
-        :param lrp_name:       Name of LRP.
-        :type lrp_name:        str
-        :returns:              Number, if lrp_name belongs to LR with multiple
-                               LRPs.
-        :rtype:                int
-        """
-        if target_lrouter:
-            lrouter_ports = getattr(target_lrouter, 'ports', set())
-            if len(lrouter_ports) and nb_idl.get_lrouter_by_lrouter_port(
-                    lrp_name) == target_lrouter:
-                # The `MAX_GW_CHASSIS` constant here is used mostly to get a
-                # multiplier that guarantees our score will outweigh natural
-                # LRP priority so that when other chassis are available those
-                # will be chosen rather than a chassis already hosting a LRP
-                # for this LR.
-                return ovn_const.MAX_GW_CHASSIS * len(target_lrouter.ports)
-        return 0
-
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
                                 priority_min, priority_max, target_lrouter):
         """Returns a lit of chassis from candidates ordered by priority
@@ -197,19 +169,46 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
         priorities = list(range(priority_max, priority_min - 1, -1))
         all_chassis_bindings = nb_idl.get_all_chassis_gateway_bindings(
                 candidates, priorities=priorities)
+
+        anti_affinity_score = 0
+        chassis_hosting_lr = []
+
+        # For the chassis already hosting different ports of this router,
+        # we want to decrease the likelyhood to be selected.
+        # Here we calculate the chassis_hosting_lr and prepare the
+        # anti_affinity_score to be used later in the loop.
+        lrouter_ports = getattr(target_lrouter, 'ports', set())
+        if len(lrouter_ports):
+            lrouter_ports_names = {getattr(lrp, 'name', "")
+                                   for lrp in lrouter_ports}
+            chassis_hosting_lr = [chassis
+                for chassis, lrps in all_chassis_bindings.items() if
+                not lrouter_ports_names.isdisjoint(
+                    [lrp_name for lrp_name, prio in lrps])]
+
+            # The `MAX_GW_CHASSIS` constant here is used mostly to get a
+            # multiplier that guarantees our score will outweigh natural
+            # LRP priority so that when other chassis are available those
+            # will be chosen rather than a chassis already hosting a LRP
+            # for this LR.
+            anti_affinity_score = (ovn_const.MAX_GW_CHASSIS *
+                                   len(target_lrouter.ports))
+
         for priority in priorities:
             chassis_load = {}
             for chassis, lrps in all_chassis_bindings.items():
                 if chassis in selected_chassis:
                     continue
                 lrps_with_prio = 0
-                anti_affinity_score = 0
                 for lrp, prio in lrps:
                     if prio == priority:
                         lrps_with_prio += 1
-                    anti_affinity_score += self._lrp_anti_affinity_score(
-                        nb_idl, target_lrouter, lrp)
-                chassis_load[chassis] = lrps_with_prio + anti_affinity_score
+
+                if chassis in chassis_hosting_lr:
+                    chassis_load[chassis] = (lrps_with_prio +
+                                             anti_affinity_score)
+                else:
+                    chassis_load[chassis] = lrps_with_prio
             if len(chassis_load) == 0:
                 break
             leastload = min(chassis_load.values())
