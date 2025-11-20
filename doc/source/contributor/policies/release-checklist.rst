@@ -31,6 +31,8 @@ Prior to major release,
    deprecations.txt file in those log directories); also, check whether any
    Launchpad bugs with the 'deprecation' tag need a clean-up or a follow-up in
    the context of the release being planned;
+#. update the ovs-ovn minimum requirement table in
+   ``doc/source/install/ovs-ovn-requirements.rst``;
 #. check that release notes and sample configuration files render correctly,
    arrange clean-up if needed;
 #. ensure all doc links are valid by running ``tox -e linkcheck`` and
