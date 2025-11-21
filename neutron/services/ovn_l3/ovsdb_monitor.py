@@ -75,3 +75,32 @@ class LogicalRouterPortEvent(row_event.RowEvent):
             else:  # LRP gateway port.
                 self.l3_plugin._ovn_client.update_router_ha_chassis_group(
                     self.admin_context, router_id)
+
+
+class LogicalRouterPortGatewayChassisEvent(row_event.RowEvent):
+    """Logical_Router_Port Gateway_Chassis change event.
+
+    When the Gateway_Chassis list of a Logical_Router_Port changes, it is
+    needed to update the linked HA_Chassis_Group registers.
+    """
+    def __init__(self, driver):
+        self.driver = driver
+        self.l3_plugin = directory.get_plugin(constants.L3)
+        self.admin_context = neutron_context.get_admin_context()
+        table = 'Logical_Router_Port'
+        events = (self.ROW_UPDATE, )
+        super().__init__(events, table, None)
+
+    def match_fn(self, event, row, old):
+        if hasattr(old, 'gateway_chassis'):
+            # NOTE: when a Gateway_Chassis register is deleted, is no longer
+            # present in the old.gateway_chassis list.
+            return True
+
+        return False
+
+    def run(self, event, row, old=None):
+        lr_name = row.external_ids.get(ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
+        router_id = utils.get_neutron_name(lr_name)
+        self.l3_plugin._ovn_client.update_router_ha_chassis_group(
+            self.admin_context, router_id)
