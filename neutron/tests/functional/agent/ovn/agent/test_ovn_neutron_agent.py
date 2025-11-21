@@ -105,6 +105,7 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
                                   'wait'), \
                 mock.patch.object(ovn_neutron_agent.OVNNeutronAgent,
                                   '_load_ovs_idl') as mock_load_ovs_idl:
+            agt._initialize_ext_manager()
             mock_load_ovs_idl.return_value = self._create_ovs_idl(agt)
             agt.start()
             external_ids = agt.sb_idl.db_get(
