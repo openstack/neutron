@@ -20,7 +20,7 @@ from neutron.tests.functional import base
 class TestRevisionNumbers(base.TestOVNFunctionalBase):
 
     def _create_network(self, name):
-        data = {'network': {'name': name, 'tenant_id': self._tenant_id}}
+        data = {'network': {'name': name, 'tenant_id': self._project_id}}
         req = self.new_create_request('networks', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['network']
@@ -39,7 +39,7 @@ class TestRevisionNumbers(base.TestOVNFunctionalBase):
 
     def _create_port(self, name, net_id):
         data = {'port': {'name': name,
-                         'tenant_id': self._tenant_id,
+                         'tenant_id': self._project_id,
                          'network_id': net_id}}
         req = self.new_create_request('ports', data, self.fmt)
         res = req.get_response(self.api)
@@ -58,7 +58,7 @@ class TestRevisionNumbers(base.TestOVNFunctionalBase):
                 return row
 
     def _create_router(self, name):
-        data = {'router': {'name': name, 'tenant_id': self._tenant_id}}
+        data = {'router': {'name': name, 'tenant_id': self._project_id}}
         req = self.new_create_request('routers', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['router']
@@ -77,7 +77,7 @@ class TestRevisionNumbers(base.TestOVNFunctionalBase):
 
     def _create_subnet(self, net_id, cidr, name='subnet1'):
         data = {'subnet': {'name': name,
-                           'tenant_id': self._tenant_id,
+                           'tenant_id': self._project_id,
                            'network_id': net_id,
                            'cidr': cidr,
                            'ip_version': 4,

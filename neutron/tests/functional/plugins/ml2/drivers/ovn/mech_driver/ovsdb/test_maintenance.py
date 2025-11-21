@@ -891,7 +891,7 @@ class TestMaintenance(_TestMaintenanceHelper):
         p1 = self._create_port('testp1', net1['id'])
         logical_ip = p1['fixed_ips'][0]['ip_address']
         fip_info = {'floatingip': {
-            'tenant_id': self._tenant_id,
+            'tenant_id': self._project_id,
             'description': 'test_fip',
             'floating_network_id': ext_net['id'],
             'port_id': p1['id'],
@@ -999,7 +999,7 @@ class TestMaintenance(_TestMaintenanceHelper):
         self._add_router_interface(router['id'], subnet1['id'])
 
         fip_info = {'floatingip': {
-            'tenant_id': self._tenant_id,
+            'tenant_id': self._project_id,
             'floating_network_id': ext_net['id'],
             'port_id': None,
             'fixed_ip_address': None}}
@@ -1187,7 +1187,7 @@ class TestMaintenance(_TestMaintenanceHelper):
         p1 = self._create_port('testp1', net1['id'])
         logical_ip = p1['fixed_ips'][0]['ip_address']
         fip_info = {'floatingip': {
-            'tenant_id': self._tenant_id,
+            'tenant_id': self._project_id,
             'description': 'test_fip',
             'floating_network_id': ext_net['id'],
             'port_id': p1['id'],

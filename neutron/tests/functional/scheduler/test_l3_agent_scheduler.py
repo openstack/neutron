@@ -335,7 +335,7 @@ class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def _create_router(self, az_hints, ha):
         router = {'name': 'router1', 'admin_state_up': True,
                   'availability_zone_hints': az_hints,
-                  'tenant_id': self._tenant_id}
+                  'tenant_id': self._project_id}
         if ha:
             router['ha'] = True
         return self.l3_plugin.create_router(

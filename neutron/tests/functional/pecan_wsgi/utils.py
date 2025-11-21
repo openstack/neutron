@@ -22,7 +22,7 @@ def create_network(context, plugin):
         context,
         {'network':
          {'name': 'pecannet',
-          'tenant_id': 'tenid',
+          'tenant_id': 'projid',
           'shared': False,
           'admin_state_up': True,
           'status': 'ACTIVE'}})
@@ -32,7 +32,7 @@ def create_subnet(context, plugin, network_id):
     return plugin.create_subnet(
         context,
         {'subnet':
-         {'tenant_id': 'tenid',
+         {'tenant_id': 'projid',
           'network_id': network_id,
           'name': 'pecansub',
           'ip_version': constants.IP_VERSION_4,
@@ -51,7 +51,7 @@ def create_router(context, l3_plugin):
         context,
         {'router':
          {'name': 'pecanrtr',
-          'tenant_id': 'tenid',
+          'tenant_id': 'projid',
           'admin_state_up': True}})
 
 

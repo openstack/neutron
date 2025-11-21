@@ -191,7 +191,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             self.context,
             {'router': {
                 'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': e1['network']['id'],
@@ -203,7 +203,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             {'subnet_id': port['fixed_ips'][0]['subnet_id']})
         r1_f2 = self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'subnet_id': None,
                 'floating_ip_address': fip_address,
@@ -619,7 +619,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         router = self.l3_plugin.create_router(
             self.context,
             {'router': {'name': uuidutils.generate_uuid(),
-                        'admin_state_up': True, 'tenant_id': self._tenant_id,
+                        'admin_state_up': True, 'tenant_id': self._project_id,
                         'external_gateway_info': external_gateway_info}})
         return router
 
@@ -703,7 +703,7 @@ class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
                                      **arg_dict)
         self._make_subnet(self.fmt, ext_net, '10.251.0.1', '10.251.0.0/24',
                           enable_dhcp=True)
-        router = self._make_router(self.fmt, self._tenant_id)
+        router = self._make_router(self.fmt, self._project_id)
         row_event = test_events.WaitForCreatePortBindingEventPerType()
         self.handler.watch_event(row_event)
         self._add_external_gateway_to_router(router['router']['id'],
@@ -978,7 +978,7 @@ class TestPortBindingChassisEvent(base.TestOVNFunctionalBase,
         n_utils.wait_until_true(lambda: check_pb_type(_type), timeout=5)
 
     def test_pb_type_patch(self):
-        router = self._make_router(self.fmt, self._tenant_id)
+        router = self._make_router(self.fmt, self._project_id)
         self._add_external_gateway_to_router(router['router']['id'],
                                              self.net['network']['id'])
         self._check_pb_type('patch')
@@ -1009,7 +1009,7 @@ class TestLogicalSwitchPortUpdateLogicalRouterPortEvent(
         lrp_event = WaitForLogicalRouterPortCreateEvent()
         self.mech_driver.nb_ovn.idl.notify_handler.watch_events(
             (lsp_event, lrp_event))
-        router = self._make_router(self.fmt, self._tenant_id)
+        router = self._make_router(self.fmt, self._project_id)
         self._router_interface_action('add', router['router']['id'],
                                       self.subnet['subnet']['id'], None)
         self.assertTrue(lsp_event.wait())

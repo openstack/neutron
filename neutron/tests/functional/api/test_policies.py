@@ -70,7 +70,7 @@ class APIPolicyTestCase(base.BaseLoggingTestCase):
         """
         extension_manager = extensions.ExtensionManager(self.extension_path)
         admin_context = context.get_admin_context()
-        tenant_context = context.Context('test_user', 'test_tenant_id', False)
+        tenant_context = context.Context('test_user', 'test_project_id', False)
         extension_manager.extend_resources(self.api_version,
                                            attributes.RESOURCES)
         self.assertTrue(self._check_external_router_policy(admin_context))
@@ -93,6 +93,6 @@ class APIPolicyTestCase(base.BaseLoggingTestCase):
         policies.reload_default_policies()
         policy.init()
         admin_context = context.get_admin_context()
-        tenant_context = context.Context('test_user', 'test_tenant_id', False)
+        tenant_context = context.Context('test_user', 'test_project_id', False)
         self.assertTrue(self._check_external_router_policy(admin_context))
         self.assertTrue(self._check_external_router_policy(tenant_context))

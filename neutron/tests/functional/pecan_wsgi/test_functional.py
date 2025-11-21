@@ -40,8 +40,8 @@ class InjectContext(base.ConfigurableMiddleware):
     def __call__(self, req):
         user_id = req.headers.get('X_USER_ID', '')
 
-        # Determine the tenant
-        tenant_id = req.headers.get('X_PROJECT_ID')
+        # Determine the project
+        project_id = req.headers.get('X_PROJECT_ID')
 
         roles = ['member', 'reader']
         # Suck out the roles if any are set
@@ -54,7 +54,7 @@ class InjectContext(base.ConfigurableMiddleware):
         user_name = req.headers.get('X_USER_NAME')
 
         # Create a context with the authentication data
-        ctx = context.Context(user_id, tenant_id, roles=roles,
+        ctx = context.Context(user_id, project_id, roles=roles,
                               user_name=user_name, tenant_name=tenant_name)
         req.environ['neutron.context'] = ctx
         return self.application

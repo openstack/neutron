@@ -28,7 +28,7 @@ class LogApiTestCaseBase(functional_base.TestOVNFunctionalBase):
         super().setUp()
         self.log_driver = self.mech_driver.log_driver
         self._check_is_supported()
-        self.ctxt = context.Context('admin', self._tenant_id)
+        self.ctxt = context.Context('admin', self._project_id)
 
     def _check_is_supported(self):
         if not self.log_driver.network_logging_supported(self.nb_api):
