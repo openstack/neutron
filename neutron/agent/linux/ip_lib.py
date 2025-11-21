@@ -1039,9 +1039,8 @@ def ensure_device_is_ready(device_name, namespace=None):
 
 def iproute_arg_supported(command, arg):
     command += ['help']
-    stdout, stderr, _, _ = utils.execute(command, check_exit_code=False,
-                                         return_stderr=True,
-                                         log_fail_as_error=False)
+    stdout, stderr = utils.execute(command, check_exit_code=False,
+                                   return_stderr=True, log_fail_as_error=False)
     return any(arg in line for line in stderr.split('\n'))
 
 

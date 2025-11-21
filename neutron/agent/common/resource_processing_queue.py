@@ -163,7 +163,6 @@ class ResourceProcessingQueue:
     """Manager of the queue of resources to process."""
     def __init__(self):
         self._queue = queue.PriorityQueue()
-        self._run = True
 
     @property
     def qsize(self):
@@ -180,8 +179,6 @@ class ResourceProcessingQueue:
         This method uses a for loop to process the resource repeatedly until
         updates stop bubbling to the front of the queue.
         """
-        if not self._run:
-            yield None, None
         next_update = self._queue.get()
 
         with ExclusiveResourceProcessor(next_update.id) as rp:

@@ -16,12 +16,12 @@ import abc
 import collections
 import os.path
 import threading
+import time
 
 from neutron_lib import exceptions as n_exc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_rootwrap import client
 from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
@@ -72,8 +72,6 @@ class ProcessManager(MonitoredProcess):
         self.default_post_cmd_callback = default_post_cmd_callback
         self.pids_path = pids_path or self.conf.external_pids
         self.pid_file = pid_file
-        self.rw_proc = None
-        self.rw_manager = None
         self.run_as_root = run_as_root or self.namespace is not None
         self.custom_reload_callback = custom_reload_callback
         self.kill_scripts_path = cfg.CONF.AGENT.kill_scripts_path
@@ -118,13 +116,8 @@ class ProcessManager(MonitoredProcess):
             cmd = cmd_callback(pid_file)
 
             ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
-            ret = ip_wrapper.netns.execute(
-                cmd, addl_env=self.cmd_addl_env,
-                run_as_root=self.run_as_root)
-            if ret and isinstance(ret, tuple):
-                stdout, self.rw_proc, self.rw_manager = ret
-                LOG.debug('Rottwrap process pid (%s) stdout: %s',
-                          self.rw_proc.pid, stdout)
+            ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
+                                     run_as_root=self.run_as_root)
 
             post_cmd_callback = (post_cmd_callback or
                                  self.default_post_cmd_callback)
@@ -167,11 +160,6 @@ class ProcessManager(MonitoredProcess):
             else:
                 cmd = self.get_kill_cmd(sig, pid)
             self._kill_process(cmd, pid)
-            if self.rw_proc:
-                try:
-                    client.Client._shutdown(self.rw_proc, self.rw_manager)
-                except AssertionError:
-                    LOG.warning("Rootwrap server is not yet started!")
 
             if delete_pid_file:
                 utils.delete_if_exists(self.get_pid_file_name(),
@@ -239,7 +227,6 @@ class ProcessMonitor:
 
         self._monitored_processes = {}
 
-        self._stopping_event = threading.Event()
         self._checking_thread = None
         if self._config.AGENT.check_child_processes_interval:
             self._checking_thread = self._spawn_checking_thread()
@@ -291,15 +278,8 @@ class ProcessMonitor:
         process will be stopped.
         """
         self._monitor_processes = False
-        self._stopping_event.set()
-        for service_id in list(self._monitored_processes.keys()):
-            process = self._monitored_processes.get(service_id)
-            if process:
-                LOG.info("ProcessMonitor disabling process: %s", service_id)
-                process.disable()
-        self._monitored_processes.clear()
         if self._checking_thread:
-            self._checking_thread.join(timeout=5)
+            self._checking_thread.join()
 
     def _spawn_checking_thread(self):
         self._monitor_processes = True
@@ -313,13 +293,7 @@ class ProcessMonitor:
         # we build the list of keys before iterating in the loop to cover
         # the case where other threads add or remove items from the
         # dictionary which otherwise will cause a RuntimeError
-        if self._stopping_event.is_set():
-            return
         for service_id in list(self._monitored_processes):
-            if self._stopping_event.is_set():
-                break
-            if not self._monitor_processes:
-                break
             pm = self._monitored_processes.get(service_id)
 
             if pm and not pm.active:
@@ -332,13 +306,11 @@ class ProcessMonitor:
                 self._execute_action(service_id)
 
     def _periodic_checking_thread(self):
-        while self._monitor_processes and not self._stopping_event.is_set():
-            if self._stopping_event.wait(
-                    timeout=self._config.AGENT.check_child_processes_interval):
-                break
+        while self._monitor_processes:
+            time.sleep(self._config.AGENT.check_child_processes_interval)
             check_thread = threading.Thread(target=self._check_child_processes)
             check_thread.start()
-            check_thread.join(timeout=5)
+            check_thread.join()
 
     def _execute_action(self, service_id):
         action = self._config.AGENT.check_child_processes_action

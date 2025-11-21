@@ -481,23 +481,15 @@ class IptablesManager:
         args = ['iptables-save', '-t', table]
         if self.namespace:
             args = ['ip', 'netns', 'exec', self.namespace] + args
-        rules = linux_utils.execute(args, run_as_root=True,
-                                  privsep_exec=True)
-        if isinstance(rules, tuple):
-            rules = rules[0].split('\n')
-        else:
-            rules = rules.split('\n')
-        return rules
+        return linux_utils.execute(args, run_as_root=True,
+                                   privsep_exec=True).split('\n')
 
     def _get_version(self):
         # Output example is "iptables v1.8.7 (nf_tables)",
         # this will return "1.8.7"
         args = ['iptables', '--version']
-        version = linux_utils.execute(
-            args, run_as_root=True, privsep_exec=True)
-        if version and isinstance(version, tuple):
-            version = version[0]
-        version = str(version.split()[1][1:])
+        version = str(linux_utils.execute(
+            args, run_as_root=True, privsep_exec=True).split()[1][1:])
         LOG.debug("IPTables version installed: %s", version)
         return version
 
@@ -590,10 +582,8 @@ class IptablesManager:
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
             try:
-                save_output= linux_utils.execute(args, run_as_root=True,
-                                                 privsep_exec=True)
-                if save_output and isinstance(save_output, tuple):
-                    save_output = save_output[0]
+                save_output = linux_utils.execute(args, run_as_root=True,
+                                                  privsep_exec=True)
             except RuntimeError:
                 # We could be racing with a cron job deleting namespaces.
                 # It is useless to try to apply iptables rules over and
@@ -804,8 +794,6 @@ class IptablesManager:
             current_table = linux_utils.execute(
                 args, run_as_root=True, privsep_exec=True,
                 log_fail_as_error=cfg.CONF.debug)
-            if current_table and isinstance(current_table, tuple):
-                current_table = current_table[0]
             current_lines = current_table.split('\n')
 
             for line in current_lines[2:]:
