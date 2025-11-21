@@ -39,10 +39,8 @@ Enabling the deployment for auto-allocation
 To use this feature, the neutron service must have the following extensions
 enabled:
 
-* ``auto-allocated-topology``
-* ``subnet_allocation``
-* ``external-net``
-* ``router``
+* ``auto_allocate``
+* ``ovn-router`` or ``router`` for non-OVN scenarios.
 
 Before the end-user can use the auto-allocation feature, the operator must
 create the resources that will be used for the auto-allocated network
