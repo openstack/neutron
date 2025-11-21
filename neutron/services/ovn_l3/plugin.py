@@ -51,6 +51,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.quota import resource_registry
 from neutron.scheduler import l3_ovn_scheduler
 from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
+from neutron.services.ovn_l3 import ovsdb_monitor
 from neutron.services.ovn_l3.service_providers import driver_controller
 from neutron.services.portforwarding.drivers.ovn import driver \
     as port_forwarding
@@ -174,6 +175,11 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     def _post_fork_initialize(self, resource, event, trigger, payload=None):
         if not self._nb_ovn or not self._sb_ovn:
             raise ovn_l3_exc.MechanismDriverOVNNotReady()
+
+        # Register needed events.
+        self._nb_ovn.idl.notify_handler.watch_events([
+            ovsdb_monitor.LogicalRouterPortEvent(self),
+        ])
 
     def _add_neutron_router_interface(self, context, router_id,
                                       interface_info):

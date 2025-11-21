@@ -2836,6 +2836,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
         self.sb_ovn.get_chassis_host_for_port.return_value = {
             ch4.name, ch5.name}
+        self.nb_ovn.lookup.return_value = None
 
         ovn_utils.sync_ha_chassis_group_network(
             self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
@@ -2879,6 +2880,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.sb_ovn.get_extport_chassis_from_cms_options.return_value = []
         self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
             ch0, ch1, ch2, ch3, ch4, ch5]
+        self.nb_ovn.lookup.return_value = None
 
         ovn_utils.sync_ha_chassis_group_network(
             self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],

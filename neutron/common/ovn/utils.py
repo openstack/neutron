@@ -1094,6 +1094,18 @@ def get_subnets_address_scopes(context, subnets_by_id, fixed_ips, ml2_plugin):
     return address4_scope_id, address6_scope_id
 
 
+def get_high_prio_chassis_in_ha_chassis_group(ha_chassis_group):
+    """Returns (name, priority) of the highest priority HA_Chassis"""
+    hc_list = []
+    for ha_chassis in ha_chassis_group.ha_chassis:
+        hc_list.append((ha_chassis.chassis_name, ha_chassis.priority))
+    hc_list = sorted(hc_list, key=lambda x: x[1], reverse=True)
+    try:
+        return hc_list[0]
+    except IndexError:
+        return None, None
+
+
 def _filter_candidates_for_ha_chassis_group(hcg_info):
     """Filter a list of chassis candidates for a given HA Chassis Group.
 
@@ -1157,6 +1169,10 @@ def _sync_ha_chassis_group(nb_idl, hcg_info, txn):
         ha_ch_grp_cmd = txn.add(nb_idl.ha_chassis_group_add(
             hcg_info.group_name, may_exist=True,
             external_ids=hcg_info.external_ids))
+    else:
+        # Update the external_ids.
+        txn.add(nb_idl.db_set('HA_Chassis_Group', hcg_info.group_name,
+                              ('external_ids', hcg_info.external_ids)))
 
     max_chassis_number = constants.MAX_CHASSIS_IN_HA_GROUP
     priority = constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
@@ -1231,7 +1247,18 @@ def sync_ha_chassis_group_router(context, nb_idl, sb_idl, router_id, txn):
 @ovn_context(idl_var_name='nb_idl')
 def sync_ha_chassis_group_network(context, nb_idl, sb_idl, port_id,
                                   network_id, txn):
-    """Syncs the HA Chassis Group for a given network"""
+    """Syncs the HA_Chassis_Group for a given network"""
+    # If there is a network associated HA_Chassis_Group, the port will use it
+    # instead of creating a new one or updating it.
+    group_name = ovn_name(network_id)
+    hcg = nb_idl.lookup('HA_Chassis_Group', group_name, default=None)
+    if hcg:
+        router_id = hcg.external_ids.get(constants.OVN_ROUTER_ID_EXT_ID_KEY)
+        if router_id:
+            # If the HA_Chassis_Group is linked to a router, do not modify it.
+            ch_name, _ = get_high_prio_chassis_in_ha_chassis_group(hcg)
+            return hcg.uuid, ch_name
+
     # If there are Chassis marked for hosting external ports create a HA
     # Chassis Group per external port, otherwise do it at the network
     # level
@@ -1247,7 +1274,6 @@ def sync_ha_chassis_group_network(context, nb_idl, sb_idl, port_id,
     else:
         chassis_list = sb_idl.get_gateway_chassis_from_cms_options(
             name_only=False)
-        group_name = ovn_name(network_id)
         ignore_chassis = set()
         LOG.debug('HA Chassis Group %s is based on network %s',
                   group_name, network_id)

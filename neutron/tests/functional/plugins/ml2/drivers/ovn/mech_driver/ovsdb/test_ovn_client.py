@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import network_mtu as mtu_def
 from neutron_lib.api.definitions import provider_net
@@ -499,3 +501,38 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                                  dhcp_options.options['ntp_server'])
                 self.assertEqual('1.2.3.6',
                                  dhcp_options.options['wpad'])
+
+    def test_update_ha_chassis_group_linked_to_router(self):
+        # Create a router with multiple networks (internal, external). The
+        # method `link_network_ha_chassis_group` must be called for all
+        # internal networks.
+        num_private_subnets = 5
+        ovn_client = self.mech_driver._ovn_client
+        net_arg = {provider_net.NETWORK_TYPE: 'geneve',
+                   external_net.EXTERNAL: True}
+        with self.network('external', as_admin=True,
+                          arg_list=tuple(net_arg.keys()), **net_arg) as net:
+            with self.subnet(net, cidr='10.100.0.0/24'):
+                ext_gw = {'network_id': net['network']['id']}
+                with self.router(external_gateway_info=ext_gw) as router:
+                    router_id = router['router']['id']
+
+        net_ids = []
+        for idx in range(num_private_subnets):
+            with self.network('internal' + str(idx)) as net:
+                net_ids.append(net['network']['id'])
+                with self.subnet(net, cidr=f'10.{idx}.0.0/24') as subnet:
+                    subnet_id = subnet['subnet']['id']
+                    self._router_interface_action(
+                        'add', router_id, subnet_id, None)
+
+        lr_name = ovn_utils.ovn_name(router_id)
+        lr = self.nb_api.lookup('Logical_Router', lr_name)
+        self.assertEqual(num_private_subnets + 1, len(lr.ports))
+        with mock.patch.object(ovn_client, 'link_network_ha_chassis_group') as\
+                mock_link:
+            ovn_client.update_router_ha_chassis_group(self.context, router_id)
+            calls = [mock.call(self.context, net_id, router_id)
+                     for net_id in net_ids]
+            self.assertEqual(num_private_subnets, len(mock_link.mock_calls))
+            mock_link.assert_has_calls(calls, any_order=True)
