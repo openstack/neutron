@@ -12,6 +12,7 @@
 #    under the License.
 #
 
+import netaddr
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
@@ -353,6 +354,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         current_gw_ip = current['gateway_ip']
         if orig_gw_ip == current_gw_ip:
             return
+        prefix = n_const.IP_ANY[netaddr.IPAddress(orig_gw_ip).version]
         gw_ports = l3plugin._plugin.get_ports(context, filters={
             'network_id': [orig['network_id']],
             'device_owner': [n_const.DEVICE_OWNER_ROUTER_GW],
@@ -361,14 +363,19 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         router_ids = {port['device_id'] for port in gw_ports
                       if utils.is_ovn_provider_router(
                           l3plugin.get_router(context, port['device_id']))}
-        remove = [{'destination': n_const.IPv4_ANY, 'nexthop': orig_gw_ip}
+        remove = [{'destination': prefix, 'nexthop': orig_gw_ip}
                   ] if orig_gw_ip else []
-        add = [{'destination': n_const.IPv4_ANY, 'nexthop': current_gw_ip}
+        add = [{'destination': prefix, 'nexthop': current_gw_ip}
                ] if current_gw_ip else []
+        add_columns = [{'external_ids': {
+            ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+            ovn_const.OVN_SUBNET_EXT_ID_KEY: orig['id'],
+            ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
+        ]
         with l3plugin._nb_ovn.transaction(check_error=True) as txn:
             for router_id in router_ids:
                 l3plugin._ovn_client.update_router_routes(
-                    context, router_id, add, remove, txn=txn)
+                    context, router_id, add, remove, add_columns, txn=txn)
 
     @staticmethod
     @registry.receives(

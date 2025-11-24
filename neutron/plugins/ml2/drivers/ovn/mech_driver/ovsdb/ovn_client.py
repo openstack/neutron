@@ -1402,14 +1402,18 @@ class OVNClient:
         return False
 
     def update_router_routes(self, context, router_id, add, remove,
-                             txn=None):
+                             add_columns=None, txn=None):
         if not any([add, remove]):
             return
         lrouter_name = utils.ovn_name(router_id)
         commands = []
-        for route in add:
-            columns = {'external_ids': {
-                ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
+        for i, route in enumerate(add):
+            if not add_columns:
+                columns = {'external_ids': {
+                    ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
+            else:
+                # Get corresponding columns from add_columns
+                columns = add_columns[i]
             commands.append(
                 self._nb_idl.add_static_route(
                     lrouter_name, ip_prefix=route['destination'],
