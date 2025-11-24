@@ -15,7 +15,6 @@
 
 from unittest import mock
 
-from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exception
 from oslo_config import cfg
 import testtools
@@ -26,35 +25,6 @@ from neutron.api import wsgi
 from neutron.tests import base
 
 CONF = cfg.CONF
-
-
-class TestWorkerService(base.BaseTestCase):
-    """WorkerService tests."""
-
-    @mock.patch.object(db_api, 'get_context_manager')
-    def test_start_withoutdb_call(self, apimock):
-        _service = mock.Mock()
-        _service.pool.spawn.return_value = None
-
-        _app = mock.Mock()
-        workerservice = wsgi.WorkerService(_service, _app, "on")
-        workerservice.start()
-        self.assertFalse(apimock.called)
-
-    @mock.patch("neutron.policy.refresh")
-    @mock.patch("neutron.common.config.setup_logging")
-    def _test_reset(self, worker_service, setup_logging_mock, refresh_mock):
-        worker_service.reset()
-
-        setup_logging_mock.assert_called_once_with()
-        refresh_mock.assert_called_once_with()
-
-    def test_reset(self):
-        _service = mock.Mock()
-        _app = mock.Mock()
-
-        worker_service = wsgi.WorkerService(_service, _app, "on")
-        self._test_reset(worker_service)
 
 
 class SerializerTest(base.BaseTestCase):

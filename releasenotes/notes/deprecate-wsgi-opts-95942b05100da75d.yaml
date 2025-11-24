@@ -1,0 +1,9 @@
+---
+deprecations:
+  - |
+    The following options are now deprecated. These were used by
+    the ``neutron-server`` process, which was removed.
+
+    - ``[DEFAULT] backlog``
+    - ``[DEFAULT] retry_until_window``
+    - ``[DEFAULT] use_ssl``

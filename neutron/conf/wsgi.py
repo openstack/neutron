@@ -21,13 +21,22 @@ from neutron._i18n import _
 socket_opts = [
     cfg.IntOpt('backlog',
                default=4096,
+               deprecated_for_removal=True,
+               deprecated_since='2026.1',
+               deprecated_reason=_("This option has no effect."),
                help=_("Number of backlog requests to configure "
                       "the socket with")),
     cfg.IntOpt('retry_until_window',
                default=30,
+               deprecated_for_removal=True,
+               deprecated_since='2026.1',
+               deprecated_reason=_("This option has no effect."),
                help=_("Number of seconds to keep retrying to listen")),
     cfg.BoolOpt('use_ssl',
                 default=False,
+                deprecated_for_removal=True,
+                deprecated_since='2026.1',
+                deprecated_reason=_("This option has no effect."),
                 help=_('Enable SSL on the API server')),
 ]
 
