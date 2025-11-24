@@ -12,16 +12,11 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# NOTE(ralonsoh): remove once the default backend is ``BackendType.THREADING``
-from oslo_service import backend as oslo_service_backend
-oslo_service_backend.init_backend(oslo_service_backend.BackendType.THREADING)
+import setproctitle
 
-# pylint: disable=wrong-import-position
-import setproctitle  # noqa: E402
-
-from neutron.plugins.ml2.drivers.macvtap.agent import (  # noqa: E402
-    macvtap_neutron_agent as agent_main)
-from neutron_lib import constants  # noqa: E402
+from neutron.plugins.ml2.drivers.macvtap.agent import macvtap_neutron_agent \
+        as agent_main
+from neutron_lib import constants
 
 
 def main():
