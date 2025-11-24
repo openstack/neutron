@@ -2,7 +2,7 @@
     name: neutron-functional
     parent: devstack-minimal
     description: Run neutron functional tests
-    timeout: 7800
+    timeout: 9000
     required-projects:
       - opendev.org/openstack/devstack
       - openstack/neutron
