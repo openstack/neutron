@@ -1,0 +1,17 @@
+---
+fixes:
+  - |
+    The following ignored options have been fixed, and now these are used by
+    metadata services.
+
+    - ``[DEFAULT] metadata_backlog``
+    - ``[DEFAULT] metadata_workers``
+
+
+upgrade:
+  - |
+    In recent releases of neutron metadata server services launch worker
+    threads instead of worker processes. (2025.1 for metadata-agent and
+    2025.2 for ovn-metadata-agent and ovn-agent). Due to the different
+    concurrency mechanism the ``[DEFAULT] metadata_workers`` may need to be
+    re-evaluated, especially when it was tuned in an older version.

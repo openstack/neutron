@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import socketserver
 from unittest import mock
 
 import ddt
@@ -437,7 +436,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
                     unlink.assert_called_once_with('/the/path')
 
     @mock.patch.object(agent, 'MetadataProxyHandler')
-    @mock.patch.object(socketserver, 'ThreadingUnixStreamServer')
+    @mock.patch.object(proxy_base, 'MetadataProxyServer')
     @mock.patch.object(fileutils, 'ensure_tree')
     def test_run(self, ensure_dir, server, handler):
         p = agent.UnixDomainMetadataProxy(self.cfg.CONF)
@@ -445,7 +444,7 @@ class TestUnixDomainMetadataProxy(base.BaseTestCase):
 
         ensure_dir.assert_called_once_with('/the', mode=0o755)
         server.assert_has_calls([
-            mock.call('/the/path', mock.ANY),
+            mock.call(0, '/the/path', mock.ANY),
             mock.call().serve_forever()])
         self.looping_mock.assert_called_once_with(f=p._report_state)
         self.looping_mock.return_value.start.assert_called_once_with(

@@ -12,11 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import socketserver
-
 from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.utils import host
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import loopingcall
@@ -197,9 +196,15 @@ class UnixDomainMetadataProxy(proxy_base.UnixDomainMetadataProxyBase):
         self.agent_state.pop('start_flag', None)
 
     def run(self):
+        # Set the default metadata_workers if not yet set in the config file
+        md_workers = self.conf.metadata_workers
+        if md_workers is None:
+            md_workers = host.cpu_count() // 2
+
         file_socket = cfg.CONF.metadata_proxy_socket
-        self._server = socketserver.ThreadingUnixStreamServer(
-            file_socket, MetadataProxyHandler)
+        self._server = proxy_base.MetadataProxyServer(
+            md_workers, file_socket, MetadataProxyHandler)
+
         MetadataProxyHandler._conf = self.conf
         self._init_state_reporting()
         self._server.serve_forever()
