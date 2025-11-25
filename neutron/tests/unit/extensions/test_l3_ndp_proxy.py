@@ -124,7 +124,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                           description=None, fmt=None, tenant_id=None,
                           expected_code=exc.HTTPCreated.code,
                           expected_message=None):
-        tenant_id = tenant_id or self._project_id
+        project_id = tenant_id or self._project_id
         data = {'ndp_proxy': {
             "port_id": port_id,
             "router_id": router_id}
@@ -136,7 +136,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
         req_res = self.new_create_request(
             'ndp-proxies', data, fmt or self.fmt,
-            tenant_id=tenant_id, as_admin=True)
+            tenant_id=project_id, as_admin=True)
 
         res = req_res.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
@@ -149,14 +149,14 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                           tenant_id=None, fmt=None,
                           expected_code=exc.HTTPOk.code,
                           expected_message=None, **kwargs):
-        tenant_id = tenant_id or self._project_id
+        project_id = tenant_id or self._project_id
         data = {}
         for k, v in kwargs.items():
             data[k] = v
         req_res = self.new_update_request(
             'ndp-proxies', {'ndp_proxy': data},
             ndp_proxy_id, fmt or self.fmt,
-            tenant_id=tenant_id, as_admin=True)
+            tenant_id=project_id, as_admin=True)
         res = req_res.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
         if expected_message:
@@ -204,12 +204,12 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def _update_router(self, router_id, update_date, tenant_id=None,
                        fmt=None, expected_code=exc.HTTPOk.code,
                        expected_message=None):
-        tenant_id = tenant_id or self._project_id
+        project_id = tenant_id or self._project_id
         data = {'router': update_date}
         router_req = self.new_update_request(
             'routers', id=router_id, data=data,
             fmt=(fmt or self.fmt),
-            tenant_id=tenant_id, as_admin=True)
+            tenant_id=project_id, as_admin=True)
         res = router_req.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
         if expected_message:

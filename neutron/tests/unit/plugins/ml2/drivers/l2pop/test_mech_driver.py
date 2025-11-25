@@ -209,9 +209,9 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                        distributed=None, ctx=None):
         if ctx is None:
             ctx = self.adminContext
-        ctx.tenant_id = project_id
+        ctx.project_id = project_id
         router = {'name': TEST_ROUTER_ID, 'admin_state_up': True,
-                  'tenant_id': ctx.tenant_id}
+                  'tenant_id': ctx.project_id}
         if ha is not None:
             router['ha'] = ha
         if distributed is not None:
@@ -280,13 +280,13 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
     def _create_ha_router(self):
         self._setup_l3()
         router = self._create_router()
-        self._bind_router(router['id'], router['tenant_id'])
+        self._bind_router(router['id'], router['project_id'])
         return router
 
     def _create_dvr_router(self):
         self._setup_l3()
         router = self._create_router(distributed=True)
-        self._bind_router(router['id'], router['tenant_id'])
+        self._bind_router(router['id'], router['project_id'])
         return router
 
     def _verify_remove_fdb(self, expected, agent_id, device, host=None):

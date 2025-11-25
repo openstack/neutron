@@ -108,7 +108,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
                        ctx=None, admin_state_up=True):
         if ctx is None:
             ctx = self.admin_ctx
-        ctx.tenant_id = tenant_id
+        ctx.project_id = tenant_id
         router = {'name': 'router1',
                   'admin_state_up': admin_state_up,
                   'tenant_id': tenant_id}
@@ -271,7 +271,7 @@ class L3HATestCase(L3HATestFramework):
         self.assertTrue(router['ha'])
         self.assertTrue(router['distributed'])
         ha_network = self.plugin.get_ha_network(self.admin_ctx,
-                                                router['tenant_id'])
+                                                router['project_id'])
         self.assertIsNotNone(ha_network)
 
     def test_no_ha_router_create(self):
@@ -303,9 +303,9 @@ class L3HATestCase(L3HATestFramework):
         def jam_in_interface(*args, **kwargs):
             ctx = context.get_admin_context()
             net = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
             self.plugin.add_ha_port(
-                ctx, router['id'], net.network_id, router['tenant_id'])
+                ctx, router['id'], net.network_id, router['project_id'])
             registry.unsubscribe(jam_in_interface, resources.ROUTER,
                                  events.PRECOMMIT_DELETE)
         registry.subscribe(jam_in_interface, resources.ROUTER,
@@ -544,7 +544,7 @@ class L3HATestCase(L3HATestFramework):
     def test_vr_id_allocation_contraint_conflict(self):
         router = self._create_router()
         network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
 
         router_db = self.plugin._get_router(self.admin_ctx, router['id'])
         self.assertIsNone(self.plugin._ensure_vr_id(self.admin_ctx,
@@ -553,7 +553,7 @@ class L3HATestCase(L3HATestFramework):
     def test_vr_id_allocation_delete_router(self):
         router = self._create_router()
         network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
 
         allocs_before = self.plugin._get_allocated_vr_id(self.admin_ctx,
                                                          network.network_id)
@@ -570,7 +570,7 @@ class L3HATestCase(L3HATestFramework):
     def test_vr_id_allocation_router_migration(self):
         router = self._create_router()
         network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
 
         allocs_before = self.plugin._get_allocated_vr_id(self.admin_ctx,
                                                          network.network_id)
@@ -585,21 +585,21 @@ class L3HATestCase(L3HATestFramework):
 
         self._migrate_router(router['id'], False)
         self.assertIsNone(
-            self.plugin.get_ha_network(self.admin_ctx, router['tenant_id']))
+            self.plugin.get_ha_network(self.admin_ctx, router['project_id']))
 
     def test_migration_no_delete_ha_network_if_not_last_router(self):
         router = self._create_router()
         router2 = self._create_router()
 
         network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
         network2 = self.plugin.get_ha_network(self.admin_ctx,
-                                              router2['tenant_id'])
+                                              router2['project_id'])
         self.assertEqual(network.network_id, network2.network_id)
 
         self._migrate_router(router['id'], False)
         self.assertIsNotNone(
-            self.plugin.get_ha_network(self.admin_ctx, router2['tenant_id']))
+            self.plugin.get_ha_network(self.admin_ctx, router2['project_id']))
 
     def test_one_ha_router_one_not(self):
         self._create_router(ha=False)
@@ -625,13 +625,13 @@ class L3HATestCase(L3HATestFramework):
         ports_before = self.core_plugin.get_ports(
             self.admin_ctx, filters=device_filter)
         network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
 
         with mock.patch.object(l3_hamode, 'L3HARouterAgentPortBinding',
                                side_effect=ValueError):
             self.assertRaises(ValueError, self.plugin.add_ha_port,
                               self.admin_ctx, router['id'], network.network_id,
-                              router['tenant_id'])
+                              router['project_id'])
 
         ports_after = self.core_plugin.get_ports(
             self.admin_ctx, filters=device_filter)
@@ -664,10 +664,10 @@ class L3HATestCase(L3HATestFramework):
     def test_update_router_ha_interface_port_ip_not_allow(self):
         router = self._create_router()
         network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
         self.plugin.add_ha_port(
             self.admin_ctx, router['id'], network.network_id,
-            router['tenant_id'])
+            router['project_id'])
 
         device_filter = {
             'device_id': [router['id']],
@@ -686,10 +686,10 @@ class L3HATestCase(L3HATestFramework):
     def test_delete_router_ha_interface_port(self):
         router = self._create_router()
         network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
+                                             router['project_id'])
         binding = self.plugin.add_ha_port(
             self.admin_ctx, router['id'], network.network_id,
-            router['tenant_id'])
+            router['project_id'])
 
         self.assertRaises(n_exc.ServicePortInUse,
                           self.core_plugin.delete_port,
@@ -869,18 +869,18 @@ class L3HATestCase(L3HATestFramework):
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
         # Check that HA networks created for each tenant
-        self.assertIn('HA network tenant %s' % router1['tenant_id'],
+        self.assertIn('HA network tenant %s' % router1['project_id'],
                       nets_before)
-        self.assertIn('HA network tenant %s' % router2['tenant_id'],
+        self.assertIn('HA network tenant %s' % router2['project_id'],
                       nets_before)
         # Delete router1
         self.plugin.delete_router(self.admin_ctx, router1['id'])
         nets_after = [net['name'] for net in
                       self.core_plugin.get_networks(self.admin_ctx)]
         # Check that HA network for tenant1 is deleted and for tenant2 is not.
-        self.assertNotIn('HA network tenant %s' % router1['tenant_id'],
+        self.assertNotIn('HA network tenant %s' % router1['project_id'],
                          nets_after)
-        self.assertIn('HA network tenant %s' % router2['tenant_id'],
+        self.assertIn('HA network tenant %s' % router2['project_id'],
                       nets_after)
 
     def test_ha_network_is_not_delete_if_ha_router_is_present(self):
@@ -890,12 +890,12 @@ class L3HATestCase(L3HATestFramework):
         router2 = self._create_router()
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['tenant_id'],
+        self.assertIn('HA network tenant %s' % router1['project_id'],
                       nets_before)
         self.plugin.delete_router(self.admin_ctx, router2['id'])
         nets_after = [net['name'] for net in
                       self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['tenant_id'],
+        self.assertIn('HA network tenant %s' % router1['project_id'],
                       nets_after)
 
     def test_ha_network_delete_ha_and_non_ha_router(self):
@@ -905,30 +905,30 @@ class L3HATestCase(L3HATestFramework):
         router2 = self._create_router()
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['tenant_id'],
+        self.assertIn('HA network tenant %s' % router1['project_id'],
                       nets_before)
         self.plugin.delete_router(self.admin_ctx, router2['id'])
         nets_after = [net['name'] for net in
                       self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertNotIn('HA network tenant %s' % router1['tenant_id'],
+        self.assertNotIn('HA network tenant %s' % router1['project_id'],
                          nets_after)
 
     def _test_ha_network_is_not_deleted_raise_exception(self, exception):
         router1 = self._create_router()
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['tenant_id'],
+        self.assertIn('HA network tenant %s' % router1['project_id'],
                       nets_before)
         ha_network = self.plugin.get_ha_network(self.admin_ctx,
-                                                router1['tenant_id'])
+                                                router1['project_id'])
         with mock.patch.object(self.plugin, '_delete_ha_network',
                                side_effect=exception):
             self.plugin.safe_delete_ha_network(self.admin_ctx,
                                                ha_network,
-                                               router1['tenant_id'])
+                                               router1['project_id'])
             nets_after = [net['name'] for net in
                           self.core_plugin.get_networks(self.admin_ctx)]
-            self.assertIn('HA network tenant %s' % router1['tenant_id'],
+            self.assertIn('HA network tenant %s' % router1['project_id'],
                           nets_after)
 
     def test_ha_network_is_not_deleted_if_another_ha_router_is_created(self):

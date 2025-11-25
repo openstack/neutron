@@ -83,11 +83,11 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
         with self.network() as n:
             sg = self._assert_object_received(securitygroup.SecurityGroup,
                                               event='updated')
-            self.assertEqual(sg.tenant_id, n['network']['tenant_id'])
+            self.assertEqual(sg.project_id, n['network']['project_id'])
             sgr = self.plugin.create_security_group_rule(
                 self.ctx,
                 {'security_group_rule': {'security_group_id': sg.id,
-                                         'tenant_id': sg.tenant_id,
+                                         'tenant_id': sg.project_id,
                                          'port_range_min': None,
                                          'port_range_max': None,
                                          'remote_ip_prefix': None,

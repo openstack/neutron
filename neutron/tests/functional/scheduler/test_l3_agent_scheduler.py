@@ -53,7 +53,7 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.l3_plugin = l3_router_plugin.L3RouterPlugin()
         directory.add_plugin(plugin_constants.L3, self.l3_plugin)
         self.adminContext = context.get_admin_context()
-        self.adminContext.tenant_id = _uuid()
+        self.adminContext.project_id = _uuid()
 
     def _create_l3_agent(self, host, context, agent_mode='legacy',
                          state=True, ext_net_id=''):
@@ -63,7 +63,7 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
     def _create_router(self, name):
         router = {'name': name, 'admin_state_up': True,
-                  'tenant_id': self.adminContext.tenant_id}
+                  'tenant_id': self.adminContext.project_id}
         return self.l3_plugin.create_router(
             self.adminContext, {'router': router})
 
@@ -309,7 +309,7 @@ class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.l3_plugin.router_scheduler = None
         directory.add_plugin(plugin_constants.L3, self.l3_plugin)
         self.adminContext = context.get_admin_context()
-        self.adminContext.tenant_id = '_func_test_tenant_'
+        self.adminContext.project_id = '_func_test_project_'
         # Extend network HA extension.
         rname = network_ha.COLLECTION_NAME
         attributes.RESOURCES[rname].update(
@@ -566,7 +566,7 @@ class L3DVRSchedulerBaseTest(L3SchedulerBaseTest):
 
     def _create_router(self, name, distributed, ext_net_id=None):
         router = {'name': name, 'admin_state_up': True,
-                  'tenant_id': self.adminContext.tenant_id,
+                  'tenant_id': self.adminContext.project_id,
                   'distributed': distributed}
 
         if ext_net_id:
@@ -576,7 +576,7 @@ class L3DVRSchedulerBaseTest(L3SchedulerBaseTest):
                                             {'router': router})
 
     def _create_network(self, net_id, name=None, external=False):
-        network_dict = {'tenant_id': self.adminContext.tenant_id,
+        network_dict = {'tenant_id': self.adminContext.project_id,
                         'id': net_id,
                         'name': name,
                         'admin_state_up': True,
@@ -592,7 +592,7 @@ class L3DVRSchedulerBaseTest(L3SchedulerBaseTest):
         return network
 
     def _create_subnet(self, sub_id, network_id, cidr, gw_ip, name='test_sub'):
-        subnet = {'tenant_id': self.adminContext.tenant_id,
+        subnet = {'tenant_id': self.adminContext.project_id,
                   'id': sub_id,
                   'name': name,
                   'network_id': network_id,

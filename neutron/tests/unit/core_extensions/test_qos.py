@@ -131,7 +131,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
                            qos_consts.QOS_POLICY_ID: qos_policy_id}
             old_qos_policy = mock.MagicMock()
             old_qos_policy.shared = shared
-            old_qos_policy.tenant_id = policy_project_id
+            old_qos_policy.project_id = policy_project_id
             self.policy_m.get_port_policy = mock.Mock(
                 return_value=old_qos_policy)
             self.core_extension.process_fields(
@@ -145,19 +145,19 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
         self._process_port_updated_policy(
             context=self.non_admin_context,
             shared=False,
-            policy_project_id=self.non_admin_context.tenant_id)
+            policy_project_id=self.non_admin_context.project_id)
 
     def test_process_resource_port_updated_admin_remove_provided_policy(self):
         self._process_port_updated_policy(
             context=self.context,
             shared=False,
-            policy_project_id=self.non_admin_context.tenant_id)
+            policy_project_id=self.non_admin_context.project_id)
 
     def test_process_resource_port_updated_remove_shared_policy(self):
         self._process_port_updated_policy(
             context=self.non_admin_context,
             shared=True,
-            policy_project_id=self.context.tenant_id)
+            policy_project_id=self.context.project_id)
 
     def test_process_resource_port_updated_remove_provided_policy(self):
         self.policy_m.is_accessible.return_value = False
@@ -165,7 +165,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
                           self._process_port_updated_policy,
                           context=self.non_admin_context,
                           shared=False,
-                          policy_project_id=self.context.tenant_id)
+                          policy_project_id=self.context.project_id)
 
     def test_process_resource_update_network_updated_no_policy(self):
         with self._mock_plugin_loaded(True):
@@ -228,7 +228,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
                               qos_consts.QOS_POLICY_ID: qos_policy_id}
             old_qos_policy = mock.MagicMock()
             old_qos_policy.shared = shared
-            old_qos_policy.tenant_id = policy_project_id
+            old_qos_policy.project_id = policy_project_id
             self.policy_m.get_network_policy.return_value = old_qos_policy
             self.core_extension.process_fields(
                 context, base_core.NETWORK, base_core.EVENT_UPDATE,
@@ -240,19 +240,19 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
         self._process_network_updated_policy(
             context=self.non_admin_context,
             shared=True,
-            policy_project_id=self.context.tenant_id)
+            policy_project_id=self.context.project_id)
 
     def test_process_fields_network_updated_remove_own_policy(self):
         self._process_network_updated_policy(
             context=self.non_admin_context,
             shared=True,
-            policy_project_id=self.non_admin_context.tenant_id)
+            policy_project_id=self.non_admin_context.project_id)
 
     def test_process_fields_update_network_admin_remove_provided_policy(self):
         self._process_network_updated_policy(
             context=self.context,
             shared=True,
-            policy_project_id=self.non_admin_context.tenant_id)
+            policy_project_id=self.non_admin_context.project_id)
 
     def test_process_fields_update_network_remove_provided_policy(self):
         self.policy_m.is_accessible.return_value = False
@@ -260,7 +260,7 @@ class QosCoreResourceExtensionTestCase(base.BaseTestCase):
                           self._process_network_updated_policy,
                           context=self.non_admin_context,
                           shared=False,
-                          policy_project_id=self.context.tenant_id)
+                          policy_project_id=self.context.project_id)
 
     def test_process_fields_create_network(self):
         with self._mock_plugin_loaded(True):

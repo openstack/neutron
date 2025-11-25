@@ -68,7 +68,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_network(self, context, network):
         with db_api.CONTEXT_WRITER.using(context):
-            project_id = network['network'].get('tenant_id')
+            project_id = network['network'].get('project_id')
             self._ensure_default_security_group(context, project_id)
             neutron_db = super().create_network(
                 context, network)

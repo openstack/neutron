@@ -48,7 +48,7 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             address_group['address_group'][k] = v
 
         req = self.new_create_request('address-groups', address_group)
-        neutron_context = context.Context('', kwargs.get('tenant_id',
+        neutron_context = context.Context('', kwargs.get('project_id',
                                                          self._project_id))
         req.environ['neutron.context'] = neutron_context
         res = req.get_response(self.ext_api)

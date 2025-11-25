@@ -118,7 +118,8 @@ class FakePortDB:
     def get_port(self, context, port_id):
         for port in self._port_list:
             if port['id'] == port_id:
-                if port['tenant_id'] == context.project_id or context.is_admin:
+                if (port['project_id'] == context.project_id or
+                        context.is_admin):
                     return port
                 break
 
@@ -130,7 +131,7 @@ class FakePortDB:
             query_filters.update(filters)
 
         if not context.is_admin:
-            query_filters['tenant_id'] = [context.project_id]
+            query_filters['project_id'] = [context.project_id]
 
         result = self._get_query_answer(self._port_list, query_filters)
         return result
@@ -214,8 +215,8 @@ class L3SchedulerBaseMixin:
                            fmt=None, tenant_id=None,
                            external_gateway_info=None,
                            subnet=None, **kwargs):
-        tenant_id = tenant_id or self._project_id
-        router = self._make_router(fmt or self.fmt, tenant_id, name,
+        project_id = tenant_id or self._project_id
+        router = self._make_router(fmt or self.fmt, project_id, name,
                                    admin_state_up, external_gateway_info,
                                    **kwargs)
         self._add_external_gateway_to_router(
@@ -1474,7 +1475,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         return rb_obj.RouterL3AgentBinding.get_objects(context, **args)
 
     def _create_ha_router(self, ha=True, project_id='project1', az_hints=None):
-        self.adminContext.tenant_id = project_id
+        self.adminContext.project_id = project_id
         router = {'name': 'router1', 'admin_state_up': True,
                   'tenant_id': project_id}
         if ha is not None:
@@ -1504,7 +1505,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                     autospec=True):
                 self.plugin.router_scheduler.create_ha_port_and_bind(
                     self.plugin, self.adminContext,
-                    router['id'], router['tenant_id'], agent)
+                    router['id'], router['project_id'], agent)
 
     def test_create_ha_port_and_bind_wont_create_redundant_ports(self):
         # When migrating from HA to DVR+HA router, create_ha_port_and_bind
@@ -1526,7 +1527,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
 
         self.plugin.router_scheduler.create_ha_port_and_bind(
             self.plugin, self.adminContext, router['id'],
-            router['tenant_id'], l3_dvr_snat_agent)
+            router['project_id'], l3_dvr_snat_agent)
         filters = {'device_owner': ['network:router_ha_interface'],
                    'device_id': [router['id']]}
         self.core_plugin = directory.get_plugin()
@@ -1548,7 +1549,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                         self.plugin, 'safe_delete_ha_network') as sd_ha_net:
                 self.plugin.router_scheduler.create_ha_port_and_bind(
                     self.plugin, self.adminContext,
-                    router['id'], router['tenant_id'], agent)
+                    router['id'], router['project_id'], agent)
                 self.assertTrue(sd_ha_net.called)
 
     def test_create_ha_port_and_bind_bind_router_returns_None(self):
@@ -1560,7 +1561,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
             with mock.patch.object(self.plugin, 'add_ha_port') as add_ha_port:
                 self.plugin.router_scheduler.create_ha_port_and_bind(
                     self.plugin, self.adminContext,
-                    router['id'], router['tenant_id'], agent)
+                    router['id'], router['project_id'], agent)
                 self.assertFalse(add_ha_port.called)
 
 

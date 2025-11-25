@@ -582,7 +582,7 @@ class TestDHCPSchedulerWithNetworkAccessibility(
                          providernet.NETWORK_TYPE: 'vlan',
                          providernet.PHYSICAL_NETWORK: 'physnet1',
                          providernet.SEGMENTATION_ID: 1,
-                         'tenant_id': 'tenant_one',
+                         'tenant_id': 'project_one',
                          'admin_state_up': True,
                          'shared': True}})
 
@@ -597,7 +597,7 @@ class TestDHCPSchedulerWithNetworkAccessibility(
                  'allocation_pools': constants.ATTR_NOT_SPECIFIED,
                  'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
                  'host_routes': constants.ATTR_NOT_SPECIFIED,
-                 'tenant_id': 'tenant_one',
+                 'tenant_id': 'project_one',
                  'enable_dhcp': True}})
 
         self.plugin.schedule_network(admin_context, net)

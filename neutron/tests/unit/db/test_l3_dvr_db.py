@@ -63,7 +63,8 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _create_router(self, router):
         with db_api.CONTEXT_WRITER.using(self.ctx):
-            return self.mixin._create_router_db(self.ctx, router, 'foo_tenant')
+            return self.mixin._create_router_db(self.ctx, router,
+                                                'foo_project')
 
     def create_port(self, net_id, port_info):
         with db_api.CONTEXT_WRITER.using(self.ctx):
@@ -1186,7 +1187,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _test_undo_router_interface_change_on_csnat_error(self, fail_revert):
         router, subnet_v4, subnet_v6 = self._setup_router_with_v4_and_v6()
         net = {'network': {'id': subnet_v6['subnet']['network_id'],
-                           'tenant_id': subnet_v6['subnet']['tenant_id']}}
+                           'tenant_id': subnet_v6['subnet']['project_id']}}
         orig_update = self.mixin._core_plugin.update_port
 
         def update_port(*args, **kwargs):

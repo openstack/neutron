@@ -483,7 +483,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=network2['network']['id'],
-                                  tenant_id=network2['network']['tenant_id'],
+                                  tenant_id=network2['network']['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.0.0/24',
                                   segment_id=segment['segment']['id'])
@@ -497,7 +497,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=net['id'],
-                                  tenant_id=net['tenant_id'],
+                                  tenant_id=net['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.0.0/24',
                                   segment_id=segment_id)
@@ -514,7 +514,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=net['id'],
-                                  tenant_id=net['tenant_id'],
+                                  tenant_id=net['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.1.0/24',
                                   segment_id=segment['segment']['id'])
@@ -535,7 +535,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         res = self._create_subnet(
             self.fmt,
             net_id=net['id'],
-            tenant_id=net['tenant_id'],
+            tenant_id=net['project_id'],
             gateway_ip=constants.ATTR_NOT_SPECIFIED,
             cidr='10.0.1.0/24',
             service_types=[constants.DEVICE_OWNER_ROUTED])
@@ -557,7 +557,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=net['id'],
-                                  tenant_id=net['tenant_id'],
+                                  tenant_id=net['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.0.0/24',
                                   segment_id=segment['id'])
@@ -1227,9 +1227,10 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
     def test_port_create_with_segment_subnets(self):
         """No binding information is provided, defer IP allocation"""
         network, segment, subnet = self._create_test_segment_with_subnet()
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'])
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'])
         res = self.deserialize(self.fmt, response)
         # Don't allocate IPs in this case because we didn't give binding info
         self.assertEqual(0, len(res['port']['fixed_ips']))
@@ -1237,13 +1238,14 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
     def test_port_create_fixed_ips_with_segment_subnets_no_binding_info(self):
         """Fixed IP provided and no binding info, do not defer IP allocation"""
         network, segment, subnet = self._create_test_segment_with_subnet()
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     fixed_ips=[
-                                         {'subnet_id': subnet['subnet']['id']}
-                                     ])
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            fixed_ips=[
+                {'subnet_id': subnet['subnet']['id']}
+            ])
         res = self.deserialize(self.fmt, response)
         # We gave fixed_ips, allocate IPs in this case despite no binding info
         self._validate_immediate_ip_allocation(res['port']['id'])
@@ -1265,12 +1267,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             (segments[1]['segment']['id'], 'otherhost'),
             (segments[0]['segment']['id'], 'thirdhost')])
 
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
         self._validate_immediate_ip_allocation(res['port']['id'])
 
@@ -1288,12 +1291,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Map the host to the segment
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
 
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
 
         # No subnets, so no allocation.  But, it shouldn't be an error.
@@ -1315,12 +1319,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Map the host to the segment
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
 
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
 
         res = self.deserialize(self.fmt, response)
         self._validate_immediate_ip_allocation(res['port']['id'])
@@ -1331,12 +1336,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
     def test_port_create_on_unconnected_host(self):
         """Binding information provided, host not connected to any segment"""
         network, segment, _subnet = self._create_test_segment_with_subnet()
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
 
         self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
@@ -1345,12 +1351,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
 
         # Ensure that mapping the segment to other hosts doesn't trip it up
         self._setup_host_mappings([(segment['segment']['id'], 'otherhost')])
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
 
         self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
@@ -1365,12 +1372,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         self._setup_host_mappings([(segments[0]['segment']['id'], 'fakehost'),
                                    (segments[1]['segment']['id'], 'fakehost')])
 
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         self.deserialize(self.fmt, response)
 
         # multi segments supported since Antelope.
@@ -1430,7 +1438,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['tenant_id'],
+            tenant_id=network['network']['project_id'],
             is_admin=True,
             **kwargs)
         port = self.deserialize(self.fmt, response)
@@ -1473,12 +1481,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             pass
 
         # Create a bound port with no IP address (since there is no subnet)
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         port = self.deserialize(self.fmt, response)
         request = self.new_show_request('ports', port['port']['id'])
         response = self.deserialize(self.fmt, request.get_response(self.api))
@@ -1510,12 +1519,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         self._setup_host_mappings([(segment['segment']['id'], 'fakehost')])
 
         # Create a bound port with no IP address (since there is no subnet)
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         port = self.deserialize(self.fmt, response)
 
         # Create the subnet and try to update the port to get an IP
@@ -1553,10 +1563,11 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         self.assertNotEqual(0, len(ips))
 
     def _create_deferred_ip_port(self, network):
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True)
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True)
         port = self.deserialize(self.fmt, response)
         ips = port['port']['fixed_ips']
         self.assertEqual(0, len(ips))
@@ -1609,11 +1620,12 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             with self.subnet(network=network):
                 pass
 
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     fixed_ips=[],
-                                     is_admin=True)
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            fixed_ips=[],
+            is_admin=True)
         port = self.deserialize(self.fmt, response)
         ips = port['port']['fixed_ips']
         self.assertEqual(0, len(ips))
@@ -1778,12 +1790,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
                                    (segments[1]['segment']['id'], 'fakehost')])
 
         # Create a bound port with an IP address
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
         port = self.deserialize(self.fmt, response)
 
@@ -1805,12 +1818,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
                                    (segments[1]['segment']['id'], 'fakehost')])
 
         # Create a bound port with an IP address
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'})
         self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
         port = self.deserialize(self.fmt, response)
 
@@ -1886,12 +1900,13 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
 
         # Create a port with host ID, validate immediate allocation on subnets
         # with correct segment_id.
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     is_admin=True,
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost_a'})
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            is_admin=True,
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost_a'})
         res = self.deserialize(self.fmt, response)
         self._validate_immediate_ip_allocation(res['port']['id'])
         # Since host mapped to segment_a, IP's must come from subnets:
@@ -2462,8 +2477,8 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.mock_p_client.reset_mock()
         self.mock_n_client.reset_mock()
 
-    def _create_test_port(self, network_id, tenant_id, subnet, **kwargs):
-        port = self._make_port(self.fmt, network_id, tenant_id=tenant_id,
+    def _create_test_port(self, network_id, project_id, subnet, **kwargs):
+        port = self._make_port(self.fmt, network_id, tenant_id=project_id,
                                as_admin=True, arg_list=(portbindings.HOST_ID,),
                                **kwargs)
         self.batch_notifier._notify()
@@ -2477,7 +2492,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         inventory, original_inventory = self._get_inventory(total, reserved)
         self.mock_p_client.get_inventory.return_value = inventory
         port = self._create_test_port(network['network']['id'],
-                                      network['network']['tenant_id'], subnet,
+                                      network['network']['project_id'], subnet,
                                       **kwargs)
         return segment['segment']['id'], original_inventory, port
 
@@ -2545,7 +2560,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         if compute_owned:
             kwargs['device_owner'] = constants.DEVICE_OWNER_COMPUTE_PREFIX
         port = self._create_test_port(first_subnet['subnet']['network_id'],
-                                      first_subnet['subnet']['tenant_id'],
+                                      first_subnet['subnet']['project_id'],
                                       first_subnet, **kwargs)
         if dhcp_owned or compute_owned:
             self.mock_p_client.get_inventory.assert_not_called()
