@@ -152,6 +152,13 @@
         override-checkout: main
 
 - job:
+    name: neutron-functional-with-ovsdbapp-master
+    branches: ^master$
+    parent: neutron-functional
+    required-projects:
+      - openstack/ovsdbapp
+
+- job:
     name: openstack-tox-py312-with-sqlalchemy-master
     branches: ^master$
     parent: openstack-tox-py312

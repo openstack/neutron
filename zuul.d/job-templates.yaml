@@ -96,6 +96,7 @@
         - neutron-functional-fips
         - neutron-functional-with-pyroute2-master
         - neutron-functional-with-sqlalchemy-master
+        - neutron-functional-with-ovsdbapp-master
         - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
