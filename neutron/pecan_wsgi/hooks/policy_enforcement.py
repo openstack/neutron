@@ -16,6 +16,7 @@
 from neutron_lib import constants as const
 from oslo_log import log as logging
 from oslo_policy import policy as oslo_policy
+from oslo_serialization import jsonutils
 from oslo_utils import excutils
 from pecan import hooks
 import webob
@@ -188,6 +189,14 @@ class PolicyHook(hooks.PecanHook):
             # we have to set the status_code here to prevent the catch_errors
             # middleware from turning this into a 500.
             state.response.status_code = 404
+            # replace the original body on NotFound body
+            error_message = {
+                'type': 'HTTPNotFound',
+                'message': 'The resource could not be found.',
+                'detail': ''
+            }
+            state.response.text = jsonutils.dumps(error_message)
+            state.response.content_type = 'application/json'
             return
 
         if is_single:
