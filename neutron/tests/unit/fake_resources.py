@@ -19,6 +19,7 @@ from unittest import mock
 
 from neutron_lib.api.definitions import l3
 from neutron_lib import constants as n_const
+from neutron_lib.plugins.ml2 import api
 from neutron_lib.utils import net
 from oslo_utils import uuidutils
 
@@ -344,7 +345,7 @@ class FakeNetwork:
                             loaded=True)
 
 
-class FakeNetworkContext:
+class FakeNetworkContext(api.NetworkContext):
     def __init__(self, network, segments):
         self.fake_network = network
         self.fake_segments = segments
