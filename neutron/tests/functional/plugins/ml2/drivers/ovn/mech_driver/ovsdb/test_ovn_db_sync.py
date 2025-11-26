@@ -1157,7 +1157,7 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                 pass
         return acl_utils.filter_acl_dict(acl_to_compare, extra_fields)
 
-    def _validate_acls(self, should_match=True):
+    def _validate_acls(self, should_match=True, db_duplicate_port=None):
         # Get the neutron DB ACLs.
         db_acls = []
 
@@ -1205,6 +1205,19 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         # Values taken out from list for comparison, since ACLs from OVN DB
         # have certain values on a list of just one object
         if should_match:
+            if db_duplicate_port:
+                # If we have a duplicate port, that indicates there are two
+                # DB entries that map to the same ACL. Remove the extra from
+                # our comparison.
+                dup_acl = None
+                for acl in db_acls:
+                    if (str(db_duplicate_port) in acl['match'] and
+                            acl not in plugin_acls):
+                        dup_acl = acl
+                        break
+                # There should have been a duplicate
+                self.assertIsNotNone(dup_acl)
+                db_acls.remove(dup_acl)
             for acl in plugin_acls:
                 if isinstance(acl['severity'], list) and acl['severity']:
                     acl['severity'] = acl['severity'][0]
@@ -1802,13 +1815,16 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
         nb_synchronizer.sync_fip_qos_policies(ctx)
         self._validate_qos_records()
 
-    def _create_security_group_rule(self, sg_id, direction, tcp_port):
+    def _create_security_group_rule(self, sg_id, direction, tcp_port,
+                                    remote_ip_prefix=None):
         data = {'security_group_rule': {'security_group_id': sg_id,
                                         'direction': direction,
                                         'protocol': constants.PROTO_NAME_TCP,
                                         'ethertype': constants.IPv4,
                                         'port_range_min': tcp_port,
                                         'port_range_max': tcp_port}}
+        if remote_ip_prefix:
+            data['security_group_rule']['remote_ip_prefix'] = remote_ip_prefix
         req = self.new_create_request('security-group-rules', data, self.fmt)
         res = req.get_response(self.api)
         sgr = self.deserialize(self.fmt, res)
@@ -1878,6 +1894,20 @@ class TestOvnNbSync(testlib_api.MySQLTestCaseMixin,
                                     log_event=log_const.ALL_EVENT)
         self._test_sync_acls_helper(test_log=True,
                                     log_event=log_const.DROP_EVENT)
+
+    def test_sync_acls_overlapping_cidr(self):
+        data = {'security_group': {'name': 'sgdup'}}
+        sg_req = self.new_create_request('security-groups', data)
+        res = sg_req.get_response(self.api)
+        sg = self.deserialize(self.fmt, res)['security_group']
+
+        # Add SG rules that map to the same ACL due to normalizing the cidr
+        for ip_suffix in range(10, 12):
+            remote_ip_prefix = '192.168.0.' + str(ip_suffix) + '/24'
+            self._create_security_group_rule(
+                sg['id'], 'ingress', 9000, remote_ip_prefix=remote_ip_prefix)
+
+        self._validate_acls(db_duplicate_port=9000)
 
     def test_sync_fip_dnat_rules(self):
         res = self._create_network(self.fmt, 'n1_ext', True, as_admin=True,
