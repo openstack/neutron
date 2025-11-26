@@ -158,6 +158,11 @@ class OVNDriver(base.DriverBase):
         for pg in pgs:
             meter_name = self.meter_name
             if pg["name"] != ovn_const.OVN_DROP_PORT_GROUP_NAME:
+                if ovn_const.OVN_SG_EXT_ID_KEY not in pg["external_ids"]:
+                    LOG.info("Port Group %s is not part of any security "
+                             "group, skipping its network log "
+                             "setting...", pg["name"])
+                    continue
                 sg = sg_obj.SecurityGroup.get_sg_by_id(context,
                     pg["external_ids"][ovn_const.OVN_SG_EXT_ID_KEY])
                 if not sg:
@@ -426,6 +431,11 @@ class OVNDriver(base.DriverBase):
         for pg in pgs:
             meter_name = self.meter_name
             if pg['name'] != ovn_const.OVN_DROP_PORT_GROUP_NAME:
+                if ovn_const.OVN_SG_EXT_ID_KEY not in pg["external_ids"]:
+                    LOG.info("Port Group %s is not part of any security "
+                             "group, skipping its network log "
+                             "setting...", pg["name"])
+                    continue
                 sg = sg_obj.SecurityGroup.get_sg_by_id(context,
                         pg['external_ids'][ovn_const.OVN_SG_EXT_ID_KEY])
                 if not sg:
