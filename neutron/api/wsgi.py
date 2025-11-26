@@ -22,7 +22,6 @@ from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from oslo_service import sslutils
 from oslo_service import wsgi
 from oslo_utils import encodeutils
 from oslo_utils import excutils
@@ -30,9 +29,7 @@ import webob.dec
 import webob.exc
 
 from neutron._i18n import _
-from neutron.common import config
 from neutron.conf import wsgi as wsgi_config
-from neutron import worker as neutron_worker
 
 CONF = cfg.CONF
 wsgi_config.register_socket_opts()
@@ -48,43 +45,9 @@ def encode_body(body):
     return encodeutils.to_utf8(body)
 
 
-class WorkerService(neutron_worker.NeutronBaseWorker):
-    """Wraps a worker to be handled by ProcessLauncher"""
-    def __init__(self, service, application, set_proctitle, disable_ssl=False,
-                 worker_process_count=0, desc=None):
-        super().__init__(worker_process_count,
-                         set_proctitle)
-
-        self._service = service
-        self._application = application
-        self._disable_ssl = disable_ssl
-        self._server = None
-        self.desc = desc
-
-    def start(self, desc=None):
-        desc = desc or self.desc
-        super().start(desc=desc)
-        # When api worker is stopped it kills the eventlet wsgi server which
-        # internally closes the wsgi server socket object. This server socket
-        # object becomes not usable which leads to "Bad file descriptor"
-        # errors on service restart.
-        # Duplicate a socket object to keep a file descriptor usable.
-        dup_sock = self._service._socket.dup()
-        if CONF.use_ssl and not self._disable_ssl:
-            dup_sock = sslutils.wrap(CONF, dup_sock)
-        self._server = self._service.pool.spawn(self._service._run,
-                                                self._application,
-                                                dup_sock)
-
-    def wait(self):
-        pass
-
-    def stop(self):
-        pass
-
-    @staticmethod
-    def reset():
-        config.reset_service()
+class WorkerService:
+    """A dummy class used as a trigger in callbacks
+    """
 
 
 class Request(wsgi.Request):
