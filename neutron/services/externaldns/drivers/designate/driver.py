@@ -163,8 +163,6 @@ class Designate(driver.ExternalDNSService):
                 dns_domain, criterion={"name": "%s" % name})
         except (d_exc.NotFound, d_exc.Forbidden):
             raise dns_exc.DNSDomainNotFound(dns_domain=dns_domain)
-        ids = [rec['id'] for rec in recordsets]
-        ips = [str(ip) for rec in recordsets for ip in rec['records']]
-        if set(ips) != set(records):
-            raise dns_exc.DuplicateRecordSet(dns_name=name)
-        return ids
+        return [rec['id'] for rec in recordsets
+                for ip in rec['records']
+                if ip in records]
