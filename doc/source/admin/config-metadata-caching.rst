@@ -6,7 +6,8 @@ Metadata Service Caching
 
 The OpenStack Networking service proxies requests that VMs send to the
 Compute service to obtain their metadata. This functionality is provided by the
-``neutron-metadata-agent`` or ``neutron-ovn-metadata-agent``, depending on the
+``neutron-metadata-agent``, ``neutron-ovn-metadata-agent`` or
+``neutron-ovn-agent`` with the metadata extension, depending on the
 ML2 backend used in the deployment.
 To obtain metadata from the Compute service, the instance ID needs to be sent
 to the ``nova-metadata-api``.
@@ -18,8 +19,8 @@ out the ID of the instance which is asking for metadata:
   details about a port with a specific fixed IP address connected to the given
   network or router (proxy service is spawned for each Neutron router or
   Neutron network),
-* ``neutron-ovn-metadata-agent`` checks the instance ID in the port details of
-  the OVN Southband DB.
+* ``neutron-ovn-metadata-agent`` and ``neutron-ovn-agent`` check the
+  instance ID in the port details of the OVN Southbound DB.
 
 For large scale deployments which are using the ``neutron-metadata-agent`` this
 may cause significant load on the RPC bus and neutron-server, since by default
