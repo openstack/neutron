@@ -782,9 +782,6 @@ class TestChassisOVNAgentWriteEvent(base.BaseTestCase):
         super().setUp()
         self.driver = mock.MagicMock()
         self.event = ovsdb_monitor.ChassisOVNAgentWriteEvent(self.driver)
-
-        self.chassis_private_table = fakes.FakeOvsdbTable.create_one_ovsdb_table(
-            attrs={'name': 'Chassis_Private'})
         self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
 
     def test_match_fn_no_agent_id(self):

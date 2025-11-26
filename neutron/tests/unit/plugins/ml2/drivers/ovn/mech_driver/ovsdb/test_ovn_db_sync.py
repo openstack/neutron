@@ -147,7 +147,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                        'security_group_id': 'sg2'}],
              'name': 'all-tcpe'}]
 
-        self.sg_port_groups_ovn = [mock.Mock(), mock.Mock(), mock.Mock(), mock.Mock()]
+        self.sg_port_groups_ovn = [mock.Mock(), mock.Mock(), mock.Mock(),
+                                   mock.Mock()]
         self.sg_port_groups_ovn[0].configure_mock(
             name='pg_sg1',
             external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg1'},
@@ -1251,7 +1252,8 @@ class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                return_value=hosts_in_neutron) as mock_ghmws:
             ovn_sb_synchronizer.sync_hostname_and_physical_networks(mock.ANY)
             mock_ghmws.assert_called_once_with(
-                mock.ANY, include_agent_types=set(ovn_const.OVN_CONTROLLER_TYPES))
+                mock.ANY,
+                include_agent_types=set(ovn_const.OVN_CONTROLLER_TYPES))
             all_hosts = set(hostname_with_physnets.keys()) | hosts_in_neutron
             self.assertEqual(
                 len(all_hosts),

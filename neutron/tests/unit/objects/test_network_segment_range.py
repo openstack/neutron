@@ -258,6 +258,7 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         allocated = []
         for allocation in random.sample(
                 allocations, k=(num_of_allocations or NUM_ALLOCATIONS)):
+            # pylint: disable=unsubscriptable-object
             segment = {k: allocation[k] for k in primary_keys}
             allocated.append(segment)
             self.assertEqual(1, subclass.allocate(self.context, **segment))
