@@ -302,7 +302,7 @@ class OVNClient:
         if up:
             if not port_up:
                 LOG.warning('Logical_Switch_Port %s host information not '
-                            'updated, the port state is down')
+                            'updated, the port state is down', db_port.id)
                 return
 
             if not db_port.port_bindings:
@@ -328,7 +328,7 @@ class OVNClient:
         else:
             if port_up:
                 LOG.warning('Logical_Switch_Port %s host information not '
-                            'removed, the port state is up')
+                            'removed, the port state is up', db_port.id)
                 return
 
             cmd.append(
