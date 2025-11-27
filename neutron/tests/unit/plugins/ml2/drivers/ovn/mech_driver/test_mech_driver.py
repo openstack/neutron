@@ -3214,17 +3214,23 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                       'mac_address': port2['mac_address']}],
                     port2['allowed_address_pairs'])
 
-                # Now test the same but giving a subnet as allowed address pair
-                self._make_port(
+                # Now test the same but giving a subnet as allowed address
+                # pair, this should be fine as we treat only /32 and /128 IPs
+                # in allowed_address_pairs as Virtual IPs, there is no block
+                # anything when bigger CIDR is set as that don't break metadata
+                new_port = self._make_port(
                     self.fmt, network['network']['id'],
                     allowed_address_pairs=[{'ip_address': '10.0.0.2/26'}],
-                    expected_res_status=exc.HTTPBadRequest.code,
-                    arg_list=('allowed_address_pairs',))
+                    arg_list=('allowed_address_pairs',))['port']
                 port3 = self._show('ports', port1['id'])['port']
                 self.assertEqual(
                     [{'ip_address': '10.0.0.3',
                       'mac_address': port3['mac_address']}],
                     port3['allowed_address_pairs'])
+                self.assertEqual(
+                    [{'ip_address': '10.0.0.2/26',
+                      'mac_address': new_port['mac_address']}],
+                    new_port['allowed_address_pairs'])
 
 
 class OVNMechanismDriverTestCase(MechDriverSetupBase,
