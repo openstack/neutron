@@ -169,6 +169,31 @@ class TestDesignateDriver(base.BaseTestCase):
         )
         self.admin_client.recordsets.delete.assert_not_called()
 
+    def test_delete_single_record_from_two_records(self):
+        # Set up two records similar to test_delete_record_set
+        self.client.recordsets.list.return_value = [
+            {'id': 123, 'records': ['192.168.0.10']},
+            {'id': 456, 'records': ['2001:db8:0:1::1']}
+        ]
+
+        cfg.CONF.set_override(
+            'allow_reverse_dns_lookup', False, group='designate'
+        )
+
+        # Delete only the first record (IPv4) out of the two
+        self.driver.delete_record_set(
+            self.context, 'example.test.', 'test',
+            ['192.168.0.10']
+        )
+
+        # Verify that only the IPv4 record was deleted
+        self.client.recordsets.delete.assert_called_once_with(
+            'example.test.', 123
+        )
+
+        # Admin client should not be called since reverse DNS is disabled
+        self.admin_client.recordsets.delete.assert_not_called()
+
     def test_delete_record_set_with_reverse_dns(self):
         self.client.recordsets.list.return_value = [
             {'id': 123, 'records': ['192.168.0.10']},

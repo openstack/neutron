@@ -14,12 +14,23 @@
 #    under the License.
 
 from neutron_lib import constants as const
+from ovsdbapp.backend.ovs_idl import event
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.ovsdb.native import helpers
 from neutron.tests.common.exclusive_resources import port
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
+
+
+class WaitOvsManagerEvent(event.WaitEvent):
+    event_name = 'WaitOvsManagerEvent'
+
+    def __init__(self, manager_target):
+        table = 'Manager'
+        events = (self.ROW_CREATE,)
+        conditions = (('target', '=', manager_target),)
+        super().__init__(events, table, conditions, timeout=10)
 
 
 class EnableConnectionUriTestCase(base.BaseSudoTestCase):
@@ -39,10 +50,15 @@ class EnableConnectionUriTestCase(base.BaseSudoTestCase):
             manager_connections.append('ptcp:%s:127.0.0.1' % _port)
 
         for index, conn_uri in enumerate(ovsdb_cfg_connections):
+            target_event = WaitOvsManagerEvent(manager_connections[index])
+            ovs.ovsdb.idl.notify_handler.watch_event(target_event)
             helpers.enable_connection_uri(conn_uri)
             manager_removal.append(ovs.ovsdb.remove_manager(
                 manager_connections[index]))
             self.addCleanup(manager_removal[index].execute)
+            target_event.wait()
+            # This check is redundant, the ``target_event`` ensures the
+            # ``Manager`` register with the expected targer is created.
             self.assertIn(manager_connections[index],
                           ovs.ovsdb.get_manager().execute())
 

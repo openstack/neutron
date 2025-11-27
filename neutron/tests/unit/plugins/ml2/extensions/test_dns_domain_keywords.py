@@ -84,10 +84,10 @@ class DNSDomainKeywordsTestCase(
                               new_dns_name=test_dns_integration.NEWDNSNAME,
                               new_dns_domain=None, **kwargs):
         test_dns_integration.mock_client.reset_mock()
-        ip_addresses = [netaddr.IPAddress(ip['ip_address'])
-                        for ip in port['fixed_ips']]
-        records_v4 = [ip for ip in ip_addresses if ip.version == 4]
-        records_v6 = [ip for ip in ip_addresses if ip.version == 6]
+        records_v4 = [ip['ip_address'] for ip in port['fixed_ips']
+                      if netaddr.IPAddress(ip['ip_address']).version == 4]
+        records_v6 = [ip['ip_address'] for ip in port['fixed_ips']
+                      if netaddr.IPAddress(ip['ip_address']).version == 6]
         recordsets = []
         if records_v4:
             recordsets.append({'id': test_dns_integration.V4UUID,
