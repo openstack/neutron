@@ -658,6 +658,14 @@ class OVNMechanismDriver(api.MechanismDriver):
                     common_ips.add(str(ip_address))
             return common_ips
 
+        # NOTE(slaweq): We can safely ignore any CIDR larger than /32 (for
+        # IPv4) or /128 (for IPv6) in the allowed_address_pairs, since such
+        # CIDRs cannot be set as a Virtual IP in OVN.
+        # Only /32 and /128 CIDRs are allowed to be set as Virtual IPs in OVN.
+        address_pairs_to_check = [
+            ip_net for ip_net in port_allowed_address_pairs_ip_addresses
+            if ip_net.size == 1]
+
         for distributed_port in distributed_ports:
             distributed_port_ip_addresses = [
                 netaddr.IPAddress(fixed_ip['ip_address']) for fixed_ip in
@@ -665,7 +673,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
             common_ips = _get_common_ips(
                 distributed_port_ip_addresses,
-                port_allowed_address_pairs_ip_addresses)
+                address_pairs_to_check)
 
             if common_ips:
                 err_msg = (
