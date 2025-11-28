@@ -243,20 +243,6 @@ class TestChecks(base.BaseTestCase):
         mock_get_ovn_client.assert_called_once_with()
 
     @mock.patch.object(checks, 'get_ovn_client')
-    def test_ovn_for_bm_provisioning_over_ipv6_check_warning(
-            self, mock_get_ovn_client):
-
-        ovn_client_mock = mock.Mock(is_ipxe_over_ipv6_supported=False)
-        mock_get_ovn_client.return_value = ovn_client_mock
-        cfg.CONF.set_override(
-            'disable_ovn_dhcp_for_baremetal_ports', False, group='ovn')
-
-        result = checks.CoreChecks.ovn_for_bm_provisioning_over_ipv6_check(
-            mock.ANY)
-        self.assertEqual(Code.WARNING, result.code)
-        mock_get_ovn_client.assert_called_once_with()
-
-    @mock.patch.object(checks, 'get_ovn_client')
     def test_ovn_for_bm_provisioning_over_ipv6_check_failed_to_get_ovn_client(
             self, mock_get_ovn_client):
 

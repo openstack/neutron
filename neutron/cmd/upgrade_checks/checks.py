@@ -523,7 +523,7 @@ class CoreChecks(base.BaseChecks):
                 upgradecheck.Code.SUCCESS,
                 _("Native OVN DHCP is disabed for baremetal ports."))
         try:
-            ovn_client = get_ovn_client()
+            get_ovn_client()
         except RuntimeError:
             return upgradecheck.Result(
                 upgradecheck.Code.WARNING,
@@ -533,22 +533,9 @@ class CoreChecks(base.BaseChecks):
                 upgradecheck.Code.WARNING,
                 _("Failed to connect to OVN. Error: %s") % err)
 
-        if ovn_client.is_ipxe_over_ipv6_supported:
-            return upgradecheck.Result(
-                upgradecheck.Code.SUCCESS,
-                _('Version of OVN supports iPXE over IPv6.'))
         return upgradecheck.Result(
-            upgradecheck.Code.WARNING,
-            _('Version of OVN does not support iPXE over IPv6 but '
-              '``disable_ovn_dhcp_for_baremetal_ports`` is set to '
-              '``False``. In case if provisioning of baremetal nodes '
-              'is required, please make sure that either '
-              '``disable_ovn_dhcp_for_baremetal_ports`` option is set to '
-              '``True`` and Neutron DHCP agent is available or use '
-              'OVN with patch https://github.com/ovn-org/ovn/commit/'
-              'c5fd51bd154147a567097eaf61fbebc0b5b39e28 which added '
-              'support for iPXE over IPv6. It is available in '
-              'OVN >= 23.06.0.'))
+            upgradecheck.Code.SUCCESS,
+            _('Version of OVN supports iPXE over IPv6.'))
 
     @staticmethod
     def ml2_ovs_igmp_flood_check(checker):

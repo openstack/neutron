@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    It is assumed now that OVN supports iPXE over IPv6. This functionality was
+    added in OVN v23.06.0.
