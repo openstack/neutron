@@ -68,6 +68,7 @@ from neutron_lib.api.definitions import project_id
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import qos
 from neutron_lib.api.definitions import qos_bw_limit_direction
+from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.api.definitions import qos_default
 from neutron_lib.api.definitions import qos_gateway_ip
 from neutron_lib.api.definitions import qos_rule_type_details
@@ -167,6 +168,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     port_resource_request.ALIAS,
     qos.ALIAS,
     qos_bw_limit_direction.ALIAS,
+    qos_bw_minimum_ingress.ALIAS,
     qos_default.ALIAS,
     qos_rule_type_details.ALIAS,
     qos_rule_type_filter.ALIAS,
