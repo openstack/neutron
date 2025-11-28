@@ -33,13 +33,27 @@ The only differences required for an OVN deployment are:
   or networker nodes)
 
 
-Known limitations
-~~~~~~~~~~~~~~~~~
+North/South routing
+~~~~~~~~~~~~~~~~~~~
 
-The current SR-IOV implementation for the OVN Neutron driver has a few
-known limitations that should be addressed in the future:
+A network with an external port (SR-IOV, baremetal), will create a
+``HA_Chassis_Group`` register to schedule these external ports in gateway
+chassis. The routers (still) use a set of ``Gateway_Chassis`` registers to
+execute the scheduling of the gateway port. Now, since the implementation of
+[1]_, when a network is connected as an internal network, the Neutron API will
+sync the network ``HA_Chassis_Group`` with the gateway port ``Gateway_Chassis``
+set. That will make both scheduling methods to be in sync and will collocate
+the gateway router port and the external port in the same OVN gateway chassis;
+that allows OVN to route the traffic from the external port through the gateway
+port.
 
-#. Routing on VLAN tenant network will not work with SR-IOV. This
-   is because the external ports are not being co-located with
-   the logical router's gateway ports, for more information take a look at
-   `bug #1875852 <https://bugs.launchpad.net/neutron/+bug/1875852>`_.
+When the network ``HA_Chassis_Group`` is updated, it could be possible that
+the currently assigned gateway chassis changes. However, before connecting the
+network to the router, this port is used only for DHCP and metadata; the
+external port binding change won't interrupt the traffic.
+
+
+References
+~~~~~~~~~~
+
+.. [1] https://review.opendev.org/q/topic:%22bug/2125553%22

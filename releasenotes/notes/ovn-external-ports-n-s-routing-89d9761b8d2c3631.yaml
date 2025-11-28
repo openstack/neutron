@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    ML2/OVN now supports North/South routing for external (SR-IOV, baremetal)
+    ports. Once the internal network is connected to the router, the OVN
+    external port scheduler is synced with the gateway port one, collocating
+    the external and the gateway ports in the same gateway chassis.
