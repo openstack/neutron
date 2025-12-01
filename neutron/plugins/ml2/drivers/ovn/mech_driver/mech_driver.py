@@ -464,14 +464,27 @@ class OVNMechanismDriver(api.MechanismDriver):
             )
             self.sb_synchronizer.sync()
 
-            self._maintenance_thread = maintenance.MaintenanceThread()
-            self._maintenance_thread.add_periodics(
-                maintenance.DBInconsistenciesPeriodics(self._ovn_client))
-            self._maintenance_thread.start()
-            LOG.info("Maintenance task thread has started")
+            self._start_maintenance_thread()
 
         LOG.info('%s process has finished the post initialization',
                  worker_class.__name__)
+
+    def _start_maintenance_thread(self):
+        self._maintenance_thread = maintenance.MaintenanceThread()
+        self._maintenance_thread.add_periodics(
+            maintenance.DBInconsistenciesPeriodics(self._ovn_client))
+        # Plugins may want to add more periodics.
+        # If `ovn_maintenance_periodics` is implemented it's expected to
+        # return a list of periodics objects that will be added here.
+        for plugin in directory.get_plugins().values():
+            try:
+                for periodics in plugin.ovn_maintenance_periodics(
+                        self._ovn_client):
+                    self._maintenance_thread.add_periodics(periodics)
+            except AttributeError:
+                pass
+        self._maintenance_thread.start()
+        LOG.info("Maintenance task thread has started")
 
     def _create_security_group_precommit(self, resource, event, trigger,
                                          payload):

@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    Allow plugins to add periodics to the OVN Maintenance Worker.
