@@ -44,9 +44,13 @@ class BridgeMonitorTestCase(base.BaseSudoTestCase):
             self.ovs.add_bridge(bridge)
 
         _idl_mon = self.ovs.ovsdb.idl_monitor
-        common_utils.wait_until_true(
-            lambda: set(bridges_to_monitor) ==
-                    set(_idl_mon._bridges_added_list),
-            timeout=20)
+        try:
+            common_utils.wait_until_true(
+                lambda: set(bridges_to_monitor) ==
+                        set(_idl_mon._bridges_added_list),
+                timeout=10)
+        except common_utils.WaitTimeout:
+            self.fail(f'Bridges to monitor: {set(bridges_to_monitor)}, '
+                      f'bridges added: {set(_idl_mon._bridges_added_list)}')
         self.assertEqual(bridges_to_monitor, _idl_mon.bridges_added)
         self.assertEqual([], _idl_mon.bridges_added)
