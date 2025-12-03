@@ -1287,18 +1287,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             return
         # We take first entry as one port can only have one FIP
         nat = nat[0]
-        # If the external_id doesn't exist, let's create at this point.
-        # TODO(dalvarez): Remove this code in T cycle when we're sure that
-        # all DNAT entries have the external_id.
-        if not nat['external_ids'].get(ovn_const.OVN_FIP_EXT_MAC_KEY):
-            self.nb_ovn.db_set('NAT', nat['_uuid'],
-                               ('external_ids',
-                                {ovn_const.OVN_FIP_EXT_MAC_KEY:
-                                 nat['external_mac']})).execute()
-
         if ovn_conf.is_ovn_distributed_floating_ip():
             if up:
-                mac = nat['external_ids'].get(ovn_const.OVN_FIP_EXT_MAC_KEY)
+                mac = nat['external_ids'][ovn_const.OVN_FIP_EXT_MAC_KEY]
                 if mac and nat['external_mac'] != mac:
                     LOG.debug("Setting external_mac of port %s to %s",
                               port_id, mac)
