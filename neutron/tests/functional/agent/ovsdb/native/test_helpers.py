@@ -14,7 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as const
-from ovsdbapp.backend.ovs_idl import event
+from ovsdbapp.backend.ovs_idl import event as idl_event
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.ovsdb.native import helpers
@@ -23,14 +23,21 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
 
-class WaitOvsManagerEvent(event.WaitEvent):
+class WaitOvsManagerEvent(idl_event.WaitEvent):
     event_name = 'WaitOvsManagerEvent'
 
-    def __init__(self, manager_target):
+    def __init__(self, manager_target, inactivity_probe=None, event=None):
         table = 'Manager'
-        events = (self.ROW_CREATE,)
+        events = (self.ROW_CREATE,) if not event else (event,)
         conditions = (('target', '=', manager_target),)
         super().__init__(events, table, conditions, timeout=10)
+        self.inactivity_probe = inactivity_probe
+
+    def match_fn(self, event, row, old):
+        if (self.inactivity_probe is None or
+                self.inactivity_probe == row.inactivity_probe[0]):
+            return True
+        return False
 
 
 class EnableConnectionUriTestCase(base.BaseSudoTestCase):
@@ -78,8 +85,13 @@ class EnableConnectionUriTestCase(base.BaseSudoTestCase):
         ovsdb_cfg_connection = 'tcp:127.0.0.1:%s' % _port
         manager_connection = 'ptcp:%s:127.0.0.1' % _port
 
+        inactivity_probe = 10
+        manager_event = WaitOvsManagerEvent(
+            manager_connection, inactivity_probe=inactivity_probe)
+        ovs.ovsdb.idl.notify_handler.watch_event(manager_event)
         helpers.enable_connection_uri(ovsdb_cfg_connection,
-                                      inactivity_probe=10)
+                                      inactivity_probe=inactivity_probe)
+        manager_event.wait()
         self.addCleanup(ovs.ovsdb.remove_manager(manager_connection).execute)
         # First call of enable_connection_uri cretes the manager
         # and the list returned by get_manager contains it:
@@ -89,7 +101,13 @@ class EnableConnectionUriTestCase(base.BaseSudoTestCase):
         # after 2nd call of enable_connection_uri with new value of
         # inactivity_probe will keep the original manager only the
         # inactivity_probe value is set:
+        inactivity_probe = 100
+        manager_event = WaitOvsManagerEvent(
+            manager_connection, inactivity_probe=inactivity_probe,
+            event='update')
+        ovs.ovsdb.idl.notify_handler.watch_event(manager_event)
         helpers.enable_connection_uri(ovsdb_cfg_connection,
-                                      inactivity_probe=100)
+                                      inactivity_probe=inactivity_probe)
+        manager_event.wait()
         my_mans = ovs.ovsdb.get_manager().execute()
         self.assertIn(manager_connection, my_mans)
