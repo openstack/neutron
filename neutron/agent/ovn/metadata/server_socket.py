@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import socketserver
-
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -75,9 +73,14 @@ class UnixDomainMetadataProxy(proxy_base.UnixDomainMetadataProxyBase):
         self._server = None
 
     def run(self):
+        # Set the default metadata_workers if not yet set in the config file
+        md_workers = self.conf.metadata_workers
+        md_workers = 0 if md_workers is None else md_workers
+
         file_socket = cfg.CONF.metadata_proxy_socket
-        self._server = socketserver.ThreadingUnixStreamServer(
-            file_socket, MetadataProxyHandler)
+        self._server = proxy_base.MetadataProxyServer(
+            md_workers, file_socket, MetadataProxyHandler)
+
         MetadataProxyHandler._conf = self.conf
         MetadataProxyHandler._chassis = self.chassis
         MetadataProxyHandler._sb_idl = self.sb_idl

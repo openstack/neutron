@@ -14,10 +14,13 @@
 #    under the License.
 
 import abc
+from concurrent import futures
+import socketserver
 import urllib
 
 import netaddr
 from neutron_lib import constants
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import netutils
 import requests
@@ -36,6 +39,49 @@ MODE_MAP = {
     config.GROUP_MODE: 0o664,
     config.ALL_MODE: 0o666,
 }
+
+
+class MetadataProxyServer(socketserver.UnixStreamServer):
+    """Metadata server which listens on a unix domain socket.
+
+    This is based on the ThreadingMixIn, but is capable to
+      - process requests within the main process when workers <= 0
+      - process requests using a threadpool when workers > 0
+    """
+
+    def __init__(self, workers, *kargs, **kwargs):
+        super().__init__(*kargs, **kwargs)
+        self._pool = None
+        if workers > 0:
+            self._pool = futures.ThreadPoolExecutor(max_workers=workers)
+        self.request_queue_size = cfg.CONF.metadata_backlog
+
+    def process_request_thread(self, request, client_address):
+        """Same as in BaseServer but as a thread.
+
+        In addition, exception handling is done here.
+
+        """
+        try:
+            self.finish_request(request, client_address)
+        except Exception:
+            self.handle_error(request, client_address)
+        finally:
+            self.shutdown_request(request)
+
+    def process_request(self, request, client_address):
+        """Start a new thread to process the request."""
+        if self._pool is not None:
+            self._pool.submit(self.process_request_thread, request,
+                              client_address)
+        else:
+            # NOTE(tkajinam): Run within the proces when workers<1
+            super().process_request(request, client_address)
+
+    def server_close(self):
+        super().server_close()
+        if self._pool is not None:
+            self._pool.shutdown()
 
 
 class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
