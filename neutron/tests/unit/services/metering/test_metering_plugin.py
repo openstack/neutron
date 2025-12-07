@@ -150,7 +150,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
         project_id_2 = '8a268a58-1610-4890-87e0-07abb8231206'
         self.mock_uuid.return_value = second_uuid
-        with self.router(name='router2', tenant_id=project_id_2,
+        with self.router(name='router2', project_id=project_id_2,
                          set_context=True):
             self.mock_uuid.return_value = self.uuid
             with self.router(name='router1'):
@@ -178,7 +178,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         with self.router(name='router1', shared=True):
             with self.metering_label():
                 self.mock_uuid.return_value = second_uuid
-                with self.metering_label(tenant_id=project_id_2, shared=True):
+                with self.metering_label(project_id=project_id_2, shared=True):
                     self.mock_add.assert_called_with(mock.ANY, expected)
 
     def test_remove_metering_label_rpc_call(self):
@@ -533,7 +533,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                     expected_error_message, jsonutils.loads(res.body)[
                         "NeutronError"]["message"])
 
-    def test_delete_metering_label_does_not_clear_router_tenant_id(self):
+    def test_delete_metering_label_does_not_clear_router_project_id(self):
         project_id = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
         # TODO(ralonsoh): to investigate why the context in [1] has some value
         # in session.transaction._connections, while during a normal operation,
@@ -541,16 +541,16 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         # [1]https://github.com/openstack/neutron/blob/
         # 1b9e9a6c2ccf7f9bc06429f53e5126f356ae3d4a/neutron/api/v2/base.py#L563
         self.ctx.GUARD_TRANSACTION = False
-        with self.metering_label(tenant_id=project_id) as metering_label:
-            with self.router(tenant_id=project_id) as r:
+        with self.metering_label(project_id=project_id) as metering_label:
+            with self.router(project_id=project_id) as r:
                 router = self._show('routers', r['router']['id'],
-                                    tenant_id=project_id)
+                                    project_id=project_id)
                 self.assertEqual(project_id, router['router']['project_id'])
                 metering_label_id = metering_label['metering_label']['id']
                 self._delete('metering-labels', metering_label_id, 204,
                              as_admin=True)
                 router = self._show('routers', r['router']['id'],
-                                    tenant_id=project_id)
+                                    project_id=project_id)
                 self.assertEqual(project_id, router['router']['project_id'])
 
 
@@ -709,7 +709,7 @@ class TestMeteringPluginRpcFromL3Agent(
             with self.router(name='router1', subnet=subnet) as router:
                 r = router['router']
                 self._add_external_gateway_to_router(r['id'], s['network_id'])
-                with self.metering_label(tenant_id=r['project_id']):
+                with self.metering_label(project_id=r['project_id']):
                     callbacks = metering_rpc.MeteringRpcCallbacks(
                         self.meter_plugin)
                     data = callbacks.get_sync_data_metering(self.adminContext,
@@ -725,8 +725,8 @@ class TestMeteringPluginRpcFromL3Agent(
                     r['id'], s['network_id'])
 
     def test_get_sync_data_metering_shared(self):
-        with self.router(name='router1', tenant_id=self.project_id_1):
-            with self.router(name='router2', tenant_id=self.project_id_2):
+        with self.router(name='router1', project_id=self.project_id_1):
+            with self.router(name='router2', project_id=self.project_id_2):
                 with self.metering_label(shared=True):
                     callbacks = metering_rpc.MeteringRpcCallbacks(
                         self.meter_plugin)
@@ -738,8 +738,8 @@ class TestMeteringPluginRpcFromL3Agent(
                     self.assertIn('router2', routers)
 
     def test_get_sync_data_metering_not_shared(self):
-        with self.router(name='router1', tenant_id=self.project_id_1):
-            with self.router(name='router2', tenant_id=self.project_id_2):
+        with self.router(name='router1', project_id=self.project_id_1):
+            with self.router(name='router2', project_id=self.project_id_2):
                 with self.metering_label():
                     callbacks = metering_rpc.MeteringRpcCallbacks(
                         self.meter_plugin)

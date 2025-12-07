@@ -325,7 +325,7 @@ class TestNetworkIPAvailabilityAPI(
 
     def test_usages_query_tenant_id(self):
         test_project_id = 'a-unique-test-id'
-        with self.network(tenant_id=test_project_id) as net:
+        with self.network(project_id=test_project_id) as net:
             with self.subnet(network=net):
                 # Get by query param: tenant_id
                 params = 'tenant_id=%s' % test_project_id
@@ -350,7 +350,7 @@ class TestNetworkIPAvailabilityAPI(
 
     def test_usages_query_project_id(self):
         test_project_id = 'a-unique-project-id'
-        with self.network(tenant_id=test_project_id) as net:
+        with self.network(project_id=test_project_id) as net:
             with self.subnet(network=net):
                 # Get by query param: project_id
                 params = 'project_id=%s' % test_project_id

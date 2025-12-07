@@ -119,7 +119,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test_update_network_set_external_non_admin_fails(self):
         # Assert that a non-admin user cannot update the
         # router:external attribute
-        with self.network(tenant_id='noadmin') as network:
+        with self.network(project_id='noadmin') as network:
             data = {'network': {'router:external': True}}
             req = self.new_update_request('networks',
                                           data,
@@ -133,7 +133,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                           as_admin=True) as ext_net,\
                 self.subnet(network=ext_net) as ext_subnet, \
                 self.port(subnet=ext_subnet,
-                          tenant_id='',
+                          project_id='',
                           device_owner=constants.DEVICE_OWNER_ROUTER_SNAT):
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
@@ -154,7 +154,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                         exc.HTTPClientError) as ctx_manager:
                     with self.port(subnet=ext_subnet,
                                    is_admin=False,
-                                   tenant_id='noadmin'):
+                                   project_id='noadmin'):
                         pass
                     self.assertEqual(403, ctx_manager.exception.code)
 
@@ -169,7 +169,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         with testtools.ExpectedException(exc.HTTPClientError) as ctx_manager:
             with self.network(router__external=True,
                               as_admin=False,
-                              tenant_id='noadmin'):
+                              project_id='noadmin'):
                 pass
             self.assertEqual(403, ctx_manager.exception.code)
 

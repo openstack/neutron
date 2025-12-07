@@ -1467,7 +1467,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.subnet(network=net) as subnet,\
                 self.port(subnet=subnet,
                           device_owner=DEVICE_OWNER_COMPUTE,
-                          tenant_id=non_admin_project,
+                          project_id=non_admin_project,
                           set_context=non_admin_port) as port:
             self.core_plugin.update_port(
                     self.context, port['port']['id'],
@@ -1479,7 +1479,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             with mock.patch.object(self.l3_plugin.l3_rpc_notifier,
                                    'router_removed_from_agent') as remove_mock:
                 self._delete('ports', port['port']['id'],
-                             tenant_id=non_admin_project)
+                             project_id=non_admin_project)
                 remove_mock.assert_called_once_with(
                     mock.ANY, router['id'], HOST)
 

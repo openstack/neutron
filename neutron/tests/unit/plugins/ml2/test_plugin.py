@@ -334,7 +334,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         project_id = 'some_project'
         device_owner = "me"
         ctx = context.Context('', project_id)
-        with self.network(tenant_id=project_id) as network_to_use:
+        with self.network(project_id=project_id) as network_to_use:
             net_id = network_to_use['network']['id']
             port = {'port': {'name': 'port',
                              'network_id': net_id,
@@ -1021,13 +1021,13 @@ class TestMl2DbOperationBoundsTenantRbac(TestMl2DbOperationBoundsTenant):
         net = self.driver.create_network(
             context.get_admin_context(),
             {'network': {'name': 'net1',
-                         'tenant_id': context_.project_id,
+                         'project_id': context_.project_id,
                          'admin_state_up': True,
                          'shared': True}})
         # create port that belongs to another tenant
         return self._make_port(
             self.fmt, net['id'],
-            set_context=True, tenant_id='fake_project')
+            set_context=True, project_id='fake_project')
 
     def test_port_list_in_shared_network_queries_constant(self):
         self._assert_object_list_queries_constant(
@@ -2018,7 +2018,7 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s&limit=1
             net_id = subnet['subnet']['network_id']
             res = self._create_subnet(
                 self.fmt,
-                tenant_id=project_id,
+                project_id=project_id,
                 net_id=net_id,
                 cidr='2607:f0d0:1002:51::/124',
                 ip_version=constants.IP_VERSION_6,

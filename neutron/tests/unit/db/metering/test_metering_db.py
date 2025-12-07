@@ -39,13 +39,15 @@ _fake_uuid = uuidutils.generate_uuid
 
 
 class MeteringPluginDbTestCaseMixin:
-    def _create_metering_label(self, fmt, name, description, **kwargs):
+    def _create_metering_label(self, fmt, name, description, project_id=None,
+                               **kwargs):
+        project_id = project_id or self._project_id
         data = {'metering_label': {'name': name,
                                    'shared': kwargs.get('shared', False),
                                    'description': description}}
         req = self.new_create_request(
             'metering-labels', data, fmt,
-            tenant_id=kwargs.get('tenant_id', self._project_id),
+            tenant_id=project_id,
             as_admin=kwargs.get('is_admin', True))
 
         return req.get_response(self.ext_api)
@@ -60,7 +62,9 @@ class MeteringPluginDbTestCaseMixin:
                                     excluded, remote_ip_prefix=None,
                                     source_ip_prefix=None,
                                     destination_ip_prefix=None,
+                                    project_id=None,
                                     **kwargs):
+        project_id = project_id or self._project_id
         data = {
             'metering_label_rule': {
                         'metering_label_id': metering_label_id,
@@ -81,7 +85,7 @@ class MeteringPluginDbTestCaseMixin:
 
         req = self.new_create_request(
             'metering-label-rules', data, fmt,
-            tenant_id=kwargs.get('tenant_id', self._project_id),
+            tenant_id=project_id,
             as_admin=kwargs.get('is_admin', True))
 
         return req.get_response(self.ext_api)
@@ -97,8 +101,6 @@ class MeteringPluginDbTestCaseMixin:
     @contextlib.contextmanager
     def metering_label(self, name='label', description='desc',
                        fmt=None, **kwargs):
-        if 'project_id' in kwargs:
-            kwargs['tenant_id'] = kwargs['project_id']
         if not fmt:
             fmt = self.fmt
         metering_label = self._make_metering_label(fmt, name,
@@ -108,8 +110,6 @@ class MeteringPluginDbTestCaseMixin:
     @contextlib.contextmanager
     def metering_label_rule(self, metering_label_id=None, direction='ingress',
                             excluded=False, fmt=None, **kwargs):
-        if 'project_id' in kwargs:
-            kwargs['tenant_id'] = kwargs['project_id']
         if not fmt:
             fmt = self.fmt
         metering_label_rule = self._make_metering_label_rule(fmt,

@@ -205,7 +205,7 @@ class SubPortsValidatorMtuSanityTestCase(test_plugin.Ml2PluginV2TestCase):
             mock.patch.object(plugin, "get_networks",
                               side_effect=get_networks_adjust_mtu):
             trunk = {'port_id': trunk_port['port']['id'],
-                     'tenant_id': 'test_project',
+                     'project_id': 'test_project',
                      'sub_ports': [{'port_id': subport['port']['id'],
                                     'segmentation_type': 'vlan',
                                     'segmentation_id': 2}]}

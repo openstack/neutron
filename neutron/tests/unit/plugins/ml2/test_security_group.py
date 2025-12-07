@@ -113,12 +113,12 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                 return_value=[]):
             super().test_get_security_group()
 
-    def test_create_security_group_rules_admin_tenant(self):
+    def test_create_security_group_rules_admin_project(self):
         plugin = directory.get_plugin()
         with mock.patch.object(
                 plugin, 'get_default_security_group_rules',
                 return_value=[]):
-            super().test_create_security_group_rules_admin_tenant()
+            super().test_create_security_group_rules_admin_project()
 
     def test_security_group_get_ports_from_devices_with_bad_id(self):
         plugin = directory.get_plugin()

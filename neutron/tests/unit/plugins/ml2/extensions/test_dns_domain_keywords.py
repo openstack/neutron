@@ -72,7 +72,7 @@ class DNSDomainKeywordsTestCase(
             port_kwargs['arg_list'] = (port_kwargs.get('arg_list', ()) +
                                        (dns_apidef.DNSDOMAIN,))
         res = self._create_port('json', network['network']['id'],
-                                set_context=True, tenant_id=PROJECT_ID,
+                                set_context=True, project_id=PROJECT_ID,
                                 **port_kwargs)
         self.assertEqual(201, res.status_int)
         port = self.deserialize(self.fmt, res)['port']

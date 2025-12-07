@@ -212,10 +212,10 @@ class L3SchedulerBaseMixin:
 
     @contextlib.contextmanager
     def router_with_ext_gw(self, name='router1', admin_state_up=True,
-                           fmt=None, tenant_id=None,
+                           fmt=None, project_id=None,
                            external_gateway_info=None,
                            subnet=None, **kwargs):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         router = self._make_router(fmt or self.fmt, project_id, name,
                                    admin_state_up, external_gateway_info,
                                    **kwargs)

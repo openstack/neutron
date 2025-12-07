@@ -291,7 +291,7 @@ class LoggingRpcCallbackTestCase(test_sg.SecurityGroupDBTestCase):
             res = self._create_port(
                 self.fmt, network['network']['id'],
                 security_groups=[sg_id],
-                tenant_id=project_id
+                project_id=project_id
             )
             ports_rest = self.deserialize(self.fmt, res)
             port_id = ports_rest['port']['id']

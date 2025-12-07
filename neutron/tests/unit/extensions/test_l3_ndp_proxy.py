@@ -80,7 +80,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
         self.address_scope_id = self._make_address_scope(
             self.fmt, constants.IP_VERSION_6,
-            **{'tenant_id': self._project_id})['address_scope']['id']
+            **{'project_id': self._project_id})['address_scope']['id']
         self.subnetpool_id = self._make_subnetpool(
             self.fmt, ['2001::0/96'],
             **{'address_scope_id': self.address_scope_id,
@@ -121,10 +121,10 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             self.private_subnet['subnet']['id'], None)
 
     def _create_ndp_proxy(self, router_id, port_id, ip_address=None,
-                          description=None, fmt=None, tenant_id=None,
+                          description=None, fmt=None, project_id=None,
                           expected_code=exc.HTTPCreated.code,
                           expected_message=None):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         data = {'ndp_proxy': {
             "port_id": port_id,
             "router_id": router_id}
@@ -146,10 +146,10 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         return self.deserialize(self.fmt, res)
 
     def _update_ndp_proxy(self, ndp_proxy_id,
-                          tenant_id=None, fmt=None,
+                          project_id=None, fmt=None,
                           expected_code=exc.HTTPOk.code,
                           expected_message=None, **kwargs):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         data = {}
         for k, v in kwargs.items():
             data[k] = v
@@ -164,7 +164,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                              res.json_body['NeutronError']['message'])
         return self.deserialize(self.fmt, res)
 
-    def _get_ndp_proxy(self, ndp_proxy_id, tenant_id=None,
+    def _get_ndp_proxy(self, ndp_proxy_id, project_id=None,
                        fmt=None, expected_code=exc.HTTPOk.code,
                        expected_message=None):
         req_res = self._req('GET', 'ndp-proxies', id=ndp_proxy_id,
@@ -176,7 +176,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                              res.json_body['NeutronError']['message'])
         return self.deserialize(self.fmt, res)
 
-    def _list_ndp_proxy(self, tenant_id=None, fmt=None,
+    def _list_ndp_proxy(self, project_id=None, fmt=None,
                         expected_code=exc.HTTPOk.code,
                         expected_message=None, **kwargs):
         req_res = self._req('GET', 'ndp-proxies', params=kwargs,
@@ -188,7 +188,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                              res.json_body['NeutronError']['message'])
         return self.deserialize(self.fmt, res)
 
-    def _delete_ndp_proxy(self, ndp_proxy_id, tenant_id=None,
+    def _delete_ndp_proxy(self, ndp_proxy_id, project_id=None,
                           fmt=None, expected_code=exc.HTTPNoContent.code,
                           expected_message=None):
         req_res = self._req('DELETE', 'ndp-proxies', id=ndp_proxy_id,
@@ -201,10 +201,10 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         if res.status_int != exc.HTTPNoContent.code:
             return self.deserialize(self.fmt, res)
 
-    def _update_router(self, router_id, update_date, tenant_id=None,
+    def _update_router(self, router_id, update_date, project_id=None,
                        fmt=None, expected_code=exc.HTTPOk.code,
                        expected_message=None):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         data = {'router': update_date}
         router_req = self.new_update_request(
             'routers', id=router_id, data=data,
@@ -216,7 +216,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             self.assertEqual(expected_message,
                              res.json_body['NeutronError']['message'])
 
-    def _get_router(self, router_id, tenant_id=None, fmt=None,
+    def _get_router(self, router_id, project_id=None, fmt=None,
                     expected_code=exc.HTTPOk.code,
                     expected_message=None):
         req_res = self._req('GET', 'routers', id=router_id,
@@ -468,19 +468,19 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def test_create_ndp_proxy_with_different_address_scope(self):
         with self.address_scope(
             ip_version=constants.IP_VERSION_6,
-            tenant_id=self._project_id) as addr_scope, \
+            project_id=self._project_id) as addr_scope, \
                 self.subnetpool(
                     ['2001::100:0:0/100'],
                     **{'address_scope_id': addr_scope['address_scope']['id'],
                        'default_prefixlen': 112, 'name': 'test1',
-                       'tenant_id': self._project_id}) as subnetpool, \
+                       'project_id': self._project_id}) as subnetpool, \
                 self.subnet(
                     cidr='2001::100:1:0/112',
                     ip_version=constants.IP_VERSION_6,
                     ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                     ipv6_address_mode=constants.DHCPV6_STATEFUL,
                     subnetpool_id=subnetpool['subnetpool']['id'],
-                    tenant_id=self._project_id) as subnet, \
+                    project_id=self._project_id) as subnet, \
                 self.port(subnet) as port:
             subnet_id = subnet['subnet']['id']
             port_id = port['port']['id']

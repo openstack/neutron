@@ -88,7 +88,7 @@ class DefaultSubnetpoolsExtensionTestCase(
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
                                  name="My subnet pool",
-                                 tenant_id=project_id,
+                                 project_id=project_id,
                                  min_prefixlen='25',
                                  is_default=True) as subnetpool:
                 subnetpool_id = subnetpool['subnetpool']['id']
@@ -106,7 +106,7 @@ class DefaultSubnetpoolsExtensionTestCase(
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
                                  name="My subnet pool",
-                                 tenant_id=project_id,
+                                 project_id=project_id,
                                  min_prefixlen='25',
                                  is_default=False) as subnetpool:
                 self.assertFalse(subnetpool['subnetpool']['is_default'])
@@ -128,7 +128,7 @@ class DefaultSubnetpoolsExtensionTestCase(
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
                                  name="My subnet pool",
-                                 tenant_id=project_id,
+                                 project_id=project_id,
                                  min_prefixlen='25',
                                  is_default=True) as subnetpool:
                 self.assertTrue(subnetpool['subnetpool']['is_default'])
@@ -145,7 +145,7 @@ class DefaultSubnetpoolsExtensionTestCase(
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
                                  name="My ipv6 subnet pool",
-                                 tenant_id=project_id,
+                                 project_id=project_id,
                                  min_prefixlen='64',
                                  is_default=True) as subnetpool:
                 subnetpool_id = subnetpool['subnetpool']['id']
