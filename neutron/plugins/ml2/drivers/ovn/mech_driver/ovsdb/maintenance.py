@@ -520,7 +520,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     router_id = port['external_ids'].get(
                         ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
                     txn.add(self._nb_idl.update_lrouter_port(
-                        name=port.name,
+                        name=port['name'],
                         external_ids=self._ovn_client._gen_router_port_ext_ids(
                             port, router_id)))
         self._sync_timer.stop()

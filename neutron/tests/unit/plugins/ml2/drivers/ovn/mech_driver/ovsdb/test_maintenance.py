@@ -395,19 +395,17 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.assertFalse(mock_log.called)
 
     def test_update_lrouter_ports_ext_ids_name_prefix(self):
-        lrp1_no_prefix = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={
+        lrp1_no_prefix = {
                 '_uuid': 'port-id1',
                 'name': 'lrp-id1',
                 'external_ids': {
-                    constants.OVN_ROUTER_NAME_EXT_ID_KEY: 'rtr-id1'}})
-        lrp2_with_prefix = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={
+                    constants.OVN_ROUTER_NAME_EXT_ID_KEY: 'rtr-id1'}}
+        lrp2_with_prefix = {
                 '_uuid': 'port-id2',
                 'name': 'lrp-id2',
                 'external_ids': {
                     constants.OVN_ROUTER_NAME_EXT_ID_KEY:
-                    '%srtr-id2' % constants.OVN_NAME_PREFIX}})
+                    '%srtr-id2' % constants.OVN_NAME_PREFIX}}
 
         nb_idl = self.fake_ovn_client._nb_idl
         nb_idl.db_find.return_value.execute.return_value = [
