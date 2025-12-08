@@ -5,7 +5,6 @@ jaeger-client
 dumb-init
 
 # sentry client
-raven
 git+https://github.com/sapcc/sentrylogger.git@main#egg=sapcc_sentrylogger
 
 # agent checks for neutron
