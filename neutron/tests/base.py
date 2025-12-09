@@ -175,9 +175,9 @@ def _catch_errors(f):
         try:
             return f(self, *args, **kwargs)
         except db_exceptions.DBReferenceError:
-            # TODO(ralonsoh): fix the ``DBReferenceError`` issues in the functional
-            # tests. This is retrying the test execution once more. If it fails
-            # again, the test is skipped. See LP#2121935
+            # TODO(ralonsoh): fix the ``DBReferenceError`` issues in
+            # the functional tests. This is retrying the test execution once
+            # more. If it fails again, the test is skipped. See LP#2121935
             self.skipTest(
                 'The test raised a ``DBReferenceError`` exception; please '
                 'check if this issue is a random occurrence or is '
