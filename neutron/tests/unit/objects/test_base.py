@@ -48,7 +48,6 @@ from neutron.objects import local_ip
 from neutron.objects import network as net_obj
 from neutron.objects.port.extensions import port_device_profile
 from neutron.objects.port.extensions import port_hardware_offload_type
-from neutron.objects.port.extensions import port_numa_affinity_policy
 from neutron.objects import ports
 from neutron.objects.qos import policy as qos_policy
 from neutron.objects import rbac_db
@@ -556,7 +555,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     obj_fields.ListOfStringsField: tools.get_random_string_list,
     obj_fields.ObjectField: lambda: None,
     obj_fields.StringField: lambda: helpers.get_random_string(10),
-    port_numa_affinity_policy.NumaAffinityPoliciesEnumField:
+    common_types.NumaAffinityPoliciesEnumField:
         tools.get_random_port_numa_affinity_policy,
     port_device_profile.PortDeviceProfile:
         lambda: helpers.get_random_string(255),
