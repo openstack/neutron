@@ -51,12 +51,9 @@ class BGPTopologyReconciler:
         if not self.nb_ovn.ovsdb_connection.idl.is_lock_contended:
             LOG.info("Full BGP topology synchronization started")
             # First make sure all chassis are indexed
-            chassis = commands.IndexAllChassis(
-                self.sb_ovn).execute(check_error=True)
             commands.FullSyncBGPTopologyCommand(
                 self.nb_ovn,
                 self.sb_ovn,
-                chassis,
             ).execute(check_error=True)
             LOG.info(
                 "Full BGP topology synchronization completed successfully")

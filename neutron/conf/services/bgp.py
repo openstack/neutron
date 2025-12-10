@@ -24,9 +24,6 @@ bgp_opts = [
     cfg.StrOpt('bgp_router_tunnel_key',
                default='42',
                help=_('Tunnel key for the main BGP router.')),
-    cfg.StrOpt('bgp_mac_base',
-               default='00:96',
-               help=_('Base MAC address for BGP router ports.')),
 ]
 
 
@@ -36,10 +33,6 @@ def get_main_router_name():
 
 def get_bgp_router_tunnel_key():
     return cfg.CONF.bgp.bgp_router_tunnel_key
-
-
-def get_bgp_mac_base():
-    return cfg.CONF.bgp.bgp_mac_base
 
 
 def register_opts(conf):

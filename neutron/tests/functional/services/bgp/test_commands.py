@@ -19,9 +19,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
-from neutron.conf.services import bgp as bgp_config
 from neutron.services.bgp import commands
-from neutron.services.bgp import constants
 from neutron.services.bgp import exceptions
 from neutron.services.bgp import helpers
 from neutron.tests.functional.services import bgp
@@ -39,21 +37,6 @@ class _FakeChassis:
     def __init__(self, name):
         self.uuid = uuidutils.generate_uuid()
         self.name = name
-        self.external_ids = {constants.OVN_BGP_CHASSIS_INDEX_KEY: '5'}
-
-
-class NbCommandsBase(bgp.BaseBgpNbIdlTestCase):
-    def setUp(self):
-        super().setUp()
-        mm = helpers.LrpMacManager.get_instance()
-        mm.known_routers.clear()
-
-
-class BgpCommandsBase(bgp.BaseBgpTestCase):
-    def setUp(self):
-        super().setUp()
-        mm = helpers.LrpMacManager.get_instance()
-        mm.known_routers.clear()
 
 
 class _AddBaseCommand:
@@ -121,13 +104,13 @@ class _AddBaseCommand:
         row = self._assert_table_row_exists(name)
 
 
-class LrAddCommandTestCase(NbCommandsBase, _AddBaseCommand):
+class LrAddCommandTestCase(bgp.BaseBgpNbIdlTestCase,
+                           _AddBaseCommand):
     table = 'Logical_Router'
     command = commands._LrAddCommand
 
 
-
-class LrpAddCommandTestCase(NbCommandsBase, _AddBaseCommand):
+class LrpAddCommandTestCase(bgp.BaseBgpNbIdlTestCase, _AddBaseCommand):
     table = 'Logical_Router_Port'
     command = commands._LrpAddCommand
 
@@ -137,41 +120,43 @@ class LrpAddCommandTestCase(NbCommandsBase, _AddBaseCommand):
         self.nb_api.lr_add(self.lr_name).execute(check_error=True)
 
     def create_row(self, name, **kwargs):
-        if 'mac' not in kwargs:
-            kwargs['mac'] = '00:00:00:00:00:00'
         return self.command(
             self.nb_api, self.lr_name, name, **kwargs).execute(
                 check_error=True)
 
     def test_create_existing_with_different_attributes(self):
         name = _get_unique_name()
-        self.create_row(name, mac='00:00:00:00:00:00',
-                        networks=['192.168.1.0/24'], peer='lrp-peer-1')
+        self.create_row(name, networks=['192.168.1.0/24'], peer='lrp-peer-1')
         lrp = self._assert_table_row_exists(name)
-        self.assertEqual(lrp.mac, '00:00:00:00:00:00')
+
+        bad_mac = '00:00:00:00:00:00'
+
+        # Set a different MAC address
+        self.nb_api.db_set(
+            'Logical_Router_Port', name,
+            mac=bad_mac).execute(check_error=True)
+        self.assertEqual(lrp.mac, bad_mac)
         self.assertEqual(lrp.networks, ['192.168.1.0/24'])
         self.assertEqual(lrp.peer, ['lrp-peer-1'])
 
         # Should update the MAC address
-        self.create_row(name, mac='00:00:00:00:00:01',
-                        networks=['192.168.2.0/24'], peer='lrp-peer-2')
+        self.create_row(name, networks=['192.168.2.0/24'], peer='lrp-peer-2')
         lrp = self._assert_table_row_exists(name)
-        self.assertEqual(lrp.mac, '00:00:00:00:00:01')
+        self.assertNotEqual(lrp.mac, bad_mac)
         self.assertEqual(lrp.networks, ['192.168.2.0/24'])
         self.assertEqual(lrp.peer, ['lrp-peer-2'])
 
 
-class HAChassisGroupAddCommandTestCase(NbCommandsBase, _AddBaseCommand):
+class HAChassisGroupAddCommandTestCase(bgp.BaseBgpNbIdlTestCase,
+                                       _AddBaseCommand):
     table = 'HA_Chassis_Group'
     command = commands._HAChassisGroupAddCommand
 
 
-class ReconcileRouterCommandTestCase(NbCommandsBase):
+class ReconcileRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
     def _validate_router_created(self, router_name):
         router = self.nb_api.lr_get(router_name).execute(check_error=True)
         self.assertEqual(router.name, router_name)
-        mm = helpers.LrpMacManager.get_instance()
-        self.assertIsNotNone(mm.known_routers.get(router_name))
 
     def test_reconcile_new_router(self):
         router_name = _get_unique_name()
@@ -206,7 +191,7 @@ class ReconcileRouterCommandTestCase(NbCommandsBase):
         self.assertEqual(router.name, router_name)
 
 
-class ReconcileMainRouterCommandTestCase(NbCommandsBase):
+class ReconcileMainRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
     def setUp(self):
         super().setUp()
         self.router_name = _get_unique_name()
@@ -236,18 +221,8 @@ class ReconcileMainRouterCommandTestCase(NbCommandsBase):
 
         self._validate_main_router_options()
 
-    def test_registered_mac_prefix(self):
-        cmd = commands.ReconcileMainRouterCommand(
-            self.nb_api)
-        cmd.execute(check_error=True)
-        mm = helpers.LrpMacManager.get_instance()
-        expected_prefix = cmd.router_mac_prefix
-        self.assertEqual(
-            expected_prefix,
-            mm.known_routers[self.router_name].mac_prefix)
 
-
-class ReconcileChassisRouterCommandTestCase(NbCommandsBase):
+class ReconcileChassisRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
     def test_reconcile_chassis_router(self):
         chassis = _create_fake_chassis()
         router_name = helpers.get_chassis_router_name(chassis.name)
@@ -274,71 +249,9 @@ class ReconcileChassisRouterCommandTestCase(NbCommandsBase):
         router = self.nb_api.lr_get(router_name).execute(check_error=True)
         self.assertEqual(router.options.get('chassis'), chassis.name)
 
-    def test_registered_mac_prefix(self):
-        chassis = _create_fake_chassis()
-        router_name = helpers.get_chassis_router_name(chassis.name)
-        cmd = commands.ReconcileChassisRouterCommand(
-            self.nb_api, chassis)
-        cmd.execute(check_error=True)
-        mm = helpers.LrpMacManager.get_instance()
-        self.assertEqual(
-            cmd.router_mac_prefix,
-            mm.known_routers[router_name].mac_prefix)
 
-
-class IndexAllChassisTestCase(bgp.BaseBgpSbIdlTestCase):
-    def test_index_all_chassis(self):
-        self.add_fake_chassis(_get_unique_name(), '192.168.1.100')
-        self.add_fake_chassis(_get_unique_name(), '192.168.1.101')
-
-        result = commands.IndexAllChassis(self.sb_api).execute(
-            check_error=True)
-
-        expected_indexes = [str(i) for i in range(2)]
-        self.assertCountEqual(
-            expected_indexes,
-            [r.external_ids.get(constants.OVN_BGP_CHASSIS_INDEX_KEY)
-             for r in result])
-
-    def test_index_all_chassis_new_chassis_added(self):
-        self.test_index_all_chassis()
-
-        self.add_fake_chassis(_get_unique_name(), '192.168.1.102')
-
-        result = commands.IndexAllChassis(self.sb_api).execute(
-            check_error=True)
-
-        expected_indexes = [str(i) for i in range(3)]
-        self.assertCountEqual(
-            expected_indexes,
-            [r.external_ids[constants.OVN_BGP_CHASSIS_INDEX_KEY]
-            for r in result])
-
-    def test_index_all_chassis_with_existing_index(self):
-        chassis_names = [_get_unique_name() for _ in range(2)]
-
-        for i, chassis_name in enumerate(chassis_names):
-            self.add_fake_chassis(chassis_name, f'192.168.1.10{i}')
-
-        commands.IndexAllChassis(self.sb_api).execute(check_error=True)
-
-        # remove chassis with index 0
-        self.sb_api.chassis_del(chassis_names[0]).execute(check_error=True)
-
-        for i in range(2):
-            self.add_fake_chassis(_get_unique_name(), f'192.168.1.11{i}')
-
-        result = commands.IndexAllChassis(self.sb_api).execute(
-            check_error=True)
-
-        expected_indexes = [str(i) for i in range(3)]
-        self.assertCountEqual(
-            expected_indexes,
-            [r.external_ids[constants.OVN_BGP_CHASSIS_INDEX_KEY]
-            for r in result])
-
-
-class ConnectChassisRouterToMainRouterCommandTestCase(NbCommandsBase):
+class ConnectChassisRouterToMainRouterCommandTestCase(
+        bgp.BaseBgpNbIdlTestCase):
     def setUp(self):
         super().setUp()
         self.main_router_name = _get_unique_name()
@@ -347,9 +260,6 @@ class ConnectChassisRouterToMainRouterCommandTestCase(NbCommandsBase):
         self.fake_chassis = _create_fake_chassis()
         self.chassis_router_name = helpers.get_chassis_router_name(
             self.fake_chassis.name)
-        self.chassis_index = int(
-            self.fake_chassis.external_ids[
-                constants.OVN_BGP_CHASSIS_INDEX_KEY])
 
         hcg_name = f'bgp-hcg-{self.fake_chassis.name}'
         self.hcg_id = self._create_hcg(hcg_name)
@@ -377,16 +287,6 @@ class ConnectChassisRouterToMainRouterCommandTestCase(NbCommandsBase):
         # Check ports are connected
         self.assertEqual(lrp_main.peer, [lrp_chassis_name])
         self.assertEqual(lrp_chassis.peer, [lrp_main_name])
-
-        # Check MAC addresses
-        mm = helpers.LrpMacManager.get_instance()
-        expected_main_mac = mm.get_mac_address(
-            self.main_router_name, self.chassis_index)
-        expected_chassis_mac = mm.get_mac_address(
-            self.chassis_router_name, constants.LRP_CHASSIS_TO_MAIN_ROUTER)
-
-        self.assertEqual(expected_main_mac, lrp_main.mac)
-        self.assertEqual(expected_chassis_mac, lrp_chassis.mac)
 
         # Verify main router LRP has HA chassis group
         self.assertEqual(self.hcg_id, lrp_main.ha_chassis_group[0].uuid)
@@ -467,7 +367,7 @@ class ConnectChassisRouterToMainRouterCommandTestCase(NbCommandsBase):
         )
 
 
-class ReconcileChassisCommandTestCase(BgpCommandsBase):
+class ReconcileChassisCommandTestCase(bgp.BaseBgpTestCase):
     PeerConnectionAttributes = namedtuple('PeerConnectionAttributes',
                                           ['lrp_name', 'lrp_ip', 'switch_ip'])
 
@@ -476,18 +376,11 @@ class ReconcileChassisCommandTestCase(BgpCommandsBase):
         self.main_router_name = _get_unique_name()
         cfg.CONF.set_override('main_router_name', self.main_router_name, 'bgp')
 
-    def _create_chassis(
-            self, name=None, index=None):
+    def _create_chassis(self, name=None, ip=1):
         chassis_name = name or _get_unique_name("chassis")
 
-        chassis_external_ids = {}
-        if index is not None:
-            chassis_external_ids[
-                constants.OVN_BGP_CHASSIS_INDEX_KEY] = str(index)
-
         return self.add_fake_chassis(
-            chassis_name, f'172.24.4.{index or 0}',
-            external_ids=chassis_external_ids)
+            chassis_name, f'172.24.4.{ip}')
 
     def _validate_hcg_created(self, chassis_name):
         hcg_name = helpers.get_hcg_name(chassis_name)
@@ -521,15 +414,14 @@ class ReconcileChassisCommandTestCase(BgpCommandsBase):
         self.assertEqual([lrp_main_name], lrp_chassis.peer)
 
     def test_reconcile_chassis_basic(self):
-        chassis = self._create_chassis(index=1)
+        chassis = self._create_chassis()
 
         # Create main router first (prerequisite)
         commands.ReconcileMainRouterCommand(self.nb_api).execute(
             check_error=True)
 
         commands.ReconcileChassisCommand(
-            self.nb_api, self.sb_api, chassis
-        ).execute(check_error=True)
+            self.nb_api, chassis).execute(check_error=True)
 
 
         # Validate all components were created
@@ -538,13 +430,12 @@ class ReconcileChassisCommandTestCase(BgpCommandsBase):
         self._validate_main_router_connection(chassis.name)
 
     def test_reconcile_chassis_idempotent(self):
-        chassis = self._create_chassis(index=1)
+        chassis = self._create_chassis()
 
         commands.ReconcileMainRouterCommand(self.nb_api).execute(
             check_error=True)
 
-        cmd = commands.ReconcileChassisCommand(
-            self.nb_api, self.sb_api, chassis)
+        cmd = commands.ReconcileChassisCommand(self.nb_api, chassis)
         cmd.execute(check_error=True)
         # Run again to check idempotency
         cmd.execute(check_error=True)
@@ -554,7 +445,7 @@ class ReconcileChassisCommandTestCase(BgpCommandsBase):
         self._validate_main_router_connection(chassis.name)
 
     def test_reconcile_chassis_with_existing_components(self):
-        chassis = self._create_chassis(index=1)
+        chassis = self._create_chassis()
         hcg_name = helpers.get_hcg_name(chassis.name)
         router_name = helpers.get_chassis_router_name(chassis.name)
 
@@ -573,70 +464,18 @@ class ReconcileChassisCommandTestCase(BgpCommandsBase):
 
         # Execute command should update existing components
         commands.ReconcileChassisCommand(
-            self.nb_api, self.sb_api, chassis
-        ).execute(check_error=True)
+            self.nb_api, chassis).execute(check_error=True)
 
         # Validate components were updated correctly
         router = self.nb_api.lr_get(router_name).execute(check_error=True)
         self.assertEqual(chassis.name, router.options.get('chassis'))
 
     def test_reconcile_chassis_missing_main_router(self):
-        chassis = self._create_chassis(index=1)
-
-        cmd = commands.ReconcileChassisCommand(
-            self.nb_api, self.sb_api, chassis)
-        self.assertRaises(
-            exceptions.ReconcileError,
-            cmd.execute,
-            check_error=True
-        )
-
-    def test_reconcile_chassis_invalid_index(self):
-        chassis = self._create_chassis(index=1)
-        chassis.external_ids[constants.OVN_BGP_CHASSIS_INDEX_KEY] = 'invalid'
-
-        cmd = commands.ReconcileChassisCommand(
-            self.nb_api, self.sb_api, chassis)
-        self.assertRaises(
-            exceptions.ReconcileError,
-            cmd.execute,
-            check_error=True
-        )
-
-    def test_reconcile_chassis_missing_index(self):
         chassis = self._create_chassis()
-        cmd = commands.ReconcileChassisCommand(
-            self.nb_api, self.sb_api, chassis)
 
+        cmd = commands.ReconcileChassisCommand(self.nb_api, chassis)
         self.assertRaises(
             exceptions.ReconcileError,
             cmd.execute,
             check_error=True
         )
-
-    def test_reconcile_chassis_mac_manager_registration(self):
-        chassis = self._create_chassis(index=1)
-
-        # Create main router first
-        commands.ReconcileMainRouterCommand(self.nb_api).execute(
-            check_error=True)
-
-        commands.ReconcileChassisCommand(
-            self.nb_api, self.sb_api, chassis
-        ).execute(check_error=True)
-
-        # Verify router is registered with MAC manager
-        mm = helpers.LrpMacManager.get_instance()
-        router_name = helpers.get_chassis_router_name(chassis.name)
-        self.assertIn(router_name, mm.known_routers)
-
-        # Verify MAC prefix is correct based on chassis index
-        expected_chassis_index = int(
-            chassis.external_ids[constants.OVN_BGP_CHASSIS_INDEX_KEY])
-        router_info = mm.known_routers[router_name]
-
-        # MAC prefix should be based on chassis index
-        base_mac = bgp_config.get_bgp_mac_base()
-        hex_str = f"{expected_chassis_index:0{4}x}"
-        expected_prefix = f'{base_mac}:{hex_str[0:2]}:{hex_str[2:4]}'
-        self.assertEqual(expected_prefix, router_info.mac_prefix)

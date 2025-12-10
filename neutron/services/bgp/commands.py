@@ -17,7 +17,6 @@
 from oslo_log import log
 from ovsdbapp.backend.ovs_idl import command as ovs_cmd
 from ovsdbapp.backend.ovs_idl import idlutils
-from ovsdbapp.backend.ovs_idl import rowview
 from ovsdbapp.schema.ovn_northbound import commands as nb_cmd
 
 from neutron.conf.services import bgp as bgp_config
@@ -58,8 +57,9 @@ class _LrpAddCommand(nb_cmd.LrpAddCommand):
     set.
     """
     def __init__(
-            self, api, router_name, lrp_name, mac, networks=None, **kwargs):
+            self, api, router_name, lrp_name, networks=None, **kwargs):
         networks = networks or []
+        mac = helpers.get_mac_address_from_lrp_name(lrp_name)
         super().__init__(api, router_name, lrp_name, mac, networks, **kwargs)
 
     def run_idl(self, txn):
@@ -68,6 +68,7 @@ class _LrpAddCommand(nb_cmd.LrpAddCommand):
         except idlutils.RowNotFound:
             super().run_idl(txn)
             self.result = self.api.lookup('Logical_Router_Port', self.port)
+        # TODO(jlibosva): Make sure the mac is unique for this router
         self.result.mac = self.mac
         self.result.networks = self.networks
         self.result.peer = self.peer
@@ -94,15 +95,11 @@ class _HAChassisGroupAddCommand(nb_cmd.HAChassisGroupAddCommand):
 
 
 class ReconcileRouterCommand(_LrAddCommand):
-    ROUTER_MAC_PREFIX = '00:00'
-
     def __init__(self, api, name):
         # We need to set policies and static_routes to empty list because IDL
         # won't have that set until the transaction is committed
         super().__init__(
             api, name, may_exist=True, policies=[], static_routes=[])
-        mac_mgr = helpers.LrpMacManager.get_instance()
-        mac_mgr.register_router(name, self.router_mac_prefix)
 
     def run_idl(self, txn):
         super().run_idl(txn)
@@ -114,15 +111,8 @@ class ReconcileRouterCommand(_LrAddCommand):
     def options(self):
         return {}
 
-    @property
-    def router_mac_prefix(self):
-        base_mac = bgp_config.get_bgp_mac_base()
-        return f'{base_mac}:{self.ROUTER_MAC_PREFIX}'
-
 
 class ReconcileMainRouterCommand(ReconcileRouterCommand):
-    ROUTER_MAC_PREFIX = '0b:96'
-
     def __init__(self, api):
         name = bgp_config.get_main_router_name()
         super().__init__(api, name)
@@ -150,52 +140,12 @@ class ReconcileChassisRouterCommand(ReconcileRouterCommand):
             'chassis': self.chassis.name,
         }
 
-    @property
-    def router_mac_prefix(self):
-        chassis_index = helpers.get_chassis_index(self.chassis)
-        base_mac = bgp_config.get_bgp_mac_base()
-
-        # Two bytes for chassis
-        hex_str = f"{chassis_index:0{4}x}"
-
-        return f'{base_mac}:{hex_str[0:2]}:{hex_str[2:4]}'
-
-
-class IndexAllChassis(ovs_cmd.BaseCommand):
-    def run_idl(self, txn):
-        used_indexes = set()
-        chassis_without_index = []
-
-        for chassis in self.api.tables['Chassis_Private'].rows.values():
-            try:
-                existing_index = int(
-                    chassis.external_ids[constants.OVN_BGP_CHASSIS_INDEX_KEY])
-            except (KeyError, ValueError):
-                chassis_without_index.append(chassis)
-            else:
-                used_indexes.add(existing_index)
-
-        number_of_chassis = len(self.api.tables['Chassis_Private'].rows)
-        available_indexes = set(range(number_of_chassis)) - used_indexes
-        for chassis in chassis_without_index:
-            index = available_indexes.pop()
-            chassis.setkey(
-                'external_ids',
-                constants.OVN_BGP_CHASSIS_INDEX_KEY,
-                str(index),
-            )
-
-        self.result = [
-            rowview.RowView(c)
-            for c in self.api.tables['Chassis_Private'].rows.values()]
-
 
 class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
     def __init__(self, api, chassis, hcg):
         super().__init__(api)
         self.chassis = chassis
         self.hcg = hcg
-        self.chassis_index = helpers.get_chassis_index(self.chassis)
         self.router_name = helpers.get_chassis_router_name(self.chassis.name)
 
     def validate_prerequisites(self):
@@ -210,23 +160,15 @@ class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
     def run_idl(self, txn):
         self.validate_prerequisites()
 
-        mac_mgr = helpers.LrpMacManager.get_instance()
-
         main_router_name = bgp_config.get_main_router_name()
 
         lrp_main = helpers.get_lrp_name(main_router_name, self.router_name)
         lrp_ch = helpers.get_lrp_name(self.router_name, main_router_name)
 
-        lrp_main_mac = mac_mgr.get_mac_address(
-            main_router_name, self.chassis_index)
-        lrp_ch_mac = mac_mgr.get_mac_address(
-            self.router_name, constants.LRP_CHASSIS_TO_MAIN_ROUTER)
-
         _LrpAddCommand(
             self.api,
             self.router_name,
             lrp_ch,
-            mac=lrp_ch_mac,
             peer=lrp_main
         ).run_idl(txn)
 
@@ -234,7 +176,6 @@ class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
             self.api,
             main_router_name,
             lrp_main,
-            mac=lrp_main_mac,
             peer=lrp_ch,
             ha_chassis_group=self.hcg,
             options={
@@ -243,9 +184,8 @@ class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
 
 
 class ReconcileChassisCommand(ovs_cmd.BaseCommand):
-    def __init__(self, api, sb_api, chassis):
+    def __init__(self, api, chassis):
         super().__init__(api)
-        self.sb_api = sb_api
         self.chassis = chassis
 
     def run_idl(self, txn):
@@ -274,9 +214,8 @@ class ReconcileChassisCommand(ovs_cmd.BaseCommand):
 
 
 class FullSyncBGPTopologyCommand(ovs_cmd.BaseCommand):
-    def __init__(self, nb_api, sb_api, chassis):
+    def __init__(self, nb_api, sb_api):
         super().__init__(nb_api)
-        self.chassis = chassis
         self.sb_api = sb_api
 
     def run_idl(self, txn):
@@ -286,9 +225,8 @@ class FullSyncBGPTopologyCommand(ovs_cmd.BaseCommand):
         LOG.debug("BGP full sync topology completed")
 
     def reconcile_all_chassis(self, txn):
-        for chassis in self.chassis:
-            ReconcileChassisCommand(
-                self.api, self.sb_api, chassis).run_idl(txn)
+        for chassis in self.sb_api.tables['Chassis_Private'].rows.values():
+            ReconcileChassisCommand(self.api, chassis).run_idl(txn)
 
     def reconcile_central(self, txn):
         ReconcileMainRouterCommand(
