@@ -267,7 +267,7 @@ class OVNClient:
                     wait=tenacity.wait_random(min=2, max=3),
                     stop=tenacity.stop_after_attempt(3),
                     reraise=True)
-    def _wait_for_port_bindings_host(self, context, port_id):
+    def _wait_for_active_port_bindings_host(self, context, port_id):
         db_port = ml2_db.get_port(context, port_id)
         # This is already checked previously but, just to stay on
         # the safe side in case the port is deleted mid-operation
@@ -280,11 +280,18 @@ class OVNClient:
                 _('No port bindings information found for  '
                   'port %s') % port_id)
 
-        if not db_port.port_bindings[0].host:
+        active_binding = p_utils.get_port_binding_by_status_and_host(
+            db_port.port_bindings, const.ACTIVE)
+        if not active_binding:
+            raise RuntimeError(
+                _('No active port bindings information found for '
+                  'port %s') % port_id)
+
+        if not active_binding.host:
             raise RuntimeError(
                 _('No hosting information found for port %s') % port_id)
 
-        return db_port
+        return active_binding
 
     def update_lsp_host_info(self, context, db_port, up=True):
         """Update the binding hosting information for the LSP.
@@ -313,18 +320,23 @@ class OVNClient:
             if not db_port.port_bindings:
                 return
 
-            if not db_port.port_bindings[0].host:
+            # There could be more than one port binding present, we need
+            # to find the active one
+            active_binding = p_utils.get_port_binding_by_status_and_host(
+                db_port.port_bindings, const.ACTIVE)
+
+            if not active_binding or not active_binding.host:
                 # NOTE(lucasgomes): There might be a sync issue between
                 # the moment that this port was fetched from the database
                 # and the hosting information being set, retry a few times
                 try:
-                    db_port = self._wait_for_port_bindings_host(
+                    active_binding = self._wait_for_active_port_bindings_host(
                         context, db_port.id)
                 except RuntimeError as e:
                     LOG.warning(e)
                     return
 
-            host = db_port.port_bindings[0].host
+            host = active_binding.host
             ext_ids = ('external_ids',
                        {ovn_const.OVN_HOST_ID_EXT_ID_KEY: host})
             cmd.append(
