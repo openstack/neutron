@@ -290,6 +290,13 @@ Trunk = "neutron.objects.trunk:Trunk"
 [project.entry-points."neutron.status.upgrade.checks"]
 neutron = "neutron.cmd.upgrade_checks.checks:CoreChecks"
 
+[project.entry-points."neutron.ovn.db_sync"]
+neutron_nb_sync = "neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_db_sync:OvnNbSynchronizer"
+neutron_sb_sync = "neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_db_sync:OvnSbSynchronizer"
+
+[project.entry-points."neutron.ovn.db_migration"]
+neutron = "neutron.plugins.ml2.drivers.ovn.db_migration:migrate_neutron_database_to_ovn"
+
 [project.scripts]
 neutron-db-manage = "neutron.db.migration.cli:main"
 neutron-dhcp-agent = "neutron.cmd.agents.dhcp:main"

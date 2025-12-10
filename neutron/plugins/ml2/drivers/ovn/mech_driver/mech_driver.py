@@ -447,20 +447,15 @@ class OVNMechanismDriver(api.MechanismDriver):
             # Call the synchronization task if its maintenance worker
             # This sync neutron DB to OVN-NB DB only in inconsistent states
             self.nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-                self._plugin,
-                self.nb_ovn,
-                self.sb_ovn,
-                ovn_conf.get_ovn_neutron_sync_mode(),
-                self,
+                self._plugin, self, ovn_conf.get_ovn_neutron_sync_mode(),
                 is_maintenance=True,
             )
             self.nb_synchronizer.sync()
 
             # This sync neutron DB to OVN-SB DB only in inconsistent states
             self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
-                self._plugin,
-                self.sb_ovn,
-                self
+                self._plugin, self, ovn_conf.get_ovn_neutron_sync_mode(),
+                is_maintenance=True,
             )
             self.sb_synchronizer.sync()
 

@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Command line tool ``neutron-ovn-db-sync-util`` now supports plugins for the
+    database syncing and ML2/OVS to ML2/OVN migration. Plugins can be provided
+    by the stadium or 3rd party projects and are loaded using entrypoints.
