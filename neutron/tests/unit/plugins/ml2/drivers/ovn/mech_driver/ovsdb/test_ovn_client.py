@@ -99,9 +99,13 @@ class TestOVNClient(TestOVNClientBase):
         super(TestOVNClient, self).setUp()
         self.get_plugin = mock.patch(
             'neutron_lib.plugins.directory.get_plugin').start()
+        self.get_pb_bsah = mock.patch(
+            'neutron_lib.plugins.utils.'
+            'get_port_binding_by_status_and_host').start()
 
         # Disable tenacity wait for UT
-        self.ovn_client._wait_for_port_bindings_host.retry.wait = wait_none()
+        self.ovn_client._wait_for_active_port_bindings_host.retry.wait = (
+            wait_none())
 
     def test__add_router_ext_gw_default_route(self):
         plugin = mock.MagicMock()
@@ -243,8 +247,9 @@ class TestOVNClient(TestOVNClientBase):
         context = mock.MagicMock()
         host_id = 'fake-binding-host-id'
         port_id = 'fake-port-id'
-        db_port = mock.Mock(
-            id=port_id, port_bindings=[mock.Mock(host=host_id)])
+        port_binding = mock.Mock(host=host_id)
+        db_port = mock.Mock(id=port_id, port_bindings=[port_binding])
+        self.get_pb_bsah.return_value = port_binding
 
         self.ovn_client.update_lsp_host_info(context, db_port)
 
@@ -256,14 +261,16 @@ class TestOVNClient(TestOVNClientBase):
         context = mock.MagicMock()
         host_id = 'fake-binding-host-id'
         port_id = 'fake-port-id'
+        port_binding = mock.Mock(host=host_id)
+        port_binding_no_host = mock.Mock(host="")
         db_port_no_host = mock.Mock(
-            id=port_id, port_bindings=[mock.Mock(host="")])
-        db_port = mock.Mock(
-            id=port_id, port_bindings=[mock.Mock(host=host_id)])
+            id=port_id, port_bindings=[port_binding_no_host])
+        self.get_pb_bsah.return_value = None
 
         with mock.patch.object(
-                self.ovn_client, '_wait_for_port_bindings_host') as mock_wait:
-            mock_wait.return_value = db_port
+                self.ovn_client,
+                '_wait_for_active_port_bindings_host') as mock_wait:
+            mock_wait.return_value = port_binding
             self.ovn_client.update_lsp_host_info(context, db_port_no_host)
 
             # Assert _wait_for_port_bindings_host was called
@@ -279,9 +286,11 @@ class TestOVNClient(TestOVNClientBase):
         port_id = 'fake-port-id'
         db_port_no_host = mock.Mock(
             id=port_id, port_bindings=[mock.Mock(host="")])
+        self.get_pb_bsah.return_value = None
 
         with mock.patch.object(
-                self.ovn_client, '_wait_for_port_bindings_host') as mock_wait:
+                self.ovn_client,
+                '_wait_for_active_port_bindings_host') as mock_wait:
             mock_wait.side_effect = RuntimeError("boom")
             self.ovn_client.update_lsp_host_info(context, db_port_no_host)
 
@@ -313,39 +322,45 @@ class TestOVNClient(TestOVNClientBase):
         self.nb_idl.db_set.assert_not_called()
 
     @mock.patch.object(ml2_db, 'get_port')
-    def test__wait_for_port_bindings_host(self, mock_get_port):
+    def test__wait_for_active_port_bindings_host(self, mock_get_port):
         context = mock.MagicMock()
         host_id = 'fake-binding-host-id'
         port_id = 'fake-port-id'
+        port_binding = mock.Mock(host=host_id)
+        port_binding_no_host = mock.Mock(host="")
         db_port_no_host = mock.Mock(
-            id=port_id, port_bindings=[mock.Mock(host="")])
+            id=port_id, port_bindings=[port_binding_no_host])
         db_port = mock.Mock(
-            id=port_id, port_bindings=[mock.Mock(host=host_id)])
+            id=port_id, port_bindings=[port_binding])
+        # no active binding, no binding with host, binding with host
+        self.get_pb_bsah.side_effect = (None, port_binding_no_host,
+                                        port_binding)
 
-        mock_get_port.side_effect = (db_port_no_host, db_port)
+        mock_get_port.side_effect = (db_port_no_host, db_port_no_host, db_port)
 
-        ret = self.ovn_client._wait_for_port_bindings_host(
+        ret = self.ovn_client._wait_for_active_port_bindings_host(
             context, port_id)
 
-        self.assertEqual(ret, db_port)
+        self.assertEqual(ret, port_binding)
 
         expected_calls = [mock.call(context, port_id),
                           mock.call(context, port_id)]
         mock_get_port.assert_has_calls(expected_calls)
 
     @mock.patch.object(ml2_db, 'get_port')
-    def test__wait_for_port_bindings_host_fail(self, mock_get_port):
+    def test__wait_for_active_port_bindings_host_fail(self, mock_get_port):
         context = mock.MagicMock()
         port_id = 'fake-port-id'
         db_port_no_pb = mock.Mock(id=port_id, port_bindings=[])
         db_port_no_host = mock.Mock(
             id=port_id, port_bindings=[mock.Mock(host="")])
+        self.get_pb_bsah.return_value = None
 
         mock_get_port.side_effect = (
             db_port_no_pb, db_port_no_host, db_port_no_host)
 
         self.assertRaises(
-            RuntimeError, self.ovn_client._wait_for_port_bindings_host,
+            RuntimeError, self.ovn_client._wait_for_active_port_bindings_host,
             context, port_id)
 
         expected_calls = [mock.call(context, port_id),
