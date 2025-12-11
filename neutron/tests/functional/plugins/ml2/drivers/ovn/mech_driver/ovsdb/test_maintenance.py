@@ -1499,6 +1499,52 @@ class TestMaintenance(_TestMaintenanceHelper):
             else:
                 self.assertEqual(def_prio, qos_rule.priority)
 
+    def test_update_lrouter_ports_ext_ids_name_prefix(self):
+        router = self._create_router(uuidutils.generate_uuid())
+        port_ids = []
+        for idx in range(2):
+            # Create 2 networks, 2 subnets and 2 router interfaces.
+            net = self._create_network(uuidutils.generate_uuid())
+            subnet = self._create_subnet(uuidutils.generate_uuid(), net['id'],
+                                         cidr=f'10.{idx}.0.0/24')
+            port_ids.append(self._add_router_interface(
+                router['id'], subnet['id'])['port_id'])
+
+        # Remove the 'OVN_ROUTER_NAME_EXT_ID_KEY' from the second LRP.
+        self.nb_api.db_remove(
+            'Logical_Router_Port', 'lrp-' + port_ids[1],
+            'external_ids', ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY).execute(
+                check_error=True)
+        lrp = self.nb_api.db_find(
+            'Logical_Router_Port',
+            ('name', '=', 'lrp-' + port_ids[1])).execute(check_error=True)[0]
+        self.assertNotIn(ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY,
+                         lrp['external_ids'])
+
+        # Set the router ID (not the OVN router name) in the first LRP.
+        # This one will be updated by the maintenance method.
+        router_name = {
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router['id']}
+        self.nb_api.db_set(
+            'Logical_Router_Port', 'lrp-' + port_ids[0],
+            ('external_ids', router_name)).execute(check_error=True)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.update_lrouter_ports_ext_ids_name_prefix)
+
+        lrps = self.nb_api.db_find(
+            'Logical_Router_Port').execute(check_error=True)
+        for lrp in (lrp for lrp in lrps if
+                    lrp['name'] == 'lrp-' + port_ids[0]):
+            # The router name key has been correctly updated; now it
+            # contains the router name (starting with "neutron-").
+            self.assertEqual(
+                lrp['external_ids'][ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY],
+                ovn_const.OVN_NAME_PREFIX + router['id'])
+            return
+        self.fail('Logical_Router_Port lrp-%s not found' % port_ids[0])
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):

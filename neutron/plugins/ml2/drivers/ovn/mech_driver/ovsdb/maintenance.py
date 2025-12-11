@@ -502,27 +502,31 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             'Maintenance task: Check missing prefix router_name in '
             'external_ids of LRPs.')
         self._sync_timer.restart()
-        ports_to_prefix = []
-        rports = self._nb_idl.db_find(
-            'Logical_Router_Port').execute(check_error=True)
-        for port in rports:
-            ext_id_rname = port['external_ids'].get(
-                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
-            if ext_id_rname and not ext_id_rname.startswith(
-                    ovn_const.OVN_NAME_PREFIX):
-                ports_to_prefix.append(port)
-        if ports_to_prefix:
+
+        lrp_key = ('external_ids', '!=',
+                   {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: ''})
+        lrp_router_id_map = {
+            lrp['name']: lrp['external_ids'][
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
+            for lrp in self._nb_idl.db_find(
+                'Logical_Router_Port', lrp_key).execute(check_error=True)
+            if not lrp['external_ids'].get(
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY,
+                '').startswith(ovn_const.OVN_NAME_PREFIX)
+        }
+
+        if lrp_router_id_map:
             LOG.debug('Update missing prefix for router_name in %d LRPs:\n%s',
-                      len(ports_to_prefix),
-                      [str(p['_uuid']) for p in ports_to_prefix])
+                      len(lrp_router_id_map), [lrp_router_id_map.keys()])
             with self._nb_idl.transaction(check_error=True) as txn:
-                for port in ports_to_prefix:
-                    router_id = port['external_ids'].get(
-                        ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
-                    txn.add(self._nb_idl.update_lrouter_port(
-                        name=port['name'],
-                        external_ids=self._ovn_client._gen_router_port_ext_ids(
-                            port, router_id)))
+                for lrp_name, router_id in lrp_router_id_map.items():
+                    router_name = {
+                        ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                            ovn_const.OVN_NAME_PREFIX + router_id}
+                    txn.add(self._nb_idl.db_set(
+                        'Logical_Router_Port', lrp_name,
+                        ('external_ids', router_name)))
+
         self._sync_timer.stop()
         LOG.info('Maintenance task: Check missing prefix router_name in LRPs '
                  '(took %.2f seconds)', self._sync_timer.elapsed())
