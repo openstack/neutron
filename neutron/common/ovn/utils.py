@@ -640,11 +640,15 @@ def get_ovn_port_addresses(ovn_port):
     return list(set(addresses + port_security))
 
 
-def get_virtual_port_parents(nb_idl, virtual_ip, network_id, port_id):
-    ls = nb_idl.ls_get(ovn_name(network_id)).execute(check_error=True)
-    return [lsp.name for lsp in ls.ports
-            if lsp.name != port_id and
-            virtual_ip in get_ovn_port_addresses(lsp)]
+def get_virtual_port_parents(context, virtual_ip, subnet_id, port_id):
+    plugin = directory.get_plugin()
+    filters = {'fixed_ips': {'subnet_id': [subnet_id]},
+               'allowed_address_pairs': {'ip_address': virtual_ip}}
+    ports = plugin.get_ports(context, filters=filters)
+    parents = [p['id'] for p in ports]
+    if parents:
+        LOG.debug("Parents of %s are %s", port_id, ", ".join(parents))
+    return parents
 
 
 def sort_ips_by_version(addresses):
@@ -1335,16 +1339,14 @@ def sync_ha_chassis_group_network_unified(context, nb_idl, sb_idl, network_id,
     return _sync_ha_chassis_group(nb_idl, hcg_info, txn)
 
 
-def get_port_type_virtual_and_parents(subnets_by_id, fixed_ips, network_id,
-                                      port_id, nb_idl):
+def get_port_type_virtual_and_parents(context, subnets_by_id, fixed_ips,
+                                      port_id):
     """Returns if a port is type virtual and its corresponding parents.
 
     :param subnets_by_id: (dict) of subnets {subnet_id: subnet, ...}
     :param fixed_ips: (list of dict) fixed IPs of several subnets (usually
                       belonging to a network but not mandatory)
-    :param network_id: (string) network ID
     :param port_id: (string) port ID
-    :param nb_idl: (``OvsdbNbOvnIdl``) OVN Northbound IDL
     :return: (tuple, three strings) (1) the virtual type ('' if not virtual),
              (2) the virtual IP address and (3) the virtual parents
     """
@@ -1357,8 +1359,8 @@ def get_port_type_virtual_and_parents(subnets_by_id, fixed_ips, network_id,
             continue
 
         # Check if the port being created is a virtual port
-        parents = get_virtual_port_parents(
-            nb_idl, fixed_ip['ip_address'], network_id, port_id)
+        parents = get_virtual_port_parents(context,
+            fixed_ip['ip_address'], fixed_ip['subnet_id'], port_id)
         if not parents:
             continue
 
@@ -1416,7 +1418,7 @@ def determine_bind_host(sb_idl, port, port_context=None):
 
 
 def validate_port_binding_and_virtual_port(
-        port_context, nb_idl, ml2_plugin, port, original_port):
+        port_context, ml2_plugin, port, original_port):
     """If the port is type=virtual and it is bound, raise BadRequest"""
     # If the port receives an update of the device ID and the binding profile
     # host ID fields, at the same time, this is because Nova is trying to bind
@@ -1436,7 +1438,7 @@ def validate_port_binding_and_virtual_port(
                                      filters={'id': list(subnet_ids)})
     subnets_by_id = {subnet['id']: subnet for subnet in subnets}
     port_type, _, _ = get_port_type_virtual_and_parents(
-        subnets_by_id, fixed_ips, port['network_id'], port['id'], nb_idl)
+        port_context.plugin_context, subnets_by_id, fixed_ips, port['id'])
     if port_type == constants.LSP_TYPE_VIRTUAL:
         raise n_exc.BadRequest(
             resource='port',

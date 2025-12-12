@@ -21,19 +21,71 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
+from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import allowedaddresspairs as addr_exc
 from neutron_lib.objects import exceptions
 from neutron_lib.utils import net as net_utils
 
+from neutron.db.models import allowed_address_pair as aap
+from neutron.db import models_v2
+from neutron.objects import base as obj_base
 from neutron.objects.port.extensions import (allowedaddresspairs
                                              as obj_addr_pair)
+
+
+def _port_allowed_address_pairs_filter_hook(query, filters):
+    """Filter ports by allowed address pairs criteria."""
+
+    allowed_pairs_filter = filters and filters.get('allowed_address_pairs')
+    if not allowed_pairs_filter:
+        return query
+
+    filters = collections.defaultdict(set)
+    for field in ("ip_address", "mac_address"):
+        try:
+            # format: {"ip_address": [xxx,]} e.g. produced by get_ports()
+            filters[field] = allowed_pairs_filter.get(field)
+        except AttributeError:
+            # format: [{"ip_address": [xxx,]} e.g. produced by get_objects()
+            for f in allowed_pairs_filter:
+                val = f.get(field, [])
+                if isinstance(val, str):
+                    val = [val]
+                if val:
+                    filters[field] = filters[field].union(set(val))
+
+        if isinstance(filters[field], str):
+            filters[field] = set([filters[field]])
+
+        if filters[field]:
+            col = getattr(aap.AllowedAddressPair, field)
+            query = query.filter(
+                models_v2.Port.allowed_address_pairs.any(
+                    col.in_(filters[field])))
+
+    return query
 
 
 @resource_extend.has_resource_extenders
 class AllowedAddressPairsMixin:
     """Mixin class for allowed address pairs."""
+
+    def __new__(cls, *args, **kwargs):
+        # Register the filter name for OVO validation
+        obj_base.register_filter_hook_on_model(models_v2.Port,
+                                               'allowed_address_pairs')
+
+        # Register the database query hook
+        model_query.register_hook(
+            models_v2.Port,
+            "allowed_address_pairs",
+            query_hook=None,
+            filter_hook=None,
+            result_filters=_port_allowed_address_pairs_filter_hook)
+
+        return super().__new__(cls)
 
     def _process_create_allowed_address_pairs(self, context, port,
                                               allowed_address_pairs):
