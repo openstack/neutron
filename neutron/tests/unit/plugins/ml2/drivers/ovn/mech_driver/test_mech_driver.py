@@ -1153,7 +1153,6 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                  is_extport_present=False):
         port_device_owner = 'compute:nova' if is_compute_port else ''
         self.mech_driver._plugin.nova_notifier = mock.Mock()
-        mock_sync.return_value = mock.Mock(), mock.Mock()
         mock_is_ext.return_value = is_extport_present
         self.sb_ovn.get_extport_chassis_from_cms_options.return_value = [
             mock.Mock()]
