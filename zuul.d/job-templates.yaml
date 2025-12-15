@@ -119,7 +119,7 @@
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
-        - neutron-ovs-tempest-plugin-iptables_hybrid-nftables
+        - neutron-tempest-plugin-openvswitch-iptables_hybrid
         - devstack-enforce-scope
         - openstack-tox-py312-with-oslo-master:
             timeout: 3600
