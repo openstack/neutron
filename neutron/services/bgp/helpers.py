@@ -13,92 +13,35 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import netaddr
+import uuid
+
 from oslo_log import log
 
-from neutron.services.bgp import constants
-from neutron.services.bgp import exceptions
 
 LOG = log.getLogger(__name__)
 
-
-class _BgpRouterMacPrefix:
-    MAC_BYTES = 6
-
-    def __init__(self, mac_prefix):
-        mac_prefix_len = len([byte for byte in mac_prefix.split(':') if byte])
-        if mac_prefix_len >= self.MAC_BYTES:
-            raise ValueError(f"MAC prefix {mac_prefix} is too long")
-        remaining_bytes = self.MAC_BYTES - mac_prefix_len
-        self.mac_prefix = mac_prefix
-        self.max_mac_index = self.calculate_max_mac_generated(remaining_bytes)
-        self.remaining_bytes = remaining_bytes
-
-    @staticmethod
-    def calculate_max_mac_generated(remaining_bytes):
-        """Calculate how many MAC address can be generated
-
-        This means depending on how many bytes are left after the MAC prefix,
-        we can generate 255^n MAC addresses, where n is the number of bytes
-        left.
-
-        For example if a mac prefix is 00:00 - it uses 2 bytes, and MAC address
-        is stored in 6 bytes. That gives us 4 bytes left and hence
-        255^4 MAC addresses.
-        """
-        return 255 ** remaining_bytes - 1
+BGP_LRP_UUID_NAMESPACE = uuid.UUID('9eaaac59-33fc-4f45-a450-8c220d46ad95')
 
 
-class LrpMacManager:
-    def __init__(self):
-        self.known_routers = {}
+def get_mac_address_from_lrp_name(lrp_name):
+    mac_uuid_base = uuid.uuid5(BGP_LRP_UUID_NAMESPACE, lrp_name)
 
-    @classmethod
-    def get_instance(cls):
-        if not hasattr(cls, "_instance"):
-            cls._instance = cls()
-        return cls._instance
+    # Let's take last 6 bytes of the UUID and convert them to bytes
+    mac_bytes = bytearray(mac_uuid_base.bytes[-6:])
 
-    def register_router(self, router_name, mac_prefix):
-        LOG.debug("Registering router %s with mac prefix %s",
-                  router_name, mac_prefix)
-        self.known_routers[router_name] = _BgpRouterMacPrefix(mac_prefix)
+    # 3. Apply Bitwise Operations on the First Byte
+    # Set the "Locally Administered" bit (2nd least significant bit) to 1
+    # xxxxxxx1 | 00000010 = xxxxxxx1 (OR 0x02)
+    mac_bytes[0] |= 0x02
 
-    def get_mac_address(self, router_name, index):
-        try:
-            router = self.known_routers[router_name]
-        except KeyError:
-            raise RuntimeError(f"Router {router_name} not registered")
+    # Clear the "Multicast" bit (Least significant bit) to 0
+    # xxxxxxx1 & 11111110 = xxxxxxx0 (AND 0xfe)
+    mac_bytes[0] &= 0xfe
 
-        if index < 0 or index > router.max_mac_index:
-            raise ValueError(
-                f"Index {index} is out of range, maximum is "
-                f"{router.max_mac_index}")
+    # 4. Format into standard MAC string (XX:XX:XX:XX:XX:XX)
+    mac_address = ':'.join(f'{b:02x}' for b in mac_bytes)
 
-        # generates the hex string based on the remaining bytes
-        # example: if remaining bytes is 3, and index is 100 will be 000064
-        # because 100 in dec is 64 in hex + 4 zeros to make it 3 bytes
-        hex_str = f"{index:0{router.remaining_bytes * 2}x}"
-
-        # inserts colons between the hex bytes
-        # example: 000064 will be 00:00:64
-        hex_bytes = ':'.join(hex_str[i:i+2] for i in range(0, len(hex_str), 2))
-
-        # combines the mac prefix and the hex bytes into a valid mac address
-        # example: {00:00:00}:{00:00:64} is prefix + hex bytes
-        result = f'{router.mac_prefix}:{hex_bytes}'
-
-        try:
-            netaddr.EUI(result, version=48)
-        except netaddr.core.AddrFormatError:
-            raise ValueError(f"Invalid generated MAC address: {result}")
-
-        return result
-
-
-def get_all_chassis(sb_ovn):
-    chassis = sb_ovn.db_find_rows('Chassis').execute(check_error=True)
-    return chassis
+    return mac_address
 
 
 # Naming helper functions
@@ -112,14 +55,3 @@ def get_hcg_name(chassis_name):
 
 def get_chassis_router_name(chassis_name):
     return f'bgp-lr-{chassis_name}'
-
-
-def get_chassis_index(chassis):
-    try:
-        return int(chassis.external_ids[constants.OVN_BGP_CHASSIS_INDEX_KEY])
-    except (KeyError, ValueError):
-        msg = (f"Chassis {chassis.name} has no index required for further "
-               "operations, such as creating chassis BGP resources")
-        LOG.error(msg)
-        # TODO(jlibosva): Use resource types for custom exceptions
-        raise exceptions.ReconcileError(msg)
