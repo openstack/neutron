@@ -47,7 +47,7 @@ class MeteringPluginDbTestCaseMixin:
                                    'description': description}}
         req = self.new_create_request(
             'metering-labels', data, fmt,
-            tenant_id=project_id,
+            project_id=project_id,
             as_admin=kwargs.get('is_admin', True))
 
         return req.get_response(self.ext_api)
@@ -85,7 +85,7 @@ class MeteringPluginDbTestCaseMixin:
 
         req = self.new_create_request(
             'metering-label-rules', data, fmt,
-            tenant_id=project_id,
+            project_id=project_id,
             as_admin=kwargs.get('is_admin', True))
 
         return req.get_response(self.ext_api)

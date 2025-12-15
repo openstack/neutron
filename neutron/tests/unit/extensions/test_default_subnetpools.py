@@ -76,7 +76,7 @@ class DefaultSubnetpoolsExtensionTestCase(
             as_admin = True
         update_req = self.new_update_request(
             'subnetpools', {'subnetpool': data}, subnetpool_id,
-            tenant_id=project_id, as_admin=as_admin)
+            project_id=project_id, as_admin=as_admin)
         res = update_req.get_response(self.api)
 
         return self.deserialize(self.fmt, res)['subnetpool']

@@ -3385,7 +3385,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                 self.driver.create_network(self.context, data)
 
     def test_extend_dictionary_no_segments(self):
-        network = dict(name='net_no_segment', id='5', tenant_id='project_one')
+        network = dict(name='net_no_segment', id='5', project_id='project_one')
         self.driver.type_manager.extend_network_dict_provider(self.context,
                                                               network)
         self.assertIsNone(network[pnet.NETWORK_TYPE])

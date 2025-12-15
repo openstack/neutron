@@ -109,7 +109,7 @@ class DNSDomainKeywordsTestCase(
         # fixed_ips of the port as by default it is not possible for non-admin
         # users
         req = self.new_update_request('ports', data, port['id'],
-                                      tenant_id=PROJECT_ID, as_admin=True)
+                                      project_id=PROJECT_ID, as_admin=True)
         res = req.get_response(self.api)
         self.assertEqual(200, res.status_int)
         port = self.deserialize(self.fmt, res)['port']

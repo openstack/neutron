@@ -72,7 +72,7 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
         fip_pf_req = self.new_create_request(
             'floatingips', data, fmt or self.fmt, floating_ip_id,
             subresource='port_forwardings',
-            tenant_id=project_id, as_admin=as_admin)
+            project_id=project_id, as_admin=as_admin)
 
         return fip_pf_req.get_response(self.ext_api)
 
@@ -90,7 +90,7 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
             'floatingips', data, floating_ip_id, fmt or self.fmt,
             sub_id=port_forwarding_id,
             subresource='port_forwardings',
-            tenant_id=req_project_id,
+            project_id=req_project_id,
             as_admin=as_admin)
 
         return fip_pf_req.get_response(self.ext_api)

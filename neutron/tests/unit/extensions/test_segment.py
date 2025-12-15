@@ -117,7 +117,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             segment['segment'][k] = None if v is None else str(v)
 
         segment_req = self.new_create_request(
-            'segments', segment, fmt, tenant_id=project_id, as_admin=True)
+            'segments', segment, fmt, project_id=project_id, as_admin=True)
 
         segment_res = segment_req.get_response(self.ext_api)
         if expected_res_status:

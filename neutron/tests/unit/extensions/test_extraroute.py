@@ -99,7 +99,8 @@ class ExtraRouteDBTestCaseBase:
             self._set_net_external(ext_sub['subnet']['network_id'])
             ext_info = {'network_id': ext_sub['subnet']['network_id']}
             with self.router(
-                    external_gateway_info=ext_info, tenant_id=my_project) as r:
+                    external_gateway_info=ext_info,
+                    project_id=my_project) as r:
                 body = self._routes_update_prepare(
                     r['router']['id'], None, None, routes, skip_add=True,
                     project_id=my_project)
@@ -112,7 +113,7 @@ class ExtraRouteDBTestCaseBase:
             nexthop_ip = nexthop_port['port']['fixed_ips'][0]['ip_address']
             routes = [{'destination': '135.207.0.0/16',
                        'nexthop': nexthop_ip}]
-            with self.router(tenant_id=my_project) as r:
+            with self.router(project_id=my_project) as r:
                 body = self._routes_update_prepare(
                     r['router']['id'], subnet['subnet']['id'], None, routes,
                     project_id=my_project, as_admin=True)
@@ -454,7 +455,7 @@ class ExtraRouteDBTestCaseBase:
                     'json',
                     200,
                     s['subnet']['network_id'],
-                    tenant_id=r['router']['project_id'],
+                    project_id=r['router']['project_id'],
                     device_owner=constants.DEVICE_OWNER_ROUTER_GW)
                 port_list = self.deserialize('json', port_res)
                 self.assertEqual(1, len(port_list['ports']))

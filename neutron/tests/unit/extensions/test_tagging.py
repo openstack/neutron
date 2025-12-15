@@ -43,7 +43,7 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
         self.user_id = uuidutils.generate_uuid()
         self.project_id = uuidutils.generate_uuid()
         self.ctx = context.Context(user_id=self.user_id,
-                                   tenant_id=self.project_id,
+                                   project_id=self.project_id,
                                    is_admin=False)
         self.tc = tagging.TaggingController()
         mock.patch.dict(

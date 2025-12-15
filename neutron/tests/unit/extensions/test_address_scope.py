@@ -59,7 +59,7 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
         address_scope_req = self.new_create_request('address-scopes',
                                                     address_scope, fmt,
-                                                    tenant_id=project_id,
+                                                    project_id=project_id,
                                                     as_admin=admin)
 
         address_scope_res = address_scope_req.get_response(self.ext_api)
@@ -100,7 +100,7 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                    expected=None, project_id=None):
         update_req = self.new_update_request(
             'address-scopes', data, addr_scope_id,
-            tenant_id=project_id or self._project_id,
+            project_id=project_id or self._project_id,
             as_admin=admin)
 
         update_res = update_req.get_response(self.ext_api)

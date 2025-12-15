@@ -1123,7 +1123,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             data['router']['external_gateway_info'] = {
                 'network_id': s['subnet']['network_id']}
             router_req = self.new_create_request(
-                'routers', data, self.fmt, tenant_id=project_id)
+                'routers', data, self.fmt, project_id=project_id)
             res = router_req.get_response(self.ext_api)
             router = self.deserialize(self.fmt, res)
             l3agents = (
@@ -1240,7 +1240,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             data['router']['external_gateway_info'] = {
                 'network_id': s1['subnet']['network_id']}
             router_req = self.new_create_request(
-                'routers', data, self.fmt, tenant_id=project_id)
+                'routers', data, self.fmt, project_id=project_id)
             res = router_req.get_response(self.ext_api)
             router = self.deserialize(self.fmt, res)
             self._router_interface_action('add',

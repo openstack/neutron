@@ -406,7 +406,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
                                {'security_groups': [security_group_id]}}
                 req = self.new_update_request('ports', update_port,
                                               port['port']['id'],
-                                              tenant_id='admin_project',
+                                              project_id='admin_project',
                                               as_admin=True)
                 port = self.deserialize('json', req.get_response(self.api))
                 security_groups = port['port']['security_groups']
@@ -432,7 +432,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
                                {'security_groups': [security_group_id]}}
                 req = self.new_update_request('ports', update_port,
                                               port['port']['id'],
-                                              tenant_id='other_project')
+                                              project_id='other_project')
                 res = req.get_response(self.api)
                 self.assertEqual(404, res.status_int)
 
@@ -508,6 +508,6 @@ class TestPortSecurity(PortSecurityDBTestCase):
                                         psec.PORTSECURITY: False}}
                 req = self.new_update_request('ports', update_port,
                                               port['port']['id'],
-                                              tenant_id='not_network_owner')
+                                              project_id='not_network_owner')
                 res = req.get_response(self.api)
                 self.assertEqual(exc.HTTPForbidden.code, res.status_int)
