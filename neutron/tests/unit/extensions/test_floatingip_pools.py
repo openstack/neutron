@@ -80,8 +80,8 @@ class FloatingIPPoolsDBTestCaseBase(test_l3.L3NatTestCaseMixin):
                                 network_id=fake_network_id,
                                 cidr=fake_cidr,
                                 ip_version=ip_version,
-                                tenant_id='fake_tenant',
-                                project_id='fake_tenant')
+                                tenant_id='fake_project',
+                                project_id='fake_project')
         fake_subnet.name = 'fake_subnet'
         self.plugin._is_v6_supported = is_v6_supported
         with mock.patch.object(
@@ -102,8 +102,8 @@ class FloatingIPPoolsDBTestCaseBase(test_l3.L3NatTestCaseMixin):
                                    'subnet_id': fake_subnet_id,
                                    'subnet_name': 'fake_subnet',
                                    'network_id': fake_network_id,
-                                   'project_id': 'fake_tenant',
-                                   'tenant_id': 'fake_tenant'}]
+                                   'project_id': 'fake_project',
+                                   'tenant_id': 'fake_project'}]
         self.assertEqual(expected_fip_pools, fip_pools)
         mock_subnet_get_objects.assert_called_once_with(
             self.admin_ctxt, _pager=mock.ANY, network_id=[fake_network_id])
@@ -125,7 +125,7 @@ class FloatingIPPoolsDBIntTestCase(test_l3.L3BaseForIntTests,
             ext_mgr=ext_mgr)
 
         self.setup_notification_driver()
-        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.ctxt = context.Context('fake_user', 'fake_project')
         self.admin_ctxt = self.ctxt.elevated()
 
 
@@ -149,5 +149,5 @@ class FloatingIPPoolsDBSepTestCase(test_l3.L3BaseForSepTests,
 
         self.setup_notification_driver()
         self.plugin = directory.get_plugin(plugin_constants.L3)
-        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.ctxt = context.Context('fake_user', 'fake_project')
         self.admin_ctxt = self.ctxt.elevated()

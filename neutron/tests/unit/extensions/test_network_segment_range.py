@@ -177,16 +177,16 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
             physical_network='',
             expected=expected_range)
 
-    def test_create_network_segment_range_tenant_specific(self):
+    def test_create_network_segment_range_project_specific(self):
         expected_range = {'shared': False,
-                          'project_id': test_db_base_plugin_v2.TEST_TENANT_ID,
+                          'project_id': test_db_base_plugin_v2.TEST_PROJECT_ID,
                           'network_type': constants.TYPE_VLAN,
                           'physical_network': 'phys_net',
                           'minimum': 200,
                           'maximum': 300}
         self._test_create_network_segment_range(
             shared=False,
-            project_id=test_db_base_plugin_v2.TEST_TENANT_ID,
+            project_id=test_db_base_plugin_v2.TEST_PROJECT_ID,
             network_type=constants.TYPE_VLAN,
             physical_network='phys_net',
             expected=expected_range)

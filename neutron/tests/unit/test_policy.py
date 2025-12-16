@@ -55,7 +55,7 @@ class PolicyFileTestCase(base.BaseTestCase):
         with open(tmpfilename, "w") as policyfile:
             policyfile.write("""{"example:test": "!"}""")
         policy.refresh(policy_file=tmpfilename)
-        self.target = {'tenant_id': 'fake_tenant'}
+        self.target = {'tenant_id': 'fake_project'}
         self.assertRaises(oslo_policy.PolicyNotAuthorized,
                           policy.enforce,
                           self.context,

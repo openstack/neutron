@@ -354,7 +354,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
                   'id': uuidutils.generate_uuid()}])
             self.assertRaises(exceptions.AutoAllocationFailure,
                               self.mixin._provision_tenant_private_network,
-                              self.ctx, 'foo_tenant')
+                              self.ctx, 'foo_project')
             g.assert_called_once_with(self.ctx, network_id)
 
     def _test__build_topology(self, method, provisioning_exception):
@@ -437,7 +437,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             self.mixin._provision_external_connectivity(
                 self.ctx, 'foo_default',
                 [{'id': 'foo_s', 'network_id': 'foo_n'}],
-                'foo_tenant')
+                'foo_project')
             self.assertEqual('foo_n', e.network_id)
             self.assertIsNone(e.router_id)
             self.assertIsNone(e.subnets)
@@ -447,13 +447,13 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         with testtools.ExpectedException(
                 exceptions.UnknownProvisioningError) as e:
             self.mixin._provision_tenant_private_network(
-                self.ctx, 'foo_tenant')
+                self.ctx, 'foo_project')
             self.assertIsNone(e.network_id)
 
     def test__check_requirements_fail_on_missing_ext_net(self):
         self.assertRaises(
             exceptions.AutoAllocationFailure,
-            self.mixin._check_requirements, self.ctx, 'foo_tenant')
+            self.mixin._check_requirements, self.ctx, 'foo_project')
 
     def test__check_requirements_fail_on_missing_pools(self):
         with mock.patch.object(
@@ -463,18 +463,18 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             g.side_effect = n_exc.NotFound()
             self.assertRaises(
                 exceptions.AutoAllocationFailure,
-                self.mixin._check_requirements, self.ctx, 'foo_tenant')
+                self.mixin._check_requirements, self.ctx, 'foo_project')
 
     def test__check_requirements_happy_path_for_kevin(self):
         with mock.patch.object(
             self.mixin, '_get_default_external_network'),\
             mock.patch.object(
                 self.mixin, '_get_supported_subnetpools'):
-            result = self.mixin._check_requirements(self.ctx, 'foo_tenant')
+            result = self.mixin._check_requirements(self.ctx, 'foo_project')
             expected = {
                 'id': 'dry-run=pass',
-                'tenant_id': 'foo_tenant',
-                'project_id': 'foo_tenant'}
+                'tenant_id': 'foo_project',
+                'project_id': 'foo_project'}
             self.assertEqual(expected, result)
 
     def test__cleanup_handles_failures(self):

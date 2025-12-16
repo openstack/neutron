@@ -86,14 +86,14 @@ class TestAZRouterCase(test_az.AZTestCommon, test_l3.L3NatTestCaseMixin):
             self.assertEqual([], res['router']['availability_zone_hints'])
 
     def test_create_router_with_none_existing_az(self):
-        res = self._create_router(self.fmt, 'tenant_id',
+        res = self._create_router(self.fmt, 'project_id',
                                   availability_zone_hints=['nova4'])
         self.assertEqual(404, res.status_int)
 
     def test_create_router_with_default_azs_not_existing(self):
         self._register_azs()
         cfg.CONF.set_default('default_availability_zones', ['nova4'])
-        res = self._create_router(self.fmt, 'tenant_id')
+        res = self._create_router(self.fmt, 'project_id')
         self.assertEqual(404, res.status_int)
 
     def test_create_router_with_default_azs_existing_az(self):

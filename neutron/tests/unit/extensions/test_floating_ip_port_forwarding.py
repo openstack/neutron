@@ -46,12 +46,12 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
                                     protocol,
                                     internal_ip_address,
                                     internal_port_id,
-                                    tenant_id=None,
+                                    project_id=None,
                                     description=None,
                                     external_port_range=None,
                                     internal_port_range=None,
                                     as_admin=False):
-        tenant_id = tenant_id or self._tenant_id
+        project_id = project_id or self._project_id
         data = {'port_forwarding': {
             "protocol": protocol,
             "internal_ip_address": internal_ip_address,
@@ -72,15 +72,15 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
         fip_pf_req = self.new_create_request(
             'floatingips', data, fmt or self.fmt, floating_ip_id,
             subresource='port_forwardings',
-            tenant_id=tenant_id, as_admin=as_admin)
+            tenant_id=project_id, as_admin=as_admin)
 
         return fip_pf_req.get_response(self.ext_api)
 
     def _update_fip_port_forwarding(self, fmt, floating_ip_id,
                                     port_forwarding_id,
-                                    req_tenant_id=None, as_admin=False,
+                                    req_project_id=None, as_admin=False,
                                     **kwargs):
-        req_tenant_id = req_tenant_id or self._tenant_id
+        req_project_id = req_project_id or self._project_id
         port_forwarding = {}
         for k, v in kwargs.items():
             port_forwarding[k] = v
@@ -90,7 +90,7 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
             'floatingips', data, floating_ip_id, fmt or self.fmt,
             sub_id=port_forwarding_id,
             subresource='port_forwardings',
-            tenant_id=req_tenant_id,
+            tenant_id=req_project_id,
             as_admin=as_admin)
 
         return fip_pf_req.get_response(self.ext_api)

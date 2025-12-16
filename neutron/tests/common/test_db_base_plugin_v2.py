@@ -80,7 +80,7 @@ DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 DEVICE_OWNER_NOT_COMPUTE = constants.DEVICE_OWNER_DHCP
 
-TEST_TENANT_ID = TEST_PROJECT_ID = '46f70361-ba71-4bd0-9769-3573fd227c4b'
+TEST_PROJECT_ID = '46f70361-ba71-4bd0-9769-3573fd227c4b'
 
 
 def optional_ctx(obj, fallback, **kwargs):

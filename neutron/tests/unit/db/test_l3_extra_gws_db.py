@@ -68,12 +68,12 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         # Create a simple setup with one external network and a subnet on it.
         self.ext_net_a_id = _uuid()
         self.ext_sub_a_id = _uuid()
-        self.tenant_id = _uuid()
+        self.project_id = _uuid()
 
         self.network_a = net_obj.Network(
             self.context,
             id=self.ext_net_a_id,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
         self.network_a.create()
@@ -82,7 +82,7 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.net_ext_a.create()
         self.ext_sub_a = subnet_obj.Subnet(self.context,
                                            id=self.ext_sub_a_id,
-                                           project_id=self.tenant_id,
+                                           project_id=self.project_id,
                                            ip_version=constants.IP_VERSION_4,
                                            cidr=net_utils.AuthenticIPNetwork(
                                                '192.0.2.0/25'),
@@ -96,7 +96,7 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.network_b = net_obj.Network(
             self.context,
             id=self.ext_net_b_id,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
         self.network_b.create()
@@ -107,7 +107,7 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.ext_sub_b = subnet_obj.Subnet(
             self.context,
             id=self.ext_sub_b_id,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             ip_version=constants.IP_VERSION_4,
             cidr=net_utils.AuthenticIPNetwork('192.0.2.128/25'),
             gateway_ip=netaddr.IPAddress('192.0.2.129'),
@@ -119,7 +119,7 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.network_c = net_obj.Network(
             self.context,
             id=self.ext_net_c_id,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
         self.network_c.create()
@@ -130,7 +130,7 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.ext_sub_c = subnet_obj.Subnet(
             self.context,
             id=self.ext_sub_c_id,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             ip_version=constants.IP_VERSION_4,
             # Overlaps with subnet A above on purpose for overlap testing.
             cidr=net_utils.AuthenticIPNetwork('192.0.2.0/25'),
@@ -186,7 +186,7 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.router = l3_models.Router(
             id=_uuid(),
             name=None,
-            tenant_id=self.tenant_id,
+            tenant_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE,
             enable_snat=True,

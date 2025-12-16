@@ -60,7 +60,7 @@ class TestLogDriversLoggingTypeValidations(drv_mgr.TestLogDriversManagerBase):
 
     def setUp(self):
         super().setUp()
-        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.ctxt = context.Context('fake_user', 'fake_project')
 
     def _get_port(self, vif_type, vnic_type):
         port_id = uuidutils.generate_uuid()

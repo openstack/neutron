@@ -129,11 +129,11 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.ext_net_id = _uuid()
         self.int_net_id = _uuid()
         self.int_sub_id = _uuid()
-        self.tenant_id = 'the_tenant'
+        self.project_id = 'the_project'
         self.network = net_obj.Network(
             self.context,
             id=self.ext_net_id,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
         self.net_ext = net_obj.ExternalNetwork(
@@ -143,7 +143,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.router = l3_models.Router(
             id=_uuid(),
             name=None,
-            tenant_id=self.tenant_id,
+            tenant_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE,
             enable_snat=True,
@@ -153,7 +153,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.router_gw_port = port_obj.Port(
             self.context,
             id=FAKE_GW_PORT_ID,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             device_id=self.router.id,
             device_owner=l3_db.DEVICE_OWNER_ROUTER_GW,
             admin_state_up=True,
@@ -167,7 +167,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.fip_ext_port = port_obj.Port(
             self.context,
             id=FAKE_FIP_EXT_PORT_ID,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             device_id=self.router.id,
             device_owner=l3_db.DEVICE_OWNER_FLOATINGIP,
@@ -179,12 +179,12 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.int_net = net_obj.Network(
             self.context,
             id=self.int_net_id,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
         self.int_sub = subnet_obj.Subnet(self.context,
                                          id=self.int_sub_id,
-                                         project_id=self.tenant_id,
+                                         project_id=self.project_id,
                                          ip_version=constants.IP_VERSION_4,
                                          cidr=net_utils.AuthenticIPNetwork(
                                              '3.3.3.0/24'),
@@ -194,7 +194,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.router_port = port_obj.Port(
             self.context,
             id=FAKE_ROUTER_PORT_ID,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             device_id=self.router.id,
             device_owner=l3_db.DEVICE_OWNER_ROUTER_INTF,
@@ -215,7 +215,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.fip_int_port = port_obj.Port(
             self.context,
             id=FAKE_FIP_INT_PORT_ID,
-            project_id=self.tenant_id,
+            project_id=self.project_id,
             admin_state_up=True,
             device_id='something',
             device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX + 'nova',
@@ -243,7 +243,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.context.session.flush()
         self.context.session.expire_all()
         self.fip_request = {'port_id': FAKE_FIP_INT_PORT_ID,
-                            'tenant_id': self.tenant_id}
+                            'tenant_id': self.project_id}
 
     def _get_gwports_dict(self, gw_ports):
         return {gw_port['id']: gw_port
@@ -384,7 +384,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def _set_router_external_gateway(self, router_id, network_id,
                                      snat_enabled=None,
                                      expected_code=exc.HTTPOk.code,
-                                     tenant_id=None, as_admin=False):
+                                     project_id=None, as_admin=False):
         ext_gw_info = {'network_id': network_id}
         # Need to set enable_snat also if snat_enabled == False
         if snat_enabled is not None:
@@ -393,7 +393,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                             {'router': {'external_gateway_info':
                                         ext_gw_info}},
                             expected_code=expected_code,
-                            request_tenant_id=tenant_id,
+                            request_tenant_id=project_id,
                             as_admin=as_admin)
 
     def test_router_gateway_set_fail_after_port_create(self):
@@ -443,28 +443,28 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
     def test_router_create_show_no_ext_gwinfo(self):
         name = 'router1'
-        tenant_id = _uuid()
-        expected_value = [('name', name), ('tenant_id', tenant_id),
+        project_id = _uuid()
+        expected_value = [('name', name), ('tenant_id', project_id),
                           ('admin_state_up', True), ('status', 'ACTIVE'),
                           ('external_gateway_info', None)]
         with self.router(name=name, admin_state_up=True,
-                         tenant_id=tenant_id) as router:
+                         tenant_id=project_id) as router:
             res = self._show('routers', router['router']['id'],
-                             tenant_id=tenant_id)
+                             tenant_id=project_id)
             for k, v in expected_value:
                 self.assertEqual(res['router'][k], v)
 
     def _test_router_create_show_ext_gwinfo(self, snat_input_value,
                                             snat_expected_value):
         name = 'router1'
-        tenant_id = _uuid()
+        project_id = _uuid()
         with self.subnet() as s:
             ext_net_id = s['subnet']['network_id']
             self._set_net_external(ext_net_id)
             input_value = {'network_id': ext_net_id}
             if snat_input_value in (True, False):
                 input_value['enable_snat'] = snat_input_value
-            expected_value = [('name', name), ('tenant_id', tenant_id),
+            expected_value = [('name', name), ('tenant_id', project_id),
                               ('admin_state_up', True), ('status', 'ACTIVE'),
                               ('external_gateway_info',
                                {'network_id': ext_net_id,
@@ -473,11 +473,11 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                     'ip_address': mock.ANY,
                                     'subnet_id': s['subnet']['id']}]})]
             with self.router(name=name, admin_state_up=True,
-                             tenant_id=tenant_id,
+                             tenant_id=project_id,
                              external_gateway_info=input_value,
                              as_admin=True) as router:
                 res = self._show('routers', router['router']['id'],
-                                 tenant_id=tenant_id)
+                                 tenant_id=project_id)
                 for k, v in expected_value:
                     self.assertEqual(v, res['router'][k])
 

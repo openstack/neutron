@@ -66,7 +66,7 @@ class FakeL3PluginWithAgents(l3_hamode_db.L3_HA_NAT_db_mixin,
 
 class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['openvswitch', 'fake_agent', 'l2population']
-    tenant = 'tenant'
+    project = 'project'
 
     def setUp(self):
         super().setUp()
@@ -205,11 +205,11 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         result = jsonutils.loads(jsonutils.dumps(payload))
         self.assertEqual(entry, result['netuuid']['ports']['1'][0])
 
-    def _create_router(self, ha=True, tenant_id='tenant1',
+    def _create_router(self, ha=True, project_id='project1',
                        distributed=None, ctx=None):
         if ctx is None:
             ctx = self.adminContext
-        ctx.tenant_id = tenant_id
+        ctx.tenant_id = project_id
         router = {'name': TEST_ROUTER_ID, 'admin_state_up': True,
                   'tenant_id': ctx.tenant_id}
         if ha is not None:
@@ -218,7 +218,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             router['distributed'] = distributed
         return self.plugin.create_router(ctx, {'router': router})
 
-    def _bind_router(self, router_id, tenant_id):
+    def _bind_router(self, router_id, project_id):
         scheduler = l3_agent_scheduler.ChanceScheduler()
         filters = {'agent_type': [constants.AGENT_TYPE_L3]}
         agents_object = self.plugin.get_agent_objects(
@@ -228,7 +228,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.plugin,
                 self.adminContext,
                 router_id,
-                tenant_id,
+                project_id,
                 agent_obj)
         self._bind_ha_network_ports(router_id)
 
@@ -370,7 +370,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             with self.port(
                     is_admin=True,
                     subnet=snet,
-                    project_id=self.tenant,
+                    project_id=self.project,
                     device_owner=constants.DEVICE_OWNER_DVR_INTERFACE)\
                         as port:
                 port_id = port['port']['id']

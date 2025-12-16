@@ -91,7 +91,7 @@ class RequestTestCase(base.BaseTestCase):
         self.assertEqual("application/json", result)
 
     def test_context_with_neutron_context(self):
-        ctxt = context.Context('fake_user', 'fake_tenant')
+        ctxt = context.Context('fake_user', 'fake_project')
         self.req.environ['neutron.context'] = ctxt
         self.assertEqual(self.req.context, ctxt)
 

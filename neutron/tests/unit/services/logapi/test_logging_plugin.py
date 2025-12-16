@@ -66,7 +66,7 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             mock.patch('neutron.services.logapi.drivers.manager.'
                        'LoggingServiceDriverManager.supported_logging_types',
                        new_callable=log_types).start()
-        self.ctxt = context.Context('admin', 'fake_tenant')
+        self.ctxt = context.Context('admin', 'fake_project')
 
     def test_get_logs(self):
         with mock.patch.object(log_object.Log, 'get_objects')\

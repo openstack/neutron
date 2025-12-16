@@ -118,7 +118,7 @@ class FakePortDB:
     def get_port(self, context, port_id):
         for port in self._port_list:
             if port['id'] == port_id:
-                if port['tenant_id'] == context.tenant_id or context.is_admin:
+                if port['tenant_id'] == context.project_id or context.is_admin:
                     return port
                 break
 
@@ -130,7 +130,7 @@ class FakePortDB:
             query_filters.update(filters)
 
         if not context.is_admin:
-            query_filters['tenant_id'] = [context.tenant_id]
+            query_filters['tenant_id'] = [context.project_id]
 
         result = self._get_query_answer(self._port_list, query_filters)
         return result
@@ -214,7 +214,7 @@ class L3SchedulerBaseMixin:
                            fmt=None, tenant_id=None,
                            external_gateway_info=None,
                            subnet=None, **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+        tenant_id = tenant_id or self._project_id
         router = self._make_router(fmt or self.fmt, tenant_id, name,
                                    admin_state_up, external_gateway_info,
                                    **kwargs)
@@ -242,7 +242,7 @@ class L3SchedulerTestBaseMixin:
             agent_id = self.l3_dvr_snat_id
             agent = self.l3_dvr_snat_agent
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r1')
         router['router']['distributed'] = distributed
         router['router']['external_gateway_info'] = external_gw
@@ -262,7 +262,7 @@ class L3SchedulerTestBaseMixin:
         agent_id = self.agent_id1
         agent = self.agent1
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r1')
         self._test_schedule_bind_router(agent, router)
         self.plugin._unbind_router(self.adminContext,
@@ -276,7 +276,7 @@ class L3SchedulerTestBaseMixin:
                                              distributed=False,
                                              external_gw=None):
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r1')
         router['router']['distributed'] = distributed
         router['router']['external_gateway_info'] = external_gw
@@ -462,7 +462,7 @@ class L3SchedulerTestBaseMixin:
 
     def test_bind_new_router(self):
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r1')
         with mock.patch.object(l3_agent_scheduler.LOG, 'debug') as flog:
             self._test_schedule_bind_router(self.agent1, router)
@@ -479,7 +479,7 @@ class L3SchedulerTestBaseMixin:
 
     def test_bind_existing_router(self):
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         self._test_schedule_bind_router(self.agent1, router)
         with mock.patch.object(l3_agent_scheduler.LOG, 'debug') as flog:
@@ -499,7 +499,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agent_candidates_legacy(self):
         self._register_l3_dvr_agents()
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         router['external_gateway_info'] = None
         router['id'] = uuidutils.generate_uuid()
@@ -513,7 +513,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agent_candidates_dvr(self):
         self._register_l3_dvr_agents()
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         router['external_gateway_info'] = None
         router['id'] = uuidutils.generate_uuid()
@@ -528,7 +528,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agent_candidates_dvr_no_vms(self):
         self._register_l3_dvr_agents()
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         router['external_gateway_info'] = None
         router['id'] = uuidutils.generate_uuid()
@@ -544,7 +544,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agent_candidates_dvr_snat(self):
         self._register_l3_dvr_agents()
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         router['external_gateway_info'] = None
         router['id'] = uuidutils.generate_uuid()
@@ -559,7 +559,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agent_candidates_dvr_snat_no_vms(self):
         self._register_l3_dvr_agents()
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         router['external_gateway_info'] = None
         router['id'] = uuidutils.generate_uuid()
@@ -577,7 +577,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agent_candidates_dvr_ha_snat_no_vms(self):
         self._register_l3_dvr_agents()
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         router['external_gateway_info'] = None
         router['id'] = uuidutils.generate_uuid()
@@ -595,7 +595,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agent_candidates_centralized(self):
         self._register_l3_dvr_agents()
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r2')
         router['external_gateway_info'] = None
         router['id'] = uuidutils.generate_uuid()
@@ -607,7 +607,7 @@ class L3SchedulerTestBaseMixin:
     def test_get_l3_agents_hosting_routers(self):
         agent = helpers.register_l3_agent('host_6')
         router = self._make_router(self.fmt,
-                                   tenant_id=uuidutils.generate_uuid(),
+                                   project_id=uuidutils.generate_uuid(),
                                    name='r1')
         ctx = self.adminContext
         router_id = router['router']['id']
@@ -1473,10 +1473,10 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
             args['binding_index'] = binding_index
         return rb_obj.RouterL3AgentBinding.get_objects(context, **args)
 
-    def _create_ha_router(self, ha=True, tenant_id='tenant1', az_hints=None):
-        self.adminContext.tenant_id = tenant_id
+    def _create_ha_router(self, ha=True, project_id='project1', az_hints=None):
+        self.adminContext.tenant_id = project_id
         router = {'name': 'router1', 'admin_state_up': True,
-                  'tenant_id': tenant_id}
+                  'tenant_id': project_id}
         if ha is not None:
             router['ha'] = ha
         if az_hints is None:
@@ -1486,7 +1486,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                                          {'router': router})
 
     def test_create_ha_port_and_bind_catch_integrity_error(self):
-        router = self._create_ha_router(tenant_id='foo_tenant')
+        router = self._create_ha_router(project_id='foo_project')
         self.plugin.schedule_router(self.adminContext, router['id'])
         agent = {'id': 'foo_agent'}
 
@@ -1515,7 +1515,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
             self.adminContext, {'admin_state_up': False})
         l3_dvr_snat_agent = helpers.register_l3_agent(
             'fake_l3_host_dvr_snat', constants.L3_AGENT_MODE_DVR_SNAT)
-        router = self._create_ha_router(tenant_id='foo_tenant')
+        router = self._create_ha_router(project_id='foo_project')
         self.plugin.schedule_router(self.adminContext, router['id'])
         router['admin_state_up'] = False
         updated_router1 = self.plugin.update_router(
@@ -1535,7 +1535,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         self.assertEqual(1, len(ports))
 
     def test_create_ha_port_and_bind_catch_router_not_found(self):
-        router = self._create_ha_router(tenant_id='foo_tenant')
+        router = self._create_ha_router(project_id='foo_project')
         self.plugin.schedule_router(self.adminContext, router['id'])
         agent = {'id': 'foo_agent'}
 
@@ -1552,7 +1552,7 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
                 self.assertTrue(sd_ha_net.called)
 
     def test_create_ha_port_and_bind_bind_router_returns_None(self):
-        router = self._create_ha_router(tenant_id='foo_tenant')
+        router = self._create_ha_router(project_id='foo_project')
         agent = {'id': 'foo_agent'}
 
         with mock.patch.object(self.plugin.router_scheduler, 'bind_router',

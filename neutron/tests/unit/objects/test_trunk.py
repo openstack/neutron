@@ -174,17 +174,18 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def test_get_objects_tenant_id(self):
         trunk = t_obj.Trunk(context=self.context,
-                            project_id='faketenant',
+                            project_id='fakeproject',
                             port_id=self.db_objs[0]['port_id'])
         trunk.create()
         self.assertIsNotNone(
-            t_obj.Trunk.get_objects(self.context, tenant_id='faketenant'))
+            t_obj.Trunk.get_objects(self.context, tenant_id='fakeproject'))
 
     def test_get_objects_both_tenant_and_project_ids(self):
         trunk = t_obj.Trunk(context=self.context,
-                            project_id='faketenant',
+                            project_id='fakeproject',
                             port_id=self.db_objs[0]['port_id'])
         trunk.create()
         self.assertIsNotNone(
             t_obj.Trunk.get_objects(
-                self.context, tenant_id='faketenant', project_id='faketenant'))
+                self.context, tenant_id='fakeproject',
+                project_id='fakeproject'))

@@ -1027,7 +1027,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         app = config.load_paste_app('extensions_test_app')
         self._api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
 
-        self._tenant_id = "8c70909f-b081-452d-872b-df48e6c355d1"
+        self._project_id = "8c70909f-b081-452d-872b-df48e6c355d1"
 
         self.agentscheduler_dbMinxin = directory.get_plugin()
 
@@ -1046,7 +1046,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
             path, body, content_type,
             method, query_string=params)
         req.environ['neutron.context'] = context.Context(
-            '', self._tenant_id, roles=['member', 'reader'])
+            '', self._project_id, roles=['member', 'reader'])
         res = req.get_response(self._api)
         if res.status_code >= 400:
             raise webexc.HTTPClientError(detail=res.body, code=res.status_code)
@@ -1056,7 +1056,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
     def _ext_test_resource_create(self, attr=None):
         data = {
             "ext_test_resource": {
-                "tenant_id": self._tenant_id,
+                "tenant_id": self._project_id,
                 "name": "test",
                 extattr.EXTENDED_ATTRIBUTE: attr
             }

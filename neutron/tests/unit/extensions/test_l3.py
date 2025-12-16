@@ -103,9 +103,9 @@ class L3NatExtensionTestCase(test_extensions_base.ExtensionTestCase):
 
     def test_router_create(self):
         router_id = _uuid()
-        tenant_id = _uuid()
+        project_id = _uuid()
         data = {'router': {'name': 'router1', 'admin_state_up': True,
-                           'tenant_id': tenant_id, 'project_id': tenant_id,
+                           'tenant_id': project_id, 'project_id': project_id,
                            'external_gateway_info': None}}
         return_value = copy.deepcopy(data['router'])
         return_value.update({'status': "ACTIVE", 'id': router_id})
@@ -381,11 +381,11 @@ class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
 
 class L3NatTestCaseMixin:
 
-    def _create_router(self, fmt, tenant_id=None, name=None,
+    def _create_router(self, fmt, project_id=None, name=None,
                        admin_state_up=None, arg_list=None,
                        as_admin=False, **kwargs):
-        tenant_id = tenant_id or self._tenant_id
-        data = {'router': {'tenant_id': tenant_id}}
+        project_id = project_id or self._project_id
+        data = {'router': {'tenant_id': project_id}}
         if name:
             data['router']['name'] = name
         if admin_state_up is not None:
@@ -405,17 +405,17 @@ class L3NatTestCaseMixin:
             data['router']['enable_ndp_proxy'] = \
                 bool(kwargs['enable_ndp_proxy'])
         router_req = self.new_create_request('routers', data, fmt,
-                                             tenant_id=tenant_id,
+                                             tenant_id=project_id,
                                              as_admin=as_admin)
 
         return router_req.get_response(self.ext_api)
 
-    def _make_router(self, fmt, tenant_id=None, name=None, admin_state_up=None,
-                     external_gateway_info=None,
+    def _make_router(self, fmt, project_id=None, name=None,
+                     admin_state_up=None, external_gateway_info=None,
                      arg_list=None, as_admin=False, **kwargs):
         if external_gateway_info:
             arg_list = ('external_gateway_info', ) + (arg_list or ())
-        res = self._create_router(fmt, tenant_id, name,
+        res = self._create_router(fmt, project_id, name,
                                   admin_state_up,
                                   arg_list=arg_list,
                                   external_gateway_info=external_gateway_info,
@@ -450,7 +450,7 @@ class L3NatTestCaseMixin:
     def _router_interface_action(self, action, router_id, subnet_id, port_id,
                                  expected_code=exc.HTTPOk.code,
                                  expected_body=None,
-                                 tenant_id=None,
+                                 project_id=None,
                                  msg=None,
                                  as_admin=False):
         interface_data = {}
@@ -461,7 +461,7 @@ class L3NatTestCaseMixin:
 
         req = self.new_action_request('routers', interface_data, router_id,
                                       "%s_router_interface" % action,
-                                      tenant_id=tenant_id, as_admin=as_admin)
+                                      tenant_id=project_id, as_admin=as_admin)
         res = req.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int, msg)
         response = self.deserialize(self.fmt, res)
@@ -474,9 +474,9 @@ class L3NatTestCaseMixin:
                fmt=None, project_id=None,
                external_gateway_info=None, as_admin=False,
                **kwargs):
-        tenant_id = project_id if project_id else kwargs.pop(
+        project_id = project_id if project_id else kwargs.pop(
             'tenant_id', None)
-        router = self._make_router(fmt or self.fmt, tenant_id, name,
+        router = self._make_router(fmt or self.fmt, project_id, name,
                                    admin_state_up, external_gateway_info,
                                    as_admin=as_admin, **kwargs)
         yield router
@@ -488,10 +488,10 @@ class L3NatTestCaseMixin:
 
     def _create_floatingip(self, fmt, network_id, port_id=None,
                            fixed_ip=None, floating_ip=None, subnet_id=None,
-                           tenant_id=None, as_admin=False, **kwargs):
-        tenant_id = tenant_id or self._tenant_id
+                           project_id=None, as_admin=False, **kwargs):
+        project_id = project_id or self._project_id
         data = {'floatingip': {'floating_network_id': network_id,
-                               'tenant_id': tenant_id}}
+                               'tenant_id': project_id}}
         if port_id:
             data['floatingip']['port_id'] = port_id
             if fixed_ip:
@@ -506,16 +506,16 @@ class L3NatTestCaseMixin:
         data['floatingip'].update(kwargs)
 
         floatingip_req = self.new_create_request(
-            'floatingips', data, fmt, tenant_id=tenant_id, as_admin=as_admin)
+            'floatingips', data, fmt, tenant_id=project_id, as_admin=as_admin)
         return floatingip_req.get_response(self.ext_api)
 
     def _make_floatingip(self, fmt, network_id, port_id=None,
-                         fixed_ip=None, tenant_id=None,
+                         fixed_ip=None, project_id=None,
                          floating_ip=None, http_status=exc.HTTPCreated.code,
                          as_admin=False, **kwargs):
         res = self._create_floatingip(fmt, network_id, port_id,
                                       fixed_ip, floating_ip,
-                                      tenant_id=tenant_id, as_admin=as_admin,
+                                      project_id=project_id, as_admin=as_admin,
                                       **kwargs)
         self.assertEqual(http_status, res.status_int)
         return self.deserialize(fmt, res)
@@ -534,13 +534,13 @@ class L3NatTestCaseMixin:
     def floatingip_with_assoc(self, port_id=None, fmt=None, fixed_ip=None,
                               public_cidr='11.0.0.0/24', project_id=None,
                               flavor_id=None, as_admin=False, **kwargs):
-        tenant_id = project_id if project_id else kwargs.pop(
+        project_id = project_id if project_id else kwargs.pop(
             'tenant_id', None)
         with self.subnet(cidr=public_cidr,
-                         tenant_id=tenant_id,
+                         tenant_id=project_id,
                          as_admin=as_admin) as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
-            args_list = {'tenant_id': tenant_id}
+            args_list = {'tenant_id': project_id}
             if flavor_id:
                 args_list['flavor_id'] = flavor_id
             private_port = None
@@ -548,7 +548,7 @@ class L3NatTestCaseMixin:
                 private_port = self._show('ports', port_id)
             with test_db_base_plugin_v2.optional_ctx(
                     private_port, self.port,
-                    tenant_id=tenant_id,
+                    tenant_id=project_id,
                     is_admin=as_admin) as private_port:
                 with self.router(**args_list) as r:
                     sid = private_port['port']['fixed_ips'][0]['subnet_id']
@@ -567,7 +567,7 @@ class L3NatTestCaseMixin:
                         public_sub['subnet']['network_id'],
                         port_id=private_port['port']['id'],
                         fixed_ip=fixed_ip,
-                        tenant_id=tenant_id,
+                        project_id=project_id,
                         as_admin=as_admin,
                         **kwargs)
                     yield floatingip
@@ -696,12 +696,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_create(self):
         name = 'router1'
-        tenant_id = _uuid()
-        expected_value = [('name', name), ('tenant_id', tenant_id),
+        project_id = _uuid()
+        expected_value = [('name', name), ('tenant_id', project_id),
                           ('admin_state_up', True), ('status', 'ACTIVE'),
                           ('external_gateway_info', None)]
         with self.router(name='router1', admin_state_up=True,
-                         tenant_id=tenant_id) as router:
+                         tenant_id=project_id) as router:
             for k, v in expected_value:
                 self.assertEqual(router['router'][k], v)
 
@@ -790,12 +790,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self.assertEqual(exc.HTTPForbidden.code, res.status_int)
 
     def test_create_routers_native_quotas(self):
-        tenant_id = _uuid()
+        project_id = _uuid()
         quota = 1
         test_db_base_plugin_v2._set_temporary_quota('router', quota)
-        res = self._create_router(self.fmt, tenant_id)
+        res = self._create_router(self.fmt, project_id)
         self.assertEqual(exc.HTTPCreated.code, res.status_int)
-        res = self._create_router(self.fmt, tenant_id)
+        res = self._create_router(self.fmt, project_id)
         self.assertEqual(exc.HTTPConflict.code, res.status_int)
 
     def test_router_list(self):
@@ -1336,34 +1336,34 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                               expected_code=error_code)
 
     def test_router_add_interface_subnet_with_bad_tenant_returns_404(self):
-        tenant_id = _uuid()
-        with self.router(tenant_id=tenant_id) as r:
-            with self.network(tenant_id=tenant_id) as n:
-                with self.subnet(network=n, tenant_id=tenant_id) as s:
+        project_id = _uuid()
+        with self.router(tenant_id=project_id) as r:
+            with self.network(tenant_id=project_id) as n:
+                with self.subnet(network=n, tenant_id=project_id) as s:
                     err_code = exc.HTTPNotFound.code
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   s['subnet']['id'],
                                                   None,
                                                   expected_code=err_code,
-                                                  tenant_id='bad_tenant')
+                                                  project_id='bad_project')
                     body = self._router_interface_action('add',
                                                          r['router']['id'],
                                                          s['subnet']['id'],
                                                          None,
-                                                         tenant_id=tenant_id)
+                                                         project_id=project_id)
                     self.assertIn('port_id', body)
                     self._router_interface_action('remove',
                                                   r['router']['id'],
                                                   s['subnet']['id'],
                                                   None,
                                                   expected_code=err_code,
-                                                  tenant_id='bad_tenant')
+                                                  project_id='bad_project')
 
     def test_router_add_interface_by_subnet_other_tenant_subnet_returns_400(
             self):
-        router_tenant_id = _uuid()
-        with self.router(tenant_id=router_tenant_id) as r:
+        router_project_id = _uuid()
+        with self.router(tenant_id=router_project_id) as r:
             with self.network(as_admin=True, shared=True) as n:
                 with self.subnet(network=n) as s:
                     err_code = exc.HTTPBadRequest.code
@@ -1372,31 +1372,31 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   s['subnet']['id'],
                                                   None,
                                                   expected_code=err_code,
-                                                  tenant_id=router_tenant_id)
+                                                  project_id=router_project_id)
 
     def test_router_add_interface_by_subnet_other_tenant_subnet_rbac_shared(
         self,
     ):
-        router_tenant_id = _uuid()
+        router_project_id = _uuid()
         with mock.patch.object(network_obj.NetworkRBAC, "get_projects") as g:
-            with self.router(tenant_id=router_tenant_id) as r:
+            with self.router(tenant_id=router_project_id) as r:
                 with self.network(as_admin=True, shared=True) as n:
                     with self.subnet(network=n) as s:
-                        g.return_value = [router_tenant_id]
+                        g.return_value = [router_project_id]
                         self._router_interface_action(
                             "add",
                             r["router"]["id"],
                             s["subnet"]["id"],
                             None,
                             expected_code=exc.HTTPOk.code,
-                            tenant_id=router_tenant_id,
+                            project_id=router_project_id,
                         )
 
     def _test_router_add_interface_by_port_allocation_pool(
             self, out_of_pool=False, router_action_as_admin=False,
             expected_code=exc.HTTPOk.code):
-        router_tenant_id = _uuid()
-        with self.router(tenant_id=router_tenant_id) as r:
+        router_project_id = _uuid()
+        with self.router(tenant_id=router_project_id) as r:
             with self.network(as_admin=True, shared=True) as n:
                 with self.subnet(network=n) as s1, (
                         self.subnet(network=n, cidr='fd00::/64',
@@ -1413,12 +1413,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                         'ip_address':
                                             s2['subnet']['gateway_ip']}
                     with self.port(subnet=s1, fixed_ips=fixed_ips,
-                                   tenant_id=router_tenant_id,
+                                   tenant_id=router_project_id,
                                    is_admin=True) as p:
                         self._router_interface_action(
                             'add', r['router']['id'], None, p['port']['id'],
                             expected_code=expected_code,
-                            tenant_id=router_tenant_id,
+                            project_id=router_project_id,
                             as_admin=router_action_as_admin)
 
     def test_router_add_interface_by_port_other_tenant_address_in_pool(
@@ -1436,21 +1436,21 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             out_of_pool=True, router_action_as_admin=True)
 
     def test_router_add_interface_subnet_with_port_from_other_tenant(self):
-        tenant_id = _uuid()
-        other_tenant_id = _uuid()
-        with self.router(tenant_id=tenant_id) as r,\
-                self.network(tenant_id=tenant_id) as n1,\
-                self.network(tenant_id=other_tenant_id) as n2:
+        project_id = _uuid()
+        other_project_id = _uuid()
+        with self.router(tenant_id=project_id) as r,\
+                self.network(tenant_id=project_id) as n1,\
+                self.network(tenant_id=other_project_id) as n2:
             with self.subnet(network=n1, cidr='10.0.0.0/24',
-                             tenant_id=tenant_id) as s1,\
+                             tenant_id=project_id) as s1,\
                     self.subnet(network=n2, cidr='10.1.0.0/24',
-                                tenant_id=other_tenant_id) as s2:
+                                tenant_id=other_project_id) as s2:
                 body = self._router_interface_action(
                     'add',
                     r['router']['id'],
                     s2['subnet']['id'],
                     None,
-                    tenant_id=other_tenant_id,
+                    project_id=other_project_id,
                     as_admin=True)
                 self.assertIn('port_id', body)
                 self._router_interface_action(
@@ -1458,7 +1458,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     r['router']['id'],
                     s1['subnet']['id'],
                     None,
-                    tenant_id=tenant_id)
+                    project_id=project_id)
                 self.assertIn('port_id', body)
 
     def test_router_add_interface_port(self):
@@ -1700,23 +1700,23 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                           HTTPBadRequest.code)
 
     def test_router_add_interface_port_bad_tenant_returns_404(self):
-        tenant_id = _uuid()
-        with self.router(tenant_id=tenant_id) as r:
-            with self.network(tenant_id=tenant_id) as n:
-                with self.subnet(tenant_id=tenant_id, network=n) as s:
-                    with self.port(tenant_id=tenant_id, subnet=s) as p:
+        project_id = _uuid()
+        with self.router(tenant_id=project_id) as r:
+            with self.network(tenant_id=project_id) as n:
+                with self.subnet(tenant_id=project_id, network=n) as s:
+                    with self.port(tenant_id=project_id, subnet=s) as p:
                         err_code = exc.HTTPNotFound.code
                         self._router_interface_action('add',
                                                       r['router']['id'],
                                                       None,
                                                       p['port']['id'],
                                                       expected_code=err_code,
-                                                      tenant_id='bad_tenant')
+                                                      project_id='bad_project')
                         self._router_interface_action('add',
                                                       r['router']['id'],
                                                       None,
                                                       p['port']['id'],
-                                                      tenant_id=tenant_id)
+                                                      project_id=project_id)
 
                         # clean-up should fail as well
                         self._router_interface_action('remove',
@@ -1724,7 +1724,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                       None,
                                                       p['port']['id'],
                                                       expected_code=err_code,
-                                                      tenant_id='bad_tenant')
+                                                      project_id='bad_project')
 
     def test_router_add_interface_port_without_ips(self):
         with self.network() as network, self.router() as r:
@@ -2020,12 +2020,12 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_create_router_port_with_device_id_of_other_tenants_router(self):
         with self.router() as admin_router:
-            with self.network(tenant_id='tenant_a') as n:
+            with self.network(tenant_id='project_a') as n:
                 with self.subnet(network=n):
                     for device_owner in lib_constants.ROUTER_INTERFACE_OWNERS:
                         self._create_port(
                             self.fmt, n['network']['id'],
-                            tenant_id='tenant_a',
+                            tenant_id='project_a',
                             device_id=admin_router['router']['id'],
                             device_owner=device_owner,
                             expected_res_status=exc.HTTPConflict.code)
@@ -2033,35 +2033,35 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_create_non_router_port_device_id_of_other_tenants_router_update(
             self):
         # This tests that HTTPConflict is raised if we create a non-router
-        # port that matches the device_id of another tenants router and then
+        # port that matches the device_id of another projects router and then
         # we change the device_owner to be network:router_interface.
         with self.router() as admin_router:
-            with self.network(tenant_id='tenant_a') as n:
+            with self.network(tenant_id='project_a') as n:
                 with self.subnet(network=n):
                     for device_owner in lib_constants.ROUTER_INTERFACE_OWNERS:
                         port_res = self._create_port(
                             self.fmt, n['network']['id'],
-                            tenant_id='tenant_a',
+                            tenant_id='project_a',
                             device_id=admin_router['router']['id'])
                         port = self.deserialize(self.fmt, port_res)
                         data = {'port': {'device_owner': device_owner}}
                         self._update('ports', port['port']['id'], data,
                                      expected_code=exc.HTTPConflict.code,
-                                     request_tenant_id='tenant_a')
+                                     request_tenant_id='project_a')
 
     def test_update_port_device_id_to_different_tenants_router(self):
         with self.router() as admin_router:
-            with self.router(tenant_id='tenant_a') as tenant_router:
-                with self.network(tenant_id='tenant_a') as n:
+            with self.router(tenant_id='project_a') as project_router:
+                with self.network(tenant_id='project_a') as n:
                     with self.subnet(network=n) as s:
                         port = self._router_interface_action(
-                            'add', tenant_router['router']['id'],
-                            s['subnet']['id'], None, tenant_id='tenant_a')
+                            'add', project_router['router']['id'],
+                            s['subnet']['id'], None, project_id='project_a')
                         data = {'port':
                                 {'device_id': admin_router['router']['id']}}
                         self._update('ports', port['port_id'], data,
                                      expected_code=exc.HTTPConflict.code,
-                                     request_tenant_id='tenant_a')
+                                     request_tenant_id='project_a')
 
     def test_router_add_gateway_invalid_network_returns_400(self):
         with self.router() as r:
@@ -2371,7 +2371,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_show(self):
         name = 'router1'
-        expected_value = [('name', name), ('tenant_id', self._tenant_id),
+        expected_value = [('name', name), ('tenant_id', self._project_id),
                           ('admin_state_up', True), ('status', 'ACTIVE'),
                           ('external_gateway_info', None)]
         with self.router(name='router1', admin_state_up=True) as router:
@@ -3537,7 +3537,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             network_id = s['subnet']['network_id']
             self._set_net_external(network_id)
             self._make_floatingip(self.fmt, network_id,
-                                  tenant_id='tenant_id',
+                                  project_id='project_id',
                                   floating_ip='10.0.0.10',
                                   http_status=exc.HTTPForbidden.code)
 
@@ -3568,7 +3568,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_create_floatingips_native_quotas(self):
         quota = 1
         test_db_base_plugin_v2._set_temporary_quota('floatingip', quota)
-        self._tenant_id = uuidutils.generate_uuid()
+        self._project_id = uuidutils.generate_uuid()
         with self.subnet() as public_sub:
             self._set_net_external(public_sub['subnet']['network_id'])
             res = self._create_floatingip(
@@ -3651,7 +3651,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         data = {'router': {
             'name': 'router1', 'admin_state_up': True,
             'external_gateway_info': {'network_id': 'some_uuid'},
-            'tenant_id': 'some_tenant'}}
+            'tenant_id': 'some_project'}}
 
         def mock_fail__update_router_gw_info(ctx, router_id, info,
                                              request_body, router=None):
@@ -3682,7 +3682,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         data = {'router': {
             'name': 'router1', 'admin_state_up': True,
             'external_gateway_info': {'network_id': 'some_uuid'},
-            'tenant_id': 'some_tenant'}}
+            'tenant_id': 'some_project'}}
 
         def mock_fail__update_router_gw_info(ctx, router_id, info,
                                              request_body, router=None):
@@ -3733,16 +3733,16 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with db_api.CONTEXT_WRITER.using(ctx):
                 plugin.add_router_interface(ctx, router_id, interface_info)
 
-        tenant_id = _uuid()
-        ctx = context.Context('', tenant_id)
-        with self.network(tenant_id=tenant_id) as network, (
+        project_id = _uuid()
+        ctx = context.Context('', project_id)
+        with self.network(tenant_id=project_id) as network, (
              self.router(name='router1', admin_state_up=True,
-                         tenant_id=tenant_id)) as router:
+                         tenant_id=project_id)) as router:
             with self.subnet(network=network, cidr='10.0.0.0/24',
-                             tenant_id=tenant_id) as subnet:
+                             tenant_id=project_id) as subnet:
                 fixed_ips = [{'subnet_id': subnet['subnet']['id']}]
                 with self.port(subnet=subnet, fixed_ips=fixed_ips,
-                               tenant_id=tenant_id) as port:
+                               tenant_id=project_id) as port:
                     mock.patch.object(
                         self.plugin, 'update_port',
                         side_effect=(
@@ -3758,7 +3758,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
                     # fetch port and confirm device_id and device_owner
                     body = self._show('ports', port['port']['id'],
-                                      tenant_id=tenant_id)
+                                      tenant_id=project_id)
                     self.assertEqual('', body['port']['device_owner'])
                     self.assertEqual('', body['port']['device_id'])
 
@@ -3868,21 +3868,22 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test__notify_subnetpool_address_scope_update(self):
         plugin = directory.get_plugin(plugin_constants.L3)
 
-        tenant_id = _uuid()
+        project_id = _uuid()
         with mock.patch.object(
             plugin, 'notify_routers_updated') as chk_method, \
                 self.subnetpool(prefixes=['10.0.0.0/24'],
                                 admin=True, name='sp',
-                                tenant_id=tenant_id) as subnetpool, \
-                self.router(tenant_id=tenant_id) as router, \
-                self.network(tenant_id=tenant_id) as network:
+                                tenant_id=project_id) as subnetpool, \
+                self.router(tenant_id=project_id) as router, \
+                self.network(tenant_id=project_id) as network:
             subnetpool_id = subnetpool['subnetpool']['id']
             data = {'subnet': {
                     'network_id': network['network']['id'],
                     'subnetpool_id': subnetpool_id,
                     'prefixlen': 24,
                     'ip_version': lib_constants.IP_VERSION_4}}
-            req = self.new_create_request('subnets', data, tenant_id=tenant_id)
+            req = self.new_create_request('subnets', data,
+                                          tenant_id=project_id)
             subnet = self.deserialize(self.fmt, req.get_response(self.api))
 
             admin_ctx = context.get_admin_context()
@@ -4005,7 +4006,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.network() as n:
             data = {'router': {
                 'name': 'router1', 'admin_state_up': True,
-                'tenant_id': ctx.tenant_id,
+                'tenant_id': ctx.project_id,
                 'external_gateway_info': {'network_id': n['network']['id']}}}
 
             self.assertRaises(MyException, plugin.create_router, ctx, data)
@@ -4609,26 +4610,24 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         self.mock_admin_client.reset_mock()
 
     def _create_network(self, fmt, name, admin_state_up,
-                        arg_list=None, tenant_id=None, as_admin=False,
+                        arg_list=None, project_id=None, as_admin=False,
                         **kwargs):
         new_arg_list = ('dns_domain',)
         if arg_list is not None:
             new_arg_list = arg_list + new_arg_list
         return super()._create_network(fmt, name, admin_state_up,
                                        arg_list=new_arg_list,
-                                       tenant_id=tenant_id,
                                        as_admin=as_admin,
                                        **kwargs)
 
     def _create_port(self, fmt, name, admin_state_up,
-                     arg_list=None, tenant_id=None, is_admin=False,
+                     arg_list=None, project_id=None, is_admin=False,
                      **kwargs):
         new_arg_list = ('dns_name',)
         if arg_list is not None:
             new_arg_list = arg_list + new_arg_list
         return super()._create_port(fmt, name, admin_state_up,
                                     arg_list=new_arg_list,
-                                    tenant_id=tenant_id,
                                     is_admin=is_admin,
                                     **kwargs)
 

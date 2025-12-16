@@ -949,11 +949,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             sg = self.deserialize(self.fmt, res.get_response(self.ext_api))
             self._delete('security-groups', sg['security_groups'][0]['id'],
                          webob.exc.HTTPConflict.code,
-                         tenant_id=test_db_base_plugin_v2.TEST_TENANT_ID)
+                         tenant_id=test_db_base_plugin_v2.TEST_PROJECT_ID)
 
     def test_security_group_list_creates_default_security_group(self):
         sg = self._list('security-groups',
-                        tenant_id=test_db_base_plugin_v2.TEST_TENANT_ID).get(
+                        tenant_id=test_db_base_plugin_v2.TEST_PROJECT_ID).get(
                             'security_groups')
         self.assertEqual(1, len(sg))
 
@@ -1949,7 +1949,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule = {'security_group_id': sg['security_group']['id'],
                     'direction': 'ingress',
                     'ethertype': const.IPv4,
-                    'tenant_id': test_db_base_plugin_v2.TEST_TENANT_ID}
+                    'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
 
             res = self._create_security_group_rule(
                 self.fmt, {'security_group_rule': rule})
@@ -1964,11 +1964,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule_v4 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
                        'ethertype': const.IPv4,
-                       'tenant_id': test_db_base_plugin_v2.TEST_TENANT_ID}
+                       'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
             rule_v6 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
                        'ethertype': const.IPv6,
-                       'tenant_id': test_db_base_plugin_v2.TEST_TENANT_ID}
+                       'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
 
             rules = {'security_group_rules': [rule_v4, rule_v6]}
             res = self._create_security_group_rule(self.fmt, rules)
@@ -2170,7 +2170,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
 
     def test_create_security_group_rule_with_specific_id(self):
         neutron_context = context.Context(
-            '', test_db_base_plugin_v2.TEST_TENANT_ID)
+            '', test_db_base_plugin_v2.TEST_PROJECT_ID)
         specified_id = "4cd70774-cc67-4a87-9b39-7d1db38eb087"
         with self.security_group() as sg:
             rule = self._build_security_group_rule(
@@ -2181,7 +2181,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 'port_range_max': None,
                 'remote_ip_prefix': None,
                 'remote_group_id': None,
-                'tenant_id': test_db_base_plugin_v2.TEST_TENANT_ID,
+                'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID,
                 'remote_address_group_id':
                     None})
             result = self.plugin.create_security_group_rule(

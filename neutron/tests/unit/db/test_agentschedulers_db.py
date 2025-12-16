@@ -81,19 +81,19 @@ class AgentSchedulerTestMixIn:
     def _path_req(self, path, method='GET', data=None,
                   query_string=None,
                   admin_context=True,
-                  req_tenant_id=None):
+                  req_project_id=None):
         content_type = 'application/%s' % self.fmt
         body = None
         if data is not None:  # empty dict is valid
             body = wsgi.Serializer().serialize(data, content_type)
         roles = ['member', 'reader']
-        req_tenant_id = req_tenant_id or self._tenant_id
+        req_project_id = req_project_id or self._project_id
         if admin_context:
             roles.append('admin')
         req = testlib_api.create_request(
             path, body, content_type, method, query_string=query_string)
         req.environ['neutron.context'] = context.Context(
-            '', req_tenant_id, roles=roles, is_admin=admin_context)
+            '', req_project_id, roles=roles, is_admin=admin_context)
         return req
 
     def _path_create_request(self, path, data, admin_context=True):
@@ -880,7 +880,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self._set_net_external(net_id)
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
-                      'tenant_id': 'tenant_id',
+                      'tenant_id': 'project_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1087,7 +1087,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             # create router with external gateway
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
-                      'tenant_id': 'tenant_id',
+                      'tenant_id': 'project_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1141,7 +1141,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
-                      'tenant_id': 'tenant_id',
+                      'tenant_id': 'project_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1171,7 +1171,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
-                      'tenant_id': 'tenant_id',
+                      'tenant_id': 'project_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1198,7 +1198,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
             router = {'name': 'router1',
                       'external_gateway_info': {'network_id': net_id},
-                      'tenant_id': 'tenant_id',
+                      'tenant_id': 'project_id',
                       'admin_state_up': True,
                       'distributed': True}
             r = self.l3plugin.create_router(self.adminContext,
@@ -1247,12 +1247,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           router['router']['id'],
                                           s2['subnet']['id'],
                                           None,
-                                          tenant_id=project_id)
+                                          project_id=project_id)
             self._router_interface_action('add',
                                           router['router']['id'],
                                           s3['subnet']['id'],
                                           None,
-                                          tenant_id=project_id)
+                                          project_id=project_id)
             l3agents = self._list_l3_agents_hosting_router(
                 router['router']['id'])
             self.assertEqual(1, len(l3agents['agents']))
@@ -1284,7 +1284,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           router['router']['id'],
                                           s2['subnet']['id'],
                                           None,
-                                          tenant_id=project_id)
+                                          project_id=project_id)
             l3agents = self._list_l3_agents_hosting_router(
                 router['router']['id'])
             self.assertEqual(1,
@@ -1293,7 +1293,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           router['router']['id'],
                                           s3['subnet']['id'],
                                           None,
-                                          tenant_id=project_id)
+                                          project_id=project_id)
             self._delete('routers', router['router']['id'],
                          tenant_id=project_id)
 

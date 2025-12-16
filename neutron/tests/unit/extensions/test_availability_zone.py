@@ -124,7 +124,7 @@ class TestAZAgentCase(AZTestCommon):
 
     def test_validate_availability_zones(self):
         self._register_azs()
-        ctx = context.Context('', 'tenant_id')
+        ctx = context.Context('', 'project_id')
         self.plugin.validate_availability_zones(ctx, 'network',
                                                 ['nova1', 'nova2'])
         self.plugin.validate_availability_zones(ctx, 'router',

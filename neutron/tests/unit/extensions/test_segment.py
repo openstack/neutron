@@ -130,7 +130,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def segment(self, **kwargs):
         kwargs.setdefault('network_type', constants.TYPE_VLAN)
         return self._make_segment(
-            self.fmt, tenant_id=self._tenant_id, **kwargs)
+            self.fmt, tenant_id=self._project_id, **kwargs)
 
     def _test_create_segment(self, expected=None, **kwargs):
         keys = kwargs.copy()

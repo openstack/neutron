@@ -289,7 +289,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
         port1_id = self._port['id']
         port2 = db_api.create_object(port_obj.Port, self.context,
-                                     {'tenant_id': 'fake_tenant_id',
+                                     {'tenant_id': 'fake_project_id',
                                       'name': 'test-port2',
                                       'network_id': self._network_id,
                                       'mac_address': 'fake_mac2',

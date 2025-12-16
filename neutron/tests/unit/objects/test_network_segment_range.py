@@ -31,7 +31,7 @@ from neutron.objects.plugins.ml2 import vlanallocation as vlan_alloc_obj
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
-TEST_TENANT_ID = '46f70361-ba71-4bd0-9769-3573fd227c4b'
+TEST_PROJECT_ID = '46f70361-ba71-4bd0-9769-3573fd227c4b'
 TEST_PHYSICAL_NETWORK = 'phys_net'
 NUM_ALLOCATIONS = 3
 
@@ -65,7 +65,7 @@ class NetworkSegmentRangeIfaceObjectTestCase(
         # Alternatives can be skipping those tests when executing
         # NetworkSegmentRangeIfaceObjectTestCase, or making base test case
         # adjustments.
-        self.update_obj_fields({'project_id': TEST_TENANT_ID,
+        self.update_obj_fields({'project_id': TEST_PROJECT_ID,
                                 'physical_network': TEST_PHYSICAL_NETWORK})
         self.extra_fields_not_in_dict = ['tenant_id']
 

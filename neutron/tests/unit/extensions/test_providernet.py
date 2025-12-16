@@ -139,15 +139,15 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
 
     def test_network_create_with_provider_attrs(self):
         ctx = context.get_admin_context()
-        tenant_id = 'an_admin'
-        ctx.tenant_id = tenant_id
+        project_id = 'an_admin'
+        ctx.tenant_id = project_id
         instance = self.plugin.return_value
         instance.create_network.return_value = {}
         res, data = self._post_network_with_provider_attrs(ctx)
         exp_input = {'network': data}
         exp_input['network'].update({'admin_state_up': True,
-                                     'tenant_id': tenant_id,
-                                     'project_id': tenant_id,
+                                     'tenant_id': project_id,
+                                     'project_id': project_id,
                                      'shared': False})
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=exp_input)
@@ -174,13 +174,13 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         self.assertEqual(web_exc.HTTPOk.code, res.status_int)
 
     def test_network_create_with_provider_attrs_noadmin_returns_403(self):
-        tenant_id = 'no_admin'
-        ctx = context.Context('', tenant_id, is_admin=False)
+        project_id = 'no_admin'
+        ctx = context.Context('', project_id, is_admin=False)
         res, _1 = self._post_network_with_provider_attrs(ctx, True)
         self.assertEqual(web_exc.HTTPForbidden.code, res.status_int)
 
     def test_network_update_with_provider_attrs_noadmin_returns_403(self):
-        tenant_id = 'no_admin'
-        ctx = context.Context('', tenant_id, is_admin=False)
+        project_id = 'no_admin'
+        ctx = context.Context('', project_id, is_admin=False)
         res, _1, _2 = self._put_network_with_provider_attrs(ctx, True)
         self.assertEqual(web_exc.HTTPForbidden.code, res.status_int)

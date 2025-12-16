@@ -47,8 +47,6 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
         super().setUp()
         self.ctx = context.get_admin_context()
         self._project_id = uuidutils.generate_uuid()
-        # TODO(ralonsoh): "tenant_id" reference should be removed.
-        self._tenant_id = self._project_id
 
     @staticmethod
     def _cleanup():

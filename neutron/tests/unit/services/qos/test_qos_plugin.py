@@ -83,7 +83,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.rpc_push = mock.patch('neutron.api.rpc.handlers.resources_rpc'
                                    '.ResourcesPushRpcApi.push').start()
 
-        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.ctxt = context.Context('fake_user', 'fake_project')
         self.admin_ctxt = context.get_admin_context()
         self.default_uuid = 'fake_uuid'
 
@@ -869,7 +869,7 @@ class TestQosPlugin(base.BaseQosTestCase):
     def test_add_policy_with_extra_tenant_keyword(self, *mocks):
         policy_id = uuidutils.generate_uuid()
         project_id = uuidutils.generate_uuid()
-        tenant_policy = {
+        project_policy = {
             'policy': {'id': policy_id,
                        'project_id': project_id,
                        'tenant_id': project_id,
@@ -886,7 +886,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                           'is_default': False}
 
         with mock.patch('neutron.objects.qos.policy.QosPolicy') as QosMocked:
-            self.qos_plugin.create_policy(self.ctxt, tenant_policy)
+            self.qos_plugin.create_policy(self.ctxt, project_policy)
 
         QosMocked.assert_called_once_with(self.ctxt, **policy_details)
 
@@ -2010,7 +2010,7 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                       service_plugins=service_plugins)
         self.qos_plugin = directory.get_plugin(plugins_constants.QOS)
 
-        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.ctxt = context.Context('fake_user', 'fake_project')
         self.rule_objects = {
             'bandwidth_limit': rule_object.QosBandwidthLimitRule,
             'dscp_marking': rule_object.QosDscpMarkingRule,
@@ -2135,7 +2135,7 @@ class TestQoSRuleAliasMinimumPacketRate(TestQoSRuleAlias):
                                             service_plugins=service_plugins)
         self.qos_plugin = directory.get_plugin(plugins_constants.QOS)
 
-        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.ctxt = context.Context('fake_user', 'fake_project')
         self.rule_objects = {
             'minimum_packet_rate': rule_object.QosMinimumPacketRateRule
         }
