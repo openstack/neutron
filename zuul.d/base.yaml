@@ -170,17 +170,6 @@
       - name: github.com/sqlalchemy/alembic
         override-checkout: main
 
-- job:
-    name: neutron-ovs-tempest-plugin-iptables_hybrid-nftables
-    parent: neutron-tempest-plugin-openvswitch-iptables_hybrid
-    pre-run: playbooks/install_nftables.yaml
-    vars:
-      devstack_local_conf:
-        post-config:
-          $NEUTRON_CONF:
-            SECURITYGROUP:
-              enable_ipset: false  # Not compatible with nftables
-
 # NOTE(ralonsoh): to be removed in 2026.2, once the OVN Metadata agent
 # replacement finishes. See LP#2112313.
 - job:
