@@ -34,9 +34,9 @@ target_bin_path=$3
 
 fullstack_path=$neutron_path/neutron/tests/fullstack/agents
 
-src_conf_path=${neutron_path}/etc
+src_conf_path=${neutron_path}/etc/neutron
 src_conf=${src_conf_path}/rootwrap.conf
-src_rootwrap_path=${src_conf_path}/neutron/rootwrap.d
+src_rootwrap_path=${src_conf_path}/rootwrap.d
 
 dst_conf_path=${target_etc_path}/neutron
 dst_conf=${dst_conf_path}/rootwrap.conf

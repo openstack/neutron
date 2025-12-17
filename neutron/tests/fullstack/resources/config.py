@@ -159,7 +159,8 @@ class NeutronConfigFixture(ConfigFixture):
         return utils.get_rand_name(prefix='host-')
 
     def _generate_api_paste(self):
-        return c_helpers.find_sample_file('api-paste.ini')
+        return c_helpers.find_sample_file(
+            os.path.join('neutron', 'api-paste.ini'))
 
     def _generate_policy_yaml(self):
         return c_helpers.find_sample_file('fullstack_tests_policy.yaml')

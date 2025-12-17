@@ -55,7 +55,7 @@ Ports, Networks, Subnets) to URLs, and the controller for each resource.
 
 .. _config.py: http://opendev.org/openstack/neutron/src/neutron/common/config.py
 
-.. _api-paste.ini: http://opendev.org/openstack/neutron/src/etc/api-paste.ini
+.. _api-paste.ini: http://opendev.org/openstack/neutron/src/etc/neutron/api-paste.ini
 
 .. _APIRouter: http://opendev.org/openstack/neutron/src/neutron/api/v2/router.py
 
