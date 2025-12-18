@@ -402,7 +402,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
     def _test_mocks_helper(self, ovn_nb_synchronizer, test_logging=False):
         core_plugin = ovn_nb_synchronizer.core_plugin
-        ovn_api = ovn_nb_synchronizer.ovn_api
+        ovn_api = ovn_nb_synchronizer.ovn_nb_api
         ovn_driver = ovn_nb_synchronizer.ovn_driver
         l3_plugin = ovn_nb_synchronizer.l3_plugin
         pf_plugin = ovn_nb_synchronizer.pf_plugin
@@ -613,7 +613,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                  test_logging=False):
         self._test_mocks_helper(ovn_nb_synchronizer, test_logging)
 
-        ovn_api = ovn_nb_synchronizer.ovn_api
+        ovn_api = ovn_nb_synchronizer.ovn_nb_api
         mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker').start()
 
         ovn_nb_synchronizer.do_sync()
@@ -907,8 +907,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         create_metadata_list = self.networks
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_REPAIR, self.mech_driver)
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         self._test_ovn_nb_sync_helper(ovn_nb_synchronizer,
                                       self.networks,
                                       self.ports,
@@ -964,8 +963,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         create_metadata_list = []
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver)
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG)
         self._test_ovn_nb_sync_helper(ovn_nb_synchronizer,
                                       self.networks,
                                       self.ports,
@@ -996,8 +994,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                                   expected_added,
                                                   expected_deleted):
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_REPAIR, self.mech_driver)
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         add_routes, del_routes = ovn_nb_synchronizer. \
             _calculate_routes_differences(ovn_routes, db_routes)
         self.assertEqual(add_routes, expected_added)
@@ -1195,8 +1192,7 @@ class TestIsRouterPortChanged(test_mech_driver.OVNMechanismDriverTestCase):
     def setUp(self):
         super().setUp()
         self.ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver)
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG)
 
         self.db_router_port = {
             'id': 'aa076509-915d-4b1c-8d9d-3db53d9c5faf',
@@ -1211,8 +1207,8 @@ class TestIsRouterPortChanged(test_mech_driver.OVNMechanismDriverTestCase):
                                        'send_periodic': 'true',
                                        'mtu': '1442'}})
 
-        self.ovn_nb_synchronizer.ovn_api.is_col_present.return_value = True
-        self.ovn_nb_synchronizer.ovn_api.lrp_get().execute.return_value = (
+        self.ovn_nb_synchronizer.ovn_nb_api.is_col_present.return_value = True
+        self.ovn_nb_synchronizer.ovn_nb_api.lrp_get().execute.return_value = (
             self.ovn_lrport)
 
     def test__is_router_port_changed_not_changed(self):
@@ -1235,10 +1231,8 @@ class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
     def test_ovn_sb_sync(self):
         ovn_sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
-            self.plugin,
-            self.mech_driver.sb_ovn,
-            self.mech_driver)
-        ovn_api = ovn_sb_synchronizer.ovn_api
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG)
+        ovn_api = ovn_sb_synchronizer.ovn_sb_api
         hostname_with_physnets = {'hostname1': ['physnet1', 'physnet2'],
                                   'hostname2': ['physnet1']}
         ovn_api.get_chassis_hostname_and_physnets.return_value = (

@@ -1668,8 +1668,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
     def _sync_resources(self, mode):
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            mode, self.mech_driver)
+            self.plugin, self.mech_driver, mode)
         self.addCleanup(nb_synchronizer.stop)
         nb_synchronizer.do_sync()
 
@@ -1813,8 +1812,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver,
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG,
             is_maintenance=True)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_port_qos_policies(ctx)
@@ -1900,8 +1898,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_LOG, self.mech_driver,
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG,
             is_maintenance=True)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_fip_qos_policies(ctx)
@@ -1957,8 +1954,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self._validate_acls(should_match=False)
 
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            ovn_const.OVN_DB_SYNC_MODE_REPAIR, self.mech_driver)
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_acls(ctx)
         self._validate_acls()
@@ -2039,8 +2035,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             ovn_config.cfg.CONF.set_override('stateless_nat_enabled', value,
                                              group='ovn')
             nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-                self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-                ovn_const.OVN_DB_SYNC_MODE_REPAIR, self.mech_driver)
+                self.plugin, self.mech_driver,
+                ovn_const.OVN_DB_SYNC_MODE_REPAIR)
             nb_synchronizer.sync_fip_dnat_rules()
             nat = self.nb_api.get_floatingip(fip['id'])
             stateless = strutils.bool_from_string(nat['options']['stateless'])
@@ -2059,7 +2055,7 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         self.mock_set_lock = self._mock_set_lock.start()
         super().setUp(maintenance_worker=True)
         self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
-            self.plugin, self.mech_driver.sb_ovn, self.mech_driver)
+            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         self.addCleanup(self.sb_synchronizer.stop)
         self.ctx = context.get_admin_context()
         self.host1 = uuidutils.generate_uuid()

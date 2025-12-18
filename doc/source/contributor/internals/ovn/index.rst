@@ -12,6 +12,7 @@ OVN Design Notes
    ovn_worker
    metadata_api
    database_consistency
+   db_sync_util
    loadbalancer
    distributed_ovsdb_events
    l3_ha_rescheduling
