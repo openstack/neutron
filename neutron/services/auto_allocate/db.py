@@ -54,7 +54,11 @@ def _ensure_external_network_default_value_callback(
     def _do_ensure_external_network_default_value_callback(
             context, request, orig, network):
         is_default = request.get(api_const.IS_DEFAULT)
-        is_external = request.get(external_net_apidef.EXTERNAL)
+        # the update request might not have external set to True, so
+        # verify by looking at the network
+        req_external = request.get(external_net_apidef.EXTERNAL)
+        net_external = network[external_net_apidef.EXTERNAL]
+        is_external = req_external is not None or net_external
         if is_default is None or not is_external:
             return
         if is_default:
