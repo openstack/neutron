@@ -428,7 +428,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             self.context,
             {'router': {
                 'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': e1['network']['id'],
@@ -460,14 +460,14 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                     'nexthop': '20.0.0.11'}]}})
         r1_f1 = self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'floating_ip_address': '100.0.0.20',
                 'subnet_id': None,
                 'port_id': n1_port_dict['p1']}})
         r1_f2 = self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'subnet_id': None,
                 'floating_ip_address': '100.0.0.21'}})
@@ -478,7 +478,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # Floating ip used for exercising port forwarding (via ovn lb)
         r1_f3 = self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'floating_ip_address': '100.0.0.22',
                 'subnet_id': None,
@@ -622,7 +622,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         r2 = self.l3_plugin.create_router(
             self.context,
             {'router': {'name': 'r2', 'admin_state_up': True,
-                        'tenant_id': self._tenant_id}})
+                        'tenant_id': self._project_id}})
         n1_prtr = self._make_port(self.fmt, n1['network']['id'],
                                   name='n1-p-rtr')
         self.l3_plugin.add_router_interface(
@@ -650,14 +650,14 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                              'subnet_id': e1_s1['subnet']['id']}]}}})
         self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'floating_ip_address': '100.0.0.30',
                 'subnet_id': None,
                 'port_id': n4_port_dict['p1']}})
         self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'floating_ip_address': '100.0.0.31',
                 'subnet_id': None,
@@ -666,7 +666,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # to port p3 and then deleting p3.
         self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'floating_ip_address': '100.0.0.32',
                 'subnet_id': None,
@@ -1819,7 +1819,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self._validate_qos_records()
 
     def _create_floatingip(self, fip_network_id, port_id, qos_policy_id=None):
-        body = {'tenant_id': self._tenant_id,
+        body = {'tenant_id': self._project_id,
                 'floating_network_id': fip_network_id,
                 'port_id': port_id,
                 }
@@ -1855,7 +1855,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # Create a router with net_ext as GW network and net_int as internal
         # one, and a floating IP on the external network.
         data = {'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': net_ext['id'],
@@ -2011,7 +2011,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # Create a router with net_ext as GW network and net_int as internal
         # one, and a floating IP on the external network.
         data = {'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._tenant_id,
+                'tenant_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': net_ext['id'],

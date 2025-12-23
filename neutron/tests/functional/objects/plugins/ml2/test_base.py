@@ -32,7 +32,7 @@ class SegmentAllocation(testlib_api.SqlTestCase,
             self.skipTest('No allocation class defined')
         super().setUp()
         self.context = context.Context(user_id='usier_id',
-                                       project_id='tenant_id')
+                                       project_id='project_id')
         self.segid_field = (
             self.segment_allocation_class.get_segmentation_id().name)
         self.is_vlan = ('physical_network' in

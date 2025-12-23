@@ -138,7 +138,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         # Save the attributes map in case the plugin will alter it
         # loading extensions
         self.useFixture(fixture.APIDefinitionFixture())
-        self._tenant_id = self._project_id = TEST_PROJECT_ID
+        self._project_id = TEST_PROJECT_ID
         # Do not call any method of ``batch_notifier.BatchNotifier`` in the
         # ML2 plugin test cases. Remove MissingAuthPlugin exception from logs.
         self.patch_notifier = mock.patch.object(
@@ -7371,7 +7371,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
 class TestNetworks(testlib_api.SqlTestCase):
     def setUp(self):
         super().setUp()
-        self._tenant_id = self._project_id = TEST_PROJECT_ID
+        self._project_id = TEST_PROJECT_ID
 
         # Update the plugin
         self.setup_coreplugin(DB_PLUGIN_KLASS)

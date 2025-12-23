@@ -47,7 +47,7 @@ class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
                                    project_id=None,
                                    is_admin=True,
                                    overwrite=False)
-        self.tenant_id = uuidutils.generate_uuid()
+        self.project_id = uuidutils.generate_uuid()
         self.network_id = uuidutils.generate_uuid()
         self.subnet_id = uuidutils.generate_uuid()
         self.port_id = uuidutils.generate_uuid()
@@ -74,7 +74,7 @@ class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
         self.assertEqual(expected, actual)
 
     def _create_network(self):
-        network = {'tenant_id': self.tenant_id,
+        network = {'tenant_id': self.project_id,
                    'id': self.network_id,
                    'name': 'test-net',
                    'admin_state_up': True,
@@ -83,7 +83,7 @@ class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
         return self.plugin.create_network(self.cxt, {'network': network})
 
     def _create_subnet(self):
-        subnet = {'tenant_id': self.tenant_id,
+        subnet = {'tenant_id': self.project_id,
                   'id': self.subnet_id,
                   'name': 'test_sub',
                   'network_id': self.network_id,
@@ -100,7 +100,7 @@ class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
     def _create_port(self, port_id, fixed_ips=None):
         port_fixed_ips = (fixed_ips if fixed_ips else
                           constants.ATTR_NOT_SPECIFIED)
-        port = {'tenant_id': self.tenant_id,
+        port = {'tenant_id': self.project_id,
                 'name': 'test_port',
                 'id': port_id,
                 'network_id': self.network_id,

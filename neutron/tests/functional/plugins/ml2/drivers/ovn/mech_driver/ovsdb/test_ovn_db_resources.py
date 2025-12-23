@@ -322,7 +322,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
             subnet_v6['id']: expected_dhcp_options_rows[subnet_v6['id']]}
         data = {
             'port': {'network_id': n1['network']['id'],
-                     'tenant_id': self._tenant_id,
+                     'tenant_id': self._project_id,
                      'device_owner': 'compute:None',
                      'fixed_ips': [{'subnet_id': subnet['id']}],
                      'extra_dhcp_opts': [{'ip_version': 4, 'opt_name': 'mtu',
@@ -350,7 +350,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
             expected_dhcp_options_rows['v4-' + p1['port']['id']]
         data = {
             'port': {'network_id': n1['network']['id'],
-                     'tenant_id': self._tenant_id,
+                     'tenant_id': self._project_id,
                      'device_owner': 'compute:None',
                      'fixed_ips': [{'subnet_id': subnet['id']}],
                      'extra_dhcp_opts': [{'ip_version': 4,
@@ -384,7 +384,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
             expected_dhcp_options_rows['v4-' + p2['port']['id']]
         data = {
             'port': {'network_id': n1['network']['id'],
-                     'tenant_id': self._tenant_id,
+                     'tenant_id': self._project_id,
                      'device_owner': 'compute:None',
                      'fixed_ips': [{'subnet_id': subnet_v6['id']}],
                      'extra_dhcp_opts': [{'ip_version': 6,
@@ -407,7 +407,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
             expected_dhcp_options_rows['v6-' + p3['port']['id']]
         data = {
             'port': {'network_id': n1['network']['id'],
-                     'tenant_id': self._tenant_id,
+                     'tenant_id': self._project_id,
                      'device_owner': 'compute:None',
                      'fixed_ips': [{'subnet_id': subnet['id']},
                                    {'subnet_id': subnet_v6['id']}],
@@ -450,7 +450,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
         # test port without extra_dhcp_opts but using subnet DHCP options
         data = {
             'port': {'network_id': n1['network']['id'],
-                     'tenant_id': self._tenant_id,
+                     'tenant_id': self._project_id,
                      'device_owner': 'compute:None',
                      'fixed_ips': [{'subnet_id': subnet['id']},
                                    {'subnet_id': subnet_v6['id']}]}}
@@ -626,7 +626,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
 
         data = {
             'port': {'network_id': n1['network']['id'],
-                     'tenant_id': self._tenant_id,
+                     'tenant_id': self._project_id,
                      'device_owner': 'compute:None',
                      'extra_dhcp_opts': [{'ip_version': 4, 'opt_name': 'mtu',
                                           'opt_value': '1100'},
@@ -757,7 +757,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
             'network':
                 {'name': 'foo',
                  'dns_domain': 'foo.com.',
-                 'tenant_id': self._tenant_id}}
+                 'tenant_id': self._project_id}}
         req = self.new_create_request('networks', data, self.fmt)
         res = req.get_response(self.api)
         net = self.deserialize(self.fmt, res)['network']

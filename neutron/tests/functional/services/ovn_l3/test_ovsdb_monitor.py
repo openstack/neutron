@@ -42,7 +42,7 @@ class TestLogicalRouterPortEvent(
             self.fmt, 'net_ext', True, as_admin=True, **kwargs)
         self.subnet = self._make_subnet(self.fmt, self.net_ext, '20.0.10.1',
                                         '20.0.10.0/24')
-        self.router = self._make_router(self.fmt, self._tenant_id)
+        self.router = self._make_router(self.fmt, self._project_id)
         self.router_id = self.router['router']['id']
         self.net_ext_id = self.net_ext['network']['id']
         self.subnet_id = self.subnet['subnet']['id']
@@ -144,7 +144,7 @@ class TestLogicalRouterPortGatewayChassisEvent(
             self.fmt, 'net_ext', True, as_admin=True, **kwargs)
         self.subnet = self._make_subnet(self.fmt, self.net_ext, '20.0.10.1',
                                         '20.0.10.0/24')
-        self.router = self._make_router(self.fmt, self._tenant_id)
+        self.router = self._make_router(self.fmt, self._project_id)
         self.router_id = self.router['router']['id']
         self.net_ext_id = self.net_ext['network']['id']
         self.subnet_id = self.subnet['subnet']['id']
