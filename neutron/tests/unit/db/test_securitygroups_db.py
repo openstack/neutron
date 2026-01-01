@@ -683,7 +683,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 mock.patch.object(
                         self.mixin, 'create_security_group') as create_sg:
             context = mock.Mock()
-            context.tenant_id = 'project_0'
+            context.project_id = 'project_0'
             context.is_admin = False
             self.mixin._ensure_default_security_group(context, 'project_1')
             create_sg.assert_not_called()

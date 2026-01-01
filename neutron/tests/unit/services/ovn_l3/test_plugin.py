@@ -87,7 +87,7 @@ class BaseTestOVNL3RouterPluginMixin:
 
         self.fake_router_port = {'device_id': '',
                                  'network_id': self.fake_network['id'],
-                                 'tenant_id': 'project-id',
+                                 'project_id': 'project-id',
                                  'device_owner': 'network:router_interface',
                                  'mac_address': 'aa:aa:aa:aa:aa:aa',
                                  'status': constants.PORT_STATUS_ACTIVE,

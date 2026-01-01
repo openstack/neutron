@@ -118,7 +118,7 @@ class OvnDriver(base.L3ServiceProvider,
         port = payload.metadata['port']
         subnets = payload.metadata['subnets']
         router_interface_info = self.l3plugin._make_router_interface_info(
-            router.id, port['tenant_id'], port['id'], port['network_id'],
+            router.id, port['project_id'], port['id'], port['network_id'],
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
         try:
             self.l3plugin._ovn_client.create_router_port(context, router.id,
@@ -141,7 +141,7 @@ class OvnDriver(base.L3ServiceProvider,
         port = payload.metadata['port']
         subnet_ids = payload.metadata['subnet_ids']
         router_interface_info = self.l3plugin._make_router_interface_info(
-            router.id, port['tenant_id'], port['id'], port['network_id'],
+            router.id, port['project_id'], port['id'], port['network_id'],
             subnet_ids[0], subnet_ids)
         try:
             self.l3plugin._ovn_client.delete_router_port(context, port['id'],

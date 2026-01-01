@@ -322,7 +322,7 @@ class FakeNetwork:
             'id': 'network-id-' + fake_uuid,
             'name': 'network-name-' + fake_uuid,
             'status': 'ACTIVE',
-            'tenant_id': 'project-id-' + fake_uuid,
+            'project_id': 'project-id-' + fake_uuid,
             'admin_state_up': True,
             'shared': False,
             'subnets': [],
@@ -526,7 +526,7 @@ class FakePort:
             'port_security_enabled': True,
             'security_groups': [],
             'status': 'ACTIVE',
-            'tenant_id': 'project-id-' + fake_uuid,
+            'project_id': 'project-id-' + fake_uuid,
         }
 
         # Overwrite default attributes.
@@ -576,7 +576,7 @@ class FakeSecurityGroup:
             'id': 'security-group-id-' + fake_uuid,
             'name': 'security-group-name-' + fake_uuid,
             'description': 'security-group-description-' + fake_uuid,
-            'tenant_id': 'project-id-' + fake_uuid,
+            'project_id': 'project-id-' + fake_uuid,
             'security_group_rules': [],
         }
 
@@ -614,7 +614,7 @@ class FakeSecurityGroupRule:
             'remote_ip_prefix': n_const.IPv4_ANY,
             'normalized_cidr': n_const.IPv4_ANY,
             'security_group_id': 'security-group-id-' + fake_uuid,
-            'tenant_id': 'project-id-' + fake_uuid,
+            'project_id': 'project-id-' + fake_uuid,
         }
 
         # Overwrite default attributes.
@@ -682,7 +682,7 @@ class FakeSubnet:
             'name': 'subnet-name-' + fake_uuid,
             'network_id': 'network-id-' + fake_uuid,
             'cidr': '10.10.10.0/24',
-            'tenant_id': 'project-id-' + fake_uuid,
+            'project_id': 'project-id-' + fake_uuid,
             'enable_dhcp': True,
             'dns_nameservers': [],
             'allocation_pools': [],
@@ -720,7 +720,7 @@ class FakeFloatingIp:
         standard_attr = FakeStandardAttribute()
         fip_attrs = {
             'id': 'fip-id-' + fake_uuid,
-            'tenant_id': '',
+            'project_id': '',
             'fixed_ip_address': '10.0.0.10',
             'fixed_port': FakePort.create_one_port(),
             'floating_ip_address': '172.21.0.100',
@@ -733,7 +733,6 @@ class FakeFloatingIp:
             'dns': '',
             'dns_domain': '',
             'dns_name': '',
-            'project_id': '',
             'standard_attr': standard_attr,
             'standard_attr_id': standard_attr.id,
             'qos_policy_binding': FakeQosFIPPolicyBinding(),
@@ -766,7 +765,6 @@ class FakeRouter:
         router_attrs = {
             'id': 'router-' + router_id,
             'name': 'router-' + router_id,
-            'tenant_id': '',
             'project_id': '',
             'admin_state_up': True,
             'status': 'ACTIVE',

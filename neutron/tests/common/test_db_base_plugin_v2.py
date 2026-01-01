@@ -460,7 +460,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         project_id = project_id or self._project_id
         data = {'network': {'name': name,
                             'admin_state_up': admin_state_up,
-                            'tenant_id': project_id}}
+                            'project_id': project_id}}
         for arg in (('admin_state_up', 'project_id', 'shared',
                      'vlan_transparent', 'mtu', enet_api.EXTERNAL,
                      'availability_zone_hints') + (arg_list or ())):
@@ -476,7 +476,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _create_network_bulk(self, fmt, number, name,
                              admin_state_up, **kwargs):
         base_data = {'network': {'admin_state_up': admin_state_up,
-                                 'tenant_id': self._project_id}}
+                                 'project_id': self._project_id}}
         return self._create_bulk(fmt, number, 'network', base_data, **kwargs)
 
     def _create_subnet(self, fmt, net_id, cidr, expected_res_status=None,
@@ -484,7 +484,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         project_id = project_id or self._project_id
         data = {'subnet': {'network_id': net_id,
                            'ip_version': constants.IP_VERSION_4,
-                           'tenant_id': project_id}}
+                           'project_id': project_id}}
         if cidr and cidr is not constants.ATTR_NOT_SPECIFIED:
             data['subnet']['cidr'] = cidr
         for arg in ('ip_version', 'project_id', 'subnetpool_id', 'prefixlen',
@@ -513,7 +513,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                             ip_version=constants.IP_VERSION_4, **kwargs):
         base_data = {'subnet': {'network_id': net_id,
                                 'ip_version': ip_version,
-                                'tenant_id': self._project_id}}
+                                'project_id': self._project_id}}
         if 'ipv6_mode' in kwargs:
             base_data['subnet']['ipv6_ra_mode'] = kwargs['ipv6_mode']
             base_data['subnet']['ipv6_address_mode'] = kwargs['ipv6_mode']
@@ -550,7 +550,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                      project_id=None, **kwargs):
         project_id = project_id or self._project_id
         data = {'port': {'network_id': net_id,
-                         'tenant_id': project_id}}
+                         'project_id': project_id}}
 
         for arg in (('admin_state_up', 'device_id',
                      'mac_address', 'name', 'fixed_ips',
@@ -615,14 +615,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                      enable_dhcp=True, dns_nameservers=None, host_routes=None,
                      shared=None, ipv6_ra_mode=None, ipv6_address_mode=None,
                      project_id=None, segment_id=None, as_admin=False):
+        project_id = project_id or network['network']['project_id']
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
                                   subnetpool_id=subnetpool_id,
                                   segment_id=segment_id,
                                   gateway_ip=gateway,
-                                  project_id=(project_id or
-                                              network['network']['tenant_id']),
+                                  project_id=project_id,
                                   allocation_pools=allocation_pools,
                                   ip_version=ip_version,
                                   enable_dhcp=enable_dhcp,
@@ -1360,7 +1360,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
 
     def test_get_ports_count(self):
         with self.port(), self.port(), self.port(), self.port() as p:
-            projid = p['port']['tenant_id']
+            projid = p['port']['project_id']
             ctx = context.Context(user_id=None, project_id=projid,
                                   is_admin=False)
             pl = directory.get_plugin()
@@ -2125,7 +2125,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
     def test_overlapping_subnets(self):
         with self.subnet() as subnet:
-            project_id = subnet['subnet']['tenant_id']
+            project_id = subnet['subnet']['project_id']
             net_id = subnet['subnet']['network_id']
             res = self._create_subnet(self.fmt,
                                       project_id=project_id,
@@ -2138,7 +2138,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_requested_subnet_id_v4_and_v6(self):
         with self.subnet() as subnet:
             # Get a IPv4 and IPv6 address
-            project_id = subnet['subnet']['tenant_id']
+            project_id = subnet['subnet']['project_id']
             net_id = subnet['subnet']['network_id']
             res = self._create_subnet(
                 self.fmt,
@@ -2744,7 +2744,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_invalid_admin_state(self):
         with self.network() as network:
             data = {'port': {'network_id': network['network']['id'],
-                             'tenant_id': network['network']['tenant_id'],
+                             'project_id': network['network']['project_id'],
                              'admin_state_up': 7,
                              'fixed_ips': []}}
             port_req = self.new_create_request('ports', data)
@@ -2754,7 +2754,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_invalid_mac_address(self):
         with self.network() as network:
             data = {'port': {'network_id': network['network']['id'],
-                             'tenant_id': network['network']['tenant_id'],
+                             'project_id': network['network']['project_id'],
                              'admin_state_up': 1,
                              'mac_address': 'mac',
                              'fixed_ips': []}}
@@ -2896,7 +2896,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
 
     def test_update_network_set_shared_owner_returns_403(self):
         with self.network(shared=False) as network:
-            net_owner = network['network']['tenant_id']
+            net_owner = network['network']['project_id']
             data = {'network': {'shared': True}}
             req = self.new_update_request('networks',
                                           data,
@@ -2928,7 +2928,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 self.fmt,
                 network['network']['id'],
                 webob.exc.HTTPCreated.code,
-                project_id=network['network']['tenant_id'])
+                project_id=network['network']['project_id'])
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
@@ -2961,12 +2961,12 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 network_obj.NetworkRBAC(
                     ctx, object_id=network['network']['id'],
                     action=rbac_db_models.ACCESS_SHARED,
-                    project_id=network['network']['tenant_id'],
+                    project_id=network['network']['project_id'],
                     target_project='somebody_else').create()
                 network_obj.NetworkRBAC(
                     ctx, object_id=network['network']['id'],
                     action=rbac_db_models.ACCESS_SHARED,
-                    project_id=network['network']['tenant_id'],
+                    project_id=network['network']['project_id'],
                     target_project='one_more_somebody_else').create()
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
@@ -2992,7 +2992,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 self.fmt,
                 network['network']['id'],
                 webob.exc.HTTPCreated.code,
-                project_id=network['network']['tenant_id'])
+                project_id=network['network']['project_id'])
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
@@ -3015,7 +3015,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                                 network['network']['id'],
                                 '10.0.0.0/24',
                                 webob.exc.HTTPCreated.code,
-                                project_id=network['network']['tenant_id'])
+                                project_id=network['network']['project_id'])
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
@@ -3354,7 +3354,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         for v in value:
             data = {'network': {'name': 'net',
                                 'admin_state_up': v[0],
-                                'tenant_id': self._project_id}}
+                                'project_id': self._project_id}}
             network_req = self.new_create_request('networks', data)
             req = network_req.get_response(self.api)
             self._check_http_response(req, v[2])
@@ -3446,7 +3446,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '10.0.2.0',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3457,7 +3457,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '10.0.0.0/4',
                                'ip_version': '4',
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -3467,7 +3467,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '10.0.0.0/4',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.0.1/32'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3476,7 +3476,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_with_cidr_and_default_subnetpool(self):
         """Expect subnet-create to keep semantic with default pools."""
         with self.network() as network:
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             subnetpool_prefix = '10.0.0.0/8'
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
@@ -3487,7 +3487,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 data = {'subnet': {'network_id': network['network']['id'],
                         'cidr': '10.0.0.0/24',
                                    'ip_version': constants.IP_VERSION_4,
-                                   'tenant_id': project_id}}
+                                   'project_id': project_id}}
                 subnet_req = self.new_create_request('subnets', data)
                 res = subnet_req.get_response(self.api)
                 subnet = self.deserialize(self.fmt, res)['subnet']
@@ -3496,7 +3496,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_no_cidr_and_default_subnetpool(self):
         """Expect subnet-create to keep semantic with default pools."""
         with self.network() as network:
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             subnetpool_prefix = '10.0.0.0/8'
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
@@ -3506,7 +3506,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  is_default=True):
                 data = {'subnet': {'network_id': network['network']['id'],
                         'ip_version': constants.IP_VERSION_4,
-                                   'tenant_id': project_id}}
+                                   'project_id': project_id}}
                 subnet_req = self.new_create_request('subnets', data)
                 res = subnet_req.get_response(self.api)
                 self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -3514,18 +3514,18 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_subnet_no_ip_version(self):
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
-                    'tenant_id': network['network']['tenant_id']}}
+                    'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
 
     def test_create_subnet_only_ip_version_v6_no_pool(self):
         with self.network() as network:
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             cfg.CONF.set_override('ipv6_pd_enabled', False)
             data = {'subnet': {'network_id': network['network']['id'],
                     'ip_version': constants.IP_VERSION_6,
-                               'tenant_id': project_id}}
+                               'project_id': project_id}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -3535,7 +3535,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': constants.IPv4_ANY,
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '0.0.0.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3546,7 +3546,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': 'fe80::',
                                'ip_version': constants.IP_VERSION_6,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': 'fe80::1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3557,7 +3557,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '2001:db8:0:1::/64',
                                'ip_version': '6',
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '2001:db8::1/64'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3568,7 +3568,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '2001:db8:0:1::/64',
                                'ip_version': '6',
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '2001:db8:0:1:1/128'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3579,7 +3579,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                     'cidr': '2014::/65',
                                'ip_version': constants.IP_VERSION_6,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': 'fe80::1',
                                'ipv6_address_mode': 'slaac'}}
             subnet_req = self.new_create_request('subnets', data)
@@ -3924,7 +3924,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
                                'ip_version': 'abc',
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3936,7 +3936,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
                                'ip_version': None,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3948,7 +3948,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': None,
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3961,7 +3961,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
                                'enable_dhcp': None,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.2.1'}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
@@ -3980,12 +3980,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 [{'start': '10.0.2.10', 'end': '10.0.2.5'}],
                                 [{'start': '10.0.0.2', 'end': '10.0.0.3'},
                                  {'start': '10.0.0.2', 'end': '10.0.0.3'}]]
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             for pool in allocation_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
                                    'cidr': '10.0.2.0/24',
                                    'ip_version': constants.IP_VERSION_4,
-                                   'tenant_id': project_id,
+                                   'project_id': project_id,
                                    'gateway_ip': '10.0.2.1',
                                    'allocation_pools': pool}}
                 subnet_req = self.new_create_request('subnets', data)
@@ -3998,12 +3998,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             nameserver_pools = [['1100.0.0.2'],
                                 ['1.1.1.2', '1.1000.1.3'],
                                 ['1.1.1.2', '1.1.1.2']]
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             for nameservers in nameserver_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
                                    'cidr': '10.0.2.0/24',
                                    'ip_version': constants.IP_VERSION_4,
-                                   'tenant_id': project_id,
+                                   'project_id': project_id,
                                    'gateway_ip': '10.0.2.1',
                                    'dns_nameservers': nameservers}}
                 subnet_req = self.new_create_request('subnets', data)
@@ -4021,12 +4021,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  'destination': '100.0.0.0/8'}],
                                [{'destination': '100.1.1.1/8',
                                  'nexthop': '10.0.2.20'}]]
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             for hostroutes in hostroute_pools:
                 data = {'subnet': {'network_id': network['network']['id'],
                                    'cidr': '10.0.2.0/24',
                                    'ip_version': constants.IP_VERSION_4,
-                                   'tenant_id': project_id,
+                                   'project_id': project_id,
                                    'gateway_ip': '10.0.2.1',
                                    'host_routes': hostroutes}}
                 subnet_req = self.new_create_request('subnets', data)
@@ -4198,7 +4198,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.0.0.0/24',
                                'ip_version': constants.IP_VERSION_4,
                                'gateway_ip': '10.0.0.1',
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'allocation_pools': [{'start': '10.0.0.100',
                                                     'end': '10.0.0.120'}]}}
             subnet_req = self.new_create_request('subnets', data)
@@ -4361,7 +4361,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_6,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -4371,7 +4371,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': 'fe80::0/80',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -4382,7 +4382,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
                                'gateway_ip': 'fe80::1',
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -4393,7 +4393,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'cidr': 'fe80::0/80',
                                'ip_version': constants.IP_VERSION_6,
                                'gateway_ip': '192.168.0.1',
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -4404,7 +4404,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'cidr': 'fe80::0/80',
                                'ip_version': constants.IP_VERSION_6,
                                'dns_nameservers': ['192.168.0.1'],
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -4417,7 +4417,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
                                'host_routes': host_routes,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -4430,7 +4430,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
                                'host_routes': host_routes,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = subnet_req.get_response(self.api)
             self._check_http_response(res, webob.exc.HTTPClientError.code)
@@ -4577,7 +4577,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 fixed_ip = [{'subnet_id': subnet['subnet']['id'],
                              'ip_address': '2001::'}]
                 kwargs = {'fixed_ips': fixed_ip,
-                          'tenant_id': 'project_id',
+                          'project_id': 'project_id',
                           'device_id': 'fake_device',
                           'device_owner': constants.DEVICE_OWNER_ROUTER_GW}
                 res = self._create_port(self.fmt, net_id=net_id,
@@ -4594,7 +4594,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 fixed_ip = [{'subnet_id': subnet['subnet']['id'],
                              'ip_address': '2001::'}]
                 kwargs = {'fixed_ips': fixed_ip,
-                          'tenant_id': 'project_id',
+                          'project_id': 'project_id',
                           'device_id': 'fake_device',
                           'device_owner': 'fake_owner'}
                 res = self._create_port(self.fmt, net_id=net_id,
@@ -4688,7 +4688,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 v6_subnet = {'ip_version': constants.IP_VERSION_6,
                              'cidr': 'fe80::/64',
                              'gateway_ip': 'fe80::1',
-                             'tenant_id': v4_subnet['subnet']['tenant_id']}
+                             'project_id': v4_subnet['subnet']['project_id']}
             # Add an IPv6 auto-address subnet to the network
             with mock.patch.object(directory.get_plugin(),
                                    'update_port') as mock_updated_port:
@@ -4826,7 +4826,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                'ip_version': constants.IP_VERSION_4,
                                'dns_nameservers': ['192.168.0.1'],
                                'host_routes': host_routes,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             subnet_req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, subnet_req.get_response(self.api))
 
@@ -5338,11 +5338,11 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.network() as network:
             res = self._create_subnet(
                 self.fmt, network['network']['id'], '10.0.0.0/24',
-                project_id=network['network']['tenant_id'])
+                project_id=network['network']['project_id'])
             self._check_http_response(res, webob.exc.HTTPCreated.code)
             res = self._create_subnet(
                 self.fmt, network['network']['id'], '10.1.0.0/24',
-                project_id=network['network']['tenant_id'])
+                project_id=network['network']['project_id'])
             self._check_http_response(res, webob.exc.HTTPConflict.code)
 
     def test_create_subnets_bulk_native_quotas(self):
@@ -5617,7 +5617,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
                                'ip_version': 7,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.2.1'}}
 
             subnet_req = self.new_create_request('subnets', data)
@@ -5629,7 +5629,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': 'invalid',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.2.1'}}
 
             subnet_req = self.new_create_request('subnets', data)
@@ -5642,7 +5642,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                       'cidr': subnet_cidr,
                       'ip_version': constants.IP_VERSION_4,
                       'enable_dhcp': True,
-                      'tenant_id': network['network']['tenant_id']}
+                      'project_id': network['network']['project_id']}
             plugin = directory.get_plugin()
             if hasattr(plugin, '_validate_subnet'):
                 self.assertRaises(lib_exc.InvalidInput,
@@ -5661,7 +5661,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': 'ipaddress'}}
 
             subnet_req = self.new_create_request('subnets', data)
@@ -5673,7 +5673,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': 'invalid-uuid',
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.0.1'}}
 
             subnet_req = self.new_create_request('subnets', data)
@@ -5708,7 +5708,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.0.1',
                                'dns_nameservers': dns_list}}
 
@@ -5755,7 +5755,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'cidr': '10.0.2.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': '10.0.0.1',
                                'host_routes': host_routes}}
 
@@ -5967,7 +5967,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             subnet = {'network_id': network['network']['id'],
                       'cidr': '10.0.2.0/24',
                       'ip_version': constants.IP_VERSION_4,
-                      'tenant_id': network['network']['tenant_id'],
+                      'project_id': network['network']['project_id'],
                       'gateway_ip': '10.0.2.1',
                       'dns_nameservers': ['8.8.8.8'],
                       'host_routes': [{'destination': '135.207.0.0/16',
@@ -6427,7 +6427,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'prefixlen': 32,
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             result = req.get_response(self.api)
             self._check_http_response(result, 201)
@@ -6444,7 +6444,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'prefixlen': 24,
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
 
@@ -6467,7 +6467,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
 
@@ -6486,7 +6486,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': None,
                                }}
             req = self.new_create_request('subnets', data)
@@ -6509,7 +6509,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.10.1.0/24',
                                'prefixlen': 26,
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
@@ -6526,7 +6526,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.10.1.0/24',
                                'prefixlen': 24,
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
@@ -6543,7 +6543,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.1.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
 
@@ -6563,7 +6563,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '192.168.1.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 500)
@@ -6580,7 +6580,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.10.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             # Allocate the subnet
             res = req.get_response(self.api)
@@ -6602,7 +6602,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.0.0/20',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
@@ -6620,7 +6620,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'cidr': '10.10.1.0/24',
                                'gateway_ip': '10.10.1.254',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual('10.10.1.254', res['subnet']['gateway_ip'])
@@ -6641,7 +6641,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'gateway_ip': '10.10.1.1',
                                'ip_version': constants.IP_VERSION_4,
                                'allocation_pools': pools,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertEqual(pools[0]['start'],
@@ -6664,7 +6664,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'prefixlen': '24',
                                'ip_version': constants.IP_VERSION_4,
                                'allocation_pools': pools,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
@@ -6682,7 +6682,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.0.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
@@ -6699,7 +6699,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.1.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id'],
+                               'project_id': network['network']['project_id'],
                                'gateway_ip': None,
                                }}
             req = self.new_create_request('subnets', data)
@@ -6721,7 +6721,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'cidr': '10.10.0.0/24',
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             req.get_response(self.api)
             req = self.new_delete_request('subnetpools',
@@ -6742,7 +6742,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'ip_version': constants.IP_VERSION_4,
                                'prefixlen': 21,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             # Allocate a subnet to fill the quota
             res = req.get_response(self.api)
@@ -6762,7 +6762,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             data = {'subnet': {'network_id': network['network']['id'],
                                'subnetpool_id': sp['subnetpool']['id'],
                                'ip_version': constants.IP_VERSION_4,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
@@ -6779,7 +6779,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                'subnetpool_id': sp['subnetpool']['id'],
                                'ip_version': ip_version,
                                'dns_nameservers': nameservers,
-                               'tenant_id': network['network']['tenant_id']}}
+                               'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             res = req.get_response(self.api)
             self._check_http_response(res, 400)
@@ -7241,7 +7241,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         self.net_data = {'network': {'id': self.net_id,
                                      'name': 'net1',
                                      'admin_state_up': True,
-                                     'tenant_id': TEST_PROJECT_ID,
+                                     'project_id': TEST_PROJECT_ID,
                                      'shared': False}}
 
     def test_create_network_with_default_status(self):
@@ -7373,7 +7373,7 @@ class TestNetworks(testlib_api.SqlTestCase):
         network = {'network': {'name': 'net',
                                'shared': shared,
                                'admin_state_up': True,
-                               'tenant_id': self._project_id}}
+                               'project_id': self._project_id}}
         created_network = plugin.create_network(ctx, network)
         return (network, created_network['id'])
 
@@ -7385,7 +7385,7 @@ class TestNetworks(testlib_api.SqlTestCase):
                          'admin_state_up': True,
                          'device_id': 'device_id',
                          'device_owner': device_owner,
-                         'tenant_id': project_id}}
+                         'project_id': project_id}}
         plugin.create_port(ctx, port)
 
     def _test_update_shared_net_used(self,

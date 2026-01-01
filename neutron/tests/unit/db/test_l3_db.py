@@ -409,19 +409,19 @@ class TestL3_NAT_dbonly_mixin(
     def test_disassociate_floatingips_conflict_by_fip_attached(self,
                                                                get_objects,
                                                                objects_exist):
-        context_tenant = context.Context('tenant', 'tenant', is_admin=False)
+        context_project = context.Context('project', 'project', is_admin=False)
         objects_exist.return_value = True
         get_objects.side_effect = [
             [],
             [{'id': 'floating_ip1', 'port_id': 'port_id'}]]
         self.assertRaises(l3_exc.FipAssociated,
                           self.db.disassociate_floatingips,
-                          context_tenant,
+                          context_project,
                           'port_id')
         objects_exist.assert_called_once_with(
             mock.ANY, fixed_port_id='port_id')
         expected_calls = [
-                mock.call(context_tenant, fixed_port_id='port_id'),
+                mock.call(context_project, fixed_port_id='port_id'),
                 mock.call(mock.ANY, fixed_port_id='port_id')]
         get_objects.assert_has_calls(expected_calls)
 

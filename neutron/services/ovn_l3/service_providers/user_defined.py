@@ -133,7 +133,7 @@ class UserDefined(base.L3ServiceProvider):
         port = payload.metadata['port']
         subnets = payload.metadata['subnets']
         router_interface_info = self.l3plugin._make_router_interface_info(
-            router.id, port['tenant_id'], port['id'], port['network_id'],
+            router.id, port['project_id'], port['id'], port['network_id'],
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
         LOG.debug('Got request to add interface %s to a user defined flavor '
                   'router with id %s', router_interface_info, router.id)
@@ -211,7 +211,7 @@ class UserDefinedNoLsp(UserDefined):
         port = payload.metadata['port']
         subnets = payload.metadata['subnets']
         router_interface_info = self.l3plugin._make_router_interface_info(
-            router.id, port['tenant_id'], port['id'], port['network_id'],
+            router.id, port['project_id'], port['id'], port['network_id'],
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
         self.l3plugin._ovn_client.delete_port(context, port['id'],
                                               port_object=port)
