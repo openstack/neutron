@@ -259,10 +259,14 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _setup_vif_port_bindings(self):
         self.supported_vnic_types = ovn_const.OVN_SUPPORTED_VNIC_TYPES
+        ovs_create_tap = ovn_conf.is_ovs_create_tap()
         self.vif_details = {
             portbindings.VIF_TYPE_OVS: {
                 portbindings.CAP_PORT_FILTER: self.sg_enabled,
                 portbindings.VIF_DETAILS_CONNECTIVITY: self.connectivity,
+                # TODO(ralonsoh): add "ovs_create_tap" to n-lib
+                # port_binding constants.
+                'ovs_create_tap': ovs_create_tap,
             },
             portbindings.VIF_TYPE_AGILIO_OVS: {
                 portbindings.CAP_PORT_FILTER: self.sg_enabled,

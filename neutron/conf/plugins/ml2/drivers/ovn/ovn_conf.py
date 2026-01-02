@@ -247,6 +247,17 @@ ovn_opts = [
                        'stateless, instead of using the conntrack OVN '
                        'actions. This strategy is faster in some '
                        'environments, like for example DPDK deployments.')),
+    cfg.BoolOpt('ovs_create_tap',
+                default=False,
+                help=_('If enabled, os-vif will create the TAP devices for '
+                       'ports. This controls the ``ovs_create_tap`` parameter '
+                       'in the vif-details dictionary.'),
+                deprecated_for_removal=True,
+                deprecated_since='2026.1',
+                deprecated_reason=('This flag was added for backwards '
+                                   'compatibility during the development of '
+                                   'the functionality in Nova (LP#2069718'),
+                ),
 ]
 
 nb_global_opts = [
@@ -422,3 +433,7 @@ def is_ovn_router_indirect_snat_enabled():
 
 def is_stateless_nat_enabled():
     return cfg.CONF.ovn.stateless_nat_enabled
+
+
+def is_ovs_create_tap():
+    return cfg.CONF.ovn.ovs_create_tap
