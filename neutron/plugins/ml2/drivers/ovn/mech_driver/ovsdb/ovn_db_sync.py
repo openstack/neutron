@@ -10,16 +10,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import abc
 from datetime import datetime
-import threading
-import time
 
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.ovn import db_sync as db_sync_base
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
@@ -42,63 +40,7 @@ from neutron.services.segments import db as segments_db
 LOG = log.getLogger(__name__)
 
 
-# TODO(slaweq): use class from neutron-lib once
-# https://review.opendev.org/c/openstack/neutron-lib/+/970267 will be merged
-# and released
-class BaseOvnDbSynchronizer(metaclass=abc.ABCMeta):
-
-    _required_mechanism_drivers = ['ovn-sync']
-    _required_service_plugins = []
-    _required_ml2_ext_drivers = []
-
-    def __init__(self, core_plugin, ovn_driver, mode, is_maintenance=False):
-        self.core_plugin = core_plugin
-        self.ovn_nb_api = ovn_driver.nb_ovn
-        self.ovn_sb_api = ovn_driver.sb_ovn
-        self.ovn_driver = ovn_driver
-        self.mode = mode
-        self.is_maintenance = is_maintenance
-        self._thread = None
-
-    def sync(self, delay_seconds=10):
-        time.sleep(delay_seconds)
-        self._thread = threading.Thread(target=self.do_sync)
-        self._thread.start()
-
-    @classmethod
-    def _get_parent_class_attribute(cls, cls_attr):
-        parent_attibutes = set()
-        for parent in cls.__mro__:
-            parent_attibutes |= set(getattr(parent, cls_attr, set()))
-        return list(parent_attibutes | set(getattr(cls, cls_attr, [])))
-
-    @classmethod
-    def get_required_mechanism_drivers(cls):
-        return cls._get_parent_class_attribute('_required_mechanism_drivers')
-
-    @classmethod
-    def get_required_service_plugins(cls):
-        return cls._get_parent_class_attribute('_required_service_plugins')
-
-    @classmethod
-    def get_required_ml2_extension_drivers(cls):
-        return cls._get_parent_class_attribute('_required_ml2_ext_drivers')
-
-    @abc.abstractmethod
-    def do_sync(self):
-        """Method to sync the OVN DB."""
-
-    def stop(self):
-        # TODO(ralonsoh): this method and the function executed in the thread
-        # should support a fast exit way.
-        try:
-            self._thread.join()
-        except AttributeError:
-            # Haven't started syncing
-            pass
-
-
-class OvnNbSynchronizer(BaseOvnDbSynchronizer):
+class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
     """Synchronizer class for NB."""
 
     _required_mechanism_drivers = []
@@ -1463,7 +1405,7 @@ class OvnNbSynchronizer(BaseOvnDbSynchronizer):
                   str(datetime.now()))
 
 
-class OvnSbSynchronizer(BaseOvnDbSynchronizer):
+class OvnSbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
     """Synchronizer class for SB."""
 
     _required_mechanism_drivers = []
