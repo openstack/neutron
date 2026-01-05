@@ -28,8 +28,14 @@ LOG = log.getLogger(__name__)
 
 
 def _run_idl_command(cmd, txn):
+    """A wrapper around a command to run it and return the row result.
+
+    This avoids using the self.result attribute but returns a custom row_result
+    instead. Imporant is that in case of a new row creation, the row_result
+    does not contain the same UUID that is stored in the DB after the commit.
+    """
     cmd.run_idl(txn)
-    return cmd.result
+    return cmd.row_result
 
 
 class _LrAddCommand(nb_cmd.LrAddCommand):
@@ -41,12 +47,14 @@ class _LrAddCommand(nb_cmd.LrAddCommand):
     """
     def run_idl(self, txn):
         try:
-            self.result = self.api.lookup('Logical_Router', self.router)
+            self.row_result = self.result = self.api.lookup(
+                'Logical_Router', self.router)
         except idlutils.RowNotFound:
             super().run_idl(txn)
-            self.result = self.api.lookup('Logical_Router', self.router)
+            self.row_result = self.api.lookup('Logical_Router', self.router)
+            return
 
-        self.set_columns(self.result, **self.columns)
+        self.set_columns(self.row_result, **self.columns)
 
 
 class _LrpAddCommand(nb_cmd.LrpAddCommand):
@@ -64,15 +72,18 @@ class _LrpAddCommand(nb_cmd.LrpAddCommand):
 
     def run_idl(self, txn):
         try:
-            self.result = self.api.lookup('Logical_Router_Port', self.port)
+            self.row_result = self.result = self.api.lookup(
+                'Logical_Router_Port', self.port)
         except idlutils.RowNotFound:
             super().run_idl(txn)
-            self.result = self.api.lookup('Logical_Router_Port', self.port)
+            self.row_result = self.api.lookup('Logical_Router_Port', self.port)
+            return
+
         # TODO(jlibosva): Make sure the mac is unique for this router
-        self.result.mac = self.mac
-        self.result.networks = self.networks
-        self.result.peer = self.peer
-        self.set_columns(self.result, **self.columns)
+        self.row_result.mac = self.mac
+        self.row_result.networks = self.networks
+        self.row_result.peer = self.peer
+        self.set_columns(self.row_result, **self.columns)
 
 
 class _HAChassisGroupAddCommand(nb_cmd.HAChassisGroupAddCommand):
@@ -84,14 +95,15 @@ class _HAChassisGroupAddCommand(nb_cmd.HAChassisGroupAddCommand):
     """
     def run_idl(self, txn):
         try:
-            hcg = self.api.lookup('HA_Chassis_Group', self.name)
+            self.row_result = self.result = self.api.lookup(
+                'HA_Chassis_Group', self.name)
         except idlutils.RowNotFound:
             super().run_idl(txn)
-            hcg = self.api.lookup('HA_Chassis_Group', self.name)
+            self.row_result = self.api.lookup(
+                'HA_Chassis_Group', self.name)
+            return
 
-        self.set_columns(hcg, **self.columns)
-
-        self.result = hcg.uuid
+        self.set_columns(self.row_result, **self.columns)
 
 
 class ReconcileRouterCommand(_LrAddCommand):
@@ -105,7 +117,7 @@ class ReconcileRouterCommand(_LrAddCommand):
         super().run_idl(txn)
 
         for key, value in self.options.items():
-            self.result.setkey('options', key, value)
+            self.row_result.setkey('options', key, value)
 
     @property
     def options(self):
@@ -142,10 +154,10 @@ class ReconcileChassisRouterCommand(ReconcileRouterCommand):
 
 
 class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
-    def __init__(self, api, chassis, hcg):
+    def __init__(self, api, chassis, hcg_uuid):
         super().__init__(api)
         self.chassis = chassis
-        self.hcg = hcg
+        self.hcg_uuid = hcg_uuid
         self.router_name = helpers.get_chassis_router_name(self.chassis.name)
 
     def validate_prerequisites(self):
@@ -177,7 +189,7 @@ class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
             main_router_name,
             lrp_main,
             peer=lrp_ch,
-            ha_chassis_group=self.hcg,
+            ha_chassis_group=self.hcg_uuid,
             options={
                 constants.LRP_OPTIONS_DYNAMIC_ROUTING_MAINTAIN_VRF: 'true'},
         ).run_idl(txn)
@@ -196,7 +208,7 @@ class ReconcileChassisCommand(ovs_cmd.BaseCommand):
 
         nb_cmd.HAChassisGroupAddChassisCommand(
             self.api,
-            hcg,
+            hcg.uuid,
             self.chassis.name, constants.HA_CHASSIS_GROUP_PRIORITY
         ).run_idl(txn)
 
@@ -209,7 +221,7 @@ class ReconcileChassisCommand(ovs_cmd.BaseCommand):
         ConnectChassisRouterToMainRouterCommand(
             self.api,
             self.chassis,
-            hcg,
+            hcg.uuid,
         ).run_idl(txn)
 
 
