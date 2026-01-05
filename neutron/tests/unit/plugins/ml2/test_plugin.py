@@ -919,7 +919,7 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                     attempt[0] += 1
                     data = {'port': {'network_id': network['network']['id'],
                                      'tenant_id':
-                                     network['network']['tenant_id'],
+                                     network['network']['project_id'],
                                      'name': 'port1',
                                      'admin_state_up': 1,
                                      'device_id': '',
@@ -1528,7 +1528,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 l3plugin.create_floatingip(
                     context.get_admin_context(),
                     {'floatingip': {'floating_network_id': n['network']['id'],
-                                    'tenant_id': n['network']['tenant_id'],
+                                    'tenant_id': n['network']['project_id'],
                                     'dns_name': '', 'dns_domain': ''}}
                 )
         self._delete('networks', n['network']['id'])
@@ -2014,7 +2014,7 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=subnet_id%%3D%s&limit=1
     def test_list_ports_filtered_by_fixed_ip_substring_dual_stack(self):
         with self.subnet() as subnet:
             # Get a IPv4 and IPv6 address
-            project_id = subnet['subnet']['tenant_id']
+            project_id = subnet['subnet']['project_id']
             net_id = subnet['subnet']['network_id']
             res = self._create_subnet(
                 self.fmt,
@@ -3849,7 +3849,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
     def _reserve_segment(self, network, seg_id=None):
         segment = {'id': 'fake_id',
                    'network_id': network['network']['id'],
-                   'tenant_id': network['network']['tenant_id'],
+                   'tenant_id': network['network']['project_id'],
                    driver_api.NETWORK_TYPE: 'vlan',
                    driver_api.PHYSICAL_NETWORK: self.physnet}
         if seg_id:

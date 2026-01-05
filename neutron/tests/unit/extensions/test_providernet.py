@@ -97,7 +97,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
             ctx.roles.append('admin')
         env = {'neutron.context': ctx}
         instance = self.plugin.return_value
-        instance.get_network.return_value = {'project_id': ctx.tenant_id,
+        instance.get_network.return_value = {'project_id': ctx.project_id,
                                              'shared': False}
         net_id = uuidutils.generate_uuid()
         res = self.api.put(test_base._get_path('networks',
@@ -140,7 +140,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
     def test_network_create_with_provider_attrs(self):
         ctx = context.get_admin_context()
         project_id = 'an_admin'
-        ctx.tenant_id = project_id
+        ctx.project_id = project_id
         instance = self.plugin.return_value
         instance.create_network.return_value = {}
         res, data = self._post_network_with_provider_attrs(ctx)
@@ -155,7 +155,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
 
     def test_network_create_with_bad_provider_attrs_400(self):
         ctx = context.get_admin_context()
-        ctx.tenant_id = 'an_admin'
+        ctx.project_id = 'an_admin'
         bad_data = {provider_net.SEGMENTATION_ID: "abc"}
         res, _1 = self._post_network_with_bad_provider_attrs(ctx, bad_data,
                                                              True)
@@ -163,7 +163,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
 
     def test_network_update_with_provider_attrs(self):
         ctx = context.get_admin_context()
-        ctx.tenant_id = 'an_admin'
+        ctx.project_id = 'an_admin'
         instance = self.plugin.return_value
         instance.update_network.return_value = {}
         res, data, net_id = self._put_network_with_provider_attrs(ctx)

@@ -80,7 +80,7 @@ class TestMetadataProxyHandlerBase(base.BaseTestCase):
             with mock.patch('requests.request') as mock_request:
                 resp.headers = {'content-type': 'text/plain'}
                 mock_request.return_value = resp
-                retval = self.handler._proxy_request('the_id', 'tenant_id',
+                retval = self.handler._proxy_request('the_id', 'project_id',
                                                      req)
                 mock_request.assert_called_once_with(
                     method=method, url='http://9.9.9.9:8775/the_path',
@@ -88,7 +88,7 @@ class TestMetadataProxyHandlerBase(base.BaseTestCase):
                         'X-Forwarded-For': '8.8.8.8',
                         'X-Instance-ID-Signature': 'signed',
                         'X-Instance-ID': 'the_id',
-                        'X-Tenant-ID': 'tenant_id'
+                        'X-Tenant-ID': 'project_id'
                     },
                     data=body,
                     cert=(self.fake_conf.nova_client_cert,
@@ -149,7 +149,7 @@ class TestMetadataProxyHandlerBase(base.BaseTestCase):
                         method='GET', body='')
         with mock.patch('requests.request') as mock_request:
             mock_request.side_effect = requests.ConnectionError()
-            retval = self.handler._proxy_request('the_id', 'tenant_id', req)
+            retval = self.handler._proxy_request('the_id', 'project_id', req)
             self.assertIsInstance(retval, webob.exc.HTTPServiceUnavailable)
 
 

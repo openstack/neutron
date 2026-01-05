@@ -545,13 +545,13 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             with self.router(tenant_id=project_id) as r:
                 router = self._show('routers', r['router']['id'],
                                     tenant_id=project_id)
-                self.assertEqual(project_id, router['router']['tenant_id'])
+                self.assertEqual(project_id, router['router']['project_id'])
                 metering_label_id = metering_label['metering_label']['id']
                 self._delete('metering-labels', metering_label_id, 204,
                              as_admin=True)
                 router = self._show('routers', r['router']['id'],
                                     tenant_id=project_id)
-                self.assertEqual(project_id, router['router']['tenant_id'])
+                self.assertEqual(project_id, router['router']['project_id'])
 
 
 class TestMeteringPluginL3AgentScheduler(
@@ -709,7 +709,7 @@ class TestMeteringPluginRpcFromL3Agent(
             with self.router(name='router1', subnet=subnet) as router:
                 r = router['router']
                 self._add_external_gateway_to_router(r['id'], s['network_id'])
-                with self.metering_label(tenant_id=r['tenant_id']):
+                with self.metering_label(tenant_id=r['project_id']):
                     callbacks = metering_rpc.MeteringRpcCallbacks(
                         self.meter_plugin)
                     data = callbacks.get_sync_data_metering(self.adminContext,

@@ -368,12 +368,13 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             pass
 
         # Create a bound port with no IP address (since there is not subnet)
-        response = self._create_port(self.fmt,
-                                     net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'],
-                                     arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'},
-                                     is_admin=True)
+        response = self._create_port(
+            self.fmt,
+            net_id=network['network']['id'],
+            tenant_id=network['network']['project_id'],
+            arg_list=(portbindings.HOST_ID,),
+            **{portbindings.HOST_ID: 'fakehost'},
+            is_admin=True)
         port = self.deserialize(self.fmt, response)
 
         # Create the subnet and try to update the port to get an IP

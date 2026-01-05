@@ -324,11 +324,11 @@ class TestNetworkIPAvailabilityAPI(
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
 
     def test_usages_query_tenant_id(self):
-        test_tenant_id = 'a-unique-test-id'
-        with self.network(tenant_id=test_tenant_id) as net:
+        test_project_id = 'a-unique-test-id'
+        with self.network(tenant_id=test_project_id) as net:
             with self.subnet(network=net):
                 # Get by query param: tenant_id
-                params = 'tenant_id=%s' % test_tenant_id
+                params = 'tenant_id=%s' % test_project_id
                 request = self.new_list_request(API_RESOURCE, params=params,
                                                 as_admin=True)
                 response = self.deserialize(self.fmt,
@@ -338,7 +338,7 @@ class TestNetworkIPAvailabilityAPI(
                 self._validate_from_availabilities(response[IP_AVAILS_KEY],
                                                    net, 0)
                 for net_avail in response[IP_AVAILS_KEY]:
-                    self.assertEqual(test_tenant_id, net_avail['tenant_id'])
+                    self.assertEqual(test_project_id, net_avail['project_id'])
 
                 # Get by NON-matching query param: tenant_id
                 params = 'tenant_id=clearly-wont-match'

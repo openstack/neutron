@@ -41,7 +41,7 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
         create_request = {
             'router': {
                 'name': 'my router',
-                'tenant_id': 'my tenant',
+                'tenant_id': 'my project',
                 'admin_state_up': True,
             }
         }
@@ -163,7 +163,7 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
         create_request = {
             'router': {
                 'name': 'my router',
-                'tenant_id': 'my tenant',
+                'tenant_id': 'my project',
                 'admin_state_up': True,
             }
         }

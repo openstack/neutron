@@ -66,7 +66,7 @@ class SubnetDNSPublishFixedIPExtensionTestCase(
 
         cidr = cidr or '192.0.2.0/24'
         network_id = network['network']['id']
-        project_id = network['network']['tenant_id']
+        project_id = network['network']['project_id']
         data = {'subnet': {
                     'network_id': network_id,
                     'ip_version': str(ip_version),

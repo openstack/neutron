@@ -454,7 +454,7 @@ class ExtraRouteDBTestCaseBase:
                     'json',
                     200,
                     s['subnet']['network_id'],
-                    tenant_id=r['router']['tenant_id'],
+                    tenant_id=r['router']['project_id'],
                     device_owner=constants.DEVICE_OWNER_ROUTER_GW)
                 port_list = self.deserialize('json', port_res)
                 self.assertEqual(1, len(port_list['ports']))

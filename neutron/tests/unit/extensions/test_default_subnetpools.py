@@ -83,7 +83,7 @@ class DefaultSubnetpoolsExtensionTestCase(
 
     def test_create_subnet_only_ip_version_v4(self):
         with self.network() as network:
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             subnetpool_prefix = '10.0.0.0/8'
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
@@ -101,7 +101,7 @@ class DefaultSubnetpoolsExtensionTestCase(
 
     def test_convert_subnetpool_to_default_subnetpool(self):
         with self.network() as network:
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             subnetpool_prefix = '10.0.0.0/8'
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
@@ -123,7 +123,7 @@ class DefaultSubnetpoolsExtensionTestCase(
 
     def test_convert_default_subnetpool_to_non_default(self):
         with self.network() as network:
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             subnetpool_prefix = '10.0.0.0/8'
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
@@ -140,7 +140,7 @@ class DefaultSubnetpoolsExtensionTestCase(
     def test_create_subnet_only_ip_version_v6(self):
         # this test mirrors its v4 counterpart
         with self.network() as network:
-            project_id = network['network']['tenant_id']
+            project_id = network['network']['project_id']
             subnetpool_prefix = '2000::/56'
             with self.subnetpool(prefixes=[subnetpool_prefix],
                                  admin=True,
@@ -163,7 +163,7 @@ class DefaultSubnetpoolsExtensionTestCase(
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                     'ip_version': constants.IP_VERSION_6,
-                               'tenant_id': network['network']['tenant_id'],
+                               'tenant_id': network['network']['project_id'],
                                'use_default_subnetpool': True}}
             if ra_addr_mode:
                 data['subnet']['ipv6_ra_mode'] = ra_addr_mode

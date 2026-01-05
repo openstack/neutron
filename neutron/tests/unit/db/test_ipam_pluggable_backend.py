@@ -601,7 +601,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                 net_id = network['network']['id']
                 data = {
                     'port': {'network_id': net_id,
-                             'tenant_id': network['network']['tenant_id']}}
+                             'tenant_id': network['network']['project_id']}}
                 port_req = self.new_create_request('ports', data)
                 res = port_req.get_response(self.api)
                 self.assertEqual(webob.exc.HTTPServerError.code,

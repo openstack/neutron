@@ -1126,8 +1126,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 self.assertIn('id', payload)
                 self.assertEqual(payload['id'], router['router']['id'])
                 self.assertIn('tenant_id', payload)
-                rtid = router['router']['tenant_id']
-                # tolerate subnet tenant deliberately set to '' in the
+                rtid = router['router']['project_id']
+                # tolerate subnet project deliberately set to '' in the
                 # nsx metadata access case
                 self.assertIn(payload['tenant_id'], [rtid, ''], msg)
 
@@ -2814,7 +2814,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         port_id=None,
                         project_id=fip['project_id'],
                         router_id=None,
-                        tenant_id=fip['tenant_id'])
+                        tenant_id=fip['project_id'])
                     current = previous.copy()
                     current.update(
                         fixed_ip_address=ip_address,
@@ -2865,7 +2865,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         port_id=port_id,
                         project_id=fip['project_id'],
                         router_id=router_id,
-                        tenant_id=fip['tenant_id'])
+                        tenant_id=fip['project_id'])
                     current = previous.copy()
                     current.update(
                         fixed_ip_address=None,
@@ -2915,7 +2915,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         port_id=port_id,
                         project_id=fip['project_id'],
                         router_id=router_id,
-                        tenant_id=fip['tenant_id'])
+                        tenant_id=fip['project_id'])
                     current = previous.copy()
                     current.update(
                         fixed_ip_address=None,
@@ -3904,7 +3904,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             # created.
             port_res = self._create_port(
                 self.fmt, n['network']['id'],
-                tenant_id=n['network']['tenant_id'], device_id='PENDING',
+                tenant_id=n['network']['project_id'], device_id='PENDING',
                 device_owner=lib_constants.DEVICE_OWNER_FLOATINGIP)
             port = self.deserialize(self.fmt, port_res)
             plugin._clean_garbage()
@@ -3949,7 +3949,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.network() as n:
             port_res = self._create_port(
                 self.fmt, n['network']['id'],
-                tenant_id=n['network']['tenant_id'], device_id='PENDING',
+                tenant_id=n['network']['project_id'], device_id='PENDING',
                 device_owner=lib_constants.DEVICE_OWNER_FLOATINGIP)
             port = self.deserialize(self.fmt, port_res)
             plugin._clean_garbage()
@@ -4246,7 +4246,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                     port_id=fip['port_id'],
                     project_id=fip['project_id'],
                     router_id=fip['router_id'],
-                    tenant_id=fip['tenant_id'])
+                    tenant_id=fip['project_id'])
                 skip = ('description', 'dns_domain', 'dns_name',
                         'port_details', 'qos_policy_id', 'revision_number',
                         'status', 'standard_attr_id')
@@ -4653,7 +4653,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         # Set ourselves up to call the right function with
         # the right arguments for the with block
         if assoc_port:
-            data['tenant_id'] = n['network']['tenant_id']
+            data['tenant_id'] = n['network']['project_id']
             data['port_id'] = p['port']['id']
             create_floatingip = self.floatingip_with_assoc
         else:

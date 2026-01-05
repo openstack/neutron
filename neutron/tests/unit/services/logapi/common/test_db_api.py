@@ -57,14 +57,14 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
         super().setUp()
         self.context = context.get_admin_context()
         self.sg_id, self.port_id, self._project_id = self._create_sg_and_port()
-        self.context.tenant_id = self._project_id
+        self.context.project_id = self._project_id
 
     def _create_sg_and_port(self):
         with self.network() as network, \
                 self.subnet(network), \
                 self.security_group() as sg:
             sg_id = sg['security_group']['id']
-            project_id = sg['security_group']['tenant_id']
+            project_id = sg['security_group']['project_id']
 
             res = self._create_port(
                 self.fmt, network['network']['id'],
@@ -203,7 +203,7 @@ class LoggingRpcCallbackTestCase(test_sg.SecurityGroupDBTestCase):
                 self.subnet(network), \
                 self.security_group() as sg:
             sg_id = sg['security_group']['id']
-            project_id = sg['security_group']['tenant_id']
+            project_id = sg['security_group']['project_id']
             rule1 = self._build_security_group_rule(
                 sg_id,
                 'ingress', const.PROTO_NAME_TCP, '22', '22',
@@ -274,7 +274,7 @@ class LoggingRpcCallbackTestCase(test_sg.SecurityGroupDBTestCase):
                 self.subnet(network), \
                 self.security_group() as sg:
             sg_id = sg['security_group']['id']
-            project_id = sg['security_group']['tenant_id']
+            project_id = sg['security_group']['project_id']
             rule1 = self._build_security_group_rule(
                 sg_id,
                 'ingress', const.PROTO_NAME_TCP, '11', '13',
