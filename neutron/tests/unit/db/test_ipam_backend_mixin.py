@@ -371,7 +371,7 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'},
             is_admin=True)

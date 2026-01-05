@@ -92,15 +92,15 @@ class PecanFunctionalTest(testlib_api.SqlTestCase,
     def set_config_overrides(self):
         cfg.CONF.set_override('auth_strategy', 'noauth')
 
-    def do_request(self, url, tenant_id=None, admin=False,
+    def do_request(self, url, project_id=None, admin=False,
                    expect_errors=False):
         if admin:
-            if not tenant_id:
-                tenant_id = 'admin'
-            headers = {'X-Tenant-Id': tenant_id,
+            if not project_id:
+                project_id = 'admin'
+            headers = {'X-Tenant-Id': project_id,
                        'X-Roles': 'admin'}
         else:
-            headers = {'X-Tenant-ID': tenant_id or ''}
+            headers = {'X-Tenant-ID': project_id or ''}
         return self.app.get(url, headers=headers, expect_errors=expect_errors)
 
 

@@ -57,7 +57,7 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _test_create_address_group(self, expected=None, **kwargs):
         keys = kwargs.copy()
-        keys.setdefault('tenant_id', self._project_id)
+        keys.setdefault('project_id', self._project_id)
         res = self._create_address_group(**keys)
         ag = self.deserialize(self.fmt, res)
         self._validate_resource(ag, keys, 'address_group')

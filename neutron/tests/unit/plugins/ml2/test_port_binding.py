@@ -368,9 +368,9 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.plugin = directory.get_plugin()
         self.plugin.start_rpc_listeners()
 
-    def _create_port_binding(self, fmt, port_id, host, tenant_id=None,
+    def _create_port_binding(self, fmt, port_id, host, project_id=None,
                              **kwargs):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         data = {'binding': {'host': host, 'tenant_id': project_id}}
         if kwargs:
             data['binding'].update(kwargs)

@@ -146,7 +146,7 @@ class TestTrackedResourcesEventHandler(BaseTestEventHandler,
         self._test_init('subnetpool')
         pool = self._make_subnetpool('json', ['10.0.0.0/8'],
                                      name='meh',
-                                     tenant_id=self._project_id)['subnetpool']
+                                     project_id=self._project_id)['subnetpool']
         self._verify_event_handler_calls(pool)
         self._delete('subnetpools', pool['id'])
         self._verify_event_handler_calls(pool, expected_call_count=2)
@@ -171,7 +171,7 @@ class TestTrackedResourcesEventHandler(BaseTestEventHandler,
             'json', 'meh', 'meh',
             project_id=self._project_id)['security_group']
         rule_req = self._build_security_group_rule(
-            sec_group['id'], 'ingress', 'TCP', tenant_id=self._project_id)
+            sec_group['id'], 'ingress', 'TCP')
         sec_group_rule = self._make_security_group_rule(
             'json', rule_req)['security_group_rule']
         # When a security group is created it also creates 2 rules, therefore

@@ -393,7 +393,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                             {'router': {'external_gateway_info':
                                         ext_gw_info}},
                             expected_code=expected_code,
-                            request_tenant_id=project_id,
+                            request_project_id=project_id,
                             as_admin=as_admin)
 
     def test_router_gateway_set_fail_after_port_create(self):
@@ -450,7 +450,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         with self.router(name=name, admin_state_up=True,
                          tenant_id=project_id) as router:
             res = self._show('routers', router['router']['id'],
-                             tenant_id=project_id)
+                             project_id=project_id)
             for k, v in expected_value:
                 self.assertEqual(res['router'][k], v)
 
@@ -477,7 +477,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                              external_gateway_info=input_value,
                              as_admin=True) as router:
                 res = self._show('routers', router['router']['id'],
-                                 tenant_id=project_id)
+                                 project_id=project_id)
                 for k, v in expected_value:
                     self.assertEqual(v, res['router'][k])
 

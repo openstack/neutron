@@ -244,7 +244,7 @@ class TestAddressScope(AddressScopeTestCase):
                                         admin=True)
         admin_res = self._list('address-scopes')
         mortal_res = self._list(
-            'address-scopes', tenant_id='not-the-owner')
+            'address-scopes', project_id='not-the-owner')
         self.assertEqual(1, len(admin_res['address_scopes']))
         self.assertEqual(1, len(mortal_res['address_scopes']))
 
@@ -253,7 +253,7 @@ class TestAddressScope(AddressScopeTestCase):
                                         name='foo-address-scope')
         admin_res = self._list('address-scopes')
         mortal_res = self._list(
-            'address-scopes', tenant_id='not-the-owner')
+            'address-scopes', project_id='not-the-owner')
         self.assertEqual(1, len(admin_res['address_scopes']))
         self.assertEqual(0, len(mortal_res['address_scopes']))
 
@@ -268,7 +268,6 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
     def _test_create_subnetpool(self, prefixes, expected=None,
                                 admin=False, **kwargs):
         keys = kwargs.copy()
-        keys.setdefault('tenant_id', self._project_id)
         with self.subnetpool(prefixes, admin, **keys) as subnetpool:
             self._validate_resource(subnetpool, keys, 'subnetpool')
             if expected:
@@ -524,20 +523,20 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
             with self.subnetpool(
                         ['10.10.0.0/16'],
                         name='subnetpool_a',
-                        tenant_id=addr_scope['project_id'],
+                        project_id=addr_scope['project_id'],
                         default_prefixlen=24,
                         address_scope_id=addr_scope['id']) as subnetpool_a,\
                 self.subnetpool(
                          ['10.20.0.0/16'],
                          name='subnetpool_b',
-                         tenant_id=addr_scope['project_id'],
+                         project_id=addr_scope['project_id'],
                          default_prefixlen=24,
                          address_scope_id=addr_scope['id']) as subnetpool_b:
                 subnetpool_a = subnetpool_a['subnetpool']
                 subnetpool_b = subnetpool_b['subnetpool']
 
                 with self.network(
-                        tenant_id=addr_scope['project_id']) as network:
+                        project_id=addr_scope['project_id']) as network:
                     subnet_a = self._make_subnet(
                         self.fmt,
                         network,
@@ -545,7 +544,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                         None,
                         subnetpool_id=subnetpool_a['id'],
                         ip_version=constants.IP_VERSION_4,
-                        tenant_id=addr_scope['project_id'])
+                        project_id=addr_scope['project_id'])
                     subnet_b = self._make_subnet(
                         self.fmt,
                         network,
@@ -553,7 +552,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                         None,
                         subnetpool_id=subnetpool_b['id'],
                         ip_version=constants.IP_VERSION_4,
-                        tenant_id=addr_scope['project_id'])
+                        project_id=addr_scope['project_id'])
 
                     # Look up subnet counts and perform assertions
                     ctx = context.Context('', addr_scope['project_id'])
@@ -587,20 +586,20 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
             with self.subnetpool(
                         ['10.10.0.0/16'],
                         name='subnetpool_a',
-                        tenant_id=scope_a['project_id'],
+                        project_id=scope_a['project_id'],
                         default_prefixlen=24,
                         address_scope_id=scope_a['id']) as subnetpool_a,\
                 self.subnetpool(
                          ['10.20.0.0/16'],
                          name='subnetpool_b',
-                         tenant_id=scope_a['project_id'],
+                         project_id=scope_a['project_id'],
                          default_prefixlen=24,
                          address_scope_id=scope_a['id']) as subnetpool_b:
                 subnetpool_a = subnetpool_a['subnetpool']
                 subnetpool_b = subnetpool_b['subnetpool']
 
                 with self.network(
-                        tenant_id=scope_a['project_id']) as network:
+                        project_id=scope_a['project_id']) as network:
                     self._make_subnet(
                         self.fmt,
                         network,
@@ -608,7 +607,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                         None,
                         subnetpool_id=subnetpool_a['id'],
                         ip_version=constants.IP_VERSION_4,
-                        tenant_id=scope_a['project_id'])
+                        project_id=scope_a['project_id'])
                     self._make_subnet(
                         self.fmt,
                         network,
@@ -616,7 +615,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                         None,
                         subnetpool_id=subnetpool_b['id'],
                         ip_version=constants.IP_VERSION_4,
-                        tenant_id=scope_a['project_id'])
+                        project_id=scope_a['project_id'])
 
                     # Attempt to update subnetpool_b's address scope and
                     # assert failure.
@@ -636,13 +635,13 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
             with self.subnetpool(
                         ['2001:db8:1234::/48'],
                         name='non_pd_pool',
-                        tenant_id=addr_scope['project_id'],
+                        project_id=addr_scope['project_id'],
                         default_prefixlen=64,
                         address_scope_id=addr_scope['id']) as non_pd_pool:
                 non_pd_pool = non_pd_pool['subnetpool']
 
                 with self.network(
-                        tenant_id=addr_scope['project_id']) as network:
+                        project_id=addr_scope['project_id']) as network:
                     with self.subnet(cidr=None,
                                      network=network,
                                      ip_version=constants.IP_VERSION_6,
@@ -654,7 +653,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                             cidr=None,
                             net_id=network['network']['id'],
                             subnetpool_id=non_pd_pool['id'],
-                            tenant_id=addr_scope['project_id'],
+                            project_id=addr_scope['project_id'],
                             ip_version=constants.IP_VERSION_6)
                         self.assertEqual(webob.exc.HTTPBadRequest.code,
                                          res.status_int)
@@ -666,13 +665,13 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
             with self.subnetpool(
                         ['2001:db8:1234::/48'],
                         name='non_pd_pool',
-                        tenant_id=addr_scope['project_id'],
+                        project_id=addr_scope['project_id'],
                         default_prefixlen=64,
                         address_scope_id=addr_scope['id']) as non_pd_pool:
                 non_pd_pool = non_pd_pool['subnetpool']
 
                 with self.network(
-                        tenant_id=addr_scope['project_id']) as network:
+                        project_id=addr_scope['project_id']) as network:
                     with self.subnet(cidr=None,
                                      network=network,
                                      ip_version=constants.IP_VERSION_6,
@@ -681,7 +680,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                             self.fmt,
                             cidr=None,
                             net_id=network['network']['id'],
-                            tenant_id=addr_scope['project_id'],
+                            project_id=addr_scope['project_id'],
                             subnetpool_id=constants.IPV6_PD_POOL_ID,
                             ip_version=constants.IP_VERSION_6,
                             ipv6_ra_mode=constants.IPV6_SLAAC,

@@ -104,14 +104,14 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         # API calls don't share a session with possible stale objects
         return context.get_admin_context()
 
-    def _create_router(self, ha=True, tenant_id='project1', distributed=None,
+    def _create_router(self, ha=True, project_id='project1', distributed=None,
                        ctx=None, admin_state_up=True):
         if ctx is None:
             ctx = self.admin_ctx
-        ctx.project_id = tenant_id
+        ctx.project_id = project_id
         router = {'name': 'router1',
                   'admin_state_up': admin_state_up,
-                  'tenant_id': tenant_id}
+                  'tenant_id': project_id}
         if ha is not None:
             router['ha'] = ha
         if distributed is not None:
@@ -473,8 +473,8 @@ class L3HATestCase(L3HATestFramework):
     def test_unique_ha_network_per_tenant(self):
         project1 = _uuid()
         project2 = _uuid()
-        self._create_router(tenant_id=project1)
-        self._create_router(tenant_id=project2)
+        self._create_router(project_id=project1)
+        self._create_router(project_id=project2)
         ha_network1 = self.plugin.get_ha_network(self.admin_ctx, project1)
         ha_network2 = self.plugin.get_ha_network(self.admin_ctx, project2)
         self.assertNotEqual(
@@ -534,7 +534,7 @@ class L3HATestCase(L3HATestFramework):
     @mock.patch('neutron.db.l3_hamode_db.VR_ID_RANGE', new=set(range(1, 2)))
     def test_vr_id_unique_range_per_tenant(self):
         self._create_router()
-        self._create_router(tenant_id=_uuid())
+        self._create_router(project_id=_uuid())
         routers = self.plugin.get_ha_sync_data_for_host(
             self.admin_ctx, self.agent1['host'], self.agent1)
         self.assertEqual(2, len(routers))
@@ -699,7 +699,7 @@ class L3HATestCase(L3HATestFramework):
         # The router creation calls first the HA network creation and the
         # HA network-tenant binding ("ha_router_networks" register)
         project_id = uuidutils.generate_uuid()
-        self._create_router(tenant_id=project_id)
+        self._create_router(project_id=project_id)
         network = self.core_plugin.get_networks(self.admin_ctx)[0]
         ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
         self.assertEqual(project_id, ha_network.project_id)
@@ -865,7 +865,7 @@ class L3HATestCase(L3HATestFramework):
     def test_ha_network_deleted_if_no_ha_router_present_two_tenants(self):
         # Create two routers in different tenants.
         router1 = self._create_router()
-        router2 = self._create_router(tenant_id='project2')
+        router2 = self._create_router(project_id='project2')
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
         # Check that HA networks created for each tenant
@@ -979,19 +979,19 @@ class L3HATestCase(L3HATestFramework):
 class L3HAModeDbTestCase(L3HATestFramework):
 
     def _create_network(self, plugin, ctx, name='net',
-                        tenant_id='project1', external=False, ha=False):
+                        project_id='project1', external=False, ha=False):
         network = {'network': {'name': name,
                                'shared': False,
                                'admin_state_up': True,
-                               'tenant_id': tenant_id,
-                               'project_id': tenant_id,
+                               'tenant_id': project_id,
+                               'project_id': project_id,
                                extnet_apidef.EXTERNAL: external,
                                network_ha.HA: ha,
                                }}
         return plugin.create_network(ctx, network)['id']
 
     def _create_subnet(self, plugin, ctx, network_id, cidr='10.0.0.0/8',
-                       name='subnet', tenant_id='project1'):
+                       name='subnet', project_id='project1'):
         subnet = {'subnet': {'name': name,
                   'ip_version': constants.IP_VERSION_4,
                              'network_id': network_id,
@@ -1000,7 +1000,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
                              'allocation_pools': constants.ATTR_NOT_SPECIFIED,
                              'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
                              'host_routes': constants.ATTR_NOT_SPECIFIED,
-                             'tenant_id': tenant_id,
+                             'tenant_id': project_id,
                              'enable_dhcp': True,
                              'ipv6_ra_mode': constants.ATTR_NOT_SPECIFIED}}
         created_subnet = plugin.create_subnet(ctx, subnet)
@@ -1426,7 +1426,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         admin_ctx = self.admin_ctx
         admin_ctx.project_id = project_id
         self._create_network(self.core_plugin, admin_ctx,
-                             tenant_id=project_id, ha=True)
+                             project_id=project_id, ha=True)
         ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
         self.assertEqual(project_id, ha_network.project_id)
         subnets = subnet_obj.Subnet.get_objects(

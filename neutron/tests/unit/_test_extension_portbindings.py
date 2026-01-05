@@ -162,7 +162,7 @@ class PortBindingsHostTestCaseMixin:
 
     def test_port_vif_non_admin(self):
         with self.network(set_context=True,
-                          tenant_id='test') as net1:
+                          project_id='test') as net1:
             with self.subnet(network=net1) as subnet1:
                 host_arg = {portbindings.HOST_ID: self.hostname}
                 try:
@@ -170,7 +170,7 @@ class PortBindingsHostTestCaseMixin:
                                    expected_res_status=403,
                                    arg_list=(portbindings.HOST_ID,),
                                    set_context=True,
-                                   tenant_id='test',
+                                   project_id='test',
                                    **host_arg):
                         pass
                 except exc.HTTPClientError:
@@ -273,14 +273,14 @@ class PortBindingsVnicTestCaseMixin:
 
     def test_port_vnic_type_non_admin(self):
         with self.network(set_context=True,
-                          tenant_id='test') as net1:
+                          project_id='test') as net1:
             with self.subnet(network=net1) as subnet1:
                 vnic_arg = {portbindings.VNIC_TYPE: self.vnic_type}
                 with self.port(subnet=subnet1,
                                expected_res_status=httplib.CREATED,
                                arg_list=(portbindings.VNIC_TYPE,),
                                set_context=True,
-                               tenant_id='test',
+                               project_id='test',
                                **vnic_arg) as port:
                     # Check a response of create_port
                     self._check_response_portbindings_vnic_type(port['port'])

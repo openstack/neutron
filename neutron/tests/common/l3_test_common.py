@@ -46,7 +46,7 @@ def get_ha_interface(ip='169.254.192.1', mac='12:34:56:78:2b:5d'):
             'subnets': [{'cidr': '169.254.192.0/18',
                          'gateway_ip': '169.254.255.254',
                          'id': subnet_id}],
-            'tenant_id': '',
+            'project_id': '',
             'agent_id': _uuid(),
             'agent_host': 'aaa',
             'priority': 1}

@@ -923,7 +923,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
         self._delete('routers', router['router']['id'],
-                     tenant_id=project_id)
+                     project_id=project_id)
 
         # deleted router
         ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
@@ -1130,7 +1130,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 self.l3plugin.get_l3_agents_hosting_routers(
                     self.adminContext, [router['router']['id']]))
             self._delete(
-                'routers', router['router']['id'], tenant_id=project_id)
+                'routers', router['router']['id'], project_id=project_id)
         self.assertEqual(0, len(l3agents))
 
     def test_dvr_router_scheduling_to_only_dvr_snat_agent(self):
@@ -1295,7 +1295,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                           None,
                                           project_id=project_id)
             self._delete('routers', router['router']['id'],
-                         tenant_id=project_id)
+                         project_id=project_id)
 
     def _test_router_add_to_l3_agent(self, admin_state_up=True):
         with self.router() as router1:

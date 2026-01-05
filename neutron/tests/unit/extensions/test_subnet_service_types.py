@@ -70,7 +70,7 @@ class SubnetServiceTypesExtensionTestCase(
         if not cidr:
             cidr = self.CIDRS[0]
         args = {'net_id': network['id'],
-                'tenant_id': network['project_id'],
+                'project_id': network['project_id'],
                 'cidr': cidr,
                 'ip_version': self.IP_VERSION,
                 'enable_dhcp': enable_dhcp}
@@ -203,7 +203,7 @@ class SubnetServiceTypesExtensionTestCase(
         network = network['network']
         port = self._create_port(self.fmt,
                                  net_id=network['id'],
-                                 tenant_id=network['project_id'],
+                                 project_id=network['project_id'],
                                  device_owner=matching_type)
         self._assert_port_res(port, matching_type, service_subnet, True)
 
@@ -225,7 +225,7 @@ class SubnetServiceTypesExtensionTestCase(
         network = network['network']
         port = self._create_port(self.fmt,
                                  net_id=network['id'],
-                                 tenant_id=network['project_id'],
+                                 project_id=network['project_id'],
                                  device_owner=matching_type)
         self._assert_port_res(port, matching_type, subnet, fallback)
 
@@ -249,7 +249,7 @@ class SubnetServiceTypesExtensionTestCase(
         network = network['network']
         port = self._create_port(self.fmt,
                                  net_id=network['id'],
-                                 tenant_id=network['project_id'])
+                                 project_id=network['project_id'])
         self._assert_port_res(port, '', subnet, fallback)
 
     def test_create_port_no_device_owner_no_fallback(self):
@@ -277,7 +277,7 @@ class SubnetServiceTypesExtensionTestCase(
         network = network['network']
         port = self._create_port(self.fmt,
                                  net_id=network['id'],
-                                 tenant_id=network['project_id'],
+                                 project_id=network['project_id'],
                                  device_owner=service_type)
         self._assert_port_res(port, service_type, subnet, fallback,
                               error='IpAddressGenerationFailure')
@@ -295,7 +295,7 @@ class SubnetServiceTypesExtensionTestCase(
         network = network['network']
         port = self._create_port(self.fmt,
                                  net_id=network['id'],
-                                 tenant_id=network['project_id'],
+                                 project_id=network['project_id'],
                                  fixed_ips=[{'subnet_id': subnet['id']}],
                                  device_owner='network:dhcp')
         self._assert_port_res(port, 'network:dhcp', subnet, enable_dhcp)
@@ -316,7 +316,7 @@ class SubnetServiceTypesExtensionTestCase(
         network = network['network']
         port = self._create_port(self.fmt,
                                  net_id=network['id'],
-                                 tenant_id=network['project_id'],
+                                 project_id=network['project_id'],
                                  device_owner=service_type)
         port = self.deserialize('json', port)['port']
         # Update the port's fixed_ips. It's ok to reuse the same IP it already
@@ -340,7 +340,7 @@ class SubnetServiceTypesExtensionTestCase(
         network = network['network']
         port = self._create_port(self.fmt,
                                  net_id=network['id'],
-                                 tenant_id=network['project_id'],
+                                 project_id=network['project_id'],
                                  device_owner=service_type,
                                  arg_list=(portbindings.HOST_ID,),
                                  **{portbindings.HOST_ID: 'fakehost'},

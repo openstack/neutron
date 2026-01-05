@@ -109,13 +109,15 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _cleanup(self):
         ml2_plugin.MAX_BIND_TRIES = 10
 
-    def _create_segment(self, fmt, expected_res_status=None, **kwargs):
+    def _create_segment(self, fmt, project_id=None, expected_res_status=None,
+                        **kwargs):
+        project_id = project_id or self._project_id
         segment = {'segment': {}}
         for k, v in kwargs.items():
             segment['segment'][k] = None if v is None else str(v)
 
         segment_req = self.new_create_request(
-            'segments', segment, fmt, as_admin=True)
+            'segments', segment, fmt, tenant_id=project_id, as_admin=True)
 
         segment_res = segment_req.get_response(self.ext_api)
         if expected_res_status:
@@ -129,8 +131,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def segment(self, **kwargs):
         kwargs.setdefault('network_type', constants.TYPE_VLAN)
-        return self._make_segment(
-            self.fmt, tenant_id=self._project_id, **kwargs)
+        return self._make_segment(self.fmt, **kwargs)
 
     def _test_create_segment(self, expected=None, **kwargs):
         keys = kwargs.copy()
@@ -483,7 +484,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=network2['network']['id'],
-                                  tenant_id=network2['network']['project_id'],
+                                  project_id=network2['network']['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.0.0/24',
                                   segment_id=segment['segment']['id'])
@@ -497,7 +498,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=net['id'],
-                                  tenant_id=net['project_id'],
+                                  project_id=net['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.0.0/24',
                                   segment_id=segment_id)
@@ -514,7 +515,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=net['id'],
-                                  tenant_id=net['project_id'],
+                                  project_id=net['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.1.0/24',
                                   segment_id=segment['segment']['id'])
@@ -535,7 +536,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         res = self._create_subnet(
             self.fmt,
             net_id=net['id'],
-            tenant_id=net['project_id'],
+            project_id=net['project_id'],
             gateway_ip=constants.ATTR_NOT_SPECIFIED,
             cidr='10.0.1.0/24',
             service_types=[constants.DEVICE_OWNER_ROUTED])
@@ -557,7 +558,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
 
         res = self._create_subnet(self.fmt,
                                   net_id=net['id'],
-                                  tenant_id=net['project_id'],
+                                  project_id=net['project_id'],
                                   gateway_ip=constants.ATTR_NOT_SPECIFIED,
                                   cidr='10.0.0.0/24',
                                   segment_id=segment['id'])
@@ -1230,7 +1231,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'])
+            project_id=network['network']['project_id'])
         res = self.deserialize(self.fmt, response)
         # Don't allocate IPs in this case because we didn't give binding info
         self.assertEqual(0, len(res['port']['fixed_ips']))
@@ -1241,7 +1242,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             fixed_ips=[
                 {'subnet_id': subnet['subnet']['id']}
@@ -1270,7 +1271,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1294,7 +1295,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1322,7 +1323,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1339,7 +1340,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1354,7 +1355,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1375,7 +1376,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1438,7 +1439,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             **kwargs)
         port = self.deserialize(self.fmt, response)
@@ -1484,7 +1485,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1522,7 +1523,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1566,7 +1567,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True)
         port = self.deserialize(self.fmt, response)
         ips = port['port']['fixed_ips']
@@ -1623,7 +1624,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             fixed_ips=[],
             is_admin=True)
         port = self.deserialize(self.fmt, response)
@@ -1793,7 +1794,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1821,7 +1822,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost'})
@@ -1903,7 +1904,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(
             self.fmt,
             net_id=network['network']['id'],
-            tenant_id=network['network']['project_id'],
+            project_id=network['network']['project_id'],
             is_admin=True,
             arg_list=(portbindings.HOST_ID,),
             **{portbindings.HOST_ID: 'fakehost_a'})
@@ -2478,7 +2479,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.mock_n_client.reset_mock()
 
     def _create_test_port(self, network_id, project_id, subnet, **kwargs):
-        port = self._make_port(self.fmt, network_id, tenant_id=project_id,
+        port = self._make_port(self.fmt, network_id, project_id=project_id,
                                as_admin=True, arg_list=(portbindings.HOST_ID,),
                                **kwargs)
         self.batch_notifier._notify()

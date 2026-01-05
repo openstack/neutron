@@ -65,7 +65,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         super().setUp()
 
     def _create_network(self, fmt, name, admin_state_up,
-                        arg_list=None, set_context=False, tenant_id=None,
+                        arg_list=None, set_context=False, project_id=None,
                         **kwargs):
         new_arg_list = ('dns_domain',)
         if arg_list is not None:
@@ -73,19 +73,19 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         return super()._create_network(fmt, name, admin_state_up,
                                        arg_list=new_arg_list,
                                        set_context=set_context,
-                                       tenant_id=tenant_id,
+                                       project_id=project_id,
                                        **kwargs)
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
-                     arg_list=None, set_context=False, tenant_id=None,
+                     arg_list=None, set_context=False, project_id=None,
                      **kwargs):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         data = {'port': {'network_id': net_id,
                          'tenant_id': project_id}}
 
         for arg in (('admin_state_up', 'device_id',
                     'mac_address', 'name', 'fixed_ips',
-                     'tenant_id', 'device_owner', 'security_groups',
+                     'project_id', 'device_owner', 'security_groups',
                      'dns_name') + (arg_list or ())):
             # Arg must be present
             if arg in kwargs:

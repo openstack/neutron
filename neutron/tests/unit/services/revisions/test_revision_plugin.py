@@ -241,7 +241,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.assertGreater(updated['revision_number'],
                            router['revision_number'])
         # add an intf and make sure it bumps rev
-        with self.subnet(tenant_id='some_project', cidr='10.0.1.0/24') as s:
+        with self.subnet(project_id='some_project', cidr='10.0.1.0/24') as s:
             interface_info = {'subnet_id': s['subnet']['id']}
         self.l3p.add_router_interface(self.ctx, router['id'],
                                       interface_info)

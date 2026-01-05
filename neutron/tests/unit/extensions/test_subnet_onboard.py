@@ -34,9 +34,7 @@ class SubnetOnboardTestsBase:
     def address_scope(self, ip_version, prefixes=None, shared=False,
                       admin=True, name='test-scope', is_default_pool=False,
                       project_id=None, **kwargs):
-        project_id = project_id or kwargs.get('tenant_id', None)
-        if not project_id:
-            project_id = self._project_id
+        project_id = project_id or self._project_id
 
         scope_data = {'tenant_id': project_id, 'ip_version': ip_version,
                       'shared': shared, 'name': name + '-scope'}
@@ -49,9 +47,7 @@ class SubnetOnboardTestsBase:
     def subnetpool(self, ip_version, prefixes=None, shared=False, admin=True,
                    name='test-pool', is_default_pool=False, project_id=None,
                    address_scope_id=None, **kwargs):
-        project_id = project_id or kwargs.get('tenant_id', None)
-        if not project_id:
-            project_id = self._project_id
+        project_id = project_id or self._project_id
         pool_data = {'tenant_id': project_id, 'shared': shared, 'name': name,
                      'address_scope_id': address_scope_id,
                      'prefixes': prefixes, 'is_default': is_default_pool}
