@@ -46,7 +46,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             local_ip['local_ip'][k] = v
 
         req = self.new_create_request('local-ips', local_ip,
-                                      tenant_id=self._project_id,
+                                      project_id=self._project_id,
                                       as_admin=True)
         res = req.get_response(self.ext_api)
         self._check_http_response(res)
@@ -54,7 +54,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _update_local_ip(self, lip_id, data):
         update_req = self.new_update_request(
-            'local-ips', data, lip_id, tenant_id=self._project_id)
+            'local-ips', data, lip_id, project_id=self._project_id)
         res = update_req.get_response(self.ext_api)
         self._check_http_response(res)
         return self.deserialize(self.fmt, res)
@@ -68,7 +68,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                       data=local_ip_assoc,
                                       id=local_ip_id,
                                       subresource='port_associations',
-                                      tenant_id=self._project_id)
+                                      project_id=self._project_id)
         res = req.get_response(self.ext_api)
         self._check_http_response(res)
         return self.deserialize(self.fmt, res)

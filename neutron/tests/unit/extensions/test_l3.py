@@ -405,7 +405,7 @@ class L3NatTestCaseMixin:
             data['router']['enable_ndp_proxy'] = \
                 bool(kwargs['enable_ndp_proxy'])
         router_req = self.new_create_request('routers', data, fmt,
-                                             tenant_id=project_id,
+                                             project_id=project_id,
                                              as_admin=as_admin)
 
         return router_req.get_response(self.ext_api)
@@ -461,7 +461,7 @@ class L3NatTestCaseMixin:
 
         req = self.new_action_request('routers', interface_data, router_id,
                                       "%s_router_interface" % action,
-                                      tenant_id=project_id, as_admin=as_admin)
+                                      project_id=project_id, as_admin=as_admin)
         res = req.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int, msg)
         response = self.deserialize(self.fmt, res)
@@ -506,7 +506,7 @@ class L3NatTestCaseMixin:
         data['floatingip'].update(kwargs)
 
         floatingip_req = self.new_create_request(
-            'floatingips', data, fmt, tenant_id=project_id, as_admin=as_admin)
+            'floatingips', data, fmt, project_id=project_id, as_admin=as_admin)
         return floatingip_req.get_response(self.ext_api)
 
     def _make_floatingip(self, fmt, network_id, port_id=None,
@@ -3877,7 +3877,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     'prefixlen': 24,
                     'ip_version': lib_constants.IP_VERSION_4}}
             req = self.new_create_request('subnets', data,
-                                          tenant_id=project_id)
+                                          project_id=project_id)
             subnet = self.deserialize(self.fmt, req.get_response(self.api))
 
             admin_ctx = context.get_admin_context()

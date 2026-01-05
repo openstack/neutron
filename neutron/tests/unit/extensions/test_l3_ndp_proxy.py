@@ -136,7 +136,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
         req_res = self.new_create_request(
             'ndp-proxies', data, fmt or self.fmt,
-            tenant_id=project_id, as_admin=True)
+            project_id=project_id, as_admin=True)
 
         res = req_res.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
@@ -156,7 +156,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         req_res = self.new_update_request(
             'ndp-proxies', {'ndp_proxy': data},
             ndp_proxy_id, fmt or self.fmt,
-            tenant_id=project_id, as_admin=True)
+            project_id=project_id, as_admin=True)
         res = req_res.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
         if expected_message:
@@ -209,7 +209,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         router_req = self.new_update_request(
             'routers', id=router_id, data=data,
             fmt=(fmt or self.fmt),
-            tenant_id=project_id, as_admin=True)
+            project_id=project_id, as_admin=True)
         res = router_req.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
         if expected_message:

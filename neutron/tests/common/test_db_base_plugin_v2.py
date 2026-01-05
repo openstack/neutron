@@ -309,9 +309,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                             code=res.status_int)
 
     def new_create_request(self, resource, data, fmt=None, id=None,
-                           subresource=None, context=None, tenant_id=None,
+                           subresource=None, context=None, project_id=None,
                            as_admin=False, as_service=False):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         if as_admin:
             return self._admin_req(
                 'POST', resource, data, fmt, id=id,
@@ -325,9 +325,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                 project_id=project_id)
 
     def new_list_request(self, resource, fmt=None, params=None,
-                         subresource=None, parent_id=None, tenant_id=None,
+                         subresource=None, parent_id=None, project_id=None,
                          as_admin=False):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         if as_admin:
             return self._admin_req(
                 'GET', resource, None, fmt, params=params, id=parent_id,
@@ -340,8 +340,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def new_show_request(self, resource, id, fmt=None,
                          subresource=None, fields=None, sub_id=None,
-                         tenant_id=None, as_admin=False):
-        project_id = tenant_id or self._project_id
+                         project_id=None, as_admin=False):
+        project_id = project_id or self._project_id
         if fields:
             params = "&".join(["fields=%s" % x for x in fields])
         else:
@@ -356,8 +356,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
                            sub_id=None, data=None, headers=None,
-                           tenant_id=None, as_admin=False):
-        project_id = tenant_id or self._project_id
+                           project_id=None, as_admin=False):
+        project_id = project_id or self._project_id
         if as_admin:
             return self._admin_req('DELETE', resource, data, fmt, id=id,
                                    subresource=subresource, sub_id=sub_id,
@@ -369,8 +369,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def new_update_request(self, resource, data, id, fmt=None,
                            subresource=None, context=None, sub_id=None,
                            headers=None, as_admin=False, as_service=False,
-                           tenant_id=None):
-        project_id = tenant_id or self._project_id
+                           project_id=None):
+        project_id = project_id or self._project_id
         if as_admin:
             return self._admin_req(
                 'PUT', resource, data, fmt, id=id, subresource=subresource,
@@ -387,9 +387,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         )
 
     def new_action_request(self, resource, data, id, action, fmt=None,
-                           subresource=None, sub_id=None, tenant_id=None,
+                           subresource=None, sub_id=None, project_id=None,
                            as_admin=False):
-        project_id = tenant_id or self._project_id
+        project_id = project_id or self._project_id
         if as_admin:
             return self._admin_req('PUT', resource, data, fmt, id=id,
                                    action=action, subresource=subresource,
@@ -431,7 +431,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         collection = "%ss" % resource
         req_data = {collection: objects}
         req = self.new_create_request(collection, req_data, fmt,
-                                      tenant_id=project_id, as_admin=as_admin)
+                                      project_id=project_id, as_admin=as_admin)
         return req.get_response(self.api)
 
     def _create_bulk(self, fmt, number, resource, data, name='test',
@@ -449,7 +449,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             objects.append(obj)
         req_data = {collection: objects}
         req = self.new_create_request(collection, req_data, fmt,
-                                      tenant_id=project_id,
+                                      project_id=project_id,
                                       as_admin=as_admin,
                                       as_service=as_service)
         return req.get_response(self.api)
@@ -468,7 +468,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             if arg in kwargs:
                 data['network'][arg] = kwargs[arg]
         network_req = self.new_create_request('networks', data, fmt,
-                                              tenant_id=project_id,
+                                              project_id=project_id,
                                               as_admin=as_admin)
 
         return network_req.get_response(self.api)
@@ -501,7 +501,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             data['subnet']['gateway_ip'] = kwargs['gateway_ip']
 
         subnet_req = self.new_create_request('subnets', data, fmt,
-                                             tenant_id=project_id,
+                                             project_id=project_id,
                                              as_admin=as_admin)
 
         subnet_res = subnet_req.get_response(self.api)
@@ -538,7 +538,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         api = self._api_for_resource('subnetpools')
         subnetpools_req = self.new_create_request('subnetpools',
                                                   subnetpool, fmt,
-                                                  tenant_id=project_id,
+                                                  project_id=project_id,
                                                   as_admin=admin)
         subnetpool_res = subnetpools_req.get_response(api)
         if expected_res_status:
@@ -569,7 +569,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])
             data['port']['device_id'] = device_id
         port_req = self.new_create_request('ports', data, fmt,
-                                           tenant_id=project_id,
+                                           project_id=project_id,
                                            as_admin=is_admin,
                                            as_service=is_service)
 
@@ -586,7 +586,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if kwargs.get('device_owner'):
             query_params.append("device_owner=%s" % kwargs.get('device_owner'))
         port_req = self.new_list_request('ports', fmt, '&'.join(query_params),
-                                         tenant_id=kwargs.get('project_id'))
+                                         project_id=kwargs.get('project_id'))
         port_res = port_req.get_response(self.api)
         if expected_res_status:
             self._check_http_response(port_res, expected_res_status)
@@ -678,7 +678,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                    'description': name,
                                    'project_id': project_id}}
         sg_req = self.new_create_request('security-groups', data, fmt,
-                                         tenant_id=project_id,
+                                         project_id=project_id,
                                          as_admin=is_admin)
         sg_res = sg_req.get_response(self.api)
         if expected_res_status:
@@ -710,7 +710,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             data[type_req][qos_const.DIRECTION] = direction
         route = 'qos/policies/{}/{}'.format(qos_policy_id, type_req + 's')
         qos_rule_req = self.new_create_request(route, data, fmt,
-                                               tenant_id=project_id,
+                                               project_id=project_id,
                                                as_admin=is_admin)
 
         qos_rule_res = qos_rule_req.get_response(self.api)
@@ -726,7 +726,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         data = {'policy': {'name': name,
                            'project_id': project_id}}
         qos_req = self.new_create_request('policies', data, fmt,
-                                          tenant_id=project_id,
+                                          project_id=project_id,
                                           as_admin=is_admin)
 
         qos_policy_res = qos_req.get_response(self.api)
@@ -746,14 +746,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 project_id=None, as_admin=False):
         req = self.new_delete_request(collection, id, headers=headers,
                                       subresource=subresource, sub_id=sub_id,
-                                      tenant_id=project_id, as_admin=as_admin)
+                                      project_id=project_id, as_admin=as_admin)
 
         res = req.get_response(self._api_for_resource(collection))
         self._check_http_response(res, expected_code)
 
     def _show_response(self, resource, id, project_id=None, as_admin=False):
         req = self.new_show_request(resource, id,
-                                    tenant_id=project_id,
+                                    project_id=project_id,
                                     as_admin=as_admin)
         return req.get_response(self._api_for_resource(resource))
 
@@ -770,7 +770,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 request_project_id=None, as_admin=False, as_service=False):
         req = self.new_update_request(
             resource, new_data, id, headers=headers,
-            tenant_id=request_project_id, as_admin=as_admin,
+            project_id=request_project_id, as_admin=as_admin,
             as_service=as_service)
         res = req.get_response(self._api_for_resource(resource))
         self._check_http_response(res, expected_code)
@@ -784,7 +784,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         req = self.new_list_request(resource, fmt, query_params,
                                     subresource=subresource,
                                     parent_id=parent_id,
-                                    tenant_id=project_id,
+                                    project_id=project_id,
                                     as_admin=as_admin)
         res = req.get_response(self._api_for_resource(resource))
         self._check_http_response(res, expected_code)
@@ -904,7 +904,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _test_list_with_sort(self, resource,
                              items, sorts, resources=None, query_params='',
-                             tenant_id=None, as_admin=False):
+                             project_id=None, as_admin=False):
         query_str = query_params
         for key, direction in sorts:
             query_str = query_str + "&sort_key={}&sort_dir={}".format(
@@ -913,7 +913,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             resources = '%ss' % resource
         req = self.new_list_request(resources,
                                     params=query_str,
-                                    tenant_id=tenant_id,
+                                    project_id=project_id,
                                     as_admin=as_admin)
         api = self._api_for_resource(resources)
         res = self.deserialize(self.fmt, req.get_response(api))
@@ -927,7 +927,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                    resources=None,
                                    query_params='',
                                    verify_key='id',
-                                   tenant_id=None,
+                                   project_id=None,
                                    as_admin=False):
         if not resources:
             resources = '%ss' % resource
@@ -935,7 +935,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         query_str = query_str + ("limit=%s&sort_key=%s&"
                                  "sort_dir=%s") % (limit, sort[0], sort[1])
         req = self.new_list_request(resources, params=query_str,
-                                    tenant_id=tenant_id, as_admin=as_admin)
+                                    project_id=project_id, as_admin=as_admin)
         neutron_ctx = req.environ['neutron.context']
         items_res = []
         page_num = 0
@@ -966,7 +966,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                            limit, expected_page_num,
                                            resources=None,
                                            query_params='',
-                                           tenant_id=None,
+                                           project_id=None,
                                            as_admin=False):
         if not resources:
             resources = '%ss' % resource
@@ -979,7 +979,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                  "marker=%s") % (limit, sort[0], sort[1],
                                                  marker)
         req = self.new_list_request(resources, params=query_str,
-                                    tenant_id=tenant_id, as_admin=as_admin)
+                                    project_id=project_id, as_admin=as_admin)
         neutron_ctx = req.environ['neutron.context']
         item_res = [items[-1][resource]]
         page_num = 0
@@ -1119,7 +1119,7 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
                              True,
                              project_id=project_id)
         req = self.new_list_request(
-            'networks', params="fields=name", tenant_id=project_id)
+            'networks', params="fields=name", project_id=project_id)
         res = req.get_response(self.api)
         self._check_list_with_fields(res, 'name')
 
@@ -1137,7 +1137,7 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
                              True,
                              project_id=project_id)
         req = self.new_list_request(
-            'networks', params="fields=tenant_id", tenant_id=project_id)
+            'networks', params="fields=tenant_id", project_id=project_id)
         res = req.get_response(self.api)
         self._check_list_with_fields(res, 'tenant_id')
 
@@ -2880,7 +2880,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'],
-                                          tenant_id='other-project')
+                                          project_id='other-project')
             res = req.get_response(self.api)
             self._check_http_response(res, 403)
 

@@ -124,7 +124,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'],
-                                          tenant_id='noadmin')
+                                          project_id='noadmin')
             res = req.get_response(self.api)
             self.assertEqual(exc.HTTPForbidden.code, res.status_int)
 
@@ -196,7 +196,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                   as snet_shared, self.subnet(as_admin=True, network=net_admin)
                   as snet_admin):
                 req = self.new_list_request('networks', as_admin=False,
-                                            tenant_id='noadmin')
+                                            project_id='noadmin')
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 net_ids = {net['id'] for net in res['networks']}
                 self.assertIn(net_ext['network']['id'], net_ids)
@@ -204,7 +204,7 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.assertNotIn(net_admin['network']['id'], net_ids)
 
                 req = self.new_list_request('subnets', as_admin=False,
-                                            tenant_id='noadmin')
+                                            project_id='noadmin')
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 snet_ids = {snet['id'] for snet in res['subnets']}
                 self.assertIn(snet_ext['subnet']['id'], snet_ids)

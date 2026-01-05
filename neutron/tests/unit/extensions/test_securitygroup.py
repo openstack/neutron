@@ -151,7 +151,7 @@ class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _create_security_group_response(self, fmt, data, project_id=None,
                                         as_admin=False, **kwargs):
         security_group_req = self.new_create_request(
-            'security-groups', data, fmt, tenant_id=project_id,
+            'security-groups', data, fmt, project_id=project_id,
             as_admin=as_admin)
         return security_group_req.get_response(self.ext_api)
 
@@ -195,7 +195,7 @@ class SecurityGroupsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                     as_admin=False, **kwargs):
 
         security_group_rule_req = self.new_create_request(
-            'security-group-rules', rules, fmt, tenant_id=project_id,
+            'security-group-rules', rules, fmt, project_id=project_id,
             as_admin=as_admin)
 
         return security_group_rule_req.get_response(self.ext_api)

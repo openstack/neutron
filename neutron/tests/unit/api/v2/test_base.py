@@ -118,25 +118,25 @@ class APIv2TestBase(base.BaseTestCase):
         policy.init()
 
     def _post_request(self, path, initial_input, expect_errors=None,
-                      req_tenant_id=None, as_admin=False):
-        req_tenant_id = req_tenant_id or self._project_id
+                      req_project_id=None, as_admin=False):
+        req_project_id = req_project_id or self._project_id
         return self.api.post_json(
             path, initial_input, expect_errors=expect_errors,
-            extra_environ=_get_neutron_env(req_tenant_id, as_admin))
+            extra_environ=_get_neutron_env(req_project_id, as_admin))
 
     def _put_request(self, path, initial_input, expect_errors=None,
-                     req_tenant_id=None, as_admin=False):
-        req_tenant_id = req_tenant_id or self._project_id
+                     req_project_id=None, as_admin=False):
+        req_project_id = req_project_id or self._project_id
         return self.api.put_json(
             path, initial_input, expect_errors=expect_errors,
-            extra_environ=_get_neutron_env(req_tenant_id, as_admin))
+            extra_environ=_get_neutron_env(req_project_id, as_admin))
 
     def _delete_request(self, path, expect_errors=None,
-                        req_tenant_id=None, as_admin=False):
-        req_tenant_id = req_tenant_id or self._project_id
+                        req_project_id=None, as_admin=False):
+        req_project_id = req_project_id or self._project_id
         return self.api.delete_json(
             path, expect_errors=expect_errors,
-            extra_environ=_get_neutron_env(req_tenant_id, as_admin))
+            extra_environ=_get_neutron_env(req_project_id, as_admin))
 
 
 class _ArgMatcher:
@@ -1216,20 +1216,20 @@ class NotificationTest(APIv2TestBase):
             res = self._post_request(
                 _get_path('networks'),
                 initial_input, expect_errors=expected_errors,
-                req_tenant_id=project_id)
+                req_project_id=project_id)
         if opname == 'update':
             instance.update_network.return_value = network_obj
             op_input = {resource: {'name': 'myname'}}
             res = self._put_request(
                 _get_path('networks', id=project_id),
                 op_input, expect_errors=expected_errors,
-                req_tenant_id=project_id)
+                req_project_id=project_id)
             expected_code = exc.HTTPOk.code
         if opname == 'delete':
             res = self._delete_request(
                 _get_path('networks', id=project_id),
                 expect_errors=expected_errors,
-                req_tenant_id=project_id)
+                req_project_id=project_id)
             expected_code = exc.HTTPNoContent.code
 
         expected_events = ('.'.join([resource, opname, "start"]),

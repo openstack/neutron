@@ -448,7 +448,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                           ('admin_state_up', True), ('status', 'ACTIVE'),
                           ('external_gateway_info', None)]
         with self.router(name=name, admin_state_up=True,
-                         tenant_id=project_id) as router:
+                         project_id=project_id) as router:
             res = self._show('routers', router['router']['id'],
                              project_id=project_id)
             for k, v in expected_value:
@@ -473,7 +473,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                     'ip_address': mock.ANY,
                                     'subnet_id': s['subnet']['id']}]})]
             with self.router(name=name, admin_state_up=True,
-                             tenant_id=project_id,
+                             project_id=project_id,
                              external_gateway_info=input_value,
                              as_admin=True) as router:
                 res = self._show('routers', router['router']['id'],
