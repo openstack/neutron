@@ -1,10 +1,6 @@
 Firewall-as-a-Service (FWaaS) v2 scenario
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. note::
-
-   Firewall v2 has no support for OVN currently.
-
 Installation of FWaaS v2
 ------------------------
 
