@@ -28,8 +28,6 @@ class BGPWorker(worker.NeutronBaseWorker):
 
         self.nb_api = ovn.OvnNbIdl(ovn_conf.get_ovn_nb_connection()).start(
             timeout=ovn_conf.get_ovn_ovsdb_timeout())
-        self.nb_api.set_lock()
-
         self.sb_api = ovn.OvnSbIdl(ovn_conf.get_ovn_sb_connection()).start(
             timeout=ovn_conf.get_ovn_ovsdb_timeout())
         self._reconciler = reconciler.BGPTopologyReconciler(
