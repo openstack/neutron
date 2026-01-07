@@ -302,7 +302,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
         net = self.plugin.create_network(
             self.ctx,
             {'network': {'name': 'name',
-                         'tenant_id': 'project_one',
+                         'project_id': 'project_one',
                          'admin_state_up': True,
                          'shared': True}})
         return net['id']
@@ -328,7 +328,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
                         'allocation_pools': constants.ATTR_NOT_SPECIFIED,
                         'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
                         'host_routes': constants.ATTR_NOT_SPECIFIED,
-                        'tenant_id': 'project_one',
+                        'project_id': 'project_one',
                         'enable_dhcp': True,
                         'segment_id': segment_id}})
         return subnet['id']
@@ -583,7 +583,7 @@ class DHCPAgentWeightSchedulerTestCase(test_plugin.Ml2PluginV2TestCase):
         net = self.plugin.create_network(
             self.ctx,
             {'network': {'name': 'name',
-                         'tenant_id': 'project_one',
+                         'project_id': 'project_one',
                          'admin_state_up': True,
                          'shared': True}})
         return net['id']

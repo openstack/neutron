@@ -241,7 +241,7 @@ class DBExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
                     {'network_id': network['network']['id'],
                      'cidr': '10.1.0.0/24',
                      'ip_version': constants.IP_VERSION_4,
-                     'tenant_id': self._project_id,
+                     'project_id': self._project_id,
                      'subnet_extension': 'abc'}}
             req = self.new_create_request('subnets', data, self.fmt)
             res = req.get_response(self.api)

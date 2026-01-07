@@ -1118,7 +1118,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         project_id = uuidutils.generate_uuid()
         with self.subnet() as s:
             self._set_net_external(s['subnet']['network_id'])
-            data = {'router': {'tenant_id': project_id}}
+            data = {'router': {'project_id': project_id}}
             data['router']['name'] = 'router1'
             data['router']['external_gateway_info'] = {
                 'network_id': s['subnet']['network_id']}
@@ -1235,7 +1235,7 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 self.subnet(project_id=project_id, cidr='10.0.3.0/24') as s3:
             self._register_agent_states()
             self._set_net_external(s1['subnet']['network_id'])
-            data = {'router': {'tenant_id': project_id}}
+            data = {'router': {'project_id': project_id}}
             data['router']['name'] = 'router1'
             data['router']['external_gateway_info'] = {
                 'network_id': s1['subnet']['network_id']}

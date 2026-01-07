@@ -269,7 +269,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         registry.subscribe(precommit_create, resources.NETWORK,
                            events.PRECOMMIT_CREATE)
         precommit_create.side_effect = exc.InvalidInput(error_message='x')
-        data = {'network': {'tenant_id': 'someproject', 'name': 'dummy',
+        data = {'network': {'project_id': 'someproject', 'name': 'dummy',
                             'admin_state_up': True, 'shared': False}}
         req = self.new_create_request('networks', data)
         res = req.get_response(self.api)
@@ -343,7 +343,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                              'admin_state_up': True,
                              'device_id': 'device_id',
                              'device_owner': device_owner,
-                             'tenant_id': project_id}}
+                             'project_id': project_id}}
             ports = [copy.deepcopy(port) for x in range(num_ports)]
             ports[1]['port']['mac_address'] = test_mac
             port_data = plugin.create_port_obj_bulk(ctx, ports)
@@ -370,7 +370,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
 
         registry.subscribe(b_func, resources.NETWORK, events.BEFORE_CREATE)
         registry.subscribe(a_func, resources.NETWORK, events.AFTER_CREATE)
-        data = [{'tenant_id': self._project_id}] * 4
+        data = [{'project_id': self._project_id}] * 4
         self._create_bulk_from_list(
             self.fmt, 'network', data, context=context.get_admin_context())
         # ensure events captured
@@ -3269,7 +3269,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                             pnet.NETWORK_TYPE: 'vlan',
                             pnet.PHYSICAL_NETWORK: 'physnet1',
                             pnet.SEGMENTATION_ID: 1,
-                            'tenant_id': 'project_one'}}
+                            'project_id': 'project_one'}}
 
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)

@@ -97,7 +97,7 @@ class TestUserDefined(testlib_api.SqlTestCase):
                 states=(self.router, self.router),
                 resource_id=self.router['id'],
                 metadata={'subnet_ids': ['subnet-id'],
-                          'port': {'tenant_id': 'tenant-id',
+                          'port': {'project_id': 'project-id',
                                    'id': 'id',
                                    'network_id': 'network-id'},
                           'subnets': [{'id': 'id'}]})
@@ -189,7 +189,7 @@ class TestUserDefinedNoLsp(testlib_api.SqlTestCase):
             states=(self.router, self.router),
             resource_id=self.router['id'],
             metadata={'subnet_ids': ['subnet-id'],
-                      'port': {'tenant_id': 'tenant-id',
+                      'port': {'project_id': 'project-id',
                                'id': 'id',
                                'network_id': 'network-id'},
                       'subnets': [{'id': 'id'}]})

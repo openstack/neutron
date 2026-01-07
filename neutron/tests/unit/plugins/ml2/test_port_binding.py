@@ -371,7 +371,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
     def _create_port_binding(self, fmt, port_id, host, project_id=None,
                              **kwargs):
         project_id = project_id or self._project_id
-        data = {'binding': {'host': host, 'tenant_id': project_id}}
+        data = {'binding': {'host': host, 'project_id': project_id}}
         if kwargs:
             data['binding'].update(kwargs)
         binding_resource = 'ports/%s/bindings' % port_id

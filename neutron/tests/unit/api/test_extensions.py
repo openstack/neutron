@@ -1056,7 +1056,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
     def _ext_test_resource_create(self, attr=None):
         data = {
             "ext_test_resource": {
-                "tenant_id": self._project_id,
+                "project_id": self._project_id,
                 "name": "test",
                 extattr.EXTENDED_ATTRIBUTE: attr
             }

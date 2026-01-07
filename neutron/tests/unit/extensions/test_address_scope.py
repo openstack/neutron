@@ -212,7 +212,7 @@ class TestAddressScope(AddressScopeTestCase):
         self.assertEqual(addr_scope['address_scope']['id'],
                          res['address_scope']['id'])
 
-    def test_get_address_scope_different_tenants_not_shared(self):
+    def test_get_address_scope_different_projects_not_shared(self):
         addr_scope = self._test_create_address_scope(name='foo-address-scope')
         req = self.new_show_request('address-scopes',
                                     addr_scope['address_scope']['id'])
@@ -221,7 +221,7 @@ class TestAddressScope(AddressScopeTestCase):
         res = req.get_response(self.ext_api)
         self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
-    def test_get_address_scope_different_tenants_shared(self):
+    def test_get_address_scope_different_projects_shared(self):
         addr_scope = self._test_create_address_scope(name='foo-address-scope',
                                                      shared=True, admin=True)
         req = self.new_show_request('address-scopes',
@@ -239,7 +239,7 @@ class TestAddressScope(AddressScopeTestCase):
         res = self._list('address-scopes')
         self.assertEqual(2, len(res['address_scopes']))
 
-    def test_list_address_scopes_different_tenants_shared(self):
+    def test_list_address_scopes_different_projects_shared(self):
         self._test_create_address_scope(name='foo-address-scope', shared=True,
                                         admin=True)
         admin_res = self._list('address-scopes')
@@ -248,7 +248,7 @@ class TestAddressScope(AddressScopeTestCase):
         self.assertEqual(1, len(admin_res['address_scopes']))
         self.assertEqual(1, len(mortal_res['address_scopes']))
 
-    def test_list_address_scopes_different_tenants_not_shared(self):
+    def test_list_address_scopes_different_projects_not_shared(self):
         self._test_create_address_scope(constants.IP_VERSION_6,
                                         name='foo-address-scope')
         admin_res = self._list('address-scopes')
@@ -382,7 +382,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                         'subnetpool_id': subnetpool_id,
                         'prefixlen': 24,
                         'ip_version': constants.IP_VERSION_4,
-                        'tenant_id': network['network']['project_id']}}
+                        'project_id': network['network']['project_id']}}
                 req = self.new_create_request('subnets', data)
                 subnet = self.deserialize(self.fmt,
                                           req.get_response(self.api))
@@ -456,7 +456,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                     'network_id': network['network']['id'],
                     'subnetpool_id': v4_subnetpool_id,
                     'ip_version': constants.IP_VERSION_4,
-                    'tenant_id': network['network']['project_id']}}
+                    'project_id': network['network']['project_id']}}
             req = self.new_create_request('subnets', data)
             self.deserialize(self.fmt, req.get_response(self.api))
             data['subnet']['subnetpool_id'] = v6_subnetpool_id

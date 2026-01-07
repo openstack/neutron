@@ -70,7 +70,7 @@ class SubnetDNSPublishFixedIPExtensionTestCase(
         data = {'subnet': {
                     'network_id': network_id,
                     'ip_version': str(ip_version),
-                    'tenant_id': project_id,
+                    'project_id': project_id,
                     'cidr': cidr}}
         data['subnet'].update(kwargs)
         subnet_req = self.new_create_request('subnets', data)

@@ -191,7 +191,7 @@ class _TestMetadataProxyHandlerCacheMixin:
         remote_address = 'remote-address'
         expected = ('device1', 'project1')
         ports = [
-            {'device_id': 'device1', 'tenant_id': 'project1',
+            {'device_id': 'device1', 'project_id': 'project1',
              'network_id': 'network1'}
         ]
         networks = (network_id,)
@@ -216,7 +216,7 @@ class _TestMetadataProxyHandlerCacheMixin:
         remote_address = 'remote-address'
         expected = ('device1', 'project1')
         ports = [
-            {'device_id': 'device1', 'tenant_id': 'project1',
+            {'device_id': 'device1', 'project_id': 'project1',
              'network_id': 'network1'}
         ]
         networks = ('network1', 'network2')
@@ -297,7 +297,7 @@ class _TestMetadataProxyHandlerCacheMixin:
         networks = ('net1', 'net2')
         ports = [
             [{'network_id': 'net1'}, {'network_id': 'net2'}],
-            [{'device_id': 'device_id', 'tenant_id': 'project_id',
+            [{'device_id': 'device_id', 'project_id': 'project_id',
               'network_id': 'net1'}]
         ]
 
@@ -336,7 +336,7 @@ class _TestMetadataProxyHandlerCacheMixin:
 
         ports = [
             [{'device_id': 'device_id',
-              'tenant_id': 'project_id',
+              'project_id': 'project_id',
               'network_id': 'the_id'}]
         ]
 
@@ -376,7 +376,7 @@ class _TestMetadataProxyHandlerCacheMixin:
         # The call should never do a port lookup, but mock it to verify
         ports = [
             [{'device_id': 'device_id',
-              'tenant_id': 'project_id',
+              'project_id': 'project_id',
               'network_id': network_id}]
         ]
 
