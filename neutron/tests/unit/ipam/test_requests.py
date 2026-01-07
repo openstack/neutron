@@ -42,7 +42,7 @@ class TestIpamSubnetRequests(IpamSubnetRequestTestCase):
     def test_subnet_request(self):
         pool = ipam_req.SubnetRequest(self.project_id,
                                       self.subnet_id)
-        self.assertEqual(self.project_id, pool.tenant_id)
+        self.assertEqual(self.project_id, pool.project_id)
         self.assertEqual(self.subnet_id, pool.subnet_id)
         self.assertIsNone(pool.gateway_ip)
         self.assertIsNone(pool.allocation_pools)
@@ -395,7 +395,7 @@ class TestSubnetRequestFactory(IpamSubnetRequestTestCase):
                                                             subnetpool)
         self.assertIsInstance(request,
                               ipam_req.SpecificSubnetRequest)
-        self.assertEqual(self.project_id, request.tenant_id)
+        self.assertEqual(self.project_id, request.project_id)
         self.assertEqual(self.subnet_id, request.subnet_id)
         self.assertIsNone(request.gateway_ip)
         self.assertIsNone(request.allocation_pools)

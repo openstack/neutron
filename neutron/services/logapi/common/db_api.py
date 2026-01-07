@@ -39,8 +39,8 @@ def _get_ports_attached_to_sg(context, sg_id):
     return [port for (port,) in ports]
 
 
-def _get_ports_filter_in_tenant(context, tenant_id):
-    """Return a list of ports filter under a tenant"""
+def _get_ports_filter_in_project(context, project_id):
+    """Return a list of ports filter under a project"""
 
     try:
         sg_id = sg_db.SecurityGroupPortBinding.security_group_id
@@ -49,7 +49,7 @@ def _get_ports_filter_in_tenant(context, tenant_id):
                 sg_db.SecurityGroupPortBinding.port_id).join(
                     sg_db.SecurityGroup,
                     sg_db.SecurityGroup.id == sg_id).filter(
-                        sg_db.SecurityGroup.project_id == tenant_id).all()
+                        sg_db.SecurityGroup.project_id == project_id).all()
             return list({port for (port,) in ports})
     except orm_exc.NoResultFound:
         return []
@@ -79,7 +79,7 @@ def _get_ports_being_logged(context, sg_log):
         port_ids = _get_ports_attached_to_sg(context, resource_id)
     # both 'resource_id' and 'target_id' aren't specified in a log_resource
     else:
-        port_ids = _get_ports_filter_in_tenant(context, sg_log['project_id'])
+        port_ids = _get_ports_filter_in_project(context, sg_log['project_id'])
 
     # list of validated ports's being logged
     validated_port_ids = []

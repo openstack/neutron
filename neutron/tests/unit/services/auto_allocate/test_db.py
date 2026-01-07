@@ -308,7 +308,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
                 n_exc.BadRequest(resource='router', msg='doh!'))
             self.assertRaises(exceptions.AutoAllocationFailure,
                               self.mixin._provision_external_connectivity,
-                              self.ctx, 'ext_net_foo', subnets, 'tenant_foo')
+                              self.ctx, 'ext_net_foo', subnets, 'project_foo')
             # expect no subnets to be unplugged
             mock_cleanup.assert_called_once_with(
                 self.ctx, network_id='network_foo',
@@ -324,7 +324,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
                 n_exc.BadRequest(resource='router', msg='doh!'))
             self.assertRaises(exceptions.AutoAllocationFailure,
                               self.mixin._provision_external_connectivity,
-                              self.ctx, 'ext_net_foo', subnets, 'tenant_foo')
+                              self.ctx, 'ext_net_foo', subnets, 'project_foo')
             # expected router_id to be None
             mock_cleanup.assert_called_once_with(
                 self.ctx, network_id='network_foo',
@@ -341,7 +341,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
                           self.mixin.get_auto_allocated_topology,
                           self.ctx, mock.ANY, fields=['foo'])
 
-    def test__provision_tenant_private_network_handles_subnet_errors(self):
+    def test__provision_project_private_network_handles_subnet_errors(self):
         network_id = uuidutils.generate_uuid()
         self.mixin._core_plugin.create_network.return_value = (
             {'id': network_id})
@@ -353,7 +353,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
                 [{'ip_version': constants.IP_VERSION_4,
                   'id': uuidutils.generate_uuid()}])
             self.assertRaises(exceptions.AutoAllocationFailure,
-                              self.mixin._provision_tenant_private_network,
+                              self.mixin._provision_project_private_network,
                               self.ctx, 'foo_project')
             g.assert_called_once_with(self.ctx, network_id)
 
@@ -376,21 +376,21 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         provisioning_exception = exceptions.UnknownProvisioningError(
             db_exc.DBError)
         self._test__build_topology(
-            '_provision_tenant_private_network',
+            '_provision_project_private_network',
             provisioning_exception)
 
     def test__build_topology_provisioning_error_network_only(self):
         provisioning_exception = exceptions.UnknownProvisioningError(
             Exception, network_id='foo')
         self._test__build_topology(
-            '_provision_tenant_private_network',
+            '_provision_project_private_network',
             provisioning_exception)
 
     def test__build_topology_error_only_network_again(self):
         provisioning_exception = exceptions.UnknownProvisioningError(
             AttributeError, network_id='foo')
         with mock.patch.object(self.mixin,
-                               '_provision_tenant_private_network') as f:
+                               '_provision_project_private_network') as f:
             f.return_value = [{'network_id': 'foo'}]
             self._test__build_topology(
                 '_provision_external_connectivity',
@@ -400,7 +400,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
         provisioning_exception = exceptions.UnknownProvisioningError(
             KeyError, network_id='foo_n', router_id='foo_r')
         with mock.patch.object(self.mixin,
-                               '_provision_tenant_private_network') as f:
+                               '_provision_project_private_network') as f:
             f.return_value = [{'network_id': 'foo_n'}]
             self._test__build_topology(
                 '_provision_external_connectivity',
@@ -411,7 +411,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             db_exc.DBConnectionError,
             network_id='foo_n', router_id='foo_r', subnets=[{'id': 'foo_s'}])
         with mock.patch.object(self.mixin,
-                               '_provision_tenant_private_network') as f,\
+                               '_provision_project_private_network') as f,\
                 mock.patch.object(self.mixin,
                                   '_provision_external_connectivity') as g:
             f.return_value = [{'network_id': 'foo_n'}]
@@ -442,11 +442,11 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             self.assertIsNone(e.router_id)
             self.assertIsNone(e.subnets)
 
-    def test__provision_tenant_private_network_with_provisioning_error(self):
+    def test__provision_project_private_network_with_provisioning_error(self):
         self.mixin._core_plugin.create_network.side_effect = Exception
         with testtools.ExpectedException(
                 exceptions.UnknownProvisioningError) as e:
-            self.mixin._provision_tenant_private_network(
+            self.mixin._provision_project_private_network(
                 self.ctx, 'foo_project')
             self.assertIsNone(e.network_id)
 

@@ -145,7 +145,7 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
             # it is not visible via API.
             return [{'state': v,
                      'name': k[0], 'resource': k[1],
-                     'tenant_id': context.tenant_id}
+                     'tenant_id': context.project_id}
                     for k, v in self._list_availability_zones(
                         context, filters).items()
                     if not filter_states or v in filter_states]
@@ -153,7 +153,7 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
         # visible via API.
         return [{'state': v,
                  'name': k[0], 'resource': k[1],
-                 'tenant_id': context.tenant_id}
+                 'tenant_id': context.project_id}
                 for k, v in self._list_availability_zones(
                     context, filters).items()]
 

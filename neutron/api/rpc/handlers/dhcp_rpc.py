@@ -238,11 +238,8 @@ class DhcpRpcCallback:
         # NOTE(kevinbenton): we sort these because the agent builds tags
         # based on position in the list and has to restart the process if
         # the order changes.
-        # TODO(ralonsoh): in Z+, remove "tenant_id" parameter. DHCP agents
-        # should read only "project_id".
         ret = {'id': network.id,
                'project_id': network.project_id,
-               'tenant_id': network.project_id,
                'admin_state_up': network.admin_state_up,
                'subnets': sorted(subnets, key=operator.itemgetter('id')),
                'non_local_subnets': sorted(nonlocal_subnets,

@@ -195,13 +195,13 @@ def remove_reservation(context, reservation_id, set_dirty=False):
     if not reservation:
         # TODO(salv-orlando): Raise here and then handle the exception?
         return
-    tenant_id = reservation.project_id
+    project_id = reservation.project_id
     resources = [delta.resource for delta in reservation.resource_deltas]
     reservation.delete()
     if set_dirty:
         # quota_usage for all resource involved in this reservation must
         # be marked as dirty
-        set_resources_quota_usage_dirty(context, resources, tenant_id)
+        set_resources_quota_usage_dirty(context, resources, project_id)
     return 1
 
 

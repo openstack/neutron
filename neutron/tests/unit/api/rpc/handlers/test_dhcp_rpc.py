@@ -208,7 +208,6 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                 non_local_subnets = []
             ret = {'id': network.id,
                    'project_id': network.project_id,
-                   'tenant_id': network.project_id,
                    'admin_state_up': network.admin_state_up,
                    'ports': ports,
                    'subnets': sorted(subnets, key=operator.itemgetter('id')),

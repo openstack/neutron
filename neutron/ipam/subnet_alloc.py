@@ -92,13 +92,13 @@ class SubnetAllocator(driver.Pool):
     def _num_quota_units_in_prefixlen(self, prefixlen, quota_unit):
         return math.pow(2, quota_unit - prefixlen)
 
-    def _allocations_used_by_tenant(self, quota_unit):
+    def _allocations_used_by_project(self, quota_unit):
         subnetpool_id = self._subnetpool['id']
-        tenant_id = self._subnetpool['tenant_id']
+        project_id = self._subnetpool['project_id']
         with db_api.CONTEXT_READER.using(self._context):
             qry = self._context.session.query(models_v2.Subnet.cidr)
             allocations = qry.filter_by(subnetpool_id=subnetpool_id,
-                                        tenant_id=tenant_id)
+                                        project_id=project_id)
             value = 0
             for allocation in allocations:
                 prefixlen = netaddr.IPNetwork(allocation.cidr).prefixlen
@@ -106,13 +106,13 @@ class SubnetAllocator(driver.Pool):
                                                             quota_unit)
             return value
 
-    def _check_subnetpool_tenant_quota(self, tenant_id, prefixlen):
+    def _check_subnetpool_project_quota(self, project_id, prefixlen):
         quota_unit = self._sp_helper.ip_version_subnetpool_quota_unit(
             self._subnetpool['ip_version'])
         quota = self._subnetpool.get('default_quota')
 
         if quota:
-            used = self._allocations_used_by_tenant(quota_unit)
+            used = self._allocations_used_by_project(quota_unit)
             requested_units = self._num_quota_units_in_prefixlen(prefixlen,
                                                                  quota_unit)
 
@@ -122,7 +122,7 @@ class SubnetAllocator(driver.Pool):
     def _allocate_any_subnet(self, request):
         with db_api.CONTEXT_WRITER.using(self._context):
             self._lock_subnetpool()
-            self._check_subnetpool_tenant_quota(request.tenant_id,
+            self._check_subnetpool_project_quota(request.project_id,
                                                 request.prefixlen)
             prefix_pool = self._get_available_prefix_list()
             for prefix in prefix_pool:
@@ -134,7 +134,7 @@ class SubnetAllocator(driver.Pool):
                     pools = ipam_utils.generate_pools(subnet.cidr,
                                                       gateway_ip)
 
-                    return IpamSubnet(request.tenant_id,
+                    return IpamSubnet(request.project_id,
                                       request.subnet_id,
                                       subnet.cidr,
                                       gateway_ip=gateway_ip,
@@ -148,13 +148,13 @@ class SubnetAllocator(driver.Pool):
     def _allocate_specific_subnet(self, request):
         with db_api.CONTEXT_WRITER.using(self._context):
             self._lock_subnetpool()
-            self._check_subnetpool_tenant_quota(request.tenant_id,
+            self._check_subnetpool_project_quota(request.project_id,
                                                 request.prefixlen)
             cidr = request.subnet_cidr
             available = self._get_available_prefix_list()
             matched = netaddr.all_matching_cidrs(cidr, available)
             if len(matched) == 1 and matched[0].prefixlen <= cidr.prefixlen:
-                return IpamSubnet(request.tenant_id,
+                return IpamSubnet(request.project_id,
                                   request.subnet_id,
                                   cidr,
                                   gateway_ip=request.gateway_ip,
@@ -200,7 +200,7 @@ class SubnetAllocator(driver.Pool):
 class IpamSubnet(driver.Subnet):
 
     def __init__(self,
-                 tenant_id,
+                 project_id,
                  subnet_id,
                  cidr,
                  gateway_ip=None,
@@ -208,7 +208,7 @@ class IpamSubnet(driver.Subnet):
                  set_gateway_ip=True,
                  ):
         self._req = ipam_req.SpecificSubnetRequest(
-            tenant_id,
+            project_id,
             subnet_id,
             cidr,
             gateway_ip=gateway_ip,

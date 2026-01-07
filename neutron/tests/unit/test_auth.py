@@ -35,27 +35,27 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.request.headers['X_AUTH_TOKEN'] = 'testauthtoken'
 
     def test_no_user_id(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         response = self.request.get_response(self.middleware)
         self.assertEqual('401 Unauthorized', response.status)
 
     def test_with_user_id(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'testuserid'
         response = self.request.get_response(self.middleware)
         self.assertEqual('200 OK', response.status)
         self.assertEqual('testuserid', self.context.user_id)
 
-    def test_with_tenant_id(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+    def test_with_project_id(self):
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'test_user_id'
         response = self.request.get_response(self.middleware)
         self.assertEqual('200 OK', response.status)
-        self.assertEqual('testtenantid', self.context.tenant_id)
-        self.assertEqual('testtenantid', self.context.project_id)
+        self.assertEqual('testprojectid', self.context.tenant_id)
+        self.assertEqual('testprojectid', self.context.project_id)
 
     def test_roles_no_admin(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'testuserid'
         self.request.headers['X_ROLES'] = 'role1, role2 , role3,role4,role5'
         response = self.request.get_response(self.middleware)
@@ -65,7 +65,7 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.assertFalse(self.context.is_admin)
 
     def test_roles_with_admin(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'testuserid'
         self.request.headers['X_ROLES'] = ('role1, role2 , role3,role4,role5,'
                                            'AdMiN')
@@ -75,35 +75,36 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
                           'AdMiN'], self.context.roles)
         self.assertTrue(self.context.is_admin)
 
-    def test_with_user_tenant_name(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+    def test_with_user_project_name(self):
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'testuserid'
-        self.request.headers['X_PROJECT_NAME'] = 'testtenantname'
+        self.request.headers['X_PROJECT_NAME'] = 'testprojectname'
         self.request.headers['X_USER_NAME'] = 'testusername'
         response = self.request.get_response(self.middleware)
         self.assertEqual('200 OK', response.status)
         self.assertEqual('testuserid', self.context.user_id)
         self.assertEqual('testusername', self.context.user_name)
-        self.assertEqual('testtenantid', self.context.tenant_id)
-        self.assertEqual('testtenantname', self.context.project_name)
+        self.assertEqual('testprojectid', self.context.tenant_id)
+        self.assertEqual('testprojectid', self.context.project_id)
+        self.assertEqual('testprojectname', self.context.project_name)
 
     def test_request_id_extracted_from_env(self):
         req_id = 'dummy-request-id'
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'testuserid'
         self.request.environ[request_id.ENV_REQUEST_ID] = req_id
         self.request.get_response(self.middleware)
         self.assertEqual(req_id, self.context.request_id)
 
     def test_with_auth_token(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'testuserid'
         response = self.request.get_response(self.middleware)
         self.assertEqual('200 OK', response.status)
         self.assertEqual('testauthtoken', self.context.auth_token)
 
     def test_without_auth_token(self):
-        self.request.headers['X_PROJECT_ID'] = 'testtenantid'
+        self.request.headers['X_PROJECT_ID'] = 'testprojectid'
         self.request.headers['X_USER_ID'] = 'testuserid'
         del self.request.headers['X_AUTH_TOKEN']
         self.request.get_response(self.middleware)

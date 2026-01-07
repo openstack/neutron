@@ -3797,7 +3797,7 @@ class TestML2PluggableIPAM(test_ipam.UseIpamMixin, TestMl2SubnetsV2):
             request.subnet_cidr = netaddr.IPNetwork(cidr)
             request.allocation_pools = []
             request.gateway_ip = netaddr.IPAddress(gateway_ip)
-            request.tenant_id = self._project_id
+            request.project_id = self._project_id
 
             ipam_subnet = mock.Mock()
             ipam_subnet.get_details.return_value = request
