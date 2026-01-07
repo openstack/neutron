@@ -26,7 +26,7 @@ sync_entrypoints = {
 }
 migration_entrypoints = {
     entrypoint.name: entrypoint
-    for entrypoint in entry_points(group=SYNC_ENTRYPOINTS)
+    for entrypoint in entry_points(group=MIGRATION_ENTRYPOINTS)
 }
 
 INSTALLED_SYNC_PLUGINS = list(sync_entrypoints)
