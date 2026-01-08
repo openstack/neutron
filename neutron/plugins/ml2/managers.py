@@ -190,7 +190,11 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             driver.obj.initialize()
 
     def initialize_network_segment_range_support(self, start_time):
-        if wsgi_utils.get_api_worker_id() != wsgi_utils.FIRST_WORKER_ID:
+        w_id = wsgi_utils.get_api_worker_id()
+        # NOTE(ralonsoh): ``get_api_worker_id`` returns None in case of using
+        # the eventlet API server (2025.1 is the last version that supports
+        # it). In that case, the initialization must be executed.
+        if w_id != wsgi_utils.FIRST_WORKER_ID and w_id is not None:
             return
 
         for network_type, driver in self.drivers.items():
