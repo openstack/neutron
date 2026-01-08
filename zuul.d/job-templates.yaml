@@ -76,17 +76,6 @@
         - neutron-ovn-tempest-ovs-release
         - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-loki
-        # Jobs added to the periodic queue by templates defined in
-        # https://opendev.org/openstack/openstack-zuul-jobs/src/branch/master/zuul.d/project-templates.yaml
-        - openstack-tox-py312-with-neutron-lib-master:
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
-        - openstack-tox-py312-with-oslo-master:
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
-        - openstack-tox-py312-with-ovsdbapp-master:
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
 
 - project-template:
     name: neutron-periodic-jobs
@@ -115,18 +104,12 @@
         - neutron-ovs-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
-        - devstack-tobiko-neutron:
-            voting: true
+        - devstack-tobiko-neutron
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
         - neutron-tempest-plugin-openvswitch-iptables_hybrid
         - devstack-enforce-scope
-        - openstack-tox-py312-with-oslo-master:
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
-        - openstack-tox-py312-with-sqlalchemy-master:
-            timeout: 3600
-            irrelevant-files: *irrelevant-files
+        - openstack-tox-py313-with-sqlalchemy-master
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master

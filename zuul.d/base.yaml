@@ -159,9 +159,22 @@
       - openstack/ovsdbapp
 
 - job:
+    # TODO(haleyb): remove once https://review.opendev.org/c/openstack/neutron-lib/+/972735 merges as only consumer
     name: openstack-tox-py312-with-sqlalchemy-master
     branches: ^master$
     parent: openstack-tox-py312
+    required-projects:
+      - name: github.com/sqlalchemy/sqlalchemy
+        override-checkout: main
+      - openstack/oslo.db
+      - openstack/neutron-lib
+      - name: github.com/sqlalchemy/alembic
+        override-checkout: main
+
+- job:
+    name: openstack-tox-py313-with-sqlalchemy-master
+    branches: ^master$
+    parent: openstack-tox-py313
     required-projects:
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
