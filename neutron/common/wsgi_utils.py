@@ -55,5 +55,5 @@ def get_api_worker_id() -> int | None:
         # pylint: disable=import-outside-toplevel
         import uwsgi
         return uwsgi.worker_id()
-    except ImportError:
+    except (ImportError, ModuleNotFoundError):
         return None
