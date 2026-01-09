@@ -220,7 +220,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         network_id = network['network']['id']
         port = self.core_plugin.create_port(
             self.context,
-            {'port': {'tenant_id': '',
+            {'port': {'project_id': '',
                       'network_id': network_id,
                       'mac_address': constants.ATTR_NOT_SPECIFIED,
                       'fixed_ips': constants.ATTR_NOT_SPECIFIED,

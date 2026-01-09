@@ -367,8 +367,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     def _create_router_gw_port(self, context, router, network_id, ext_ips,
                                update_gw_port=True):
-        # Port has no 'tenant-id', as it is hidden from user
-        port_data = {'tenant_id': '',  # intentionally not set
+        # Port has no 'project-id', as it is hidden from user
+        port_data = {'project_id': '',  # intentionally not set
                      'network_id': network_id,
                      'fixed_ips': ext_ips or constants.ATTR_NOT_SPECIFIED,
                      'device_id': router['id'],
@@ -946,7 +946,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         [subnet],
                         False)
 
-        port_data = {'tenant_id': router.tenant_id,
+        port_data = {'project_id': router.tenant_id,
                      'network_id': subnet['network_id'],
                      'fixed_ips': [fixed_ip],
                      'admin_state_up': True,
@@ -958,10 +958,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @staticmethod
     def _make_router_interface_info(
-            router_id, tenant_id, port_id, network_id, subnet_id, subnet_ids):
+            router_id, project_id, port_id, network_id, subnet_id, subnet_ids):
         return {
             'id': router_id,
-            'tenant_id': tenant_id,
+            'project_id': project_id,
             'port_id': port_id,
             'network_id': network_id,
             'subnet_id': subnet_id,  # deprecated by IPv6 multi-prefix
@@ -1033,7 +1033,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                              resource_id=router_id))
 
         return self._make_router_interface_info(
-            router.id, port['tenant_id'], port['id'], port['network_id'],
+            router.id, port['project_id'], port['id'], port['network_id'],
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
 
     @db_api.retry_if_session_inactive()
@@ -1232,7 +1232,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                              resource_id=router_id,
                              states=(router,)))
 
-        return self._make_router_interface_info(router_id, port['tenant_id'],
+        return self._make_router_interface_info(router_id, port['project_id'],
                                                 port['id'], port['network_id'],
                                                 subnets[0]['id'], subnet_ids)
 
@@ -1335,18 +1335,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return [ip for ip in port['fixed_ips']
                 if netaddr.IPAddress(ip['ip_address']).version == 4]
 
-    def _internal_fip_assoc_data(self, context, fip, tenant_id):
+    def _internal_fip_assoc_data(self, context, fip, project_id):
         """Retrieve internal port data for floating IP.
 
         Retrieve information concerning the internal port where
         the floating IP should be associated to.
         """
         internal_port = self._core_plugin.get_port(context, fip['port_id'])
-        if internal_port['tenant_id'] != tenant_id and not context.is_admin:
+        if internal_port['project_id'] != project_id and not context.is_admin:
             port_id = fip['port_id']
             msg = (_('Cannot process floating IP association with '
                      'Port %s, since that port is owned by a '
-                     'different tenant') % port_id)
+                     'different project') % port_id)
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
         internal_subnet_id = None
@@ -1499,11 +1499,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _("Network %s does not contain any IPv4 subnet") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
-        # This external port is never exposed to the tenant.
+        # This external port is never exposed to the project.
         # it is used purely for internal system and admin use when
         # managing floating IPs.
 
-        port = {'tenant_id': '',  # tenant intentionally not set
+        port = {'project_id': '',  # project intentionally not set
                 'network_id': f_net_id,
                 'admin_state_up': True,
                 'device_id': 'PENDING',

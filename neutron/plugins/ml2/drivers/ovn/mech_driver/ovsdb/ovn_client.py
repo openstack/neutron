@@ -1304,7 +1304,7 @@ class OVNClient:
                 net = self._plugin.get_network(context, subnet['network_id'])
                 # If it's a gateway port and connected to a provider
                 # network set send_periodic to False, that way we do not
-                # leak the RAs generated for the tenant networks via the
+                # leak the RAs generated for the project networks via the
                 # provider network
                 ipv6_ra_configs['send_periodic'] = 'true'
                 if is_gw_port and utils.is_external_network(net):
@@ -2867,7 +2867,7 @@ class OVNClient:
         fixed_ips = [{'subnet_id': s['id']}
                      for s in subnets if s['enable_dhcp']]
         port = {'port': {'network_id': net_id,
-                         'tenant_id': network['project_id'],
+                         'project_id': network['project_id'],
                          'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
                          'device_id': ovn_const.OVN_METADATA_PREFIX + net_id,
                          'fixed_ips': fixed_ips,

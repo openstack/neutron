@@ -106,7 +106,7 @@ class TestOvsdbPersistUuid(base.TestOVNFunctionalBase):
 
     def _create_port(self, name, net_id):
         data = {'port': {'name': name,
-                         'tenant_id': self._project_id,
+                         'project_id': self._project_id,
                          'network_id': net_id}}
 
         req = self.new_create_request('ports', data, self.fmt)
@@ -179,7 +179,7 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         if port_id is None:
             port_data['port'].update({
                 'network_id': self.n1['network']['id'],
-                'tenant_id': self._project_id})
+                'project_id': self._project_id})
 
             port_req = self.new_create_request('ports', port_data, self.fmt,
                                                as_service=True)
@@ -452,7 +452,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
     def _create_port(self, fixed_ip=None, allowed_address=None):
         port_data = {
             'port': {'network_id': self.n1['network']['id'],
-                     'tenant_id': self._project_id}}
+                     'project_id': self._project_id}}
         if fixed_ip:
             port_data['port']['fixed_ips'] = [{'ip_address': fixed_ip}]
 
@@ -723,7 +723,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         net_id = self.n1['network']['id']
         port_data = {
             'port': {'network_id': net_id,
-                     'tenant_id': self._project_id,
+                     'project_id': self._project_id,
                      portbindings.VNIC_TYPE: vnic_type}}
 
         port_req = self.new_create_request('ports', port_data, self.fmt)
@@ -755,7 +755,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         net_id = self.n1['network']['id']
         port_data = {
             'port': {'network_id': net_id,
-                     'tenant_id': self._project_id,
+                     'project_id': self._project_id,
                      portbindings.VNIC_TYPE: 'normal'}}
 
         # Create port
@@ -842,7 +842,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         net_id = self.n1['network']['id']
         port_data = {
             'port': {'network_id': net_id,
-                     'tenant_id': self._project_id}}
+                     'project_id': self._project_id}}
 
         port_req = self.new_create_request('ports', port_data, self.fmt)
         port_res = port_req.get_response(self.api)
@@ -908,7 +908,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         net_id = self.n1['network']['id']
         port_data = {
             'port': {'network_id': net_id,
-                     'tenant_id': self._project_id,
+                     'project_id': self._project_id,
                      portbindings.VNIC_TYPE: vnic_type}}
 
         # Create a VNIC_DIRECT[_PHYSICAL] type port without the "switchdev"
@@ -957,7 +957,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         net_id = self.n1['network']['id']
         port_data = {
             'port': {'network_id': net_id,
-                     'tenant_id': self._project_id,
+                     'project_id': self._project_id,
                      portbindings.VNIC_TYPE: 'direct'}}
 
         # Create external port
@@ -1549,7 +1549,7 @@ class TestNATRuleGatewayPort(_TestRouter):
     def _create_port(self, name, net_id, security_groups=None,
                      device_owner=None):
         data = {'port': {'name': name,
-                         'tenant_id': self._project_id,
+                         'project_id': self._project_id,
                          'network_id': net_id}}
 
         if security_groups is not None:

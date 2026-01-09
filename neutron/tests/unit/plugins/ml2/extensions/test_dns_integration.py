@@ -467,7 +467,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         port_request = {
             'port': {
                 'network_id': net['id'],
-                'tenant_id': net['project_id'],
+                'project_id': net['project_id'],
                 'name': 'mugsie',
                 'admin_state_up': True,
                 'device_id': '',

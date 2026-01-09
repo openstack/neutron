@@ -1261,6 +1261,16 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                   fixed_ips=[],
                                   **kwargs)
 
+    def test_create_port_None_project_id(self):
+        # TODO(haleyb): "tenant_id" reference should be removed in G+2.
+        with self.network() as network:
+            self._create_port(self.fmt,
+                              network['network']['id'],
+                              webob.exc.HTTPCreated.code,
+                              project_id=None,
+                              fixed_ips=[],
+                              tenant_id='project_id')
+
     def test_create_port_public_network_with_ip(self):
         with self.network(shared=True, as_admin=True) as network:
             ip_net = netaddr.IPNetwork('10.0.0.0/24')
@@ -1364,7 +1374,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
             ctx = context.Context(user_id=None, project_id=projid,
                                   is_admin=False)
             pl = directory.get_plugin()
-            count = pl.get_ports_count(ctx, filters={'tenant_id': [projid]})
+            count = pl.get_ports_count(ctx, filters={'project_id': [projid]})
             self.assertEqual(4, count)
 
     def test_create_ports_bulk_emulated_plugin_failure(self):
@@ -7164,7 +7174,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_port(self, ctx, network_id):
         with db_api.CONTEXT_WRITER.using(ctx):
             port = models_v2.Port(network_id=network_id, mac_address='1',
-                                  tenant_id='dbcheck',
+                                  project_id='dbcheck',
                                   admin_state_up=True, status="COOL",
                                   device_id="devid", device_owner="me")
             ctx.session.add(port)

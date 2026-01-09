@@ -1145,7 +1145,7 @@ class SecurityGroupDbMixin(
         _state = (payload.states[0] if event == events.BEFORE_UPDATE else
                   payload.latest_state)
         # TODO(ralonsoh): "tenant_id" reference should be removed.
-        project_id = _state.get('project_id') or _state['tenant_id']
+        project_id = _state.get('project_id') or _state.get('tenant_id')
         if project_id:
             self._ensure_default_security_group(payload.context, project_id)
 
@@ -1177,9 +1177,9 @@ class SecurityGroupDbMixin(
             return self._get_default_sg_id(context, tenant_id)
 
     def _get_security_groups_on_port(self, context, port):
-        """Check that all security groups on port belong to tenant.
+        """Check that all security groups on port belong to project.
 
-        :returns: all security groups on port belonging to tenant)
+        :returns: all security groups on port belonging to project)
 
         """
         port = port['port']
@@ -1189,16 +1189,16 @@ class SecurityGroupDbMixin(
             return
 
         port_sg = port.get(ext_sg.SECURITYGROUPS, [])
-        tenant_id = port.get('tenant_id')
+        project_id = port.get('project_id')
 
         sg_objs = sg_obj.SecurityGroup.get_objects(context, id=port_sg)
 
         valid_groups = {
             g.id for g in sg_objs
-            if (context.is_admin or not tenant_id or
-                g.tenant_id == tenant_id or
+            if (context.is_admin or not project_id or
+                g.tenant_id == project_id or
                 sg_obj.SecurityGroup.is_shared_with_project(
-                    context, g.id, tenant_id))
+                    context, g.id, project_id))
         }
 
         requested_groups = set(port_sg)
@@ -1215,8 +1215,7 @@ class SecurityGroupDbMixin(
             return
         port_sg = port.get(ext_sg.SECURITYGROUPS)
         if port_sg is None or not validators.is_attr_set(port_sg):
-            # TODO(ralonsoh): "tenant_id" reference should be removed.
-            port_project = port.get('project_id') or port.get('tenant_id')
+            port_project = port.get('project_id')
             default_sg = self._ensure_default_security_group(context,
                                                              port_project)
             if default_sg:

@@ -283,7 +283,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                         'by concurrent operation', router_id)
                     raise l3_exc.RouterNotFound(router_id=router_id)
 
-    def add_ha_port(self, context, router_id, network_id, tenant_id):
+    def add_ha_port(self, context, router_id, network_id, project_id):
         # NOTE(kevinbenton): we have to block any ongoing transactions because
         # our exception handling will try to delete the port using the normal
         # core plugin API. If this function is called inside of a transaction
@@ -293,12 +293,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         if db_api.is_session_active(context.session):
             raise RuntimeError(_('add_ha_port cannot be called inside of a '
                                  'transaction.'))
-        args = {'tenant_id': '',
+        args = {'project_id': '',
                 'network_id': network_id,
                 'admin_state_up': True,
                 'device_id': router_id,
                 'device_owner': constants.DEVICE_OWNER_ROUTER_HA_INTF,
-                'name': constants.HA_PORT_NAME % tenant_id}
+                'name': constants.HA_PORT_NAME % project_id}
         creation = functools.partial(p_utils.create_port, self._core_plugin,
                                      context, {'port': args})
         content = functools.partial(self._create_ha_port_binding, context,

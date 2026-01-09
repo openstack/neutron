@@ -81,7 +81,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                      **kwargs):
         project_id = project_id or self._project_id
         data = {'port': {'network_id': net_id,
-                         'tenant_id': project_id}}
+                         'project_id': project_id}}
 
         for arg in (('admin_state_up', 'device_id',
                     'mac_address', 'name', 'fixed_ips',

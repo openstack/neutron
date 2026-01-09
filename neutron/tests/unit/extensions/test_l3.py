@@ -1119,11 +1119,11 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 payload = n['payload']['router_interface']
                 self.assertIn('id', payload)
                 self.assertEqual(payload['id'], router['router']['id'])
-                self.assertIn('tenant_id', payload)
+                self.assertIn('project_id', payload)
                 rtid = router['router']['project_id']
                 # tolerate subnet project deliberately set to '' in the
                 # nsx metadata access case
-                self.assertIn(payload['tenant_id'], [rtid, ''], msg)
+                self.assertIn(payload['project_id'], [rtid, ''], msg)
 
     def test_router_add_interface_bad_values(self):
         with self.router() as r:
