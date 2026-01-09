@@ -54,11 +54,18 @@ class TestDhcp(functional_base.BaseSudoTestCase):
             'fixed_ips': [tests_base.AttributeDict(
                 {'subnet_id': 'subnet_foo_id4', 'ip_address': '10.0.0.4'})]
         })
+        wrong_port = tests_base.AttributeDict({
+            'id': 'foo_id5',
+            'binding:host_id': 'wrong',
+            'mac_address': '10:22:33:44:55:71',
+            'fixed_ips': [tests_base.AttributeDict(
+                {'subnet_id': 'subnet_foo_id4', 'ip_address': '10.0.0.7'})]
+        })
         network = {
             'id': 'foo_id',
             'project_id': 'foo_project',
             'namespace': 'qdhcp-foo_id',
-            'ports': [dhcp_port4],
+            'ports': [dhcp_port4, wrong_port],
             'subnets': [tests_base.AttributeDict({'id': 'subnet_foo_id',
                                                   'enable_dhcp': True,
                                                   'ipv6_address_mode': None,
@@ -91,11 +98,16 @@ class TestDhcp(functional_base.BaseSudoTestCase):
                             "tapfoo_id4",
                             "10:22:33:44:55:70",
                             namespace="qdhcp-foo_id")
+        dev_mgr.driver.plug("foo_id",
+                            "foo_id5",
+                            "tapfoo_id5",
+                            "10:22:33:44:55:71",
+                            namespace="qdhcp-foo_id")
         ipw = ip_lib.IPWrapper(namespace="qdhcp-foo_id")
         devices = ipw.get_devices()
         self.addCleanup(ipw.netns.delete, 'qdhcp-foo_id')
         self.assertEqual(sorted(["tapfoo_id2", "tapfoo_id3",
-                                 "tapfoo_id4"]),
+                                 "tapfoo_id4", "tapfoo_id5"]),
                          sorted(map(str, devices)))
         # setting up dhcp for the network
         dev_mgr.setup(tests_base.AttributeDict(network))

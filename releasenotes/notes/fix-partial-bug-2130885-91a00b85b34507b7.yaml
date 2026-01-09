@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Partially fixed `bug #2130885 <https://bugs.launchpad.net/neutron/+bug/2130885>`__ where
+    a DHCP port for neutron-dhcp-agent bound on the wrong host was not cleaned up correctly.

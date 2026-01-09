@@ -26,6 +26,7 @@ import time
 
 import netaddr
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.utils import file as file_utils
@@ -1777,6 +1778,22 @@ class DeviceManager:
         db_ports = {self.get_interface_name(network, port)
                     for port in network.ports}
         hw_ports = {d.name for d in ns_ip.get_devices()}
+
+        for port in network.ports:
+            dev_name = self.driver.get_device_name(port)
+            if dev_name not in hw_ports:
+                continue
+
+            host_id = port.get(portbindings.HOST_ID)
+            if host_id and host_id != self.conf.host:
+                LOG.warning(f"Found stale port {port.id} for network "
+                            f"{network.id} bound to {host_id} that is "
+                            f"not us {self.conf.host}, deleting")
+                try:
+                    self.unplug(dev_name, network)
+                except Exception:
+                    LOG.exception("Exception during stale dhcp bound "
+                                  "device cleanup")
 
         for dev_name in hw_ports - db_ports:
             if dev_name != skip_dev_name:
