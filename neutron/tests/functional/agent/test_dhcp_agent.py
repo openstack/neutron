@@ -170,6 +170,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         return device_manager.get_interface_name(network, port)
 
     def configure_dhcp_for_network(self, network, dhcp_enabled=True):
+        self.mock_plugin_api.get_network_info.return_value = network
         self.agent.configure_dhcp_for_network(network)
         self.addCleanup(self._cleanup_network, network, dhcp_enabled)
 

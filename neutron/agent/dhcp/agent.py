@@ -455,6 +455,14 @@ class DhcpAgent(manager.Manager):
 
         if (any(s for s in network.subnets if s.enable_dhcp) and
                 self.call_driver('enable', network)):
+            # Ensure we have an up-to-date network object
+            # Without, the object may not contain the new DHCP port
+            # which in turn could have a port wrongfully marked
+            # as stale and deleted
+            new_network = self.safe_get_network_info(network.id)
+            if new_network:
+                network = new_network
+
             self.update_isolated_metadata_proxy(network)
             self.cache.put(network)
             # After enabling dhcp for network, mark all existing
