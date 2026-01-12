@@ -24,6 +24,11 @@ bgp_opts = [
     cfg.StrOpt('bgp_router_tunnel_key',
                default='42',
                help=_('Tunnel key for the main BGP router.')),
+    cfg.IntOpt('bgp_chassis_router_vrf_id',
+               default=10,
+               help=_('VRF ID for the chassis BGP router. This VRF ID is used '
+                      'to learn default routes for the egress traffic out '
+                      'from the chassis.')),
 ]
 
 
@@ -33,6 +38,10 @@ def get_main_router_name():
 
 def get_bgp_router_tunnel_key():
     return cfg.CONF.bgp.bgp_router_tunnel_key
+
+
+def get_bgp_chassis_router_vrf_id():
+    return cfg.CONF.bgp.bgp_chassis_router_vrf_id
 
 
 def register_opts(conf):

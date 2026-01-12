@@ -17,6 +17,7 @@ import uuid
 
 from oslo_log import log
 
+from neutron.services.bgp import constants
 
 LOG = log.getLogger(__name__)
 
@@ -44,9 +45,28 @@ def get_mac_address_from_lrp_name(lrp_name):
     return mac_address
 
 
+def get_chassis_bgp_bridges(chassis):
+    try:
+        bgp_bridges = chassis.external_ids[
+            constants.CHASSIS_BGP_BRIDGES_EXT_ID_KEY]
+    except KeyError:
+        LOG.warning("Chassis %s has no BGP bridges set", chassis.name)
+        return []
+
+    return [bridge for br in bgp_bridges.split(',') if (bridge := br.strip())]
+
+
 # Naming helper functions
 def get_lrp_name(from_name, to_name):
     return f'bgp-lrp-{from_name}-to-{to_name}'
+
+
+def get_lsp_name(from_name, to_name):
+    return f'bgp-lsp-{from_name}-to-{to_name}'
+
+
+def get_lsp_localnet_name(switch_name):
+    return f'bgp-lsp-{switch_name}-localnet'
 
 
 def get_hcg_name(chassis_name):
@@ -55,3 +75,7 @@ def get_hcg_name(chassis_name):
 
 def get_chassis_router_name(chassis_name):
     return f'bgp-lr-{chassis_name}'
+
+
+def get_chassis_peer_switch_name(chassis_name, network_name):
+    return f'bgp-ls-{chassis_name}-{network_name}'

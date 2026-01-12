@@ -13,12 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 import os
 import tempfile
 
 from oslo_config import cfg
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import connection
+from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import venv
 
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -31,6 +33,18 @@ idl_schema_map = {
     'OVN_Northbound': bgp_ovn.OvnNbIdl,
     'OVN_Southbound': bgp_ovn.OvnSbIdl,
 }
+
+
+def requires_ovn_version_with_bgp():
+    def outer(f):
+        @functools.wraps(f)
+        def inner(self, *args, **kwargs):
+            if not self._is_bgp_supported():
+                raise self.skipException(
+                    "Used OVN version does not have BGP support")
+            return f(self, *args, **kwargs)
+        return inner
+    return outer
 
 
 class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
@@ -61,6 +75,12 @@ class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
             'OVN_Southbound': ovsvenv.ovnsb_connection,
             'Open_vSwitch': ovsvenv.ovs_connection,
         }
+
+    def _is_bgp_supported(self):
+        # Look at the Southbound IDL to check if Advertised_Route table exists
+        helper = idlutils.get_schema_helper(
+            self._schema_map['OVN_Southbound'], 'OVN_Southbound')
+        return 'Advertised_Route' in helper.schema_json['tables']
 
     def create_idls(self):
         for schema in self.schemas:
