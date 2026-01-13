@@ -288,6 +288,12 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
                                 headers={'X-Project-Id': 'tenid'},
                                 expect_errors=True)
         self.assertEqual(404, response.status_int)
+        self.assertEqual(
+            {
+                'type': 'HTTPNotFound',
+                'message': 'The resource could not be found.',
+                'detail': ''
+            }, jsonutils.loads(response.body))
         self.assertEqual(1, self.mock_plugin.get_meh.call_count)
 
     def test_after_on_get_excludes_admin_attribute(self):

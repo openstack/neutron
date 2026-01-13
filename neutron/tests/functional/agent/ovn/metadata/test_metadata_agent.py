@@ -120,6 +120,9 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 check_error=True)
             self.assertEqual(external_ids[ovn_const.OVN_AGENT_OVN_BRIDGE],
                              self.OVN_BRIDGE)
+            self.assertEqual(
+                external_ids[ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY],
+                '0')
 
         # Metadata agent will open connections to OVS and SB databases.
         # Close connections to them when the test ends,
@@ -129,16 +132,6 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         return agt
 
     def test_metadata_agent_healthcheck(self):
-        chassis_row = self.sb_api.db_find(
-            AGENT_CHASSIS_TABLE,
-            ('name', '=', self.chassis_name)).execute(
-            check_error=True)[0]
-
-        # Assert that, prior to creating a resource the metadata agent
-        # didn't populate the external_ids from the Chassis
-        self.assertNotIn(ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY,
-                         chassis_row['external_ids'])
-
         # Let's list the agents to force the nb_cfg to be bumped on NB
         # db, which will automatically increment the nb_cfg counter on
         # NB_Global and make ovn-controller copy it over to SB_Global. Upon
