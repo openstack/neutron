@@ -37,6 +37,9 @@ class FakeAgentAPI:
     def __init__(self, ovs_idl):
         self.ovs_idl = ovs_idl
 
+    def set_chassis_bgp_bridges(self, bridge_names):
+        pass
+
 
 class NewBgpBridgeEventTestCase(BaseBgpEventsTestCase):
     def setUp(self):
