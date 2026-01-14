@@ -37,6 +37,7 @@ from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
+from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
@@ -2059,25 +2060,14 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         self.addCleanup(self.sb_synchronizer.stop)
         self.ctx = context.get_admin_context()
         self.host1 = uuidutils.generate_uuid()
+        self.sb_api.idl.notify_handler.watch_events([
+            ovsdb_monitor.ChassisAgentWriteEvent(self),
+            ovsdb_monitor.ChassisAgentDownEvent(self),
+            ovsdb_monitor.ChassisAgentDeleteEvent(self),
+        ])
 
     def _sync_resources(self):
         self.sb_synchronizer.sync_hostname_and_physical_networks(self.ctx)
-
-    def create_agent(self, host, bridge_mappings=None, agent_type=None):
-        if agent_type is None:
-            agent_type = ovn_const.OVN_CONTROLLER_AGENT
-        if bridge_mappings is None:
-            bridge_mappings = {}
-        agent = {
-            'host': host,
-            'agent_type': agent_type,
-            'binary': '/bin/test',
-            'topic': 'test_topic',
-            'configurations': {'bridge_mappings': bridge_mappings}
-        }
-        _, status = self.plugin.create_or_update_agent(self.context, agent)
-
-        return status['id']
 
     def create_segment(self, network_id, physical_network, segmentation_id):
         segment_data = {'network_id': network_id,
@@ -2114,34 +2104,44 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         self.assertFalse(segment_hosts)
 
     def test_ovn_sb_sync_delete_stale_host(self):
+        # A stale host implies the presence of an OVN agent related to a
+        # chassis register that has been destroyed (deleted).
         with self.network() as network:
             network_id = network['network']['id']
-        segment = self.create_segment(network_id, self.physnet, 50)
-        segments_db.update_segment_host_mapping(
-            self.ctx, self.host1, {segment['id']})
-        _ = self.create_agent(self.host1,
-                              bridge_mappings={self.physnet: 'eth0'})
+
+        # A chassis mapped to phsynet is created. A segment on this physnet
+        # is created too. The sync call will craete the corresponding segment
+        # mapping.
+        self.create_segment(network_id, self.physnet, 50)
+        ch1 = self.add_fake_chassis(self.host1, [self.physnet])
+        self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1}, segment_hosts)
-        # Since there is no chassis in the sb DB, self.host1 is the stale host
-        # recorded in neutron DB. It should be deleted after sync.
+
+        # The chassis is deleted but the OVN agent is still present in the
+        # local cache.
+        self.del_fake_chassis(ch1)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertFalse(segment_hosts)
 
-    def test_ovn_sb_sync_host_with_no_agent_not_deleted(self):
+    def test_ovn_sb_sync_host_with_ovn_agent_deleted(self):
+        # If the OVN agent (ovn-controller) of a host (chassis) is deleted,
+        # Neutron considers the host mapping as external; for example, a
+        # baremetal node.
         with self.network() as network:
             network_id = network['network']['id']
-        segment = self.create_segment(network_id, self.physnet, 50)
-        segments_db.update_segment_host_mapping(
-            self.ctx, self.host1, {segment['id']})
-        _ = self.create_agent(self.host1,
-                              bridge_mappings={self.physnet: 'eth0'},
-                              agent_type="Not OVN Agent")
+        self.create_segment(network_id, self.physnet, 50)
+        ch1 = self.add_fake_chassis(self.host1, [self.physnet])
+        self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1}, segment_hosts)
-        # There is no chassis in the sb DB, self.host1 does not have an agent
-        # so it is not deleted.
+
+        # Delete the chassis and the local cache OVN agent register. The
+        # existing host mapping is considered by Neutron as an external
+        # mapping, not related to an OVN controller agent.
+        self.del_fake_chassis(ch1)
+        neutron_agent.AgentCache().delete(ch1)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1}, segment_hosts)
@@ -2175,15 +2175,45 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         segments_db.update_segment_host_mapping(
             self.ctx, host3, {seg1['id']})
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        _ = self.create_agent(self.host1)
-        _ = self.create_agent(host2, bridge_mappings={self.physnet2: 'eth0'})
-        _ = self.create_agent(host3, bridge_mappings={self.physnet3: 'eth0'})
         self.assertEqual({self.host1, host2, host3}, segment_hosts)
+
+        # The `Private_Chassis` register events are monitored by the SB IDL.
+        # Each register is stored as an OVN controller agent in the agent
+        # local cache singleton.
+        # self.sb_api.idl.notify_handler.watch_events([
+        #     ovsdb_monitor.ChassisAgentWriteEvent(self),
+        #     ovsdb_monitor.ChassisAgentDownEvent(self),
+        #     ovsdb_monitor.ChassisAgentDeleteEvent(self),
+        # ])
         self.add_fake_chassis(host2, [self.physnet2])
         self.add_fake_chassis(host3, [self.physnet3])
+        ch4 = self.add_fake_chassis(host4, [self.physnet])
+
+        # host1 must be kept because this mapping doesn't belong to an OVN
+        # controller host (could be a baremetal host mapping). Check
+        # LP#2040172.
+        # host3 should be cleared since there is no segment for mapping
+        # (physnet3 doesn't have a related segment created).
+        self._sync_resources()
+        segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
+        self.assertEqual({self.host1, host2, host4}, segment_hosts)
+
+        # Chassis4 has been removed; during the sync call the host mapping
+        # should be removed too.
+        self.del_fake_chassis(ch4)
+        self._sync_resources()
+        segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
+        self.assertEqual({self.host1, host2}, segment_hosts)
+
+        # If chassis4 is added again; the mapping should be re-added too.
         self.add_fake_chassis(host4, [self.physnet])
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
-        # host1 should be cleared since it is not in the chassis DB. host3
-        # should be cleared since there is no segment for mapping.
-        self.assertEqual({host2, host4}, segment_hosts)
+        self.assertEqual({self.host1, host2, host4}, segment_hosts)
+
+        # If a new segment is created for physnet3, now chassis3 should be
+        # mapped because this chassis has physnet3 in the bridge mappings.
+        self.create_segment(network_id, self.physnet3, 52)
+        self._sync_resources()
+        segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
+        self.assertEqual({self.host1, host2, host3, host4}, segment_hosts)
