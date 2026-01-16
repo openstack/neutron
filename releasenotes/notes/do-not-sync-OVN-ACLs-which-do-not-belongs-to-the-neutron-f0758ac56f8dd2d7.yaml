@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    The ``neutron-ovn-db-sync`` utility only manages OVN ACL rules containing
+    the ``neutron:security_group_rule_id`` key in external_ids. Any ACL rules
+    lacking this key are treated as external and will remain untouched by the
+    synchronization process. Consequently, these rules will not be automatically
+    removed, which may affect the intended behavior of the security groups
+    created in Neutron.
