@@ -25,3 +25,6 @@ LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID = 'dynamic-routing-vrf-id'
 HA_CHASSIS_GROUP_PRIORITY = 10
 
 CHASSIS_BGP_BRIDGES_EXT_ID_KEY = 'neutron-bgp-bridges'
+
+AGENT_BGP_PEER_BRIDGES = 'neutron-bgp-peer-bridges'
+AGENT_BGP_EXT_NAME = 'ovn-bgp'

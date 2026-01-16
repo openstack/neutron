@@ -1,0 +1,124 @@
+# Copyright 2025 Red Hat, Inc.
+# All Rights Reserved.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+import tempfile
+import weakref
+
+from oslo_config import cfg
+from ovsdbapp import venv
+
+from neutron.agent.ovsdb import impl_idl
+from neutron.common import utils
+from neutron.services.bgp import constants
+from neutron.tests.functional.agent.ovn.agent import test_ovn_neutron_agent
+
+
+class BGPExtensionTestCase(test_ovn_neutron_agent.TestOVNNeutronAgentBase):
+    def setUp(self, **kwargs):
+        self.ovs_venv = self.useFixture(venv.OvsVenvFixture(
+            tempfile.mkdtemp(),
+            remove=True,
+        ))
+        _orig_ovsdb_connection = cfg.CONF.OVS.ovsdb_connection
+        cfg.CONF.set_override(
+            'ovsdb_connection', self.ovs_venv.ovs_connection, group='OVS')
+        self.addCleanup(
+            cfg.CONF.set_override,
+            'ovsdb_connection',
+            _orig_ovsdb_connection,
+            group='OVS')
+        # Cleanup after tests that did not cleanup after themselves
+        self._reset_class_attributes()
+        test_ovn_neutron_agent.EXTENSION_NAMES[
+            constants.AGENT_BGP_EXT_NAME] = 'BGP agent extension'
+        try:
+            super().setUp(extensions=[constants.AGENT_BGP_EXT_NAME], **kwargs)
+        finally:
+            self.addCleanup(self._reset_class_attributes)
+
+    def _reset_class_attributes(self):
+        # The connection is a class attribute so we need to reset it in order
+        # to connect to the newly spawned per-test ovsdb server
+        impl_idl.NeutronOvsdbIdl._klass._ovsdb_connection = None
+
+        # We spawn a different ovsdb server for each test
+        # let's make sure the connection is always a new one
+        impl_idl._connection = None
+
+        # We also need to reset the SingletonDecorator
+        utils.SingletonDecorator._singleton_instances = (
+            weakref.WeakValueDictionary())
+
+        # EXTENSION_NAMES is a class attribute so we need to reset it for other
+        # tests running in the same process
+        try:
+            del test_ovn_neutron_agent.EXTENSION_NAMES[
+                constants.AGENT_BGP_EXT_NAME]
+        except KeyError:
+            pass
+
+    def _get_bridge_mappings(self):
+        return self.ovn_agent.ovs_idl.db_get(
+            'Open_vSwitch', '.',
+            'external_ids').execute(
+                check_error=True).get('ovn-bridge-mappings', '')
+
+    def _check_bridge_mappings(self, expected_bms):
+        def wait_for_bms():
+            bms = self._get_bridge_mappings()
+            return sorted(bms.split(',')) == sorted(expected_bms.split(','))
+
+        utils.wait_until_true(
+            wait_for_bms,
+            sleep=0.1,
+            timeout=5,
+            exception=Exception(
+                "Expected bridge mappings %s were not configured" %
+                expected_bms)
+        )
+
+    def test_bgp_extension_configures_bridge_mappings(self):
+        self.ovn_agent.ovs_idl.db_set(
+            'Open_vSwitch', '.',
+            external_ids={
+                'ovn-bridge-mappings': 'physnet:bridge',
+                constants.AGENT_BGP_PEER_BRIDGES: 'bgp-br-1,bgp-br-2'}
+        ).execute(check_error=True)
+
+        self.ovn_agent.ovs_idl.restart_connection()
+
+        expected_bms = 'physnet:bridge,bgp-br-1:bgp-br-1,bgp-br-2:bgp-br-2'
+        self._check_bridge_mappings(expected_bms)
+
+    def test_bgp_extension_configures_bridge_mappings_with_empty_bms(self):
+        self.ovn_agent.ovs_idl.db_set(
+            'Open_vSwitch', '.',
+            external_ids={
+                constants.AGENT_BGP_PEER_BRIDGES: 'bgp-br-1,bgp-br-2'}
+            ).execute(check_error=True)
+        self.ovn_agent.ovs_idl.restart_connection()
+
+        expected_bms = 'bgp-br-1:bgp-br-1,bgp-br-2:bgp-br-2'
+        self._check_bridge_mappings(expected_bms)
+
+    def test_bgp_extension_missing_bgp_peer_bridges(self):
+        self.ovn_agent.ovs_idl.db_set(
+            'Open_vSwitch', '.',
+            external_ids={'ovn-bridge-mappings': 'physnet:bridge'}).execute(
+                check_error=True)
+        self.ovn_agent.ovs_idl.restart_connection()
+
+        expected_bms = 'physnet:bridge'
+        self._check_bridge_mappings(expected_bms)
