@@ -12,6 +12,9 @@
       - neutron-periodic-jobs
       - neutron-tox-override-jobs
       - neutron-skip-level-jobs
+      - periodic-jobs-with-neutron-lib-master
+      - periodic-jobs-with-oslo-master
+      - periodic-jobs-with-ovsdbapp-master
     check:
       jobs:
         - neutron-functional
