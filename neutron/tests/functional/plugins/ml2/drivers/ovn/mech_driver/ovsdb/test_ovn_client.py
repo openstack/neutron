@@ -502,12 +502,8 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                 self.assertEqual('1.2.3.6',
                                  dhcp_options.options['wpad'])
 
-    def test_update_ha_chassis_group_linked_to_router(self):
-        # Create a router with multiple networks (internal, external). The
-        # method `link_network_ha_chassis_group` must be called for all
-        # internal networks.
+    def _create_router_with_subnets_and_gw(self, num_private_subnets):
         num_private_subnets = 5
-        ovn_client = self.mech_driver._ovn_client
         net_arg = {provider_net.NETWORK_TYPE: 'geneve',
                    external_net.EXTERNAL: True}
         with self.network('external', as_admin=True,
@@ -526,6 +522,16 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                     self._router_interface_action(
                         'add', router_id, subnet_id, None)
 
+        return router_id, net_ids
+
+    def test_update_ha_chassis_group_linked_to_router(self):
+        # Create a router with multiple networks (internal, external). The
+        # method `link_network_ha_chassis_group` must be called for all
+        # internal networks.
+        ovn_client = self.mech_driver._ovn_client
+        num_private_subnets = 5
+        router_id, net_ids = self._create_router_with_subnets_and_gw(
+            num_private_subnets)
         lr_name = ovn_utils.ovn_name(router_id)
         lr = self.nb_api.lookup('Logical_Router', lr_name)
         self.assertEqual(num_private_subnets + 1, len(lr.ports))
@@ -536,3 +542,19 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                      for net_id in net_ids]
             self.assertEqual(num_private_subnets, len(mock_link.mock_calls))
             mock_link.assert_has_calls(calls, any_order=True)
+
+    def test_update_ha_chassis_group_deleted_lr(self):
+        # Create a router with multiple networks (internal, external). The
+        # method `link_network_ha_chassis_group` is called just after a
+        # parallel call deletes the `Logical_Router`.
+        ovn_client = self.mech_driver._ovn_client
+        num_private_subnets = 5
+        router_id, net_ids = self._create_router_with_subnets_and_gw(
+            num_private_subnets)
+        lr_name = ovn_utils.ovn_name(router_id)
+        self.nb_api.db_destroy('Logical_Router', lr_name).execute(
+            check_error=True)
+        with mock.patch.object(ovn_client, 'link_network_ha_chassis_group') as\
+                mock_link:
+            ovn_client.update_router_ha_chassis_group(self.context, router_id)
+            mock_link.assert_not_called()

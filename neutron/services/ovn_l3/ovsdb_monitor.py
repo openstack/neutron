@@ -44,7 +44,13 @@ class LogicalRouterPortEvent(row_event.RowEvent):
             # the case, do nothing.
             ls_name = row.external_ids[ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
             lr_name = row.external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
-            lr = self.driver._nb_ovn.lookup('Logical_Router', lr_name)
+            lr = self.driver._nb_ovn.lookup('Logical_Router', lr_name,
+                                            default=None)
+            if not lr:
+                # The LRP has been deleted along with the LR. That happens
+                # only with the GW LRPs. No action needed.
+                return False
+
             for lrp in (lrp for lrp in lr.ports if lrp.name != row.name):
                 if (ls_name == lrp.external_ids[
                         ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]):
