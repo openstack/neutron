@@ -54,6 +54,7 @@ OVS_VIF_DETAILS = {
     portbindings.VIF_DETAILS_BOUND_DRIVERS: {'0': 'ovn'},
     portbindings.VIF_DETAILS_BRIDGE_NAME: 'br-int',
     portbindings.OVS_DATAPATH_TYPE: 'system',
+    'ovs_create_tap': False,
 }
 VHOSTUSER_VIF_DETAILS = {
     portbindings.CAP_PORT_FILTER: False,
@@ -235,6 +236,7 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         expected_vif_details.pop('vhostuser_mode')
         expected_vif_details.pop('vhostuser_ovs_plug')
         expected_vif_details[portbindings.CAP_PORT_FILTER] = True
+        expected_vif_details['ovs_create_tap'] = False
         port_id = self._create_or_update_port(hostname=self.invalid_dpdk_host)
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
                                  expected_vif_details)
@@ -293,6 +295,7 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         expected_vif_details.pop('vhostuser_mode')
         expected_vif_details.pop('vhostuser_ovs_plug')
         expected_vif_details[portbindings.CAP_PORT_FILTER] = True
+        expected_vif_details['ovs_create_tap'] = False
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
                                  expected_vif_details)
 

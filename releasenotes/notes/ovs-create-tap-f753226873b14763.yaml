@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    Added a new configuration flag: ``[ovn]ovs_create_tap``. This flag
+    controls the flag with the same name added to the ML2/OVN port
+    ``vif_details`` dictionary during the port binding. Nova compute will pre-
+    create the TAP device if enabled. It is disabled by default. This flag is
+    only available for kernel OVS; it is not present for OVS DPDK nor hardware
+    offloaded OVS.
+deprecations:
+  - |
+    The flag ``[ovn]ovs_create_tap`` is deprecated and will be removed in
+    2027.1. The default behaviour will be enabled.
