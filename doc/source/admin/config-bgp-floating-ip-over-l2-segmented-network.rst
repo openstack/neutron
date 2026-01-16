@@ -114,7 +114,7 @@ so the speaker initiates a BGP session to the network equipment.
 
    $ # Add the BGP peer to the speaker of compute 1
    $ openstack bgp speaker add peer \
-         compute-1.example.com rack1-switch-1
+         mycloud-compute-1.example.com rack1-switch-1
 
    $ # Tell the speaker not to advertize tenant networks
    $ openstack bgp speaker set \
