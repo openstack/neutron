@@ -34,6 +34,13 @@ from neutron.tests.unit.services.logapi.drivers.ovn import test_driver
 OvnPortInfo = collections.namedtuple('OvnPortInfo', ['name'])
 
 
+class FakeACL:
+
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
 @mock.patch.object(ovn_plugin.OVNL3RouterPlugin, '_sb_ovn', mock.Mock())
 class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
@@ -121,54 +128,41 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                          'host_routes': [],
                          'ip_version': 4}]
 
-        self.security_groups = [
-            {'id': 'sg1', 'tenant_id': 'tenant1',
-             'security_group_rules': [{'remote_group_id': None,
-                                       'direction': 'ingress',
-                                       'remote_ip_prefix': '0.0.0.0/0',
-                                       'protocol': 'tcp',
-                                       'ethertype': 'IPv4',
-                                       'tenant_id': 'tenant1',
-                                       'port_range_max': 65535,
-                                       'port_range_min': 1,
-                                       'id': 'ruleid1',
-                                       'security_group_id': 'sg1'}],
-             'name': 'all-tcp'},
-            {'id': 'sg2', 'tenant_id': 'tenant1',
-             'security_group_rules': [{'remote_group_id': 'sg2',
-                                       'direction': 'egress',
-                                       'remote_ip_prefix': '0.0.0.0/0',
-                                       'protocol': 'tcp',
-                                       'ethertype': 'IPv4',
-                                       'tenant_id': 'tenant1',
-                                       'port_range_max': 65535,
-                                       'port_range_min': 1,
-                                       'id': 'ruleid1',
-                                       'security_group_id': 'sg2'}],
-             'name': 'all-tcpe'}]
+        self.security_group_rules = [
+            {
+                'remote_group_id': None,
+                'direction': 'ingress',
+                'remote_ip_prefix': const.IPv4_ANY,
+                'protocol': 'tcp',
+                'ethertype': 'IPv4',
+                'project_id': 'project1',
+                'port_range_max': 65535,
+                'port_range_min': 1,
+                'id': 'ruleid1',
+                'security_group_id': 'sg1',
+                'normalized_cidr': ''
+            }, {
+                'remote_group_id': 'sg2',
+                'direction': 'egress',
+                'remote_ip_prefix': const.IPv4_ANY,
+                'protocol': 'tcp',
+                'ethertype': 'IPv4',
+                'project_id': 'project1',
+                'port_range_max': 65535,
+                'port_range_min': 1,
+                'id': 'ruleid2',
+                'security_group_id': 'sg2',
+                'normalized_cidr': ''
+            },
+        ]
 
-        self.sg_port_groups_ovn = [
-            mock.Mock(), mock.Mock(), mock.Mock(), mock.Mock()]
-        self.sg_port_groups_ovn[0].configure_mock(
-            name='pg_sg1',
-            external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg1'},
-            ports=[],
-            acls=[])
-        self.sg_port_groups_ovn[1].configure_mock(
-            name='pg_unknown_del',
-            external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg2'},
-            ports=[],
-            acls=[])
-        self.sg_port_groups_ovn[2].configure_mock(
-            name=ovn_const.OVN_DROP_PORT_GROUP_NAME,
-            external_ids={},
-            ports=[],
-            acls=[])
-        self.sg_port_groups_ovn[3].configure_mock(
-            name='external_pg',
-            external_ids={'owner': 'not-owned-by-neutron'},
-            ports=[],
-            acls=[])
+        self.security_groups = [
+            {'id': 'sg1', 'project_id': 'project1',
+             'security_group_rules': [self.security_group_rules[0]],
+             'name': 'all-tcp'},
+            {'id': 'sg2', 'project_id': 'project1',
+             'security_group_rules': [self.security_group_rules[1]],
+             'name': 'all-tcpe'}]
 
         self.ports = [
             {'id': 'p1n1',
@@ -225,6 +219,90 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                  [{'subnet_id': 'ext-subnet',
                    'ip_address': '90.0.0.10'}],
              'network_id': 'ext-net'}]
+
+        self.sg_port_groups_ovn = [mock.Mock(), mock.Mock(), mock.Mock(),
+                                   mock.Mock(), mock.Mock()]
+        self.sg_port_groups_ovn[0].configure_mock(
+            name='pg_sg1',
+            external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg1'},
+            ports=[],
+            acls=[FakeACL(
+                name=[],
+                meter=[],
+                severity=[],
+                direction='to-lport',
+                action='allow-related',
+                log=False,
+                priority=1002,
+                match=('outport == @pg_sg1 && ip4 && tcp && '
+                       'tcp.dst >= 1 && tcp.dst <= 65535'),
+                external_ids={ovn_const.OVN_SG_RULE_EXT_ID_KEY: 'ruleid1'}
+            )])
+        self.sg_port_groups_ovn[1].configure_mock(
+            name='pg_unknown_del',
+            external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg2'},
+            ports=[],
+            acls=[])
+        self.sg_port_groups_ovn[2].configure_mock(
+            name=ovn_const.OVN_DROP_PORT_GROUP_NAME,
+            external_ids={},
+            ports=[],
+            acls=[
+                FakeACL(
+                    name=[],
+                    meter=[],
+                    severity=[],
+                    direction='to-lport',
+                    action='drop',
+                    log=False,
+                    priority=1001,
+                    match=('outport == @%s && ip' %
+                           ovn_const.OVN_DROP_PORT_GROUP_NAME),
+                    external_ids={}
+                ),
+                FakeACL(
+                    name=[],
+                    meter=[],
+                    severity=[],
+                    direction='from-lport',
+                    action='drop',
+                    log=False,
+                    priority=1001,
+                    match=('inport == @%s && ip' %
+                           ovn_const.OVN_DROP_PORT_GROUP_NAME),
+                    external_ids={}
+                )
+            ])
+        self.sg_port_groups_ovn[3].configure_mock(
+            name='pg_sg_stale',
+            external_ids={ovn_const.OVN_SG_EXT_ID_KEY: 'sg_stale'},
+            ports=[],
+            acls=[FakeACL(
+                name=[],
+                meter=[],
+                severity=[],
+                direction='to-lport',
+                action='allow-related',
+                log=False,
+                priority=1000,
+                match='outport == @pg_sg_stale',
+                external_ids={ovn_const.OVN_SG_RULE_EXT_ID_KEY: 'stale_rule'}
+            )])
+        self.sg_port_groups_ovn[4].configure_mock(
+            name='external_pg',
+            external_ids={'owner': 'not-owned-by-neutron'},
+            ports=[],
+            acls=[FakeACL(
+                name=[],
+                meter=[],
+                severity=[],
+                direction=[],
+                action='allow-related',
+                log=False,
+                priority=1000,
+                match='outport == @external_pg',
+                external_ids={'owner': 'not-owned-by-neutron'}
+            )])
 
         self.ports_ovn = [OvnPortInfo('p1n1'), OvnPortInfo('p1n2'),
                           OvnPortInfo('p2n1'), OvnPortInfo('p2n2'),
@@ -424,10 +502,13 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         # following block is used for acl syncing unit-test
 
         # With the given set of values in the unit testing,
-        # 19 neutron acls should have been there,
-        # 4 acls are returned as current ovn acls,
-        # two of which will match with neutron.
-        # So, in this example 17 will be added, 2 removed
+        # 5 Port Groups are created in the OVN db,
+        # 2 of them should be deleted as they are managed by Neutron SGs and
+        # don't match any SG in the Neutron DB.
+        # One of those Port Groups has also ACL which should be deleted.
+        # One Port Group is missing (sg2) and should be created in OVN DB.
+        # There is one ACL in that missing ACL which should be created in the
+        # OVN DB too.
 
         core_plugin.get_ports = mock.Mock()
         core_plugin.get_ports.return_value = self.ports
@@ -453,10 +534,45 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_nb_synchronizer.get_acls.return_value = self.acls_ovn
         core_plugin.get_security_groups = mock.MagicMock(
             return_value=self.security_groups)
+
+        def get_security_group_rules(context, filters=None):
+            rules = []
+            for rule in self.security_group_rules:
+                if filters['security_group_id'] == rule['security_group_id']:
+                    rules.append(rule)
+            return rules
+
+        core_plugin.get_security_group_rules = mock.MagicMock(
+            side_effect=get_security_group_rules)
         get_sg_port_groups = mock.MagicMock()
+        if test_logging:
+            for pg in self.sg_port_groups_ovn:
+                for pg_acl in pg.acls:
+                    if pg.name == ovn_const.OVN_DROP_PORT_GROUP_NAME:
+                        pg_acl.log = True
+                    pg_acl.name = ['neutron-1111']
+                    pg_acl.severity = ['info']
+                    pg_acl.meter = ['acl_log_meter']
+        # import remote_pdb; remote_pdb.set_trace(port=2222)
         get_sg_port_groups.execute.return_value = self.sg_port_groups_ovn
         ovn_api.db_list_rows.return_value = get_sg_port_groups
         ovn_api.lsp_list.execute.return_value = self.ports_ovn
+
+        # we need to mock ACL table schema to actually be able to search for
+        # specific fields in the mocked ACL objects:
+        mock.patch.dict(
+            ovn_nb_synchronizer.ovn_api._tables['ACL'].columns,
+            {'name': mock.Mock(),
+             'meter': mock.Mock(),
+             'severity': mock.Mock(),
+             'direction': mock.Mock(),
+             'action': mock.Mock(),
+             'priority': mock.Mock(),
+             'match': mock.Mock(),
+             'log': mock.Mock(),
+             'external_ids': mock.Mock()}
+        ).start()
+
         # end of acl-sync block
 
         # The following block is used for router and router port syncing tests
@@ -592,6 +708,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                  delete_dhcp_options_list,
                                  add_port_groups_list,
                                  del_port_groups_list,
+                                 add_acls_list,
+                                 del_acls_list,
                                  test_logging=False):
         self._test_mocks_helper(ovn_nb_synchronizer, test_logging)
 
@@ -615,6 +733,21 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             ovn_api.pg_del.call_count)
         ovn_api.pg_del.assert_has_calls(
             del_port_groups_calls, any_order=True)
+
+        add_acls_calls = [mock.call(may_exist=True, **a)
+                          for a in add_acls_list]
+        self.assertEqual(
+            len(add_acls_list),
+            ovn_api.pg_acl_add.call_count)
+        ovn_api.pg_acl_add.assert_has_calls(
+            add_acls_calls, any_order=True)
+        del_acls_calls = [mock.call(*d)
+                          for d in del_acls_list]
+        ovn_api.pg_acl_del.assert_has_calls(
+            del_acls_calls, any_order=True)
+        self.assertEqual(
+            len(del_acls_list),
+            ovn_api.pg_acl_del.call_count)
 
         self.assertEqual(
             len(create_network_list),
@@ -768,10 +901,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             delete_dhcp_options_calls, any_order=True)
 
         if test_logging:
-            # 2 times when doing add_logging_options_to_acls and then
-            # 2 times because of the add_label_related used 2 times for the
-            # from-port and to-port drop acls
-            self.assertEqual(4, ovn_nb_synchronizer.ovn_log_driver.
+            # 2 times when doing add_logging_options_to_acls
+            self.assertEqual(2, ovn_nb_synchronizer.ovn_log_driver.
                              _pgs_from_log_obj.call_count)
 
     def _test_ovn_nb_sync_mode_repair(self, test_logging=False):
@@ -870,8 +1001,22 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             {'external_ids': {ovn_const.OVN_SG_EXT_ID_KEY: 'sg2'},
              'name': 'pg_sg2',
              'acls': []}]
-        del_port_groups_list = ['pg_unknown_del']
-
+        del_port_groups_list = ['pg_unknown_del', 'pg_sg_stale']
+        add_acls_list = [
+            {'port_group': 'pg_sg2',
+             'priority': 1002,
+             'action': 'allow-related',
+             'log': False,
+             'name': 'neutron-1111' if test_logging else [],
+             'severity': 'info' if test_logging else [],
+             'direction': 'from-lport',
+             'match': ('inport == @pg_sg2 && ip4 && tcp && '
+                       'tcp.dst >= 1 && tcp.dst <= 65535'),
+             'meter': 'acl_log_meter' if test_logging else [],
+             ovn_const.OVN_SG_RULE_EXT_ID_KEY: 'ruleid2'},
+        ]
+        del_acls_list = [
+            ('pg_sg_stale', 'to-lport', 1000, 'outport == @pg_sg_stale')]
         add_subnet_dhcp_options_list = [(self.subnets[2], self.networks[1]),
                                         (self.subnets[1], self.networks[0])]
         delete_dhcp_options_list = ['UUID2', 'UUID4', 'UUID5']
@@ -901,6 +1046,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                       delete_dhcp_options_list,
                                       add_port_groups_list,
                                       del_port_groups_list,
+                                      add_acls_list,
+                                      del_acls_list,
                                       test_logging)
 
     def test_ovn_nb_sync_mode_repair(self):
@@ -930,6 +1077,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         delete_dhcp_options_list = []
         add_port_groups_list = []
         del_port_groups_list = []
+        add_acls_list = []
+        del_acls_list = []
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
@@ -955,7 +1104,9 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                       add_subnet_dhcp_options_list,
                                       delete_dhcp_options_list,
                                       add_port_groups_list,
-                                      del_port_groups_list)
+                                      del_port_groups_list,
+                                      add_acls_list,
+                                      del_acls_list)
 
     def _test_ovn_nb_sync_calculate_routes_helper(self,
                                                   ovn_routes,
