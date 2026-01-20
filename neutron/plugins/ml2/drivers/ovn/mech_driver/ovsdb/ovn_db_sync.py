@@ -12,7 +12,6 @@
 
 import abc
 from datetime import datetime
-import itertools
 import threading
 import time
 
@@ -177,48 +176,6 @@ class OvnNbSynchronizer(BaseOvnDbSynchronizer):
         # Create the port in OVN. This will include ACL and Address Set
         # updates as needed.
         self._ovn_client.create_port(ctx, port)
-
-    def remove_common_acls(self, neutron_acls, nb_acls):
-        """Take out common acls of the two acl dictionaries.
-
-        @param   neutron_acls: neutron dictionary of port vs acls
-        @type    neutron_acls: {}
-        @param   nb_acls: nb dictionary of port vs acls
-        @type    nb_acls: {}
-        @return: Nothing, original dictionary modified
-        """
-        for port in neutron_acls.keys():
-            for acl in list(neutron_acls[port]):
-                if port in nb_acls and acl in nb_acls[port]:
-                    neutron_acls[port].remove(acl)
-                    nb_acls[port].remove(acl)
-
-    def get_acls(self, context):
-        """create the list of ACLS in OVN.
-
-        @param context: neutron_lib.context
-        @type  context: object of type neutron_lib.context.Context
-        @var   lswitch_names: List of lswitch names
-        @var   acl_list: List of NB acls
-        @var   acl_list_dict: Dictionary of acl-lists based on lport as key
-        @return: acl_list-dict
-        """
-        lswitch_names = set()
-        for network in self.core_plugin.get_networks(context):
-            lswitch_names.add(network['id'])
-        acl_dict, ignore1, ignore2 = (
-            self.ovn_nb_api.get_acls_for_lswitches(lswitch_names))
-        acl_list = list(itertools.chain(*acl_dict.values()))
-        acl_list_dict = {}
-        for acl in acl_list:
-            acl = acl_utils.filter_acl_dict(
-                acl, extra_fields=['lport', 'lswitch'])
-            key = acl['lport']
-            if key in acl_list_dict:
-                acl_list_dict[key].append(acl)
-            else:
-                acl_list_dict[key] = list([acl])
-        return acl_list_dict
 
     def sync_port_groups(self, ctx):
         """Sync Port Groups between neutron and NB.

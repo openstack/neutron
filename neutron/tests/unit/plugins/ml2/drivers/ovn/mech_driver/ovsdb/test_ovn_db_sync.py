@@ -230,32 +230,6 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                           OvnPortInfo('p2n1'), OvnPortInfo('p2n2'),
                           OvnPortInfo('p3n1'), OvnPortInfo('p3n3')]
 
-        self.acls_ovn = {
-            'lport1':
-            # ACLs need to be removed by the sync tool
-            [{'id': 'acl1', 'priority': 00, 'policy': 'allow',
-              'lswitch': 'lswitch1', 'lport': 'lport1'}],
-            'lport2':
-            [{'id': 'acl2', 'priority': 00, 'policy': 'drop',
-             'lswitch': 'lswitch2', 'lport': 'lport2'},
-             {'id': 'aclr3', 'priority': 00, 'log': True,
-              'policy': 'drop', 'lswitch': 'lswitch2',
-              'meter': 'acl_log_meter', 'label': 1, 'lport': 'lport2'}],
-            # ACLs need to be kept as-is by the sync tool
-            'p2n2':
-            [{'lport': 'p2n2', 'direction': 'to-lport',
-              'log': False, 'lswitch': 'neutron-n2',
-              'priority': 1001, 'action': 'drop',
-             'external_ids': {'neutron:lport': 'p2n2'},
-              'match': 'outport == "p2n2" && ip'},
-             {'lport': 'p2n2', 'direction': 'to-lport',
-              'log': False, 'lswitch': 'neutron-n2',
-              'priority': 1002, 'action': 'allow',
-              'external_ids': {'neutron:lport': 'p2n2'},
-              'match': 'outport == "p2n2" && ip4 && '
-              'ip4.src == 10.0.0.0/24 && udp && '
-              'udp.src == 67 && udp.dst == 68'}]}
-
         self.routers = [{'id': 'r1', 'routes': [{'nexthop': '20.0.0.100',
                          'destination': '11.0.0.0/24'}, {
                          'nexthop': '20.0.0.101',
@@ -466,8 +440,6 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
         core_plugin.get_security_group = mock.MagicMock(
             side_effect=self.security_groups)
-        ovn_nb_synchronizer.get_acls = mock.Mock()
-        ovn_nb_synchronizer.get_acls.return_value = self.acls_ovn
         core_plugin.get_security_groups = mock.MagicMock(
             return_value=self.security_groups)
         get_sg_port_groups = mock.MagicMock()
