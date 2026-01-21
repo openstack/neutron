@@ -1612,7 +1612,11 @@ class OVNClient:
         # Retrieve all internal networks (aka: ext_ids=neutron:is_ext_gw=False)
         # connected to this router.
         lr_name = utils.ovn_name(router_id)
-        lr = self._nb_idl.lr_get(lr_name).execute(check_error=True)
+        lr = self._nb_idl.lookup('Logical_Router', lr_name, default=None)
+        if not lr:
+            # The Logical_Router has been deleted.
+            return
+
         network_ids = set()
         for lrp in lr.ports:
             ext_gw = lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW)
@@ -2350,6 +2354,11 @@ class OVNClient:
         ports in the same gateway chassis as the router gateway port, allowing
         N/S communication. See LP#2125553
         """
+        if not self._nb_idl.lookup('Logical_Router', utils.ovn_name(router_id),
+                                   default=None):
+            # The Logical_Router has been deleted.
+            return
+
         gw_lrps = self.get_router_gateway_ports(router_id)
         if not gw_lrps:
             # The router has no GW ports. Remove the "neutron:router_id" tag
