@@ -92,15 +92,15 @@ so the speaker initiates a BGP session to the network equipment.
 .. code-block:: console
 
    $ # Create a BGP peer to represent the switch 1,
-   $ # which runs FRR on 10.1.0.253 with AS 64601
+   $ # which runs FRR on 10.1.0.253 with AS 64498
    $ openstack bgp peer create \
          --peer-ip 10.1.0.253 \
-         --remote-as 64601 \
+         --remote-as 64498 \
          rack1-switch-1
 
    $ # Create a BGP speaker on compute-1
    $ BGP_SPEAKER_ID_COMPUTE_1=$(openstack bgp speaker create \
-         --local-as 64999 --ip-version 4 mycloud-compute-1.example.com \
+         --local-as 64499 --ip-version 4 mycloud-compute-1.example.com \
          --format value -c id)
 
    $ # Get the agent ID of the dragent running on compute 1
@@ -434,7 +434,7 @@ procedure, if having 2 switches per rack, looks like this:
 
    # tell neighbors to not route through this router
    vtysh
-   vtysh# router bgp 64999
+   vtysh# router bgp 64499
    vtysh# bgp graceful-shutdown
    vtysh# exit
    systemctl restart switchd
