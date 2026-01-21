@@ -412,7 +412,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # net was deleted, throw a retry to start over to create another
             raise db_exc.RetryRequest(
                 l3ha_exc.HANetworkConcurrentDeletion(
-                    tenant_id=router['tenant_id']))
+                    project_id=router['tenant_id']))
 
     @registry.receives(resources.ROUTER, [events.AFTER_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
