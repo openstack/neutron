@@ -50,12 +50,12 @@ class InjectContext(base.ConfigurableMiddleware):
             roles = [r.strip() for r in custom_roles.split(',')]
 
         # Human-friendly names
-        tenant_name = req.headers.get('X_PROJECT_NAME')
+        project_name = req.headers.get('X_PROJECT_NAME')
         user_name = req.headers.get('X_USER_NAME')
 
         # Create a context with the authentication data
         ctx = context.Context(user_id, project_id, roles=roles,
-                              user_name=user_name, tenant_name=tenant_name)
+                              user_name=user_name, project_name=project_name)
         req.environ['neutron.context'] = ctx
         return self.application
 

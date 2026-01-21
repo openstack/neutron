@@ -66,22 +66,23 @@ class APIPolicyTestCase(base.BaseLoggingTestCase):
         Verifies that loading policies by way of admin context before
         populating extensions and extending the resource map results in
         networks with router:external is true being invisible to regular
-        tenants.
+        projects.
         """
         extension_manager = extensions.ExtensionManager(self.extension_path)
         admin_context = context.get_admin_context()
-        tenant_context = context.Context('test_user', 'test_project_id', False)
+        project_context = context.Context('test_user', 'test_project_id',
+                                          False)
         extension_manager.extend_resources(self.api_version,
                                            attributes.RESOURCES)
         self.assertTrue(self._check_external_router_policy(admin_context))
-        self.assertFalse(self._check_external_router_policy(tenant_context))
+        self.assertFalse(self._check_external_router_policy(project_context))
 
     def test_proper_load_order(self):
         """Test proper policy load order
 
         Verifies that loading policies by way of admin context after
         populating extensions and extending the resource map results in
-        networks with router:external are visible to regular tenants.
+        networks with router:external are visible to regular projects.
         """
         policy.reset()
         extension_manager = extensions.ExtensionManager(self.extension_path)
@@ -93,6 +94,7 @@ class APIPolicyTestCase(base.BaseLoggingTestCase):
         policies.reload_default_policies()
         policy.init()
         admin_context = context.get_admin_context()
-        tenant_context = context.Context('test_user', 'test_project_id', False)
+        project_context = context.Context('test_user', 'test_project_id',
+                                          False)
         self.assertTrue(self._check_external_router_policy(admin_context))
-        self.assertTrue(self._check_external_router_policy(tenant_context))
+        self.assertTrue(self._check_external_router_policy(project_context))

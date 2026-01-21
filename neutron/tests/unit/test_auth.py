@@ -51,7 +51,6 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.request.headers['X_USER_ID'] = 'test_user_id'
         response = self.request.get_response(self.middleware)
         self.assertEqual('200 OK', response.status)
-        self.assertEqual('testprojectid', self.context.tenant_id)
         self.assertEqual('testprojectid', self.context.project_id)
 
     def test_roles_no_admin(self):
@@ -84,7 +83,6 @@ class NeutronKeystoneContextTestCase(base.BaseTestCase):
         self.assertEqual('200 OK', response.status)
         self.assertEqual('testuserid', self.context.user_id)
         self.assertEqual('testusername', self.context.user_name)
-        self.assertEqual('testprojectid', self.context.tenant_id)
         self.assertEqual('testprojectid', self.context.project_id)
         self.assertEqual('testprojectname', self.context.project_name)
 
