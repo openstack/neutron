@@ -304,6 +304,14 @@ class OVNClient:
             # NOTE(ralonsoh): OVN subports don't have host ID information.
             return
 
+        # NOTE(ralonsoh): instead of checking first the presence of the
+        # `Logical_Switch_Port`, the `lsp_get_up` could implement a `if_exists`
+        # check. This check is better than catching the `RowNotFound` exception
+        # in the middle of a transaction.
+        if not self._nb_idl.lookup('Logical_Switch_Port', db_port.id,
+                                   default=None):
+            return
+
         port_up = self._nb_idl.lsp_get_up(db_port.id).execute(
             check_error=True)
         if up:
