@@ -676,6 +676,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
             lrp_name = utils.ovn_lrouter_port_name(gw_port['id'])
             lrp = self._nb_idl.get_lrouter_port(lrp_name)
+            if not lrp:
+                # NOTE(ralonsoh): the `Logical_Router_Port` has been deleted
+                # during the processing of the `gw_ports`.
+                continue
+
             redirect_value = lrp.options.get(
                 ovn_const.LRP_OPTIONS_REDIRECT_TYPE)
             if enable_redirect:
