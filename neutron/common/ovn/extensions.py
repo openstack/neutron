@@ -96,6 +96,7 @@ from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.api.definitions import subnetpool_prefix_ops
 from neutron_lib.api.definitions import tag_creation
 from neutron_lib.api.definitions import tap_mirror
+from neutron_lib.api.definitions import tap_mirror_both_direction
 from neutron_lib.api.definitions import trunk
 from neutron_lib.api.definitions import uplink_status_propagation
 from neutron_lib.api.definitions import uplink_status_propagation_updatable
@@ -222,4 +223,5 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     uplink_status_propagation.ALIAS,
     uplink_status_propagation_updatable.ALIAS,
     tap_mirror.ALIAS,
+    tap_mirror_both_direction.ALIAS,
 ]
