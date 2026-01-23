@@ -16,6 +16,8 @@
 import datetime
 import uuid
 
+from sqlalchemy import func
+
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
 from oslo_log import log
@@ -146,7 +148,7 @@ def get_active_nodes(context, interval, group_name, from_host=False):
 @db_api.CONTEXT_READER
 def count_offline_nodes(context, interval, group_name):
     query = _get_nodes_query(context, interval, group_name, offline=True)
-    return query.count()
+    return query.with_entities(func.count()).scalar()
 
 
 @db_api.retry_if_session_inactive()
@@ -155,4 +157,4 @@ def count_nodes_from_host(context, group_name):
     query = context.session.query(ovn_models.OVNHashRing).filter(
         ovn_models.OVNHashRing.group_name == group_name,
         ovn_models.OVNHashRing.hostname == CONF.host)
-    return query.count()
+    return query.with_entities(func.count()).scalar()

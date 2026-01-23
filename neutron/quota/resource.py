@@ -21,6 +21,7 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
 from sqlalchemy import exc as sql_exc
+from sqlalchemy import func
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _
@@ -297,7 +298,7 @@ class TrackedResource(BaseResource):
                                   'project_id': project_id})
             in_use = context.session.query(
                 self._model_class.project_id).filter_by(
-                    project_id=project_id).count()
+                    project_id=project_id).with_entities(func.count()).scalar()
 
             # Update quota usage, if requested (by default do not do that, as
             # typically one counts before adding a record, and that would mark
@@ -357,7 +358,7 @@ class TrackedResource(BaseResource):
         with db_api.CONTEXT_READER.using(admin_context):
             query = admin_context.session.query(self._model_class.project_id)
             query = query.filter(self._model_class.project_id == project_id)
-            return query.count()
+            return query.with_entities(func.count()).scalar()
 
     def _except_bulk_delete(self, delete_context):
         if delete_context.mapper.class_ == self._model_class:
