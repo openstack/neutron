@@ -267,6 +267,11 @@ class OvnNbSynchronizer(BaseOvnDbSynchronizer):
                 acl_string['port_group'] = pg.name
                 if id_key in acl.external_ids:
                     acl_string[id_key] = acl.external_ids[id_key]
+                elif pg.name != ovn_const.OVN_DROP_PORT_GROUP_NAME:
+                    # If ACL is not associated with a security group rule,
+                    # nor it belongs to the default neutron_pg_drop port group,
+                    # it don't need to be synced.
+                    continue
                 # This properties are present as lists of one item,
                 # converting them to string.
                 if acl_string['name']:
