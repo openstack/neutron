@@ -110,6 +110,7 @@ from neutron._i18n import _
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as sg_rpc
 from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
+from neutron.api.rpc.agentnotifiers import utils as notifier_utils
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import dvr_rpc
 from neutron.api.rpc.handlers import metadata_rpc
@@ -302,6 +303,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.type_manager.initialize()
         self.extension_manager.initialize()
         self.mechanism_manager.initialize()
+        self.notifier = notifier_utils.RPCNotifierHandler()
         self._setup_dhcp()
         self._start_rpc_notifiers()
         self.add_agent_status_check_worker(self.agent_health_check)
@@ -322,10 +324,15 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             resources_rpc.ResourcesPullRpcCallback()
         ]
 
+    @property
+    def _rpc_workers(self):
+        return conf_service.get_rpc_workers()
+
     def _setup_dhcp(self):
-        """Initialize components to support DHCP."""
-        if not cfg.CONF.enable_traditional_dhcp:
+        """Initialize components to support the DHCP agent."""
+        if not cfg.CONF.enable_traditional_dhcp or self._rpc_workers == 0:
             return
+
         self.network_scheduler = importutils.import_object(
             cfg.CONF.network_scheduler_driver
         )
@@ -422,12 +429,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @log_helpers.log_method_call
     def _start_rpc_notifiers(self):
         """Initialize RPC notifiers for agents."""
-        self.ovo_notifier = None
-        rpc_workers = conf_service.get_rpc_workers()
-        if rpc_workers is None or rpc_workers >= 1:
-            self.ovo_notifier = ovo_rpc.OVOServerRpcInterface(
-                cfg.CONF.enable_signals)
-        self.notifier = rpc.AgentNotifierApi(topics.AGENT)
+        if self._rpc_workers == 0:
+            return
+
+        self._ovo_notifier = ovo_rpc.OVOServerRpcInterface(
+            cfg.CONF.enable_signals)
+        self.notifier.notifier_instance = rpc.AgentNotifierApi(topics.AGENT)
         if cfg.CONF.enable_traditional_dhcp:
             self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
                 dhcp_rpc_agent_api.DhcpAgentNotifyAPI()

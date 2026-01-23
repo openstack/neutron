@@ -1344,7 +1344,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router = self._create_router(router_dict)
         plugin = mock.Mock()
         directory.add_plugin(plugin_constants.CORE, plugin)
-        l3_notify = self.mixin.l3_rpc_notifier = mock.Mock()
+        l3_notify = self.mixin._l3_rpc_notifier = mock.Mock()
         port = {
             'id': 'my_port_id',
             'fixed_ips': [
@@ -1401,7 +1401,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         router = self._create_router(router_dict)
         plugin = mock.Mock()
         directory.add_plugin(plugin_constants.CORE, plugin)
-        l3_notify = self.mixin.l3_rpc_notifier = mock.Mock()
+        l3_notify = self.mixin._l3_rpc_notifier = mock.Mock()
         port = {
             'id': 'my_port_id',
             'network_id': 'my_network_id',

@@ -1986,10 +1986,9 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                           device_owner=DEVICE_OWNER_COMPUTE,
                           arg_list=arg_list,
                           **{portbindings.HOST_ID: HOST1}):
-            l3_notifier = mock.Mock()
-            self.l3_plugin.l3_rpc_notifier = l3_notifier
+            self.l3_plugin._l3_rpc_notifier = mock.Mock()
             self.l3_plugin.agent_notifiers[
-                    constants.AGENT_TYPE_L3] = l3_notifier
+                    constants.AGENT_TYPE_L3] = self.l3_plugin.l3_rpc_notifier
 
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
@@ -2000,7 +1999,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
 
-            l3_notifier.router_removed_from_agent.assert_called_once_with(
+            self.l3_plugin.l3_rpc_notifier.router_removed_from_agent.\
+                assert_called_once_with(
                 mock.ANY, router['id'], HOST1)
 
     def test_router_auto_scheduling(self):
