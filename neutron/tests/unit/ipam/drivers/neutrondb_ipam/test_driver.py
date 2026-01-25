@@ -95,7 +95,7 @@ class TestNeutronDbIpamPool(testlib_api.SqlTestCase,
             gateway_ip_address = netaddr.IPAddress(gateway_ip)
         if cidr:
             cidr_ip_network = netaddr.IPNetwork(cidr)
-        self.assertEqual(project_id, ipam_subnet_details.tenant_id)
+        self.assertEqual(project_id, ipam_subnet_details.project_id)
         self.assertEqual(gateway_ip_address, ipam_subnet_details.gateway_ip)
         self.assertEqual(cidr_ip_network, ipam_subnet_details.subnet_cidr)
         self.assertEqual(allocation_pools,

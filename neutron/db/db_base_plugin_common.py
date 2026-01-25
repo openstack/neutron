@@ -342,8 +342,8 @@ class DbBasePluginCommon:
 
     def _is_network_shared(self, context, rbac_entries):
         # The shared attribute for a network now reflects if the network
-        # is shared to the calling tenant via an RBAC entry.
-        matches = ('*',) + ((context.tenant_id,) if context else ())
+        # is shared to the calling project via an RBAC entry.
+        matches = ('*',) + ((context.project_id,) if context else ())
         for entry in rbac_entries:
             if (entry.action == rbac_db_models.ACCESS_SHARED and
                     entry.target_project in matches):
@@ -351,7 +351,7 @@ class DbBasePluginCommon:
         return False
 
     def _make_subnet_args(self, detail, subnet, subnetpool_id):
-        args = {'project_id': detail.tenant_id,
+        args = {'project_id': detail.project_id,
                 'id': detail.subnet_id,
                 'name': subnet['name'],
                 'network_id': subnet['network_id'],

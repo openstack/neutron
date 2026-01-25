@@ -165,12 +165,12 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
             self.assertEqual(netaddr.IPAddress('2210::ffff:ffff:ffff:ffff'),
                              detail.gateway_ip)
 
-    def test__allocation_value_for_tenant_no_allocations(self):
+    def test__allocation_value_for_project_no_allocations(self):
         sp = self._create_subnet_pool(self.plugin, self.ctx, 'test-sp',
                                       ['10.1.0.0/16', '192.168.1.0/24'],
                                       21, 4)
         sa = subnet_alloc.SubnetAllocator(sp, self.ctx)
-        value = sa._allocations_used_by_tenant(32)
+        value = sa._allocations_used_by_project(32)
         self.assertEqual(0, value)
 
     def test_subnetpool_default_quota_exceeded(self):

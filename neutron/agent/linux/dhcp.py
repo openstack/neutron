@@ -171,14 +171,6 @@ class NetModel(DictModel):
     def namespace(self):
         return self._ns_name
 
-    # TODO(ralonsoh): remove in Z+.
-    @property
-    def project_id(self):
-        try:
-            return self['project_id']
-        except KeyError:
-            return self['tenant_id']
-
 
 class DhcpBase(metaclass=abc.ABCMeta):
 

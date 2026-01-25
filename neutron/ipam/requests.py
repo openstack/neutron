@@ -35,13 +35,13 @@ class SubnetRequest(metaclass=abc.ABCMeta):
     that is common to any type of request.  This class shouldn't be
     instantiated on its own.  Rather, a subclass of this class should be used.
     """
-    def __init__(self, tenant_id, subnet_id,
+    def __init__(self, project_id, subnet_id,
                  gateway_ip=None, allocation_pools=None,
                  set_gateway_ip=True):
         """Initialize and validate
 
-        :param tenant_id: The tenant id who will own the subnet
-        :type tenant_id: str uuid
+        :param project_id: The project id who will own the subnet
+        :type project_id: str uuid
         :param subnet_id: Neutron's subnet ID
         :type subnet_id: str uuid
         :param gateway_ip: An IP to reserve for the subnet gateway.
@@ -57,7 +57,7 @@ class SubnetRequest(metaclass=abc.ABCMeta):
             be assigned.
         :type set_gateway_ip: boolean
         """
-        self._tenant_id = tenant_id
+        self._project_id = project_id
         self._subnet_id = subnet_id
         self._gateway_ip = None
         self._set_gateway_ip = set_gateway_ip
@@ -93,8 +93,8 @@ class SubnetRequest(metaclass=abc.ABCMeta):
                                    "allocation pool version"))
 
     @property
-    def tenant_id(self):
-        return self._tenant_id
+    def project_id(self):
+        return self._project_id
 
     @property
     def subnet_id(self):
@@ -154,7 +154,7 @@ class AnySubnetRequest(SubnetRequest):
     WILDCARDS = {constants.IPv4: '0.0.0.0',
                  constants.IPv6: '::'}
 
-    def __init__(self, tenant_id, subnet_id, version, prefixlen,
+    def __init__(self, project_id, subnet_id, version, prefixlen,
                  gateway_ip=None, allocation_pools=None,
                  set_gateway_ip=True):
         """Initialize AnySubnetRequest
@@ -165,7 +165,7 @@ class AnySubnetRequest(SubnetRequest):
         :type prefixlen: int
         """
         super().__init__(
-            tenant_id=tenant_id,
+            project_id=project_id,
             subnet_id=subnet_id,
             gateway_ip=gateway_ip,
             allocation_pools=allocation_pools,
@@ -189,7 +189,7 @@ class SpecificSubnetRequest(SubnetRequest):
     allocation, even overlapping ones.  This can be expanded on by future
     blueprints.
     """
-    def __init__(self, tenant_id, subnet_id, subnet_cidr,
+    def __init__(self, project_id, subnet_id, subnet_cidr,
                  gateway_ip=None, allocation_pools=None,
                  set_gateway_ip=True):
         """Initialize SpecificSubnetRequest
@@ -200,7 +200,7 @@ class SpecificSubnetRequest(SubnetRequest):
         :type subnet: netaddr.IPNetwork or convertible to one
         """
         super().__init__(
-            tenant_id=tenant_id,
+            project_id=project_id,
             subnet_id=subnet_id,
             gateway_ip=gateway_ip,
             allocation_pools=allocation_pools,
