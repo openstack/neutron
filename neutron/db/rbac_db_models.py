@@ -80,20 +80,6 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
         # with the valid actions rbac entries
         pass
 
-    def get_target_tenant(self):
-        return self.target_project
-
-    def set_target_tenant(self, value):
-        self.target_project = value
-
-    # TODO(ralonsoh): remove once the neutron-lib code is modified and the
-    # minimum required version of this library set.
-    @orm.declared_attr
-    def target_tenant(cls):
-        return orm.synonym(
-            'target_project',
-            descriptor=property(cls.get_target_tenant, cls.set_target_tenant))
-
 
 def get_type_model_map():
     return {table.object_type: table for table in RBACColumns.__subclasses__()}
