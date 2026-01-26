@@ -17,18 +17,34 @@ from oslo_log import log
 from ovsdbapp.backend.ovs_idl import event as row_event
 
 from neutron._i18n import _
+from neutron.agent.ovn.agent import ovsdb
 from neutron.services.bgp import constants
 
 LOG = log.getLogger(__name__)
 
 
-def _get_bgp_peer_bridges(row):
+def _get_external_ids_list(row, key):
     try:
-        return row.external_ids[constants.AGENT_BGP_PEER_BRIDGES].split(',')
-    except KeyError:
-        LOG.warning("Chassis %s does not have BGP configuration but the "
-                    "BGP extension is enabled", row.name)
+        value = row.external_ids[key]
+    except (KeyError, AttributeError):
         return []
+
+    if not value:
+        return []
+
+    return [stripped for item in value.split(',')
+            if (stripped := item.strip())]
+
+
+def _get_bgp_peer_bridges(row):
+    return set(_get_external_ids_list(row, constants.AGENT_BGP_PEER_BRIDGES))
+
+
+def _get_ovn_bridge_mappings(row):
+    """Get OVN bridge mappings as {bridge_name: 'network:bridge'} dict."""
+    return {
+        mapping.split(':')[1]: mapping
+        for mapping in _get_external_ids_list(row, 'ovn-bridge-mappings')}
 
 
 class BGPAgentEvent(row_event.RowEvent):
@@ -52,27 +68,47 @@ class LocalOVSEvent(BGPAgentEvent):
     """Base class for local OVS events."""
     TABLE = 'Open_vSwitch'
 
+    def _get_desired_mappings(self, row, old):
+        bgp_peer_bridges = set(_get_bgp_peer_bridges(row))
+        current_mappings = _get_ovn_bridge_mappings(row)
+        old_bgp_peer_bridges = set(_get_bgp_peer_bridges(old))
+
+        bgp_mappings = {bridge: f"{bridge}:{bridge}"
+                        for bridge in bgp_peer_bridges}
+
+        # Keep all non-BGP mappings as-is
+        non_bgp_mappings = {
+            mapping
+            for bridge, mapping in current_mappings.items()
+            if bridge not in bgp_peer_bridges | old_bgp_peer_bridges
+        }
+
+        return sorted(list(set(bgp_mappings.values()) | non_bgp_mappings))
+
+    def run(self, event, row, old):
+        desired_mappings = self._get_desired_mappings(row, old)
+        ovsdb.set_ovn_bridge_mapping(
+            self.agent_api.ovs_idl, desired_mappings)
+
 
 class CreateLocalOVSEvent(LocalOVSEvent):
     EVENTS = (LocalOVSEvent.ROW_CREATE,)
 
     def match_fn(self, event, row, old):
         if constants.AGENT_BGP_PEER_BRIDGES not in row.external_ids:
-            LOG.warning("Chassis %s does not have BGP configuration but the "
-                        "BGP extension is enabled", self.agent_api.chassis)
+            LOG.warning("The BGP bridges are not configured")
             return False
         return True
 
-    def run(self, event, row, old):
-        bgp_peer_bridges = _get_bgp_peer_bridges(row)
-        ovn_bridge_mappings = row.external_ids.get(
-            'ovn-bridge-mappings')
-        if ovn_bridge_mappings:
-            ovn_bridge_mappings = ovn_bridge_mappings.split(',')
-        else:
-            ovn_bridge_mappings = []
-        self.bgp_agent.configure_bgp_bridge_mappings(
-            bgp_peer_bridges, ovn_bridge_mappings)
+
+class UpdateLocalOVSEvent(LocalOVSEvent):
+    EVENTS = (LocalOVSEvent.ROW_UPDATE,)
+
+    def match_fn(self, event, row, old):
+        desired_mappings = self._get_desired_mappings(row, old)
+        bm_bridges = sorted(list(_get_ovn_bridge_mappings(row).values()))
+
+        return desired_mappings != bm_bridges
 
 
 class NewBgpBridgeEvent(BGPAgentEvent):

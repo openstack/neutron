@@ -15,7 +15,6 @@
 
 from oslo_log import log
 
-from neutron.agent.ovn.agent import ovsdb
 from neutron.agent.ovn.extensions.bgp import bridge
 from neutron.agent.ovn.extensions.bgp import events
 from neutron.agent.ovn.extensions import extension_manager as ovn_ext_mgr
@@ -64,13 +63,3 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         bgp_bridge = bridge.BGPChassisBridge(self, bridge_name)
         self.bgp_bridges[bridge_name] = bgp_bridge
         return bgp_bridge
-
-    def configure_bgp_bridge_mappings(
-            self, bgp_peer_bridges, ovn_bridge_mappings):
-        for bgp_bridge_name in bgp_peer_bridges:
-            bgp_bridge_mapping = f'{bgp_bridge_name}:{bgp_bridge_name}'
-            if bgp_bridge_mapping not in ovn_bridge_mappings:
-                ovn_bridge_mappings.append(bgp_bridge_mapping)
-        LOG.debug("Setting OVN bridge mappings: %s", ovn_bridge_mappings)
-        ovsdb.set_ovn_bridge_mapping(
-            self.agent_api.ovs_idl, ovn_bridge_mappings)
