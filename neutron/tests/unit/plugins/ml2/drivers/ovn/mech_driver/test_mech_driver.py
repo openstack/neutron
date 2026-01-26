@@ -4522,6 +4522,15 @@ class TestOVNMechanismDriverSecurityGroup(
             sg_r = self._create_sg_rule(sg['id'], 'ingress',
                                         const.PROTO_NAME_UDP,
                                         ethertype=const.IPv6)
+
+            # Updating an ACL will call 'check_for_row_by_value_and_retry'
+            # for the PG at least once.
+            pg_name = ovn_utils.ovn_port_group_name(sg['id'])
+            cfrbvar = self.mech_driver.nb_ovn.check_for_row_by_value_and_retry
+            cfrbvar.assert_has_calls([
+                mock.call('Port_Group', 'name', pg_name)
+            ])
+
             self.assertEqual(
                 1, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 

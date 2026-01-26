@@ -296,6 +296,15 @@ def update_acls_for_security_group(plugin,
     if not is_sg_enabled():
         return
 
+    # It's possible to have a security group created on one controller and
+    # then a security group rule created on a different controller quickly
+    # enough that the second controller does not yet see that security group
+    # in its local cache of the OVN northbound database. Check if the port
+    # group is present or not in the idl's local copy of the database before
+    # creating the security group rule.
+    pg_name = utils.ovn_port_group_name(security_group_id)
+    ovn.check_for_row_by_value_and_retry('Port_Group', 'name', pg_name)
+
     # Check if ACL log name and severity supported or not
     keep_name_severity = _acl_columns_name_severity_supported(ovn)
 
@@ -303,8 +312,7 @@ def update_acls_for_security_group(plugin,
     stateful = is_sg_stateful(sg)
 
     acl = _add_sg_rule_acl_for_port_group(
-        utils.ovn_port_group_name(security_group_id),
-        stateful, security_group_rule)
+        pg_name, stateful, security_group_rule)
     # Remove ACL log name and severity if not supported
     if is_add_acl:
         if not keep_name_severity:
