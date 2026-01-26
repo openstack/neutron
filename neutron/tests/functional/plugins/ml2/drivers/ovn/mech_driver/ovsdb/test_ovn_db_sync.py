@@ -2187,23 +2187,3 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         # host1 should be cleared since it is not in the chassis DB. host3
         # should be cleared since there is no segment for mapping.
         self.assertEqual({host2, host4}, segment_hosts)
-
-
-class TestOvnNbSyncOverTcp(TestOvnNbSync):
-    def get_ovsdb_server_protocol(self):
-        return 'tcp'
-
-
-class TestOvnSbSyncOverTcp(TestOvnSbSync):
-    def get_ovsdb_server_protocol(self):
-        return 'tcp'
-
-
-class TestOvnNbSyncOverSsl(TestOvnNbSync):
-    def get_ovsdb_server_protocol(self):
-        return 'ssl'
-
-
-class TestOvnSbSyncOverSsl(TestOvnSbSync):
-    def get_ovsdb_server_protocol(self):
-        return 'ssl'

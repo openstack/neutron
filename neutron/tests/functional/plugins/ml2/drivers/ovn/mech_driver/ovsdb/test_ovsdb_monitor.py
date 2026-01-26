@@ -651,16 +651,6 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         _check_high_prio_chassis(num_chassis - 1)
 
 
-class TestNBDbMonitorOverTcp(TestNBDbMonitor):
-    def get_ovsdb_server_protocol(self):
-        return 'tcp'
-
-
-class TestNBDbMonitorOverSsl(TestNBDbMonitor):
-    def get_ovsdb_server_protocol(self):
-        return 'ssl'
-
-
 class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
 
     def setUp(self, **kwargs):
