@@ -20,6 +20,7 @@ from neutron_lib.plugins import directory
 
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
+from neutron.services.bgp import constants as bgp_constants
 from neutron.tests.functional import base
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_l3
@@ -125,6 +126,71 @@ class TestLogicalRouterPortEvent(
             req.get_response(self.api)
             self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
                               is_called, timeout=5)
+
+    def test_add_lrp_not_in_the_neutron_db(self):
+        def mock_link_called():
+            try:
+                mock_link.assert_called_once_with(
+                    mock.ANY, self.net_ext_id, self.router_id)
+                return True
+            except AssertionError:
+                return False
+
+        def mock_update_router_called():
+            try:
+                mock_update_router.assert_called_once_with(
+                    mock.ANY, self.router_id)
+                return True
+            except AssertionError:
+                return False
+
+        ovn_client = self.l3_plugin._ovn_client
+        with mock.patch.object(
+                ovn_client, 'link_network_ha_chassis_group') as mock_link,\
+                mock.patch.object(ovn_client,
+                'update_router_ha_chassis_group') as mock_update_router:
+            ext_ids = {bgp_constants.LRP_NETWORK_NAME_EXT_ID_KEY: 'br-bgp1'}
+            self.nb_api.lrp_add(
+                ovn_utils.ovn_name(self.router_id), 'ovn-port-bgp',
+                mac='02:00:00:00:00:00', networks=['192.168.100.2/30'],
+                external_ids=ext_ids).execute(check_error=True)
+            self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
+                              mock_link_called, timeout=5)
+            self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
+                              mock_update_router_called, timeout=2)
+
+    def test_remove_lrp_not_in_the_neutron_db(self):
+        def mock_unlink_called():
+            try:
+                mock_unlink.assert_called_once_with(
+                    mock.ANY, self.net_ext_id, self.router_id)
+                return True
+            except AssertionError:
+                return False
+
+        def mock_update_router_called():
+            try:
+                mock_update_router.assert_called_once_with(
+                    mock.ANY, self.router_id)
+                return True
+            except AssertionError:
+                return False
+
+        ovn_client = self.l3_plugin._ovn_client
+        with mock.patch.object(
+                ovn_client, 'unlink_network_ha_chassis_group') as mock_unlink,\
+                mock.patch.object(ovn_client,
+                'update_router_ha_chassis_group') as mock_update_router:
+            ext_ids = {bgp_constants.LRP_NETWORK_NAME_EXT_ID_KEY: 'br-bgp1'}
+            self.nb_api.lrp_add(
+                ovn_utils.ovn_name(self.router_id), 'ovn-port-bgp',
+                mac='02:00:00:00:00:00', networks=['192.168.100.2/30'],
+                external_ids=ext_ids).execute(check_error=True)
+            self.nb_api.lrp_del('ovn-port-bgp').execute(check_error=True)
+            self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
+                              mock_unlink_called, timeout=5)
+            self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
+                              mock_update_router_called, timeout=2)
 
 
 class TestLogicalRouterPortGatewayChassisEvent(

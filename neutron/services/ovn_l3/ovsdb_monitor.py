@@ -39,11 +39,17 @@ class LogicalRouterPortEvent(row_event.RowEvent):
         super().__init__(events, table, None)
 
     def match_fn(self, event, row, old):
+        try:
+            ls_name = row.external_ids[ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
+            lr_name = row.external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
+        except KeyError:
+            # The Logical_Router_Port doesn't have the Neutron owned resources
+            # external_ids ("neutron:network_name", "neutron:router_name").
+            return False
+
         if event == self.ROW_DELETE:
             # Check if the LR has another port in the same network. If that is
             # the case, do nothing.
-            ls_name = row.external_ids[ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
-            lr_name = row.external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
             lr = self.driver._nb_ovn.lookup('Logical_Router', lr_name,
                                             default=None)
             if not lr:
