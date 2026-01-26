@@ -55,16 +55,9 @@ class OvnIdl(connection.OvsdbIdl):
 
 
 class BgpOvnNbIdl(nb_impl_idl.OvnNbApiIdlImpl):
-    LOCK_NAME = 'bgp_topology_lock'
-
-    def set_lock(self):
-        LOG.debug("Setting lock for BGP topology")
-        self.ovsdb_connection.idl.set_lock(self.LOCK_NAME)
-        self.ovsdb_connection.txns.put(None)
-
     @property
     def has_lock(self):
-        return not self.ovsdb_connection.idl.is_lock_contended
+        return self.ovsdb_connection.idl.has_lock
 
     def register_events(self, events):
         self.ovsdb_connection.idl.notify_handler.watch_events(events)
@@ -76,10 +69,16 @@ class BgpOvnSbIdl(sb_impl_idl.OvnSbApiIdlImpl):
 
 
 class OvnNbIdl(OvnIdl):
+    LOCK_NAME = 'bgp_topology_lock'
     LEADER_ONLY = True
     SCHEMA = 'OVN_Northbound'
     tables = OVN_NB_TABLES
     api_cls = BgpOvnNbIdl
+
+    def start(self, timeout):
+        LOG.debug("Setting lock for BGP topology")
+        self.set_lock(self.LOCK_NAME)
+        return super().start(timeout)
 
 
 class OvnSbIdl(OvnIdl):
