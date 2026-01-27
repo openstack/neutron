@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    The maximum hardcoded number of ``HA_Chassis`` in a ``HA_Chassis_Group`` is
+    5. The method that handles this resource checks any pre-existing group and
+    trims the excess ``HA_Chassis`` registers.
+    See bug: `2139143 <https://bugs.launchpad.net/tripleo/+bug/2139143>`_.

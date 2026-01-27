@@ -1191,6 +1191,23 @@ def _sync_ha_chassis_group(nb_idl, hcg_info, txn):
         ha_chassis in ha_ch_grp.ha_chassis} if ha_ch_grp else {}
     ch_delete = set(ch_existing_dict) - candidates
     ch_keep = set(ch_existing_dict) & candidates
+
+    # The maximum number of HA_Chassis is MAX_CHASSIS_IN_HA_GROUP; check the
+    # HCG doesn't have more than this number. In that case, remove the lower
+    # priority ones.
+    if len(ch_keep) > constants.MAX_CHASSIS_IN_HA_GROUP:
+        ch_keep_dict = {k: ch_existing_dict[k] for k in ch_keep}
+        ch_keep_list_ordered = sorted(list(ch_keep_dict.items()),
+                                      key=lambda x: x[1], reverse=True)
+        ch_keep_list_ordered = [k[0] for k in ch_keep_list_ordered]
+        ch_excess_list = ch_keep_list_ordered[
+            constants.MAX_CHASSIS_IN_HA_GROUP:]
+        # Reduce the ch_keep list to just MAX_CHASSIS_IN_HA_GROUP length by
+        # removing lower priority HA_Chassis.
+        ch_keep -= set(ch_excess_list)
+        # Add the removed HA_Chassis to the list to be deleted.
+        ch_delete |= set(ch_excess_list)
+
     # The number of chassis to add will depend on the chassis to keep and the
     # maximum chassis number.
     ch_add_list = list(candidates - set(ch_existing_dict))
