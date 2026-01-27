@@ -566,7 +566,6 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     pg_acl.name = ['neutron-1111']
                     pg_acl.severity = ['info']
                     pg_acl.meter = ['acl_log_meter']
-        #import remote_pdb; remote_pdb.set_trace(port=2222)
         get_sg_port_groups.execute.return_value = self.sg_port_groups_ovn
         ovn_api.db_list_rows.return_value = get_sg_port_groups
         ovn_api.lsp_list.execute.return_value = self.ports_ovn
