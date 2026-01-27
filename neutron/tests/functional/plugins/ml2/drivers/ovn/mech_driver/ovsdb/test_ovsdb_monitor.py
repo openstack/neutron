@@ -218,11 +218,6 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         cmd = ['ovsdb-client', 'transact',
                self.mech_driver.sb_ovn.connection_string]
 
-        if self._ovsdb_protocol == 'ssl':
-            cmd += ['-p', self.ovsdb_server_mgr.private_key, '-c',
-                    self.ovsdb_server_mgr.certificate, '-C',
-                    self.ovsdb_server_mgr.ca_cert]
-
         cmd += ['["OVN_Southbound", {"op": "select", "table": "MAC_Binding", '
                 '"where": [["_uuid", "==", ["uuid", "%s"]]]}]' % macb_id]
 
