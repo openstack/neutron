@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants as n_consts
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
+from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -303,6 +304,46 @@ class TestRouter(base.TestOVNFunctionalBase):
                 chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
         self.assertEqual(expected, sched_info)
 
+    def test_gateway_chassis_balanced_scheduling_multiple_gw_networks(self):
+        """Test that gateway_chassis registers are balanced across GW chassis.
+
+        This test creates 4 GW chassis and a router with 6 GW networks.
+        The gateway_chassis registers (3*6=18 total) should be balanced.
+        across all GW chassis. Each GW chassis should have:
+        - 2 gateway_chassis registers with priority 1
+        - 2 gateway_chassis registers with priority 2
+        - 2 gateway_chassis registers with priority 3
+        """
+        ovn_client = self.l3_plugin._ovn_client
+        ovn_client._ovn_scheduler = l3_sched.OVNGatewayLeastLoadedScheduler()
+
+        # Create the 3rd gateway chassis.
+        chassis3 = self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet3'],
+            enable_chassis_as_gw=True, azs=[])
+
+        # Create external network.
+        ext_net = self._create_ext_network(
+            uuidutils.generate_uuid(), 'vlan', 'physnet3',
+            None, '30.0.0.1', '30.0.0.0/24')
+
+        # Create router with 6 gateway networks.
+        router = self._create_router('router-multi-gw')
+        self._add_external_gateways(
+            router['id'],
+            [{'network_id': ext_net['network']['id']} for _ in range(6)])
+
+        # Verify the gateway_chassis registers are balanced.
+        # Each chassis should have 2 registers with priority 1, 2 and 3.
+        sched_info = self._get_gwc_dict()
+        expected_priorities = {1: 2, 2: 2, 3: 2}
+        expected = {
+            self.chassis1: expected_priorities,
+            self.chassis2: expected_priorities,
+            chassis3: expected_priorities,
+        }
+        self.assertEqual(expected, sched_info)
+
     def test_gateway_chassis_least_loaded_scheduler_anti_affinity(self):
         ovn_client = self.l3_plugin._ovn_client
         ovn_client._ovn_scheduler = l3_sched.OVNGatewayLeastLoadedScheduler()
@@ -364,6 +405,36 @@ class TestRouter(base.TestOVNFunctionalBase):
                         self.assertNotEqual(
                             lrps[n],
                             lrp_list[n])
+
+    def test_gateway_chassis_least_loaded_scheduler_anti_affinity_count(self):
+        ovn_client = self.l3_plugin._ovn_client
+        ovn_client._ovn_scheduler = l3_sched.OVNGatewayLeastLoadedScheduler()
+        ext1 = self._create_ext_network(
+            'ext1', 'flat', 'physnet5', None, "10.10.50.1", "10.10.50.0/24")
+        gw_info = {'network_id': ext1['network']['id']}
+
+        chassis_list = []
+        # first fill a few chassis with normal routers
+        chassis_list.extend(
+            self._add_chassis(0, ovn_const.MAX_GW_CHASSIS * 2, ['physnet5']))
+        for i in range(1, (ovn_const.MAX_GW_CHASSIS * 4) + 1):
+            router = self._create_router('router%d' % i, gw_info=gw_info)
+
+        # now that we have a few chassis with router ports associated,
+        # we can test how many calls to the northbound idl we are using in
+        # in order to create the new routers
+        with mock.patch.object(ovn_client._nb_idl, 'get_lrouter_port',
+            wraps=ovn_client._nb_idl.get_lrouter_port) as nb_glrp:
+            router = self._create_router('router-multi-gw%d' % i)
+            self._add_external_gateways(
+                router['id'],
+                [
+                    {'network_id': ext1['network']['id']},
+                    {'network_id': ext1['network']['id']},
+                    {'network_id': ext1['network']['id']},
+                ])
+            # Ideally we count all calls to nb_idl
+            self.assertLess(nb_glrp.call_count, ovn_const.MAX_GW_CHASSIS)
 
     def _get_gw_port(self, router_id):
         router = self.l3_plugin._get_router(self.context, router_id)
