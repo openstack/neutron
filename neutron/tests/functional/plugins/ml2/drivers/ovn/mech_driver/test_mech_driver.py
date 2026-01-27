@@ -1717,3 +1717,22 @@ class TestHAChassisGroupSync(base.TestOVNFunctionalBase):
                         # chassis.
                         self.assertEqual(master_ch1.chassis_name,
                                          master_ch2.chassis_name)
+
+
+class TestOvsDBConnectionsOverTcp(base.TestOVNFunctionalBase):
+
+    def get_ovsdb_server_protocol(self):
+        return 'tcp'
+
+    def test_connections(self):
+        self.assertIsNotNone(
+            self.mech_driver._nb_ovn.ls_list().execute(check_error=True))
+
+        self.assertIsNotNone(
+            self.mech_driver._sb_ovn.chassis_list().execute(
+                check_error=True))
+
+
+class TestOvsDBConnectionsOverSsl(TestOvsDBConnectionsOverTcp):
+    def get_ovsdb_server_protocol(self):
+        return 'ssl'
