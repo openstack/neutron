@@ -1140,3 +1140,44 @@ def is_iterable_not_string(value):
             not isinstance(value, bytes) and
             not isinstance(value, bytearray) and
             not isinstance(value, str))
+
+
+def find_unique_sequence(groups):
+    """Finds a unique sequence of choices from groups
+
+    Finds a sequence of choices from groups such that no value is
+    repeated in the selection.
+    """
+
+    def backtrack(group_index, current_path):
+        # Base Case: If we have made a choice for every group, we are done!
+        if group_index == len(groups):
+            return current_path
+
+        # Get the options for the current group
+        options = groups[group_index]
+
+        # Try every value in the current group
+        for value in options:
+
+            # --- CONSTRAINT CHECK ---
+            # "Never repeated": Check if value is already in our path.
+            # If you only wanted to check the IMMEDIATE neighbor,
+            # you would change this to: if not current_path or
+            # value != current_path[-1]
+            if value not in current_path:
+
+                # If valid, choose it and move to the next group (recurse)
+                result = backtrack(group_index + 1, current_path + [value])
+
+                # If the recursive call returned a valid result, propagate it
+                # up.
+                if result is not None:
+                    return result
+
+        # If we try all options and none work, return None (trigger
+        # backtracking).
+        return None
+
+    # Start the recursion at group index 0 with an empty path
+    return backtrack(0, [])

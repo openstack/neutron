@@ -785,3 +785,84 @@ class ThreadPoolExecutorWithBlockTestCase(base.BaseTestCase):
         # complete in 2 seconds (2x).
         self.assertTrue(1 < diff_seconds < 2)
         self._check_values(expected_values)
+
+
+class TestFindUniqueSequence(base.BaseTestCase):
+    def test_empty_groups(self):
+        # Empty input should return empty list
+        result = utils.find_unique_sequence([])
+        self.assertEqual([], result)
+
+    def test_single_group_single_value(self):
+        # Single group with one value
+        result = utils.find_unique_sequence([['a']])
+        self.assertEqual(['a'], result)
+
+    def test_single_group_multiple_values(self):
+        # Single group with multiple values - returns first value
+        result = utils.find_unique_sequence([['a', 'b', 'c']])
+        self.assertEqual(['a'], result)
+
+    def test_multiple_groups_no_overlap(self):
+        # Multiple groups with distinct values - straightforward case
+        result = utils.find_unique_sequence([['a'], ['b'], ['c']])
+        self.assertEqual(['a', 'b', 'c'], result)
+
+    def test_multiple_groups_with_overlap_solvable(self):
+        # Groups with overlapping values but a solution exists
+        result = utils.find_unique_sequence(
+            [['a', 'b'], ['b', 'c'], ['c', 'a']])
+        self.assertEqual(['a', 'b', 'c'], result)
+
+    def test_backtracking_required(self):
+        # First choice in group 1 would conflict, requiring backtrack
+        # Group 0 picks 'a', group 1 must pick 'b' (not 'a'),
+        # group 2 must pick 'c'
+        result = utils.find_unique_sequence([['a'], ['a', 'b'], ['b', 'c']])
+        self.assertEqual(['a', 'b', 'c'], result)
+
+    def test_no_solution_all_same_value(self):
+        # All groups have only the same value - no valid sequence
+        result = utils.find_unique_sequence([['a'], ['a'], ['a']])
+        self.assertIsNone(result)
+
+    def test_no_solution_insufficient_unique_values(self):
+        # Not enough unique values across groups
+        result = utils.find_unique_sequence(
+            [['a', 'b'], ['a', 'b'], ['a', 'b']])
+        self.assertIsNone(result)
+
+    def test_complex_backtracking(self):
+        # Requires multiple levels of backtracking
+        # If we pick 'x' first, then 'y', we're stuck at group 2
+        # Need to backtrack and try different combinations
+        groups = [['x', 'a'], ['y', 'x', 'b'], ['x', 'y', 'c']]
+        result = utils.find_unique_sequence(groups)
+        # Verify result is valid: one per group, all unique
+        self.assertIsNotNone(result)
+        self.assertEqual(3, len(result))
+        self.assertEqual(3, len(set(result)))
+        for i, val in enumerate(result):
+            self.assertIn(val, groups[i])
+
+    def test_result_preserves_group_order(self):
+        # Result should have one element from each group in order
+        groups = [['1', '2'], ['3', '4'], ['5', '6']]
+        result = utils.find_unique_sequence(groups)
+        self.assertEqual(3, len(result))
+        self.assertIn(result[0], groups[0])
+        self.assertIn(result[1], groups[1])
+        self.assertIn(result[2], groups[2])
+
+    def test_partial_overlap(self):
+        # Some groups share values, but solution exists
+        groups = [['a', 'b', 'c'], ['b', 'c', 'd'], ['c', 'd', 'e']]
+        result = utils.find_unique_sequence(groups)
+        self.assertIsNotNone(result)
+        self.assertEqual(3, len(result))
+        self.assertEqual(3, len(set(result)))
+
+    def test_single_empty_group_in_list(self):
+        # One of the groups is empty - no solution possible
+        result = utils.find_unique_sequence([['a'], [], ['c']])
+        self.assertIsNone(result)
