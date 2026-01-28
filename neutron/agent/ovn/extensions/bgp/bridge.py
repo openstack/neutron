@@ -17,6 +17,8 @@
 from oslo_log import log
 
 from neutron.agent.common import ovs_lib
+from neutron.common.ovn import constants as ovn_const
+from neutron.services.bgp import constants
 
 LOG = log.getLogger(__name__)
 
@@ -42,7 +44,23 @@ class BGPChassisBridge(Bridge):
     The BGP bridge is the provider bridge that connects a chassis to a BGP
     physical interface connected to a BGP peer, typically a leaf switch.
     """
+    def __init__(self, bgp_agent_api, name):
+        super().__init__(bgp_agent_api, name)
+        self.lrp_mac = self._get_lrp_mac()
+
     def __str__(self):
         return f"BGPChassisBridge(name={self.name})"
 
     __repr__ = __str__
+
+    def _get_lrp_mac(self):
+        ext_ids = {constants.LRP_NETWORK_NAME_EXT_ID_KEY: self.name}
+        port_bindings = self.sb_idl.db_find_rows(
+            'Port_Binding',
+            ('type', '=', ovn_const.PB_TYPE_L3GATEWAY),
+            ('external_ids', '=', ext_ids)).execute(
+                check_error=True)
+        if port_bindings:
+            return port_bindings[0].mac[0].split(' ', 1)[0]
+
+        LOG.debug("LRP MAC does not exist yet for %s", self.name)

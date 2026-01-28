@@ -435,6 +435,7 @@ LS_OPTIONS_BROADCAST_ARPS_ROUTERS = 'broadcast-arps-to-all-routers'
 
 # Port Binding types
 PB_TYPE_VIRTUAL = 'virtual'
+PB_TYPE_L3GATEWAY = 'l3gateway'
 
 HA_CHASSIS_GROUP_DEFAULT_NAME = 'default_ha_chassis_group'
 HA_CHASSIS_GROUP_HIGHEST_PRIORITY = 32767
