@@ -60,7 +60,7 @@ def upgrade():
                       'maximum',
                       ]
 
-    inspect = sa.engine.reflection.Inspector.from_engine(op.get_bind())
+    inspect = sa.inspect(op.get_bind())
     unique_constraints = inspect.get_unique_constraints(TABLE_NAME)
     for unique_constraint in unique_constraints:
         if unique_constraint['name'] == unique_name:
