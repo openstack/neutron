@@ -411,7 +411,7 @@ class OVNClientQosExtension:
                 return  # No QoS policy change
 
         net_name = utils.ovn_name(port['network_id'])
-        ls = self.nb_idl.ls_get(net_name).execute(check_errors=True)
+        ls = self.nb_idl.ls_get(net_name).execute(check_error=True)
         network_type = ls.external_ids[ovn_const.OVN_NETTYPE_EXT_ID_KEY]
         self._update_port_qos_rules(
             context, txn, port['id'], port['network_id'], network_type,
@@ -553,7 +553,7 @@ class OVNClientQosExtension:
         with self.nb_idl.transaction(check_error=True) as txn:
             for network_id in bound_networks:
                 ls = self._nb_idl.ls_get(utils.ovn_name(network_id)).execute(
-                    check_errors=True)
+                    check_error=True)
                 net_type = ls.external_ids[ovn_const.OVN_NETTYPE_EXT_ID_KEY]
                 network = {'qos_policy_id': policy.id,
                            'id': network_id,

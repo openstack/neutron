@@ -1851,13 +1851,13 @@ class OVNClient:
         try:
             return self._nb_idl.lrp_get(
                 utils.ovn_lrouter_port_name(port_id)).execute(
-                check_errors=True)
+                check_error=True)
         except idlutils.RowNotFound:
             return
 
     def get_router_gateway_ports(self, router_id):
         lrps = self._nb_idl.lrp_list(utils.ovn_name(router_id)).execute(
-            check_errors=True)
+            check_error=True)
         return [lrp for lrp in lrps if
                 strutils.bool_from_string(
                     lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW))]

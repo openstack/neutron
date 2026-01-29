@@ -936,7 +936,7 @@ class TestSecurityGroups(base.TestOVNFunctionalBase):
         # Retrieve the ACL UUIDs before deleting the Port_Group; this operation
         # will also delete the associated ACLs.
         pg_name = utils.ovn_port_group_name(sg['id'])
-        pg = self.nb_api.pg_get(pg_name).execute(check_errors=True)
+        pg = self.nb_api.pg_get(pg_name).execute(check_error=True)
         acl_uuids = [acl.uuid for acl in pg.acls]
         self._delete('security-groups', sg['id'])
         self.assertIsNone(rev_db.get_revision_row(self.context, sg['id']))
