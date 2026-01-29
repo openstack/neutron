@@ -64,6 +64,9 @@ at [1]_.
   ML2/OVN backend.
   This is being reported in [8]_.
 
+* QoS packet rate limit and minimum packet rate rules are not supported
+  :doc:`Quality of Service (QoS) <../admin/config-qos>`.
+
 References
 ----------
 
