@@ -47,25 +47,11 @@ at [1]_.
   traffic using an OVN router between two private networks. This is being
   tracked in [5]_ and [6]_.
 
-* North/South Fragmentation and path MTU discovery
-
-  OVN does not correctly fragment IPv4 packets when the MTU of the target
-  network is smaller than the MTU of the source network. Instead, affected
-  packets could be silently dropped depending on the direction. OVN will
-  also not generate ICMP "packet too big" responses for packets that have
-  the DF bit set, even when the necessary configuration option is used
-  in ``ml2_conf.ini``::
-
-    [ovn]
-    ovn_emit_need_to_frag = true
-
-  This makes path MTU discovery fail, and is being tracked in [5]_ and [7]_.
-
 * Traffic metering
 
   Currently ``neutron-metering-agent`` can only work with the Neutron L3 agent.
   It is not supported by the ``ovn-router`` service plugin nor by the
-  ``neutron-ovn-agent``. This is being reported and tracked in [8]_.
+  ``neutron-ovn-agent``. This is being reported and tracked in [7]_.
 
 * Floating IP Port Forwarding in provider networks and with distributed routing
 
@@ -76,7 +62,7 @@ at [1]_.
   Due to an incompatible setting of the router to make traffic in the vlan/flat
   networks to be distributed but port forwardings are always centralized in
   ML2/OVN backend.
-  This is being reported in [9]_.
+  This is being reported in [8]_.
 
 References
 ----------
@@ -87,6 +73,5 @@ References
 .. [4] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
 .. [5] https://bugs.launchpad.net/neutron/+bug/2032817
 .. [6] https://bugzilla.redhat.com/show_bug.cgi?id=2238494
-.. [7] https://bugzilla.redhat.com/show_bug.cgi?id=2238969
-.. [8] https://bugs.launchpad.net/neutron/+bug/2048773
-.. [9] https://bugs.launchpad.net/neutron/+bug/2028846
+.. [7] https://bugs.launchpad.net/neutron/+bug/2048773
+.. [8] https://bugs.launchpad.net/neutron/+bug/2028846
