@@ -2919,29 +2919,32 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.assertEqual(set(), hcg_info.ignore_chassis)
 
     def _build_hcg_info(self, with_az=False, with_ignore_chassis=False,
-                        network_id=None):
+                        network_id=None, num_chassis=4):
+        assert num_chassis >= 4
         az_hints = []
+        chassis_list = []
         if with_az:
             az_hints = ['az0', 'az1']
-            ch0 = fakes.FakeChassis.create(attrs={'name': 'ch0'},
-                                           az_list=['az0', 'az1'])
-            ch1 = fakes.FakeChassis.create(attrs={'name': 'ch1'},
-                                           az_list=['az2'])
-            ch2 = fakes.FakeChassis.create(attrs={'name': 'ch2'},
-                                           az_list=['az3', 'az0'])
-            ch3 = fakes.FakeChassis.create(attrs={'name': 'ch3'},
-                                           az_list=['az1'])
+            chassis_list.append(fakes.FakeChassis.create(
+                attrs={'name': 'ch0'}, az_list=['az0', 'az1']))
+            chassis_list.append(fakes.FakeChassis.create(
+                attrs={'name': 'ch1'}, az_list=['az2']))
+            chassis_list.append(fakes.FakeChassis.create(
+                attrs={'name': 'ch2'}, az_list=['az3', 'az0']))
+            chassis_list.append(fakes.FakeChassis.create(
+                attrs={'name': 'ch3'}, az_list=['az1']))
+            for idx in range(len(chassis_list), num_chassis):
+                chassis_list.append(fakes.FakeChassis.create(
+                    attrs={'name': f'ch{idx}'}))
         else:
-            ch0 = fakes.FakeChassis.create(attrs={'name': 'ch0'})
-            ch1 = fakes.FakeChassis.create(attrs={'name': 'ch1'})
-            ch2 = fakes.FakeChassis.create(attrs={'name': 'ch2'})
-            ch3 = fakes.FakeChassis.create(attrs={'name': 'ch3'})
-
-        chassis_list = [ch0, ch1, ch2, ch3]
+            for idx in range(num_chassis):
+                chassis_list.append(fakes.FakeChassis.create(
+                    attrs={'name': f'ch{idx}'}))
 
         ignore_chassis = set()
         if with_ignore_chassis:
-            ignore_chassis = {ch1.name, ch2.name}
+            ignore_chassis = {chassis_list[1].name,
+                              chassis_list[2].name}
         group_name = (ovn_utils.ovn_name(network_id) if network_id else
                       'fake-hcg-name')
 
@@ -3198,6 +3201,40 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         ]
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             add_calls, any_order=True)
+
+    def test__sync_ha_chassis_group_excess_hc_in_hcg(self):
+        network_id = uuidutils.generate_uuid()
+        hcg_info = self._build_hcg_info(network_id=network_id,
+                                        num_chassis=8)
+        max_prio = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+        chassis_prio = {
+            'ch0': max_prio, 'ch1': max_prio - 1,
+            'ch2': max_prio - 2, 'ch3': max_prio - 3,
+            'ch4': max_prio - 4, 'ch5': max_prio - 5,
+            'ch6': max_prio - 6, 'ch7': max_prio - 7,
+        }
+        hcg = self._create_fake_hcg(hcg_info.group_name, chassis_prio,)
+        self.nb_ovn.lookup.return_value = hcg
+        hcg_uuid, prio_chassis = ovn_utils._sync_ha_chassis_group(
+            self.nb_ovn, hcg_info, mock.Mock())
+
+        self.assertEqual(hcg.uuid, hcg_uuid)
+        self.assertEqual(prio_chassis, 'ch0')
+        del_calls = [
+            mock.call(hcg_info.group_name, 'ch5', if_exists=True),
+            mock.call(hcg_info.group_name, 'ch6', if_exists=True),
+            mock.call(hcg_info.group_name, 'ch7', if_exists=True),
+        ]
+        self.nb_ovn.ha_chassis_group_del_chassis.assert_has_calls(
+            del_calls, any_order=True)
+        add_calls = [
+            mock.call(hcg_info.group_name, 'ch0', priority=max_prio),
+            mock.call(hcg_info.group_name, 'ch1', priority=max_prio - 1),
+            mock.call(hcg_info.group_name, 'ch2', priority=max_prio - 2),
+            mock.call(hcg_info.group_name, 'ch3', priority=max_prio - 3),
+            mock.call(hcg_info.group_name, 'ch4', priority=max_prio - 4),
+        ]
+        self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(add_calls)
 
     @mock.patch.object(mech_driver, 'LOG')
     def test_responsible_for_ports_allocation(self, mock_log):
