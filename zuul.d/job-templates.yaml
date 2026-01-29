@@ -47,7 +47,6 @@
     experimental:
       jobs:
         - neutron-ovn-grenade-multinode
-        - neutron-ovn-tempest-with-uwsgi-loki
         - tempest-integrated-networking:
             irrelevant-files:
               - ^\.pylintrc$
