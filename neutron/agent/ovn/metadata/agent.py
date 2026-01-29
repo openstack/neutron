@@ -14,7 +14,6 @@
 
 import collections
 import functools
-import re
 import secrets
 import threading
 import uuid
@@ -47,7 +46,6 @@ _SYNC_STATE_LOCK = threading.RLock()
 CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
 NS_PREFIX = ovn_const.OVN_METADATA_PREFIX
-MAC_PATTERN = re.compile(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})', re.I)
 OVN_VIF_PORT_TYPES = (
     "", ovn_const.LSP_TYPE_EXTERNAL, ovn_const.LSP_TYPE_LOCALPORT)
 
@@ -631,11 +629,10 @@ class MetadataAgent:
             LOG.warning("Port %s MAC column is empty, cannot retrieve IP "
                         "addresses", port.uuid)
             return []
-        mac_field_attrs = port.mac[0].split()
-        ips = mac_field_attrs[1:]
+        mac, ips = ovn_utils.get_mac_and_ips_from_port_binding(port)
         if not ips:
             LOG.debug("Port %s IP addresses were not retrieved from the "
-                      "Port_Binding MAC column %s", port.uuid, mac_field_attrs)
+                      "Port_Binding MAC column %s", port.uuid, port.mac)
         ip4_ips = []
         any_ip6 = False
         for ip in ips:
@@ -717,15 +714,16 @@ class MetadataAgent:
             return
 
         # First entry of the mac field must be the MAC address.
-        match = MAC_PATTERN.match(metadata_port.mac[0].split(' ')[0])
-        if not match:
+        try:
+            mac, ips = ovn_utils.get_mac_and_ips_from_port_binding(
+                metadata_port)
+        except ValueError:
             LOG.error("Metadata port for network %s doesn't have a MAC "
                       "address, tearing the namespace down if needed",
                       net_name)
             self.teardown_datapath(net_name)
             return
 
-        mac = match.group()
         ip_addresses = set(
             metadata_port.external_ids[
                 ovn_const.OVN_CIDRS_EXT_ID_KEY].split(' '))

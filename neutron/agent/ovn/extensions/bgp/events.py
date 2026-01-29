@@ -19,6 +19,7 @@ from ovsdbapp.backend.ovs_idl import event as row_event
 from neutron._i18n import _
 from neutron.agent.ovn.agent import ovsdb
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.services.bgp import constants
 
 LOG = log.getLogger(__name__)
@@ -185,16 +186,15 @@ class PortBindingLrpMacEvent(BGPAgentEvent):
         if constants.LRP_NETWORK_NAME_EXT_ID_KEY not in row.external_ids:
             return False
         try:
-            # Only check if the MAC is populated
-            row.mac[0].split(' ', 1)[0]
-        except IndexError:
-            LOG.error("Failed to get MAC address from port binding %s",
-                      row)
+            ovn_utils.get_mac_and_ips_from_port_binding(row)
+        except ValueError as ve:
+            LOG.error("Failed to get MAC address from port binding %s: %s",
+                      row, ve)
             return False
         return True
 
     def run(self, event, row, old):
-        lrp_mac = row.mac[0].split(' ', 1)[0]
+        lrp_mac = ovn_utils.get_mac_and_ips_from_port_binding(row)[0]
         network_name = row.external_ids[constants.LRP_NETWORK_NAME_EXT_ID_KEY]
         try:
             bridge = self.bgp_agent.bgp_bridges[network_name]
