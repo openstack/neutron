@@ -503,7 +503,6 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                                  dhcp_options.options['wpad'])
 
     def _create_router_with_subnets_and_gw(self, num_private_subnets):
-        num_private_subnets = 5
         net_arg = {provider_net.NETWORK_TYPE: 'geneve',
                    external_net.EXTERNAL: True}
         with self.network('external', as_admin=True,
