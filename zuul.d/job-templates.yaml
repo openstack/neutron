@@ -51,7 +51,6 @@
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
         - neutron-ovn-grenade-multinode
-        - neutron-ovn-tempest-with-uwsgi-loki
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
         - neutron-ovn-tempest-postgres-full
