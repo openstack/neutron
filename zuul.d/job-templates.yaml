@@ -55,7 +55,6 @@
         - neutron-ovn-grenade-multinode
         - neutron-ovn-grenade-multinode-tick-tick:
             voting: false
-        - neutron-ovn-tempest-with-uwsgi-loki
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
         - neutron-ovn-tempest-postgres-full
