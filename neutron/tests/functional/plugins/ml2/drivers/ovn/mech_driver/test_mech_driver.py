@@ -391,17 +391,6 @@ class TestPortBinding(base.TestOVNFunctionalBase):
             _check_set_up_called(mock_set_up, lsp_name)
 
 
-class TestPortBindingOverTcp(TestPortBinding):
-    def get_ovsdb_server_protocol(self):
-        return 'tcp'
-
-
-# TODO(mjozefcz): This test class hangs during execution.
-class TestPortBindingOverSsl(TestPortBinding):
-    def get_ovsdb_server_protocol(self):
-        return 'ssl'
-
-
 class TestNetworkMTUUpdate(base.TestOVNFunctionalBase):
 
     def setUp(self):

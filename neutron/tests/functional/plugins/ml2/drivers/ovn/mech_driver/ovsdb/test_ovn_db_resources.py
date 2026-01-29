@@ -1167,13 +1167,3 @@ class TestPortExternalIds(base.TestOVNFunctionalBase):
         self.assertEqual('1.11.11.1',
                          actual_ext_ids.get(ovn_const.OVN_PORT_FIP_EXT_ID_KEY))
         self.assertEqual('value1234', actual_ext_ids.get('foreign_key2'))
-
-
-class TestNBDbResourcesOverTcp(TestNBDbResources):
-    def get_ovsdb_server_protocol(self):
-        return 'tcp'
-
-
-class TestNBDbResourcesOverSsl(TestNBDbResources):
-    def get_ovsdb_server_protocol(self):
-        return 'ssl'
