@@ -16,7 +16,6 @@ import functools
 import inspect
 import os
 import random
-import re
 import typing
 
 import netaddr
@@ -66,8 +65,6 @@ BPInfo = collections.namedtuple(
     'BPInfo', ['bp_param', 'vnic_type', 'capabilities'])
 
 _OVS_PERSIST_UUID = _SENTINEL = object()
-
-MAC_PATTERN = re.compile(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$', re.IGNORECASE)
 
 
 class HAChassisGroupInfo:
@@ -1538,7 +1535,6 @@ def get_mac_and_ips_from_port_binding(port_binding):
         mac = mac_list[0]
     except IndexError:
         raise ValueError(_("mac column is empty"))
-    match = MAC_PATTERN.match(mac)
-    if not match:
+    if not netaddr.valid_mac(mac):
         raise ValueError(_("Invalid MAC address: %s"), mac)
     return mac, mac_list[1:]
