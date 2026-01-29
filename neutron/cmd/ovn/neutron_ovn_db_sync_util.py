@@ -15,6 +15,7 @@
 import copy
 
 from neutron_lib.agent import topics
+from neutron_lib.ovn import db_sync as db_sync_base
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_db import options as db_options
@@ -30,7 +31,6 @@ from neutron import manager
 from neutron import opts as neutron_options
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2 import plugin as ml2_plugin
 
@@ -158,10 +158,10 @@ def setup_conf():
 def _load_drivers(entry_point, driver_name=None):
 
     def load_driver(ext):
-        if not issubclass(ext.plugin, ovn_db_sync.BaseOvnDbSynchronizer):
+        if not issubclass(ext.plugin, db_sync_base.BaseOvnDbSynchronizer):
             LOG.error("Extension '%s' is not an instance of "
                       "%s and will not be loaded",
-                      ext.name, ovn_db_sync.BaseOvnDbSynchronizer)
+                      ext.name, db_sync_base.BaseOvnDbSynchronizer)
             return False
         if driver_name is None:
             return True
