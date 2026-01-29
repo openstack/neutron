@@ -672,26 +672,28 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def get_subnet_dhcp_options(self, subnet_id, with_ports=False):
         subnet = {}
         ports = []
-        for row in self._tables['DHCP_Options'].rows.values():
-            external_ids = getattr(row, 'external_ids', {})
-            if subnet_id == external_ids.get('subnet_id'):
-                port_id = external_ids.get('port_id')
-                if with_ports and port_id:
-                    ports.append(self._format_dhcp_row(row))
-                elif not port_id:
-                    subnet = self._format_dhcp_row(row)
-                    if not with_ports:
-                        break
+        for row in self.db_find_rows(
+                'DHCP_Options',
+                ('external_ids', '=', {'subnet_id': subnet_id})
+                ).execute(check_error=True):
+            port_id = row.external_ids.get('port_id')
+            if with_ports and port_id:
+                ports.append(self._format_dhcp_row(row))
+            elif not port_id:
+                subnet = self._format_dhcp_row(row)
+                if not with_ports:
+                    break
         return {'subnet': subnet, 'ports': ports}
 
     def get_subnets_dhcp_options(self, subnet_ids):
         ret_opts = []
-        for row in self._tables['DHCP_Options'].rows.values():
-            external_ids = getattr(row, 'external_ids', {})
-            if (external_ids.get('subnet_id') in subnet_ids and not
-                    external_ids.get('port_id')):
-                ret_opts.append(self._format_dhcp_row(row))
-                if len(ret_opts) == len(subnet_ids):
+        for subnet_id in subnet_ids:
+            for row in self.db_find_rows(
+                    'DHCP_Options',
+                    ('external_ids', '=', {'subnet_id': subnet_id})
+                    ).execute(check_error=True):
+                if not row.external_ids.get('port_id'):
+                    ret_opts.append(self._format_dhcp_row(row))
                     break
         return ret_opts
 
