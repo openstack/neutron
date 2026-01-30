@@ -45,7 +45,6 @@ from neutron.objects import router as router_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as qos_extension
 from neutron import service
-from neutron.services.logapi.drivers.ovn import driver as log_driver
 
 
 CONF = cfg.CONF
@@ -885,11 +884,9 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         driver after the OVN NB idl is loaded
 
         """
-        if log_driver.OVNDriver.network_logging_supported(self._nb_idl):
-            meter_name = (
-                cfg.CONF.network_log.local_output_log_base or "acl_log_meter")
-            self._ovn_client.create_ovn_fair_meter(meter_name,
-                                                   from_reload=True)
+        meter_name = (
+            cfg.CONF.network_log.local_output_log_base or "acl_log_meter")
+        self._ovn_client.create_ovn_fair_meter(meter_name, from_reload=True)
         raise periodics.NeverAgain()
 
     @has_lock_periodic(spacing=86400, run_immediately=True)

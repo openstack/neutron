@@ -10,11 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from unittest import mock
-
 from neutron_lib import constants as n_const
 from neutron_lib import context
-from neutron_lib import exceptions
 from neutron_lib.services.logapi import constants as log_const
 
 from neutron.common.ovn import constants as ovn_const
@@ -27,14 +24,7 @@ class LogApiTestCaseBase(functional_base.TestOVNFunctionalBase):
     def setUp(self):
         super().setUp()
         self.log_driver = self.mech_driver.log_driver
-        self._check_is_supported()
         self.ctxt = context.Context('admin', self._project_id)
-
-    def _check_is_supported(self):
-        if not self.log_driver.network_logging_supported(self.nb_api):
-            self.skipTest("The current OVN version does not offer support "
-                          "for neutron network log functionality.")
-        self.assertIsNotNone(self.log_plugin)
 
     def _log_data(self, sg_id=None, port_id=None, enabled=True):
         log_data = {'project_id': self.ctxt.project_id,
@@ -61,16 +51,6 @@ class LogApiTestCaseSimple(LogApiTestCaseBase):
         log_objs_get = self.log_plugin.get_logs(self.ctxt)
         log_objs_ids = {x['id'] for x in log_objs_get}
         self.assertEqual({log_obj['id'], log_obj2['id']}, log_objs_ids)
-
-    def test_log_ovn_unsupported(self):
-        with mock.patch.object(self.log_driver, 'network_logging_supported',
-                               return_value=False) as supported_mock:
-            log_data = {'log': {'resource_type': 'security_group',
-                                'enabled': True}}
-            self.assertRaises(exceptions.DriverCallError,
-                              self.log_plugin.create_log,
-                              self.ctxt, log_data)
-            supported_mock.assert_called_once()
 
 
 class LogApiTestCaseComplex(LogApiTestCaseBase):

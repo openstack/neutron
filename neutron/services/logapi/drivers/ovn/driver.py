@@ -63,11 +63,6 @@ class OVNDriver(base.DriverBase):
         self.meter_name = (
             cfg.CONF.network_log.local_output_log_base or "acl_log_meter")
 
-    @staticmethod
-    def network_logging_supported(ovn_nb):
-        columns = list(ovn_nb._tables["Meter"].columns)
-        return ("fair" in columns)
-
     @classmethod
     def create(cls, plugin_driver):
         cls.plugin_driver = plugin_driver
@@ -300,9 +295,6 @@ class OVNDriver(base.DriverBase):
         :param log_obj: a log object being created
         """
         LOG.debug("Create_log_precommit %s", log_obj)
-
-        if not self.network_logging_supported(self.ovn_nb):
-            raise LoggingNotSupported()
 
     def _unset_disabled_acls(self, context, log_obj, ovn_txn):
         """Check if we need to disable any ACLs after an update.
