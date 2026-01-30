@@ -1461,7 +1461,7 @@ class TestMaintenance(_TestMaintenanceHelper):
             self.maint.update_qos_fip_rule_priority)
 
         for qos_rule in self.nb_api.qos_list(ls_name).execute(
-                check_errors=True):
+                check_error=True):
             if qos_rule.external_ids.get(ovn_const.OVN_FIP_EXT_ID_KEY):
                 self.assertEqual(fip_prio, qos_rule.priority)
             else:

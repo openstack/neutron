@@ -350,7 +350,7 @@ class TestOVNClient(base.TestOVNFunctionalBase,
 
         for router in routers:
             lr_name = ovn_utils.ovn_name(router['router']['id'])
-            lrp = self.nb_api.lrp_list(lr_name).execute(check_errors=True)[0]
+            lrp = self.nb_api.lrp_list(lr_name).execute(check_error=True)[0]
             self.assertEqual(1400, int(lrp.options['gateway_mtu']))
 
         # Add to every router a new internal subnet. That must update the
@@ -361,7 +361,7 @@ class TestOVNClient(base.TestOVNFunctionalBase,
             self._router_interface_action(
                 'add', router['router']['id'], subnet['subnet']['id'],
                 None)
-            lrps = self.nb_api.lrp_list(lr_name).execute(check_errors=True)
+            lrps = self.nb_api.lrp_list(lr_name).execute(check_error=True)
             for lrp in lrps:
                 if strutils.bool_from_string(
                         lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW]):
@@ -377,7 +377,7 @@ class TestOVNClient(base.TestOVNFunctionalBase,
             self._router_interface_action(
                 'remove', router['router']['id'], subnet['subnet']['id'],
                 None)
-            lrps = self.nb_api.lrp_list(lr_name).execute(check_errors=True)
+            lrps = self.nb_api.lrp_list(lr_name).execute(check_error=True)
             for lrp in lrps:
                 if strutils.bool_from_string(
                         lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW]):
