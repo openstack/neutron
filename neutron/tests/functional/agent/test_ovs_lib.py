@@ -289,6 +289,17 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         ifaces = {self.create_ovs_port()[0] for i in range(5)}
         self.assertSetEqual(ifaces, set(self.br.get_iface_name_list()))
 
+    def test_get_iface_ofports_by_type(self):
+        internal_port_ofport = self.create_ovs_port()[1]
+        patch_port_ofport = self.create_ovs_port(('type', 'patch'))[1]
+        observed_internal_ofports = self.br.get_iface_ofports_by_type(
+            'internal')
+        observed_patch_ofports = self.br.get_iface_ofports_by_type(
+            'patch')
+        self.assertCountEqual(
+            observed_internal_ofports, [internal_port_ofport])
+        self.assertCountEqual(observed_patch_ofports, [patch_port_ofport])
+
     def test_get_port_stats(self):
         # Nothing seems to use this function?
         (port_name, ofport) = self.create_ovs_port()

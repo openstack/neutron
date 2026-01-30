@@ -209,3 +209,30 @@ class BGPExtensionTestCase(test_ovn_neutron_agent.TestOVNNeutronAgentBase):
         bgp_bridge = self.bgp_ext.create_bgp_bridge(bridge_name)
 
         self.assertEqual(mac, bgp_bridge.lrp_mac)
+
+    def test_watch_patch_port_created_event(self):
+        bgp_bridge = self._add_bgp_bridge('ovn-br-bgp')
+        self.bgp_ext.watch_port_created_event(bgp_bridge, 'patch')
+
+        self.ovn_agent.ovs_idl.add_port(
+            'ovn-br-bgp', 'ovn-port-bgp', type='patch').execute(
+                check_error=True)
+
+        utils.wait_until_true(
+            lambda: bgp_bridge.patch_port_ofport is not None,
+            timeout=5,
+            exception=Exception(
+                "Patch port ofport was not configured"))
+
+    def test_creating_bgp_bridge_with_existing_patch_port(self):
+        bridge_name = 'ovn-br-bgp'
+        bgp_bridge = self._add_bgp_bridge(bridge_name)
+        self.ovn_agent.ovs_idl.add_port(
+            bridge_name, 'ovn-port-bgp', type='patch').execute(
+                check_error=True)
+
+        del self.bgp_ext.bgp_bridges[bridge_name]
+
+        bgp_bridge = self.bgp_ext.create_bgp_bridge(bridge_name)
+
+        self.assertIsNotNone(bgp_bridge.patch_port_ofport)
