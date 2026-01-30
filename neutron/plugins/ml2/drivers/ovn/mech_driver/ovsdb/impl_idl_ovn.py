@@ -367,8 +367,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                         columns['logical_port'] = nat.logical_port[0]
                     columns['external_ids'] = nat.external_ids
                     columns['uuid'] = nat.uuid
-                    if utils.is_nat_gateway_port_supported(self):
-                        columns['gateway_port'] = nat.gateway_port
+                    columns['gateway_port'] = nat.gateway_port
                     dnat_and_snats.append(columns)
                 elif nat.type == 'snat':
                     snat.append(columns)

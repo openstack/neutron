@@ -1611,11 +1611,7 @@ class TestNATRuleGatewayPort(_TestRouter):
 
         rules = self.nb_api.get_all_logical_routers_with_rports()[0]
         fip_rule = rules['dnat_and_snats'][0]
-
-        if utils.is_nat_gateway_port_supported(self.nb_api):
-            self.assertNotEqual([], fip_rule['gateway_port'])
-        else:
-            self.assertNotIn('gateway_port', fip_rule)
+        self.assertNotEqual([], fip_rule['gateway_port'])
 
 
 class TestRouterGWPort(_TestRouter):

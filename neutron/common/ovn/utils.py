@@ -1469,10 +1469,6 @@ def get_requested_chassis(requested_chassis):
     return []
 
 
-def is_nat_gateway_port_supported(idl):
-    return idl.is_col_present('NAT', 'gateway_port')
-
-
 def is_ovn_provider_router(router):
     flavor_id = router.get('flavor_id')
     return flavor_id is None or flavor_id is const.ATTR_NOT_SPECIFIED

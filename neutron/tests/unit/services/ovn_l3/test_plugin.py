@@ -350,9 +350,6 @@ class BaseTestOVNL3RouterPluginMixin:
             'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client.'
             'OVNClient.delete_mac_binding_entries_by_mac',
             return_value=1)
-        self._start_mock(
-            'neutron.common.ovn.utils.is_nat_gateway_port_supported',
-            return_value=False)
         self._get_router_gw_ports = self._start_mock(
             'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client.'
             'OVNClient._get_router_gw_ports',
@@ -1406,7 +1403,6 @@ class BaseTestOVNL3RouterPluginMixin:
         _nb_ovn.get_lrouter_nat_rules.return_value = [
             {'external_ip': '192.168.0.10', 'logical_ip': '10.0.0.0/24',
              'type': 'snat', 'uuid': 'uuid1'}]
-        utils.is_nat_gateway_port_supported.return_value = is_gw_port
         lrp_options = {}
         if is_gw_port:
             lrp_options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = 'true'
