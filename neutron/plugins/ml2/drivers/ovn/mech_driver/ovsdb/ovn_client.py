@@ -510,26 +510,25 @@ class OVNClient:
         options = copy.deepcopy(options)
         chassis = utils.determine_bind_host(self._sb_idl, port)
         if chassis:
-            # If OVN supports multi-chassis port bindings, use it for live
-            # migration to asynchronously configure destination port while
-            # VM is migrating
-            if utils.is_additional_chassis_supported(self._sb_idl):
-                mdst = port.get(
-                    portbindings.PROFILE, {}).get(ovn_const.MIGRATING_ATTR)
-                if mdst:
-                    # Let OVN know that the port should be configured on
-                    # destination too
-                    chassis += ',%s' % mdst
-                    # Block traffic on destination host until libvirt sends
-                    # a RARP packet from it to inform network about the new
-                    # location of the port
-                    # TODO(ihrachys) Remove this once OVN properly supports
-                    # activation of DPDK ports (bug 2092407)
-                    if (port[portbindings.VIF_TYPE] !=
-                            portbindings.VIF_TYPE_VHOST_USER):
-                        strategy = ovn_conf.get_ovn_lm_activation_strategy()
-                        if strategy:
-                            options['activation-strategy'] = strategy
+            # Since version 22.09.0, OVN supports multi-chassis port bindings,
+            # used it for live migration to asynchronously configure
+            # destination port while VM is migrating.
+            mdst = port.get(
+                portbindings.PROFILE, {}).get(ovn_const.MIGRATING_ATTR)
+            if mdst:
+                # Let OVN know that the port should be configured on
+                # destination too
+                chassis += ',%s' % mdst
+                # Block traffic on destination host until libvirt sends
+                # a RARP packet from it to inform network about the new
+                # location of the port
+                # TODO(ihrachys) Remove this once OVN properly supports
+                # activation of DPDK ports (bug 2092407)
+                if (port[portbindings.VIF_TYPE] !=
+                        portbindings.VIF_TYPE_VHOST_USER):
+                    strategy = ovn_conf.get_ovn_lm_activation_strategy()
+                    if strategy:
+                        options['activation-strategy'] = strategy
             options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = chassis
         return options
 

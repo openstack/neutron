@@ -2066,28 +2066,13 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             portbindings.HOST_ID: 'fake-src',
             portbindings.PROFILE: {
                 ovn_const.MIGRATING_ATTR: 'fake-dest',
-            }
+            },
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
         }
         options = self.mech_driver._ovn_client._get_port_options(
             self.context, port)
-        self.assertEqual('fake-src', options.options['requested-chassis'])
-
-    def test__get_port_options_migrating_additional_chassis_missing(self):
-        port = {
-            'id': 'virt-port',
-            'mac_address': '00:00:00:00:00:00',
-            'device_owner': 'device_owner',
-            'network_id': 'foo',
-            'fixed_ips': [],
-            portbindings.HOST_ID: 'fake-src',
-            portbindings.PROFILE: {
-                ovn_const.MIGRATING_ATTR: 'fake-dest',
-            }
-        }
-        options = self.mech_driver._ovn_client._get_port_options(
-            self.context, port)
-        self.assertNotIn('activation-strategy', options.options)
-        self.assertEqual('fake-src', options.options['requested-chassis'])
+        self.assertEqual('fake-src,fake-dest',
+                         options.options['requested-chassis'])
 
     def test__get_port_options_migrating_additional_chassis_present(self):
         port = {
@@ -2102,11 +2087,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             },
             portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
         }
-        with mock.patch.object(
-                self.mech_driver._ovn_client._sb_idl, 'is_col_present',
-                return_value=True):
-            options = self.mech_driver._ovn_client._get_port_options(
-                self.context, port)
+        options = self.mech_driver._ovn_client._get_port_options(
+            self.context, port)
         self.assertEqual('rarp', options.options['activation-strategy'])
         self.assertEqual('fake-src,fake-dest',
                          options.options['requested-chassis'])

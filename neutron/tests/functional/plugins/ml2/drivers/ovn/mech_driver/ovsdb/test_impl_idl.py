@@ -14,7 +14,6 @@
 
 from collections import abc
 import copy
-from unittest import mock
 import uuid
 
 import netaddr
@@ -36,7 +35,6 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb \
     import impl_idl_ovn as impl
 from neutron.services.portforwarding import constants as pf_const
 from neutron.tests.functional import base as n_base
-from neutron.tests.functional.common import ovn as ovn_common
 from neutron.tests.functional.resources.ovsdb import events
 
 OWNER = ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY
@@ -236,7 +234,6 @@ class TestSbApi(BaseOvnIdlTest):
 
         self.assertEqual(expected, result)
 
-    @ovn_common.skip_if_additional_chassis_not_supported('api')
     def test_get_ports_on_chassis_with_additional_chassis(self):
         chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
         port, binding = self._add_port_to_switch(switch)
@@ -248,21 +245,6 @@ class TestSbApi(BaseOvnIdlTest):
             chassis=[chassis, chassis2],
             bindings=[binding, binding2],
             expected=[binding, binding2])
-
-    def test_get_ports_on_chassis_with_additional_chassis_not_supported(self):
-        chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
-        port, binding = self._add_port_to_switch(switch)
-        chassis2, switch2 = self._add_switch(self.data['chassis'][1]['name'])
-        port2, binding2 = self._add_port_to_switch(switch2)
-
-        with mock.patch(
-                'neutron.common.ovn.utils.is_additional_chassis_supported',
-                return_value=False):
-            self._test_get_ports_on_chassis_with_additional_chassis(
-                ports=[port, port2],
-                chassis=[chassis, chassis2],
-                bindings=[binding, binding2],
-                expected=[binding])
 
 
 class TestNbApi(BaseOvnIdlTest):

@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Since v22.09.0, OVN supports the new column
+    ``Port_Binding.additional_chassis``. It is no longer needed to check
+    its presence.
