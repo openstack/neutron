@@ -259,8 +259,10 @@ class OVNGatewayLeastLoadedScheduler(TestOVNGatewayScheduler):
         gateway_name = self.new_gateway_name
         chassis = self.select(mapping, gateway_name, chassis_and_azs,
                               candidates=mapping['Chassis'])
-        # hv1 will have least priority
-        self.assertEqual(chassis[2], 'hv1')
+        # hv3 will have highest priority
+        self.assertEqual(chassis[0], 'hv3')
+        self.assertIn(chassis[1], ['hv1', 'hv2', 'hv3'])
+        self.assertIn(chassis[2], ['hv1', 'hv2', 'hv3'])
 
     def test_least_loaded_chassis_available_for_new_gateway3(self):
         mapping = self.fake_chassis_gateway_mappings['Multiple3']

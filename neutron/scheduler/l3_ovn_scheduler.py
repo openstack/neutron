@@ -20,6 +20,7 @@ from oslo_log import log
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.common import utils as common_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 
 
@@ -194,16 +195,25 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
             anti_affinity_score = (ovn_const.MAX_GW_CHASSIS *
                                    len(target_lrouter.ports))
 
+        # ``leastloaded_chassis`` will contain, in decreasing order, a list of
+        # groups of chassis that are the least loaded chassis for each
+        # priority. E.g.: [(ch1, ch2),  # prio3
+        #                  (ch3, ch2),  # prio2
+        #                  (ch1, ch3)]  # prio1
+        # ``discarded_by_priority`` will contain the other chassis discarded
+        # in the same priority.
+        leastloaded_by_priority = []
+        discarded_by_priority = []
         for priority in priorities:
             chassis_load = {}
             for chassis, lrps in all_chassis_bindings.items():
-                if chassis in selected_chassis:
-                    continue
                 lrps_with_prio = 0
                 for lrp, prio in lrps:
                     if prio == priority:
                         lrps_with_prio += 1
 
+                # If the chassis is already hosting another LRP, increase the
+                # load value adding ``anti_affinity_score``.
                 if chassis in chassis_hosting_lr:
                     chassis_load[chassis] = (lrps_with_prio +
                                              anti_affinity_score)
@@ -211,11 +221,27 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
                     chassis_load[chassis] = lrps_with_prio
             if len(chassis_load) == 0:
                 break
+
             leastload = min(chassis_load.values())
-            chassis = secrets.SystemRandom().choice(
-                [chassis for chassis, load in chassis_load.items()
-                 if load == leastload])
-            selected_chassis.append(chassis)
+            # Store only the least loaded chassis.
+            leastloaded_set = {chassis for chassis, load in
+                               chassis_load.items() if load == leastload}
+            leastloaded_by_priority.append(leastloaded_set)
+            discarded_by_priority.append(set(chassis_load) - leastloaded_set)
+
+        selected_chassis = common_utils.find_unique_sequence(
+            leastloaded_by_priority)
+
+        if not selected_chassis:
+            # This loop will add the discarded chassis to the lower priorities,
+            # in order.
+            for idx in reversed(range(len(priorities))):
+                leastloaded_by_priority[idx] |= discarded_by_priority[idx]
+                selected_chassis = common_utils.find_unique_sequence(
+                    leastloaded_by_priority)
+                if selected_chassis:
+                    break
+
         return self._reorder_by_az(nb_idl, sb_idl, selected_chassis)
 
 
