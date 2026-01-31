@@ -91,6 +91,8 @@ class LocalOVSEvent(BGPAgentEvent):
         desired_mappings = self._get_desired_mappings(row, old)
         ovsdb.set_ovn_bridge_mapping(
             self.agent_api.ovs_idl, desired_mappings)
+        bgp_bridge_names = sorted(_get_bgp_peer_bridges(row))
+        self.bgp_agent.set_chassis_bgp_bridges(bgp_bridge_names)
 
 
 class CreateLocalOVSEvent(LocalOVSEvent):

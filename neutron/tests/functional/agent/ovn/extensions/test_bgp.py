@@ -196,7 +196,27 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
                 expected_bms)
         )
 
-    def test_bgp_extension_configures_bridge_mappings(self):
+    def _verify_chassis_bgp_bridges(self, expected_bridge_names):
+        def wait_for_chassis_bgp_bridges():
+            ext_ids = self.ovn_agent.sb_idl.db_get(
+                'Chassis_Private', self.chassis_name, 'external_ids').execute(
+                    check_error=True)
+            try:
+                observed_bridges = ext_ids[
+                    constants.CHASSIS_BGP_BRIDGES_EXT_ID_KEY]
+            except KeyError:
+                observed_bridges = ''
+            return observed_bridges == expected_bridge_names
+
+        utils.wait_until_true(
+            wait_for_chassis_bgp_bridges,
+            sleep=0.1,
+            timeout=5,
+            exception=Exception(
+                "Expected chassis BGP bridges %s were not configured" %
+                expected_bridge_names))
+
+    def test_bgp_extension_configures_bridges(self):
         self.ovn_agent.ovs_idl.db_set(
             'Open_vSwitch', '.',
             external_ids={
@@ -208,8 +228,9 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
 
         expected_bms = 'physnet:bridge,bgp-br-1:bgp-br-1,bgp-br-2:bgp-br-2'
         self._check_bridge_mappings(expected_bms)
+        self._verify_chassis_bgp_bridges('bgp-br-1,bgp-br-2')
 
-    def test_bgp_extension_configures_bridge_mappings_with_empty_bms(self):
+    def test_bgp_extension_configures_bridge_with_empty_bms(self):
         self.ovn_agent.ovs_idl.db_set(
             'Open_vSwitch', '.',
             external_ids={
@@ -219,6 +240,7 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
 
         expected_bms = 'bgp-br-1:bgp-br-1,bgp-br-2:bgp-br-2'
         self._check_bridge_mappings(expected_bms)
+        self._verify_chassis_bgp_bridges('bgp-br-1,bgp-br-2')
 
     def test_bgp_extension_missing_bgp_peer_bridges(self):
         self.ovn_agent.ovs_idl.db_set(
@@ -229,6 +251,7 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
 
         expected_bms = 'physnet:bridge'
         self._check_bridge_mappings(expected_bms)
+        self._verify_chassis_bgp_bridges('')
 
     def _test_lrp_with_mac_helper(self, bridge_name):
         port_name = 'ovn-port-bgp'

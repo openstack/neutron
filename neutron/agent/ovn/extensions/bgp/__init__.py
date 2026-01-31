@@ -17,7 +17,9 @@ import netaddr
 from oslo_log import log
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.ovn.agent import ovsdb
 from neutron.agent.ovn.extensions.bgp import bridge
+from neutron.agent.ovn.extensions.bgp import commands
 from neutron.agent.ovn.extensions.bgp import events
 from neutron.agent.ovn.extensions import extension_manager as ovn_ext_mgr
 
@@ -67,6 +69,10 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         ]
 
     @property
+    def chassis_name(self):
+        return ovsdb.get_own_chassis_name(self.agent_api.ovs_idl)
+
+    @property
     def host_ips(self):
         host_ips = self.hostdev_ips
         for bgp_bridge in self.bgp_bridges.values():
@@ -88,6 +94,13 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         bgp_bridge = bridge.BGPChassisBridge(self, bridge_name)
         self.bgp_bridges[bridge_name] = bgp_bridge
         return bgp_bridge
+
+    def set_chassis_bgp_bridges(self, bridge_name_list):
+        commands.SetChassisBgpBridgesCommand(
+            self.agent_api.sb_idl,
+            self.chassis_name,
+            bridge_name_list
+        ).execute(check_error=True)
 
     def watch_port_created_event(self, bgp_bridge, port_type):
         # Check the port doesn't exist on the bridge
