@@ -13,8 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 from oslo_log import log
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.ovn.extensions.bgp import bridge
 from neutron.agent.ovn.extensions.bgp import events
 from neutron.agent.ovn.extensions import extension_manager as ovn_ext_mgr
@@ -31,6 +33,7 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         #     'br-eth2': BGPChassisBridge('br-eth2'),
         # }
         self.bgp_bridges = {}
+        self.hostdev_name = ip_lib.LOOPBACK_DEVNAME
 
     @property
     def name(self):
@@ -62,6 +65,24 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         return [
             events.PortBindingLrpMacEvent,
         ]
+
+    @property
+    def host_ips(self):
+        host_ips = self.hostdev_ips
+        for bgp_bridge in self.bgp_bridges.values():
+            host_ips.extend(bgp_bridge.ips)
+        return host_ips
+
+    @property
+    def hostdev_ips(self):
+        """Return the IP addresses configured on a host device.
+
+        The host device is typically a loopback device and all host IPs should
+        be configured there.
+        """
+        return [cidr for dev in ip_lib.get_devices_with_ip(
+                    namespace=None, name=self.hostdev_name)
+                if not (cidr := netaddr.IPNetwork(dev['cidr'])).is_loopback()]
 
     def create_bgp_bridge(self, bridge_name):
         bgp_bridge = bridge.BGPChassisBridge(self, bridge_name)

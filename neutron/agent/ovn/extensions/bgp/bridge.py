@@ -13,13 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import tempfile
 
+import netaddr
+from neutron_lib import constants
 from oslo_log import log
 
 from neutron.agent.common import ovs_lib
+from neutron.agent.linux import ip_lib
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
-from neutron.services.bgp import constants
+from neutron.services.bgp import constants as bgp_const
 
 LOG = log.getLogger(__name__)
 
@@ -38,6 +42,21 @@ class Bridge:
     def sb_idl(self):
         return self.bgp_agent_api.agent_api.sb_idl
 
+    def _apply_flows_as_bundle(self, flows):
+        """Apply multiple OpenFlow rules as a bundle using temporary file"""
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.flows',
+                                        prefix='bgp_', delete=True) as f:
+            f.write("delete\n")
+            for flow in flows:
+                f.write(f"{flow}\n")
+            f.flush()
+
+            LOG.debug("Applying %d BGP flows as bundle to bridge %s",
+                      len(flows), self.name)
+
+            self.ovs_bridge.run_ofctl(
+                "add-flows", ["--bundle", f.name])
+
 
 class BGPChassisBridge(Bridge):
     """BGP Bridge
@@ -47,10 +66,11 @@ class BGPChassisBridge(Bridge):
     """
     def __init__(self, bgp_agent_api, name):
         super().__init__(bgp_agent_api, name)
-        self.lrp_mac = self._get_lrp_mac()
         self._requirements = [
-            ('patch port ofport is not set', self.patch_port_ofport),
-            ('LRP MAC is not set', self.lrp_mac),
+            ('bridge does not exist', 'exists'),
+            ('NIC ofport is not set', 'nic_ofport'),
+            ('patch port ofport is not set', 'patch_port_ofport'),
+            ('LRP MAC is not set', 'lrp_mac'),
         ]
 
     def __str__(self):
@@ -60,7 +80,7 @@ class BGPChassisBridge(Bridge):
 
     def _check_requirements_for_flows_met(self):
         for msg, requirement in self._requirements:
-            if not requirement:
+            if not getattr(self, requirement):
                 LOG.debug(
                     "Bridge %s: %s, skipping installing flows",
                     self.name, msg)
@@ -82,8 +102,19 @@ class BGPChassisBridge(Bridge):
                       self.name)
             return None
 
-    def _get_lrp_mac(self):
-        ext_ids = {constants.LRP_NETWORK_NAME_EXT_ID_KEY: self.name}
+    @property
+    def nic_ofport(self):
+        # REVISIT(jlibosva): we can consider supporting OVS bonds too
+        nics_ofports = self.ovs_bridge.get_iface_ofports_by_type('')
+        if len(nics_ofports) != 1:
+            LOG.warning("Expected 1 NIC for bridge %s, got %s",
+                        self.name, len(nics_ofports))
+            return None
+        return nics_ofports[0]
+
+    @property
+    def lrp_mac(self):
+        ext_ids = {bgp_const.LRP_NETWORK_NAME_EXT_ID_KEY: self.name}
         port_bindings = self.sb_idl.db_find_rows(
             'Port_Binding',
             ('type', '=', ovn_const.PB_TYPE_L3GATEWAY),
@@ -95,10 +126,84 @@ class BGPChassisBridge(Bridge):
                 return ovn_utils.get_mac_and_ips_from_port_binding(pb)[0]
             except ValueError:
                 LOG.error("Failed to get MAC address from port binding %s",
-                            pb.uuid)
+                          pb.logical_port)
 
         LOG.debug("LRP MAC does not exist yet for %s", self.name)
 
+    @property
+    def exists(self):
+        return self.ovs_bridge.bridge_exists(self.name)
+
+    @property
+    def ips(self):
+        return [netaddr.IPNetwork(ip['cidr'])
+                for ip in ip_lib.get_devices_with_ip(
+                    namespace=None, name=self.name)]
+
+    def _get_flows_for_lrp(self):
+        LOG.debug(f"Adding a flow to direct data plane traffic to OVN "
+                  f"from {self.nic_ofport} to {self.patch_port_ofport} using "
+                  f"MAC {self.lrp_mac} on bridge {self.name}")
+        return [
+            f"priority=80,in_port={self.nic_ofport},"
+            f"actions=mod_dl_dst:{self.lrp_mac},"
+            f"output:{self.patch_port_ofport}"
+        ]
+
+    def _get_flows_for_patch_port(self):
+        LOG.debug("Adding a flow to direct data plane traffic to out "
+                  "from patch port %s on bridge %s",
+                  self.patch_port_ofport, self.name)
+        return [
+            f"priority=100,in_port={self.patch_port_ofport},"
+            f"actions=NORMAL"
+        ]
+
+    def _get_flows_for_nic_port(self):
+        LOG.debug("Adding flows to direct traffic to the host from the NIC "
+                  "port %s on bridge %s", self.nic_ofport, self.name)
+        # Allow IPv6 link-local traffic
+        flows = [f"priority=100,ipv6,in_port={self.nic_ofport},"
+                 f"ipv6_dst=fe80::/64 actions=NORMAL"]
+
+        # Direct traffic meant for the host IPs
+        for host_ip in self.bgp_agent_api.host_ips:
+            if host_ip.version == constants.IP_VERSION_4:
+                flows.append(f"priority=100,ip,in_port={self.nic_ofport},"
+                             f"nw_dst={host_ip.ip} actions=NORMAL")
+            elif host_ip.version == constants.IP_VERSION_6:
+                flows.append(f"priority=100,ipv6,in_port={self.nic_ofport},"
+                             f"ipv6_dst={host_ip.ip} actions=NORMAL")
+
+        return flows
+
     def configure_flows(self):
-        # TODO(jlibosva) Implement flows configuration
-        pass
+        # The resulting openflows rules that will be written to a temporary
+        # file and applied to the bridge.
+        if not self._check_requirements_for_flows_met():
+            LOG.error(f"Some of the requirements to install flows on bridge "
+                      f"{self.name} are missing, skipping")
+            return
+
+        LOG.debug("Configuring BGP bridge flows for %s", self.name)
+        # Allow ARP and ICMPv6
+        flows = [
+            "priority=100,arp actions=NORMAL",
+            "priority=100,icmp6,icmp_type=133 actions=NORMAL",
+            "priority=100,icmp6,icmp_type=134 actions=NORMAL",
+            "priority=100,icmp6,icmp_type=135 actions=NORMAL",
+            "priority=100,icmp6,icmp_type=136 actions=NORMAL",
+
+            # Allow all other traffic
+            "priority=0, actions=normal",
+        ]
+
+        flows.extend(self._get_flows_for_nic_port())
+        flows.extend(self._get_flows_for_patch_port())
+        flows.extend(self._get_flows_for_lrp())
+
+        try:
+            self._apply_flows_as_bundle(flows)
+        except Exception as e:
+            LOG.error("Failed to configure BGP flows on bridge %s: %s: %s",
+                      self.name, e, flows)
