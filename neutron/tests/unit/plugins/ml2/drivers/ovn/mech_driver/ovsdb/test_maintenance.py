@@ -401,30 +401,44 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             attrs={'name': 'ls0',
                    'other_config': {
                        constants.MCAST_SNOOP: 'false',
-                       constants.MCAST_FLOOD_UNREGISTERED: 'false'}})
+                       constants.MCAST_FLOOD_UNREGISTERED: 'false'},
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port0'}})
         ls1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'ls1',
-                   'other_config': {}})
+                   'other_config': {},
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port1'}})
         ls2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'ls2',
                    'other_config': {
                         constants.MCAST_SNOOP: 'true',
-                        constants.MCAST_FLOOD_UNREGISTERED: 'false'}})
+                        constants.MCAST_FLOOD_UNREGISTERED: 'false'},
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port2'}})
         ls3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': '',
-                   'other_config': {}})
+                   'other_config': {},
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port3'}})
         ls4 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': '',
-                   'other_config': {constants.MCAST_SNOOP: 'false'}})
-
+                   'other_config': {constants.MCAST_SNOOP: 'false'},
+                   'external_ids': {
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'port4'}})
+        ls5 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'ls5',
+                   'other_config': {},
+                   'external_ids': {}})
         nb_idl.ls_list.return_value.execute.return_value = [ls0, ls1, ls2, ls3,
-                                                            ls4]
+                                                            ls4, ls5]
 
         self.assertRaises(periodics.NeverAgain,
                           self.periodic.check_for_igmp_snoop_support)
 
         # "ls2" is not part of the transaction because it already
-        # have the right value set; "ls3" and "ls4" do not have a name set.
+        # have the right value set; "ls3" and "ls4" do not have a name set;
+        # "ls5" is not managed by neutron.
         expected_calls = [
             mock.call('Logical_Switch', 'ls0',
                       ('other_config', {
@@ -479,7 +493,14 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                    'external_ids': {
                        constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net1'}})
 
-        nb_idl.db_find_rows.return_value.execute.return_value = [p0, p1]
+        # Port p2 is not owned by Neutron and should not be affected.
+        p2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_EXTERNAL,
+                   'name': 'p2',
+                   'ha_chassis_group': [hcg1],
+                   'external_ids': {}})
+
+        nb_idl.db_find_rows.return_value.execute.return_value = [p0, p1, p2]
         mock_sync_ha_chassis_group_network.return_value = hcg0.uuid, mock.ANY
 
         # Invoke the periodic method, it meant to run only once at startup

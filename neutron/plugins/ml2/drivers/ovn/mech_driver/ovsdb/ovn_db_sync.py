@@ -196,7 +196,11 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         ovn_pgs = set()
         port_groups = self.ovn_api.db_list_rows('Port_Group').execute() or []
         for pg in port_groups:
-            ovn_pgs.add(pg.name)
+            # Default neutron "drop pg" does NOT have any external IDs, but
+            # we still want to manage it, so we match it on its name.
+            if (ovn_const.OVN_SG_EXT_ID_KEY in pg.external_ids or
+                    pg.name == ovn_const.OVN_DROP_PORT_GROUP_NAME):
+                ovn_pgs.add(pg.name)
 
         add_pgs = neutron_pgs.difference(ovn_pgs)
         remove_pgs = ovn_pgs.difference(neutron_pgs)
@@ -260,6 +264,11 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 acl_string['port_group'] = pg.name
                 if id_key in acl.external_ids:
                     acl_string[id_key] = acl.external_ids[id_key]
+                elif pg.name != ovn_const.OVN_DROP_PORT_GROUP_NAME:
+                    # If ACL is not associated with a security group rule,
+                    # nor it belongs to the default neutron_pg_drop port group,
+                    # it don't need to be synced.
+                    continue
                 # This properties are present as lists of one item,
                 # converting them to string.
                 if acl_string['name']:

@@ -183,25 +183,46 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
              'networks': ['10.0.3.0/24'],
              'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: None}},
             {'name': 'xrp-id-b1',
-             'external_ids': {}, 'networks': ['20.0.1.0/24']},
+             'external_ids': {
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                     utils.ovn_name('lr-id-b'),
+             }, 'networks': ['20.0.1.0/24']},
             {'name': utils.ovn_lrouter_port_name('orp-id-b2'),
-             'external_ids': {}, 'networks': ['20.0.2.0/24'],
+             'external_ids': {
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                     utils.ovn_name('lr-id-b')},
+             'networks': ['20.0.2.0/24'],
              'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'}},
             {'name': utils.ovn_lrouter_port_name('orp-id-b3'),
-             'external_ids': {}, 'networks': ['20.0.3.0/24'],
+             'external_ids': {
+                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                     utils.ovn_name('lr-id-b')},
+             'networks': ['20.0.3.0/24'],
              'options': {}},
             {'name': utils.ovn_lrouter_port_name('gwc'),
              'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'lr-id-f',
                               ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.4.0/24'],
+             'options': {}},
+            {'name': utils.ovn_lrouter_port_name('not-managed'),
+             'external_ids': {
+                 'owner': 'not-owned-by-neutron'},
+             'networks': ['10.0.5.0/24'],
              'options': {}}],
         'gateway_chassis': [
             {'chassis_name': 'fake-chassis',
              'name': utils.ovn_lrouter_port_name('gwc') + '_fake-chassis'}],
         'static_routes': [{'ip_prefix': '20.0.0.0/16',
-                           'nexthop': '10.0.3.253'},
+                           'nexthop': '10.0.3.253',
+                           'external_ids': {
+                               ovn_const.OVN_SUBNET_EXT_ID_KEY: 'uuid_1'}},
                           {'ip_prefix': '10.0.0.0/16',
-                           'nexthop': '20.0.2.253'}],
+                           'nexthop': '20.0.2.253',
+                           'external_ids': {
+                               ovn_const.OVN_SUBNET_EXT_ID_KEY: 'uuid_2'}},
+                          {'ip_prefix': '30.0.0.0/16',
+                           'nexthop': '30.0.4.253',
+                           'external_ids': {'owner': 'not-owned-by-neutron'}}],
         'nats': [{'external_ip': '10.0.3.1', 'logical_ip': '20.0.0.0/16',
                   'type': 'snat'},
                  {'external_ip': '20.0.2.1', 'logical_ip': '10.0.0.0/24',
@@ -481,7 +502,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
     def _test_get_all_logical_routers_with_rports(self, is_gw_port):
         # Test empty
-        mapping = self.nb_ovn_idl.get_all_logical_switches_with_ports()
+        mapping = self.nb_ovn_idl.get_all_logical_routers_with_rports()
         self.assertCountEqual(mapping, {})
         # Test loaded values
         self._load_nb_db()
