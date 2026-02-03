@@ -21,7 +21,6 @@ import netaddr
 from oslo_config import cfg
 from ovsdbapp import venv
 
-from neutron.agent.linux import ip_lib
 from neutron.agent.ovsdb import impl_idl
 from neutron.common import utils
 from neutron.services.bgp import constants
@@ -35,7 +34,8 @@ class FakeLoopbackContext:
     """Context manager that creates a fake loopback device and mocks constants.
 
     This creates a veth pair to use as a fake loopback device and patches
-    the ip_lib.LOOPBACK_DEVNAME and bgp.LOCALHOST_ADDRESSES constants.
+    the agent hostdev_name and netaddr.is_loopback function to consider our
+    addresses as loopback.
     """
 
     def __init__(self, test_case):
@@ -333,23 +333,8 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
         self.assertIsNotNone(bgp_bridge.patch_port_ofport)
 
 
-class BGPExtensionHostIpsTestCase(BGPExtensionBaseTestCase):
-    def _add_bgp_bridge(self, ips):
-        bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        nic = self.useFixture(net_helpers.VethFixture()).ports[0]
-
-        self.ovn_agent.ovs_idl.add_port(
-            bridge.br_name, nic.name, type='').execute(check_error=True)
-
-        for ip in ips:
-            ip_lib.add_ip_address(ip, bridge.br_name, namespace=None,
-                                  add_broadcast=False)
-
-        # Avoid using the local OVS Open_vSwitch table to define the BGP
-        # bridges
-        self.bgp_ext.create_bgp_bridge(bridge.br_name)
-
-    def _check_host_ips(self, loopback_ips, bridge1_ips, bridge2_ips):
+class BGPExtensionHostdevIpsTestCase(BGPExtensionBaseTestCase):
+    def _check_host_ips(self, loopback_ips):
         """Helper to test host_ips with given IP configurations.
 
         Creates a fake loopback device and two BGP bridges with the specified
@@ -361,15 +346,11 @@ class BGPExtensionHostIpsTestCase(BGPExtensionBaseTestCase):
         """
         with FakeLoopbackContext(self) as fake_lo:
             fake_lo.add_ips(loopback_ips)
-            self._add_bgp_bridge(bridge1_ips)
-            self._add_bgp_bridge(bridge2_ips)
 
-            host_ips = self.bgp_ext.host_ips
+            host_ips = self.bgp_ext.hostdev_ips
             host_ip_cidrs = [str(ip) for ip in host_ips]
 
-            expected_cidrs = loopback_ips + bridge1_ips + bridge2_ips
-
-            self.assertCountEqual(expected_cidrs, host_ip_cidrs)
+            self.assertCountEqual(loopback_ips, host_ip_cidrs)
 
     def _get_exclusive_ip(self, test_net_number):
         """Get an exclusive IP address from a TEST-NET range.
@@ -381,26 +362,15 @@ class BGPExtensionHostIpsTestCase(BGPExtensionBaseTestCase):
             ip_address.get_test_net_address_fixture(test_net_number))
         return f'{exclusive_ip.address}/32'
 
-    def test_host_ips_combines_loopback_and_bridge_ips(self):
+    def test_hostdev_ips_combines_loopback(self):
         loopback_ips = [
             self._get_exclusive_ip(1),
             self._get_exclusive_ip(1),
         ]
-        bridge1_ips = [self._get_exclusive_ip(2), self._get_exclusive_ip(3)]
-        bridge2_ips = [self._get_exclusive_ip(3), self._get_exclusive_ip(2)]
 
-        self._check_host_ips(loopback_ips, bridge1_ips, bridge2_ips)
+        self._check_host_ips(loopback_ips)
 
-    def test_host_ips_with_bridge_having_no_ips(self):
-        loopback_ips = [self._get_exclusive_ip(1)]
-        bridge1_ips = [self._get_exclusive_ip(2)]
-        bridge2_ips = []
-
-        self._check_host_ips(loopback_ips, bridge1_ips, bridge2_ips)
-
-    def test_host_ips_with_loopback_having_no_ips(self):
+    def test_hostdev_ips_with_loopback_having_no_ips(self):
         loopback_ips = []
-        bridge1_ips = [self._get_exclusive_ip(2)]
-        bridge2_ips = [self._get_exclusive_ip(3)]
 
-        self._check_host_ips(loopback_ips, bridge1_ips, bridge2_ips)
+        self._check_host_ips(loopback_ips)

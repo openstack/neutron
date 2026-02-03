@@ -167,7 +167,7 @@ class BGPChassisBridge(Bridge):
                  f"ipv6_dst=fe80::/64 actions=NORMAL"]
 
         # Direct traffic meant for the host IPs
-        for host_ip in self.bgp_agent_api.host_ips:
+        for host_ip in self.bgp_agent_api.hostdev_ips + self.ips:
             if host_ip.version == constants.IP_VERSION_4:
                 flows.append(f"priority=100,ip,in_port={self.nic_ofport},"
                              f"nw_dst={host_ip.ip} actions=NORMAL")
