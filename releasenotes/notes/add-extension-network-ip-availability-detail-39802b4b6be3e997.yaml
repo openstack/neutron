@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add a new API extension, ``network-ip-availability-details``, that adds
+    the ``ip_availability_details`` attribute to network IP availabilities.
+    The value of this attribute contains detailed information about the
+    network IP usage statistics.

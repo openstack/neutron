@@ -1,0 +1,354 @@
+# Copyright 2025 Samsung SDS. All Rights Reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+#  implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+import netaddr
+from neutron_lib import constants
+
+from neutron.api import extensions as api_ext
+from neutron.common import config
+from neutron import extensions
+from neutron.services.network_ip_availability import plugin as plugin_module
+from neutron.tests.common import test_db_base_plugin_v2
+
+API_RESOURCE = 'network-ip-availabilities'
+IP_AVAIL_KEY = 'network_ip_availability'
+IP_AVAILS_KEY = 'network_ip_availabilities'
+IP_AVAIL_DETAILS_KEY = 'ip_availability_details'
+TOTAL_IPS_IN_SUBNET = 'total_ips_in_subnet'
+TOTAL_IPS_IN_ALLOCATION_POOL = 'total_ips_in_allocation_pool'
+USED_IPS_IN_SUBNET = 'used_ips_in_subnet'
+USED_IPS_IN_ALLOCATION_POOL = 'used_ips_in_allocation_pool'
+EXTENSIONS_PATH = ':'.join(extensions.__path__)
+PLUGIN_NAME = '{}.{}'.format(
+    plugin_module.NetworkIPAvailabilityPlugin.__module__,
+    plugin_module.NetworkIPAvailabilityPlugin.__name__)
+
+
+class TestNetworkIPAvailabilityDetails(
+        test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+    def setUp(self):
+        svc_plugins = {'plugin_name': PLUGIN_NAME}
+        super().setUp(
+                service_plugins=svc_plugins)
+        self.plugin = plugin_module.NetworkIPAvailabilityPlugin()
+        ext_mgr = api_ext.PluginAwareExtensionManager(
+            EXTENSIONS_PATH, {"network-ip-availability": self.plugin}
+        )
+        app = config.load_paste_app('extensions_test_app')
+        self.ext_api = api_ext.ExtensionMiddleware(app, ext_mgr=ext_mgr)
+
+    def _validate_availability_details(self, availability_details,
+                                       expected_total_in_subnet,
+                                       expected_total_in_allocation_pools,
+                                       expected_used_in_subnet,
+                                       expected_used_in_allocation_pools):
+        self.assertEqual(expected_total_in_subnet,
+                         availability_details[TOTAL_IPS_IN_SUBNET])
+        self.assertEqual(expected_total_in_allocation_pools,
+                         availability_details[TOTAL_IPS_IN_ALLOCATION_POOL])
+        self.assertEqual(expected_used_in_subnet,
+                         availability_details[USED_IPS_IN_SUBNET])
+        self.assertEqual(expected_used_in_allocation_pools,
+                         availability_details[USED_IPS_IN_ALLOCATION_POOL])
+
+    def _validate_from_availabilities(self, availabilities, wrapped_network,
+                                      expected_total_in_subnet,
+                                      expected_total_in_allocation_pools,
+                                      expected_used_in_subnet,
+                                      expected_used_in_allocation_pools):
+        network = wrapped_network['network']
+        availability = self._find_availability(availabilities, network['id'])
+        self.assertIsNotNone(availability)
+        self.assertIsNotNone(availability[IP_AVAIL_DETAILS_KEY])
+        self._validate_availability_details(availability[IP_AVAIL_DETAILS_KEY],
+                                            expected_total_in_subnet,
+                                            expected_total_in_allocation_pools,
+                                            expected_used_in_subnet,
+                                            expected_used_in_allocation_pools)
+
+    def test_usages_query_list_with_fields_ip_availability_details(self):
+        with self.network() as net:
+            with self.subnet(network=net):
+                # list by query fields: total_ips
+                params = 'fields=ip_availability_details'
+                request = self.new_list_request(API_RESOURCE,
+                                                params=params,
+                                                as_admin=True)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                availability = response[IP_AVAILS_KEY][0]
+                self.assertIn('ip_availability_details', availability)
+                self.assertNotIn('network_id', availability)
+
+    def test_usages_query_show_with_fields_total_ips(self):
+        with self.network() as net:
+            with self.subnet(network=net):
+                network = net['network']
+                params = ['ip_availability_details']
+                request = self.new_show_request(API_RESOURCE,
+                                                network['id'],
+                                                fields=params,
+                                                as_admin=True)
+                response = self.deserialize(
+                    self.fmt, request.get_response(self.ext_api))
+                availability = response[IP_AVAIL_KEY]
+                self.assertIn('ip_availability_details', availability)
+                self.assertNotIn('network_id', availability)
+
+    @staticmethod
+    def _find_availability(availabilities, net_id):
+        for ip_availability in availabilities:
+            if net_id == ip_availability['network_id']:
+                return ip_availability
+
+    def test_basic(self):
+        with self.network() as net:
+            with self.subnet(network=net):
+                network = net['network']
+                # Get ALL
+                request = self.new_list_request(API_RESOURCE,
+                                                self.fmt,
+                                                as_admin=True)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertIn(IP_AVAILS_KEY, response)
+                self.assertEqual(1, len(response[IP_AVAILS_KEY]))
+                self._validate_from_availabilities(response[IP_AVAILS_KEY],
+                                                   net, 254, 253, 0, 0)
+
+                # Get single via id
+                request = self.new_show_request(API_RESOURCE, network['id'],
+                                                as_admin=True)
+                response = self.deserialize(
+                    self.fmt, request.get_response(self.ext_api))
+                self.assertIn(IP_AVAIL_KEY, response)
+                usage = response[IP_AVAIL_KEY]
+                self.assertIn(IP_AVAIL_DETAILS_KEY, usage)
+                self._validate_availability_details(
+                    usage[IP_AVAIL_DETAILS_KEY], 254, 253, 0, 0)
+
+    def test_usages_multi_nets_subnets(self):
+        with self.network(name='net1') as n1,\
+                self.network(name='net2') as n2,\
+                self.network(name='net3') as n3:
+            # n1 should have 2 subnets, n2 should have none, n3 has 1
+            with self.subnet(network=n1) as subnet1_1, \
+                    self.subnet(cidr='40.0.0.0/24', network=n3) as subnet3_1:
+                # Consume 3 ports n1, none n2, 2 ports on n3
+                with self.port(subnet=subnet1_1),\
+                        self.port(subnet=subnet1_1),\
+                        self.port(subnet=subnet1_1),\
+                        self.port(subnet=subnet3_1),\
+                        self.port(subnet=subnet3_1):
+
+                    # Test get ALL
+                    request = self.new_list_request(API_RESOURCE,
+                                                    as_admin=True)
+                    response = self.deserialize(
+                        self.fmt, request.get_response(self.ext_api))
+                    self.assertIn(IP_AVAILS_KEY, response)
+                    self.assertEqual(3, len(response[IP_AVAILS_KEY]))
+
+                    data = response[IP_AVAILS_KEY]
+                    self._validate_from_availabilities(data, n1,
+                                                       254, 253, 3, 3)
+                    self._validate_from_availabilities(data, n2,
+                                                       0, 0, 0, 0)
+                    self._validate_from_availabilities(data, n3,
+                                                       254, 253, 2, 2)
+
+                    # Test get single via network id
+                    network = n1['network']
+                    request = self.new_show_request(API_RESOURCE,
+                                                    network['id'],
+                                                    as_admin=True)
+                    response = self.deserialize(
+                        self.fmt, request.get_response(self.ext_api))
+                    self.assertIn(IP_AVAIL_KEY, response)
+                    data = response[IP_AVAIL_KEY]
+                    self.assertIn(IP_AVAIL_DETAILS_KEY, data)
+                    self._validate_availability_details(
+                        data[IP_AVAIL_DETAILS_KEY], 254, 253, 3, 3)
+
+    def test_usages_multi_nets_subnets_sums(self):
+        with self.network(name='net1') as n1:
+            # n1 has 2 subnets
+            with self.subnet(network=n1) as subnet1_1, \
+                    self.subnet(cidr='40.0.0.0/24', network=n1) as subnet1_2:
+                # Consume 3 ports n1: 1 on subnet 1 and 2 on subnet 2
+                with self.port(subnet=subnet1_1),\
+                        self.port(subnet=subnet1_2),\
+                        self.port(subnet=subnet1_2):
+                    # Get ALL
+                    request = self.new_list_request(API_RESOURCE,
+                                                    as_admin=True)
+                    response = self.deserialize(
+                        self.fmt, request.get_response(self.ext_api))
+                    self.assertIn(IP_AVAILS_KEY, response)
+                    self.assertEqual(1, len(response[IP_AVAILS_KEY]))
+                    self._validate_from_availabilities(response[IP_AVAILS_KEY],
+                                                       n1, 508, 506, 3, 3)
+
+                    # Get single via network id
+                    network = n1['network']
+                    request = self.new_show_request(API_RESOURCE,
+                                                    network['id'],
+                                                    as_admin=True)
+                    response = self.deserialize(
+                        self.fmt, request.get_response(self.ext_api))
+                    self.assertIn(IP_AVAIL_KEY, response)
+                    data = response[IP_AVAIL_KEY]
+                    self.assertIn(IP_AVAIL_DETAILS_KEY, data)
+                    self._validate_availability_details(
+                        data[IP_AVAIL_DETAILS_KEY], 508, 506, 3, 3)
+
+    def test_usages_query_ip_version_v4(self):
+        with self.network() as net:
+            with self.subnet(network=net):
+                # Get IPv4
+                params = 'ip_version=%s' % constants.IP_VERSION_4
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertIn(IP_AVAILS_KEY, response)
+                self.assertEqual(1, len(response[IP_AVAILS_KEY]))
+                self._validate_from_availabilities(response[IP_AVAILS_KEY],
+                                                   net, 254, 253, 0, 0)
+
+                # Get IPv6 should return empty array
+                params = 'ip_version=%s' % constants.IP_VERSION_6
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertEqual(0, len(response[IP_AVAILS_KEY]))
+
+    def test_usages_query_ip_version_v6(self):
+        cidr_ipv6 = '2001:db8:1002:51::/64'
+        cidr_ipv6_net = netaddr.IPNetwork(cidr_ipv6)
+        with self.network() as net:
+            with self.subnet(
+                    network=net, cidr=cidr_ipv6,
+                    ip_version=constants.IP_VERSION_6,
+                    ipv6_address_mode=constants.DHCPV6_STATELESS):
+                # Get IPv6
+                params = 'ip_version=%s' % constants.IP_VERSION_6
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertEqual(1, len(response[IP_AVAILS_KEY]))
+                self._validate_from_availabilities(
+                    response[IP_AVAILS_KEY], net,
+                    cidr_ipv6_net.size, cidr_ipv6_net.size - 1, 0, 0)
+
+                # Get IPv4 should return empty array
+                params = 'ip_version=%s' % constants.IP_VERSION_4
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertEqual(0, len(response[IP_AVAILS_KEY]))
+
+    def test_usages_ports_consumed_v6(self):
+        cidr_ipv6 = '2001:db8:1002:51::/64'
+        cidr_ipv6_net = netaddr.IPNetwork(cidr_ipv6)
+        with self.network() as net:
+            with self.subnet(
+                    network=net, cidr=cidr_ipv6,
+                    ip_version=constants.IP_VERSION_6,
+                    ipv6_address_mode=constants.DHCPV6_STATELESS) as subnet:
+                request = self.new_list_request(API_RESOURCE,
+                                                as_admin=True)
+                # Consume 3 ports
+                with self.port(subnet=subnet),\
+                        self.port(subnet=subnet), \
+                        self.port(subnet=subnet):
+                    response = self.deserialize(
+                        self.fmt, request.get_response(self.ext_api))
+
+                    self._validate_from_availabilities(
+                        response[IP_AVAILS_KEY], net,
+                        cidr_ipv6_net.size, cidr_ipv6_net.size - 1, 3, 3)
+
+    def test_usages_multi_net_multi_subnet_46(self):
+        # Setup mixed v4/v6 networks with IPs consumed on each
+        cidr_ipv6 = '2001:db8:1003:52::/64'
+        cidr_ipv6_net = netaddr.IPNetwork(cidr_ipv6)
+        with self.network(name='net-v6-1') as net_v6_1, \
+                self.network(name='net-v6-2') as net_v6_2, \
+                self.network(name='net-v4-1') as net_v4_1, \
+                self.network(name='net-v4-2') as net_v4_2:
+            with self.subnet(network=net_v6_1, cidr='2001:db8:1002:51::/64',
+                             ip_version=constants.IP_VERSION_6) as s61, \
+                    self.subnet(network=net_v6_2,
+                                cidr=cidr_ipv6,
+                                ip_version=constants.IP_VERSION_6) as s62, \
+                    self.subnet(network=net_v4_1, cidr='10.0.0.0/24') as s41, \
+                    self.subnet(network=net_v4_2, cidr='10.0.1.0/24') as s42:
+                with self.port(subnet=s61),\
+                        self.port(subnet=s62), self.port(subnet=s62), \
+                        self.port(subnet=s41), \
+                        self.port(subnet=s42), self.port(subnet=s42):
+
+                    # Verify consumption across all
+                    request = self.new_list_request(API_RESOURCE,
+                                                    as_admin=True)
+                    response = self.deserialize(
+                        self.fmt, request.get_response(self.ext_api))
+                    avails_list = response[IP_AVAILS_KEY]
+                    self._validate_from_availabilities(
+                        avails_list, net_v6_1,
+                        cidr_ipv6_net.size, cidr_ipv6_net.size - 1, 1, 1)
+                    self._validate_from_availabilities(
+                        avails_list, net_v6_2,
+                        cidr_ipv6_net.size, cidr_ipv6_net.size - 1, 2, 2)
+                    self._validate_from_availabilities(
+                        avails_list, net_v4_1,
+                        254, 253, 1, 1)
+                    self._validate_from_availabilities(
+                        avails_list, net_v4_2,
+                        254, 253, 2, 2)
+
+                    # Query by IP versions. Ensure subnet versions match
+                    for ip_ver in [constants.IP_VERSION_4,
+                                   constants.IP_VERSION_6]:
+                        params = 'ip_version=%i' % ip_ver
+                        request = self.new_list_request(API_RESOURCE,
+                                                        params=params,
+                                                        as_admin=True)
+                        response = self.deserialize(
+                                self.fmt, request.get_response(self.ext_api))
+                        for net_avail in response[IP_AVAILS_KEY]:
+                            for sub in net_avail['subnet_ip_availability']:
+                                self.assertEqual(ip_ver, sub['ip_version'])
+
+                    # Verify consumption querying 2 network ids (IN clause)
+                    request = self.new_list_request(
+                            API_RESOURCE,
+                            params='network_id=%s&network_id=%s'
+                                   % (net_v4_2['network']['id'],
+                                      net_v6_2['network']['id']),
+                            as_admin=True)
+                    response = self.deserialize(
+                        self.fmt, request.get_response(self.ext_api))
+                    avails_list = response[IP_AVAILS_KEY]
+                    self._validate_from_availabilities(
+                        avails_list, net_v6_2,
+                        cidr_ipv6_net.size, cidr_ipv6_net.size - 1, 2, 2)
+                    self._validate_from_availabilities(
+                        avails_list, net_v4_2,
+                        254, 253, 2, 2)
