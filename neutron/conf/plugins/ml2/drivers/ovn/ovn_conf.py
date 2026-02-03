@@ -96,8 +96,7 @@ ovn_opts = [
                help=_('The probe interval for the OVSDB session, in '
                       'milliseconds. If this is zero, it disables the '
                       'connection keepalive feature. If non-zero the value '
-                      'will be forced to at least 1000 milliseconds. Defaults '
-                      'to 60 seconds.')),
+                      'will be forced to at least 1000 milliseconds.')),
     cfg.StrOpt('neutron_sync_mode',
                default=ovn_const.OVN_DB_SYNC_MODE_LOG,
                choices=[(ovn_const.OVN_DB_SYNC_MODE_OFF,
@@ -198,7 +197,7 @@ ovn_opts = [
                        'If an older version of OVN is used for baremetal '
                        'provisioning over IPv6 this option should be set '
                        'to "True" and neutron-dhcp-agent should be used '
-                       'instead. Defaults to "False".')),
+                       'instead.')),
     cfg.BoolOpt('localnet_learn_fdb',
                 default=False,
                 help=_('If enabled it will allow localnet ports to learn MAC '
@@ -229,8 +228,7 @@ ovn_opts = [
                 default=False,
                 help=_('Whether to configure SNAT for all nested subnets '
                        'connected to the router through any other routers, '
-                       'similar to the default ML2/OVS behavior. Defaults to '
-                       '"False".')),
+                       'similar to the default ML2/OVS behavior.')),
     cfg.StrOpt('live_migration_activation_strategy',
                default="rarp",
                choices=[("rarp",
@@ -277,10 +275,10 @@ nb_global_opts = [
                min=0,
                default=0,
                help=_('FDB aging bulk removal limit. This limits how many '
-                      'rows can expire in a single transaction. Default '
-                      'is 0, which is unlimited. When the limit is reached, '
-                      'the next batch removal is delayed by 5 seconds. '
-                      'This is supported by OVN >= 23.09.')),
+                      'rows can expire in a single transaction. Zero (0) '
+                      'means number of removals is unlimited. When the limit '
+                      'is reached, the next batch removal is delayed by 5 '
+                      'seconds. This is supported by OVN >= 23.09.')),
     cfg.IntOpt('mac_binding_removal_limit',
                min=0,
                default=0,
