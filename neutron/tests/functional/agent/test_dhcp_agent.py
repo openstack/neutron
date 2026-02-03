@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+import functools
 import os.path
 import time
 from unittest import mock
@@ -281,6 +282,13 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             network.namespace,
             service=driver_base.HAPROXY_SERVICE)
 
+    def resolve_txt_record(self, namespace, server_address, record):
+        actual = ip_lib.IPWrapper(namespace=namespace).netns.execute(
+            ["dig", "+short", "+timeout=1", "-t", "txt", record,
+             f"@{server_address}"],
+            privsep_exec=True)
+        return actual.strip().strip('"')
+
 
 class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
 
@@ -438,3 +446,32 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
             exception=RuntimeError("'dhcp_ready_on_ports' not be called"))
         self.mock_plugin_api.dhcp_ready_on_ports.assert_called_with(
             ports_to_send)
+
+    def test_dnsmasq_local_txt_record(self):
+        txt_record = "record.example.com"
+        txt_value = "txt_value"
+        self.conf.set_override(
+                "dnsmasq_txt_record", f"{txt_record},{txt_value}")
+        dhcp_enabled = True
+        predicates = []
+
+        for ip_version in [4, 6]:
+            network = self.network_dict_for_dhcp(
+                dhcp_enabled, ip_version=ip_version)
+            self.configure_dhcp_for_network(network=network,
+                                            dhcp_enabled=dhcp_enabled)
+            server_address = self._IP_ADDRS[ip_version]["addr"]
+            predicates.append(functools.partial(
+                self.resolve_txt_record,
+                network.namespace, server_address, txt_record
+            ))
+
+        for predicate in predicates:
+            # The resolver might not be available right away, retry a few times
+            common_utils.wait_until_true(
+                predicate,
+                timeout=5,
+                sleep=1,
+                exception=RuntimeError("Failed to resolve a TXT value")
+            )
+            self.assertEqual(txt_value, predicate())

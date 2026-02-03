@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add a new option ``dnsmasq_txt_record`` to the DHCP agent so we can set a
+    local TXT record in dnsmasq.
+    This could be useful for monitoring purposes, for example, to grab the
+    liveness of dnsmasq from the DHCP namespace.
