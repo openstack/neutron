@@ -38,7 +38,7 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
                    'ResourcesPushRpcApi.push', new=receive).start()
         # base case blocks the handler
         self.ovo_push_interface_p.stop()
-        self.plugin.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
+        self.plugin._ovo_notifier = ovo_rpc.OVOServerRpcInterface()
 
     def _assert_object_received(self, ovotype, oid=None, event=None,
                                 count=1):

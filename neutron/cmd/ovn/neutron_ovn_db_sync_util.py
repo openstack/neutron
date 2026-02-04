@@ -14,7 +14,6 @@
 
 import copy
 
-from neutron_lib.agent import topics
 from neutron_lib.ovn import db_sync as db_sync_base
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -39,13 +38,9 @@ LOG = logging.getLogger(__name__)
 
 class Ml2Plugin(ml2_plugin.Ml2Plugin):
 
-    def _setup_dhcp(self):
-        pass
-
-    def _start_rpc_notifiers(self):
-        # Override the notifier so that when calling the ML2 plugin to create
-        # resources, it doesn't crash trying to notify subscribers.
-        self.notifier = AgentNotifierApi(topics.AGENT)
+    @property
+    def _rpc_workers(self):
+        return 0
 
 
 class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
@@ -94,46 +89,6 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
         port = copy.deepcopy(context.current)
         port['network'] = context.network.current
         self.ovn_client.delete_port(context.plugin_context, port['id'])
-
-
-class AgentNotifierApi:
-    """Default Agent Notifier class for ovn-db-sync-util.
-
-    This class implements empty methods so that when creating resources in
-    the core plugin, the original ones don't get called and don't interfere
-    with the syncing process.
-    """
-    def __init__(self, topic):
-        self.topic = topic
-        self.topic_network_delete = topics.get_topic_name(topic,
-                                                          topics.NETWORK,
-                                                          topics.DELETE)
-        self.topic_port_update = topics.get_topic_name(topic,
-                                                       topics.PORT,
-                                                       topics.UPDATE)
-        self.topic_port_delete = topics.get_topic_name(topic,
-                                                       topics.PORT,
-                                                       topics.DELETE)
-        self.topic_network_update = topics.get_topic_name(topic,
-                                                          topics.NETWORK,
-                                                          topics.UPDATE)
-
-    def network_delete(self, context, network_id):
-        pass
-
-    def port_update(self, context, port, network_type, segmentation_id,
-                    physical_network):
-        pass
-
-    def port_delete(self, context, port_id):
-        pass
-
-    def network_update(self, context, network):
-        pass
-
-    def security_groups_provider_updated(self, context,
-                                         devices_to_update=None):
-        pass
 
 
 def setup_conf():

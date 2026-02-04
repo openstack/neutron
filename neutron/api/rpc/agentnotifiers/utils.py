@@ -58,3 +58,31 @@ def retry(func, max_attempts):
     function.
     """
     return _call_with_retry(max_attempts)(func)
+
+
+class RPCNotifierHandler:
+    _notifier_instance = None
+
+    @property
+    def notifier_instance(self):
+        return self._notifier_instance
+
+    @notifier_instance.setter
+    def notifier_instance(self, value):
+        self._notifier_instance = value
+
+    def __getattr__(self, method_name):
+        def null_method(*args, **kwargs):
+            pass
+
+        if not self._notifier_instance:
+            # No RPC notifier instantiated. No action is executed.
+            return null_method
+
+        _method = getattr(self.notifier_instance, method_name, None)
+        if not _method:
+            LOG.warning(f'Method {method_name} is not implemented in the RPC '
+                        'notifier.')
+            return null_method
+
+        return _method

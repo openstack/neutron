@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    When the Neutron API uses the ML2/OVN mechanism driver and is configured
+    with ``[DEFAULT]rpc_workers=0``, the ``ML2plugin`` will not initialize
+    any RPC client and no RPC notifications will be sent.

@@ -2214,10 +2214,6 @@ class L3RpcNotifierMixin:
             self._l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
         return self._l3_rpc_notifier
 
-    @l3_rpc_notifier.setter
-    def l3_rpc_notifier(self, value):
-        self._l3_rpc_notifier = value
-
     def notify_router_updated(self, context, router_id,
                               operation=None):
         if router_id:

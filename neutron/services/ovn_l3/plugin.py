@@ -35,6 +35,7 @@ from neutron_lib.services import base as service_base
 from oslo_log import log
 
 from neutron._i18n import _
+from neutron.api.rpc.agentnotifiers import utils as notifier_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
@@ -98,6 +99,13 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         self.port_forwarding = port_forwarding.OVNPortForwarding(self)
         self.l3_driver_controller = driver_controller.DriverController(self)
         self.subscribe()
+        self._l3_rpc_notifier = notifier_utils.RPCNotifierHandler()
+
+    @property
+    def l3_rpc_notifier(self):
+        # The OVN L3 plugin notifier does not have an RPC instance. There is
+        # no need to send any RPC update.
+        return self._l3_rpc_notifier
 
     @staticmethod
     def _disable_qos_extensions_by_extension_drivers(aliases):
