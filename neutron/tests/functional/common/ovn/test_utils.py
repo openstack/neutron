@@ -446,7 +446,7 @@ class TestGetLogicalRouterPortHAChassis(base.TestOVNFunctionalBase):
         gw_info = {'network_id': network_id}
         router = {'router': {'name': uuidutils.generate_uuid(),
                              'admin_state_up': True,
-                             'tenant_id': self._project_id,
+                             'project_id': self._project_id,
                              'external_gateway_info': gw_info}}
         return self.l3_plugin.create_router(self.context, router)
 

@@ -211,7 +211,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
             ctx = self.adminContext
         ctx.project_id = project_id
         router = {'name': TEST_ROUTER_ID, 'admin_state_up': True,
-                  'tenant_id': ctx.project_id}
+                  'project_id': ctx.project_id}
         if ha is not None:
             router['ha'] = ha
         if distributed is not None:

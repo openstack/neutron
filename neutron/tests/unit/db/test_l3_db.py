@@ -754,7 +754,7 @@ class L3_NAT_db_mixin(base.BaseTestCase):
 
     def _test_create_router(self, external_gateway_info=None):
         router_db = l3_models.Router(id='123')
-        router_dict = {'id': '123', 'tenant_id': '456',
+        router_dict = {'id': '123', 'project_id': '456',
                        'external_gateway_info': external_gateway_info}
         # Need to use a copy here as the create_router method pops the gateway
         # information
@@ -823,7 +823,7 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.subnets.append(self.create_subnet(self.network, '1.1.2.1',
                                                '1.1.2.0/24'))
         router = {'router': {'name': 'foo_router', 'admin_state_up': True,
-                             'tenant_id': 'foo_project'}}
+                             'project_id': 'foo_project'}}
         self.router = self.create_router(router)
         self.ports = []
         for subnet in self.subnets:
@@ -1002,7 +1002,7 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         with mock.patch.object(l3_db.registry, 'publish') as mock_publish:
             router = {'router': {'name': 'foo_router',
                                  'admin_state_up': True,
-                                 'tenant_id': 'foo_project'}}
+                                 'project_id': 'foo_project'}}
             self.create_router(router)
             expected_calls = [
                 mock.call(resources.ROUTER, events.BEFORE_CREATE,
@@ -1017,7 +1017,7 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test_create_router_extra_attr(self):
         router_args = {'router': {'name': 'foo_router',
                                   'admin_state_up': True,
-                                  'tenant_id': 'foo_project'}
+                                  'project_id': 'foo_project'}
                        }
         router_dict = self.create_router(router_args)
         with db_api.CONTEXT_READER.using(self.ctx) as session:

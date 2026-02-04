@@ -81,7 +81,7 @@ EXTERNAL_GW_INFO = l3_apidef.EXTERNAL_GW_INFO
 API_TO_DB_COLUMN_MAP = {'port_id': 'fixed_port_id'}
 CORE_ROUTER_ATTRS = ('id',
                      'name',
-                     'tenant_id',
+                     'project_id',
                      'admin_state_up',
                      'status',
                      'enable_snat',
@@ -253,10 +253,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             resource_extend.apply_funcs(l3_apidef.ROUTERS, res, router)
         return lib_db_utils.resource_fields(res, fields)
 
-    def _create_router_db(self, context, router, tenant_id):
+    def _create_router_db(self, context, router):
         """Create the DB object."""
         router.setdefault('id', uuidutils.generate_uuid())
-        router['tenant_id'] = tenant_id
 
         registry.publish(resources.ROUTER, events.BEFORE_CREATE, self,
                          payload=events.DBEventPayload(
@@ -269,7 +268,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # configuring external gw port
             router_db = l3_models.Router(
                 id=router['id'],
-                tenant_id=router['tenant_id'],
+                project_id=router['project_id'],
                 name=router['name'],
                 admin_state_up=router['admin_state_up'],
                 status=constants.ACTIVE,
@@ -311,10 +310,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def create_router(self, context, router):
         r = router['router']
         gw_info = r.get(EXTERNAL_GW_INFO, None)
-        # TODO(ralonsoh): migrate "tenant_id" to "project_id"
+        # TODO(ralonsoh): migrate "tenant_id" to "project_id", remove in G+2
         # https://blueprints.launchpad.net/neutron/+spec/keystone-v3
-        create = functools.partial(self._create_router_db, context, r,
-                                   r['tenant_id'])
+        if r.get('tenant_id') and r.get('project_id') is None:
+            r['project_id'] = r['tenant_id']
+            LOG.warning('project_id key not found in router dictionary, using '
+                        'tenant_id instead. This support has been deprecated '
+                        'and will be removed in a future release.')
+
+        create = functools.partial(self._create_router_db, context, r)
         delete = functools.partial(self.delete_router, context)
         update_gw = functools.partial(self._update_gw_for_create_router,
                                       context, gw_info, r)
@@ -946,7 +950,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         [subnet],
                         False)
 
-        port_data = {'project_id': router.tenant_id,
+        port_data = {'project_id': router.project_id,
                      'network_id': subnet['network_id'],
                      'fixed_ips': [fixed_ip],
                      'admin_state_up': True,
@@ -1792,7 +1796,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # router still exists. It's possible for HA router interfaces
         # to remain after the router is deleted if they encounter an
         # error during deletion.
-        # Elevated context in case router is owned by another tenant
+        # Elevated context in case router is owned by another project
         if port['device_owner'] == DEVICE_OWNER_FLOATINGIP:
             if not l3_obj.FloatingIP.objects_exist(
                     context, id=port['device_id']):

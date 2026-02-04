@@ -186,7 +186,7 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
         self.router = l3_models.Router(
             id=_uuid(),
             name=None,
-            tenant_id=self.project_id,
+            project_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE,
             enable_snat=True,

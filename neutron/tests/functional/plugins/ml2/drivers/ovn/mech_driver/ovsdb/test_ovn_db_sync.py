@@ -428,7 +428,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             self.context,
             {'router': {
                 'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._project_id,
+                'project_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': e1['network']['id'],
@@ -622,7 +622,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         r2 = self.l3_plugin.create_router(
             self.context,
             {'router': {'name': 'r2', 'admin_state_up': True,
-                        'tenant_id': self._project_id}})
+                        'project_id': self._project_id}})
         n1_prtr = self._make_port(self.fmt, n1['network']['id'],
                                   name='n1-p-rtr')
         self.l3_plugin.add_router_interface(
@@ -1855,7 +1855,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # Create a router with net_ext as GW network and net_int as internal
         # one, and a floating IP on the external network.
         data = {'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._project_id,
+                'project_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': net_ext['id'],
@@ -2011,7 +2011,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         # Create a router with net_ext as GW network and net_int as internal
         # one, and a floating IP on the external network.
         data = {'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._project_id,
+                'project_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': net_ext['id'],

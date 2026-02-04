@@ -316,7 +316,7 @@ class AutoAllocatedTopologyMixin:
             'name': 'auto_allocated_router',
             l3_apidef.EXTERNAL_GW_INFO: {
                 'network_id': default_external_network},
-            'tenant_id': project_id,
+            'project_id': project_id,
             'admin_state_up': True
         }
         router = None

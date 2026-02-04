@@ -20,7 +20,7 @@ ROUTER_DISTRIBUTED_OPTS = [
     cfg.BoolOpt('router_distributed',
                 default=False,
                 help=_("System-wide flag to determine the type of router "
-                       "that tenants can create. Only admin can override.")),
+                       "that projects can create. Only admin can override.")),
     cfg.BoolOpt('enable_dvr',
                 default=True,
                 help=_("Determine if setup is configured for DVR. If False, "

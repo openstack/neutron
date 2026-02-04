@@ -51,7 +51,7 @@ def create_router(context, l3_plugin):
         context,
         {'router':
          {'name': 'pecanrtr',
-          'tenant_id': 'projid',
+          'project_id': 'projid',
           'admin_state_up': True}})
 
 
