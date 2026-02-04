@@ -85,12 +85,24 @@ class LocalOVSEvent(BGPAgentEvent):
             if bridge not in bgp_peer_bridges | old_bgp_peer_bridges
         }
 
-        return sorted(list(set(bgp_mappings.values()) | non_bgp_mappings))
+        return (
+            bgp_mappings,
+            sorted(list(set(bgp_mappings.values()) | non_bgp_mappings)))
 
     def run(self, event, row, old):
-        desired_mappings = self._get_desired_mappings(row, old)
+        bgp_mappings, desired_bridge_mappings = (
+            self._get_desired_mappings(row, old))
         ovsdb.set_ovn_bridge_mapping(
-            self.agent_api.ovs_idl, desired_mappings)
+            self.agent_api.ovs_idl, desired_bridge_mappings)
+        if bgp_mappings:
+            port_mappings_str = ','.join(bgp_mappings.values())
+        else:
+            port_mappings_str = ''
+        self.agent_api.ovs_idl.db_set(
+            'Open_vSwitch', '.',
+            external_ids={
+                constants.OVN_DYNAMIC_ROUTING_PORT_MAPPING: port_mappings_str}
+        ).execute(check_error=True)
         bgp_bridge_names = sorted(_get_bgp_peer_bridges(row))
         self.bgp_agent.set_chassis_bgp_bridges(bgp_bridge_names)
 
