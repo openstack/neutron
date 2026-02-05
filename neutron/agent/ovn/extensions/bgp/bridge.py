@@ -140,31 +140,27 @@ class BGPChassisBridge(Bridge):
                 for ip in ip_lib.get_devices_with_ip(
                     namespace=None, name=self.name)]
 
-    def _get_flows_for_lrp(self):
-        LOG.debug(f"Adding a flow to direct data plane traffic to OVN "
-                  f"from {self.nic_ofport} to {self.patch_port_ofport} using "
-                  f"MAC {self.lrp_mac} on bridge {self.name}")
-        return [
-            f"priority=80,in_port={self.nic_ofport},"
-            f"actions=mod_dl_dst:{self.lrp_mac},"
-            f"output:{self.patch_port_ofport}"
-        ]
+    def _get_flows_for_icmpv6(self):
+        """Ingress flows for ICMPv6.
 
-    def _get_flows_for_patch_port(self):
-        LOG.debug("Adding a flow to direct data plane traffic to out "
-                  "from patch port %s on bridge %s",
-                  self.patch_port_ofport, self.name)
-        return [
-            f"priority=100,in_port={self.patch_port_ofport},"
-            f"actions=NORMAL"
-        ]
+        We don't know if ND or RA related packets are from the host or the
+        per chassis BGP router, so we flood the traffic to both.
+        """
+        flows = [(f"priority=100,in_port={self.nic_ofport},icmp6,"
+                 f"icmp_type={icmp_type} "
+                 f"actions=NORMAL,mod_dl_dst:{self.lrp_mac},"
+                 f"output:{self.patch_port_ofport}")
+                 for icmp_type in [133, 134, 135, 136]]
 
-    def _get_flows_for_nic_port(self):
+        return flows
+
+    def _get_flows_for_host_ips(self):
         LOG.debug("Adding flows to direct traffic to the host from the NIC "
                   "port %s on bridge %s", self.nic_ofport, self.name)
         # Allow IPv6 link-local traffic
         flows = [f"priority=100,ipv6,in_port={self.nic_ofport},"
-                 f"ipv6_dst=fe80::/64 actions=NORMAL"]
+                 f"ipv6_dst=fe80::/64 actions=NORMAL,"
+                 f"mod_dl_dst:{self.lrp_mac},output:{self.patch_port_ofport}"]
 
         # Direct traffic meant for the host IPs
         for host_ip in self.bgp_agent_api.host_ips:
@@ -189,18 +185,23 @@ class BGPChassisBridge(Bridge):
         # Allow ARP and ICMPv6
         flows = [
             "priority=100,arp actions=NORMAL",
-            "priority=100,icmp6,icmp_type=133 actions=NORMAL",
-            "priority=100,icmp6,icmp_type=134 actions=NORMAL",
-            "priority=100,icmp6,icmp_type=135 actions=NORMAL",
-            "priority=100,icmp6,icmp_type=136 actions=NORMAL",
+
+            # Put the destination MAC of the LRP on the per-chassis router for
+            # any remaining traffic going from the NIC.
+            (f"priority=80,in_port={self.nic_ofport},"
+             f"actions=mod_dl_dst:{self.lrp_mac},"
+             f"output:{self.patch_port_ofport}"),
+
+            # Any traffic coming from the patch port should go out.
+            (f"priority=100,in_port={self.patch_port_ofport},"
+             f"actions=NORMAL"),
 
             # Allow all other traffic
-            "priority=0, actions=normal",
+            "priority=0, actions=NORMAL",
         ]
 
-        flows.extend(self._get_flows_for_nic_port())
-        flows.extend(self._get_flows_for_patch_port())
-        flows.extend(self._get_flows_for_lrp())
+        flows.extend(self._get_flows_for_host_ips())
+        flows.extend(self._get_flows_for_icmpv6())
 
         try:
             self._apply_flows_as_bundle(flows)

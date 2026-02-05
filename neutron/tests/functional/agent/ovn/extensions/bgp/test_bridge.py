@@ -139,13 +139,25 @@ class BGPChassisBridgeTestCase(BgpTestCaseWithIdls):
 
         # 1. ARP and ICMPv6 flows
         self.assertIn('arp actions=NORMAL', flow_strings)
-        self.assertIn('icmp6,icmp_type=133 actions=NORMAL',
+        self.assertIn(f'icmp6,in_port={self.bgp_bridge.nic_ofport},'
+                      'icmp_type=133 actions=NORMAL,'
+                      'mod_dl_dst:aa:bb:cc:dd:ee:ff,'
+                      f'output:{self.bgp_bridge.patch_port_ofport}',
+                      flow_strings)
+        self.assertIn(f'icmp6,in_port={self.bgp_bridge.nic_ofport},'
+                      'icmp_type=134 actions=NORMAL,'
+                      'mod_dl_dst:aa:bb:cc:dd:ee:ff,'
+                      f'output:{self.bgp_bridge.patch_port_ofport}',
+                      flow_strings)
+        self.assertIn(f'icmp6,in_port={self.bgp_bridge.nic_ofport},'
+                      'icmp_type=135 actions=NORMAL,'
+                      'mod_dl_dst:aa:bb:cc:dd:ee:ff,'
+                      f'output:{self.bgp_bridge.patch_port_ofport}',
                         flow_strings)
-        self.assertIn('icmp6,icmp_type=134 actions=NORMAL',
-                        flow_strings)
-        self.assertIn('icmp6,icmp_type=135 actions=NORMAL',
-                        flow_strings)
-        self.assertIn('icmp6,icmp_type=136 actions=NORMAL',
+        self.assertIn(f'icmp6,in_port={self.bgp_bridge.nic_ofport},'
+                      'icmp_type=136 actions=NORMAL,'
+                      'mod_dl_dst:aa:bb:cc:dd:ee:ff,'
+                      f'output:{self.bgp_bridge.patch_port_ofport}',
                         flow_strings)
 
         # 2. Host IP flows (IPv4)
