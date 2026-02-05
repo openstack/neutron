@@ -948,8 +948,6 @@ class OvnSbIdl(OvnIdlDistributedLock):
 
     @classmethod
     def from_server(cls, connection_string, helper, driver):
-        if 'FDB' in helper.schema_json['tables']:
-            helper.register_table('FDB')
         helper.register_table('Chassis_Private')
         helper.register_table('Chassis')
         helper.register_table('Encap')
