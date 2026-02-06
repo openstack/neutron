@@ -258,6 +258,11 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
     column on the Port_Binding. The port never goes down, so we won't
     see update the driver with the LogicalSwitchPortUpdateUpEvent which
     only monitors for transitions from DOWN to UP.
+
+    Also we check here if additional_chassis is set, which means, we have a
+    LSP migration and the ovn-controller at destination has claimed the
+    port. In this case also we need to inform nova via network-vif-plugged
+    event, that migration can continue.
     """
 
     def __init__(self, driver):
@@ -272,8 +277,30 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         # NOTE(twilson) ROW_UPDATE events always pass old, but chassis will
         # only be set if chassis has changed
         old_chassis = getattr(old, 'chassis', None)
-        if not (row.chassis and old_chassis) or row.chassis == old_chassis:
+        old_additional_chassis = getattr(old, 'additional_chassis', None)
+
+        # No chassis assigned or not chassis change.
+        no_chassis_change = (not (row.chassis and old_chassis) or
+                             row.chassis == old_chassis)
+
+        # This checks if the port is being live migrated. When a TAP device
+        # is created in the destination host (there is another copy still
+        # present in the source host), the destination host ovn-controller
+        # will populate the ``Port_Binding.additional_chassis``.
+        # Conditions:
+        # * There is no additional chassis configured
+        # * The older additional is not present (NOTE: when the
+        #   ``additional_chassis`` field is updated, the old one is []).
+        # * The register has not changed.
+        no_live_migration = (not row.additional_chassis or
+                             old_additional_chassis is None or
+                             row.additional_chassis == old_additional_chassis)
+
+        # When the chassis/additional_chassis not set or not changed,
+        # we send no event
+        if no_chassis_change and no_live_migration:
             return False
+
         if row.type == ovn_const.OVN_CHASSIS_REDIRECT:
             return False
         try:
@@ -285,13 +312,12 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
                         {'port': row.logical_port, 'binding': row.uuid})
             return False
 
-        req_chassis = utils.get_requested_chassis(
-            row.options.get(ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY, ''))
-        if len(req_chassis) > 1:
-            # This event has been issued during a LSP migration. During this
-            # process, the LSP will change the port binding but the port status
-            # will be handled by the ``LogicalSwitchPortUpdateDownEvent`` and
-            # ``LogicalSwitchPortUpdateUpEvent`` events.
+        if old_additional_chassis and row.additional_chassis == []:
+            # Now the Port_Binding is cleaned up, so additional_chassis is
+            # cleared -> we send no event.
+            # This event has been issued during a LSP migration when the
+            # port is claimed on the destination chassis and additional_chassis
+            # got set
             return False
 
         return utils.is_lsp_enabled(lsp) and utils.is_lsp_up(lsp)

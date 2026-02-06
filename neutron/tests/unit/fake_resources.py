@@ -414,6 +414,7 @@ class FakeOvsdbRow(FakeResource):
             'uuid': fake_uuid,
             'name': 'name-' + fake_uuid,
             'external_ids': {},
+            'additional_chassis': [],
         }
 
         # Set default methods.
