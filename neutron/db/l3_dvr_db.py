@@ -278,7 +278,7 @@ class DVRResourceOperationHandler:
     def _add_csnat_router_interface_port(
             self, context, router, network_id, subnets, do_pop=True):
         """Add SNAT interface to the specified router and subnet."""
-        port_data = {'tenant_id': '',
+        port_data = {'project_id': '',
                      'network_id': network_id,
                      'fixed_ips': subnets,
                      'device_id': router.id,
@@ -1211,7 +1211,7 @@ class _DVRAgentInterfaceMixin:
                           {'gw': agent_port,
                            'dest_host': host})
             else:
-                port_data = {'tenant_id': '',
+                port_data = {'project_id': '',
                              'network_id': network_id,
                              'device_id': l3_agent_db['id'],
                              'device_owner': const.DEVICE_OWNER_AGENT_GW,

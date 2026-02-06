@@ -909,7 +909,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             plugin._get_security_groups_on_port(
                 neutron_context,
                 {'port': {'security_groups': [sg1['security_group']['id']],
-                          'tenant_id': 'project'}}
+                          'project_id': 'project'}}
             )
 
     def test_get_security_group_on_port_with_admin_from_other_project(self):
@@ -923,7 +923,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         sgs = plugin._get_security_groups_on_port(
             neutron_context,
             {'port': {'security_groups': [sg1['security_group']['id']],
-                      'tenant_id': 'project'}})
+                      'project_id': 'project'}})
         sg1_id = sg1['security_group']['id']
         self.assertEqual(sg1_id, sgs[0].id)
         self.assertEqual('other_project', sgs[0].project_id)

@@ -287,26 +287,26 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 context, net['id'], net['tenant_id'], tenant_to_check)
 
     def ensure_no_project_ports_on_network(self, context, network_id,
-                                           net_tenant_id, tenant_id):
+                                           net_project_id, project_id):
         elevated = context.elevated()
         with db_api.CONTEXT_READER.using(elevated):
             ports = model_query.query_with_hooks(
                 elevated, models_v2.Port).filter(
                     models_v2.Port.network_id == network_id)
-            if tenant_id == '*':
+            if project_id == '*':
                 # for the wildcard we need to get all of the rbac entries to
                 # see if any allow the remaining ports on the network.
                 # any port with another RBAC entry covering it or one belonging
-                # to the same tenant as the network owner is ok
+                # to the same project as the network owner is ok
                 other_rbac_objs = network_obj.NetworkRBAC.get_objects(
                     elevated, object_id=network_id,
                     action=rbac_db_models.ACCESS_SHARED)
-                allowed_tenants = [rbac['target_project'] for rbac
-                                   in other_rbac_objs
-                                   if rbac.target_project != tenant_id]
-                allowed_tenants.append(net_tenant_id)
+                allowed_projects = [rbac['target_project'] for rbac
+                                    in other_rbac_objs
+                                    if rbac.target_project != project_id]
+                allowed_projects.append(net_project_id)
                 ports = ports.filter(
-                    ~models_v2.Port.tenant_id.in_(allowed_tenants))
+                    ~models_v2.Port.project_id.in_(allowed_projects))
                 # Filter any port with project_id=''. These ports are related
                 # to floating IPs, router ports (gateway, SNAT, FIP agent, HA
                 # interface).
@@ -319,7 +319,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         action=rbac_db_models.ACCESS_SHARED,
                         target_project='*'):
                     return
-                ports = ports.filter(models_v2.Port.project_id == tenant_id)
+                ports = ports.filter(models_v2.Port.project_id == project_id)
             if ports.count():
                 raise exc.InvalidSharedSetting(network=network_id)
 
@@ -351,14 +351,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         ports = ports.filter(not_(models_v2.Port.device_owner.startswith(
             constants.DEVICE_OWNER_NETWORK_PREFIX)))
         subnets = subnet_obj.Subnet.get_objects(context, network_id=id)
-        tenant_ids = set([port['tenant_id'] for port in ports] +
-                         [subnet['tenant_id'] for subnet in subnets])
-        # raise if multiple tenants found or if the only tenant found
+        project_ids = set([port['project_id'] for port in ports] +
+                          [subnet['tenant_id'] for subnet in subnets])
+        # raise if multiple projects found or if the only project found
         # is not the owner of the network
-        if (len(tenant_ids) > 1 or len(tenant_ids) == 1 and
-                original.tenant_id not in tenant_ids):
+        if (len(project_ids) > 1 or len(project_ids) == 1 and
+                original.project_id not in project_ids):
             self._validate_projects_have_access_to_network(
-                original, tenant_ids)
+                original, project_ids)
 
     def _validate_projects_have_access_to_network(self, network, project_ids):
         ctx_admin = ctx.get_admin_context()
@@ -1541,14 +1541,19 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         p = port['port']
         port_id = p.get('id') or uuidutils.generate_uuid()
         network_id = p['network_id']
-        # TODO(ralonsoh): "tenant_id" reference should be removed.
-        project_id = p.get('project_id') or p['tenant_id']
+        # TODO(ralonsoh): "tenant_id" reference should be removed in G+2.
+        if p.get('tenant_id') and p.get('project_id') is None:
+            p['project_id'] = p['tenant_id']
+            LOG.warning('project_id key not found in port dictionary, using '
+                        'tenant_id instead. This support has been deprecated '
+                        'and will be removed in a future release.')
+        project_id = p['project_id']
         if p.get('device_owner'):
             self._enforce_device_owner_not_router_intf_or_device_id(
                 context, p.get('device_owner'), p.get('device_id'),
                 project_id)
 
-        port_data = dict(tenant_id=project_id,
+        port_data = dict(project_id=project_id,
                          name=p['name'],
                          id=port_id,
                          network_id=network_id,
@@ -1593,7 +1598,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if current_owner and changed_device_id or changed_owner:
             self._enforce_device_owner_not_router_intf_or_device_id(
                 context, current_owner, current_device_id,
-                db_port['tenant_id'])
+                db_port['project_id'])
 
         if (new_mac and
                 new_mac != converters.convert_to_sanitized_mac_address(

@@ -42,7 +42,7 @@ class UplinkStatusPropagationUpdatableML2ExtDriverTestCase(
         with self.network() as n:
             args = {'port': {'name': 'test',
                              'network_id': n['network']['id'],
-                             'tenant_id': n['network']['id'],
+                             'project_id': n['network']['project_id'],
                              'device_id': '',
                              'device_owner': '',
                              'fixed_ips': '',

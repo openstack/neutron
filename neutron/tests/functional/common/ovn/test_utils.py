@@ -177,7 +177,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         net = self._make_network(self.fmt, 'n1', True)['network']
         port_data = {
             'port': {'network_id': net['id'],
-                     'tenant_id': self._project_id,
+                     'project_id': self._project_id,
                      portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT}}
         port_req = self.new_create_request('ports', port_data, self.fmt)
         port_res = port_req.get_response(self.api)
@@ -429,7 +429,7 @@ class TestGetLogicalRouterPortHAChassis(base.TestOVNFunctionalBase):
         kwargs = {external_net.EXTERNAL: True, 'as_admin': True}
         net = self._make_network(self.fmt, 'n1', True, **kwargs)['network']
         port_data = {'port': {'network_id': net['id'],
-                              'tenant_id': self._project_id,}}
+                              'project_id': self._project_id,}}
         port_req = self.new_create_request('ports', port_data, self.fmt)
         port_res = port_req.get_response(self.api)
         return self.deserialize(self.fmt, port_res)['port']

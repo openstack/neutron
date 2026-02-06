@@ -39,7 +39,7 @@ class TestRevisionNumbers(base.TestOVNFunctionalBase):
 
     def _create_port(self, name, net_id):
         data = {'port': {'name': name,
-                         'tenant_id': self._project_id,
+                         'project_id': self._project_id,
                          'network_id': net_id}}
         req = self.new_create_request('ports', data, self.fmt)
         res = req.get_response(self.api)

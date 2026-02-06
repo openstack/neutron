@@ -238,7 +238,7 @@ class DbBasePluginCommon:
         res = {"id": port["id"],
                'name': port['name'],
                "network_id": port["network_id"],
-               'tenant_id': port['tenant_id'],
+               'project_id': port['project_id'],
                "mac_address": str(mac),
                "admin_state_up": port["admin_state_up"],
                "status": port["status"],

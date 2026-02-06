@@ -1760,7 +1760,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             for port in port_list:
                 # Set up the port request dict
                 pdata = port.get('port')
-                project_id = pdata.get('project_id') or pdata.get('tenant_id')
+                project_id = pdata.get('project_id')
                 security_group_ids = pdata.get('security_groups')
                 network_id = pdata.get('network_id')
                 if security_group_ids is const.ATTR_NOT_SPECIFIED:

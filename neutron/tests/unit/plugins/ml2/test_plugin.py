@@ -918,7 +918,7 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
                         return False
                     attempt[0] += 1
                     data = {'port': {'network_id': network['network']['id'],
-                                     'tenant_id':
+                                     'project_id':
                                      network['network']['project_id'],
                                      'name': 'port1',
                                      'admin_state_up': 1,
@@ -1024,7 +1024,7 @@ class TestMl2DbOperationBoundsTenantRbac(TestMl2DbOperationBoundsTenant):
                          'project_id': context_.project_id,
                          'admin_state_up': True,
                          'shared': True}})
-        # create port that belongs to another tenant
+        # create port that belongs to another project
         return self._make_port(
             self.fmt, net['id'],
             set_context=True, project_id='fake_project')
@@ -1699,9 +1699,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                         'security_groups':
                                             constants.ATTR_NOT_SPECIFIED,
                                         'project_id':
-                                            snet_v6['subnet']['project_id'],
-                                        'tenant_id':
-                                            snet_v6['subnet']['tenant_id']}},
+                                            snet_v6['subnet']['project_id']}},
                               {'port': {'network_id': net_id,
                                         'admin_state_up': True,
                                         'name': 'test_1',
@@ -1714,9 +1712,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                         'security_groups':
                                             constants.ATTR_NOT_SPECIFIED,
                                         'project_id':
-                                            snet_v6['subnet']['project_id'],
-                                        'tenant_id':
-                                            snet_v6['subnet']['tenant_id']}}
+                                            snet_v6['subnet']['project_id']}}
                               ]}
                 b_ports = self.plugin.create_port_bulk(
                     ctx, ports)
@@ -1748,8 +1744,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                     'device_id': '',
                                     'security_groups':
                                         constants.ATTR_NOT_SPECIFIED,
-                                    'project_id': project_id,
-                                    'tenant_id': project_id}}
+                                    'project_id': project_id}}
                           ]}
             self.assertRaises(
                 exc.NetworkNotFound,
@@ -3969,7 +3964,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
     def test_release_segment_nofity_mechanism_manager(self):
         self._test_nofity_mechanism_manager(events.PRECOMMIT_DELETE)
 
-    def test_prevent_delete_segment_with_tenant_port(self):
+    def test_prevent_delete_segment_with_project_port(self):
         fake_owner_compute = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
         ml2_db.subscribe()
         plugin = directory.get_plugin()

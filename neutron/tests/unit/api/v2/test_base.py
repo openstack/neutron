@@ -877,7 +877,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self._test_create_failure_bad_request('networks', data)
 
     def test_create_missing_attr(self):
-        data = {'port': {'what': 'who', 'tenant_id': _uuid()}}
+        data = {'port': {'what': 'who', 'project_id': _uuid()}}
         self._test_create_failure_bad_request('ports', data)
 
     def test_create_readonly_attr(self):

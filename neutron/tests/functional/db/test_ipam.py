@@ -100,7 +100,7 @@ class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
     def _create_port(self, port_id, fixed_ips=None):
         port_fixed_ips = (fixed_ips if fixed_ips else
                           constants.ATTR_NOT_SPECIFIED)
-        port = {'tenant_id': self.project_id,
+        port = {'project_id': self.project_id,
                 'name': 'test_port',
                 'id': port_id,
                 'network_id': self.network_id,
