@@ -207,7 +207,7 @@ class ReconcileMainRouterCommand(ReconcileRouterCommand):
             constants.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
                 constants.BGP_ROUTER_REDISTRIBUTE,
             constants.LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID:
-                bgp_config.get_bgp_router_tunnel_key(),
+                str(bgp_config.get_main_router_vrf_id()),
         }
 
 
@@ -221,8 +221,9 @@ class ReconcileChassisRouterCommand(ReconcileRouterCommand):
     def options(self):
         return {
             'chassis': self.chassis.name,
+            constants.LR_OPTIONS_DYNAMIC_ROUTING: 'true',
             constants.LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID:
-                bgp_config.get_bgp_chassis_router_vrf_id(),
+                str(bgp_config.get_chassis_router_vrf_id()),
         }
 
 class ConnectRouterToSwitchCommand(ovs_cmd.BaseCommand):
