@@ -732,10 +732,11 @@ class OVSBridge(BaseOVS):
             if result['ofport'] == UNASSIGNED_OFPORT:
                 LOG.warning("Found not yet ready openvswitch port: %s",
                             result['name'])
+                continue
             elif result['ofport'] == INVALID_OFPORT:
                 LOG.warning("Found failed openvswitch port: %s",
                             result['name'])
-            elif 'attached-mac' in result['external_ids']:
+            if 'attached-mac' in result['external_ids']:
                 port_id = self.portid_from_external_ids(result['external_ids'])
                 if port_id:
                     edge_ports.add(port_id)
