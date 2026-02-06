@@ -517,8 +517,6 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._load_nb_db()
 
         # Test with gateway_port_support enabled
-        utils.is_nat_gateway_port_supported = mock.Mock()
-        utils.is_nat_gateway_port_supported.return_value = is_gw_port
         mapping = self.nb_ovn_idl.get_all_logical_routers_with_rports()
         lra_nat = self._find_ovsdb_fake_row(self.nat_table,
                                             'external_ip', '20.0.2.4')
@@ -529,14 +527,18 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                    'logical_ip': '10.0.0.4',
                    'type': 'dnat_and_snat',
                    'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_a'},
-                   'uuid': lra_nat.uuid}
+                   'uuid': lra_nat.uuid,
+                   'gateway_port': lra_nat.gateway_port,
+                   }
         lrb_fip = {'external_ip': '20.0.2.5',
                    'logical_ip': '10.0.0.5',
                    'type': 'dnat_and_snat',
                    'external_mac': '00:01:02:03:04:05',
                    'logical_port': 'lsp-id-001',
                    'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_b'},
-                   'uuid': lrb_nat.uuid}
+                   'uuid': lrb_nat.uuid,
+                   'gateway_port': [],
+                   }
 
         if is_gw_port:
             lra_fip['gateway_port'] = lra_nat.gateway_port

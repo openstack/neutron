@@ -1,0 +1,5 @@
+---
+other:
+  - |
+    Since v22.06.0, OVN supports the new column ``NAT.gateway_port``. It is
+    no longer needed to check its presence.
