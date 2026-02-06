@@ -110,8 +110,7 @@
         - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-with-sqlalchemy-master
-        - devstack-tobiko-neutron:
-            voting: true
+        - devstack-tobiko
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
         - neutron-ovs-tempest-plugin-iptables_hybrid-nftables
