@@ -45,6 +45,7 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
     def ovs_idl_events(self):
         return [
             events.CreateLocalOVSEvent,
+            events.UpdateLocalOVSEvent,
             events.NewBgpBridgeEvent,
         ]
 
