@@ -1086,8 +1086,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         # TODO(twilson) Some day it would be nice to stop passing names around
         # and just start using chassis objects so db_find_rows could be used
         rows = self.db_list_rows('Port_Binding').execute(check_error=True)
-        if (include_additional_chassis and
-                utils.is_additional_chassis_supported(self)):
+        if include_additional_chassis:
             return [r for r in rows
                     if r.chassis and r.chassis[0].name == chassis or
                     chassis in [ch.name for ch in r.additional_chassis]]
@@ -1105,7 +1104,6 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                 # chassis handling
                 pass
 
-            if utils.is_additional_chassis_supported(self):
-                for ch in row.additional_chassis:
-                    chassis.add(ch.name)
+            for ch in row.additional_chassis:
+                chassis.add(ch.name)
         return chassis

@@ -34,7 +34,6 @@ from neutron.conf.agent.metadata import config as meta_config
 from neutron.conf.agent.ovn.metadata import config as meta_config_ovn
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
-from neutron.tests.functional.common import ovn as ovn_common
 from neutron.tests.functional.resources.ovsdb import events
 
 AGENT_CHASSIS_TABLE = 'Chassis_Private'
@@ -446,7 +445,6 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         agent_sb_idl = self.agent.sb_idl
         self.assertEqual(agent_sb_idl, proxy_sb_idl)
 
-    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
     def test_metadata_provisioned_on_additional_chassis_change(self):
         other_chassis_name = uuidutils.generate_uuid()
         self.add_fake_chassis("other_chassis", name=other_chassis_name)
@@ -477,7 +475,6 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 exception=NoDatapathProvision(
                     "Additional chassis didn't trigger Port Binding event"))
 
-    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
     def test_metadata_not_provisioned_on_foreign_additional_chassis_change(
             self):
         other_chassis_name = uuidutils.generate_uuid()
@@ -517,7 +514,6 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                     exception=NoDatapathProvision(
                         "Provisioning wasn't triggered"))
 
-    @ovn_common.skip_if_additional_chassis_not_supported
     def test_metadata_teardown_on_additional_chassis_removed(self):
         other_chassis_name = uuidutils.generate_uuid()
         self.add_fake_chassis("other_chassis", name=other_chassis_name)
@@ -562,7 +558,6 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 exception=NoDatapathProvision(
                     "Removing additional chassis did not call teardown"))
 
-    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
     def test_metadata_additional_chassis_removed_chassis_set(self):
         other_chassis_name = uuidutils.generate_uuid()
         self.add_fake_chassis("other_chassis", name=other_chassis_name)
@@ -650,7 +645,6 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 exception=NoDatapathProvision(
                     "Removing additional chassis did not call teardown"))
 
-    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
     def test_metadata_additional_chassis_removed_different_chassis_set(self):
         other_chassis_name2 = uuidutils.generate_uuid()
         self.add_fake_chassis("other_chassis2", name=other_chassis_name2)
@@ -658,11 +652,9 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             self.sb_api, 'Chassis', 'name', other_chassis_name2)
         self._test_metadata_additional_chassis_removed(other_chassis2.uuid)
 
-    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
     def test_metadata_additional_chassis_removed_chassis_unset(self):
         self._test_metadata_additional_chassis_removed(new_chassis_uuid=[])
 
-    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
     def test_metadata_port_binding_column_updated(self):
         agent_chassis = idlutils.row_by_value(
             self.sb_api, 'Chassis', 'name', self.chassis_name)

@@ -1469,13 +1469,6 @@ def get_requested_chassis(requested_chassis):
     return []
 
 
-# TODO(lucasagomes): Remove this function when the additional_chassis column
-# becomes the norm and older versions of OVN are no longer supported (the field
-# was added in v22.09.0)
-def is_additional_chassis_supported(idl):
-    return idl.is_col_present('Port_Binding', 'additional_chassis')
-
-
 def is_nat_gateway_port_supported(idl):
     return idl.is_col_present('NAT', 'gateway_port')
 
