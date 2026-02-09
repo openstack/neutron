@@ -435,6 +435,7 @@
           "/$NEUTRON_CORE_PLUGIN_CONF":
             ovn:
               enable_distributed_floating_ip: True
+              ovs_create_tap: True
       devstack_localrc:
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.3
