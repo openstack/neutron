@@ -111,7 +111,7 @@ class OVOServerRpcInterface:
     Generates RPC callback notifications on ML2 object changes.
     """
 
-    def __init__(self, enable_signals=True):
+    def __init__(self):
         self._rpc_pusher = resources_rpc.ResourcesPushRpcApi()
         self._setup_change_handlers()
         LOG.debug("ML2 OVO RPC backend initialized.")

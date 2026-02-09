@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    The configuration variable ``enable_signals`` is deprecated and removed.
+    Since Caracal (2024.1), this variable is no longer used. Since the removal
+    of the eventlet API server, this variable is unnecessary.
