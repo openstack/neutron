@@ -355,8 +355,8 @@ class TestRouter(base.TestOVNFunctionalBase):
         # first fill a few chassis with normal routers
         chassis_list.extend(
             self._add_chassis(0, ovn_const.MAX_GW_CHASSIS * 2, ['physnet5']))
-        for i in range(1, (ovn_const.MAX_GW_CHASSIS * 4) + 1):
-            router = self._create_router('router%d' % i, gw_info=gw_info)
+        for i in range(0, (ovn_const.MAX_GW_CHASSIS * 4)):
+            self._create_router('router%d' % i, gw_info=gw_info)
 
         # add more chassis and create a set of routers with multiple gateway
         # ports
@@ -368,20 +368,18 @@ class TestRouter(base.TestOVNFunctionalBase):
         # Each router created below will have three LRPs, which should fit
         # in ovn_const.MAX_GW_CHASSIS * 3 chassis without duplicates when
         # using the anti affinity scheduler.
+        num_of_gws = 3
         chassis_list.extend(
             self._add_chassis(
                 len(chassis_list), ovn_const.MAX_GW_CHASSIS, ['physnet5']))
         router_lrps = {}
-        for i in range(1, 2 + 1):
+        for i in range(4):
             router = self._create_router('router-multi-gw%d' % i)
             router_lrps[router['id']] = []
             self._add_external_gateways(
                 router['id'],
-                [
-                    {'network_id': ext1['network']['id']},
-                    {'network_id': ext1['network']['id']},
-                    {'network_id': ext1['network']['id']},
-                ])
+                [{'network_id': ext1['network']['id']}
+                 for _ in range(num_of_gws)])
             for row in self.nb_api.tables[
                     'Logical_Router_Port'].rows.values():
                 if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY
@@ -394,17 +392,11 @@ class TestRouter(base.TestOVNFunctionalBase):
                     for gwc in row.gateway_chassis:
                         chassis[gwc.priority] = gwc.chassis_name
                     router_lrps[router['id']].append(chassis)
-        for router, lrp_lists in router_lrps.items():
-            while lrp_lists:
-                try:
-                    lrps = lrp_lists.pop()
-                except IndexError:
-                    break
-                for lrp_list in lrp_lists:
-                    for n in range(1, ovn_const.MAX_GW_CHASSIS + 1):
-                        self.assertNotEqual(
-                            lrps[n],
-                            lrp_list[n])
+
+        for _, lrp_lists in router_lrps.items():
+            for idx in range(1, ovn_const.MAX_GW_CHASSIS + 1):
+                chassis_set = {prio_chassis[idx] for prio_chassis in lrp_lists}
+                self.assertEqual(num_of_gws, len(chassis_set))
 
     def test_gateway_chassis_least_loaded_scheduler_anti_affinity_count(self):
         ovn_client = self.l3_plugin._ovn_client
