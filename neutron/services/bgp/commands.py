@@ -85,6 +85,7 @@ class _LspAddCommand(nb_cmd.LspAddCommand):
 
         self.set_columns(self.row_result, **self.columns)
 
+
 class _LrpAddCommand(nb_cmd.LrpAddCommand):
     """An idempotent command to add a logical router port.
 
