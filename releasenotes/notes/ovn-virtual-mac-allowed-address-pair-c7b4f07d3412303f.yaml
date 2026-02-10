@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    ML2/OVN now supports allowed address pairs with virtual MAC addresses.
+    This functionality requires OVN v26.03, that includes the support for
+    VRRPv3 protocol. In systems with older OVN versions, the port security
+    for this specific allowed address pair will return an invalid syntax error
+    and the port won't accept traffic for the IP+MAC tuple, as it was happening
+    before.

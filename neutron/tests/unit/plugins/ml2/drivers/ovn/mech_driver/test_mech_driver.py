@@ -749,10 +749,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_create_port_security_allowed_address_pairs(self):
         # NOTE(mjozefcz): Lets pretend this is nova port to not
         # be treated as VIP.
+        ip1 = '1.1.1.1'
+        ip2 = '2.2.2.2'
+        mac2 = '22:22:22:22:22:22'
         kwargs = {'allowed_address_pairs':
-                  [{"ip_address": "1.1.1.1"},
-                   {"ip_address": "2.2.2.2",
-                    "mac_address": "22:22:22:22:22:22"}],
+                  [{'ip_address': ip1},
+                   {'ip_address': ip2, 'mac_address': mac2}],
                   'device_owner': 'compute:nova'}
         with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
@@ -760,29 +762,28 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                is_admin=True,
                                arg_list=('allowed_address_pairs',),
                                **kwargs) as port:
+                    port_mac = port['port']['mac_address']
                     port_ip = port['port'].get('fixed_ips')[0]['ip_address']
                     self.assertTrue(self.nb_ovn.create_lswitch_port.called)
                     called_args_dict = (
                         (self.nb_ovn.create_lswitch_port
                          ).call_args_list[0][1])
-                    self.assertEqual(
-                        tools.UnorderedList(
-                            ["22:22:22:22:22:22 2.2.2.2",
-                             port['port']['mac_address'] + ' ' + port_ip +
-                             ' ' + '1.1.1.1']),
-                        called_args_dict.get('port_security'))
-                    self.assertEqual(
-                        tools.UnorderedList(
-                            ["22:22:22:22:22:22",
-                             port['port']['mac_address'] + ' ' + port_ip]),
-                        called_args_dict.get('addresses'))
-
-                    old_mac = port['port']['mac_address']
+                    psec = tools.UnorderedList(
+                        [' '.join(['VRRPv3', port_mac, mac2, ip2]),
+                         ' '.join([port_mac, port_ip, ip1])])
+                    self.assertEqual(psec,
+                                     called_args_dict.get('port_security'))
+                    addresses = tools.UnorderedList(
+                        [mac2,
+                         ' '.join([port_mac, port_ip])])
+                    self.assertEqual(addresses,
+                                     called_args_dict.get('addresses'))
 
                     # we are updating only the port mac address. So the
                     # mac address of the allowed address pair ip 1.1.1.1
                     # will have old mac address
-                    data = {'port': {'mac_address': '00:00:00:00:00:01'}}
+                    port_mac_new = '00:00:00:00:00:01'
+                    data = {'port': {'mac_address': port_mac_new}}
                     req = self.new_update_request(
                         'ports',
                         data, port['port']['id'],
@@ -792,17 +793,19 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     called_args_dict = (
                         (self.nb_ovn.set_lswitch_port
                          ).call_args_list[0][1])
-                    self.assertEqual(tools.UnorderedList(
-                        ["22:22:22:22:22:22 2.2.2.2",
-                         "00:00:00:00:00:01 " + port_ip,
-                         old_mac + " 1.1.1.1"]),
-                        called_args_dict.get('port_security'))
-                    self.assertEqual(
-                        tools.UnorderedList(
-                            ["22:22:22:22:22:22",
-                             "00:00:00:00:00:01 " + port_ip,
-                             old_mac]),
-                        called_args_dict.get('addresses'))
+
+                    psec = tools.UnorderedList(
+                        [' '.join(['VRRPv3', port_mac_new, port_mac, ip1]),
+                         ' '.join(['VRRPv3', port_mac_new, mac2, ip2]),
+                         ' '.join([port_mac_new, port_ip])])
+                    self.assertEqual(psec,
+                                     called_args_dict.get('port_security'))
+                    addresses = tools.UnorderedList(
+                        [port_mac,
+                         mac2,
+                         ' '.join([port_mac_new, port_ip])])
+                    self.assertEqual(addresses,
+                                     called_args_dict.get('addresses'))
 
     def test_create_port_ovn_octavia_vip(self):
         with self.network() as net1,\

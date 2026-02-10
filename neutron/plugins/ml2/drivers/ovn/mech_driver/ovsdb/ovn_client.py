@@ -162,8 +162,15 @@ class OVNClient:
             if allowed_address['mac_address'] == port['mac_address']:
                 addresses += ' ' + allowed_address['ip_address']
             else:
-                allowed_addresses.add(allowed_address['mac_address'] + ' ' +
-                                      allowed_address['ip_address'])
+                # If a virtual MAC is provided, it is needed to define the
+                # port security according to the RFC 9568 OVN support,
+                # provided in
+                # https://github.com/ovn-org/ovn/commit/d9e2393e9840aaad08900f3510f96b1efcea5ddc
+                # Port security entry: VRRPv3 MAC-PHY VRRP-MAC IP
+                vrrpv3 = ' '.join(('VRRPv3', port['mac_address'],
+                                   allowed_address['mac_address'],
+                                   allowed_address['ip_address']))
+                allowed_addresses.add(vrrpv3)
                 new_macs.add(allowed_address['mac_address'])
 
         allowed_addresses.add(addresses)
