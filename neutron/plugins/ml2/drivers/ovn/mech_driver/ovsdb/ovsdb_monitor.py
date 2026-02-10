@@ -339,7 +339,8 @@ class ChassisAgentWriteEvent(ChassisAgentEvent):
         # On updates to Chassis_Private because the Chassis has been deleted,
         # don't update the AgentCache. We use chassis_private.chassis to return
         # data about the agent.
-        return event == self.ROW_CREATE or hasattr(old, 'nb_cfg')
+        return (event == self.ROW_CREATE or
+                (hasattr(old, 'nb_cfg') and row.chassis))
 
     def run(self, event, row, old):
         n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, row,
