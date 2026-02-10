@@ -447,16 +447,9 @@ class OVNClient:
             port_security, new_macs = (
                 self._get_allowed_addresses_from_port(port))
             is_vpn_gw_port = device_owner == n_const.DEVICE_OWNER_VPN_ROUTER_GW
-            # TODO(egarciar): OVN supports MAC learning from v21.03. This
-            # if-else block is stated so as to keep compatibility with older
-            # OVN versions and should be removed in the future.
-            if self._sb_idl.is_table_present('FDB'):
-                if (port_security or port_type or dhcpv4_options or
-                        dhcpv6_options or is_vpn_gw_port):
-                    addresses.append(address)
-                    addresses.extend(new_macs)
-            else:
-                addresses = [address]
+            if (port_security or port_type or dhcpv4_options or
+                    dhcpv6_options or is_vpn_gw_port):
+                addresses.append(address)
                 addresses.extend(new_macs)
 
             if not port_security and not port_type:
