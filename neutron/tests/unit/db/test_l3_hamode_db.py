@@ -188,6 +188,29 @@ class L3HATestCase(L3HATestFramework):
         self.assertIn((self.agent1['id'], 'active'), agent_ids)
         self.assertIn((self.agent2['id'], 'standby'), agent_ids)
 
+    def test_get_l3_bindings_hosting_router_with_ha_states_null_agent(self):
+        router = self._create_router()
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
+        mock_bindings = self.plugin.get_ha_router_port_bindings(
+            self.admin_ctx, [router['id']])
+        mock_bindings[0].state = constants.HA_ROUTER_STATE_STANDBY
+        target = (
+            'neutron.db.l3_hamode_db.L3_HA_NAT_db_mixin'
+            '.get_ha_router_port_bindings'
+        )
+        with (
+            mock.patch(
+                target,
+                return_value=mock_bindings),
+            mock.patch.object(mock_bindings[0], 'agent', new=None)
+        ):
+            bindings = (
+                self.plugin.get_l3_bindings_hosting_router_with_ha_states(
+                    self.admin_ctx, router['id'])
+            )
+        self.assertEqual(len(bindings), 1)
+
     def test_get_l3_bindings_hosting_router_with_ha_states_not_scheduled(self):
         router = self._create_router(ha=False)
         # Check that there no L3 agents scheduled for this router
