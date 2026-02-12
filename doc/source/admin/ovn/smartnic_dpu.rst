@@ -127,7 +127,7 @@ examples:
      [pci]
      passthrough_whitelist = {"vendor_id": "15b3", "product_id": "101e", "physical_network": "dcfabric", "remote_managed": "true"}
 
-   .. note::
+  .. note::
 
    "dcfabric" is an arbitrary physnet name. In order for this to work it must
    be specified consistenly in Nova config, during OVN configuraton when

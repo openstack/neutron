@@ -48,7 +48,7 @@ rpdb
 ----
 
 An alternative to ``pdb`` is the use of
-`rpdb <https://pypi.org/project/rpdb/>`. This library works the same as ``pdb``
+`rpdb <https://pypi.org/project/rpdb/>`_. This library works the same as ``pdb``
 but opening a TCP port that can be accessed using telnet, netcat, etc. For
 example:
 

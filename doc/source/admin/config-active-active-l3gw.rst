@@ -59,8 +59,8 @@ Limitations
 .. warning::
 
    The feature can not be used together with NAT, routers and gateways must be
-   created with the ``--disable-snat`` argument, and instances must use site-
-   or globally routable addresses.
+   created with the ``--disable-snat`` argument, and instances must use
+   unique local (ULA) or globally routable addresses.
 
 Scale considerations
 --------------------

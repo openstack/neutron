@@ -4,21 +4,33 @@ default_language_version:
   python: python3
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
+      # whitespace
       - id: trailing-whitespace
       - id: mixed-line-ending
         args: ['--fix', 'lf']
         exclude: '.*\.(svg)$'
-      - id: check-byte-order-marker
+      # file format and permissions
+      - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
-      - id: check-merge-conflict
-      - id: debug-statements
+      # TODO(haleyb) fix these issues or remove check
+      # - id: check-shebang-scripts-are-executable
       - id: check-yaml
         files: .*\.(yaml|yml)$
         exclude: 'rally-jobs/task-neutron.yaml'
+      # git
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+        exclude: 'neutron/tests/var/.*|vagrant/ovn/provisioning/id_rsa'
+      # python
+      - id: debug-statements
+      - id: check-docstring-first
+        exclude: 'neutron/db/migration/alembic_migrations/.*|neutron/tests/unit/db/test_agents_db.py'
   - repo: https://github.com/lucas-c/pre-commit-hooks
-    rev: v1.5.5
+    rev: v1.5.6
     hooks:
       - id: remove-tabs
         exclude: '.*\.(svg)$'
@@ -34,23 +46,34 @@ repos:
         files: .*\.sh
         exclude: '.tox/.*'
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.1
+    rev: v0.15.0
     hooks:
       - id: ruff-check
         args: ['--fix', '--unsafe-fixes']
-  - repo: https://opendev.org/openstack/hacking
-    rev: 7.0.0
-    hooks:
-      - id: hacking
-        additional_dependencies: ['neutron-lib>=3.21.1']
-        exclude: '^(doc|releasenotes|tools)/.*$'
   - repo: https://github.com/hhatto/autopep8
     rev: v2.3.2
     hooks:
       - id: autopep8
         files: '^.*\.py$'
+  # Run hacking after autopep8 so that if it can fix
+  # it, it will. Note it will still fail in CI because
+  # fixing an issue changes the code and that should
+  # not happen in CI.
+  - repo: https://opendev.org/openstack/hacking
+    rev: 8.0.0
+    hooks:
+      - id: hacking
+        additional_dependencies: ['neutron-lib>=3.23.0']
+        exclude: '^(doc|releasenotes|tools)/.*$'
+  - repo: https://github.com/sphinx-contrib/sphinx-lint
+    rev: v1.0.2
+    hooks:
+      - id: sphinx-lint
+        args: []
+        files: ^doc|releasenotes
+        types: [rst]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.1
+    rev: v1.19.1
     hooks:
       - id: mypy
         pass_filenames: false

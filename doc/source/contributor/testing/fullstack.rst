@@ -120,9 +120,9 @@ To run fullstack tests locally, you should clone the following repositories
 under `/opt/stack/` directory (you may have to create it first with
 `mkdir -p /opt/stack`):
 
-* `Devstack <https://opendev.org/openstack/devstack/>`
-* `Neutron <https://opendev.org/openstack/neutron>`
-* `Requirements <https://opendev.org/openstack/requirements>`
+* `Devstack <https://opendev.org/openstack/devstack/>`_
+* `Neutron <https://opendev.org/openstack/neutron>`_
+* `Requirements <https://opendev.org/openstack/requirements>`_
 
 When repositories are available locally, the first thing which needs to be
 done is preparation of the environment. There is a simple script in Neutron
