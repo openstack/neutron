@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 
 # Save trace setting
 XTRACE=$(set +o | grep xtrace)
