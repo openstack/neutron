@@ -172,27 +172,32 @@ class BgpBridgeMappingsBase(BaseBgpEventsTestCase):
         super().setUp()
         self.agent_api = FakeAgentAPI(self.ovs_api)
 
-    def _verify_bridge_mappings(self, expected_bridge_mappings):
-        def wait_for_bridge_mappings():
+    def _verify_mappings(self, key, expected_mappings):
+        def wait_for_mappings():
             try:
-                bms = self.ovs_api.db_get(
+                mappings = self.ovs_api.db_get(
                     'Open_vSwitch', '.', 'external_ids'
-                ).execute(check_error=True)['ovn-bridge-mappings']
+                ).execute(check_error=True)[key]
             except KeyError:
-                bms = ''
-
-            if bms:
-                bms = sorted(bms.split(','))
-
-            return bms == sorted(expected_bridge_mappings)
+                mappings = ''
+            if mappings:
+                mappings = sorted(mappings.split(','))
+            return mappings == sorted(expected_mappings)
 
         utils.wait_until_true(
-            wait_for_bridge_mappings,
+            wait_for_mappings,
             sleep=0.1,
             timeout=5,
             exception=Exception(
-                "Expected bridge mappings %s were not configured" %
-                expected_bridge_mappings))
+                f"Expected {key} {expected_mappings} were not configured",
+            ))
+
+    def _verify_bridge_mappings(self, expected_bridge_mappings):
+        self._verify_mappings('ovn-bridge-mappings', expected_bridge_mappings)
+
+    def _verify_port_mappings(self, expected_port_mappings):
+        self._verify_mappings(
+            constants.OVN_DYNAMIC_ROUTING_PORT_MAPPING, expected_port_mappings)
 
 
 class CreateLocalOVSEventTestCase(BgpBridgeMappingsBase):
@@ -211,8 +216,9 @@ class CreateLocalOVSEventTestCase(BgpBridgeMappingsBase):
                 constants.AGENT_BGP_PEER_BRIDGES: 'br-bgp-1,br-bgp-2'}
         ).execute(check_error=True)
         self.trigger_event()
-        expected_bridge_mappings = ['br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
-        self._verify_bridge_mappings(expected_bridge_mappings)
+        expected_mappings = ['br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
+        self._verify_bridge_mappings(expected_mappings)
+        self._verify_port_mappings(expected_mappings)
 
     def test_create_local_ovs_event_existing_bridge_mappings(self):
         self.ovs_api.db_set(
@@ -224,7 +230,10 @@ class CreateLocalOVSEventTestCase(BgpBridgeMappingsBase):
         self.trigger_event()
         expected_bridge_mappings = [
             'physnet:bridge', 'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
+        expected_port_mappings = [
+            'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
         self._verify_bridge_mappings(expected_bridge_mappings)
+        self._verify_port_mappings(expected_port_mappings)
 
     def test_create_local_ovs_event_existing_bgp_in_bridge_mappings(self):
         self.ovs_api.db_set(
@@ -236,12 +245,18 @@ class CreateLocalOVSEventTestCase(BgpBridgeMappingsBase):
         self.trigger_event()
         expected_bridge_mappings = [
             'physnet:bridge', 'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
+        expected_port_mappings = [
+            'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
         self._verify_bridge_mappings(expected_bridge_mappings)
+        self._verify_port_mappings(expected_port_mappings)
 
 
 class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
     def _test_helper(
-        self, initial_ext_ids, new_ext_ids, expected_bridge_mappings):
+            self, initial_ext_ids,
+            new_ext_ids,
+            expected_bridge_mappings,
+            expected_port_mappings):
         self.ovs_api.db_set(
             'Open_vSwitch', '.',
             external_ids=initial_ext_ids
@@ -255,6 +270,7 @@ class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
         ).execute(check_error=True)
 
         self._verify_bridge_mappings(expected_bridge_mappings)
+        self._verify_port_mappings(expected_port_mappings)
 
     def test_adding_bgp_bridge(self):
         self._test_helper(
@@ -264,7 +280,8 @@ class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
             new_ext_ids={
                 constants.AGENT_BGP_PEER_BRIDGES: 'br-bgp-1,br-bgp-2'},
             expected_bridge_mappings=[
-                'physnet:bridge', 'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
+                'physnet:bridge', 'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2'],
+            expected_port_mappings=['br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
         )
 
     def test_removing_bgp_bridge(self):
@@ -275,7 +292,8 @@ class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
                 constants.AGENT_BGP_PEER_BRIDGES: 'br-bgp-1,br-bgp-2',
             },
             new_ext_ids={constants.AGENT_BGP_PEER_BRIDGES: 'br-bgp-2'},
-            expected_bridge_mappings=['physnet:bridge', 'br-bgp-2:br-bgp-2']
+            expected_bridge_mappings=['physnet:bridge', 'br-bgp-2:br-bgp-2'],
+            expected_port_mappings=['br-bgp-2:br-bgp-2']
         )
 
     def test_modifying_bgp_bridge(self):
@@ -288,7 +306,8 @@ class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
             new_ext_ids={
                 constants.AGENT_BGP_PEER_BRIDGES: 'br-bgp-2,br-bgp-3'},
             expected_bridge_mappings=[
-                'physnet:bridge', 'br-bgp-2:br-bgp-2', 'br-bgp-3:br-bgp-3']
+                'physnet:bridge', 'br-bgp-2:br-bgp-2', 'br-bgp-3:br-bgp-3'],
+            expected_port_mappings=['br-bgp-2:br-bgp-2', 'br-bgp-3:br-bgp-3']
         )
 
     def test_modifying_bridge_mappings(self):
@@ -302,5 +321,6 @@ class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
                 'ovn-bridge-mappings': 'physnet:bridge,br-bgp-2:br-bgp-2',
             },
             expected_bridge_mappings=[
-                'physnet:bridge', 'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
+                'physnet:bridge', 'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2'],
+            expected_port_mappings=['br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
         )

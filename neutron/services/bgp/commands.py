@@ -267,6 +267,9 @@ class ConnectChassisRouterToSwitchCommand(ConnectRouterToSwitchCommand):
             external_ids={
                 constants.LRP_NETWORK_NAME_EXT_ID_KEY: self.network_name,
             },
+            options={
+                constants.LRP_OPTIONS_PORT_NAME: self.network_name,
+            },
         ).run_idl(txn)
 
 
