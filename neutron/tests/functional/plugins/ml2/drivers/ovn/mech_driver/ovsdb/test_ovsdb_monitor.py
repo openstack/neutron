@@ -191,7 +191,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             self.context,
             {'router': {
                 'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._project_id,
+                'project_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': e1['network']['id'],
@@ -614,7 +614,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         router = self.l3_plugin.create_router(
             self.context,
             {'router': {'name': uuidutils.generate_uuid(),
-                        'admin_state_up': True, 'tenant_id': self._project_id,
+                        'admin_state_up': True, 'project_id': self._project_id,
                         'external_gateway_info': external_gateway_info}})
         return router
 

@@ -58,7 +58,7 @@ class TestRevisionNumbers(base.TestOVNFunctionalBase):
                 return row
 
     def _create_router(self, name):
-        data = {'router': {'name': name, 'tenant_id': self._project_id}}
+        data = {'router': {'name': name, 'project_id': self._project_id}}
         req = self.new_create_request('routers', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['router']

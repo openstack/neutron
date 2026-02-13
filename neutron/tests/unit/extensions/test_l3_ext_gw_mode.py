@@ -143,7 +143,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.router = l3_models.Router(
             id=_uuid(),
             name=None,
-            tenant_id=self.project_id,
+            project_id=self.project_id,
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE,
             enable_snat=True,
@@ -444,7 +444,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def test_router_create_show_no_ext_gwinfo(self):
         name = 'router1'
         project_id = _uuid()
-        expected_value = [('name', name), ('tenant_id', project_id),
+        expected_value = [('name', name), ('project_id', project_id),
                           ('admin_state_up', True), ('status', 'ACTIVE'),
                           ('external_gateway_info', None)]
         with self.router(name=name, admin_state_up=True,
@@ -464,7 +464,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             input_value = {'network_id': ext_net_id}
             if snat_input_value in (True, False):
                 input_value['enable_snat'] = snat_input_value
-            expected_value = [('name', name), ('tenant_id', project_id),
+            expected_value = [('name', name), ('project_id', project_id),
                               ('admin_state_up', True), ('status', 'ACTIVE'),
                               ('external_gateway_info',
                                {'network_id': ext_net_id,

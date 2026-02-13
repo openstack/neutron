@@ -370,8 +370,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         # ensure the HA network exists before we start router creation so
         # we can provide meaningful errors back to the user if no network
         # can be allocated
-        # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
-        project_id = router.get('project_id') or router['tenant_id']
+        project_id = router['project_id']
         ha_network = self.get_ha_network(admin_ctx, project_id)
         if not ha_network:
             self._create_ha_network(admin_ctx, project_id)
@@ -407,12 +406,12 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         # This will throw an exception if there aren't enough agents to
         # handle this HA router
         self.get_number_of_agents_for_scheduling(context)
-        ha_net = self.get_ha_network(context, router['tenant_id'])
+        ha_net = self.get_ha_network(context, router['project_id'])
         if not ha_net:
             # net was deleted, throw a retry to start over to create another
             raise db_exc.RetryRequest(
                 l3ha_exc.HANetworkConcurrentDeletion(
-                    project_id=router['tenant_id']))
+                    project_id=router['project_id']))
 
     @registry.receives(resources.ROUTER, [events.AFTER_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
@@ -509,10 +508,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # always attempt to cleanup the network as the router is
             # deleted. the core plugin will stop us if its in use
             ha_network = self.get_ha_network(context,
-                                             router_db.tenant_id)
+                                             router_db.project_id)
             if ha_network:
                 self.safe_delete_ha_network(context, ha_network,
-                                            router_db.tenant_id)
+                                            router_db.project_id)
 
         self.schedule_router(context, router_id)
         self._notify_router_updated(context, router_db.id)
@@ -554,7 +553,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         router_db = payload.latest_state
         if router_db.extra_attributes.ha:
             ha_network = self.get_ha_network(context,
-                                             router_db.tenant_id)
+                                             router_db.project_id)
             if ha_network:
                 self._delete_vr_id_allocation(
                     context, ha_network, router_db.extra_attributes.ha_vr_id)

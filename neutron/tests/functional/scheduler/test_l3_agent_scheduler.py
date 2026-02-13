@@ -63,7 +63,7 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
     def _create_router(self, name):
         router = {'name': name, 'admin_state_up': True,
-                  'tenant_id': self.adminContext.project_id}
+                  'project_id': self.adminContext.project_id}
         return self.l3_plugin.create_router(
             self.adminContext, {'router': router})
 
@@ -335,7 +335,7 @@ class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def _create_router(self, az_hints, ha):
         router = {'name': 'router1', 'admin_state_up': True,
                   'availability_zone_hints': az_hints,
-                  'tenant_id': self._project_id}
+                  'project_id': self._project_id}
         if ha:
             router['ha'] = True
         return self.l3_plugin.create_router(
@@ -566,7 +566,7 @@ class L3DVRSchedulerBaseTest(L3SchedulerBaseTest):
 
     def _create_router(self, name, distributed, ext_net_id=None):
         router = {'name': name, 'admin_state_up': True,
-                  'tenant_id': self.adminContext.project_id,
+                  'project_id': self.adminContext.project_id,
                   'distributed': distributed}
 
         if ext_net_id:

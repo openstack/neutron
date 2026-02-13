@@ -1374,7 +1374,7 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
             return
 
         try:
-            # using admin context as router may belong to admin tenant
+            # using admin context as router may belong to admin project
             router = self._get_router(context.elevated(), router_id)
         except l3_exc.RouterNotFound:
             LOG.warning("Router %s was not found. "

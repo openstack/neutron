@@ -51,7 +51,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         router = {'router':
                   {'name': name,
                    'admin_state_up': True,
-                   'tenant_id': self._project_id}}
+                   'project_id': self._project_id}}
         if az_hints:
             router['router']['availability_zone_hints'] = az_hints
         if gw_info:

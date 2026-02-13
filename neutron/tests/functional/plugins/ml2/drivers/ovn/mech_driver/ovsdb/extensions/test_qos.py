@@ -344,11 +344,9 @@ class TestOVNClientQosExtensionEndToEnd(_TestOVNClientQosExtensionBase):
         self.mock_qos_rules = self._mock_qos_rules.start()
 
     def _create_router(self, name, gw_info=None, az_hints=None):
-        # TODO(haleyb): "tenant_id" reference should be removed
         router = {'router':
                   {'name': name,
                    'admin_state_up': True,
-                   'tenant_id': self._project_id,
                    'project_id': self._project_id}}
         if az_hints:
             router['router']['availability_zone_hints'] = az_hints

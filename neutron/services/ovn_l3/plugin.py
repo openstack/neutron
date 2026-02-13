@@ -208,7 +208,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                        for s in utils.get_port_subnet_ids(port)]
             router_interface_info = (
                 self._make_router_interface_info(
-                    router_id, port['tenant_id'], port['id'],
+                    router_id, port['project_id'], port['id'],
                     port['network_id'], subnets[0]['id'],
                     [subnet['id'] for subnet in subnets]))
 

@@ -351,7 +351,7 @@ class TestPortBinding(base.TestOVNFunctionalBase):
             {'router': {
                 'name': uuidutils.generate_uuid(),
                 'admin_state_up': True,
-                'tenant_id': self._project_id,
+                'project_id': self._project_id,
                 'external_gateway_info': {
                     'enable_snat': True,
                     'network_id': e1['network']['id'],
@@ -1514,7 +1514,7 @@ class _TestRouter(base.TestOVNFunctionalBase):
         self._ovn_client = self.mech_driver._ovn_client
 
     def _create_router(self, name, external_gateway_info=None):
-        data = {'router': {'name': name, 'tenant_id': self._project_id,
+        data = {'router': {'name': name, 'project_id': self._project_id,
                            'external_gateway_info': external_gateway_info}}
         as_admin = bool(external_gateway_info.get('enable_snat'))
         req = self.new_create_request('routers', data, self.fmt,

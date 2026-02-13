@@ -1274,7 +1274,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                    method='create_port_postcommit')):
             l3_plugin = directory.get_plugin(plugin_constants.L3)
             data = {'router': {'name': 'router', 'admin_state_up': True,
-                               'tenant_id': 'fake_project'}}
+                               'project_id': 'fake_project'}}
             r = l3_plugin.create_router(self.context, data)
             with self.subnet() as s:
                 data = {'subnet_id': s['subnet']['id']}
@@ -1291,7 +1291,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                    method='_bind_port_if_needed')):
             l3_plugin = directory.get_plugin(plugin_constants.L3)
             data = {'router': {'name': 'router', 'admin_state_up': True,
-                               'tenant_id': 'fake_project'}}
+                               'project_id': 'fake_project'}}
             r = l3_plugin.create_router(self.context, data)
             with self.subnet() as s:
                 data = {'subnet_id': s['subnet']['id']}
@@ -2548,7 +2548,7 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
         r = plugin.create_router(
             self.context,
             {'router': {'name': 'router', 'admin_state_up': True,
-             'tenant_id': 'fake_project'}})
+             'project_id': 'fake_project'}})
         with self.subnet() as s:
             p = plugin.add_router_interface(self.context, r['id'],
                                             {'subnet_id': s['subnet']['id']})

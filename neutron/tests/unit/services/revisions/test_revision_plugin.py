@@ -233,7 +233,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         self.assertGreater(updated['revision_number'], sg['revision_number'])
 
     def test_router_interface_ops_bump_router(self):
-        r = {'router': {'name': 'myrouter', 'tenant_id': 'some_project',
+        r = {'router': {'name': 'myrouter', 'project_id': 'some_project',
                         'admin_state_up': True}}
         router = self.l3p.create_router(self.ctx, r)
         r['router']['name'] = 'yourrouter'

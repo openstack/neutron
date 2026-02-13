@@ -1731,14 +1731,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _enforce_device_owner_not_router_intf_or_device_id(self, context,
                                                            device_owner,
                                                            device_id,
-                                                           tenant_id):
-        """Prevent tenants from replacing the device id of router ports with
-        a router uuid belonging to another tenant.
+                                                           project_id):
+        """Prevent projects from replacing the device id of router ports with
+        a router uuid belonging to another project.
         """
         if device_owner not in constants.ROUTER_INTERFACE_OWNERS:
             return
         if not context.is_admin:
-            # check to make sure device_id does not match another tenants
+            # check to make sure device_id does not match another projects
             # router.
             if device_id:
                 if hasattr(self, 'get_router'):
@@ -1760,7 +1760,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         # raise as extension doesn't support L3 anyways.
                         raise exc.DeviceIDNotOwnedByTenant(
                             device_id=device_id)
-                if tenant_id != router['tenant_id']:
+                if project_id != router['project_id']:
                     raise exc.DeviceIDNotOwnedByTenant(device_id=device_id)
 
     @db_api.retry_if_session_inactive()

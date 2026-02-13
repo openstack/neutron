@@ -225,7 +225,7 @@ class L3Scheduler(metaclass=abc.ABCMeta):
         if sync_router.get('ha', False):
             chosen_agents = self._bind_ha_router(plugin, context,
                                                  router_id,
-                                                 sync_router.get('tenant_id'),
+                                                 sync_router.get('project_id'),
                                                  candidates)
             if not chosen_agents:
                 return
@@ -251,21 +251,21 @@ class L3Scheduler(metaclass=abc.ABCMeta):
                 else candidates_count)
 
     def _add_port_from_net_and_ensure_vr_id(self, plugin, ctxt, router_db,
-                                            tenant_id, ha_net):
+                                            project_id, ha_net):
         plugin._ensure_vr_id(ctxt, router_db, ha_net)
         return plugin.add_ha_port(ctxt, router_db.id, ha_net.network_id,
-                                  tenant_id)
+                                  project_id)
 
     def create_ha_port_and_bind(self, plugin, context, router_id,
-                                tenant_id, agent, is_manual_scheduling=False):
+                                project_id, agent, is_manual_scheduling=False):
         """Creates and binds a new HA port for this agent."""
         ctxt = context.elevated()
         router_db = plugin._get_router(ctxt, router_id)
         creator = functools.partial(self._add_port_from_net_and_ensure_vr_id,
-                                    plugin, ctxt, router_db, tenant_id)
-        dep_getter = functools.partial(plugin.get_ha_network, ctxt, tenant_id)
+                                    plugin, ctxt, router_db, project_id)
+        dep_getter = functools.partial(plugin.get_ha_network, ctxt, project_id)
         dep_creator = functools.partial(plugin._create_ha_network,
-                                        ctxt, tenant_id)
+                                        ctxt, project_id)
         dep_deleter = functools.partial(plugin._delete_ha_network, ctxt)
         dep_id_attr = 'network_id'
 
@@ -302,9 +302,9 @@ class L3Scheduler(metaclass=abc.ABCMeta):
             # we try to clear the HA network here in case the port we created
             # blocked the concurrent router delete operation from getting rid
             # of the HA network
-            ha_net = plugin.get_ha_network(ctxt, tenant_id)
+            ha_net = plugin.get_ha_network(ctxt, project_id)
             if ha_net:
-                plugin.safe_delete_ha_network(ctxt, ha_net, tenant_id)
+                plugin.safe_delete_ha_network(ctxt, ha_net, project_id)
 
     def _filter_scheduled_agents(self, plugin, context, router_id, candidates):
         hosting = plugin.get_l3_agents_hosting_routers(context, [router_id])
@@ -313,7 +313,7 @@ class L3Scheduler(metaclass=abc.ABCMeta):
         return list(set(candidates) - set(hosting_list))
 
     def _bind_ha_router(self, plugin, context, router_id,
-                        tenant_id, candidates):
+                        project_id, candidates):
         """Bind a HA router to agents based on a specific policy."""
 
         candidates = self._filter_scheduled_agents(plugin, context, router_id,
@@ -324,7 +324,7 @@ class L3Scheduler(metaclass=abc.ABCMeta):
 
         for agent in chosen_agents:
             self.create_ha_port_and_bind(plugin, context, router_id,
-                                         tenant_id, agent)
+                                         project_id, agent)
 
         return chosen_agents
 

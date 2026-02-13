@@ -111,7 +111,7 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         ctx.project_id = project_id
         router = {'name': 'router1',
                   'admin_state_up': admin_state_up,
-                  'tenant_id': project_id}
+                  'project_id': project_id}
         if ha is not None:
             router['ha'] = ha
         if distributed is not None:
@@ -885,13 +885,13 @@ class L3HATestCase(L3HATestFramework):
             self.admin_ctx)
         self.assertEqual(3, num_ha_candidates)
 
-    def test_ha_network_deleted_if_no_ha_router_present_two_tenants(self):
-        # Create two routers in different tenants.
+    def test_ha_network_deleted_if_no_ha_router_present_two_projects(self):
+        # Create two routers in different projects.
         router1 = self._create_router()
         router2 = self._create_router(project_id='project2')
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
-        # Check that HA networks created for each tenant
+        # Check that HA networks created for each project
         self.assertIn('HA network tenant %s' % router1['project_id'],
                       nets_before)
         self.assertIn('HA network tenant %s' % router2['project_id'],
@@ -900,14 +900,14 @@ class L3HATestCase(L3HATestFramework):
         self.plugin.delete_router(self.admin_ctx, router1['id'])
         nets_after = [net['name'] for net in
                       self.core_plugin.get_networks(self.admin_ctx)]
-        # Check that HA network for tenant1 is deleted and for tenant2 is not.
+        # Check that HA network for project1 is deleted and project2 is not.
         self.assertNotIn('HA network tenant %s' % router1['project_id'],
                          nets_after)
         self.assertIn('HA network tenant %s' % router2['project_id'],
                       nets_after)
 
     def test_ha_network_is_not_delete_if_ha_router_is_present(self):
-        # Create 2 routers in one tenant and check if one is deleted, HA
+        # Create 2 routers in one project and check if one is deleted, HA
         # network still exists.
         router1 = self._create_router()
         router2 = self._create_router()
