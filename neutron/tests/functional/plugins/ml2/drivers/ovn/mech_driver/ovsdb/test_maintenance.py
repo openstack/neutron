@@ -210,16 +210,49 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         return self.nb_api.lookup(
             'Port_Group', utils.ovn_port_group_name(sg_id), default=None)
 
-    def _create_security_group_rule(self, sg_id):
+    def _create_security_group_rule(self, sg_id,
+                                    remote_address_group_id=None,
+                                    ethertype=n_const.IPv4):
         data = {'security_group_rule': {'security_group_id': sg_id,
                                         'direction': 'ingress',
                                         'protocol': n_const.PROTO_NAME_TCP,
-                                        'ethertype': n_const.IPv4,
+                                        'ethertype': ethertype,
                                         'port_range_min': 22,
                                         'port_range_max': 22}}
+        if remote_address_group_id:
+            data['security_group_rule']['remote_address_group_id'] = (
+                remote_address_group_id)
         req = self.new_create_request('security-group-rules', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['security_group_rule']
+
+    def _create_address_group(self, name='ag_test',
+                              addresses=None):
+        if addresses is None:
+            addresses = ['192.168.2.2/32', '2001:db8::/32']
+        ag_args = {'project_id': self._project_id,
+                   'name': name,
+                   'description': 'test address group',
+                   'addresses': addresses}
+        return self._ovn_client._plugin.create_address_group(
+            self.context, {'address_group': ag_args})
+
+    def _find_address_set_for_ag(self, ag_id):
+        _as = {}
+        for ip_version in (n_const.IP_VERSION_4,
+                           n_const.IP_VERSION_6):
+            as_name = utils.ovn_ag_addrset_name(ag_id, 'ip' + str(ip_version))
+            _as[ip_version] = self.nb_api.lookup(
+                'Address_Set', as_name, default=None)
+        return _as
+
+    def _delete_address_set_for_ag(self, ag_id):
+        """Delete OVN Address_Set rows for an address group."""
+        for ip_version in n_const.IP_ALLOWED_VERSIONS:
+            as_name = utils.ovn_ag_addrset_name(
+                ag_id, 'ip' + str(ip_version))
+            self.nb_api.address_set_del(
+                as_name, if_exists=True).execute(check_error=True)
 
     def _find_security_group_rule_row_by_id(self, sgr_id):
         for row in self.nb_api._tables['ACL'].rows.values():
@@ -1452,6 +1485,97 @@ class TestMaintenance(_TestMaintenanceHelper):
                 ovn_const.OVN_NAME_PREFIX + router['id'])
             return
         self.fail('Logical_Router_Port lrp-%s not found' % port_ids[0])
+
+    def test_update_security_group_with_address_group(self):
+        """Test missing Address_Sets are recreated and ACLs are updated.
+
+        Simulates a pre-upgrade state where an Address Group existed in
+        Neutron but the corresponding OVN Address_Sets were never created,
+        so the ACL match string does not reference the Address_Set.
+        """
+        # 1. Create an AG, a SG, and two SG rules (IPv4 + IPv6) pointing
+        #    to the AG.
+        ag = self._create_address_group(
+            name='ag_maint_test',
+            addresses=['172.16.0.1/32', '2001:db8::1/128'])
+        neutron_sg = self._create_security_group()
+        sg_rule_v4 = self._create_security_group_rule(
+            neutron_sg['id'], remote_address_group_id=ag['id'],
+            ethertype=n_const.IPv4)
+        sg_rule_v6 = self._create_security_group_rule(
+            neutron_sg['id'], remote_address_group_id=ag['id'],
+            ethertype=n_const.IPv6)
+
+        # 2. Verify the ACLs reference the Address_Sets and that both
+        #    Address_Sets (IPv4, IPv6) exist.
+        ag_as_name_v4 = utils.ovn_ag_addrset_name(ag['id'], 'ip4')
+        ag_as_name_v6 = utils.ovn_ag_addrset_name(ag['id'], 'ip6')
+
+        acl_v4 = self._find_security_group_rule_row_by_id(sg_rule_v4['id'])
+        self.assertIsNotNone(acl_v4)
+        acl_v4_uuid_before = acl_v4.uuid
+        self.assertIn(ag_as_name_v4, acl_v4.match)
+
+        acl_v6 = self._find_security_group_rule_row_by_id(sg_rule_v6['id'])
+        self.assertIsNotNone(acl_v6)
+        acl_v6_uuid_before = acl_v6.uuid
+        self.assertIn(ag_as_name_v6, acl_v6.match)
+
+        address_sets = self._find_address_set_for_ag(ag['id'])
+        self.assertIsNotNone(address_sets[n_const.IP_VERSION_4])
+        self.assertIsNotNone(address_sets[n_const.IP_VERSION_6])
+
+        # 3. Simulate the pre-upgrade state: delete the Address_Sets and
+        #    strip the Address_Set reference from both ACL matches.
+        self._delete_address_set_for_ag(ag['id'])
+        address_sets = self._find_address_set_for_ag(ag['id'])
+        self.assertIsNone(address_sets[n_const.IP_VERSION_4])
+        self.assertIsNone(address_sets[n_const.IP_VERSION_6])
+
+        match_v4_without_ag = acl_v4.match.replace(
+            ' && ip4.src == $%s' % ag_as_name_v4, '')
+        self.nb_api.db_set(
+            'ACL', acl_v4.uuid,
+            ('match', match_v4_without_ag)).execute(check_error=True)
+        acl_v4 = self._find_security_group_rule_row_by_id(sg_rule_v4['id'])
+        self.assertNotIn(ag_as_name_v4, acl_v4.match)
+
+        match_v6_without_ag = acl_v6.match.replace(
+            ' && ip6.src == $%s' % ag_as_name_v6, '')
+        self.nb_api.db_set(
+            'ACL', acl_v6.uuid,
+            ('match', match_v6_without_ag)).execute(check_error=True)
+        acl_v6 = self._find_security_group_rule_row_by_id(sg_rule_v6['id'])
+        self.assertNotIn(ag_as_name_v6, acl_v6.match)
+
+        # 4. Run the maintenance task.
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.update_security_group_with_address_group)
+
+        # 5. Verify the Address_Sets are recreated.
+        address_sets = self._find_address_set_for_ag(ag['id'])
+        self.assertEqual(['172.16.0.1/32'],
+                         address_sets[n_const.IP_VERSION_4].addresses)
+        self.assertEqual(['2001:db8::1/128'],
+                         address_sets[n_const.IP_VERSION_6].addresses)
+
+        # 6. Verify the previous ACLs are deleted and new ones were created
+        #    (different UUIDs) with matches that include the Address_Set
+        #    references.
+        acl_uuids = set(self.nb_api._tables['ACL'].rows.keys())
+        self.assertNotIn(acl_v4_uuid_before, acl_uuids)
+        self.assertNotIn(acl_v6_uuid_before, acl_uuids)
+
+        acl_v4_after = self._find_security_group_rule_row_by_id(
+            sg_rule_v4['id'])
+        self.assertIsNotNone(acl_v4_after)
+        self.assertIn(ag_as_name_v4, acl_v4_after.match)
+
+        acl_v6_after = self._find_security_group_rule_row_by_id(
+            sg_rule_v6['id'])
+        self.assertIsNotNone(acl_v6_after)
+        self.assertIn(ag_as_name_v6, acl_v6_after.match)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,

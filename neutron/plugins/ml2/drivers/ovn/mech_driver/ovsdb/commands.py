@@ -763,6 +763,40 @@ class DelACLCommand(command.BaseCommand):
         _updatevalues_in_list(lswitch, 'acls', old_values=acls_to_del)
 
 
+class DelACLBySGruleIDCommand(command.BaseCommand):
+    lookup_table = 'Port_Group'
+
+    def __init__(self, api, sg_id, sg_rule_id, if_exists):
+        super().__init__(api)
+        self.sg_id = sg_id
+        self.sg_rule_id = sg_rule_id
+        self.if_exists = if_exists
+
+    def run_idl(self, txn):
+        pg_name = utils.ovn_port_group_name(self.sg_id)
+        try:
+            port_group = idlutils.row_by_value(
+                self.api.idl, self.lookup_table, 'name', pg_name)
+        except idlutils.RowNotFound:
+            if self.if_exists:
+                return
+            msg = _('%(table)s %(name)s does not exist') % {
+                'table': self.lookup_table, 'name': pg_name}
+            raise RuntimeError(msg)
+
+        acls_to_del = None
+        acls = getattr(port_group, 'acls', [])
+        for acl in acls:
+            ext_ids = getattr(acl, 'external_ids', {})
+            if (ext_ids.get(ovn_const.OVN_SG_RULE_EXT_ID_KEY) ==
+                    self.sg_rule_id):
+                acls_to_del = acl
+                break
+        if acls_to_del:
+            acls_to_del.delete()
+            _updatevalues_in_list(port_group, 'acls', old_values=[acls_to_del])
+
+
 class AddStaticRouteCommand(command.BaseCommand):
     def __init__(self, api, lrouter, maintain_bfd=False, **columns):
         super().__init__(api)
