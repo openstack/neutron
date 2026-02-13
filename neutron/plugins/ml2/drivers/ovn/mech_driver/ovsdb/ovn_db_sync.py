@@ -30,6 +30,7 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron import manager
 from neutron.objects.port_forwarding import PortForwarding
+from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as ovn_qos
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -1445,13 +1446,27 @@ class OvnSbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         LOG.debug("OVN-Southbound DB sync process completed @ %s",
                   str(datetime.now()))
 
+    def _get_hosts_mapped(self, ctx):
+        """Retrieve the hosts mapped with segment associated to controllers"""
+        # NOTE(ralonsoh): the method `get_hosts_mapped_with_segments` cannot
+        # be used with the filters `include_agent_types` nor
+        # `exclude_agent_types`. The OVN agents are not stored in the SQL
+        # database but present only in the `AgentCache` singleton.
+        mapped_hosts = segments_db.get_hosts_mapped_with_segments(ctx)
+        # Even if a chassis has been deleted, the OVN agent cached resource
+        # is preserved.
+        controllers = neutron_agent.AgentCache().get_agents(
+            filters={'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
+        controllers_hosts = {c.chassis.hostname for c in controllers
+                             if c.chassis}
+        return mapped_hosts & controllers_hosts
+
     def sync_hostname_and_physical_networks(self, ctx):
         LOG.debug('OVN-SB Sync hostname and physical networks started @ %s',
                   str(datetime.now()))
         host_phynets_map = self.ovn_sb_api.get_chassis_hostname_and_physnets()
         current_hosts = set(host_phynets_map)
-        previous_hosts = segments_db.get_hosts_mapped_with_segments(
-            ctx, include_agent_types=set(ovn_const.OVN_CONTROLLER_TYPES))
+        previous_hosts = self._get_hosts_mapped(ctx)
 
         stale_hosts = previous_hosts - current_hosts
         for host in stale_hosts:
