@@ -1457,11 +1457,6 @@ class TestMaintenance(_TestMaintenanceHelper):
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):
     def test_check_for_logging_conf_change(self):
-        # Check logging is supported
-        if not self.log_driver.network_logging_supported(self.nb_api):
-            self.skipTest("The current OVN version does not offer support "
-                          "for neutron network log functionality.")
-            self.assertIsNotNone(self.log_plugin)
         # Check no meter exists
         self.assertFalse(self.nb_api._tables['Meter'].rows.values())
         # Add a log object
