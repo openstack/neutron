@@ -74,13 +74,6 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         return ovsdb.get_own_chassis_name(self.agent_api.ovs_idl)
 
     @property
-    def host_ips(self):
-        host_ips = self.hostdev_ips
-        for bgp_bridge in self.bgp_bridges.values():
-            host_ips.extend(bgp_bridge.ips)
-        return host_ips
-
-    @property
     def hostdev_ips(self):
         """Return the IP addresses configured on a host device.
 

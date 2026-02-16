@@ -94,7 +94,7 @@ class BGPChassisBridgeTestCase(BgpTestCaseWithIdls):
         self.assertIn(ofport, [1, 2])
 
     def test_configure_flows_complete_has_all_expected_flows(self):
-        self.bgp_bridge.bgp_agent_api.host_ips = [
+        self.bgp_bridge.bgp_agent_api.hostdev_ips = [
             netaddr.IPNetwork('172.16.1.1/30'),
             netaddr.IPNetwork('2001:db8::1/64'),
             netaddr.IPNetwork('192.168.1.10/32'),
