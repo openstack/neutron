@@ -78,7 +78,7 @@ class BGPChassisBridge(Bridge):
 
     __repr__ = __str__
 
-    def _check_requirements_for_flows_met(self):
+    def check_requirements_for_flows_met(self):
         for msg, requirement in self._requirements:
             if not getattr(self, requirement):
                 LOG.debug(
@@ -176,7 +176,7 @@ class BGPChassisBridge(Bridge):
     def configure_flows(self):
         # The resulting openflows rules that will be written to a temporary
         # file and applied to the bridge.
-        if not self._check_requirements_for_flows_met():
+        if not self.check_requirements_for_flows_met():
             LOG.error(f"Some of the requirements to install flows on bridge "
                       f"{self.name} are missing, skipping")
             return

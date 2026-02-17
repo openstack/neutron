@@ -121,7 +121,7 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
                 LOG.debug(
                     "The %s port was created in the meantime on bridge %s "
                     "with ofport %d, removing the onetime event from the "
-                    "queue.", bgp_bridge.name, ports_ofports[0])
+                    "queue.", port_type, bgp_bridge.name, ports_ofports[0])
                 event_handler.unwatch_event(event)
                 if bgp_bridge.check_requirements_for_flows_met():
                     bgp_bridge.configure_flows()
