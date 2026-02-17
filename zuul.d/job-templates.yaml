@@ -106,6 +106,7 @@
         - neutron-ovn-tempest-ovs-release-fips
         - devstack-tobiko
         - ironic-tempest-bios-ipmi-direct
+        - devstack-tobiko-ovs
         - openstacksdk-functional-devstack-networking
         - neutron-tempest-plugin-openvswitch-iptables_hybrid
         - devstack-enforce-scope
