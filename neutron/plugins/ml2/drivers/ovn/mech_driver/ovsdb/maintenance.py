@@ -1100,6 +1100,39 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def update_ha_failover(self):
+        """Set the OVN BFD settings to control the HA failover timeout"""
+        strategy = cfg.CONF.ovn.ha_failover_strategy
+        if strategy == ovn_const.OVN_HA_FAILOVER_NORMAL:
+            bfd_min_rx = ovn_const.OVN_BFD_MIN_RX
+            bfd_min_tx = ovn_const.OVN_BFD_MIN_TX
+            bfd_mult = ovn_const.OVN_BFD_MULT
+        elif strategy == ovn_const.OVN_HA_FAILOVER_AGGRESSIVE:
+            bfd_min_rx = ovn_const.OVN_BFD_MIN_RX / 2
+            bfd_min_tx = ovn_const.OVN_BFD_MIN_TX
+            bfd_mult = ovn_const.OVN_BFD_MULT
+        elif strategy == ovn_const.OVN_HA_FAILOVER_CONSERVATIVE:
+            bfd_min_rx = ovn_const.OVN_BFD_MIN_RX
+            bfd_min_tx = ovn_const.OVN_BFD_MIN_TX
+            bfd_mult = ovn_const.OVN_BFD_MULT * 2
+        else:
+            bfd_min_rx = cfg.CONF.ovn.bfd_min_rx
+            bfd_min_tx = cfg.CONF.ovn.bfd_min_tx
+            bfd_mult = cfg.CONF.ovn.bfd_mult
+
+        options = {'bfd-min-rx': str(bfd_min_rx),
+                   'bfd-min-tx': str(bfd_min_tx),
+                   'bfd-mult': str(bfd_mult),
+                   }
+        self._nb_idl.set_nb_global_options(**options).execute(
+            check_error=True)
+
+        raise periodics.NeverAgain()
+
     # TODO(ralonsoh): to remove in E+4 cycle (2nd next SLURP release)
     @has_lock_periodic(
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,

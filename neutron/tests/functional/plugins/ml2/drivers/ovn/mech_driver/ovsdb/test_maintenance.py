@@ -1518,6 +1518,54 @@ class TestMaintenance(_TestMaintenanceHelper):
             return
         self.fail('Logical_Router_Port lrp-%s not found' % port_ids[0])
 
+    def _get_nb_global_options(self):
+        return self.nb_api.db_get(
+            'NB_Global', '.', 'options').execute(check_error=True)
+
+    def _test_update_ha_failover(self, strategy, expected_rx, expected_tx,
+                                 expected_mult, manual_overrides=None):
+        cfg.CONF.set_override('ha_failover_strategy', strategy, group='ovn')
+        if manual_overrides:
+            for key, value in manual_overrides.items():
+                cfg.CONF.set_override(key, value, group='ovn')
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.update_ha_failover)
+
+        options = self._get_nb_global_options()
+        self.assertEqual(str(expected_rx), options['bfd-min-rx'])
+        self.assertEqual(str(expected_tx), options['bfd-min-tx'])
+        self.assertEqual(str(expected_mult), options['bfd-mult'])
+
+    def test_update_ha_failover_normal(self):
+        self._test_update_ha_failover(
+            ovn_const.OVN_HA_FAILOVER_NORMAL,
+            ovn_const.OVN_BFD_MIN_RX,
+            ovn_const.OVN_BFD_MIN_TX,
+            ovn_const.OVN_BFD_MULT)
+
+    def test_update_ha_failover_aggressive(self):
+        self._test_update_ha_failover(
+            ovn_const.OVN_HA_FAILOVER_AGGRESSIVE,
+            ovn_const.OVN_BFD_MIN_RX / 2,
+            ovn_const.OVN_BFD_MIN_TX,
+            ovn_const.OVN_BFD_MULT)
+
+    def test_update_ha_failover_conservative(self):
+        self._test_update_ha_failover(
+            ovn_const.OVN_HA_FAILOVER_CONSERVATIVE,
+            ovn_const.OVN_BFD_MIN_RX,
+            ovn_const.OVN_BFD_MIN_TX,
+            ovn_const.OVN_BFD_MULT * 2)
+
+    def test_update_ha_failover_manual(self):
+        self._test_update_ha_failover(
+            ovn_const.OVN_HA_FAILOVER_MANUAL,
+            5000, 400, 8,
+            manual_overrides={'bfd_min_rx': 5000,
+                              'bfd_min_tx': 400,
+                              'bfd_mult': 8})
+
     def test_update_security_group_with_address_group(self):
         """Test missing Address_Sets are recreated and ACLs are updated.
 

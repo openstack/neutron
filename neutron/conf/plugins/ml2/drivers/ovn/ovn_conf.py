@@ -256,6 +256,39 @@ ovn_opts = [
                                    'compatibility during the development of '
                                    'the functionality in Nova (LP#2069718'),
                 ),
+    cfg.StrOpt('ha_failover_strategy',
+               default=ovn_const.OVN_HA_FAILOVER_NORMAL,
+               choices=ovn_const.OVN_HA_FAILOVER_CHOICES,
+               help=_('HA chassis group failover strategy. Determines how '
+                      'aggressively OVN fails over to a new chassis when the '
+                      'current one becomes unavailable. Supported values: %s')
+                      % ','.join(ovn_const.OVN_HA_FAILOVER_CHOICES),
+               ),
+    cfg.IntOpt('bfd_min_rx',
+               default=ovn_const.OVN_BFD_MIN_RX,
+               min=1,
+               help=_('BFD minimum RX interval in milliseconds. This sets '
+                      'the minimum interval between BFD control packets '
+                      'received by the local system. This option will apply '
+                      'only if "ha_failover_strategy=manual"'),
+               ),
+    cfg.IntOpt('bfd_min_tx',
+               default=ovn_const.OVN_BFD_MIN_TX,
+               min=1,
+               help=_('BFD minimum TX interval in milliseconds. This sets '
+                      'the minimum interval between BFD control packets '
+                      'sent by the local system. This option will apply '
+                      'only if "ha_failover_strategy=manual"'),
+               ),
+    cfg.IntOpt('bfd_mult',
+               default=ovn_const.OVN_BFD_MULT,
+               min=1,
+               max=255,
+               help=_('BFD detection multiplier. The number of BFD control '
+                      'packets that must be missed in a row before the '
+                      'session is declared down. This option will apply '
+                      'only if "ha_failover_strategy=manual"'),
+               ),
 ]
 
 nb_global_opts = [
