@@ -32,6 +32,7 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import event as row_event
+from ovsdbapp.backend.ovs_idl import rowview
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -1382,6 +1383,42 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 # Unset the Gateway_Chassis in the LRP.
                 txn.add(self._nb_idl.db_clear(
                     'Logical_Router_Port', lrp.uuid, 'gateway_chassis'))
+
+        raise periodics.NeverAgain()
+
+    # TODO(mnaser): to remove in H+3 (2028.1) cycle (2nd next SLURP release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def update_neutron_pg_drop_priority(self):
+        """Ensure neutron_pg_drop ACLs are at the expected priority.
+
+        The global neutron_pg_drop ACLs must be at ACL_PRIORITY_DROP to
+        make room for per-security-group drop ACLs at ACL_PRIORITY_LOG_DROP,
+        which are used for correct network log attribution.
+        See LP#2110087.
+        """
+        expected_priority = ovn_const.ACL_PRIORITY_DROP
+        cmds = []
+        pg = self._nb_idl.lookup(
+            "Port_Group", ovn_const.OVN_DROP_PORT_GROUP_NAME, default=None)
+        if pg is None:
+            LOG.error('Port group %s was not found while updating its drop '
+                      'ACL priority', ovn_const.OVN_DROP_PORT_GROUP_NAME)
+            raise periodics.NeverAgain()
+
+        for acl in pg.acls:
+            acl = rowview.RowView(acl)
+            if acl.priority != expected_priority and acl.action == 'drop':
+                cmds.append(self._nb_idl.db_set(
+                    'ACL', acl.uuid,
+                    ('priority', expected_priority)))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
 
         raise periodics.NeverAgain()
 

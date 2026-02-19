@@ -17,6 +17,7 @@ from neutron_lib import constants as const
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import acl as ovn_acl
+from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.agent import securitygroups_rpc
 from neutron.tests import base
@@ -60,7 +61,7 @@ class TestACLs(base.BaseTestCase):
                         'lport': self.fake_port['id'],
                         'lswitch': 'neutron-network_id1',
                         'match': 'outport == "fake_port_id1" && ip',
-                        'priority': 1001,
+                        'priority': ovn_const.ACL_PRIORITY_DROP,
                         'meter': []}
         acl_from_lport = {'action': 'drop', 'direction': 'from-lport',
                           'external_ids': {'neutron:lport':
@@ -69,7 +70,7 @@ class TestACLs(base.BaseTestCase):
                           'lport': self.fake_port['id'],
                           'lswitch': 'neutron-network_id1',
                           'match': 'inport == "fake_port_id1" && ip',
-                          'priority': 1001,
+                          'priority': ovn_const.ACL_PRIORITY_DROP,
                           'meter': []}
         for acl in acls:
             if 'to-lport' in acl.values():

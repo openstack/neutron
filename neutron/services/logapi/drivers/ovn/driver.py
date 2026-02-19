@@ -25,6 +25,7 @@ from oslo_utils import importutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron._i18n import _
+from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.services import logging as log_cfg
@@ -81,8 +82,9 @@ class OVNDriver(base.DriverBase):
         cls.__new__.__defaults__ = tuple(log_dict.values())
         return cls()
 
-    def _get_logs(self, context):
-        log_objs = self._log_plugin.get_logs(context)
+    def _get_logs(self, context, **filters):
+        log_objs = self._log_plugin.get_logs(
+            context, filters=filters or None)
         return [self._log_dict_to_obj(lo) for lo in log_objs]
 
     @property
@@ -185,6 +187,12 @@ class OVNDriver(base.DriverBase):
                         acl, expected_log, log_name, meter_name):
                     continue
 
+                # Don't claim ACLs whose action is not relevant to this
+                # log object; otherwise a DROP log would claim the allow
+                # ACLs and block a later ALL/ACCEPT log from updating them.
+                if not acl.name and acl.action not in actions_enabled:
+                    continue
+
                 columns = {
                     'log': expected_log,
                     'meter': meter_name,
@@ -204,8 +212,12 @@ class OVNDriver(base.DriverBase):
         for log_obj in log_objs:
             pgs = self._pgs_from_log_obj(context, log_obj)
             actions_enabled = self._acl_actions_enabled(log_obj)
+            log_name = utils.ovn_name(log_obj.id)
             self._set_acls_log(pgs, context, ovn_txn, actions_enabled,
-                               utils.ovn_name(log_obj.id))
+                               log_name)
+            if log_obj.enabled:
+                self._create_sg_drop_acls(context, log_obj, ovn_txn,
+                                          log_name)
 
     def _pgs_all(self):
         return self.ovn_nb.db_list(
@@ -239,21 +251,11 @@ class OVNDriver(base.DriverBase):
                 return pgs
             except idlutils.RowNotFound:
                 pass
-        pgs = []
-        # include special pg_drop to log DROP and ALL actions
-        if not log_obj.event or log_obj.event in (log_const.DROP_EVENT,
-                                                  log_const.ALL_EVENT):
-            try:
-                pg = self.ovn_nb.lookup("Port_Group",
-                                        ovn_const.OVN_DROP_PORT_GROUP_NAME)
-                pgs.append({"name": pg.name,
-                            "external_ids": pg.external_ids,
-                            "acls": [r.uuid for r in pg.acls]})
-            except idlutils.RowNotFound:
-                pass
-            if log_obj.event == log_const.DROP_EVENT:
-                return pgs
+        return self._get_sg_port_groups(context, log_obj)
 
+    def _get_sg_port_groups(self, context, log_obj):
+        """Get port groups for the security groups targeted by a log object."""
+        pgs = []
         if log_obj.resource_id:
             try:
                 pg = self.ovn_nb.lookup("Port_Group",
@@ -264,8 +266,6 @@ class OVNDriver(base.DriverBase):
                             "acls": [r.uuid for r in pg.acls]})
             except idlutils.RowNotFound:
                 pass
-            # Note: when sg is provided, it is redundant to get sgs from port,
-            # because model will ensure that sg is associated with neutron port
         elif log_obj.target_id:
             sg_ids = db_api._get_sgs_attached_to_port(context,
                                                       log_obj.target_id)
@@ -280,6 +280,63 @@ class OVNDriver(base.DriverBase):
                     pass
         return pgs
 
+    def _create_sg_drop_acls(self, context, log_obj, ovn_txn, log_name):
+        """Create per-SG drop ACLs for network log attribution.
+
+        When logging DROP events for a specific security group, we create
+        drop ACLs on the SG's port group at a higher priority than the
+        global neutron_pg_drop. This ensures drop events are correctly
+        attributed to the specific security group's log resource.
+        """
+        if log_obj.event not in (log_const.DROP_EVENT, log_const.ALL_EVENT):
+            return
+        sg_pgs = self._get_sg_port_groups(context, log_obj)
+        for pg in sg_pgs:
+            for acl in acl_utils.add_acls_for_log_drop_port_group(
+                    pg["name"], log_name, self.meter_name):
+                ovn_txn.add(self.ovn_nb.pg_acl_add(**acl, may_exist=True))
+
+    def _remove_sg_drop_acls(self, context, log_obj, ovn_txn):
+        """Remove per-SG drop ACLs created for network log attribution."""
+        sg_pgs = self._get_sg_port_groups(context, log_obj)
+        for pg in sg_pgs:
+            for direction, p in (('from-lport', 'inport'),
+                                 ('to-lport', 'outport')):
+                ovn_txn.add(self.ovn_nb.pg_acl_del(
+                    pg["name"], direction,
+                    ovn_const.ACL_PRIORITY_LOG_DROP,
+                    f'{p} == @{pg["name"]} && ip'))
+
+    def _get_other_sg_drop_logs(self, context, log_obj):
+        """Get other enabled logs that still need per-SG drop ACLs."""
+        drop_events = (log_const.DROP_EVENT, log_const.ALL_EVENT)
+        filters = {'enabled': True, 'event': list(drop_events)}
+        log_objs = []
+        if log_obj.resource_id:
+            log_objs.extend(self._get_logs(
+                context, resource_id=log_obj.resource_id, **filters))
+            port_ids = db_api._get_ports_attached_to_sg(context,
+                                                        log_obj.resource_id)
+            if port_ids:
+                log_objs.extend(self._get_logs(
+                    context, target_id=port_ids, **filters))
+        elif log_obj.target_id:
+            log_objs.extend(self._get_logs(
+                context, target_id=log_obj.target_id, **filters))
+            sg_ids = db_api._get_sgs_attached_to_port(context,
+                                                      log_obj.target_id)
+            if sg_ids:
+                log_objs.extend(self._get_logs(
+                    context, resource_id=sg_ids, **filters))
+        else:
+            return []
+
+        other_logs = {}
+        for log in log_objs:
+            if log.id != log_obj.id:
+                other_logs[log.id] = log
+        return list(other_logs.values())
+
     def create_log(self, context, log_obj):
         """Create a log_obj invocation.
 
@@ -290,11 +347,13 @@ class OVNDriver(base.DriverBase):
 
         pgs = self._pgs_from_log_obj(context, log_obj)
         actions_enabled = self._acl_actions_enabled(log_obj)
+        log_name = utils.ovn_name(log_obj.id)
         with self.ovn_nb.transaction(check_error=True) as ovn_txn:
             self._ovn_client.create_ovn_fair_meter(self.meter_name,
                                                    txn=ovn_txn)
             self._set_acls_log(pgs, context, ovn_txn, actions_enabled,
-                               utils.ovn_name(log_obj.id))
+                               log_name)
+            self._create_sg_drop_acls(context, log_obj, ovn_txn, log_name)
 
     def create_log_precommit(self, context, log_obj):
         """Create a log_obj precommit.
@@ -341,7 +400,8 @@ class OVNDriver(base.DriverBase):
                               log.resource_id == log_obj.resource_id)}
             if (log_const.ALL_EVENT not in all_events and
                     log_obj.event not in all_events):
-                self._remove_acls_log(pgs, ovn_txn)
+                self._remove_acls_log(pgs, ovn_txn,
+                                      utils.ovn_name(log_obj.id))
         return True
 
     def update_log(self, context, log_obj):
@@ -353,13 +413,24 @@ class OVNDriver(base.DriverBase):
         """
         LOG.debug("Update_log %s", log_obj)
 
+        log_name = utils.ovn_name(log_obj.id)
         with self.ovn_nb.transaction(check_error=True) as ovn_txn:
 
             if not self._unset_disabled_acls(context, log_obj, ovn_txn):
                 pgs = self._pgs_from_log_obj(context, log_obj)
                 actions_enabled = self._acl_actions_enabled(log_obj)
                 self._set_acls_log(pgs, context, ovn_txn, actions_enabled,
-                                   utils.ovn_name(log_obj.id))
+                                   log_name)
+            if log_obj.enabled:
+                self._create_sg_drop_acls(context, log_obj, ovn_txn,
+                                          log_name)
+            elif log_obj.event in (log_const.DROP_EVENT, log_const.ALL_EVENT):
+                other_sg_drop_logs = self._get_other_sg_drop_logs(context,
+                                                                  log_obj)
+                self._remove_sg_drop_acls(context, log_obj, ovn_txn)
+                for log in other_sg_drop_logs:
+                    self._create_sg_drop_acls(context, log, ovn_txn,
+                                              utils.ovn_name(log.id))
 
     def delete_log(self, context, log_obj):
         """Delete a log_obj invocation.
@@ -378,6 +449,7 @@ class OVNDriver(base.DriverBase):
             pgs = self._pgs_all()
             with self.ovn_nb.transaction(check_error=True) as ovn_txn:
                 self._remove_acls_log(pgs, ovn_txn)
+                self._remove_sg_drop_acls(context, log_obj, ovn_txn)
                 ovn_txn.add(self.ovn_nb.meter_del(self.meter_name,
                                                   if_exists=True))
                 ovn_txn.add(self.ovn_nb.meter_del(
@@ -392,6 +464,7 @@ class OVNDriver(base.DriverBase):
         pgs = self._pgs_from_log_obj(context, log_obj)
         with self.ovn_nb.transaction(check_error=True) as ovn_txn:
             self._remove_acls_log(pgs, ovn_txn, utils.ovn_name(log_obj.id))
+            self._remove_sg_drop_acls(context, log_obj, ovn_txn)
 
         # TODO(flaviof): We needed to break this second part into a separate
         # transaction because logic that determines the value of the 'freed up'
@@ -454,6 +527,9 @@ class OVNDriver(base.DriverBase):
                 # skip acls used by a different network log
                 n_acl_name = acl['name']
                 if n_acl_name and n_acl_name != log_name:
+                    continue
+                # Don't claim ACLs whose action is not relevant
+                if not n_acl_name and acl['action'] not in actions_enabled:
                     continue
                 action = acl['action'] in actions_enabled
                 acl['log'] = action

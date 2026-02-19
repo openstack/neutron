@@ -138,21 +138,38 @@ def acl_protocol_and_ports(r, icmp):
     return match
 
 
-def add_acls_for_drop_port_group(pg_name):
+def _add_acls_for_drop(pg_name, priority, log=False, log_name=None,
+                       severity=None, meter_name=None):
     acl_list = []
     for direction, p in (('from-lport', 'inport'),
                          ('to-lport', 'outport')):
         acl = {"port_group": pg_name,
-               "priority": ovn_const.ACL_PRIORITY_DROP,
+               "priority": priority,
                "action": ovn_const.ACL_ACTION_DROP,
-               "log": False,
-               "name": [],
-               "severity": [],
+               "log": log,
+               "name": log_name or [],
+               "severity": severity or [],
                "direction": direction,
                "match": f'{p} == @{pg_name} && ip',
-               "meter": []}
+               "meter": meter_name or []}
         acl_list.append(acl)
     return acl_list
+
+
+def add_acls_for_drop_port_group(pg_name):
+    return _add_acls_for_drop(pg_name, ovn_const.ACL_PRIORITY_DROP)
+
+
+def add_acls_for_log_drop_port_group(pg_name, log_name, meter_name):
+    """Create per-SG drop ACLs with logging for network log attribution.
+
+    These ACLs are created at a higher priority than neutron_pg_drop so
+    that drop events are correctly attributed to the specific security
+    group's log resource.
+    """
+    return _add_acls_for_drop(pg_name, ovn_const.ACL_PRIORITY_LOG_DROP,
+                              log=True, log_name=log_name,
+                              severity="info", meter_name=meter_name)
 
 
 def drop_all_ip_traffic_for_port(port):

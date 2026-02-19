@@ -1030,7 +1030,7 @@ def create_neutron_pg_drop():
                 "action": "drop",
                 "direction": "to-lport",
                 "match": "outport == @neutron_pg_drop && ip",
-                "priority": 1001
+                "priority": constants.ACL_PRIORITY_DROP
             },
             "uuid-name": "droptoport"
         }, {
@@ -1040,7 +1040,7 @@ def create_neutron_pg_drop():
                 "action": "drop",
                 "direction": "from-lport",
                 "match": "inport == @neutron_pg_drop && ip",
-                "priority": 1001
+                "priority": constants.ACL_PRIORITY_DROP
             },
             "uuid-name": "dropfromport"
         }, {
