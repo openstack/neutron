@@ -14,8 +14,7 @@ repos:
       # file format and permissions
       - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
-      # TODO(haleyb) fix these issues or remove check
-      # - id: check-shebang-scripts-are-executable
+      - id: check-shebang-scripts-are-executable
       - id: check-yaml
         files: .*\.(yaml|yml)$
         exclude: 'rally-jobs/task-neutron.yaml'

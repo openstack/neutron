@@ -1,5 +1,3 @@
-#!/bin/bash
-
 function provider_setup {
     # Save the existing address from eth2 and add it to br-provider
 
