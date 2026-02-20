@@ -26,6 +26,7 @@ from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import address_group as ag_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_log import log
@@ -42,6 +43,7 @@ from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.objects import network as network_obj
 from neutron.objects import ports as ports_obj
 from neutron.objects import router as router_obj
+from neutron.objects import securitygroup as sg_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as qos_extension
 from neutron import service
@@ -1116,6 +1118,54 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
                     txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
+
+    # TODO(ralonsoh): to remove in G+4 (2028.1) cycle (2nd next SLURP release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def update_security_group_with_address_group(self):
+        """Create all Address_Set and update the corresponding ACLs"""
+        # 1. List all Address Groups with missing Address_Set registers.
+        admin_context = n_context.get_admin_context()
+        ag_ids_missing_as = []
+        for ag in self._ovn_client._plugin.get_address_groups(admin_context):
+            for ip_version in n_const.IP_ALLOWED_VERSIONS:
+                as_name = utils.ovn_ag_addrset_name(
+                    ag['id'], 'ip' + str(ip_version))
+                if not self._nb_idl.lookup('Address_Set', as_name,
+                                           default=None):
+                    ag_ids_missing_as.append(ag['id'])
+                    break
+
+        # 2. Create the corresponding Address_Set (IPv4, IPv6) registers.
+        # The ``create_address_group`` method calls ``address_set_add`` with
+        # may_exist=True, so is safe if any of these registers already exists.
+        # This operation will also create the OVN revision number for each
+        # Address Group.
+        for ag_id in ag_ids_missing_as:
+            try:
+                _ag = self._ovn_client._plugin.get_address_group(
+                    admin_context, ag_id)
+            except ag_exc.AddressGroupNotFound:
+                continue
+            self._ovn_client.create_address_group(admin_context, _ag)
+
+        # 3. Update all the ACLs associated to the SG rules that have these
+        # Address Groups.
+        filter = {'remote_address_group_id': ag_ids_missing_as}
+        for sg_rule in sg_obj.SecurityGroupRule.get_objects(
+                admin_context, **filter):
+            # Delete the current ACL.
+            self._ovn_client._nb_idl.delete_acl_by_sg_id(
+                sg_rule['security_group_id'], sg_rule['id'],
+                if_exists=True).execute(check_error=True)
+            # Re-create the ACL including the Address Group (OVN Address_Set).
+            self._ovn_client.create_security_group_rule(
+                admin_context, sg_rule)
 
         raise periodics.NeverAgain()
 

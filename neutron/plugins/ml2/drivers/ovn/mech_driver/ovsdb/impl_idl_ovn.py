@@ -498,6 +498,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def delete_acl(self, lswitch, lport, if_exists=True):
         return cmd.DelACLCommand(self, lswitch, lport, if_exists)
 
+    def delete_acl_by_sg_id(self, sg_id, sg_rule_id, if_exists=True):
+        """Removes an ACL register matching the security group rule ID"""
+        return cmd.DelACLBySGruleIDCommand(self, sg_id, sg_rule_id, if_exists)
+
     def add_static_route(self, lrouter, maintain_bfd=False, **columns):
         return cmd.AddStaticRouteCommand(self, lrouter, maintain_bfd,
                                          **columns)

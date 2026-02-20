@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    After change `949854 <https://review.opendev.org/c/openstack/neutron/+/949854>`_,
+    the Address Groups were stored in OVN as ``Address_Set`` and the security
+    group rules referring to them had a match pointing to the ``Address_Set``
+    register. Now the OVN maintenance task fixes the ``ACL`` registers created
+    before this patch, adding the corresponding ``Address_Set`` and updating
+    the ``ACL`` register. For more information, see bug:
+    `2141589 <https://bugs.launchpad.net/neutron/+bug/2141589>`_.
