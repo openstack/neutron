@@ -19,6 +19,7 @@ from oslo_config import cfg
 from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.objects import securitygroup as sg_obj
 
 
 # Convert the protocol number from integer to strings because that's
@@ -308,8 +309,9 @@ def update_acls_for_security_group(plugin,
     # Check if ACL log name and severity supported or not
     keep_name_severity = _acl_columns_name_severity_supported(ovn)
 
-    sg = plugin.get_security_group(admin_context, security_group_id)
-    stateful = is_sg_stateful(sg)
+    sg_stateful = sg_obj.SecurityGroup.get_sgs_stateful_flag(
+        admin_context, [security_group_id])
+    stateful = bool(sg_stateful[security_group_id])
 
     acl = _add_sg_rule_acl_for_port_group(
         pg_name, stateful, security_group_rule)
