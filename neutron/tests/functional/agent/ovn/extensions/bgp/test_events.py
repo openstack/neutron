@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import threading
 from unittest import mock
 
 import testtools
@@ -324,3 +325,16 @@ class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
                 'physnet:bridge', 'br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2'],
             expected_port_mappings=['br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
         )
+
+    def test_unrelated_change_does_not_trigger_event(self):
+        th_event = threading.Event()
+
+        def event_run(event, row, old):
+            th_event.set()
+
+        with mock.patch.object(
+                events.UpdateLocalOVSEvent, 'run', side_effect=event_run):
+            self.ovs_api.idl.notify_handler.watch_event(
+                events.UpdateLocalOVSEvent(self.agent_api))
+            self.ovs_api.add_br('br-bgp-test').execute(check_error=True)
+            self.assertFalse(th_event.wait(5))
