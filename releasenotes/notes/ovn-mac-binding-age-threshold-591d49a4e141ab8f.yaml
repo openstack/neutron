@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    The ``[ovn]mac_binding_age_threshold`` configuration parameter is now set
+    to a default value of 300. If the aging value is not set, the
+    ``MAC_Binding`` table can grow indefinitely.

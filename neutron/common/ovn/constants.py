@@ -432,6 +432,9 @@ BRIDGE_REDIRECT_TYPE = "bridged"
 LS_OPTIONS_FDB_AGE_THRESHOLD = 'fdb_age_threshold'
 FDB_AGE_THRESHOLD_DEFAULT = 300
 
+# MAC ageing settings.
+MAC_BINDING_AGE_THRESHOLD = 300
+
 LS_OPTIONS_BROADCAST_ARPS_ROUTERS = 'broadcast-arps-to-all-routers'
 
 # Port Binding types

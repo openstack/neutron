@@ -912,7 +912,8 @@ class TestMaintenance(_TestMaintenanceHelper):
         lr = self.nb_api.get_lrouter(router["id"])
 
         self.assertEqual(
-            '0', lr.options.get(ovn_const.LR_OPTIONS_MAC_AGE_LIMIT))
+            str(ovn_const.MAC_BINDING_AGE_THRESHOLD),
+            lr.options.get(ovn_const.LR_OPTIONS_MAC_AGE_LIMIT))
 
         self.assertEqual('0', options.get('mac_binding_removal_limit', '0'))
 

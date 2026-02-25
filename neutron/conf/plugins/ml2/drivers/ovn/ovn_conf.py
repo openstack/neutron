@@ -213,7 +213,7 @@ ovn_opts = [
                       'OVN >= 23.09.')),
     cfg.IntOpt('mac_binding_age_threshold',
                min=0,
-               default=0,
+               default=ovn_const.MAC_BINDING_AGE_THRESHOLD,
                help=_('The number of seconds to keep MAC_Binding entries in '
                       'the OVN DB. 0 to disable aging.')),
     cfg.BoolOpt('broadcast_arps_to_all_routers',
