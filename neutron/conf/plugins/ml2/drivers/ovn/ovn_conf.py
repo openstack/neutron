@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.ovn import constants as n_lib_ovn_const
 from oslo_config import cfg
 from oslo_config import types
 from oslo_log import log as logging
@@ -98,20 +99,20 @@ ovn_opts = [
                       'connection keepalive feature. If non-zero the value '
                       'will be forced to at least 1000 milliseconds.')),
     cfg.StrOpt('neutron_sync_mode',
-               default=ovn_const.OVN_DB_SYNC_MODE_LOG,
-               choices=[(ovn_const.OVN_DB_SYNC_MODE_OFF,
+               default=n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG,
+               choices=[(n_lib_ovn_const.OVN_DB_SYNC_MODE_OFF,
                          "Synchronization is off."),
-                        (ovn_const.OVN_DB_SYNC_MODE_LOG,
+                        (n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG,
                          "During neutron-server startup, check to see if OVN "
                          "is in sync with the Neutron database. "
                          "Log warnings for any inconsistencies found so that "
                          "an admin can investigate."),
-                        (ovn_const.OVN_DB_SYNC_MODE_REPAIR,
+                        (n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR,
                          "During neutron-server startup, automatically create "
                          "resources found in Neutron but not in OVN. "
                          "Also remove resources from OVN that are no longer "
                          "found in Neutron."),
-                        (ovn_const.OVN_DB_SYNC_MODE_MIGRATE,
+                        (n_lib_ovn_const.OVN_DB_SYNC_MODE_MIGRATE,
                          "This mode is to OVS to OVN migration. "
                          "It will sync the DB just like repair mode but it "
                          "will additionally fix the Neutron DB resource from "

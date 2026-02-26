@@ -23,6 +23,7 @@ import warnings
 import weakref
 
 import fixtures
+from neutron_lib.ovn import constants as ovn_const
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -34,7 +35,6 @@ from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 from neutron.agent.linux import utils
 from neutron.api import extensions as exts
 from neutron.api import wsgi
-from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import ovs_conf

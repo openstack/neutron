@@ -493,12 +493,6 @@ OVN_SUPPORTED_VNIC_TYPES = [portbindings.VNIC_NORMAL,
 OVN_L3_SCHEDULER_LEASTLOADED = 'leastloaded'
 OVN_L3_SCHEDULER_CHANCE = 'chance'
 
-# OVN db sync mode options
-OVN_DB_SYNC_MODE_OFF = 'off'
-OVN_DB_SYNC_MODE_LOG = 'log'
-OVN_DB_SYNC_MODE_REPAIR = 'repair'
-OVN_DB_SYNC_MODE_MIGRATE = 'migrate'
-
 # HA failover options.
 # These are the default values defined in OVN.
 OVN_BFD_MIN_RX = 1000
