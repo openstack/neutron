@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import enum
+
 BGP_ROUTER_REDISTRIBUTE = 'connected-as-host,nat'
 OVN_DYNAMIC_ROUTING_PORT_MAPPING = 'dynamic-routing-port-mapping'
 
@@ -36,3 +38,20 @@ BGP_BRIDGE_NIC_TYPES = ('', 'system')
 BGP_LRP_TO_CHASSIS = 'neutron-bgp-lrp-to-chassis-router'
 
 RELATED_RESOURCE_TAG = 'neutron-bgp-related-resource'
+
+
+class Enum(enum.Enum):
+
+    def __str__(self):
+        return self.value
+
+
+class Action(Enum):
+    RECONCILE = 'reconcile'
+    DELETE = 'delete'
+
+
+class BGPReconcilerResource(Enum):
+    CHASSIS_BGP_BRIDGES = 'bgp-bridges'
+    PROVIDER_SWITCH = 'provider-switch'
+    GATEWAY_IP = 'gateway-ip'

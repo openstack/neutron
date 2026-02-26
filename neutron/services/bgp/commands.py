@@ -66,13 +66,19 @@ def _get_all_provider_switches(nb_idl):
             ovn_const.OVN_NETTYPE_EXT_ID_KEY) in n_const.TYPE_PHYSICAL]
 
 
-def _get_gw_ips_for_switch(nb_idl, switch):
+def _get_switch_dhcp_options(nb_idl, switch):
     n_net_id = helpers.get_neutron_id_from_ovn_name(switch)
-    gw_ips = [
-        gw_ip for dhcp_opt in nb_idl.tables['DHCP_Options'].rows.values()
+    for dhcp_opt in nb_idl.tables['DHCP_Options'].rows.values():
         if dhcp_opt.external_ids.get(
-            ovn_const.OVN_NETWORK_ID_EXT_ID_KEY) == n_net_id and
-        (gw_ip := helpers.get_gw_ip_from_dhcp_options(dhcp_opt)) is not None]
+                 ovn_const.OVN_NETWORK_ID_EXT_ID_KEY) == n_net_id:
+            yield dhcp_opt
+
+
+def _get_gw_ips_for_switch(nb_idl, switch):
+    gw_ips = [
+        gw_ip for dhcp_opt in _get_switch_dhcp_options(nb_idl, switch)
+        if (gw_ip := helpers.get_gw_ip_from_dhcp_options(
+                dhcp_opt)) is not None]
     LOG.debug("For logical switch %s, found gateway IPs: %s",
               switch.name, gw_ips)
     return gw_ips
@@ -408,6 +414,38 @@ class ConnectRouterToSwitchCommand(ovs_cmd.BaseCommand):
             type=ovn_const.LSP_TYPE_ROUTER,
             options={'router-port': self.lrp_name},
         ).run_idl(txn)
+
+
+class ReconcileGatewayIPCommand(ovs_cmd.BaseCommand):
+    def __init__(self, api, dhcp_opt):
+        super().__init__(api)
+        prefixlen = netaddr.IPNetwork(dhcp_opt.cidr).prefixlen
+        self.gw_ip = f"{dhcp_opt.options['router']}/{prefixlen}"
+        router_name = bgp_config.get_main_router_name()
+        try:
+            n_net_id = dhcp_opt.external_ids[
+                ovn_const.OVN_NETWORK_ID_EXT_ID_KEY]
+        except KeyError:
+            raise exceptions.ReconcileError(
+                f"DHCP option {dhcp_opt} does not have a network ID")
+        interconnect_switch_name = (
+            helpers.get_provider_interconnect_switch_name(
+                f"neutron-{n_net_id}"))
+        self.lrp_name = helpers.get_lrp_name(
+            router_name, interconnect_switch_name)
+
+    def run_idl(self, txn):
+        try:
+            lrp = self.api.lookup('Logical_Router_Port', self.lrp_name)
+        except idlutils.RowNotFound:
+            LOG.error("LRP %s not found", self.lrp_name)
+            return
+
+        # Use addvalue (OVSDB mutate insert) instead of read-modify-write.
+        # Reading lrp.networks between back-to-back transactions can return
+        # stale data from the IDL cache, causing duplicates. addvalue is
+        # idempotent for set columns and avoids this race.
+        lrp.addvalue('networks', self.gw_ip)
 
 
 class ConnectChassisRouterToSwitchCommand(ConnectRouterToSwitchCommand):
