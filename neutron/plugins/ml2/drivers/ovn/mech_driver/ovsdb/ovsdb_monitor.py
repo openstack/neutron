@@ -23,7 +23,6 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import timeutils
-from ovs.db import idl as ovs_idl_mod
 from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import event as row_event
@@ -817,13 +816,7 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
             remote, schema, probe_interval=probe_interval, **kwargs)
 
     def set_table_condition(self, table_name, condition):
-        # Prior to ovs commit 46d44cf3be0, self.cond_change() doesn't work here
-        # but after that commit, setting table.condition doesn't work.
-        if hasattr(ovs_idl_mod, 'ConditionState'):
-            self.cond_change(table_name, condition)
-        else:
-            # Can be removed after the minimum ovs version >= 2.17.0
-            self.tables[table_name].condition = condition
+        self.cond_change(table_name, condition)
 
 
 class BaseOvnIdl(Ml2OvnIdlBase):
