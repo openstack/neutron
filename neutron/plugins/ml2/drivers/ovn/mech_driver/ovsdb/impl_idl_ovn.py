@@ -974,8 +974,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         return cls(conn)
 
     def _get_chassis_physnets(self, chassis):
-        other_config = utils.get_ovn_chassis_other_config(chassis)
-        bridge_mappings = other_config.get('ovn-bridge-mappings', '')
+        bridge_mappings = chassis.other_config.get('ovn-bridge-mappings', '')
         mapping_dict = helpers.parse_mappings(bridge_mappings.split(','))
         return list(mapping_dict.keys())
 
@@ -1021,7 +1020,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
             if ('{}={}'
                     .format(ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
                             card_serial_number)
-                    in utils.get_ovn_chassis_other_config(ch).get(
+                    in ch.other_config.get(
                         ovn_const.OVN_CMS_OPTIONS, '').split(',')):
                 return ch
         raise RuntimeError(

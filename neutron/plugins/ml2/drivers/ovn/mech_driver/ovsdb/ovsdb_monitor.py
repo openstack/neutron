@@ -182,19 +182,13 @@ class ChassisEvent(row_event.RowEvent):
         if event != self.ROW_UPDATE:
             return True
 
-        # NOTE(ralonsoh): LP#1990229 to be removed when min OVN version is
-        # 22.09
-        other_config = ('other_config' if hasattr(row, 'other_config') else
-                        'external_ids')
         # NOTE(lucasgomes): If the other_config/external_ids column wasn't
         # updated (meaning, Chassis "gateway" status didn't change) just
         # returns
-        if not hasattr(old, other_config) and event == self.ROW_UPDATE:
+        if not hasattr(old, 'other_config') and event == self.ROW_UPDATE:
             return False
-        old_br_mappings = utils.get_ovn_chassis_other_config(old).get(
-            'ovn-bridge-mappings')
-        new_br_mappings = utils.get_ovn_chassis_other_config(row).get(
-            'ovn-bridge-mappings')
+        old_br_mappings = old.other_config.get('ovn-bridge-mappings')
+        new_br_mappings = row.other_config.get('ovn-bridge-mappings')
         if old_br_mappings != new_br_mappings:
             return True
         # Check if either the Gateway status or Availability Zones has
@@ -210,7 +204,7 @@ class ChassisEvent(row_event.RowEvent):
     def run(self, event, row, old):
         host = row.hostname
         phy_nets = []
-        new_other_config = utils.get_ovn_chassis_other_config(row)
+        new_other_config = row.other_config
         if event != self.ROW_DELETE:
             bridge_mappings = new_other_config.get('ovn-bridge-mappings', '')
             mapping_dict = helpers.parse_mappings(bridge_mappings.split(','))
@@ -227,8 +221,7 @@ class ChassisEvent(row_event.RowEvent):
             if event == self.ROW_DELETE:
                 kwargs['event_from_chassis'] = row.name
             elif event == self.ROW_UPDATE:
-                old_other_config = utils.get_ovn_chassis_other_config(old)
-                old_mappings = old_other_config.get('ovn-bridge-mappings',
+                old_mappings = old.other_config.get('ovn-bridge-mappings',
                                                     set()) or set()
                 new_mappings = new_other_config.get('ovn-bridge-mappings',
                                                     set()) or set()

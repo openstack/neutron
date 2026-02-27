@@ -826,7 +826,7 @@ def compute_address_pairs_diff(ovn_port, neutron_port):
 
 def get_ovn_cms_options(chassis):
     """Return the list of CMS options in a Chassis."""
-    return [opt.strip() for opt in get_ovn_chassis_other_config(chassis).get(
+    return [opt.strip() for opt in chassis.other_config.get(
         constants.OVN_CMS_OPTIONS, '').split(',')]
 
 
@@ -1051,10 +1051,6 @@ def create_neutron_pg_drop():
         }]
 
     OvsdbClientTransactCommand.run(command)
-
-
-def get_ovn_chassis_other_config(chassis):
-    return chassis.other_config
 
 
 def get_subnets_address_scopes(context, subnets_by_id, fixed_ips, ml2_plugin):
