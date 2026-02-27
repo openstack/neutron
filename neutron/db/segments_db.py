@@ -150,21 +150,8 @@ def network_segments_exist_in_range(context, network_type, physical_network,
     # network segment ranges, that have an empty string in order to force the
     # database constraint.
     physical_network = physical_network or None
-    with db_api.CONTEXT_READER.using(context):
-        filters = {
-            'network_type': network_type,
-            'physical_network': physical_network,
-        }
-        segment_objs = network_obj.NetworkSegment.get_objects(
-            context, **filters)
-        if segment_range:
-            minimum_id = segment_range['minimum']
-            maximum_id = segment_range['maximum']
-            segment_objs = [
-                segment for segment in segment_objs if
-                minimum_id <= segment.segmentation_id <= maximum_id]
-        return len(segment_objs) > 0
-
+    return bool(network_obj.NetworkSegment.count_segments(
+        context, network_type, physical_network, segment_range=segment_range))
 
 def min_max_actual_segments_in_range(context, network_type, physical_network,
                                      segment_range=None):

@@ -15,6 +15,7 @@
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_utils import versionutils
 from oslo_versionedobjects import exception
@@ -167,6 +168,20 @@ class NetworkSegment(base.NeutronDbObject):
             ]
         return super().get_objects(context, _pager,
                                    **kwargs)
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def count_segments(cls, context, network_type,
+                       physical_network, segment_range=None):
+        segments = context.session.query(cls.db_model).filter(
+            cls.db_model.network_type == network_type,
+            cls.db_model.physical_network == physical_network)
+        if segment_range:
+            segments = segments.filter(
+                cls.db_model.segmentation_id.between(
+                    segment_range['minimum'],
+                    segment_range['maximum']))
+        return segments.count()
 
 
 @base.NeutronObjectRegistry.register
