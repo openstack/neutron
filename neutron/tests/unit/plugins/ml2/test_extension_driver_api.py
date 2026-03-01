@@ -63,7 +63,7 @@ class ExtensionDriverTestCase(test_plugin.Ml2PluginV2TestCase):
                                side_effect=TypeError):
             self._verify_network_create(500, 'HTTPInternalServerError')
             # Verify the operation is rolled back
-            query_params = "tenant_id=%s" % self._project_id
+            query_params = "project_id=%s" % self._project_id
             nets = self._list('networks', query_params=query_params)
             self.assertFalse(nets['networks'])
 

@@ -307,7 +307,7 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def create_network(self, context, network):
         self._ensure_default_security_group(context,
-                                            network['network']['tenant_id'])
+                                            network['network']['project_id'])
         return super().create_network(context,
                                       network)
 
@@ -415,7 +415,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 {'network': {'name': 'foo',
                              'admin_state_up': True,
                              'shared': False,
-                             'tenant_id': 'bar'}})
+                             'project_id': 'bar'}})
 
     def test_update_security_group(self):
         with self.security_group() as sg:

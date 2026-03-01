@@ -469,8 +469,8 @@ class Controller:
         # one resource for which reservations are being made
         request_deltas = collections.defaultdict(int)
         for item in items:
-            self._validate_network_tenant_ownership(request,
-                                                    item[self._resource])
+            self._validate_network_project_ownership(request,
+                                                     item[self._resource])
             self._belongs_to_default_sg(request, item[self._resource])
             # For ext resources policy check, we support two types, such as
             # parent_id is in request body, another type is parent_id is in
@@ -776,7 +776,7 @@ class Controller:
         attr_ops.convert_values(res_dict, exc_cls=webob.exc.HTTPBadRequest)
         return body
 
-    def _validate_network_tenant_ownership(self, request, resource_item):
+    def _validate_network_project_ownership(self, request, resource_item):
         # TODO(salvatore-orlando): consider whether this check can be folded
         # in the policy engine
         if (request.context.is_admin or request.context.is_service_role or
@@ -789,11 +789,11 @@ class Controller:
         if network.get('shared'):
             return
 
-        network_owner = network['tenant_id']
+        network_owner = network['project_id']
 
         if network_owner != resource_item['tenant_id']:
             # NOTE(kevinbenton): we raise a 404 to hide the existence of the
-            # network from the tenant since they don't have access to it.
+            # network from the project since they don't have access to it.
             msg = _('The resource could not be found.')
             raise webob.exc.HTTPNotFound(msg)
 

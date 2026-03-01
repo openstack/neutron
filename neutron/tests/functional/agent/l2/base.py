@@ -254,7 +254,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
 
     def _create_test_network_dict(self):
         return {'id': uuidutils.generate_uuid(),
-                'tenant_id': uuidutils.generate_uuid()}
+                'project_id': uuidutils.generate_uuid()}
 
     def _plug_ports(self, network, ports, agent,
                     bridge=None, namespace=None):

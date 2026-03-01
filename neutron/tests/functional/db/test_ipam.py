@@ -74,7 +74,7 @@ class IpamTestCase(testlib_api.SqlTestCase, testlib_api.MySQLTestCaseMixin):
         self.assertEqual(expected, actual)
 
     def _create_network(self):
-        network = {'tenant_id': self.project_id,
+        network = {'project_id': self.project_id,
                    'id': self.network_id,
                    'name': 'test-net',
                    'admin_state_up': True,

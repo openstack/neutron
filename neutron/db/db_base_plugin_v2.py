@@ -265,26 +265,27 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
             # we still have to verify that the caller owns the network because
             # _get_network will succeed on a shared network
-            if not context.is_admin and net['tenant_id'] != context.tenant_id:
+            if (not context.is_admin and
+                    net['project_id'] != context.project_id):
                 msg = _("Only admins can manipulate policies on networks "
                         "they do not own")
                 raise exc.InvalidInput(error_message=msg)
 
-        tenant_to_check = None
-        self_sharing = policy['target_project'] == net['tenant_id']
+        project_to_check = None
+        self_sharing = policy['target_project'] == net['project_id']
         if self_sharing:
             return
         if event == events.BEFORE_UPDATE:
-            new_tenant = payload.request_body['target_project']
-            if policy['target_project'] != new_tenant:
-                tenant_to_check = policy['target_project']
+            new_project = payload.request_body['target_project']
+            if policy['target_project'] != new_project:
+                project_to_check = policy['target_project']
 
         if event == events.BEFORE_DELETE:
-            tenant_to_check = policy['target_project']
+            project_to_check = policy['target_project']
 
-        if tenant_to_check:
+        if project_to_check:
             self.ensure_no_project_ports_on_network(
-                context, net['id'], net['tenant_id'], tenant_to_check)
+                context, net['id'], net['project_id'], project_to_check)
 
     def ensure_no_project_ports_on_network(self, context, network_id,
                                            net_project_id, project_id):
@@ -463,10 +464,15 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def create_network_db(self, context, network):
         # single request processing
         n = network['network']
-        # TODO(ralonsoh): "tenant_id" reference should be removed.
-        project_id = n.get('project_id') or n['tenant_id']
+        # TODO(ralonsoh): migrate "tenant_id" to "project_id", remove in G+2
+        if n.get('tenant_id') and n.get('project_id') is None:
+            n['project_id'] = n['tenant_id']
+            LOG.warning('project_id key not found in network dictionary, '
+                        'using tenant_id instead. This support has been '
+                        'deprecated and will be removed in a future release.')
+        project_id = n['project_id']
         with db_api.CONTEXT_WRITER.using(context):
-            args = {'tenant_id': project_id,
+            args = {'project_id': project_id,
                     'id': n.get('id') or uuidutils.generate_uuid(),
                     'name': n['name'],
                     'mtu': n.get('mtu', 0),

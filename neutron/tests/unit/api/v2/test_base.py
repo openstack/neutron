@@ -788,7 +788,6 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         project_id = _uuid()
 
         initial_input = {'network': {'name': 'net1',
-                                     'tenant_id': project_id,
                                      'project_id': project_id}}
         full_input = {'network': {'admin_state_up': True,
                                   'shared': False}}
@@ -796,6 +795,9 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
         return_value = {'id': net_id, 'status': "ACTIVE"}
         return_value.update(full_input['network'])
+
+        # TODO(haleyb): "tenant_id" reference should be removed.
+        full_input['network'].update({'tenant_id': project_id})
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
@@ -822,15 +824,17 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         project_id = _uuid()
         net_id = _uuid()
         env = _get_neutron_env(project_id)
-        # tenant_id should be fetched from env
+        # project_id should be fetched from env
         initial_input = {'network': {'name': 'net1'}}
         full_input = {'network': {'admin_state_up': True,
-                      'shared': False, 'tenant_id': project_id,
-                                  'project_id': project_id}}
+                      'shared': False, 'project_id': project_id}}
         full_input['network'].update(initial_input['network'])
 
         return_value = {'id': net_id, 'status': "ACTIVE"}
         return_value.update(full_input['network'])
+
+        # TODO(haleyb): "tenant_id" reference should be removed.
+        full_input['network'].update({'tenant_id': project_id})
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
@@ -845,9 +849,9 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                                                    network=full_input)
         self.assertEqual(exc.HTTPCreated.code, res.status_int)
 
-    def test_create_bad_keystone_tenant(self):
+    def test_create_bad_keystone_project(self):
         project_id = _uuid()
-        data = {'network': {'name': 'net1', 'tenant_id': project_id}}
+        data = {'network': {'name': 'net1', 'project_id': project_id}}
         env = {'neutron.context': context.Context('', project_id + "bad")}
         self._test_create_failure_bad_request('networks', data,
                                               extra_environ=env)
@@ -881,14 +885,14 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self._test_create_failure_bad_request('ports', data)
 
     def test_create_readonly_attr(self):
-        data = {'network': {'name': 'net1', 'tenant_id': _uuid(),
+        data = {'network': {'name': 'net1', 'project_id': _uuid(),
                             'status': "ACTIVE"}}
         self._test_create_failure_bad_request('networks', data)
 
     def test_create_with_too_long_name(self):
         data = {'network': {'name': "12345678" * 32,
                             'admin_state_up': True,
-                            'tenant_id': _uuid()}}
+                            'project_id': _uuid()}}
         res = self.api.post(_get_path('networks', fmt=self.fmt),
                             self.serialize(data),
                             content_type='application/' + self.fmt,
@@ -898,10 +902,10 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_create_bulk(self):
         data = {'networks': [{'name': 'net1',
                               'admin_state_up': True,
-                              'tenant_id': _uuid()},
+                              'project_id': _uuid()},
                              {'name': 'net2',
                               'admin_state_up': True,
-                              'tenant_id': _uuid()}]}
+                              'project_id': _uuid()}]}
 
         def side_effect(context, network):
             net = network.copy()
@@ -962,7 +966,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
         instance = self.plugin.return_value
         instance.get_network.return_value = {
-            'tenant_id': str(project_id)
+            'project_id': str(project_id)
         }
         instance.get_ports_count.return_value = 1
         instance.create_port.return_value = return_value
@@ -981,7 +985,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         net_id = _uuid()
         project_id = _uuid()
         data = {'network': {'name': 'net1', 'admin_state_up': True,
-                            'tenant_id': project_id}}
+                            'project_id': project_id}}
         return_value = {'subnets': [], 'status': "ACTIVE",
                         'id': net_id, 'v2attrs:something': "123"}
         return_value.update(data['network'].copy())
@@ -1179,7 +1183,7 @@ class V2Views(base.BaseTestCase):
 
     def test_network(self):
         keys = ('id', 'name', 'subnets', 'admin_state_up', 'status',
-                'tenant_id')
+                'project_id')
         self._view(keys, 'networks', 'network')
 
     def test_port(self):
@@ -1290,7 +1294,7 @@ class RegistryNotificationTest(APIv2TestBase):
 
     def test_network_create_registry_publish(self):
         input = {'network': {'name': 'net',
-                             'tenant_id': _uuid()}}
+                             'project_id': _uuid()}}
         self._test_registry_publish('create', 'network', input)
 
     def test_network_delete_registry_publish(self):
@@ -1302,9 +1306,9 @@ class RegistryNotificationTest(APIv2TestBase):
 
     def test_networks_create_bulk_registry_publish(self):
         input = {'networks': [{'name': 'net1',
-                               'tenant_id': _uuid()},
+                               'project_id': _uuid()},
                               {'name': 'net2',
-                               'tenant_id': _uuid()}]}
+                               'project_id': _uuid()}]}
         self._test_registry_publish('create', 'network', input)
 
 
@@ -1312,7 +1316,7 @@ class QuotaTest(APIv2TestBase):
     """This class checks the quota enforcement API, regardless of the driver"""
 
     def test_create_network_quota_exceeded(self):
-        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        initial_input = {'network': {'name': 'net1', 'project_id': _uuid()}}
         instance = self.plugin.return_value
         instance.create_network.return_value = initial_input
         with mock.patch.object(quota.QUOTAS, 'make_reservation',
@@ -1323,7 +1327,7 @@ class QuotaTest(APIv2TestBase):
                       res.json['NeutronError']['message'])
 
     def test_create_network_quota_without_limit(self):
-        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        initial_input = {'network': {'name': 'net1', 'project_id': _uuid()}}
         instance = self.plugin.return_value
         instance.create_network.return_value = initial_input
         with mock.patch.object(quota.QUOTAS, 'make_reservation'), \
@@ -1365,16 +1369,20 @@ class ExtensionTestCase(base.BaseTestCase):
     def test_extended_create(self):
         net_id = _uuid()
         project_id = _uuid()
-        initial_input = {'network': {'name': 'net1', 'tenant_id': project_id,
+        initial_input = {'network': {'name': 'net1',
                                      'project_id': project_id,
                                      'v2attrs:something_else': "abc"}}
         data = {'network': {'admin_state_up': True, 'shared': False}}
         data['network'].update(initial_input['network'])
+        # data['network'].update({'tenant_id': project_id})
 
         return_value = {'subnets': [], 'status': "ACTIVE",
                         'id': net_id,
                         'v2attrs:something': "123"}
         return_value.update(data['network'].copy())
+
+        # TODO(haleyb): "tenant_id" reference should be removed.
+        data['network'].update({'tenant_id': project_id})
 
         instance = self.plugin.return_value
         instance.create_network.return_value = return_value
