@@ -116,7 +116,6 @@ class L3RouterPlugin(service_base.ServicePluginBase,
 
     __native_pagination_support = True
     __native_sorting_support = True
-    __filter_validation_support = True
 
     IP_UPDATE_NOT_ALLOWED_LIST = [
         n_const.DEVICE_OWNER_ROUTER_INTF,

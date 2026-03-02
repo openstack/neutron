@@ -102,7 +102,6 @@ class APIv2TestBase(base.BaseTestCase):
                                                 filter_validation.ALIAS]
         instance._NeutronPluginBaseV2__native_pagination_support = True
         instance._NeutronPluginBaseV2__native_sorting_support = True
-        instance._NeutronPluginBaseV2__filter_validation_support = True
         tools.make_mock_plugin_json_encodable(instance)
 
         api = router.APIRouter()

@@ -101,7 +101,6 @@ class NetworkSegmentRangeTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     """Test plugin to mixin the network segment range extension."""
     __native_pagination_support = True
     __native_sorting_support = True
-    __filter_validation_support = True
 
     supported_extension_aliases = ["provider", "network-segment-range"]
 

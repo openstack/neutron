@@ -38,8 +38,6 @@ class TagPlugin(tagging.TagPluginBase):
                                    tag_creation.ALIAS,
                                    ]
 
-    __filter_validation_support = True
-
     def __new__(cls, *args, **kwargs):
         inst = super().__new__(cls, *args, **kwargs)
         tag_obj.register_tag_hooks()

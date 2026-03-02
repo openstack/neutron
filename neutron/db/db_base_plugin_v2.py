@@ -174,10 +174,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     __native_bulk_support = True
     __native_pagination_support = True
     __native_sorting_support = True
-    # This attribute specifies whether the plugin supports or not
-    # filter validations. Name mangling is used in
-    # order to ensure it is qualified by class
-    __filter_validation_support = False
 
     def has_native_datastore(self):
         return True
@@ -231,6 +227,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # pylint: disable=import-outside-toplevel
             from neutron.notifiers import ironic
             self.ironic_notifier = ironic.Notifier.get_instance()
+        # This attribute specifies whether the plugin supports or not
+        # filter validations.
+        self._filter_validation_support = True
+
+    @property
+    def filter_validation_support(self):
+        return self._filter_validation_support
 
     @registry.receives(resources.RBAC_POLICY, [events.BEFORE_CREATE,
                                                events.BEFORE_UPDATE,

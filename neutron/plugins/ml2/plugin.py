@@ -208,10 +208,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_bulk_support = True
     __native_pagination_support = True
     __native_sorting_support = True
-    # This attribute specifies whether the plugin supports or not
-    # filter validations. Name mangling is used in
-    # order to ensure it is qualified by class
-    __filter_validation_support = True
 
     # List of supported extensions
     _supported_extension_aliases = [provider_net.ALIAS,

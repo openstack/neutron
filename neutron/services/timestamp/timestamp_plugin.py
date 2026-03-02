@@ -25,8 +25,6 @@ class TimeStampPlugin(service_base.ServicePluginBase,
 
     supported_extension_aliases = ['standard-attr-timestamp']
 
-    __filter_validation_support = True
-
     def __init__(self):
         super().__init__()
         self.register_db_events()

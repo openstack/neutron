@@ -58,7 +58,6 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
 
     __native_pagination_support = True
     __native_sorting_support = True
-    __filter_validation_support = True
 
     def __init__(self):
         super().__init__()

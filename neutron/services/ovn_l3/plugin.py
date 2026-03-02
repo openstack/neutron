@@ -84,7 +84,6 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     # once available.
     _supported_extension_aliases = (
         extensions.ML2_SUPPORTED_API_EXTENSIONS_OVN_L3)
-    __filter_validation_support = True
 
     @resource_registry.tracked_resources(router=l3_models.Router,
                                          floatingip=l3_models.FloatingIP)

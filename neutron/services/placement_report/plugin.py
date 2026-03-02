@@ -38,11 +38,6 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
 
     supported_extension_aliases = []
 
-    # A service plugin without claiming support for filter validation would
-    # disable filter validation for all other plugins, so we report support
-    # although this plugin doesn't have filters.
-    __filter_validation_support = True
-
     @classmethod
     def get_plugin_type(cls):
         return PLUGIN_TYPE

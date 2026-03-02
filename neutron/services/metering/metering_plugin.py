@@ -39,7 +39,6 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
     supported_extension_aliases = [
         metering_apidef.ALIAS, metering_source_and_destination_filters.ALIAS]
     path_prefix = "/metering"
-    __filter_validation_support = True
 
     def __init__(self):
         super().__init__()
