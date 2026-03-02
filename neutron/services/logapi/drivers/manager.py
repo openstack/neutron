@@ -68,13 +68,17 @@ class LoggingServiceDriverManager:
         self._drivers = set()
         self.rpc_required = False
         registry.publish(log_const.LOGGING_PLUGIN, events.AFTER_INIT, self)
-
-        if self.rpc_required:
-            self.logging_rpc = server_rpc.LoggingApiNotification()
+        self._logging_rpc = None
 
     @property
     def drivers(self):
         return self._drivers
+
+    @property
+    def logging_rpc(self):
+        if self.rpc_required and not self._logging_rpc:
+            self._logging_rpc = server_rpc.LoggingApiNotification()
+        return self._logging_rpc
 
     def register_driver(self, driver):
         """Register driver with logging plugin.
