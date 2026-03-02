@@ -75,6 +75,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovs_fixes
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron import service
 from neutron.services.logapi.drivers.ovn import driver as log_driver
+from neutron.services.pvlan.drivers.ovn import driver as pvlan_driver
 from neutron.services.qos.drivers.ovn import driver as qos_driver
 from neutron.services.segments import db as segment_service_db
 from neutron.services.trunk.drivers.ovn import trunk_driver
@@ -145,6 +146,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
         self.log_driver = log_driver.register(self)
+        pvlan_driver.register(self)
         self._start_time = None
         self._agent_cache = None
 

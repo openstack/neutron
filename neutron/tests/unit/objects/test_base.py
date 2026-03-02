@@ -542,6 +542,7 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.UUIDField: uuidutils.generate_uuid,
     common_types.VlanIdRangeField: tools.get_random_vlan,
     event_types.SecurityEventField: tools.get_random_security_event,
+    obj_fields.EnumField: lambda: helpers.get_random_string(10),
     obj_fields.BooleanField: tools.get_random_boolean,
     obj_fields.DateTimeField: tools.get_random_datetime,
     obj_fields.DictOfStringsField: get_random_dict_of_strings,

@@ -16,6 +16,7 @@ import netaddr
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
+from neutron_lib.services.pvlan import constants as pvlan_const
 from neutron_lib.utils import net as net_utils
 from oslo_log import log as logging
 from oslo_utils import versionutils
@@ -333,7 +334,8 @@ class Port(base.NeutronDbObject):
     # Version 1.8: Added hints field
     # Version 1.9: Added hardware_offload_type field
     # Version 1.10: Added trusted field
-    VERSION = '1.10'
+    # Version 1.11: Added pvlan attributes
+    VERSION = '1.11'
 
     db_model = models_v2.Port
 
@@ -379,6 +381,9 @@ class Port(base.NeutronDbObject):
             # TODO(ihrachys): how do we safely pass a mutable default?
             default=None,
         ),
+        'pvlan_type': obj_fields.EnumField(
+            valid_values=pvlan_const.PVLAN_TYPES, nullable=True),
+        'pvlan_community': obj_fields.StringField(nullable=True),
         'qos_policy_id': common_types.UUIDField(nullable=True, default=None),
         'qos_network_policy_id': common_types.UUIDField(nullable=True,
                                                         default=None),
@@ -414,6 +419,8 @@ class Port(base.NeutronDbObject):
         'numa_affinity_policy',
         'qos_policy_id',
         'qos_network_policy_id',
+        'pvlan_type',
+        'pvlan_community',
         'security',
         'security_group_ids',
         'trusted',
@@ -592,6 +599,14 @@ class Port(base.NeutronDbObject):
             self.trusted = db_obj.trusted.trusted
             fields_to_change.append('trusted')
 
+        if db_obj.get('pvlan'):
+            self.pvlan_type = db_obj.pvlan.pvlan_type
+            self.pvlan_community = db_obj.pvlan.pvlan_community
+        else:
+            self.pvlan_type = None
+            self.pvlan_community = None
+        fields_to_change.extend(['pvlan_type', 'pvlan_community'])
+
         self.obj_reset_changes(fields_to_change)
 
     def obj_make_compatible(self, primitive, target_version):
@@ -602,6 +617,9 @@ class Port(base.NeutronDbObject):
             primitive.pop('hardware_offload_type', None)
         if _target_version < (1, 10):
             primitive.pop('trusted', None)
+        if _target_version < (1, 11):
+            primitive.pop('pvlan_type', None)
+            primitive.pop('pvlan_community', None)
 
     @classmethod
     @db_api.CONTEXT_READER
