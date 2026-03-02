@@ -60,15 +60,19 @@ class BGPChassisBridgeTestCase(BgpTestCaseWithIdls):
 
         self.fake_nic = self.useFixture(net_helpers.VethFixture()).ports[0]
 
+        bgp_patch_port_name = utils.get_rand_name(max_length=14,
+                                                  prefix='bgp-pp')
+        peer_patch_port_name = utils.get_rand_name(max_length=14,
+                                                   prefix='peer-pp')
         with self.ovs_api.transaction(check_error=True) as txn:
             txn.add(self.ovs_api.add_port(
                 self.test_bridge.br_name,
-                'bgp-patch-port', type='patch',
-                options={'peer': 'peer-patch-port'}))
+                bgp_patch_port_name, type='patch',
+                options={'peer': peer_patch_port_name}))
             txn.add(self.ovs_api.add_port(
                 patch_bridge.br_name,
-                'peer-patch-port', type='patch',
-                options={'peer': 'bgp-patch-port'}))
+                peer_patch_port_name, type='patch',
+                options={'peer': bgp_patch_port_name}))
             txn.add(self.ovs_api.add_port(
                 self.test_bridge.br_name, self.fake_nic.name))
 
