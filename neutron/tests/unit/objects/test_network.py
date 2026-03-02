@@ -15,6 +15,9 @@ from unittest import mock
 from neutron_lib.api.definitions import availability_zone as az_def
 
 from neutron.db import rbac_db_models
+from neutron_lib import constants as lib_constants
+from oslo_utils import uuidutils
+
 from neutron.objects import base as obj_base
 from neutron.objects import network
 from neutron.objects.qos import binding
@@ -133,6 +136,79 @@ class NetworkSegmentDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
         super().setUp()
         self.update_obj_fields(
             {'network_id': lambda: self._create_test_network_id()})
+
+    _seg_index = 0
+
+    def _create_segment(self, network_type, physical_network, segmentation_id,
+                        network_id=None):
+        NetworkSegmentDbObjTestCase._seg_index += 1
+        seg = network.NetworkSegment(
+            self.context,
+            id=uuidutils.generate_uuid(),
+            network_id=network_id or self._create_test_network_id(),
+            network_type=network_type,
+            physical_network=physical_network,
+            segmentation_id=segmentation_id,
+            segment_index=self._seg_index)
+        seg.create()
+        return seg
+
+    def test_count_segments(self):
+        net_id = self._create_test_network_id()
+        self._create_segment(lib_constants.TYPE_VLAN, 'physnet1', 100,
+                             network_id=net_id)
+        self._create_segment(lib_constants.TYPE_VLAN, 'physnet1', 200,
+                             network_id=net_id)
+        self._create_segment(lib_constants.TYPE_VLAN, 'physnet2', 50,
+                             network_id=net_id)
+        self._create_segment(lib_constants.TYPE_VLAN, 'physnet2', 150,
+                             network_id=net_id)
+        self._create_segment(lib_constants.TYPE_VLAN, 'physnet2', 300,
+                             network_id=net_id)
+        self._create_segment(lib_constants.TYPE_VXLAN, None, 5000,
+                             network_id=net_id)
+
+        _count = network.NetworkSegment.count_segments
+        # Match network_type and physical_network
+        self.assertEqual(
+            2, _count(self.context, lib_constants.TYPE_VLAN, 'physnet1'))
+        self.assertEqual(
+            3, _count(self.context, lib_constants.TYPE_VLAN, 'physnet2'))
+        # Wrong network_type
+        self.assertEqual(
+            0, _count(self.context, lib_constants.TYPE_GRE, 'physnet1'))
+        # Wrong physical_network
+        self.assertEqual(
+            0, _count(self.context, lib_constants.TYPE_VLAN, 'no-such'))
+        # Tunnel type with physical_network=None
+        self.assertEqual(
+            1, _count(self.context, lib_constants.TYPE_VXLAN, None))
+        # Mismatch: VXLAN does not have physnet1
+        self.assertEqual(
+            0, _count(self.context, lib_constants.TYPE_VXLAN, 'physnet1'))
+
+        # segment_range filtering on physnet2 (segments: 50, 150, 300)
+        self.assertEqual(
+            3, _count(self.context, lib_constants.TYPE_VLAN, 'physnet2',
+                      segment_range={'minimum': 1, 'maximum': 400}))
+        self.assertEqual(
+            1, _count(self.context, lib_constants.TYPE_VLAN, 'physnet2',
+                      segment_range={'minimum': 100, 'maximum': 200}))
+        self.assertEqual(
+            0, _count(self.context, lib_constants.TYPE_VLAN, 'physnet2',
+                      segment_range={'minimum': 51, 'maximum': 149}))
+        # Inclusive boundaries
+        self.assertEqual(
+            2, _count(self.context, lib_constants.TYPE_VLAN, 'physnet2',
+                      segment_range={'minimum': 50, 'maximum': 150}))
+        # No range returns all
+        self.assertEqual(
+            3, _count(self.context, lib_constants.TYPE_VLAN, 'physnet2',
+                      segment_range=None))
+        # Range that excludes physnet1 segments (100, 200)
+        self.assertEqual(
+            0, _count(self.context, lib_constants.TYPE_VLAN, 'physnet1',
+                      segment_range={'minimum': 250, 'maximum': 400}))
 
     def test_hosts(self):
         hosts = ['host1', 'host2']
