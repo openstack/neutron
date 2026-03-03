@@ -230,7 +230,7 @@ class OVNMechanismDriver(api.MechanismDriver):
     def get_supported_vif_types(self):
         vif_types = set()
         for ch in self.sb_ovn.chassis_list().execute(check_error=True):
-            other_config = ovn_utils.get_ovn_chassis_other_config(ch)
+            other_config = ch.other_config
             dp_type = other_config.get(ovn_const.OVN_DATAPATH_TYPE, '')
             if dp_type == ovn_const.CHASSIS_DATAPATH_NETDEV:
                 vif_types.add(portbindings.VIF_TYPE_VHOST_USER)
@@ -1177,7 +1177,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                                       'agent': agent})
             return
         chassis = agent.chassis
-        other_config = ovn_utils.get_ovn_chassis_other_config(chassis)
+        other_config = chassis.other_config
         datapath_type = other_config.get(ovn_const.OVN_DATAPATH_TYPE, '')
         iface_types = other_config.get('iface-types', '')
         iface_types = iface_types.split(',') if iface_types else []
