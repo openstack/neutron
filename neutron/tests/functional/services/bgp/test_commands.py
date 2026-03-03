@@ -610,20 +610,23 @@ class ReconcileGatewayIPCommandTestCase(bgp.BaseBgpNbIdlTestCase):
             f'neutron-{net_id}')
         lrp_name = helpers.get_lrp_name(
             self.main_router_name, interconnect_name)
-        self.nb_api.ls_add(interconnect_name).execute(check_error=True)
         lsp_name = helpers.get_lsp_name(
             interconnect_name, self.main_router_name)
-        self.nb_api.lrp_add(
-            self.main_router_name, lrp_name,
-            mac=helpers.get_mac_address_from_lrp_name(lrp_name),
-            networks=[],
-        ).execute(check_error=True)
-        self.nb_api.lsp_add(
-            interconnect_name, lsp_name,
-            type='router',
-            addresses=['router'],
-            options={'router-port': lrp_name},
-        ).execute(check_error=True)
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(interconnect_name))
+            txn.add(self.nb_api.lrp_add(
+                self.main_router_name, lrp_name,
+                mac=helpers.get_mac_address_from_lrp_name(lrp_name),
+                networks=[],
+            ))
+            txn.add(self.nb_api.lsp_add(
+                interconnect_name, lsp_name,
+                type='router',
+                addresses=['router'],
+                options={'router-port': lrp_name},
+            ))
+
         return lrp_name
 
     def test_reconcile_gateway_ip_configures_correct_ip_on_lrp(self):
@@ -1196,8 +1199,6 @@ class _BaseNeutronSwitchCommandTestCase(BgpNbIdlWithChassisBase):
 
         return ls.result
 
-
-class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
     def _validate_neutron_switch_dead_connection(self, n_switch):
         lrp_name = helpers.get_lrp_name(self.main_router_name, n_switch.name)
         lsp_name = helpers.get_lsp_name(n_switch.name, self.main_router_name)
@@ -1235,6 +1236,8 @@ class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
 
         return lrp
 
+
+class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
     def test_reconcile_neutron_switch_basic(self):
         network_name = 'provider-net'
         n_switch = self._create_neutron_switch_with_localnet(network_name, [])
@@ -1313,6 +1316,110 @@ class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
             commands.ReconcileNeutronSwitchCommand,
             self.nb_api, n_switch
         )
+
+
+class DeleteNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
+    def _assert_interconnect_switch_gone(self, n_switch_name):
+        try:
+            self.nb_api.ls_get(n_switch_name).execute(check_error=True)
+            self.fail("Logical switch %s should not exist" % n_switch_name)
+        except idlutils.RowNotFound:
+            pass
+
+    def _assert_lrp_gone(self, lrp_name):
+        try:
+            self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+            self.fail("LRP %s should not exist" % lrp_name)
+        except idlutils.RowNotFound:
+            pass
+
+    def _assert_main_router_policy_for_neutron_switch_gone(
+            self, interconnect_switch_name, n_switch_name):
+        main_router_name = bgp_config.get_main_router_name()
+        expected_match = (
+            'inport=="%s" && is_chassis_resident("cr-%s")' % (
+                interconnect_switch_name, n_switch_name))
+        policies = self.nb_api.lr_policy_list(
+            main_router_name).execute(check_error=True)
+        for policy in policies:
+            if policy.match == expected_match and policy.priority == 10:
+                self.fail(
+                    "Policy with match %r should not exist after delete" % (
+                        expected_match,))
+
+    def _assert_resources_exist(self, n_switch, network_name, gw_ips):
+        self._validate_neutron_switch_dead_connection(n_switch)
+        self._validate_interconnect_switch_created(n_switch, network_name)
+        self._validate_interconnect_switch_connection(n_switch, gw_ips)
+
+    def test_delete_neutron_switch_removes_resources(self):
+        network_name = 'provider-net'
+        subnets = [
+            self.Subnet(cidr='192.168.1.0/24', gateway_ip='192.168.1.1'),
+        ]
+        n_switch = self._create_neutron_switch_with_localnet(
+            network_name, subnets)
+
+        commands.ReconcileNeutronSwitchCommand(
+            self.nb_api, n_switch).execute(check_error=True)
+        self._assert_resources_exist(
+            n_switch, network_name, ['192.168.1.1/24'])
+
+        commands.DeleteNeutronSwitchCommand(
+            self.nb_api, n_switch).execute(check_error=True)
+
+        self._assert_interconnect_switch_gone(
+            helpers.get_provider_interconnect_switch_name(n_switch.name))
+        router_to_ic_lrp = helpers.get_lrp_name(
+            self.main_router_name,
+            helpers.get_provider_interconnect_switch_name(n_switch.name))
+        router_to_n_switch_lrp = helpers.get_lrp_name(
+            self.main_router_name, n_switch.name)
+        self._assert_lrp_gone(router_to_ic_lrp)
+        self._assert_lrp_gone(router_to_n_switch_lrp)
+        self._assert_main_router_policy_for_neutron_switch_gone(
+            helpers.get_provider_interconnect_switch_name(n_switch.name),
+            n_switch.name)
+
+    def test_delete_neutron_switch_removes_only_relevant_resources(self):
+        network_name_to_delete = 'net-to-delete'
+        network_name_to_keep = 'net-to-keep'
+
+        n_switch_to_delete = self._create_neutron_switch_with_localnet(
+            network_name_to_delete, [
+                self.Subnet(cidr='192.168.1.0/24', gateway_ip='192.168.1.1')])
+        n_switch_to_keep = self._create_neutron_switch_with_localnet(
+            network_name_to_keep, [
+                self.Subnet(cidr='192.168.2.0/24', gateway_ip='192.168.2.1')])
+
+        for switch in [n_switch_to_delete, n_switch_to_keep]:
+            commands.ReconcileNeutronSwitchCommand(
+                self.nb_api, switch).execute(check_error=True)
+
+        self._assert_resources_exist(n_switch_to_delete,
+                                     network_name_to_delete,
+                                     ['192.168.1.1/24'])
+        self._assert_resources_exist(
+            n_switch_to_keep, network_name_to_keep, ['192.168.2.1/24'])
+
+        commands.DeleteNeutronSwitchCommand(
+            self.nb_api, n_switch_to_delete).execute(check_error=True)
+
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            n_switch_to_delete.name)
+        router_to_ic_lrp = helpers.get_lrp_name(
+            self.main_router_name, interconnect_name)
+        router_to_n_switch_lrp = helpers.get_lrp_name(
+            self.main_router_name, n_switch_to_delete.name)
+
+        self._assert_interconnect_switch_gone(interconnect_name)
+        self._assert_lrp_gone(router_to_ic_lrp)
+        self._assert_lrp_gone(router_to_n_switch_lrp)
+        self._assert_main_router_policy_for_neutron_switch_gone(
+            interconnect_name, n_switch_to_delete.name)
+
+        self._assert_resources_exist(n_switch_to_keep, network_name_to_keep,
+                                     ['192.168.2.1/24'])
 
 
 class ReconcileMainRouterPoliciesCommandTestCase(BgpNbIdlWithChassisBase):

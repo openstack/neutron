@@ -84,6 +84,11 @@ def _get_gw_ips_for_switch(nb_idl, switch):
     return gw_ips
 
 
+def _make_main_router_policy_match(ic_switch_lrp_name, chassis_lrp_name):
+    return (f'inport=="{ic_switch_lrp_name}" && '
+            f'is_chassis_resident("cr-{chassis_lrp_name}")')
+
+
 class _LsAddCommand(nb_cmd.LsAddCommand):
     def run_idl(self, txn):
         try:
@@ -221,14 +226,19 @@ class CreateLspLocalnetCommand(_LspAddCommand):
         super().run_idl(txn)
 
 
-class ReconcileNeutronSwitchCommand(ovs_cmd.BaseCommand):
+class _NeutronSwitchBase(ovs_cmd.BaseCommand):
     def __init__(self, api, n_switch):
         super().__init__(api)
         self.n_switch = n_switch
         self.router_name = bgp_config.get_main_router_name()
-        self.network_name = self._get_network_name()
         self.interconnect_switch_name = (
             helpers.get_provider_interconnect_switch_name(self.n_switch.name))
+
+
+class ReconcileNeutronSwitchCommand(_NeutronSwitchBase):
+    def __init__(self, api, n_switch):
+        super().__init__(api, n_switch)
+        self.network_name = self._get_network_name()
 
     def _get_network_name(self):
         for port in self.n_switch.ports:
@@ -263,6 +273,37 @@ class ReconcileNeutronSwitchCommand(ovs_cmd.BaseCommand):
             self.interconnect_switch_name,
             related_resource=self.n_switch,
         ).run_idl(txn)
+
+
+class DeleteNeutronSwitchCommand(_NeutronSwitchBase):
+    def run_idl(self, txn):
+        router_to_interconnect_lrp_name = helpers.get_lrp_name(
+            self.router_name, self.interconnect_switch_name)
+        router_to_n_switch_lrp_name = helpers.get_lrp_name(
+            self.router_name, self.n_switch.name)
+
+        main_router = _get_main_router(self.api)
+
+        for chassis_lrp in helpers.lrps_to_chassis_routers(main_router):
+            nb_cmd.LrPolicyDelCommand(
+                self.api,
+                self.router_name,
+                priority=10,
+                match=_make_main_router_policy_match(
+                    router_to_interconnect_lrp_name, chassis_lrp.name),
+            ).run_idl(txn)
+
+        nb_cmd.LsDelCommand(
+            self.api,
+            self.interconnect_switch_name,
+        ).run_idl(txn)
+
+        for lrp_name in [router_to_interconnect_lrp_name,
+                         router_to_n_switch_lrp_name]:
+            nb_cmd.LrpDelCommand(
+                self.api,
+                lrp_name,
+            ).run_idl(txn)
 
 
 class ReconcileMainRouterPoliciesForProviderCommand(ovs_cmd.BaseCommand):
@@ -308,8 +349,8 @@ class ReconcileMainRouterPoliciesCommand(ovs_cmd.BaseCommand):
             self.api,
             self.router.name,
             priority=10,
-            match=f'inport==\"{self.interconnect_lrp_name}\" '
-                    f'&& is_chassis_resident(\"cr-{self.chassis_lrp.name}\")',
+            match=_make_main_router_policy_match(
+                self.interconnect_lrp_name, self.chassis_lrp.name),
             action='reroute',
             output_port=self.chassis_lrp,
             nexthops=[lrp_peer_ip],
