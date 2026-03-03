@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import functools
 import os
 import tempfile
 
@@ -43,25 +42,6 @@ class OvsTestIdl(connection.OvsdbIdl):
 
     def notify(self, event, row, updates=None):
         self.notify_handler.notify(event, row, updates)
-
-
-def requires_ovn_version_with_bgp():
-    def outer(f):
-        @functools.wraps(f)
-        def inner(self, *args, **kwargs):
-            if not self._is_bgp_supported():
-                raise self.skipException(
-                    "Used OVN version does not have BGP support")
-            return f(self, *args, **kwargs)
-        return inner
-    return outer
-
-
-def is_policy_output_port_column_supported(idl):
-    # OVN added the output_port column to the Logical_Router_Policy table in
-    # v26.03 commit 75681638854291c412a46dbea81bd7e6a6128a3b
-    return idlutils.table_has_column(
-        idl, 'Logical_Router_Policy', 'output_port')
 
 
 class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
@@ -97,12 +77,6 @@ class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
             'OVN_Southbound': ovsvenv.ovnsb_connection,
             'Open_vSwitch': ovsvenv.ovs_connection,
         }
-
-    def _is_bgp_supported(self):
-        # Look at the Southbound IDL to check if Advertised_Route table exists
-        helper = idlutils.get_schema_helper(
-            self._schema_map['OVN_Southbound'], 'OVN_Southbound')
-        return 'Advertised_Route' in helper.schema_json['tables']
 
     def create_idls(self):
         for schema in self.schemas:
