@@ -551,9 +551,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         if fix_subnets:
             admin_context = n_context.get_admin_context()
             LOG.debug('Triggering update for %s subnets', len(fix_subnets))
+            net_ids = {s['network_id'] for s in fix_subnets}
+            nets = {n['id']: n for n in self._ovn_client._plugin.get_networks(
+                admin_context, filters={'id': list(net_ids)})}
             for subnet in fix_subnets:
-                neutron_net = self._ovn_client._plugin.get_network(
-                    admin_context, subnet['network_id'])
+                neutron_net = nets[subnet['network_id']]
                 try:
                     self._ovn_client.update_subnet(admin_context, subnet,
                                                    neutron_net)
