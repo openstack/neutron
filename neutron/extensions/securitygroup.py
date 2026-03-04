@@ -91,8 +91,8 @@ class SecurityGroupRuleInvalidProtocol(exceptions.InvalidInput):
                 "[0 to 255] are supported.")
 
 
-class SecurityGroupRulesNotSingleTenant(exceptions.InvalidInput):
-    message = _("Multiple tenant_ids in bulk security group rule create"
+class SecurityGroupRulesNotSingleProject(exceptions.InvalidInput):
+    message = _("Multiple project_ids in bulk security group rule create"
                 " not allowed")
 
 

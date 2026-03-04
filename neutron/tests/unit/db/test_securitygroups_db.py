@@ -36,7 +36,7 @@ from neutron.tests.unit import testlib_api
 
 FAKE_SECGROUP = {
     'security_group': {
-        "tenant_id": 'fake',
+        "project_id": 'fake',
         'description': 'fake',
         'name': 'fake'
     }
@@ -44,7 +44,7 @@ FAKE_SECGROUP = {
 
 FAKE_SECGROUP_RULE = {
     'security_group_rule': {
-        "tenant_id": 'fake',
+        "project_id": 'fake',
         'description': 'fake',
         'name': 'fake',
         'port_range_min': '21',
@@ -137,7 +137,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             context = mock.Mock()
             rule_dict = {
                 'security_group_rule': {'protocol': None,
-                                        'tenant_id': 'fake',
+                                        'project_id': 'fake',
                                         'security_group_id': 'fake',
                                         'direction': 'fake'}
             }
@@ -161,7 +161,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
     def test_check_for_duplicate_diff_rules_remote_ip_prefix_ipv4(self):
         fake_secgroup = copy.deepcopy(FAKE_SECGROUP)
         fake_secgroup['security_group_rules'] = \
-            [{'id': 'fake', 'tenant_id': 'fake', 'ethertype': 'IPv4',
+            [{'id': 'fake', 'project_id': 'fake', 'ethertype': 'IPv4',
               'direction': 'ingress', 'security_group_id': 'fake',
               'remote_ip_prefix': None}]
         with mock.patch.object(self.mixin, 'get_security_group',
@@ -169,7 +169,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             context = mock.Mock()
             rule_dict = {
                 'security_group_rule': {'id': 'fake2',
-                                        'tenant_id': 'fake',
+                                        'project_id': 'fake',
                                         'security_group_id': 'fake',
                                         'ethertype': 'IPv4',
                                         'direction': 'ingress',
@@ -182,7 +182,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
     def test_check_for_duplicate_diff_rules_remote_ip_prefix_ipv6(self):
         fake_secgroup = copy.deepcopy(FAKE_SECGROUP)
         fake_secgroup['security_group_rules'] = \
-            [{'id': 'fake', 'tenant_id': 'fake', 'ethertype': 'IPv6',
+            [{'id': 'fake', 'project_id': 'fake', 'ethertype': 'IPv6',
               'direction': 'ingress', 'security_group_id': 'fake',
               'remote_ip_prefix': None}]
         with mock.patch.object(self.mixin, 'get_security_group',
@@ -190,7 +190,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             context = mock.Mock()
             rule_dict = {
                 'security_group_rule': {'id': 'fake2',
-                                        'tenant_id': 'fake',
+                                        'project_id': 'fake',
                                         'security_group_id': 'fake',
                                         'ethertype': 'IPv6',
                                         'direction': 'ingress',
@@ -279,14 +279,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
     def _test_security_group_precommit_create_event(self,
                                                     with_revisions=False):
         DEFAULT_SECGROUP = {
-            'tenant_id': FAKE_SECGROUP['security_group']['tenant_id'],
+            'project_id': FAKE_SECGROUP['security_group']['project_id'],
             'name': 'default',
             'description': 'Default security group',
         }
+        # TODO(haleyb): "tenant_id" reference should be removed.
         DEFAULT_SECGROUP_DICT = {
             'id': mock.ANY,
-            'tenant_id': FAKE_SECGROUP['security_group']['tenant_id'],
-            'project_id': FAKE_SECGROUP['security_group']['tenant_id'],
+            'tenant_id': FAKE_SECGROUP['security_group']['project_id'],
+            'project_id': FAKE_SECGROUP['security_group']['project_id'],
             'name': 'default',
             'description': 'Default security group',
             'stateful': mock.ANY,
@@ -572,7 +573,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                                          is_admin=True, overwrite=False)
         self.sg_user = self.mixin.create_security_group(
             self.user_ctx, {'security_group': {'name': 'name',
-                                               'tenant_id': 'project_1',
+                                               'project_id': 'project_1',
                                                'description': 'fake'}})
 
     def test_get_security_group_rules(self):
@@ -581,13 +582,13 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
 
         rule = copy.deepcopy(FAKE_SECGROUP_RULE)
         rule['security_group_rule']['security_group_id'] = self.sg_user['id']
-        rule['security_group_rule']['tenant_id'] = 'project_2'
+        rule['security_group_rule']['project_id'] = 'project_2'
         self.mixin.create_security_group_rule(self.admin_ctx, rule)
 
         rules_after = self.mixin.get_security_group_rules(self.user_ctx)
         self.assertEqual(len(rules_before) + 1, len(rules_after))
         for rule in (rule for rule in rules_after if rule not in rules_before):
-            self.assertEqual('project_2', rule['tenant_id'])
+            self.assertEqual('project_2', rule['project_id'])
 
     def test_get_security_group_rules_filters_passed(self):
         self._create_environment()
@@ -599,7 +600,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             self.user_ctx, filters={'name': 'default'})[0]
         rule = copy.deepcopy(FAKE_SECGROUP_RULE)
         rule['security_group_rule']['security_group_id'] = default_sg['id']
-        rule['security_group_rule']['tenant_id'] = 'project_1'
+        rule['security_group_rule']['project_id'] = 'project_1'
         self.mixin.create_security_group_rule(self.user_ctx, rule)
 
         rules_after = self.mixin.get_security_group_rules(self.user_ctx,
@@ -612,13 +613,13 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
 
         rule = copy.deepcopy(FAKE_SECGROUP_RULE)
         rule['security_group_rule']['security_group_id'] = self.sg_user['id']
-        rule['security_group_rule']['tenant_id'] = 'project_1'
+        rule['security_group_rule']['project_id'] = 'project_1'
         self.mixin.create_security_group_rule(self.user_ctx, rule)
 
         rules_after = self.mixin.get_security_group_rules(self.ctx)
         self.assertEqual(len(rules_before) + 1, len(rules_after))
         for rule in (rule for rule in rules_after if rule not in rules_before):
-            self.assertEqual('project_1', rule['tenant_id'])
+            self.assertEqual('project_1', rule['project_id'])
             self.assertEqual(self.sg_user['id'], rule['security_group_id'])
 
     def test__ensure_default_security_group(self):
@@ -632,7 +633,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 self.ctx,
                 {'security_group': {
                     'name': 'default',
-                    'tenant_id': 'project_1',
+                    'project_id': 'project_1',
                     'description': securitygroups_db.DEFAULT_SG_DESCRIPTION}},
                 default_sg=True)
             get_default_sg_id.assert_called_once_with(self.ctx, 'project_1')
@@ -660,7 +661,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 self.ctx,
                 {'security_group': {
                     'name': 'default',
-                    'tenant_id': 'project_1',
+                    'project_id': 'project_1',
                     'description': securitygroups_db.DEFAULT_SG_DESCRIPTION}},
                 default_sg=True)
             get_default_sg_id.assert_has_calls([
@@ -677,7 +678,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             create_sg.assert_not_called()
             get_default_sg_id.assert_not_called()
 
-    def test__ensure_default_security_group_tenant_mismatch(self):
+    def test__ensure_default_security_group_project_mismatch(self):
         with mock.patch.object(
                 self.mixin, '_get_default_sg_id') as get_default_sg_id,\
                 mock.patch.object(

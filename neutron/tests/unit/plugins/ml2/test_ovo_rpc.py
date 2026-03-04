@@ -87,7 +87,7 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
             sgr = self.plugin.create_security_group_rule(
                 self.ctx,
                 {'security_group_rule': {'security_group_id': sg.id,
-                                         'tenant_id': sg.project_id,
+                                         'project_id': sg.project_id,
                                          'port_range_min': None,
                                          'port_range_max': None,
                                          'remote_ip_prefix': None,
@@ -110,7 +110,7 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
         # fresh reads aren't possible.
         with db_api.CONTEXT_WRITER.using(self.ctx):
             self.plugin.create_security_group(
-                self.ctx, {'security_group': {'tenant_id': 'test',
+                self.ctx, {'security_group': {'project_id': 'test',
                                               'description': 'desc',
                                               'name': 'test'}})
             self.assertEqual([], self.received)

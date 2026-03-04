@@ -997,7 +997,7 @@ class TestSecurityGroup(base.TestOVNFunctionalBase):
         self.sg_data = {
             'name': 'testsg',
             'description': 'Test Security Group',
-            'tenant_id': self._project_id,
+            'project_id': self._project_id,
             'is_default': True,
         }
         mock.patch.object(
@@ -1065,7 +1065,7 @@ class TestSecurityGroup(base.TestOVNFunctionalBase):
                      'port_range_max': None,
                      'port_range_min': None,
                      'remote_ip_prefix': None,
-                     'tenant_id': sg1['project_id'],
+                     'project_id': sg1['project_id'],
                      'remote_address_group_id': None,
                      'security_group_id': sg1['id'],
                      'remote_group_id': sg2['id']}
