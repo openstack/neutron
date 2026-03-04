@@ -97,6 +97,7 @@ class FloatingIPPoolsDBTestCaseBase(test_l3.L3NatTestCaseMixin):
 
         expected_fip_pools = []
         if ip_version == lib_const.IP_VERSION_4 or is_v6_supported:
+            # TODO(haleyb): "tenant_id" reference should be removed
             expected_fip_pools = [{'cidr': fake_cidr,
                                    'subnet_id': fake_subnet_id,
                                    'subnet_name': 'fake_subnet',

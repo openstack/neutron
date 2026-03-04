@@ -41,7 +41,6 @@ class PortForwardingTestCaseBase(testlib_api.MySQLTestCaseMixin,
         body = {"floating_network_id": network_id,
                 "port_id": port_id,
                 "fixed_ip_address": fixed_ip_address,
-                "tenant_id": self._project_id,
                 "project_id": self._project_id}
 
         return self.l3_plugin.create_floatingip(

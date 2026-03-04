@@ -1394,7 +1394,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         When a floating IP is associated with an internal port,
         we need to extract/determine some data associated with the
         internal port, including the internal_ip_address, and router_id.
-        The confirmation of the internal port whether owned by the tenant who
+        The confirmation of the internal port whether owned by the project who
         owns the floating IP will be confirmed by _get_router_for_floatingip.
         """
         (internal_port, internal_subnet_id,
@@ -1547,12 +1547,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floating_ip_address = floating_fixed_ip['ip_address']
             qos_policy_id = (fip.get(qos_const.QOS_POLICY_ID)
                              if self._is_fip_qos_supported else None)
-            # TODO(ralonsoh): "tenant_id" reference should be removed.
-            project_id = fip.get('project_id') or fip['tenant_id']
+            # TODO(ralonsoh): "tenant_id" reference should be removed in G+2
+            if fip.get('tenant_id') and fip.get('project_id') is None:
+                fip['project_id'] = fip['tenant_id']
+                LOG.warning('project_id key not found in floatingip '
+                            'dictionary, using tenant_id instead. This '
+                            'support has been deprecated and will be removed '
+                            'in a future release.')
             floatingip_obj = l3_obj.FloatingIP(
                 context,
                 id=fip_id,
-                project_id=project_id,
+                project_id=fip['project_id'],
                 status=initial_status,
                 floating_network_id=fip['floating_network_id'],
                 floating_ip_address=floating_ip_address,
@@ -1827,7 +1832,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         with db_api.CONTEXT_WRITER.using(context):
             # NOTE(froyo): Context is elevated to confirm the presence of at
             # least one FIP associated to the port_id. Additional checks
-            # regarding the tenant's grants will be carried out in following
+            # regarding the project's grants will be carried out in following
             # lines.
             if not l3_obj.FloatingIP.objects_exist(
                     context.elevated(), fixed_port_id=port_id):
@@ -1837,8 +1842,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 context, fixed_port_id=port_id)
 
             # NOTE(froyo): To ensure that a FIP assigned by an admin user
-            # cannot be disassociated by a tenant user, we raise exception to
-            # generate a 409 Conflict response message that prompts the tenant
+            # cannot be disassociated by a project user, we raise exception to
+            # generate a 409 Conflict response message that prompts the project
             # user to contact an admin, rather than a 500 error message.
             if not context.is_admin:
                 floating_ip_objs_admin = l3_obj.FloatingIP.get_objects(
