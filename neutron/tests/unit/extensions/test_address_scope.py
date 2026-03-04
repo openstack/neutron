@@ -389,7 +389,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
 
                 with mock.patch.object(registry, 'publish') as publish:
                     plugin = db_base_plugin_v2.NeutronDbPluginV2()
-                    plugin.is_address_scope_owned_by_tenant = mock.Mock(
+                    plugin.is_address_scope_owned_by_project = mock.Mock(
                         return_value=True)
                     plugin._validate_address_scope_id = mock.Mock()
                     ctx = context.get_admin_context()

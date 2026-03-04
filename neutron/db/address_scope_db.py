@@ -19,6 +19,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib.db import utils as db_utils
 from neutron_lib.exceptions import address_scope as api_err
+from oslo_log import log as logging
 from oslo_utils import uuidutils
 
 from neutron._i18n import _
@@ -26,6 +27,8 @@ from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import address_scope as obj_addr_scope
 from neutron.objects import base as base_obj
 from neutron.objects import subnetpool as subnetpool_obj
+
+LOG = logging.getLogger(__name__)
 
 
 @resource_extend.has_resource_extenders
@@ -45,16 +48,16 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
             raise api_err.AddressScopeNotFound(address_scope_id=id)
         return obj
 
-    def is_address_scope_owned_by_tenant(self, context, id):
-        """Check if address scope id is owned by the tenant or not.
+    def is_address_scope_owned_by_project(self, context, id):
+        """Check if address scope id is owned by the project or not.
 
         AddressScopeNotFound is raised if the
           - address scope id doesn't exist or
-          - if the (unshared) address scope id is not owned by this tenant.
+          - if the (unshared) address scope id is not owned by this project.
 
-        @return Returns true if the user is admin or tenant is owner
+        @return Returns true if the user is admin or project is owner
                 Returns false if the address scope id is shared and not
-                owned by the tenant.
+                owned by the project.
         """
         address_scope = self._get_address_scope(context, id)
         return context.is_admin or (
@@ -70,8 +73,13 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         address_scope_id = a_s.get('id') or uuidutils.generate_uuid()
         # TODO(ralonsoh): remove tenant_id reference once bp/keystone-v3
         # migration finishes.
-        project_id = a_s.get('project_id') or a_s['tenant_id']
-        pool_args = {'project_id': project_id,
+        if a_s.get('tenant_id') and a_s.get('project_id') is None:
+            a_s['project_id'] = a_s['tenant_id']
+            LOG.warning('project_id key not found in address_scope '
+                        'dictionary, using tenant_id instead. This support '
+                        'has been deprecated and will be removed in a '
+                        'future release.')
+        pool_args = {'project_id': a_s['project_id'],
                      'id': address_scope_id,
                      'name': a_s['name'],
                      'shared': a_s['shared'],

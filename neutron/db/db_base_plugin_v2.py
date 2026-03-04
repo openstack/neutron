@@ -1234,7 +1234,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         """Validate the address scope before associating.
 
         Subnetpool can associate with an address scope if
-          - the tenant user is the owner of both the subnetpool and
+          - the project user is the owner of both the subnetpool and
             address scope
           - the user is associating the subnetpool with a shared
             address scope
@@ -1322,11 +1322,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         """Check if the subnetpool can be updated or not.
 
         If the subnetpool is associated to a shared address scope not owned
-        by the tenant, then the subnetpool cannot be updated.
+        by the project, then the subnetpool cannot be updated.
         """
 
-        if not self.is_address_scope_owned_by_tenant(context,
-                                                     address_scope_id):
+        if not self.is_address_scope_owned_by_project(context,
+                                                      address_scope_id):
             msg = _("subnetpool %(subnetpool_id)s cannot be updated when"
                     " associated with shared address scope "
                     "%(address_scope_id)s") % {
@@ -1355,7 +1355,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         self._validate_address_scope_id(context, sp_reader.address_scope_id,
                                         sp_reader.id, sp_reader.prefixes,
                                         sp_reader.ip_version)
-        pool_args = {'project_id': sp['tenant_id'],
+        # TODO(haleyb): migrate "tenant_id" to "project_id", remove in G+2
+        if sp.get('tenant_id') and sp.get('project_id') is None:
+            sp['project_id'] = sp['tenant_id']
+            LOG.warning('project_id key not found in subnetpool dictionary, '
+                        'using tenant_id instead. This support has been '
+                        'deprecated and will be removed in a future release.')
+        pool_args = {'project_id': sp['project_id'],
                      'id': sp_reader.id,
                      'name': sp_reader.name,
                      'ip_version': sp_reader.ip_version,

@@ -46,7 +46,7 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
                             default_quota=constants.ATTR_NOT_SPECIFIED,
                             shared=False, is_default=False):
         subnetpool = {'subnetpool': {'name': name,
-                                     'tenant_id': self._project_id,
+                                     'project_id': self._project_id,
                                      'prefixes': prefix_list,
                                      'min_prefixlen': min_prefixlen,
                                      'max_prefixlen': max_prefixlen,
