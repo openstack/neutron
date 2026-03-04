@@ -34,6 +34,9 @@
         - openstack-tox-py313: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
+        - openstack-tox-py314: # from openstack-python3-jobs template
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
             pre-run: playbooks/configure_swap.yaml
@@ -45,10 +48,10 @@
         - openstack-tox-py310-arm64: # from openstack-python3-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py312-arm64: # from openstack-python3-jobs-arm64 template
+        - openstack-tox-py313-arm64: # from openstack-python3-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py313-arm64: # from openstack-python3-jobs-arm64 template
+        - openstack-tox-py314-arm64: # from openstack-python3-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
     gate:
