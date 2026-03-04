@@ -1319,11 +1319,15 @@ class OVNClient:
             'enable_default_route_bfd', False)
 
         # 1. Add the external gateway router port.
+        # Each LRP is created in its own OVSDB transaction so that the
+        # gateway scheduler sees the committed state of previously
+        # scheduled LRPs. This is required for the anti-affinity
+        # mechanism to work when a router has multiple gateway ports.
         admin_context = context.elevated()
         added_ports = []
         for gw_port in self._get_router_gw_ports(admin_context, router['id']):
             port = self._plugin.get_port(admin_context, gw_port['id'])
-            self._create_lrouter_port(admin_context, router, port, txn=txn)
+            self._create_lrouter_port(admin_context, router, port)
             added_ports.append(port)
 
             # 2. Add default route with nexthop as gateway ip
