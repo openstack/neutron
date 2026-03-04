@@ -20,7 +20,6 @@ from oslo_log import log
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
-from neutron.common import utils as common_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 
 
@@ -80,8 +79,8 @@ class OVNGatewayScheduler(metaclass=abc.ABCMeta):
         # column or gateway_chassis column in the OVN_Northbound is done
         # by the caller
         chassis = self._select_gateway_chassis(
-            nb_idl, sb_idl, candidates, 1, chassis_count, target_lrouter
-        )[:chassis_count]
+            nb_idl, sb_idl, candidates, 1, chassis_count, target_lrouter,
+            gateway_name=gateway_name)[:chassis_count]
         # priority of existing chassis is higher than candidates
         chassis = existing_chassis + chassis
 
@@ -126,7 +125,8 @@ class OVNGatewayScheduler(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
-                                priority_min, priority_max, target_lrouter):
+                                priority_min, priority_max, target_lrouter,
+                                gateway_name=None):
         """Choose a chassis from candidates based on a specific policy.
 
         Returns a list of chassis to use for scheduling. The value at
@@ -145,7 +145,8 @@ class OVNGatewayChanceScheduler(OVNGatewayScheduler):
             candidates, existing_chassis, target_lrouter)
 
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
-                                priority_min, priority_max, target_lrouter):
+                                priority_min, priority_max, target_lrouter,
+                                gateway_name=None):
         candidates = copy.deepcopy(candidates)
         secrets.SystemRandom().shuffle(candidates)
         return self._reorder_by_az(nb_idl, sb_idl, candidates)
@@ -161,8 +162,9 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
                                       target_lrouter)
 
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
-                                priority_min, priority_max, target_lrouter):
-        """Returns a lit of chassis from candidates ordered by priority
+                                priority_min, priority_max, target_lrouter,
+                                gateway_name=None):
+        """Returns a list of chassis from candidates ordered by priority
         (highest first). Each chassis in every priority will be selected, as it
         is the least loaded for that specific priority.
         """
@@ -174,10 +176,6 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
         anti_affinity_score = 0
         chassis_hosting_lr = []
 
-        # For the chassis already hosting different ports of this router,
-        # we want to decrease the likelyhood to be selected.
-        # Here we calculate the chassis_hosting_lr and prepare the
-        # anti_affinity_score to be used later in the loop.
         lrouter_ports = getattr(target_lrouter, 'ports', set())
         if len(lrouter_ports):
             lrouter_ports_names = {getattr(lrp, 'name', "")
@@ -195,25 +193,16 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
             anti_affinity_score = (ovn_const.MAX_GW_CHASSIS *
                                    len(target_lrouter.ports))
 
-        # ``leastloaded_chassis`` will contain, in decreasing order, a list of
-        # groups of chassis that are the least loaded chassis for each
-        # priority. E.g.: [(ch1, ch2),  # prio3
-        #                  (ch3, ch2),  # prio2
-        #                  (ch1, ch3)]  # prio1
-        # ``discarded_by_priority`` will contain the other chassis discarded
-        # in the same priority.
-        leastloaded_by_priority = []
-        discarded_by_priority = []
         for priority in priorities:
             chassis_load = {}
             for chassis, lrps in all_chassis_bindings.items():
+                if chassis in selected_chassis:
+                    continue
                 lrps_with_prio = 0
                 for lrp, prio in lrps:
                     if prio == priority:
                         lrps_with_prio += 1
 
-                # If the chassis is already hosting another LRP, increase the
-                # load value adding ``anti_affinity_score``.
                 if chassis in chassis_hosting_lr:
                     chassis_load[chassis] = (lrps_with_prio +
                                              anti_affinity_score)
@@ -223,24 +212,10 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
                 break
 
             leastload = min(chassis_load.values())
-            # Store only the least loaded chassis.
-            leastloaded_set = {chassis for chassis, load in
-                               chassis_load.items() if load == leastload}
-            leastloaded_by_priority.append(leastloaded_set)
-            discarded_by_priority.append(set(chassis_load) - leastloaded_set)
-
-        selected_chassis = common_utils.find_unique_sequence(
-            leastloaded_by_priority)
-
-        if not selected_chassis:
-            # This loop will add the discarded chassis to the lower priorities,
-            # in order.
-            for idx in reversed(range(len(priorities))):
-                leastloaded_by_priority[idx] |= discarded_by_priority[idx]
-                selected_chassis = common_utils.find_unique_sequence(
-                    leastloaded_by_priority)
-                if selected_chassis:
-                    break
+            chassis = secrets.SystemRandom().choice(
+                [chassis for chassis, load in chassis_load.items()
+                 if load == leastload])
+            selected_chassis.append(chassis)
 
         return self._reorder_by_az(nb_idl, sb_idl, selected_chassis)
 
