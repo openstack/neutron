@@ -37,6 +37,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import placement as placement_exc
 from neutron_lib.placement import client as placement_client
 from neutron_lib.plugins import directory
+from neutron_lib.services import base as service_base
 from novaclient import client as nova_client
 from novaclient import exceptions as nova_exc
 from oslo_config import cfg
@@ -64,7 +65,9 @@ MAX_INVENTORY_UPDATE_RETRIES = 10
 
 @resource_extend.has_resource_extenders
 @registry.has_registry_receivers
-class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
+class Plugin(service_base.ServicePluginBase,
+             db.SegmentDbMixin,
+             segment.SegmentPluginBase):
 
     _instance = None
 
@@ -82,6 +85,13 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
     def __init__(self):
         self.nova_updater = NovaSegmentNotifier()
         self.segment_host_routes = SegmentHostRoutes()
+
+    def get_plugin_description(self):
+        return 'Segments service plugin'
+
+    @classmethod
+    def get_plugin_type(cls):
+        return 'segments'
 
     @staticmethod
     @resource_extend.extends([net_def.COLLECTION_NAME])
