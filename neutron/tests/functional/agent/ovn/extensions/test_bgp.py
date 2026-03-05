@@ -224,8 +224,6 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
                 constants.AGENT_BGP_PEER_BRIDGES: 'bgp-br-1,bgp-br-2'}
         ).execute(check_error=True)
 
-        self.ovn_agent.ovs_idl.restart_connection()
-
         expected_bms = 'physnet:bridge,bgp-br-1:bgp-br-1,bgp-br-2:bgp-br-2'
         self._check_bridge_mappings(expected_bms)
         self._verify_chassis_bgp_bridges('bgp-br-1,bgp-br-2')
@@ -236,7 +234,6 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
             external_ids={
                 constants.AGENT_BGP_PEER_BRIDGES: 'bgp-br-1,bgp-br-2'}
             ).execute(check_error=True)
-        self.ovn_agent.ovs_idl.restart_connection()
 
         expected_bms = 'bgp-br-1:bgp-br-1,bgp-br-2:bgp-br-2'
         self._check_bridge_mappings(expected_bms)
@@ -247,7 +244,6 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
             'Open_vSwitch', '.',
             external_ids={'ovn-bridge-mappings': 'physnet:bridge'}).execute(
                 check_error=True)
-        self.ovn_agent.ovs_idl.restart_connection()
 
         expected_bms = 'physnet:bridge'
         self._check_bridge_mappings(expected_bms)
