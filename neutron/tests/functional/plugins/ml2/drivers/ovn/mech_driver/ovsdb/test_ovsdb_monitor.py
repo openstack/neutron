@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import allowedaddresspairs
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
+from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
@@ -53,9 +54,19 @@ class WaitForDataPathBindingCreateEvent(event.WaitEvent):
     def __init__(self, net_name):
         table = 'Datapath_Binding'
         events = (self.ROW_CREATE,)
-        conditions = (('external_ids', '=', {'name2': net_name}),)
-        super().__init__(
-            events, table, conditions, timeout=15)
+        self._net_name = net_name
+        self.core_plugin = directory.get_plugin()
+        self.context = context.get_admin_context()
+        super().__init__(events, table, None, timeout=15)
+
+    def match_fn(self, event, row, old=None):
+        ls_name = row.external_ids.get('name')
+        networks = self.core_plugin.get_networks(
+            self.context, filters={'name': [self._net_name]})
+        try:
+            return ovn_utils.ovn_name(networks[0]['id']) == ls_name
+        except (IndexError, KeyError):
+            return False
 
 
 class WaitForChassisPrivateCreateEvent(event.WaitEvent):
@@ -242,11 +253,12 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             ['MAC_Binding'], self.mech_driver.sb_schema_helper.schema_json)
         row_event = WaitForDataPathBindingCreateEvent(net_name)
         self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
-        self._make_network(self.fmt, net_name, True)
+        net = self._make_network(self.fmt, net_name, True)
         self.assertTrue(row_event.wait())
+        ls_name = ovn_utils.ovn_name(net['network']['id'])
         dp = self.sb_api.db_find(
             'Datapath_Binding',
-            ('external_ids', '=', {'name2': net_name})).execute()
+            ('external_ids', '=', {'name': ls_name})).execute()
         macb_id = self.sb_api.db_create('MAC_Binding', datapath=dp[0]['_uuid'],
                                         ip='100.0.0.21').execute()
         port = self.create_port()
