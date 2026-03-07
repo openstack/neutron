@@ -87,7 +87,7 @@ class LocalOVSEvent(BGPAgentEvent):
 
         return (
             bgp_mappings,
-            sorted(list(set(bgp_mappings.values()) | non_bgp_mappings)))
+            sorted(set(bgp_mappings.values()) | non_bgp_mappings))
 
     def run(self, event, row, old):
         bgp_mappings, desired_bridge_mappings = (
@@ -121,10 +121,10 @@ class UpdateLocalOVSEvent(LocalOVSEvent):
     EVENTS = (LocalOVSEvent.ROW_UPDATE,)
 
     def match_fn(self, event, row, old):
-        desired_mappings = self._get_desired_mappings(row, old)
-        bm_bridges = sorted(list(_get_ovn_bridge_mappings(row).values()))
-
-        return desired_mappings != bm_bridges
+        bgp_mappings, desired_bridge_mappings = self._get_desired_mappings(
+            row, old)
+        bm_bridges = sorted(_get_ovn_bridge_mappings(row).values())
+        return desired_bridge_mappings != bm_bridges
 
 
 class NewBgpBridgeEvent(BGPAgentEvent):
