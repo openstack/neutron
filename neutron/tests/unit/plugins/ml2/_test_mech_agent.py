@@ -22,26 +22,10 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins.ml2 import api
 
 from neutron.tests import base
+from neutron.tests.unit import fake_resources as fakes
 
 NETWORK_ID = "fake_network"
 PORT_ID = "fake_port"
-
-
-class FakeNetworkContext(api.NetworkContext):
-    def __init__(self, segments):
-        self._network_segments = segments
-
-    @property
-    def current(self):
-        return {'id': NETWORK_ID}
-
-    @property
-    def original(self):
-        return None
-
-    @property
-    def network_segments(self):
-        return self._network_segments
 
 
 class FakePortContext(api.PortContext):
@@ -50,7 +34,8 @@ class FakePortContext(api.PortContext):
                  original=None, profile=None):
         self._agent_type = agent_type
         self._agents = agents
-        self._network_context = FakeNetworkContext(segments)
+        network = {'id': NETWORK_ID}
+        self._network_context = fakes.FakeNetworkContext(network, segments)
         self._bound_vnic_type = vnic_type
         self._bound_profile = profile
         self._bound_segment_id = None
