@@ -15,6 +15,7 @@
 
 import uuid
 
+import netaddr
 from oslo_log import log
 
 from neutron.services.bgp import constants
@@ -79,3 +80,44 @@ def get_chassis_router_name(chassis_name):
 
 def get_chassis_peer_switch_name(chassis_name, network_name):
     return f'bgp-ls-{chassis_name}-{network_name}'
+
+
+def get_provider_interconnect_switch_name(provider_switch_name):
+    return f'bgp-ls-interconnect-{provider_switch_name}'
+
+
+def get_ip_network(ip_address, ip_network):
+    return f"{ip_address}/{ip_network.prefixlen}"
+
+
+def get_neutron_id_from_ovn_name(ovn_obj):
+    # Get the ID from the OVN name, which is not ideal but the
+    # network ID does not seem to be stored elsewhere in the OVN objects.
+    try:
+        return ovn_obj.name.split('neutron-', 1)[1]
+    except IndexError:
+        raise ValueError(
+            f"OVN object {ovn_obj.name} does not contain a Neutron ID")
+
+
+## Router filtering helpers
+def _get_lrps_by_external_id(router, external_id):
+    return [lrp for lrp in router.ports
+            if hasattr(lrp, 'external_ids') and
+            external_id in lrp.external_ids]
+
+
+def lrps_to_chassis_routers(router):
+    return _get_lrps_by_external_id(router, constants.BGP_LRP_TO_CHASSIS)
+
+
+def ipv6_link_local_from_mac(mac):
+    return str(netaddr.EUI(mac).ipv6_link_local())
+
+
+def get_gw_ip_from_dhcp_options(dhcp_opt):
+    prefixlen = netaddr.IPNetwork(dhcp_opt.cidr).prefixlen
+    try:
+        return f"{dhcp_opt.options['router']}/{prefixlen}"
+    except KeyError:
+        return None

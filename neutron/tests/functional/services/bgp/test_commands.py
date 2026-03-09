@@ -13,12 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
+
 from neutron.agent.linux import ip_lib
+from neutron.common.ovn import constants as ovn_const
+from neutron.conf.services import bgp as bgp_config
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import (
+    commands as ovn_commands)
 from neutron.services.bgp import commands
 from neutron.services.bgp import constants
 from neutron.services.bgp import exceptions
@@ -103,6 +109,83 @@ class _AddBaseCommand:
         name = _get_unique_name()
         self.create_row(name, external_ids={'id1': 'value3'})
         row = self._assert_table_row_exists(name)
+
+
+class TestGetGwIps(bgp.BaseBgpNbIdlTestCase):
+    def _add_dhcp_options_command(self, net_id, cidr, router_ip=None):
+        options = {}
+        if router_ip:
+            options['router'] = router_ip
+        return ovn_commands.AddDHCPOptionsCommand(
+            self.nb_api, net_id, may_exist=False,
+            cidr=cidr,
+            options=options,
+            external_ids={ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: net_id},
+        )
+
+    def test_get_gw_ips_for_switch_returns_empty_when_no_dhcp_options(self):
+        net_id = uuidutils.generate_uuid()
+        ls_name = f"neutron-{net_id}"
+        ls = self.nb_api.ls_add(ls_name).execute(check_error=True)
+
+        gw_ips = commands._get_gw_ips_for_switch(self.nb_api, ls)
+
+        self.assertEqual([], gw_ips)
+
+    def test_get_gw_ips_for_switch_returns_gateway_ip_from_dhcp_options(self):
+        net_id = uuidutils.generate_uuid()
+        ls_name = f"neutron-{net_id}"
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            ls = txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self._add_dhcp_options_command(
+                net_id, '10.0.0.0/24', '10.0.0.5'))
+
+        gw_ips = commands._get_gw_ips_for_switch(self.nb_api, ls.result)
+
+        self.assertEqual(['10.0.0.5/24'], gw_ips)
+
+    def test_get_gw_ips_for_switch_ignores_other_networks(self):
+        net_id = uuidutils.generate_uuid()
+        other_net_id = uuidutils.generate_uuid()
+        ls_name = f"neutron-{net_id}"
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            ls = txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self._add_dhcp_options_command(
+                other_net_id, '10.0.0.0/24', '10.0.0.1'))
+
+        gw_ips = commands._get_gw_ips_for_switch(self.nb_api, ls.result)
+
+        self.assertEqual([], gw_ips)
+
+    def test_get_gw_ips_for_switch_returns_multiple_gateways(self):
+        net_id = uuidutils.generate_uuid()
+        ls_name = f"neutron-{net_id}"
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            ls = txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self._add_dhcp_options_command(
+                net_id, '10.0.0.0/24', '10.0.0.1'))
+            txn.add(self._add_dhcp_options_command(
+                net_id, '2001:db8::/64', '2001:db8::1'))
+
+        gw_ips = commands._get_gw_ips_for_switch(self.nb_api, ls.result)
+
+        self.assertCountEqual(['10.0.0.1/24', '2001:db8::1/64'], gw_ips)
+
+    def test_get_gw_ips_for_switch_skips_dhcp_options_without_router(self):
+        net_id = uuidutils.generate_uuid()
+        ls_name = f"neutron-{net_id}"
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            ls = txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self._add_dhcp_options_command(
+                net_id, '10.0.0.0/24'))
+
+        gw_ips = commands._get_gw_ips_for_switch(self.nb_api, ls.result)
+
+        self.assertEqual([], gw_ips)
 
 
 class TestCaseWithOutputPort(bgp.BaseBgpNbIdlTestCase):
@@ -879,3 +962,368 @@ class ReconcileChassisCommandTestCase(bgp.BaseBgpTestCase):
             cmd.execute,
             check_error=True
         )
+
+
+class BgpNbIdlWithChassisBase(bgp.BaseBgpNbIdlTestCase):
+    def _create_chassis_lrp(self):
+        chassis_router_name = _get_unique_name('chassis-lr')
+        lrp_main_name = helpers.get_lrp_name(
+            self.main_router_name, chassis_router_name)
+        lrp_chassis_name = helpers.get_lrp_name(
+            chassis_router_name, self.main_router_name)
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lr_add(chassis_router_name))
+            txn.add(self.nb_api.lrp_add(
+                chassis_router_name, lrp_chassis_name,
+                mac=helpers.get_mac_address_from_lrp_name(lrp_chassis_name),
+                networks=[],
+                peer=lrp_main_name,
+            ))
+            lrp = txn.add(self.nb_api.lrp_add(
+                self.main_router_name, lrp_main_name,
+                mac=helpers.get_mac_address_from_lrp_name(lrp_main_name),
+                peer=lrp_chassis_name,
+                networks=[],
+                external_ids={
+                    constants.BGP_LRP_TO_CHASSIS: chassis_router_name},
+            ))
+
+        return lrp.result
+
+    def _assert_main_router_has_policies_for_interconnect(
+            self, interconnect_switch_name, chassis_lrps):
+        interconnect_lrp_name = helpers.get_lrp_name(
+            self.main_router_name, interconnect_switch_name)
+        policies = self.nb_api.lr_policy_list(self.main_router_name).execute(
+            check_error=True)
+        interconnect_policies = [
+            p for p in policies
+            if interconnect_lrp_name in p.match and p.priority == 10]
+        self.assertEqual(
+            len(chassis_lrps), len(interconnect_policies),
+            "Expected %d policies for chassis LRPs, got %d" % (
+                len(chassis_lrps), len(interconnect_policies)))
+        for lrp in chassis_lrps:
+            expected_match = (
+                'inport=="%s" && is_chassis_resident("cr-%s")' % (
+                    interconnect_lrp_name, lrp.name))
+            matching = [p for p in interconnect_policies
+                        if p.match == expected_match and p.action == 'reroute']
+            self.assertEqual(
+                1, len(matching),
+                "Expected one policy for chassis LRP %s with match %r" % (
+                    lrp.name, expected_match))
+
+
+class _BaseNeutronSwitchCommandTestCase(BgpNbIdlWithChassisBase):
+    Subnet = collections.namedtuple('Subnet', ['cidr', 'gateway_ip'])
+
+    def setUp(self):
+        super().setUp()
+        self.main_router_name = bgp_config.get_main_router_name()
+        commands.ReconcileMainRouterCommand(
+            self.nb_api).execute(check_error=True)
+
+    def _create_neutron_switch_with_localnet(self, network_name, subnets):
+        """Simulate a Neutron provider network"""
+        net_id = uuidutils.generate_uuid()
+        ls_name = f'neutron-{net_id}'
+        localnet_lsp_name = f'{ls_name}-localnet'
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            ls = txn.add(self.nb_api.ls_add(ls_name))
+            for subnet in subnets:
+                txn.add(ovn_commands.AddDHCPOptionsCommand(
+                    self.nb_api, net_id, may_exist=False,
+                    cidr=subnet.cidr,
+                    options={'router': subnet.gateway_ip},
+                    external_ids={ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: net_id})
+                )
+            txn.add(self.nb_api.lsp_add(
+                ls_name, localnet_lsp_name,
+                type='localnet',
+                options={'network_name': network_name},
+                addresses=['unknown']
+            ))
+
+        return ls.result
+
+
+class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
+    def _validate_neutron_switch_dead_connection(self, n_switch):
+        lrp_name = helpers.get_lrp_name(self.main_router_name, n_switch.name)
+        lsp_name = helpers.get_lsp_name(n_switch.name, self.main_router_name)
+
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertIsNotNone(lrp)
+
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertEqual('router', lsp.type)
+        self.assertEqual(lrp_name, lsp.options.get('router-port'))
+
+    def _validate_interconnect_switch_created(self, n_switch, network_name):
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            n_switch.name)
+
+        ls = self.nb_api.ls_get(interconnect_name).execute(check_error=True)
+        self.assertEqual(interconnect_name, ls.name)
+
+        localnet_lsp_name = helpers.get_lsp_localnet_name(interconnect_name)
+        lsp = self.nb_api.lsp_get(localnet_lsp_name).execute(check_error=True)
+        self.assertEqual('localnet', lsp.type)
+        self.assertEqual(network_name, lsp.options.get('network_name'))
+
+    def _validate_interconnect_switch_connection(self, n_switch, gw_ips):
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            n_switch.name)
+        lrp_name = helpers.get_lrp_name(
+            self.main_router_name, interconnect_name)
+
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertIsNotNone(lrp)
+
+        # Check gateway IPs are set
+        self.assertCountEqual(gw_ips, lrp.networks)
+
+        return lrp
+
+    @bgp.requires_ovn_version_with_bgp()
+    def test_reconcile_neutron_switch_basic(self):
+        network_name = 'provider-net'
+        n_switch = self._create_neutron_switch_with_localnet(network_name, [])
+
+        # Create 3 chassis routers
+        chassis_lrps = [self._create_chassis_lrp() for _ in range(3)]
+
+        commands.ReconcileNeutronSwitchCommand(
+            self.nb_api, n_switch
+        ).execute(check_error=True)
+
+        self._validate_neutron_switch_dead_connection(n_switch)
+        self._validate_interconnect_switch_created(n_switch, network_name)
+        self._validate_interconnect_switch_connection(n_switch, gw_ips=[])
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            n_switch.name)
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_name, chassis_lrps)
+
+    def test_reconcile_neutron_switch_with_gateway_ips(self):
+        network_name = 'provider-net'
+        subnets = [
+            self.Subnet(cidr='192.168.1.1/24', gateway_ip='192.168.1.1'),
+            self.Subnet(cidr='2001:db8::/64', gateway_ip='2001:db8::5'),
+        ]
+        n_switch = self._create_neutron_switch_with_localnet(
+            network_name, subnets)
+
+        commands.ReconcileNeutronSwitchCommand(
+            self.nb_api, n_switch
+        ).execute(check_error=True)
+
+        self._validate_neutron_switch_dead_connection(n_switch)
+        self._validate_interconnect_switch_created(n_switch, network_name)
+
+        gw_ips = ['192.168.1.1/24', '2001:db8::5/64']
+        lrp = self._validate_interconnect_switch_connection(n_switch, gw_ips)
+        self.assertCountEqual(gw_ips, lrp.networks)
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            n_switch.name)
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_name, [])
+
+    def test_reconcile_neutron_switch_idempotent(self):
+        network_name = 'provider-net'
+        subnets = [
+            self.Subnet(cidr='192.168.1.0/24', gateway_ip='192.168.1.4'),
+        ]
+        n_switch = self._create_neutron_switch_with_localnet(
+            network_name, subnets)
+
+        commands.ReconcileNeutronSwitchCommand(
+            self.nb_api, n_switch
+        ).execute(check_error=True)
+        commands.ReconcileNeutronSwitchCommand(
+            self.nb_api, n_switch
+        ).execute(check_error=True)
+
+        self._validate_neutron_switch_dead_connection(n_switch)
+        self._validate_interconnect_switch_created(n_switch, network_name)
+
+        gw_ips = ['192.168.1.4/24']
+        self._validate_interconnect_switch_connection(n_switch, gw_ips)
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            n_switch.name)
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_name, [])
+
+    def test_reconcile_neutron_switch_no_localnet_port_raises(self):
+        ls_name = _get_unique_name('neutron')
+        self.nb_api.ls_add(ls_name).execute(check_error=True)
+        n_switch = self.nb_api.ls_get(ls_name).execute(check_error=True)
+
+        self.assertRaises(
+            ValueError,
+            commands.ReconcileNeutronSwitchCommand,
+            self.nb_api, n_switch
+        )
+
+
+class ReconcileMainRouterPoliciesCommandTestCase(BgpNbIdlWithChassisBase):
+    def setUp(self):
+        super().setUp()
+        self.main_router_name = bgp_config.get_main_router_name()
+        commands.ReconcileMainRouterCommand(
+            self.nb_api).execute(check_error=True)
+        self.main_router = self.nb_api.lr_get(
+            self.main_router_name).execute(check_error=True)
+
+    def _create_interconnect_switch(self, gw_ips=None):
+        gw_ips = gw_ips or []
+        ls_name = _get_unique_name('interconnect')
+        lrp_name = helpers.get_lrp_name(self.main_router_name, ls_name)
+        lsp_name = helpers.get_lsp_name(ls_name, self.main_router_name)
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self.nb_api.lrp_add(
+                self.main_router_name, lrp_name,
+                mac=helpers.get_mac_address_from_lrp_name(lrp_name),
+                networks=gw_ips,
+            ))
+            txn.add(self.nb_api.lsp_add(
+                ls_name, lsp_name,
+                type='router',
+                addresses=['router'],
+                options={'router-port': lrp_name},
+            ))
+
+        return ls_name, lrp_name
+
+    @bgp.requires_ovn_version_with_bgp()
+    def test_creates_policy_and_route(self):
+        chassis_lrp = self._create_chassis_lrp()
+        interconnect_switch_name, interconnect_lrp_name = (
+            self._create_interconnect_switch())
+
+        commands.ReconcileMainRouterPoliciesCommand(
+            self.nb_api,
+            self.main_router,
+            interconnect_lrp_name,
+            chassis_lrp,
+        ).execute(check_error=True)
+
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_switch_name, [chassis_lrp])
+
+    @bgp.requires_ovn_version_with_bgp()
+    def test_creates_policy_and_route_with_related_resource(self):
+        chassis_lrp = self._create_chassis_lrp()
+        interconnect_name, interconnect_lrp_name = (
+            self._create_interconnect_switch())
+
+        related_switch = self.nb_api.ls_get(interconnect_name).execute(
+            check_error=True)
+
+        commands.ReconcileMainRouterPoliciesCommand(
+            self.nb_api,
+            self.main_router,
+            interconnect_lrp_name,
+            chassis_lrp,
+            related_resource=related_switch,
+        ).execute(check_error=True)
+
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_name, [chassis_lrp])
+
+    @bgp.requires_ovn_version_with_bgp()
+    def test_idempotent(self):
+        chassis_lrp = self._create_chassis_lrp()
+        interconnect_switch_name, interconnect_lrp_name = (
+            self._create_interconnect_switch())
+
+        for _ in range(2):
+            commands.ReconcileMainRouterPoliciesCommand(
+                self.nb_api,
+                self.main_router,
+                interconnect_lrp_name,
+                chassis_lrp,
+            ).execute(check_error=True)
+
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_switch_name, [chassis_lrp])
+
+
+class ReconcileMainRouterRoutesForProviderCommandTestCase(
+        BgpNbIdlWithChassisBase):
+
+    def setUp(self):
+        super().setUp()
+        self.main_router_name = bgp_config.get_main_router_name()
+        commands.ReconcileMainRouterCommand(
+            self.nb_api).execute(check_error=True)
+
+    def _create_interconnect_switch(self, name=None):
+        ls_name = name or _get_unique_name('interconnect')
+
+        lrp_name = helpers.get_lrp_name(self.main_router_name, ls_name)
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            ls = txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self.nb_api.lrp_add(
+                self.main_router_name, lrp_name,
+                mac=helpers.get_mac_address_from_lrp_name(lrp_name),
+                networks=['192.168.1.1/24'],
+            ))
+
+        return ls.result
+
+    @bgp.requires_ovn_version_with_bgp()
+    def test_creates_policies_for_each_chassis_lrp(self):
+        chassis_lrp1 = self._create_chassis_lrp()
+        chassis_lrp2 = self._create_chassis_lrp()
+        interconnect_switch = self._create_interconnect_switch()
+
+        commands.ReconcileMainRouterPoliciesForProviderCommand(
+            self.nb_api,
+            interconnect_switch.name,
+            related_resource=interconnect_switch,
+        ).execute(check_error=True)
+
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_switch.name, [chassis_lrp1, chassis_lrp2])
+
+    @bgp.requires_ovn_version_with_bgp()
+    def test_no_chassis_lrps_creates_nothing(self):
+        interconnect_switch = self._create_interconnect_switch()
+
+        commands.ReconcileMainRouterPoliciesForProviderCommand(
+            self.nb_api,
+            interconnect_switch.name,
+            related_resource=interconnect_switch,
+        ).execute(check_error=True)
+
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_switch.name, [])
+
+        router = self.nb_api.lr_get(self.main_router_name).execute(
+            check_error=True)
+        routes = [r for r in router.static_routes
+                  if r.external_ids.get(
+                    constants.RELATED_RESOURCE_TAG) ==
+                    str(interconnect_switch.uuid)]
+        self.assertEqual(0, len(routes))
+
+    @bgp.requires_ovn_version_with_bgp()
+    def test_sets_related_resource_tag(self):
+        chassis_lrp = self._create_chassis_lrp()
+        interconnect_switch = self._create_interconnect_switch()
+
+        commands.ReconcileMainRouterPoliciesForProviderCommand(
+            self.nb_api,
+            interconnect_switch.name,
+            related_resource=interconnect_switch,
+        ).execute(check_error=True)
+
+        self._assert_main_router_has_policies_for_interconnect(
+            interconnect_switch.name, [chassis_lrp])

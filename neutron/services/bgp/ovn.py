@@ -29,6 +29,7 @@ OVN_NB_TABLES = (
     'Logical_Router', 'Logical_Router_Port',
     'HA_Chassis_Group', 'HA_Chassis',
     'Logical_Router_Static_Route', 'Logical_Router_Policy',
+    'DHCP_Options',
 )
 OVN_SB_TABLES = ('Chassis', 'Chassis_Private')
 
