@@ -1,0 +1,18 @@
+---
+features:
+  - |
+    Added 4 new configuration options to control the OVN BFD options:
+
+    * ``[ovn]ha_failover_strategy``: this option has 4 possible values:
+
+      - "normal": the default OVN NB_Global options for ``bfd-min-rx``,
+        ``bfd-min-tx`` and ``bfd-mult`` are set.
+      - "aggressive": the ``bfd-min-rx`` is halved by 2.
+      - "conservative": the ``bfd-mult`` is multiplied by 2.
+      - "manual": the administrator can manually define the following values.
+
+    * ``[ovn]bfd_min_rx``: BFD minimum RX interval in milliseconds, default
+      1000 ms.
+    * ``[ovn]bfd_min_tx``: BFD minimum TX interval in milliseconds, default
+      100 ms.
+    * ``[ovn]bfd_mult``: BFD detection multiplier, default 3.

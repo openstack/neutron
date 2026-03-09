@@ -105,6 +105,30 @@ for a given router.
 The gateway nodes monitor each other in star topology. Compute nodes don't
 monitor each other because that's not necessary.
 
+Neutron exposes, via configuration file, a set of options to configure the OVS
+BFD options. That allows the administrator to configure the HA failover timeout
+that is defined as:
+
+.. math::
+
+   \text{detection time} = max(\text{bfd-min-rx}, \text{bfd-min-tx}) * \text{bfd-mult}
+
+The Neutron configuration provide a list of three preset values and an extra
+manual one, where the specific parameters can be defined:
+
+* ``[ovn]ha_failover_strategy``: this option has 4 possible values:
+
+  - "normal": the default OVN NB_Global options for ``bfd-min-rx``,
+    ``bfd-min-tx`` and ``bfd-mult`` are set [1]_ [2]_ [3]_.
+  - "aggressive": the ``bfd-min-rx`` is halved by 2.
+  - "conservative": the ``bfd-mult`` is multiplied by 2.
+  - "manual": the administrator can manually define the following values.
+
+* ``[ovn]bfd_min_rx``: BFD minimum RX interval in milliseconds, default 1000
+  ms.
+* ``[ovn]bfd_min_tx``: BFD minimum TX interval in milliseconds, default 100 ms.
+* ``[ovn]bfd_mult``: BFD detection multiplier, default 3.
+
 
 Failover (detected by BFD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,3 +238,11 @@ router. This could impact the performance of the traffic using the networks
 connected to the router if the MTU defined is low. But the user can unset the
 Neutron configuration flag in order to avoid the fragmentation, at the cost
 of limiting the communication between networks with different MTUs.
+
+
+References
+~~~~~~~~~~
+
+.. [1] https://github.com/openvswitch/ovs/blob/b43ed9036e6fb38fe09ff4746b603edaef5319da/vswitchd/vswitch.xml#L4147
+.. [2] https://github.com/openvswitch/ovs/blob/b43ed9036e6fb38fe09ff4746b603edaef5319da/vswitchd/vswitch.xml#L4155
+.. [3] https://github.com/openvswitch/ovs/blob/b43ed9036e6fb38fe09ff4746b603edaef5319da/vswitchd/vswitch.xml#L4236

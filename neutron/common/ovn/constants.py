@@ -498,3 +498,18 @@ OVN_DB_SYNC_MODE_OFF = 'off'
 OVN_DB_SYNC_MODE_LOG = 'log'
 OVN_DB_SYNC_MODE_REPAIR = 'repair'
 OVN_DB_SYNC_MODE_MIGRATE = 'migrate'
+
+# HA failover options.
+# These are the default values defined in OVN.
+OVN_BFD_MIN_RX = 1000
+OVN_BFD_MIN_TX = 100
+OVN_BFD_MULT = 3
+OVN_HA_FAILOVER_NORMAL = 'normal'
+OVN_HA_FAILOVER_AGGRESSIVE = 'aggressive'
+OVN_HA_FAILOVER_CONSERVATIVE = 'conservative'
+OVN_HA_FAILOVER_MANUAL = 'manual'
+OVN_HA_FAILOVER_CHOICES = (OVN_HA_FAILOVER_NORMAL,
+                           OVN_HA_FAILOVER_AGGRESSIVE,
+                           OVN_HA_FAILOVER_CONSERVATIVE,
+                           OVN_HA_FAILOVER_MANUAL,
+                           )
