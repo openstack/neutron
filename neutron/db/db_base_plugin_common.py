@@ -332,7 +332,7 @@ class DbBasePluginCommon:
         # not be registered for OwnerCheck anymore.
         res = {'id': network['id'],
                'name': network['name'],
-               'tenant_id': network['tenant_id'],
+               'tenant_id': network['project_id'],
                'project_id': network['project_id'],
                'admin_state_up': network['admin_state_up'],
                'mtu': network.get('mtu', constants.DEFAULT_NETWORK_MTU),

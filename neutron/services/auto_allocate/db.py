@@ -277,7 +277,7 @@ class AutoAllocatedTopologyMixin:
             network_args = {
                 'name': 'auto_allocated_network',
                 'admin_state_up': False,
-                'tenant_id': project_id,
+                'project_id': project_id,
                 'shared': False
             }
             network = p_utils.create_network(
@@ -287,7 +287,7 @@ class AutoAllocatedTopologyMixin:
                 subnet_args = {
                     'name': 'auto_allocated_subnet_v%s' % pool['ip_version'],
                     'network_id': network['id'],
-                    'tenant_id': project_id,
+                    'project_id': project_id,
                     'ip_version': pool['ip_version'],
                     'subnetpool_id': pool['id'],
                 }

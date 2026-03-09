@@ -576,7 +576,7 @@ class L3DVRSchedulerBaseTest(L3SchedulerBaseTest):
                                             {'router': router})
 
     def _create_network(self, net_id, name=None, external=False):
-        network_dict = {'tenant_id': self.adminContext.project_id,
+        network_dict = {'project_id': self.adminContext.project_id,
                         'id': net_id,
                         'name': name,
                         'admin_state_up': True,

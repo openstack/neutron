@@ -39,7 +39,7 @@ class PSExtDriverTestCase(test_plugin.Ml2PluginV2TestCase,
         mtu = 1530 - cfg.CONF.ml2_type_geneve.max_header_size
         args = {'network':
                 {'name': 'test',
-                 'tenant_id': '',
+                 'project_id': '',
                  'shared': False,
                  'mtu': mtu,
                  'admin_state_up': True,

@@ -145,6 +145,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         instance.create_network.return_value = {}
         res, data = self._post_network_with_provider_attrs(ctx)
         exp_input = {'network': data}
+        # TODO(haleyb): "tenant_id" reference should be removed.
         exp_input['network'].update({'admin_state_up': True,
                                      'tenant_id': project_id,
                                      'project_id': project_id,

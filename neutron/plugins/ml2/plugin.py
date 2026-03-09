@@ -1224,13 +1224,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _create_network_db(self, context, network):
         net_data = network[net_def.RESOURCE_NAME]
-        # TODO(ralonsoh): "tenant_id" reference should be removed.
-        tenant_id = net_data.get('project_id') or net_data['tenant_id']
+        # TODO(ralonsoh): migrate "tenant_id" to "project_id", remove in G+2
+        if net_data.get('tenant_id') and net_data.get('project_id') is None:
+            net_data['project_id'] = net_data['tenant_id']
+            LOG.warning('project_id key not found in network dictionary, '
+                        'using tenant_id instead. This support has been '
+                        'deprecated and will be removed in a future release.')
+        project_id = net_data['project_id']
         with db_api.CONTEXT_WRITER.using(context):
             net_db = self.create_network_db(context, network)
             net_data['id'] = net_db.id
             self.type_manager.create_network_segments(context, net_data,
-                                                      tenant_id)
+                                                      project_id)
             net_db.mtu = self._get_network_mtu(net_db)
 
             result = self._make_network_dict(net_db, process_extensions=False,

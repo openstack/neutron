@@ -269,7 +269,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         port, dns_data_db = self._create_port_for_test()
         self._verify_port_dns(port, dns_data_db)
 
-    def test_create_port_tenant_network(self, *mocks):
+    def test_create_port_project_network(self, *mocks):
         port, dns_data_db = self._create_port_for_test(provider_net=False)
         self._verify_port_dns(port, dns_data_db, provider_net=False)
 
@@ -324,7 +324,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         self.assertFalse(
             mock_admin_client.recordsets.delete.call_args_list)
 
-    def test_update_port_tenant_network(self, *mocks):
+    def test_update_port_project_network(self, *mocks):
         port, dns_data_db = self._create_port_for_test(provider_net=False)
         port, dns_data_db = self._update_port_for_test(port)
         self._verify_port_dns(port, dns_data_db, delete_records=True,

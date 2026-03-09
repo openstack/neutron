@@ -218,17 +218,17 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                        pnet.NETWORK_TYPE: 'vlan',
                        pnet.PHYSICAL_NETWORK: 'physnet1',
                        pnet.SEGMENTATION_ID: 1,
-                       'tenant_id': 'project_one'},
+                       'project_id': 'project_one'},
                       {'name': 'net2',
                        pnet.NETWORK_TYPE: 'vlan',
                        pnet.PHYSICAL_NETWORK: 'physnet2',
                        pnet.SEGMENTATION_ID: 210,
-                       'tenant_id': 'project_one'},
+                       'project_id': 'project_one'},
                       {'name': 'net3',
                        pnet.NETWORK_TYPE: 'vlan',
                        pnet.PHYSICAL_NETWORK: 'physnet2',
                        pnet.SEGMENTATION_ID: 220,
-                       'tenant_id': 'project_one'}
+                       'project_id': 'project_one'}
                       ]
         # multiprovider networks
         self.mp_nets = [{'name': 'net4',
@@ -239,7 +239,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                               {pnet.NETWORK_TYPE: 'vlan',
                                pnet.PHYSICAL_NETWORK: 'physnet2',
                                pnet.SEGMENTATION_ID: 202}],
-                         'tenant_id': 'project_one'}
+                         'project_id': 'project_one'}
                         ]
         self.nets = self.mp_nets + self.pnets
 
@@ -1016,7 +1016,7 @@ class TestMl2DbOperationBoundsTenantRbac(TestMl2DbOperationBoundsTenant):
 
     def make_port_in_shared_network(self):
         context_ = self._get_context()
-        # create shared network owned by the tenant; we use direct driver call
+        # create shared network owned by the project; we use direct driver call
         # because default policy does not allow users to create shared networks
         net = self.driver.create_network(
             context.get_admin_context(),
@@ -3368,7 +3368,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                             pnet.NETWORK_TYPE: 'vlan',
                             pnet.PHYSICAL_NETWORK: 'physnet1',
                             pnet.SEGMENTATION_ID: 1,
-                            'tenant_id': 'project_one'}}
+                            'project_id': 'project_one'}}
 
         def raise_mechanism_exc(*args, **kwargs):
             raise ml2_exc.MechanismDriverError(
@@ -3450,7 +3450,7 @@ class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
                          pnet.NETWORK_TYPE: 'vlan',
                          pnet.PHYSICAL_NETWORK: 'physnet1',
                          pnet.SEGMENTATION_ID: 1,
-                         'tenant_id': 'project_one',
+                         'project_id': 'project_one',
                          'admin_state_up': True,
                          'shared': True}})
         observeds = self.driver.filter_hosts_with_network_access(
@@ -3468,7 +3468,7 @@ class TestMl2HostsNetworkAccess(Ml2PluginV2TestCase):
                              {pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet2',
                               pnet.SEGMENTATION_ID: 2}],
-                         'tenant_id': 'project_one',
+                         'project_id': 'project_one',
                          'admin_state_up': True,
                          'shared': True}})
         expecteds = {self.dhcp_agent1.host, self.dhcp_agent2.host}
@@ -3520,7 +3520,7 @@ class TestFaultyMechansimDriver(Ml2PluginV2FaultyDriverTestCase):
                              error['NeutronError']['type'])
             # Check the client can see the root cause of error.
             self.assertIn(err_msg, error['NeutronError']['message'])
-            query_params = "tenant_id=%s" % self._project_id
+            query_params = "project_id=%s" % self._project_id
             nets = self._list('networks', query_params=query_params)
             self.assertFalse(nets['networks'])
 

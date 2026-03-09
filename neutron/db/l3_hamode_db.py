@@ -96,10 +96,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         inst._verify_configuration()
         return inst
 
-    def get_ha_network(self, context, tenant_id):
+    def get_ha_network(self, context, project_id):
         pager = base.Pager(limit=1)
         results = l3_hamode.L3HARouterNetwork.get_objects(
-            context, _pager=pager, project_id=tenant_id)
+            context, _pager=pager, project_id=project_id)
         return results.pop() if results else None
 
     def _get_allocated_vr_id(self, context, network_id):
@@ -195,8 +195,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                      {'subnet': args})
 
     @registry.receives(resources.NETWORK, [events.PRECOMMIT_CREATE])
-    def _create_ha_network_tenant_binding(self, resource, event, trigger,
-                                          payload=None):
+    def _create_ha_network_project_binding(self, resource, event, trigger,
+                                           payload=None):
         if not payload.request_body.get(network_ha_apidef.HA):
             return
 
@@ -218,14 +218,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             network[providernet.PHYSICAL_NETWORK] = (
                 cfg.CONF.l3_ha_network_physical_name)
 
-    def _create_ha_network(self, admin_ctx, tenant_id):
+    def _create_ha_network(self, admin_ctx, project_id):
         # The project ID is needed to create the ``L3HARouterNetwork``
         # resource; the project ID cannot be retrieved from the network because
         # is explicitly created without it.
-        admin_ctx.project_id = tenant_id
+        admin_ctx.project_id = project_id
         args = {'network':
-                {'name': constants.HA_NETWORK_NAME % tenant_id,
-                 'tenant_id': '',
+                {'name': constants.HA_NETWORK_NAME % project_id,
+                 'project_id': '',
                  'shared': False,
                  'admin_state_up': True,
                  network_ha_apidef.HA: True,
@@ -233,13 +233,13 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         self._add_ha_network_settings(args['network'])
         network = p_utils.create_network(self._core_plugin, admin_ctx, args)
         try:
-            self._create_ha_subnet(admin_ctx, network['id'], tenant_id)
+            self._create_ha_subnet(admin_ctx, network['id'], project_id)
         except Exception:
             with excutils.save_and_reraise_exception():
                 self._core_plugin.delete_network(admin_ctx, network['id'])
 
         return l3_hamode.L3HARouterNetwork.get_object(
-            admin_ctx, network_id=network['id'], project_id=tenant_id)
+            admin_ctx, network_id=network['id'], project_id=project_id)
 
     def get_number_of_agents_for_scheduling(self, context):
         """Return number of agents on which the router will be scheduled."""
@@ -467,7 +467,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             new_owner = constants.DEVICE_OWNER_ROUTER_INTF
 
             ha_network = self.get_ha_network(payload.context,
-                                             payload.desired_state.tenant_id)
+                                             payload.desired_state.project_id)
             self._delete_vr_id_allocation(
                 payload.context, ha_network,
                 payload.desired_state.extra_attributes.ha_vr_id)
@@ -520,7 +520,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         admin_ctx = context.elevated()
         self._core_plugin.delete_network(admin_ctx, net.network_id)
 
-    def safe_delete_ha_network(self, context, ha_network, tenant_id):
+    def safe_delete_ha_network(self, context, ha_network, project_id):
         # initialize to silence pylint used-before-assignment warning
         net_id = None
         try:
@@ -532,7 +532,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         except (n_exc.NetworkNotFound,
                 orm.exc.ObjectDeletedError):
             LOG.debug(
-                "HA network for tenant %s was already deleted.", tenant_id)
+                "HA network for project %s was already deleted.", project_id)
         except sa.exc.InvalidRequestError:
             LOG.info("HA network %s can not be deleted.", net_id)
         except n_exc.NetworkInUse:
@@ -541,9 +541,9 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             pass
         else:
             LOG.info("HA network %(network)s was deleted as "
-                     "no HA routers are present in tenant "
-                     "%(tenant)s.",
-                     {'network': net_id, 'tenant': tenant_id})
+                     "no HA routers are present in project "
+                     "%(project)s.",
+                     {'network': net_id, 'project': project_id})
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
@@ -573,12 +573,13 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         """Event handler to attempt HA network deletion after router delete."""
         if not original['ha']:
             return
-        ha_network = self.get_ha_network(context, original['tenant_id'])
+        ha_network = self.get_ha_network(context, original['project_id'])
         if not ha_network:
             return
         # always attempt to cleanup the network as the router is
         # deleted. the core plugin will stop us if its in use
-        self.safe_delete_ha_network(context, ha_network, original['tenant_id'])
+        self.safe_delete_ha_network(context, ha_network,
+                                    original['project_id'])
 
     def _unbind_ha_router(self, context, router_id):
         for agent in self.get_l3_agents_hosting_routers(context, [router_id]):

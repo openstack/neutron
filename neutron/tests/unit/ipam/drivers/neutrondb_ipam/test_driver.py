@@ -40,7 +40,7 @@ class TestNeutronDbIpamMixin:
         network = {'network': {'name': 'net',
                                'shared': shared,
                                'admin_state_up': True,
-                               'tenant_id': self._project_id}}
+                               'project_id': self._project_id}}
         created_network = plugin.create_network(ctx, network)
         return (created_network, created_network['id'])
 

@@ -493,7 +493,7 @@ class L3HATestCase(L3HATestFramework):
         interface = router.get(constants.HA_INTERFACE_KEY)
         self.assertIsNone(interface)
 
-    def test_unique_ha_network_per_tenant(self):
+    def test_unique_ha_network_per_project(self):
         project1 = _uuid()
         project2 = _uuid()
         self._create_router(project_id=project1)
@@ -555,7 +555,7 @@ class L3HATestCase(L3HATestFramework):
                          self._create_router()['status'])
 
     @mock.patch('neutron.db.l3_hamode_db.VR_ID_RANGE', new=set(range(1, 2)))
-    def test_vr_id_unique_range_per_tenant(self):
+    def test_vr_id_unique_range_per_project(self):
         self._create_router()
         self._create_router(project_id=_uuid())
         routers = self.plugin.get_ha_sync_data_for_host(
@@ -718,9 +718,9 @@ class L3HATestCase(L3HATestFramework):
                           self.core_plugin.delete_port,
                           self.admin_ctx, binding.port_id)
 
-    def test_create_ha_network_tenant_binding_raises_duplicate(self):
+    def test_create_ha_network_project_binding_raises_duplicate(self):
         # The router creation calls first the HA network creation and the
-        # HA network-tenant binding ("ha_router_networks" register)
+        # HA network-project binding ("ha_router_networks" register)
         project_id = uuidutils.generate_uuid()
         self._create_router(project_id=project_id)
         network = self.core_plugin.get_networks(self.admin_ctx)[0]
@@ -735,7 +735,7 @@ class L3HATestCase(L3HATestFramework):
             payload = events.DBEventPayload(
                 ctx, states=(network, ), resource_id=network['id'],
                 request_body=network)
-            self.plugin._create_ha_network_tenant_binding(
+            self.plugin._create_ha_network_project_binding(
                 mock.ANY, mock.ANY, mock.ANY, payload=payload)
 
     def test_create_router_db_vr_id_allocation_goes_to_error(self):
@@ -892,18 +892,18 @@ class L3HATestCase(L3HATestFramework):
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
         # Check that HA networks created for each project
-        self.assertIn('HA network tenant %s' % router1['project_id'],
+        self.assertIn(constants.HA_NETWORK_NAME % router1['project_id'],
                       nets_before)
-        self.assertIn('HA network tenant %s' % router2['project_id'],
+        self.assertIn(constants.HA_NETWORK_NAME % router2['project_id'],
                       nets_before)
         # Delete router1
         self.plugin.delete_router(self.admin_ctx, router1['id'])
         nets_after = [net['name'] for net in
                       self.core_plugin.get_networks(self.admin_ctx)]
         # Check that HA network for project1 is deleted and project2 is not.
-        self.assertNotIn('HA network tenant %s' % router1['project_id'],
+        self.assertNotIn(constants.HA_NETWORK_NAME % router1['project_id'],
                          nets_after)
-        self.assertIn('HA network tenant %s' % router2['project_id'],
+        self.assertIn(constants.HA_NETWORK_NAME % router2['project_id'],
                       nets_after)
 
     def test_ha_network_is_not_delete_if_ha_router_is_present(self):
@@ -913,12 +913,12 @@ class L3HATestCase(L3HATestFramework):
         router2 = self._create_router()
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['project_id'],
+        self.assertIn(constants.HA_NETWORK_NAME % router1['project_id'],
                       nets_before)
         self.plugin.delete_router(self.admin_ctx, router2['id'])
         nets_after = [net['name'] for net in
                       self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['project_id'],
+        self.assertIn(constants.HA_NETWORK_NAME % router1['project_id'],
                       nets_after)
 
     def test_ha_network_delete_ha_and_non_ha_router(self):
@@ -928,19 +928,19 @@ class L3HATestCase(L3HATestFramework):
         router2 = self._create_router()
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['project_id'],
+        self.assertIn(constants.HA_NETWORK_NAME % router1['project_id'],
                       nets_before)
         self.plugin.delete_router(self.admin_ctx, router2['id'])
         nets_after = [net['name'] for net in
                       self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertNotIn('HA network tenant %s' % router1['project_id'],
+        self.assertNotIn(constants.HA_NETWORK_NAME % router1['project_id'],
                          nets_after)
 
     def _test_ha_network_is_not_deleted_raise_exception(self, exception):
         router1 = self._create_router()
         nets_before = [net['name'] for net in
                        self.core_plugin.get_networks(self.admin_ctx)]
-        self.assertIn('HA network tenant %s' % router1['project_id'],
+        self.assertIn(constants.HA_NETWORK_NAME % router1['project_id'],
                       nets_before)
         ha_network = self.plugin.get_ha_network(self.admin_ctx,
                                                 router1['project_id'])
@@ -951,7 +951,7 @@ class L3HATestCase(L3HATestFramework):
                                                router1['project_id'])
             nets_after = [net['name'] for net in
                           self.core_plugin.get_networks(self.admin_ctx)]
-            self.assertIn('HA network tenant %s' % router1['project_id'],
+            self.assertIn(constants.HA_NETWORK_NAME % router1['project_id'],
                           nets_after)
 
     def test_ha_network_is_not_deleted_if_another_ha_router_is_created(self):
@@ -972,7 +972,7 @@ class L3HATestCase(L3HATestFramework):
     def test_ha_router_create_failed_no_ha_network_delete(self):
         project_id = "foo_project_id"
         nets_before = self.core_plugin.get_networks(self.admin_ctx)
-        self.assertNotIn('HA network tenant %s' % project_id,
+        self.assertNotIn(constants.HA_NETWORK_NAME % project_id,
                          nets_before)
 
         # Unable to create HA network
@@ -986,7 +986,7 @@ class L3HATestCase(L3HATestFramework):
                                   n_exc.NoNetworkAvailable)
             nets_after = self.core_plugin.get_networks(self.admin_ctx)
             self.assertEqual(nets_before, nets_after)
-            self.assertNotIn('HA network tenant %s' % project_id,
+            self.assertNotIn(constants.HA_NETWORK_NAME % project_id,
                              nets_after)
 
     def test_update_port_status_port_bingding_deleted_concurrently(self):
@@ -1006,7 +1006,6 @@ class L3HAModeDbTestCase(L3HATestFramework):
         network = {'network': {'name': name,
                                'shared': False,
                                'admin_state_up': True,
-                               'tenant_id': project_id,
                                'project_id': project_id,
                                extnet_apidef.EXTERNAL: external,
                                network_ha.HA: ha,

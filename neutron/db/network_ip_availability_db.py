@@ -48,7 +48,7 @@ class IpAvailabilityMixin:
     # Columns for the network/subnet and used_ip counts
     network_used_ips_columns = list(common_columns)
     network_used_ips_columns.append(mod.Network.name.label(NETWORK_NAME))
-    network_used_ips_columns.append(mod.Network.tenant_id)
+    network_used_ips_columns.append(mod.Network.project_id)
     network_used_ips_columns.append(mod.Subnet.name.label(SUBNET_NAME))
     # Aggregate query computed column
     network_used_ips_computed_columns = [
@@ -158,8 +158,7 @@ class IpAvailabilityMixin:
         else:
             network = {NETWORK_ID: db_row.network_id,
                        NETWORK_NAME: db_row.network_name,
-                       'tenant_id': db_row.tenant_id,
-                       'project_id': db_row.tenant_id,
+                       'project_id': db_row.project_id,
                        'subnet_ip_availability': [],
                        'used_ips': 0, 'total_ips': 0}
             result_dict[db_row.network_id] = network

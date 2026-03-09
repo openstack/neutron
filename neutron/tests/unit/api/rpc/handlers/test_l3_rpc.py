@@ -37,7 +37,7 @@ class TestL3RpcCallback(testlib_api.SqlTestCase):
     def _prepare_network(self):
         network = {'network': {'name': 'abc',
                                'shared': False,
-                               'tenant_id': 'project_id',
+                               'project_id': 'project_id',
                                'admin_state_up': True}}
         return self.plugin.create_network(self.ctx, network)
 

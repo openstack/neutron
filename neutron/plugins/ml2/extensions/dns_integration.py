@@ -352,7 +352,7 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
     def initialize(self):
         LOG.info("DNSExtensionDriverML2 initialization complete")
 
-    def _is_tunnel_tenant_network(self, provider_net):
+    def _is_tunnel_project_network(self, provider_net):
         if provider_net['network_type'] == lib_const.TYPE_GENEVE:
             tunnel_ranges = cfg.CONF.ml2_type_geneve.vni_ranges
         elif provider_net['network_type'] == lib_const.TYPE_VXLAN:
@@ -368,7 +368,7 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
             tun_max = tun_max.strip()
             return int(tun_min) <= segmentation_id <= int(tun_max)
 
-    def _is_vlan_tenant_network(self, provider_net):
+    def _is_vlan_project_network(self, provider_net):
         network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
             cfg.CONF.ml2_type_vlan.network_vlan_ranges)
         vlan_ranges = network_vlan_ranges[provider_net['physical_network']]
@@ -397,11 +397,11 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
         if provider_net['network_type'] == lib_const.TYPE_FLAT:
             return False
         if provider_net['network_type'] == lib_const.TYPE_VLAN:
-            return self._is_vlan_tenant_network(provider_net)
+            return self._is_vlan_project_network(provider_net)
         if provider_net['network_type'] in [
                 lib_const.TYPE_GRE, lib_const.TYPE_VXLAN,
                 lib_const.TYPE_GENEVE]:
-            return self._is_tunnel_tenant_network(provider_net)
+            return self._is_tunnel_project_network(provider_net)
         return True
 
 

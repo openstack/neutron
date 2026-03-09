@@ -582,7 +582,7 @@ class TestDHCPSchedulerWithNetworkAccessibility(
                          providernet.NETWORK_TYPE: 'vlan',
                          providernet.PHYSICAL_NETWORK: 'physnet1',
                          providernet.SEGMENTATION_ID: 1,
-                         'tenant_id': 'project_one',
+                         'project_id': 'project_one',
                          'admin_state_up': True,
                          'shared': True}})
 

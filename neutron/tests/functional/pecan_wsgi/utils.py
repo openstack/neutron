@@ -22,7 +22,7 @@ def create_network(context, plugin):
         context,
         {'network':
          {'name': 'pecannet',
-          'tenant_id': 'projid',
+          'project_id': 'projid',
           'shared': False,
           'admin_state_up': True,
           'status': 'ACTIVE'}})

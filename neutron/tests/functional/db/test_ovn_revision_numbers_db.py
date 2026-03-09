@@ -20,7 +20,7 @@ from neutron.tests.functional import base
 class TestRevisionNumbers(base.TestOVNFunctionalBase):
 
     def _create_network(self, name):
-        data = {'network': {'name': name, 'tenant_id': self._project_id}}
+        data = {'network': {'name': name, 'project_id': self._project_id}}
         req = self.new_create_request('networks', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['network']

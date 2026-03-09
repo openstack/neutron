@@ -1137,9 +1137,9 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
                              True,
                              project_id=project_id)
         req = self.new_list_request(
-            'networks', params="fields=tenant_id", project_id=project_id)
+            'networks', params="fields=project_id", project_id=project_id)
         res = req.get_response(self.api)
-        self._check_list_with_fields(res, 'tenant_id')
+        self._check_list_with_fields(res, 'project_id')
 
     def test_show_returns_200(self):
         with self.network() as net:
@@ -3070,13 +3070,13 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         _set_temporary_quota('network', quota)
         self._project_id = uuidutils.generate_uuid()
         networks = [{'network': {'name': 'n1',
-                                 'tenant_id': self._project_id}},
+                                 'project_id': self._project_id}},
                     {'network': {'name': 'n2',
-                                 'tenant_id': self._project_id}},
+                                 'project_id': self._project_id}},
                     {'network': {'name': 'n1',
-                                 'tenant_id': 't1'}},
+                                 'project_id': 't1'}},
                     {'network': {'name': 'n2',
-                                 'tenant_id': 't1'}}]
+                                 'project_id': 't1'}}]
 
         res = self._create_bulk_from_list(self.fmt, 'network', networks,
                                           as_admin=True)
@@ -3089,15 +3089,15 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         _set_temporary_quota('network', quota)
         self._project_id = uuidutils.generate_uuid()
         networks = [{'network': {'name': 'n1',
-                                 'tenant_id': self._project_id}},
+                                 'project_id': self._project_id}},
                     {'network': {'name': 'n2',
-                                 'tenant_id': self._project_id}},
+                                 'project_id': self._project_id}},
                     {'network': {'name': 'n1',
-                                 'tenant_id': 't1'}},
+                                 'project_id': 't1'}},
                     {'network': {'name': 'n3',
-                                 'tenant_id': self._project_id}},
+                                 'project_id': self._project_id}},
                     {'network': {'name': 'n2',
-                                 'tenant_id': 't1'}}]
+                                 'project_id': 't1'}}]
 
         res = self._create_bulk_from_list(self.fmt, 'network', networks,
                                           as_admin=True)
@@ -7156,7 +7156,7 @@ class DbModelTenantTestCase(DbModelMixin, testlib_api.SqlTestCase):
     def _make_network(self, ctx):
         with db_api.CONTEXT_WRITER.using(ctx):
             network = models_v2.Network(name="net_net", status="OK",
-                                        tenant_id='dbcheck',
+                                        project_id='dbcheck',
                                         admin_state_up=True)
             ctx.session.add(network)
         return network
