@@ -29,7 +29,6 @@ import os
 import os.path
 import re
 import secrets
-import signal
 import socket
 import sys
 import threading
@@ -120,12 +119,6 @@ def throttler(threshold=DEFAULT_THROTTLER_VALUE):
                 return f(*args, **kwargs)
         return wrapper
     return decorator
-
-
-def _subprocess_setup():
-    # Python installs a SIGPIPE handler by default. This is usually not what
-    # non-Python subprocesses expect.
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
 def get_first_host_ip(net, ip_version):
