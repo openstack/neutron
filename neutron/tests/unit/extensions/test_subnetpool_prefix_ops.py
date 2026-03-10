@@ -38,7 +38,7 @@ class SubnetpoolPrefixOpsTestBase:
         if not project_id:
             project_id = self._project_id
 
-        scope_data = {'tenant_id': project_id, 'ip_version': ip_version,
+        scope_data = {'project_id': project_id, 'ip_version': ip_version,
                       'shared': shared, 'name': name + '-scope'}
         with db_api.CONTEXT_WRITER.using(self.context):
             yield self.driver.create_address_scope(
@@ -53,7 +53,7 @@ class SubnetpoolPrefixOpsTestBase:
             'project_id', None)
         if not project_id:
             project_id = self._project_id
-        pool_data = {'tenant_id': project_id, 'shared': shared, 'name': name,
+        pool_data = {'project_id': project_id, 'shared': shared, 'name': name,
                      'address_scope_id': address_scope_id,
                      'prefixes': prefixes, 'is_default': is_default_pool}
         for key in kwargs:

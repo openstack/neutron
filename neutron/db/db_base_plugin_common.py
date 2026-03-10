@@ -212,7 +212,7 @@ class DbBasePluginCommon:
         max_prefixlen = str(subnetpool['max_prefixlen'])
         res = {'id': subnetpool['id'],
                'name': subnetpool['name'],
-               'tenant_id': subnetpool['tenant_id'],
+               'project_id': subnetpool['project_id'],
                'default_prefixlen': default_prefixlen,
                'min_prefixlen': min_prefixlen,
                'max_prefixlen': max_prefixlen,
