@@ -522,8 +522,8 @@ class _TestMeterRateLimitQoS:
 
         vm.bridge.use_at_least_protocol(ovs_constants.OPENFLOW13)
         if not vm.bridge.list_meter_features():
-            self.skip("Test ovs bridge %s does not support meter.",
-                      vm.bridge.br_name)
+            self.skipTest("Test ovs bridge %s does not support meter.",
+                          vm.bridge.br_name)
 
         pkt_rule = qos_policy['rules'][0]
         self._wait_for_meter_rate_limit_rule_applied(
@@ -565,8 +565,8 @@ class _TestMeterRateLimitQoS:
 
         vm.bridge.use_at_least_protocol(ovs_constants.OPENFLOW13)
         if not vm.bridge.list_meter_features():
-            self.skip("Test ovs bridge %s does not support meter.",
-                      vm.bridge.br_name)
+            self.skipTest("Test ovs bridge %s does not support meter.",
+                          vm.bridge.br_name)
 
         pkt_rule = qos_policy['rules'][0]
         self._wait_for_meter_rate_limit_rule_applied(
