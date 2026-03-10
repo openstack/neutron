@@ -33,7 +33,7 @@ class FloatingIPPoolsDbMixin:
     def _make_floatingip_pool_dict(context, subnet, fields=None):
         res = {'subnet_id': subnet.id,
                'subnet_name': subnet.name,
-               'tenant_id': context.tenant_id,
+               'project_id': context.project_id,
                'network_id': subnet.network_id,
                'cidr': str(subnet.cidr)}
 
@@ -47,8 +47,8 @@ class FloatingIPPoolsDbMixin:
         net_ids = [n.network_id
                    for n in net_obj.ExternalNetwork.get_objects(context)]
         # NOTE(hongbin): Use elevated context to make sure we have enough
-        # permission to retrieve subnets that are not in current tenant
-        # but belongs to external networks shared with current tenant.
+        # permission to retrieve subnets that are not in current project
+        # but belongs to external networks shared with current project.
         admin_context = context.elevated()
         subnet_objs = subnet_obj.Subnet.get_objects(admin_context,
                                                     _pager=pager,

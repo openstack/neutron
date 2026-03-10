@@ -243,7 +243,7 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         self.context.session.flush()
         self.context.session.expire_all()
         self.fip_request = {'port_id': FAKE_FIP_INT_PORT_ID,
-                            'tenant_id': self.project_id}
+                            'project_id': self.project_id}
 
     def _get_gwports_dict(self, gw_ports):
         return {gw_port['id']: gw_port

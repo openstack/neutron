@@ -492,7 +492,7 @@ class L3NatTestCaseMixin:
                            project_id=None, as_admin=False, **kwargs):
         project_id = project_id or self._project_id
         data = {'floatingip': {'floating_network_id': network_id,
-                               'tenant_id': project_id}}
+                               'project_id': project_id}}
         if port_id:
             data['floatingip']['port_id'] = port_id
             if fixed_ip:
@@ -2801,6 +2801,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             break
                     self.assertIsNotNone(aue_kwargs)
                     payload = aue_kwargs['payload']
+                    # TODO(haleyb): "tenant_id" reference should be removed
                     previous = dict(
                         fixed_ip_address=None,
                         floating_ip_address=fip['floating_ip_address'],
@@ -2852,6 +2853,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             break
                     self.assertIsNotNone(aue_kwargs)
                     payload = aue_kwargs['payload']
+                    # TODO(haleyb): "tenant_id" reference should be removed
                     previous = dict(
                         fixed_ip_address=ip_address,
                         floating_ip_address=fip['floating_ip_address'],
@@ -2902,6 +2904,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             break
                     self.assertIsNotNone(aue_kwargs)
                     payload = aue_kwargs['payload']
+                    # TODO(haleyb): "tenant_id" reference should be removed
                     previous = dict(
                         fixed_ip_address=ip_address,
                         floating_ip_address=fip['floating_ip_address'],
@@ -4233,6 +4236,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 self.assertIsNotNone(ade_kwargs)
                 payload = ade_kwargs['payload']
                 fip = f['floatingip']
+                # TODO(haleyb): "tenant_id" reference should be removed
                 previous = dict(
                     fixed_ip_address=fip['fixed_ip_address'],
                     floating_ip_address=fip['floating_ip_address'],
@@ -4648,7 +4652,7 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
         # Set ourselves up to call the right function with
         # the right arguments for the with block
         if assoc_port:
-            data['tenant_id'] = n['network']['project_id']
+            data['project_id'] = n['network']['project_id']
             data['port_id'] = p['port']['id']
             create_floatingip = self.floatingip_with_assoc
         else:
