@@ -298,11 +298,18 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             port = core_plugin.get_ports(
                 self.context, filters={'id': [port_id]})[0]
             return port['status'] == status
-        if action == 'bind':
-            self.sb_api.lsp_bind(port_id, self.chassis,
-                                 may_exist=True).execute(check_error=True)
-        else:
-            self.sb_api.lsp_unbind(port_id).execute(check_error=True)
+        with self.sb_api.transaction(check_error=True) as txn:
+            if action == 'bind':
+                txn.add(self.sb_api.lsp_bind(
+                    port_id, self.chassis, may_exist=True))
+                up = True
+            else:
+                txn.add(self.sb_api.lsp_unbind(port_id))
+                up = False
+            # TODO(jlibosva): Remove once commit
+            #                 a8dcb36c33fe7720e20de4d85bad2f461d102a01 is
+            #                 available in ovsdbapp release
+            txn.add(self.sb_api.db_set('Port_Binding', port_id, up=up))
         n_utils.wait_until_true(lambda: check_port_status(status))
 
     def test_port_up_down_events(self):
