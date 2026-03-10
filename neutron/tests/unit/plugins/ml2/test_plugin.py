@@ -2064,7 +2064,7 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
             ports_data = self._list('ports', query_params=query_params)
             self.assertEqual(port1['port']['id'], ports_data['ports'][0]['id'])
             self.assertEqual(1, len(ports_data['ports']))
-            temp_sg = {'security_group': {'tenant_id': 'some_project',
+            temp_sg = {'security_group': {'project_id': 'some_project',
                                           'name': '', 'description': 's'}}
             sg_dbMixin = sg_db.SecurityGroupDbMixin()
             sg = sg_dbMixin.create_security_group(ctx, temp_sg)

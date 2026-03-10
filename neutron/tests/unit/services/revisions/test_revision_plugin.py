@@ -207,14 +207,14 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(rev + 1, new_rev)
 
     def test_security_group_rule_ops_bump_security_group(self):
-        s = {'security_group': {'tenant_id': 'some_project', 'name': '',
+        s = {'security_group': {'project_id': 'some_project', 'name': '',
                                 'description': 's'}}
         sg = self.cp.create_security_group(self.ctx, s)
         s['security_group']['name'] = 'hello'
         updated = self.cp.update_security_group(self.ctx, sg['id'], s)
         self.assertGreater(updated['revision_number'], sg['revision_number'])
         # ensure rule changes bump parent SG
-        r = {'security_group_rule': {'tenant_id': 'some_project',
+        r = {'security_group_rule': {'project_id': 'some_project',
                                      'port_range_min': 80, 'protocol': 6,
                                      'port_range_max': 90,
                                      'remote_ip_prefix': n_const.IPv4_ANY,

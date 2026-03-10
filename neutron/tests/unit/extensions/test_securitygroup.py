@@ -1377,7 +1377,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                      'protocol': const.PROTO_NAME_TCP,
                      'port_range_min': '22',
                      'port_range_max': '22',
-                     'tenant_id': "bad_project"}}
+                     'project_id': "bad_project"}}
 
             res = self._create_security_group_rule(self.fmt, rule,
                                                    project_id='bad_project',
@@ -1397,7 +1397,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                      'protocol': const.PROTO_NAME_TCP,
                      'port_range_min': '22',
                      'port_range_max': '22',
-                     'tenant_id': 'bad_project',
+                     'project_id': 'bad_project',
                      'remote_group_id': sg['security_group']['id']}}
 
             res = self._create_security_group_rule(self.fmt, rule,
@@ -1418,7 +1418,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                      'protocol': const.PROTO_NAME_TCP,
                      'port_range_min': '22',
                      'port_range_max': '22',
-                     'tenant_id': 'bad_project'}}
+                     'project_id': 'bad_project'}}
 
             res = self._create_security_group_rule(self.fmt, rule,
                                                    project_id='bad_project',
@@ -1949,7 +1949,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule = {'security_group_id': sg['security_group']['id'],
                     'direction': 'ingress',
                     'ethertype': const.IPv4,
-                    'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
+                    'project_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
 
             res = self._create_security_group_rule(
                 self.fmt, {'security_group_rule': rule})
@@ -1964,11 +1964,11 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             rule_v4 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
                        'ethertype': const.IPv4,
-                       'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
+                       'project_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
             rule_v6 = {'security_group_id': sg['security_group']['id'],
                        'direction': 'ingress',
                        'ethertype': const.IPv6,
-                       'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
+                       'project_id': test_db_base_plugin_v2.TEST_PROJECT_ID}
 
             rules = {'security_group_rules': [rule_v4, rule_v6]}
             res = self._create_security_group_rule(self.fmt, rules)
@@ -2181,7 +2181,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 'port_range_max': None,
                 'remote_ip_prefix': None,
                 'remote_group_id': None,
-                'tenant_id': test_db_base_plugin_v2.TEST_PROJECT_ID,
+                'project_id': test_db_base_plugin_v2.TEST_PROJECT_ID,
                 'remote_address_group_id':
                     None})
             result = self.plugin.create_security_group_rule(
