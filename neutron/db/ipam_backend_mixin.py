@@ -346,9 +346,12 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 if ip_sets[l_cursor] & ip_sets[r_cursor]:
                     l_range = ip_ranges[l_cursor]
                     r_range = ip_ranges[r_cursor]
+                    # TODO(mtomaska): Remove the explicit IPRange object to
+                    # string cast here once neutron depends on
+                    # oslo.serialization > 5.9.1. See LP#2142242
                     LOG.info("Found overlapping ranges: %(l_range)s and "
-                             "%(r_range)s",
-                             {'l_range': l_range, 'r_range': r_range})
+                             "%(r_range)s", {'l_range': str(l_range),
+                                             'r_range': str(r_range)})
                     raise exc.OverlappingAllocationPools(
                         pool_1=l_range,
                         pool_2=r_range,
