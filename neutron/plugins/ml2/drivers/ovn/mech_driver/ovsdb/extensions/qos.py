@@ -34,8 +34,6 @@ LOG = logging.getLogger(__name__)
 OVN_QOS_DEFAULT_RULE_PRIORITY = 2002
 OVN_QOS_FIP_RULE_PRIORITY = 2003
 _MIN_RATE = ovn_const.LSP_OPTIONS_QOS_MIN_RATE
-# NOTE(ralonsoh): this constant will be in neutron_lib.constants
-TYPE_PHYSICAL = (constants.TYPE_FLAT, constants.TYPE_VLAN)
 
 
 class OVNClientQosExtension:
@@ -332,7 +330,7 @@ class OVNClientQosExtension:
                              for direction in constants.VALID_DIRECTIONS):
             txn.add(self.nb_idl.qos_del(**ovn_rule_qos))
 
-        if network_type in TYPE_PHYSICAL:
+        if network_type in constants.TYPE_PHYSICAL:
             self._update_lsp_qos_options(txn, lsp, port_id,
                                          self._ovn_lsp_rule({}))
 
@@ -352,7 +350,7 @@ class OVNClientQosExtension:
             # dictionary if (1) direction=egress, (2) the network is physical
             # and (3) there are min-bw rules. Otherwise, the OVN QoS registers
             # are used (OVN BW policer).
-            if (network_type in TYPE_PHYSICAL and
+            if (network_type in constants.TYPE_PHYSICAL and
                     direction == constants.EGRESS_DIRECTION):
                 if min_bw:
                     ovn_rule_lsp = self._ovn_lsp_rule(rules)
