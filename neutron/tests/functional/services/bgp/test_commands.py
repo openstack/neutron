@@ -583,6 +583,165 @@ class ReconcileMainRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         self._validate_main_router_options()
 
 
+class ReconcileGatewayIPCommandTestCase(bgp.BaseBgpNbIdlTestCase):
+    def setUp(self):
+        super().setUp()
+        self.main_router_name = _get_unique_name()
+        cfg.CONF.set_override('main_router_name', self.main_router_name, 'bgp')
+        commands.ReconcileMainRouterCommand(
+            self.nb_api).execute(check_error=True)
+
+    def _get_dhcp_opt_for_network(self, net_id, cidr):
+        rows = self.nb_api.db_find_rows(
+            'DHCP_Options',
+            ('external_ids', '=', {ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: net_id}
+            ),
+            ('cidr', '=', cidr),
+        ).execute(check_error=True)
+        if not rows:
+            self.fail(f"DHCP option for net {net_id} cidr {cidr} not found")
+        return rows[0]
+
+    def _create_neutron_switch_with_dhcp(self, net_id, cidr, gateway_ip):
+        ls_name = f'neutron-{net_id}'
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(ovn_commands.AddDHCPOptionsCommand(
+                self.nb_api, net_id, may_exist=False,
+                cidr=cidr,
+                options={'router': gateway_ip},
+                external_ids={ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: net_id}))
+        return ls_name
+
+    def _create_interconnect_switch_and_lrp(self, net_id):
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            f'neutron-{net_id}')
+        lrp_name = helpers.get_lrp_name(
+            self.main_router_name, interconnect_name)
+        self.nb_api.ls_add(interconnect_name).execute(check_error=True)
+        lsp_name = helpers.get_lsp_name(
+            interconnect_name, self.main_router_name)
+        self.nb_api.lrp_add(
+            self.main_router_name, lrp_name,
+            mac=helpers.get_mac_address_from_lrp_name(lrp_name),
+            networks=[],
+        ).execute(check_error=True)
+        self.nb_api.lsp_add(
+            interconnect_name, lsp_name,
+            type='router',
+            addresses=['router'],
+            options={'router-port': lrp_name},
+        ).execute(check_error=True)
+        return lrp_name
+
+    def test_reconcile_gateway_ip_configures_correct_ip_on_lrp(self):
+        net_id = uuidutils.generate_uuid()
+        cidr = '192.168.1.0/24'
+        gateway_ip = '192.168.1.1'
+        self._create_neutron_switch_with_dhcp(net_id, cidr, gateway_ip)
+        self._create_interconnect_switch_and_lrp(net_id)
+
+        dhcp_opt = self._get_dhcp_opt_for_network(net_id, cidr)
+        commands.ReconcileGatewayIPCommand(
+            self.nb_api, dhcp_opt).execute(check_error=True)
+
+        expected_gw_ip = '192.168.1.1/24'
+        lrp_name = helpers.get_lrp_name(
+            self.main_router_name,
+            helpers.get_provider_interconnect_switch_name(f'neutron-{net_id}'))
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertIn(expected_gw_ip, lrp.networks)
+
+    def test_reconcile_gateway_ip_idempotent(self):
+        net_id = uuidutils.generate_uuid()
+        cidr = '10.0.0.0/24'
+        gateway_ip = '10.0.0.5'
+        self._create_neutron_switch_with_dhcp(net_id, cidr, gateway_ip)
+        self._create_interconnect_switch_and_lrp(net_id)
+
+        lrp_name = helpers.get_lrp_name(
+            self.main_router_name,
+            helpers.get_provider_interconnect_switch_name(f'neutron-{net_id}'))
+
+        dhcp_opt = self._get_dhcp_opt_for_network(net_id, cidr)
+        commands.ReconcileGatewayIPCommand(
+            self.nb_api, dhcp_opt).execute(check_error=True)
+
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        networks_after_first = list(lrp.networks)
+
+        commands.ReconcileGatewayIPCommand(
+            self.nb_api, dhcp_opt).execute(check_error=True)
+
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        expected_gw_ip = '10.0.0.5/24'
+        self.assertIn(expected_gw_ip, lrp.networks)
+        # Compare against the state after the first call rather than
+        # asserting len == 1, because the LRP networks column has min:1
+        # in the OVN schema. When the LRP is created with networks=[],
+        # python-ovs silently drops the write and the OVSDB server falls
+        # back to the column default: a set containing one empty string.
+        # That placeholder remains after reconciliation, so the set may
+        # contain more than just the gateway IP.
+        self.assertEqual(sorted(networks_after_first), sorted(lrp.networks))
+
+    def test_reconcile_gateway_ip_lrp_not_found(self):
+        net_id = uuidutils.generate_uuid()
+        cidr = '172.16.0.0/24'
+        gateway_ip = '172.16.0.1'
+        self._create_neutron_switch_with_dhcp(net_id, cidr, gateway_ip)
+        # Do not create interconnect switch or LRP.
+
+        dhcp_opt = self._get_dhcp_opt_for_network(net_id, cidr)
+        # Should not raise; command logs error and returns
+        commands.ReconcileGatewayIPCommand(
+            self.nb_api, dhcp_opt).execute(check_error=True)
+
+    def test_reconcile_gateway_ip_ls_referenced_by_network_id_missing(self):
+        net_id = uuidutils.generate_uuid()
+        cidr = '172.20.0.0/24'
+        gateway_ip = '172.20.0.1'
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(ovn_commands.AddDHCPOptionsCommand(
+                self.nb_api, net_id, may_exist=False,
+                cidr=cidr,
+                options={'router': gateway_ip},
+                external_ids={ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: net_id}))
+        # Do not create logical switch neutron-{net_id};
+        # create interconnect + LRP only.
+        self._create_interconnect_switch_and_lrp(net_id)
+
+        dhcp_opt = self._get_dhcp_opt_for_network(net_id, cidr)
+        commands.ReconcileGatewayIPCommand(
+            self.nb_api, dhcp_opt).execute(check_error=True)
+
+        expected_gw_ip = '172.20.0.1/24'
+        lrp_name = helpers.get_lrp_name(
+            self.main_router_name,
+            helpers.get_provider_interconnect_switch_name(f'neutron-{net_id}'))
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertIn(expected_gw_ip, lrp.networks)
+
+    def test_reconcile_gateway_ip_raises_when_dhcp_option_missing_network_id(
+            self):
+        cidr = '192.168.2.0/24'
+        gateway_ip = '192.168.2.1'
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(ovn_commands.AddDHCPOptionsCommand(
+                self.nb_api, uuidutils.generate_uuid(), may_exist=False,
+                cidr=cidr,
+                options={'router': gateway_ip},
+                # no external_ids - missing OVN_NETWORK_ID_EXT_ID_KEY
+            ))
+        dhcp_opt = self.nb_api.db_find_rows(
+            'DHCP_Options', ('cidr', '=', cidr)).execute(check_error=True)[0]
+        self.assertRaises(
+            exceptions.ReconcileError,
+            commands.ReconcileGatewayIPCommand,
+            self.nb_api,
+            dhcp_opt)
+
+
 class ReconcileChassisRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
     def test_reconcile_chassis_router(self):
         chassis = _create_fake_chassis()
