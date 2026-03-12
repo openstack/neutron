@@ -25,7 +25,6 @@ from neutron.services.bgp import helpers
 from neutron.services.bgp import ovn as bgp_ovn
 from neutron.services.bgp import reconciler
 from neutron.tests.functional import base
-from neutron.tests.functional.services import bgp as bgp_tests
 
 
 class TestBGPReconciler(base.TestOVNFunctionalBase):
@@ -37,10 +36,6 @@ class TestBGPReconciler(base.TestOVNFunctionalBase):
         bgp_ovn.BgpOvnNbIdl._ovsdb_connection = None
         super().setUp()
         self.reconciler = reconciler.BGPTopologyReconciler()
-
-        if not bgp_tests.is_policy_output_port_column_supported(
-                self.reconciler.nb_api.idl):
-            raise self.skipException("Policy output port column not supported")
 
         self.nb_api = self.reconciler.nb_api
         self.sb_api = self.reconciler.sb_api

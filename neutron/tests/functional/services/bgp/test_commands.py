@@ -188,11 +188,6 @@ class TestGetGwIps(bgp.BaseBgpNbIdlTestCase):
         self.assertEqual([], gw_ips)
 
 
-class TestCaseWithOutputPort(bgp.BaseBgpNbIdlTestCase):
-    def _is_bgp_supported(self):
-        return bgp.is_policy_output_port_column_supported(self.nb_api.idl)
-
-
 class LsAddCommandTestCase(bgp.BaseBgpNbIdlTestCase, _AddBaseCommand):
     table = 'Logical_Switch'
     command = commands._LsAddCommand
@@ -400,7 +395,7 @@ class CreateLspLocalnetCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         self.assertNotIn('router-port', lsp.options)
 
 
-class LrPolicyAddCommandTestCase(TestCaseWithOutputPort):
+class LrPolicyAddCommandTestCase(bgp.BaseBgpNbIdlTestCase):
     table = 'Logical_Router_Policy'
     command = commands._LrPolicyAddCommand
 
@@ -422,7 +417,6 @@ class LrPolicyAddCommandTestCase(TestCaseWithOutputPort):
                 mac="00:00:00:00:00:02",
                 networks=["192.168.1.2/30"]))
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_create_new_policy(self):
         priority = 100
         match = 'inport==\"%s\"' % self.lrp_inport_name
@@ -444,7 +438,6 @@ class LrPolicyAddCommandTestCase(TestCaseWithOutputPort):
         self.assertEqual(self.lrp_nexthop_name, policy.output_port[0].name)
         self.assertCountEqual(expected_exthops, policy.nexthops)
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_create_existing_policy(self):
         priority = 100
         match = 'inport==\"%s\"' % self.lrp_inport_name
@@ -488,7 +481,6 @@ class LrPolicyAddCommandTestCase(TestCaseWithOutputPort):
             self.router_name).execute(check_error=True)
         self.assertEqual(1, len(policies))
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_create_policy_with_nexthops(self):
         priority = 100
         match = 'inport==\"%s\"' % self.lrp_inport_name
@@ -896,7 +888,6 @@ class ConnectRouterToSwitchCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         self.nb_api.lr_add(self.lr_name).execute(check_error=True)
         self.nb_api.ls_add(self.ls_name).execute(check_error=True)
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_connect_router_to_switch_without_ip(self):
         commands.ConnectRouterToSwitchCommand(
             self.nb_api, self.lr_name, self.ls_name).execute(check_error=True)
@@ -922,7 +913,6 @@ class ConnectRouterToSwitchCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual([lrp_ip], lrp.networks)
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_connect_existing_with_different_attributes(self):
         lrp_name = helpers.get_lrp_name(self.lr_name, self.ls_name)
         lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
@@ -1044,7 +1034,6 @@ class ReconcileChassisCommandTestCase(bgp.BaseBgpTestCase):
 
         self.assertEqual(len(router.policies), len(checked_policies))
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_reconcile_chassis_basic(self):
         peers = ["bgp1", "bgp2"]
         chassis = self._create_chassis(network_names=peers)
@@ -1065,7 +1054,6 @@ class ReconcileChassisCommandTestCase(bgp.BaseBgpTestCase):
         self._validate_main_router_connection(chassis.name)
         self._validate_chassis_router_policies(chassis.name, router, peers)
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_reconcile_chassis_idempotent(self):
         peers = ["bgp1", "bgp2"]
         chassis = self._create_chassis(network_names=peers)
@@ -1247,7 +1235,6 @@ class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
 
         return lrp
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_reconcile_neutron_switch_basic(self):
         network_name = 'provider-net'
         n_switch = self._create_neutron_switch_with_localnet(network_name, [])
@@ -1359,7 +1346,6 @@ class ReconcileMainRouterPoliciesCommandTestCase(BgpNbIdlWithChassisBase):
 
         return ls_name, lrp_name
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_creates_policy_and_route(self):
         chassis_lrp = self._create_chassis_lrp()
         interconnect_switch_name, interconnect_lrp_name = (
@@ -1375,7 +1361,6 @@ class ReconcileMainRouterPoliciesCommandTestCase(BgpNbIdlWithChassisBase):
         self._assert_main_router_has_policies_for_interconnect(
             interconnect_switch_name, [chassis_lrp])
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_creates_policy_and_route_with_related_resource(self):
         chassis_lrp = self._create_chassis_lrp()
         interconnect_name, interconnect_lrp_name = (
@@ -1395,7 +1380,6 @@ class ReconcileMainRouterPoliciesCommandTestCase(BgpNbIdlWithChassisBase):
         self._assert_main_router_has_policies_for_interconnect(
             interconnect_name, [chassis_lrp])
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_idempotent(self):
         chassis_lrp = self._create_chassis_lrp()
         interconnect_switch_name, interconnect_lrp_name = (
@@ -1437,7 +1421,6 @@ class ReconcileMainRouterRoutesForProviderCommandTestCase(
 
         return ls.result
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_creates_policies_for_each_chassis_lrp(self):
         chassis_lrp1 = self._create_chassis_lrp()
         chassis_lrp2 = self._create_chassis_lrp()
@@ -1452,7 +1435,6 @@ class ReconcileMainRouterRoutesForProviderCommandTestCase(
         self._assert_main_router_has_policies_for_interconnect(
             interconnect_switch.name, [chassis_lrp1, chassis_lrp2])
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_no_chassis_lrps_creates_nothing(self):
         interconnect_switch = self._create_interconnect_switch()
 
@@ -1473,7 +1455,6 @@ class ReconcileMainRouterRoutesForProviderCommandTestCase(
                     str(interconnect_switch.uuid)]
         self.assertEqual(0, len(routes))
 
-    @bgp.requires_ovn_version_with_bgp()
     def test_sets_related_resource_tag(self):
         chassis_lrp = self._create_chassis_lrp()
         interconnect_switch = self._create_interconnect_switch()
