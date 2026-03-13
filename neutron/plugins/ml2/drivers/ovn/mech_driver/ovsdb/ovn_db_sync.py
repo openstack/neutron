@@ -45,7 +45,7 @@ LOG = log.getLogger(__name__)
 class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
     """Synchronizer class for NB."""
 
-    _required_mechanism_drivers = []
+    _required_mechanism_drivers = ['ovn-sync']
     _required_service_plugins = [
         'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin',
         'neutron.services.segments.plugin.Plugin',
@@ -1424,7 +1424,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
 class OvnSbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
     """Synchronizer class for SB."""
 
-    _required_mechanism_drivers = []
+    _required_mechanism_drivers = ['ovn-sync']
     _required_service_plugins = [
         'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin',
         'neutron.services.segments.plugin.Plugin',
