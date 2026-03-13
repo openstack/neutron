@@ -507,3 +507,7 @@ OVN_HA_FAILOVER_CHOICES = (OVN_HA_FAILOVER_NORMAL,
                            OVN_HA_FAILOVER_CONSERVATIVE,
                            OVN_HA_FAILOVER_MANUAL,
                            )
+
+# RFC 5798 VRRP virtual MAC address prefixes.
+VRRP_VIRTUAL_MAC_PREFIX_IPV4 = '00:00:5e:00:01'
+VRRP_VIRTUAL_MAC_PREFIX_IPV6 = '00:00:5e:00:02'

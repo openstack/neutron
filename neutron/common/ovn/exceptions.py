@@ -44,3 +44,9 @@ class InvalidPortForwardingConfiguration(n_exc.NeutronException):
                 'can not be used with ML2/OVN backend, distributed '
                 'floating IPs and provider network type(s) used as '
                 'tenant networks.')
+
+
+class InvalidVirtualMACAddress(n_exc.InvalidInput):
+    message = _('Virtual MAC address %(mac_address)s in allowed address pair '
+                'does not belong to the RFC 5798 VRRP virtual MAC ranges '
+                '(00:00:5e:00:01:XX for IPv4 or 00:00:5e:00:02:XX for IPv6).')

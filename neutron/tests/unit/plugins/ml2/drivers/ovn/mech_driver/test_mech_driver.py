@@ -751,9 +751,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         # be treated as VIP.
         ip1 = '1.1.1.1'
         ip2 = '2.2.2.2'
-        mac2 = '22:22:22:22:22:22'
+        mac1 = '00:00:5e:00:01:01'
+        mac2 = '00:00:5e:00:01:22'
         kwargs = {'allowed_address_pairs':
-                  [{'ip_address': ip1},
+                  [{'ip_address': ip1, 'mac_address': mac1},
                    {'ip_address': ip2, 'mac_address': mac2}],
                   'device_owner': 'compute:nova'}
         with self.network() as net1:
@@ -769,19 +770,18 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                         (self.nb_ovn.create_lswitch_port
                          ).call_args_list[0][1])
                     psec = tools.UnorderedList(
-                        [' '.join(['VRRPv3', port_mac, mac2, ip2]),
-                         ' '.join([port_mac, port_ip, ip1])])
+                        [' '.join(['VRRPv3', port_mac, mac1, ip1]),
+                         ' '.join(['VRRPv3', port_mac, mac2, ip2]),
+                         ' '.join([port_mac, port_ip])])
                     self.assertEqual(psec,
                                      called_args_dict.get('port_security'))
                     addresses = tools.UnorderedList(
-                        [mac2,
+                        [mac1,
+                         mac2,
                          ' '.join([port_mac, port_ip])])
                     self.assertEqual(addresses,
                                      called_args_dict.get('addresses'))
 
-                    # we are updating only the port mac address. So the
-                    # mac address of the allowed address pair ip 1.1.1.1
-                    # will have old mac address
                     port_mac_new = '00:00:00:00:00:01'
                     data = {'port': {'mac_address': port_mac_new}}
                     req = self.new_update_request(
@@ -795,17 +795,70 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                          ).call_args_list[0][1])
 
                     psec = tools.UnorderedList(
-                        [' '.join(['VRRPv3', port_mac_new, port_mac, ip1]),
+                        [' '.join(['VRRPv3', port_mac_new, mac1, ip1]),
                          ' '.join(['VRRPv3', port_mac_new, mac2, ip2]),
                          ' '.join([port_mac_new, port_ip])])
                     self.assertEqual(psec,
                                      called_args_dict.get('port_security'))
                     addresses = tools.UnorderedList(
-                        [port_mac,
+                        [mac1,
                          mac2,
                          ' '.join([port_mac_new, port_ip])])
                     self.assertEqual(addresses,
                                      called_args_dict.get('addresses'))
+
+    def test_create_port_aap_invalid_virtual_mac_unbound(self):
+        kwargs = {'allowed_address_pairs':
+                  [{'ip_address': '10.0.0.1',
+                    'mac_address': '22:22:22:22:22:22'}],
+                  'device_owner': 'compute:nova'}
+        with self.network() as net1:
+            with self.subnet(network=net1):
+                res = self._create_port(
+                    self.fmt, net1['network']['id'],
+                    arg_list=('allowed_address_pairs', 'device_owner',),
+                    **kwargs)
+                self.assertNotEqual(exc.HTTPBadRequest.code,
+                                    res.status_int)
+
+    def test_update_port_aap_invalid_virtual_mac_unbound(self):
+        with self.network() as net1:
+            with self.subnet(network=net1) as subnet1:
+                with self.port(subnet=subnet1,
+                               is_admin=True,
+                               device_owner='compute:nova') as port:
+                    data = {'port': {
+                        'allowed_address_pairs': [
+                            {'ip_address': '10.0.0.1',
+                             'mac_address': 'aa:bb:cc:dd:ee:ff'}]}}
+                    req = self.new_update_request(
+                        'ports', data, port['port']['id'],
+                        as_admin=True)
+                    res = req.get_response(self.api)
+                    self.assertNotEqual(exc.HTTPBadRequest.code,
+                                        res.status_int)
+
+    def test_update_port_aap_invalid_virtual_mac_bound_to_ovn(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'device_owner': 'compute:nova',
+                'allowed_address_pairs': []}
+        updated_port = dict(port, allowed_address_pairs=[
+            {'ip_address': '10.0.0.1',
+             'mac_address': '22:22:22:22:22:22'}])
+        _context = mock.Mock(
+            current=updated_port, original=port,
+            vif_type=portbindings.VIF_TYPE_OVS)
+        self.assertRaises(
+            ovn_exceptions.InvalidVirtualMACAddress,
+            self.mech_driver.update_port_precommit,
+            _context)
+
+    def test_update_port_aap_valid_vrrp_mac_bound_to_ovn(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'ip_address': '10.0.0.1',
+                     'mac_address': '00:00:5e:00:01:01'}]}
+        ovn_utils.validate_port_allowed_address_pairs_vrrp_mac(port)
 
     def test_create_port_ovn_octavia_vip(self):
         with self.network() as net1,\
