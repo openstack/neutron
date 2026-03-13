@@ -1465,7 +1465,7 @@ class OvnSbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         mapped_hosts = segments_db.get_hosts_mapped_with_segments(ctx)
         # Even if a chassis has been deleted, the OVN agent cached resource
         # is preserved.
-        controllers = neutron_agent.AgentCache().get_agents(
+        controllers = neutron_agent.AgentCache(self.ovn_driver).get_agents(
             filters={'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         controllers_hosts = {c.chassis.hostname for c in controllers
                              if c.chassis}
