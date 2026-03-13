@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    The ML2/OVN mechanism driver now validates that virtual MAC addresses in
+    allowed address pairs conform to the RFC 5798 VRRP ranges
+    (``00:00:5e:00:01:XX`` for IPv4 or ``00:00:5e:00:02:XX`` for IPv6).
+    Previously, non-conforming virtual MACs were silently accepted by the
+    Neutron API but discarded by ovn-controller, leading to confusing behavior.
+    For more information see bug
+    `2144371 <https://bugs.launchpad.net/neutron/+bug/2144371>`_.

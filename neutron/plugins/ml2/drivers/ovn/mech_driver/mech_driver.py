@@ -280,6 +280,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                 portbindings.VIF_DETAILS_CONNECTIVITY: self.connectivity,
             },
         }
+        self.supported_vif_types = tuple(self.vif_details)
 
     @property
     def connectivity(self):
@@ -996,6 +997,10 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._validate_ignored_port(port, original_port)
         ovn_utils.validate_and_get_data_from_binding_profile(port)
         self._validate_port_extra_dhcp_opts(port)
+        if context.vif_type in self.supported_vif_types:
+            # Validate the AAP only if the port is bound and belongs to the
+            # ML2/OVN supported VIF types.
+            ovn_utils.validate_port_allowed_address_pairs_vrrp_mac(port)
         ovn_utils.validate_port_binding_and_virtual_port(
             context, self._plugin, port, original_port)
         if self._is_port_provisioning_required(port, context.host,

@@ -1333,3 +1333,99 @@ class GetMacAndIpsFromPortBindingTestCase(base.BaseTestCase):
         mac, ips = utils.get_mac_and_ips_from_port_binding(pb)
         self.assertEqual('00:00:00:00:00:00', mac)
         self.assertEqual([], ips)
+
+
+class ValidatePortAllowedAddressPairsVrrpMacTestCase(base.BaseTestCase):
+
+    def test_no_allowed_address_pairs(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc'}
+        utils.validate_port_allowed_address_pairs_vrrp_mac(port)
+
+    def test_empty_allowed_address_pairs(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': []}
+        utils.validate_port_allowed_address_pairs_vrrp_mac(port)
+
+    def test_same_mac_as_port(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': 'fa:16:3e:aa:bb:cc',
+                     'ip_address': '10.0.0.1'}]}
+        utils.validate_port_allowed_address_pairs_vrrp_mac(port)
+
+    def test_valid_vrrp_ipv4_mac(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5e:00:01:01',
+                     'ip_address': '10.0.0.1'}]}
+        utils.validate_port_allowed_address_pairs_vrrp_mac(port)
+
+    def test_valid_vrrp_ipv6_mac(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5e:00:02:01',
+                     'ip_address': '2001:db8::1'}]}
+        utils.validate_port_allowed_address_pairs_vrrp_mac(port)
+
+    def test_valid_vrrp_multiple_pairs(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5e:00:01:0a',
+                     'ip_address': '10.0.0.1'},
+                    {'mac_address': '00:00:5e:00:02:ff',
+                     'ip_address': '2001:db8::1'}]}
+        utils.validate_port_allowed_address_pairs_vrrp_mac(port)
+
+    def test_invalid_virtual_mac(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '22:22:22:22:22:22',
+                     'ip_address': '10.0.0.1'}]}
+        self.assertRaises(
+            ovn_exc.InvalidVirtualMACAddress,
+            utils.validate_port_allowed_address_pairs_vrrp_mac, port)
+
+    def test_invalid_virtual_mac_mixed_with_valid(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5e:00:01:01',
+                     'ip_address': '10.0.0.1'},
+                    {'mac_address': 'aa:bb:cc:dd:ee:ff',
+                     'ip_address': '10.0.0.2'}]}
+        self.assertRaises(
+            ovn_exc.InvalidVirtualMACAddress,
+            utils.validate_port_allowed_address_pairs_vrrp_mac, port)
+
+    def test_invalid_virtual_mac_wrong_vrrp_prefix(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5e:00:03:01',
+                     'ip_address': '10.0.0.1'}]}
+        self.assertRaises(
+            ovn_exc.InvalidVirtualMACAddress,
+            utils.validate_port_allowed_address_pairs_vrrp_mac, port)
+
+    def test_valid_vrrp_mac_uppercase(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5E:00:01:FF',
+                     'ip_address': '10.0.0.1'}]}
+        utils.validate_port_allowed_address_pairs_vrrp_mac(port)
+
+    def test_ipv4_ip_with_ipv6_vrrp_mac(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5e:00:02:01',
+                     'ip_address': '10.0.0.1'}]}
+        self.assertRaises(
+            ovn_exc.InvalidVirtualMACAddress,
+            utils.validate_port_allowed_address_pairs_vrrp_mac, port)
+
+    def test_ipv6_ip_with_ipv4_vrrp_mac(self):
+        port = {'mac_address': 'fa:16:3e:aa:bb:cc',
+                'allowed_address_pairs': [
+                    {'mac_address': '00:00:5e:00:01:01',
+                     'ip_address': '2001:db8::1'}]}
+        self.assertRaises(
+            ovn_exc.InvalidVirtualMACAddress,
+            utils.validate_port_allowed_address_pairs_vrrp_mac, port)
