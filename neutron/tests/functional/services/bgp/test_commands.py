@@ -1149,7 +1149,8 @@ class BgpNbIdlWithChassisBase(bgp.BaseBgpNbIdlTestCase):
             check_error=True)
         interconnect_policies = [
             p for p in policies
-            if interconnect_lrp_name in p.match and p.priority == 10]
+            if interconnect_lrp_name in p.match and
+            p.priority == constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY]
         self.assertEqual(
             len(chassis_lrps), len(interconnect_policies),
             "Expected %d policies for chassis LRPs, got %d" % (
@@ -1342,7 +1343,9 @@ class DeleteNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
         policies = self.nb_api.lr_policy_list(
             main_router_name).execute(check_error=True)
         for policy in policies:
-            if policy.match == expected_match and policy.priority == 10:
+            if (policy.match == expected_match and
+                    policy.priority ==
+                        constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY):
                 self.fail(
                     "Policy with match %r should not exist after delete" % (
                         expected_match,))
