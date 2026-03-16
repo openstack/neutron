@@ -44,6 +44,8 @@ size of geneve header compared to other common tunneling protocols (VXLAN).
 If you are using VM's as compute nodes make sure that you either lower the MTU
 size on the virtual interface or enable fragmentation on it.
 
+.. _duplicated_ovn_agents:
+
 Duplicated or deleted OVN agents
 --------------------------------
 
@@ -118,3 +120,16 @@ list will present the corresponding agents with the following message:
 administrator should manually delete the orphaned OVN Southbound database
 register. Neutron will receive this event and will delete the associated
 OVN agents.
+
+Recovering from an OVN Chassis crash
+------------------------------------
+
+If the "ovn-controller" process, running on an OVN Chassis host, is killed
+without being gracefully stopped or the host running the "ovn-controller"
+process crashed, the corresponding "Chassis" and "Chassis_Private" registers
+are not deleted. Before restarting the "ovn-controller" or "ovn-controller"
+host after the crash, the administrator should follow the procedure described
+in the :ref:`Duplicated or deleted OVN agents<duplicated_ovn_agents>` section,
+and manually delete stale "Chassis" and "Chassis_Private" registers. Neutron
+will be notified of the deletion and will remove the corresponding
+"Gateway_Chassis" registers in the OVN Northbound database.
