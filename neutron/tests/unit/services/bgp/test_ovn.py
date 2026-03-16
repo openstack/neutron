@@ -13,8 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from ovs import stream
 from unittest import mock
+
+from ovs import stream
 
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.services.bgp import ovn

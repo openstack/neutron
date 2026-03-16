@@ -157,12 +157,12 @@ class BGPChassisBridgeTestCase(BgpTestCaseWithIdls):
                       'icmp_type=135 actions=NORMAL,'
                       'mod_dl_dst:aa:bb:cc:dd:ee:ff,'
                       f'output:{self.bgp_bridge.patch_port_ofport}',
-                        flow_strings)
+                      flow_strings)
         self.assertIn(f'icmp6,in_port={self.bgp_bridge.nic_ofport},'
                       'icmp_type=136 actions=NORMAL,'
                       'mod_dl_dst:aa:bb:cc:dd:ee:ff,'
                       f'output:{self.bgp_bridge.patch_port_ofport}',
-                        flow_strings)
+                      flow_strings)
 
         # 2. Host IP flows (IPv4)
         self.assertIn('nw_dst=192.168.1.10 actions=NORMAL', flow_strings)

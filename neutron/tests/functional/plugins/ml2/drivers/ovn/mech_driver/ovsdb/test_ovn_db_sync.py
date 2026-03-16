@@ -228,7 +228,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: n1[
                             'network']['id'],
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: '0',
-                       'port_id': port['port']['id']},
+                        'port_id': port['port']['id']},
                     'options': {
                         'classless_static_route':
                         '{169.254.169.254/32,10.0.0.2, 0.0.0.0/0,10.0.0.1}',

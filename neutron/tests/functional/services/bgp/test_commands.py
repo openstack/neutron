@@ -586,8 +586,8 @@ class ReconcileGatewayIPCommandTestCase(bgp.BaseBgpNbIdlTestCase):
     def _get_dhcp_opt_for_network(self, net_id, cidr):
         rows = self.nb_api.db_find_rows(
             'DHCP_Options',
-            ('external_ids', '=', {ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: net_id}
-            ),
+            ('external_ids', '=',
+             {ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: net_id}),
             ('cidr', '=', cidr),
         ).execute(check_error=True)
         if not rows:
@@ -1561,8 +1561,8 @@ class ReconcileMainRouterRoutesForProviderCommandTestCase(
             check_error=True)
         routes = [r for r in router.static_routes
                   if r.external_ids.get(
-                    constants.RELATED_RESOURCE_TAG) ==
-                    str(interconnect_switch.uuid)]
+                      constants.RELATED_RESOURCE_TAG) ==
+                  str(interconnect_switch.uuid)]
         self.assertEqual(0, len(routes))
 
     def test_sets_related_resource_tag(self):

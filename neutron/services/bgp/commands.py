@@ -644,7 +644,7 @@ class ReconcileChassisPeerCommand(ovs_cmd.BaseCommand):
 
         peer_switch_lrp_name = helpers.get_lrp_name(
             self.chassis_router_name, self.switch_name)
-        match=f'inport==\"{peer_switch_lrp_name}\"'
+        match = f'inport=="{peer_switch_lrp_name}"'
         lrp_to_main_router_name = helpers.get_lrp_name(
             self.chassis_router_name, bgp_config.get_main_router_name())
         lrp = self.api.lookup('Logical_Router_Port', lrp_to_main_router_name)
