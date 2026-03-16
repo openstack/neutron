@@ -20,7 +20,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 
 from neutron._i18n import _
 from neutron.common import utils
@@ -68,11 +68,12 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         # NOTE(korzen) This method enables to query within already started
         # session
         rbac_db_model = rbac_db_cls.db_model
-        return (db_utils.model_query(context, rbac_db_model).filter(
+        query = db_utils.model_query(context, rbac_db_model).filter(
             and_(rbac_db_model.object_id == obj_id,
                  rbac_db_model.action == models.ACCESS_SHARED,
                  rbac_db_model.target_project.in_(
-                     ['*', project_id]))).count() != 0)
+                     ['*', project_id])))
+        return query.with_entities(func.count()).scalar() != 0
 
     @classmethod
     def is_shared_with_project(cls, context, obj_id, project_id):
