@@ -79,6 +79,16 @@ this ``Chassis`` and could be transmitting. If the highest ``Gateway_Chassis``
 is changed, the ``Logical_Router_Port`` is bound to the new ``Chassis`` and
 could break any active sessions.
 
+.. note::
+
+   Neutron does not support adding or modifying the ``Gateway_Chassis``
+   registers with the "ovn-nbctl lrp-set-gateway-chassis" or the
+   "ovn-nbctl set" commands. Operators should not use these commands to
+   modify the ``Gateway_Chassis`` registers because Neutron will not be able
+   to re-schedule the corresponding ``Logical_Router_Port`` properly.
+
+.. end
+
 
 Availability Zones (AZ) distribution
 ------------------------------------
