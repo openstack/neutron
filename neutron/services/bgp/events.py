@@ -72,8 +72,9 @@ class BGPChassisBridgesUpdateEvent(BGPReconcilerResourceEvent):
         return current_bgp_bridges != old_bgp_bridges
 
 
-class ProviderSwitchCreatedEvent(BGPReconcilerResourceEvent):
-    EVENTS = (BGPReconcilerResourceEvent.ROW_CREATE,)
+class ProviderSwitchEvent(BGPReconcilerResourceEvent):
+    EVENTS = (BGPReconcilerResourceEvent.ROW_CREATE,
+              BGPReconcilerResourceEvent.ROW_DELETE)
     RESOURCE = constants.BGPReconcilerResource.PROVIDER_SWITCH
     TABLE = 'Logical_Switch'
 

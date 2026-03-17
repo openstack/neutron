@@ -37,6 +37,10 @@ class BGPTopologyReconciler:
                 constants.BGPReconcilerResource.GATEWAY_IP:
                     self.reconcile_gateway_ip,
             },
+            constants.Action.DELETE: {
+                constants.BGPReconcilerResource.PROVIDER_SWITCH:
+                    self.delete_provider_switch,
+            },
         }
         self.nb_api = ovn.OvnNbIdl(
             ovn_conf.get_ovn_nb_connection(),
@@ -54,7 +58,7 @@ class BGPTopologyReconciler:
     @property
     def nb_events(self):
         return [
-            events.ProviderSwitchCreatedEvent(self),
+            events.ProviderSwitchEvent(self),
             events.GatewayIPCreatedEvent(self),
             events.GatewayIPUpdatedEvent(self),
         ]
@@ -102,4 +106,10 @@ class BGPTopologyReconciler:
         commands.ReconcileGatewayIPCommand(
             self.nb_api,
             dhcp_opt,
+        ).execute(check_error=True)
+
+    def delete_provider_switch(self, switch):
+        commands.DeleteNeutronSwitchCommand(
+            self.nb_api,
+            switch,
         ).execute(check_error=True)
