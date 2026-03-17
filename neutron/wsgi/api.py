@@ -20,4 +20,4 @@ application = None
 lock = threading.Lock()
 with lock:
     if application is None:
-        application = server.boot_server(api.api_server)
+        application = server.boot_server(api.api_server, prog='neutron-api')
