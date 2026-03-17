@@ -1295,6 +1295,14 @@ def sync_ha_chassis_group_network(context, nb_idl, sb_idl, port_id,
         chassis_list = sb_idl.get_gateway_chassis_from_cms_options(
             name_only=False)
         ignore_chassis = set()
+        # Filter out chassis with not matching physnets
+        chassis_physnets = sb_idl.get_chassis_and_physnets()
+        ls = nb_idl.get_lswitch(group_name)
+        physnet = ls.external_ids.get(constants.OVN_PHYSNET_EXT_ID_KEY)
+        if physnet:
+            for ch in chassis_list:
+                if physnet not in chassis_physnets[ch.name]:
+                    ignore_chassis.add(ch.name)
         LOG.debug('HA Chassis Group %s is based on network %s',
                   group_name, network_id)
 
