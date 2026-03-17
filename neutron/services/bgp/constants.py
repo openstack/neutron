@@ -56,6 +56,7 @@ class Action(Enum):
 
 
 class BGPReconcilerResource(Enum):
+    CHASSIS = 'chassis'
     CHASSIS_BGP_BRIDGES = 'bgp-bridges'
     PROVIDER_SWITCH = 'provider-switch'
     GATEWAY_IP = 'gateway-ip'

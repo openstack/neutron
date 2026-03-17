@@ -36,10 +36,14 @@ class BGPTopologyReconciler:
                     self.reconcile_provider_switch,
                 constants.BGPReconcilerResource.GATEWAY_IP:
                     self.reconcile_gateway_ip,
+                constants.BGPReconcilerResource.CHASSIS:
+                    self.reconcile_chassis,
             },
             constants.Action.DELETE: {
                 constants.BGPReconcilerResource.PROVIDER_SWITCH:
                     self.delete_provider_switch,
+                constants.BGPReconcilerResource.CHASSIS:
+                    self.delete_chassis,
             },
         }
         self.nb_api = ovn.OvnNbIdl(
@@ -67,6 +71,7 @@ class BGPTopologyReconciler:
     def sb_events(self):
         return [
             events.BGPChassisBridgesUpdateEvent(self),
+            events.BGPChassisEvent(self),
         ]
 
     def full_sync(self):
@@ -112,4 +117,26 @@ class BGPTopologyReconciler:
         commands.DeleteNeutronSwitchCommand(
             self.nb_api,
             switch,
+        ).execute(check_error=True)
+
+    def reconcile_chassis(self, chassis):
+        LOG.info("Reconciling chassis %s", chassis.name)
+        commands.ReconcileChassisCommand(
+            self.nb_api,
+            chassis,
+        ).execute(check_error=True)
+
+    def delete_chassis(self, chassis):
+        LOG.info("Deleting chassis %s", chassis.name)
+        commands.DeleteChassisCommand(
+            self.nb_api,
+            chassis,
+        ).execute(check_error=True)
+
+        # The HA Chassis Group cannot be deleted in the same transaction as
+        # the LRP that references it, we need to delete it in a subsequent
+        # transaction.
+        commands.HaChassisGroupDelCommand(
+            self.nb_api,
+            chassis,
         ).execute(check_error=True)

@@ -192,6 +192,12 @@ class _HAChassisGroupAddCommand(nb_cmd.HAChassisGroupAddCommand):
         self.set_columns(self.row_result, **self.columns)
 
 
+class HaChassisGroupDelCommand(nb_cmd.HAChassisGroupDelCommand):
+    def __init__(self, api, chassis):
+        ha_chassis_group_name = helpers.get_hcg_name(chassis.name)
+        super().__init__(api, ha_chassis_group_name, if_exists=True)
+
+
 class _LrPolicyAddCommand(nb_cmd.LrPolicyAddCommand):
     """An idempotent command to add a logical router policy.
     """
@@ -438,6 +444,128 @@ class ReconcileChassisRouterCommand(ReconcileRouterCommand):
             constants.LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID:
                 str(bgp_config.get_chassis_router_vrf_id()),
         }
+
+
+class DeleteChassisPeerCommand(ovs_cmd.BaseCommand):
+    def __init__(self, api, chassis, network_name):
+        super().__init__(api)
+        self.chassis = chassis
+        self.network_name = network_name
+
+    def run_idl(self, txn):
+        chassis_router_name = helpers.get_chassis_router_name(
+            self.chassis.name)
+        switch_name = helpers.get_chassis_peer_switch_name(
+            self.chassis.name, self.network_name)
+        peer_switch_lrp_name = helpers.get_lrp_name(
+            chassis_router_name, switch_name)
+
+        try:
+            nb_cmd.LrPolicyDelCommand(
+                self.api,
+                chassis_router_name,
+                priority=constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY,
+                match=f'inport=="{peer_switch_lrp_name}"',
+                if_exists=True,
+            ).run_idl(txn)
+        except idlutils.RowNotFound:
+            pass
+
+        nb_cmd.LsDelCommand(
+            self.api, switch_name, if_exists=True,
+        ).run_idl(txn)
+
+        nb_cmd.LrpDelCommand(
+            self.api,
+            peer_switch_lrp_name,
+            if_exists=True,
+        ).run_idl(txn)
+
+
+class DeleteChassisCommand(ovs_cmd.BaseCommand):
+    """Deletes all resources related to a chassis
+
+    The command deletes all peer connections, main router policies, LRPs, and
+    the chassis router. However, it does not delete the HA Chassis Group
+    itself because it is referenced by the main router LRP and must be deleted
+    in a subsequent transaction.
+    """
+
+    def __init__(self, api, chassis):
+        super().__init__(api)
+        self.chassis = chassis
+
+    def run_idl(self, txn):
+        main_router_name = bgp_config.get_main_router_name()
+        chassis_router_name = helpers.get_chassis_router_name(
+            self.chassis.name)
+
+        self._delete_peers(txn)
+        self._delete_main_router_policies(
+            chassis_router_name, main_router_name)
+        self._cleanup_ha_chassis_group(txn)
+        self._delete_lrps(
+            txn, chassis_router_name, main_router_name)
+        nb_cmd.LrDelCommand(
+            self.api, chassis_router_name, if_exists=True,
+        ).run_idl(txn)
+
+    def _delete_peers(self, txn):
+        for network_name in helpers.get_chassis_bgp_bridges(
+                self.chassis):
+            DeleteChassisPeerCommand(
+                self.api, self.chassis, network_name,
+            ).run_idl(txn)
+
+    def _delete_main_router_policies(
+            self, chassis_router_name, main_router_name):
+        lrp_main = helpers.get_lrp_name(
+            main_router_name, chassis_router_name)
+        chassis_resident = (
+            f'is_chassis_resident("cr-{lrp_main}")')
+
+        main_router = _get_main_router(self.api)
+        for policy in list(main_router.policies):
+            if chassis_resident in policy.match:
+                main_router.delvalue('policies', policy)
+                policy.delete()
+
+    def _delete_lrps(self, txn, chassis_router_name,
+                     main_router_name):
+        lrp_main = helpers.get_lrp_name(
+            main_router_name, chassis_router_name)
+        lrp_ch = helpers.get_lrp_name(
+            chassis_router_name, main_router_name)
+
+        try:
+            lrp_main_row = self.api.lookup(
+                'Logical_Router_Port', lrp_main)
+            lrp_main_row.ha_chassis_group = []
+        except idlutils.RowNotFound:
+            pass
+
+        nb_cmd.LrpDelCommand(
+            self.api, lrp_ch, if_exists=True,
+        ).run_idl(txn)
+        nb_cmd.LrpDelCommand(
+            self.api, lrp_main, if_exists=True,
+        ).run_idl(txn)
+
+    def _cleanup_ha_chassis_group(self, txn):
+        hcg_name = helpers.get_hcg_name(self.chassis.name)
+        try:
+            hcg = self.api.lookup(
+                'HA_Chassis_Group', hcg_name)
+        except idlutils.RowNotFound:
+            return
+        nb_cmd.HAChassisGroupDelChassisCommand(
+            self.api, hcg.uuid, self.chassis.name,
+            if_exists=True,
+        ).run_idl(txn)
+
+        # The HA Chassis Group itself remains because the reference
+        # integrity in the schema prevents it from being deleted in the same
+        # transaction
 
 
 class ConnectRouterToSwitchCommand(ovs_cmd.BaseCommand):

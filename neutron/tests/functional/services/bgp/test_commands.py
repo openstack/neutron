@@ -1114,6 +1114,233 @@ class ReconcileChassisCommandTestCase(bgp.BaseBgpTestCase):
         )
 
 
+class _BaseDeleteChassisTestCase(bgp.BaseBgpTestCase):
+    def setUp(self):
+        super().setUp()
+        self.main_router_name = _get_unique_name()
+        cfg.CONF.set_override('main_router_name', self.main_router_name, 'bgp')
+        commands.ReconcileMainRouterCommand(self.nb_api).execute(
+            check_error=True)
+
+    def _create_chassis(self, network_names, ip='172.24.4.1'):
+        chassis_name = _get_unique_name("chassis")
+        ext_ids = {
+            constants.CHASSIS_BGP_BRIDGES_EXT_ID_KEY:
+                ','.join(network_names),
+        }
+        chassis = self.add_fake_chassis(
+            chassis_name, ip, external_ids=ext_ids)
+        commands.ReconcileChassisCommand(
+            self.nb_api, chassis).execute(check_error=True)
+        return chassis
+
+
+class DeleteChassisPeerCommandTestCase(_BaseDeleteChassisTestCase):
+    def _assert_peer_resources_exist(self, chassis, network_name):
+        chassis_router_name = helpers.get_chassis_router_name(chassis.name)
+        switch_name = helpers.get_chassis_peer_switch_name(
+            chassis.name, network_name)
+        lrp_name = helpers.get_lrp_name(chassis_router_name, switch_name)
+
+        self.nb_api.ls_get(switch_name).execute(check_error=True)
+        self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+
+        router = self.nb_api.lr_get(chassis_router_name).execute(
+            check_error=True)
+        match = f'inport=="{lrp_name}"'
+        found = any(
+            p.match == match and
+            p.priority == constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY
+            for p in router.policies
+        )
+        self.assertTrue(found, "Policy for peer %s not found" % network_name)
+
+    def _assert_peer_resources_gone(
+            self, chassis, network_name, missing_router=False):
+        chassis_router_name = helpers.get_chassis_router_name(chassis.name)
+        switch_name = helpers.get_chassis_peer_switch_name(
+            chassis.name, network_name)
+        lrp_name = helpers.get_lrp_name(chassis_router_name, switch_name)
+
+        try:
+            self.nb_api.ls_get(switch_name).execute(check_error=True)
+            self.fail("Peer switch %s should not exist" % switch_name)
+        except idlutils.RowNotFound:
+            pass
+
+        try:
+            self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+            self.fail("Peer LRP %s should not exist" % lrp_name)
+        except idlutils.RowNotFound:
+            pass
+
+        # The chassis router should not be removed
+        try:
+            router = self.nb_api.lr_get(chassis_router_name).execute(
+                check_error=True)
+        except idlutils.RowNotFound:
+            if missing_router:
+                return
+            self.fail("Chassis router %s should exist" % chassis_router_name)
+
+        match = f'inport=="{lrp_name}"'
+        found = any(
+            p.match == match and
+            p.priority == constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY
+            for p in router.policies
+        )
+        self.assertFalse(
+            found, "Policy for peer %s should not exist" % network_name)
+
+    def test_delete_peer_removes_resources(self):
+        chassis = self._create_chassis(["bgp1", "bgp2"])
+
+        self._assert_peer_resources_exist(chassis, "bgp1")
+        self._assert_peer_resources_exist(chassis, "bgp2")
+
+        commands.DeleteChassisPeerCommand(
+            self.nb_api, chassis, "bgp1").execute(check_error=True)
+
+        self._assert_peer_resources_gone(chassis, "bgp1")
+        self._assert_peer_resources_exist(chassis, "bgp2")
+
+    def test_delete_peer_idempotent(self):
+        chassis = self._create_chassis(["bgp1"])
+
+        commands.DeleteChassisPeerCommand(
+            self.nb_api, chassis, "bgp1").execute(check_error=True)
+        commands.DeleteChassisPeerCommand(
+            self.nb_api, chassis, "bgp1").execute(check_error=True)
+
+        self._assert_peer_resources_gone(chassis, "bgp1")
+
+    def test_delete_peer_when_router_missing(self):
+        chassis = self._create_chassis(["bgp1"])
+
+        chassis_router_name = helpers.get_chassis_router_name(chassis.name)
+        self.nb_api.lr_del(chassis_router_name).execute(check_error=True)
+
+        commands.DeleteChassisPeerCommand(
+            self.nb_api, chassis, "bgp1").execute(check_error=True)
+
+        self._assert_peer_resources_gone(chassis, "bgp1", missing_router=True)
+
+
+class DeleteChassisCommandTestCase(_BaseDeleteChassisTestCase):
+    def _assert_row_gone(self, table, name):
+        try:
+            self.nb_api.lookup(table, name)
+            self.fail("%s %s should not exist" % (table, name))
+        except idlutils.RowNotFound:
+            pass
+
+    def _assert_chassis_gone(self, chassis, peers):
+        chassis_router_name = helpers.get_chassis_router_name(
+            chassis.name)
+
+        self._assert_row_gone('Logical_Router', chassis_router_name)
+
+        hcg_name = helpers.get_hcg_name(chassis.name)
+        hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+        self.assertEqual([], list(hcg.ha_chassis))
+
+        for lrp_name in [
+            helpers.get_lrp_name(
+                self.main_router_name, chassis_router_name),
+            helpers.get_lrp_name(
+                chassis_router_name, self.main_router_name),
+        ]:
+            self._assert_row_gone('Logical_Router_Port', lrp_name)
+
+        for peer in peers:
+            sw_name = helpers.get_chassis_peer_switch_name(
+                chassis.name, peer)
+            self._assert_row_gone('Logical_Switch', sw_name)
+
+    def _assert_no_main_router_policies_for_chassis(self, chassis):
+        chassis_router_name = helpers.get_chassis_router_name(
+            chassis.name)
+        lrp_main = helpers.get_lrp_name(
+            self.main_router_name, chassis_router_name)
+        chassis_resident = (
+            f'is_chassis_resident("cr-{lrp_main}")')
+
+        policies = self.nb_api.lr_policy_list(
+            self.main_router_name).execute(check_error=True)
+        for policy in policies:
+            if chassis_resident in policy.match:
+                self.fail(
+                    "Policy %r should not exist" % policy.match)
+
+    def _create_provider_switch(self, network_name):
+        net_id = uuidutils.generate_uuid()
+        ls_name = f'neutron-{net_id}'
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self.nb_api.lsp_add(
+                ls_name, f'{ls_name}-localnet',
+                type='localnet',
+                options={'network_name': network_name},
+                addresses=['unknown'],
+            ))
+        n_switch = self.nb_api.ls_get(ls_name).execute(
+            check_error=True)
+        commands.ReconcileNeutronSwitchCommand(
+            self.nb_api, n_switch).execute(check_error=True)
+        return n_switch
+
+    def test_delete_chassis(self):
+        peers = ["bgp1", "bgp2"]
+        chassis = self._create_chassis(peers)
+
+        commands.DeleteChassisCommand(
+            self.nb_api, chassis).execute(check_error=True)
+
+        self._assert_chassis_gone(chassis, peers)
+        self._assert_no_main_router_policies_for_chassis(chassis)
+
+    def test_delete_chassis_idempotent(self):
+        chassis = self._create_chassis(["bgp1"])
+
+        commands.DeleteChassisCommand(
+            self.nb_api, chassis).execute(check_error=True)
+        commands.DeleteChassisCommand(
+            self.nb_api, chassis).execute(check_error=True)
+
+        self._assert_chassis_gone(chassis, ["bgp1"])
+        self._assert_no_main_router_policies_for_chassis(chassis)
+
+    def test_delete_chassis_with_provider_switch_policies(self):
+        peers = ["bgp1"]
+        chassis = self._create_chassis(peers)
+        self._create_provider_switch('physnet1')
+
+        main_router = self.nb_api.lr_get(
+            self.main_router_name).execute(check_error=True)
+        self.assertTrue(main_router.policies)
+
+        commands.DeleteChassisCommand(
+            self.nb_api, chassis).execute(check_error=True)
+
+        self._assert_chassis_gone(chassis, peers)
+        self._assert_no_main_router_policies_for_chassis(chassis)
+
+    def test_delete_one_chassis_keeps_other(self):
+        chassis1 = self._create_chassis(["bgp1"], ip='172.24.4.1')
+        chassis2 = self._create_chassis(["bgp2"], ip='172.24.4.2')
+
+        commands.DeleteChassisCommand(
+            self.nb_api, chassis1).execute(check_error=True)
+
+        self._assert_chassis_gone(chassis1, ["bgp1"])
+        self._assert_no_main_router_policies_for_chassis(chassis1)
+
+        chassis2_router = helpers.get_chassis_router_name(
+            chassis2.name)
+        self.nb_api.lr_get(chassis2_router).execute(
+            check_error=True)
+
+
 class BgpNbIdlWithChassisBase(bgp.BaseBgpNbIdlTestCase):
     def _create_chassis_lrp(self):
         chassis_router_name = _get_unique_name('chassis-lr')

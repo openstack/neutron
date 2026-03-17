@@ -130,3 +130,10 @@ class GatewayIPUpdatedEvent(GatewayIPEvent):
 
         return ('router' in row.options and
                 row.options['router'] != old.options.get('router'))
+
+
+class BGPChassisEvent(BGPReconcilerResourceEvent):
+    EVENTS = (BGPReconcilerResourceEvent.ROW_CREATE,
+              BGPReconcilerResourceEvent.ROW_DELETE)
+    RESOURCE = constants.BGPReconcilerResource.CHASSIS
+    TABLE = 'Chassis_Private'
