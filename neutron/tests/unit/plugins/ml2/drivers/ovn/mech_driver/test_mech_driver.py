@@ -3147,6 +3147,200 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             expected_calls, any_order=True)
 
+    @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
+    def test_sync_ha_chassis_group_network_filters_chassis_by_physnet(
+            self, mock_sync_hcg):
+        """Test that chassis without required physnet are filtered out."""
+        net_attrs = {az_def.AZ_HINTS: ['az0']}
+        fake_net = (
+            fakes.FakeNetwork.create_one_network(attrs=net_attrs).info())
+        mock.patch.object(self.mech_driver._plugin,
+                          'get_network', return_value=fake_net).start()
+        fake_port = fakes.FakePort.create_one_port().info()
+        fake_port['network_id'] = fake_net['id']
+
+        # Create chassis with different physnet mappings
+        ch0 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+        ch1 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+        ch2 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+
+        # Setup chassis physnet mappings - ch1 missing required physnet
+        chassis_physnets = {
+            ch0.name: ['physnet1'],
+            ch1.name: ['physnet2'],  # Missing physnet1
+            ch2.name: ['physnet1', 'physnet2']
+        }
+
+        # Setup logical switch with physnet1
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'external_ids': {ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'physnet1'}
+        })
+
+        self.sb_ovn.get_extport_chassis_from_cms_options.return_value = []
+        self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
+            ch0, ch1, ch2]
+        self.sb_ovn.get_chassis_and_physnets.return_value = chassis_physnets
+        self.nb_ovn.get_lswitch.return_value = fake_ls
+        self.nb_ovn.lookup.return_value = None
+
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
+            fake_net['id'], None)
+
+        # Verify the chassis was filtered correctly
+        mock_sync_hcg.assert_called_once()
+        hcg_info = mock_sync_hcg.call_args.args[1]
+        expected_group_name = ovn_utils.ovn_name(fake_net['id'])
+        expected_ch_list = [ch0, ch1, ch2]
+        expected_ignore_chassis = {ch1.name}  # ch1 should be ignored
+
+        self.assertEqual(expected_group_name, hcg_info.group_name)
+        self.assertEqual(expected_ch_list, hcg_info.chassis_list)
+        self.assertEqual(expected_ignore_chassis, hcg_info.ignore_chassis)
+
+        # Verify the new methods were called
+        self.sb_ovn.get_chassis_and_physnets.assert_called_once()
+        self.nb_ovn.get_lswitch.assert_called_once_with(expected_group_name)
+
+    @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
+    def test_sync_ha_chassis_group_network_no_physnet_filtering(
+            self, mock_sync_hcg):
+        """Test that no filtering occurs when logical switch has no physnet."""
+        net_attrs = {az_def.AZ_HINTS: ['az0']}
+        fake_net = (
+            fakes.FakeNetwork.create_one_network(attrs=net_attrs).info())
+        mock.patch.object(self.mech_driver._plugin,
+                          'get_network', return_value=fake_net).start()
+        fake_port = fakes.FakePort.create_one_port().info()
+        fake_port['network_id'] = fake_net['id']
+
+        # Create chassis
+        ch0 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+        ch1 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+
+        # Setup chassis physnet mappings
+        chassis_physnets = {
+            ch0.name: ['physnet1'],
+            ch1.name: ['physnet2']
+        }
+
+        # Setup logical switch WITHOUT physnet
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'external_ids': {}
+        })
+
+        self.sb_ovn.get_extport_chassis_from_cms_options.return_value = []
+        self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
+            ch0, ch1]
+        self.sb_ovn.get_chassis_and_physnets.return_value = chassis_physnets
+        self.nb_ovn.get_lswitch.return_value = fake_ls
+        self.nb_ovn.lookup.return_value = None
+
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
+            fake_net['id'], None)
+
+        # Verify no chassis were filtered
+        mock_sync_hcg.assert_called_once()
+        hcg_info = mock_sync_hcg.call_args.args[1]
+        expected_group_name = ovn_utils.ovn_name(fake_net['id'])
+        expected_ch_list = [ch0, ch1]
+        expected_ignore_chassis = set()  # No chassis should be ignored
+
+        self.assertEqual(expected_group_name, hcg_info.group_name)
+        self.assertEqual(expected_ch_list, hcg_info.chassis_list)
+        self.assertEqual(expected_ignore_chassis, hcg_info.ignore_chassis)
+
+        # Verify the new methods were called
+        self.sb_ovn.get_chassis_and_physnets.assert_called_once()
+        self.nb_ovn.get_lswitch.assert_called_once_with(expected_group_name)
+
+    @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
+    def test_sync_ha_chassis_group_network_all_chassis_have_physnet(
+            self, mock_sync_hcg):
+        """Test that no chassis are filtered when all have required physnet."""
+        net_attrs = {az_def.AZ_HINTS: ['az0']}
+        fake_net = (
+            fakes.FakeNetwork.create_one_network(attrs=net_attrs).info())
+        mock.patch.object(self.mech_driver._plugin,
+                          'get_network', return_value=fake_net).start()
+        fake_port = fakes.FakePort.create_one_port().info()
+        fake_port['network_id'] = fake_net['id']
+
+        # Create chassis
+        ch0 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+        ch1 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+        ch2 = fakes.FakeChassis.create(az_list=['az0'], chassis_as_gw=True)
+
+        # All chassis have the required physnet
+        chassis_physnets = {
+            ch0.name: ['physnet1', 'physnet2'],
+            ch1.name: ['physnet1'],
+            ch2.name: ['physnet1', 'physnet3']
+        }
+
+        # Setup logical switch with physnet1
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'external_ids': {ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'physnet1'}
+        })
+
+        self.sb_ovn.get_extport_chassis_from_cms_options.return_value = []
+        self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
+            ch0, ch1, ch2]
+        self.sb_ovn.get_chassis_and_physnets.return_value = chassis_physnets
+        self.nb_ovn.get_lswitch.return_value = fake_ls
+        self.nb_ovn.lookup.return_value = None
+
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
+            fake_net['id'], None)
+
+        # Verify no chassis were filtered
+        mock_sync_hcg.assert_called_once()
+        hcg_info = mock_sync_hcg.call_args.args[1]
+        expected_group_name = ovn_utils.ovn_name(fake_net['id'])
+        expected_ch_list = [ch0, ch1, ch2]
+        expected_ignore_chassis = set()  # No chassis should be ignored
+
+        self.assertEqual(expected_group_name, hcg_info.group_name)
+        self.assertEqual(expected_ch_list, hcg_info.chassis_list)
+        self.assertEqual(expected_ignore_chassis, hcg_info.ignore_chassis)
+
+        # Verify the new methods were called
+        self.sb_ovn.get_chassis_and_physnets.assert_called_once()
+        self.nb_ovn.get_lswitch.assert_called_once_with(expected_group_name)
+
+    @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
+    def test_sync_ha_chassis_group_network_physnet_filtering_not_for_extport(
+            self, mock_sync_hcg):
+        """Test that physnet filtering is NOT executed for extport chassis."""
+        net_attrs = {az_def.AZ_HINTS: ['az0']}
+        fake_net = (
+            fakes.FakeNetwork.create_one_network(attrs=net_attrs).info())
+        mock.patch.object(self.mech_driver._plugin,
+                          'get_network', return_value=fake_net).start()
+        fake_port = fakes.FakePort.create_one_port().info()
+        fake_port['network_id'] = fake_net['id']
+
+        # Create extport chassis
+        ch0 = fakes.FakeChassis.create(az_list=['az0'],
+                                       chassis_as_extport=True)
+
+        self.sb_ovn.get_extport_chassis_from_cms_options.return_value = [ch0]
+        self.sb_ovn.get_chassis_host_for_port.return_value = set()
+        self.nb_ovn.lookup.return_value = None
+
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
+            fake_net['id'], None)
+
+        # Verify the physnet filtering logic was NOT executed
+        self.sb_ovn.get_chassis_and_physnets.assert_not_called()
+        self.nb_ovn.get_lswitch.assert_not_called()
+
+        # But the function should still work normally
+        mock_sync_hcg.assert_called_once()
+
     @staticmethod
     def _create_fake_hcg(name, chassis_prio):
         ha_chassis = []
