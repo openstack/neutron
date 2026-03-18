@@ -288,7 +288,7 @@ class DeleteNeutronSwitchCommand(_NeutronSwitchBase):
             nb_cmd.LrPolicyDelCommand(
                 self.api,
                 self.router_name,
-                priority=10,
+                priority=constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY,
                 match=_make_main_router_policy_match(
                     router_to_interconnect_lrp_name, chassis_lrp.name),
             ).run_idl(txn)
@@ -348,7 +348,7 @@ class ReconcileMainRouterPoliciesCommand(ovs_cmd.BaseCommand):
         _LrPolicyAddCommand(
             self.api,
             self.router.name,
-            priority=10,
+            priority=constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY,
             match=_make_main_router_policy_match(
                 self.interconnect_lrp_name, self.chassis_lrp.name),
             action='reroute',
@@ -652,7 +652,7 @@ class ReconcileChassisPeerCommand(ovs_cmd.BaseCommand):
         _LrPolicyAddCommand(
             self.api,
             self.chassis_router_name,
-            priority=10,
+            priority=constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY,
             match=match,
             action=ovsdbapp_const.POLICY_ACTION_REROUTE,
             nexthops=[lrp_peer_ip],
