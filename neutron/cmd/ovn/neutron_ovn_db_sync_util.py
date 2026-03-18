@@ -136,6 +136,17 @@ def load_db_migration_drivers(driver_name=None):
     return _load_drivers('neutron.ovn.db_migration', driver_name)
 
 
+def prepare_additional_configuration(conf, mgr):
+    for ext in mgr:
+        # TODO(slaweq): Remove that check when
+        # patch https://review.opendev.org/c/openstack/neutron-lib/+/980435
+        # will be available in the neutron-lib and
+        # 'prepare_additional_configuration' method will be available in the
+        # BaseOvnDbSynchronizer
+        if hasattr(ext.plugin, "prepare_additional_configuration"):
+            ext.plugin.prepare_additional_configuration(conf)
+
+
 def configure_mechanism_drivers(conf, mgr):
     required_mechanism_drivers = set()
     for ext in mgr:
@@ -243,6 +254,7 @@ def main():
         configure_mechanism_drivers(conf, sync_ext_mgr)
         configure_service_plugins(conf, sync_ext_mgr)
         configure_ml2_extension_drivers(conf, sync_ext_mgr)
+        prepare_additional_configuration(conf, sync_ext_mgr)
 
     else:
         LOG.error('Invalid core plugin: ["%s"].', conf.core_plugin)
