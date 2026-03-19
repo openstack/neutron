@@ -78,11 +78,31 @@ def update_network_segment(context, segment_id, segmentation_id):
 
 
 def get_network_segments(context, network_id, filter_dynamic=False):
+    """Get network segments for a single network.
+
+    :param context: neutron context
+    :param network_id: UUID of the network
+    :param filter_dynamic: Filter segments by is_dynamic flag:
+                          - False: return only static segments (default)
+                          - True: return only dynamic segments
+                          - None: return all segments (both static and dynamic)
+    :returns: list of segment dictionaries
+    """
     return get_networks_segments(
         context, [network_id], filter_dynamic)[network_id]
 
 
 def get_networks_segments(context, network_ids, filter_dynamic=False):
+    """Get network segments for multiple networks.
+
+    :param context: neutron context
+    :param network_ids: list of network UUIDs
+    :param filter_dynamic: Filter segments by is_dynamic flag:
+                          - False: return only static segments (default)
+                          - True: return only dynamic segments
+                          - None: return all segments (both static and dynamic)
+    :returns: dict mapping network_id to list of segment dictionaries
+    """
     if not network_ids:
         return {}
 
