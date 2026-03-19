@@ -364,7 +364,6 @@ line-length = 79
 select = ["C90", "E", "F", "G", "S", "UP", "W"]
 preview = true
 ignore = [
-    "E741",  # Ambiguous variable name: `l`
     "S104",  # Possible binding to all interfaces
     "S404",  # `subprocess` module is possibly insecure
     "UP031", # Use format specifiers instead of percent format

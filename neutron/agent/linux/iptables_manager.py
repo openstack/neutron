@@ -555,8 +555,8 @@ class IptablesManager:
             # line error wasn't found, print all lines instead
             log_start = 0
             log_end = len(commands)
-        log_lines = ('%7d. %s' % (idx, l)
-                     for idx, l in enumerate(
+        log_lines = ('%7d. %s' % (idx, line)
+                     for idx, line in enumerate(
                          commands[log_start:log_end],
                          log_start + 1)
                      )

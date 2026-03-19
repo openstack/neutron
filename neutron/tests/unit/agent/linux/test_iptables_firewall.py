@@ -1242,8 +1242,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         for filter_inst in [self.v4filter_inst, self.v6filter_inst]:
             comb = zip(calls, filter_inst.mock_calls)
-            for (l, r) in comb:
-                self.assertEqual(l, r)
+            for (call, mock_call) in comb:
+                self.assertEqual(call, mock_call)
             filter_inst.assert_has_calls(calls)
         self.assertIn(port['id'], self.firewall.trusted_ports)
 
@@ -1277,8 +1277,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
         for filter_inst in [self.v4filter_inst, self.v6filter_inst]:
             comb = zip(calls, filter_inst.mock_calls)
-            for (l, r) in comb:
-                self.assertEqual(l, r)
+            for (call, mock_call) in comb:
+                self.assertEqual(call, mock_call)
             filter_inst.assert_has_calls(calls)
         self.assertNotIn(port['id'], self.firewall.trusted_ports)
 
@@ -1449,8 +1449,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
                                      top=False, comment=None),
                   mock.call.add_rule('sg-chain', '-j ACCEPT')]
         comb = zip(calls, filter_inst.mock_calls)
-        for (l, r) in comb:
-            self.assertEqual(l, r)
+        for (call, mock_call) in comb:
+            self.assertEqual(call, mock_call)
         filter_inst.assert_has_calls(calls)
 
     def _test_remove_conntrack_entries(self, ethertype, protocol, direction,
