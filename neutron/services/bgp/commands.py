@@ -55,6 +55,12 @@ def _get_lrp_peer_ip(nb_idl, lrp):
         return helpers.ipv6_link_local_from_mac(peer_lrp.mac)
 
 
+def _lrps_to_chassis_routers(router):
+    return [lrp for lrp in router.ports
+            if hasattr(lrp, 'external_ids') and
+            constants.BGP_LRP_TO_CHASSIS in lrp.external_ids]
+
+
 def _get_main_router(nb_idl):
     return nb_idl.lookup('Logical_Router', bgp_config.get_main_router_name())
 
@@ -284,7 +290,7 @@ class DeleteNeutronSwitchCommand(_NeutronSwitchBase):
 
         main_router = _get_main_router(self.api)
 
-        for chassis_lrp in helpers.lrps_to_chassis_routers(main_router):
+        for chassis_lrp in _lrps_to_chassis_routers(main_router):
             nb_cmd.LrPolicyDelCommand(
                 self.api,
                 self.router_name,
@@ -316,7 +322,7 @@ class ReconcileMainRouterPoliciesForProviderCommand(ovs_cmd.BaseCommand):
         router = _get_main_router(self.api)
         lrp_interconnect_name = helpers.get_lrp_name(
             router.name, self.interconnect_switch_name)
-        for lrp in helpers.lrps_to_chassis_routers(router):
+        for lrp in _lrps_to_chassis_routers(router):
             ReconcileMainRouterPoliciesCommand(
                 self.api,
                 router,

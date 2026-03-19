@@ -100,17 +100,6 @@ def get_neutron_id_from_ovn_name(ovn_obj):
             f"OVN object {ovn_obj.name} does not contain a Neutron ID")
 
 
-# Router filtering helpers
-def _get_lrps_by_external_id(router, external_id):
-    return [lrp for lrp in router.ports
-            if hasattr(lrp, 'external_ids') and
-            external_id in lrp.external_ids]
-
-
-def lrps_to_chassis_routers(router):
-    return _get_lrps_by_external_id(router, constants.BGP_LRP_TO_CHASSIS)
-
-
 def ipv6_link_local_from_mac(mac):
     return str(netaddr.EUI(mac).ipv6_link_local())
 
