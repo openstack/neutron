@@ -305,6 +305,7 @@ class TestRouter(base.TestOVNFunctionalBase):
                 chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
         self.assertEqual(expected, sched_info)
 
+    @tests_base.unstable_test("bug 2139271")
     def test_gateway_chassis_balanced_scheduling_multiple_gw_networks(self):
         """Test that gateway_chassis registers are balanced across GW chassis.
 
