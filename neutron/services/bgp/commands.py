@@ -70,7 +70,7 @@ def _get_switch_dhcp_options(nb_idl, switch):
     n_net_id = helpers.get_neutron_id_from_ovn_name(switch)
     for dhcp_opt in nb_idl.tables['DHCP_Options'].rows.values():
         if dhcp_opt.external_ids.get(
-                 ovn_const.OVN_NETWORK_ID_EXT_ID_KEY) == n_net_id:
+                ovn_const.OVN_NETWORK_ID_EXT_ID_KEY) == n_net_id:
             yield dhcp_opt
 
 
@@ -78,7 +78,7 @@ def _get_gw_ips_for_switch(nb_idl, switch):
     gw_ips = [
         gw_ip for dhcp_opt in _get_switch_dhcp_options(nb_idl, switch)
         if (gw_ip := helpers.get_gw_ip_from_dhcp_options(
-                dhcp_opt)) is not None]
+            dhcp_opt)) is not None]
     LOG.debug("For logical switch %s, found gateway IPs: %s",
               switch.name, gw_ips)
     return gw_ips

@@ -1345,7 +1345,7 @@ class DeleteNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
         for policy in policies:
             if (policy.match == expected_match and
                     policy.priority ==
-                        constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY):
+                    constants.LR_BGP_TO_CHASSIS_POLICY_PRIORITY):
                 self.fail(
                     "Policy with match %r should not exist after delete" % (
                         expected_match,))

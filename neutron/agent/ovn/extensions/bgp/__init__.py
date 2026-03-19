@@ -81,7 +81,7 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         be configured there.
         """
         return [cidr for dev in ip_lib.get_devices_with_ip(
-                    namespace=None, name=self.hostdev_name)
+            namespace=None, name=self.hostdev_name)
                 if not (cidr := netaddr.IPNetwork(dev['cidr'])).is_loopback()]
 
     def create_bgp_bridge(self, bridge_name):
