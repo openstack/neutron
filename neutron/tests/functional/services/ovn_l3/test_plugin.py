@@ -305,23 +305,34 @@ class TestRouter(base.TestOVNFunctionalBase):
                 chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
         self.assertEqual(expected, sched_info)
 
-    def test_gateway_chassis_balanced_scheduling_multiple_gw_networks(self):
+    def test_gateway_chassis_balanced_multiple_gw_networks_3_6(self):
+        self._test_gateway_chassis_balanced_multiple_gw_networks(3, 6)
+
+    def test_gateway_chassis_balanced_multiple_gw_networks_4_8(self):
+        self._test_gateway_chassis_balanced_multiple_gw_networks(4, 8)
+
+    def test_gateway_chassis_balanced_multiple_gw_networks_5_10(self):
+        self._test_gateway_chassis_balanced_multiple_gw_networks(5, 10)
+
+    def _test_gateway_chassis_balanced_multiple_gw_networks(
+            self, num_chassis, num_networks):
         """Test that gateway_chassis registers are balanced across GW chassis.
 
-        This test creates 4 GW chassis and a router with 6 GW networks.
-        The gateway_chassis registers (3*6=18 total) should be balanced.
-        across all GW chassis. Each GW chassis should have:
-        - 2 gateway_chassis registers with priority 1
-        - 2 gateway_chassis registers with priority 2
-        - 2 gateway_chassis registers with priority 3
+        This test creates ``num_chassis`` GW chassis and a router with
+        ``num_networks`` GW networks. The gateway_chassis registers
+        (``num_chassis`` * ``num_networks``) should be balanced across all
+        GW chassis.
+        NOTE: to make a balanced distribution, the relation
+        ``num_networks`` / ``num_chassis`` must be an integer.
         """
         ovn_client = self.l3_plugin._ovn_client
         ovn_client._ovn_scheduler = l3_sched.OVNGatewayLeastLoadedScheduler()
 
-        # Create the 3rd gateway chassis.
-        chassis3 = self.add_fake_chassis(
-            'ovs-host3', physical_nets=['physnet3'],
-            enable_chassis_as_gw=True, azs=[])
+        ch_list = [self.chassis1, self.chassis2]
+        for idx in range(3, num_chassis + 1):
+            ch_list.append(self.add_fake_chassis(
+                f'ovs-host{idx}', physical_nets=['physnet3'],
+                enable_chassis_as_gw=True, azs=[]))
 
         # Create external network.
         ext_net = self._create_ext_network(
@@ -332,17 +343,14 @@ class TestRouter(base.TestOVNFunctionalBase):
         router = self._create_router('router-multi-gw')
         self._add_external_gateways(
             router['id'],
-            [{'network_id': ext_net['network']['id']} for _ in range(6)])
+            [{'network_id': ext_net['network']['id']}
+             for _ in range(num_networks)])
 
         # Verify the gateway_chassis registers are balanced.
-        # Each chassis should have 2 registers with priority 1, 2 and 3.
         sched_info = self._get_gwc_dict()
-        expected_priorities = {1: 2, 2: 2, 3: 2}
-        expected = {
-            self.chassis1: expected_priorities,
-            self.chassis2: expected_priorities,
-            chassis3: expected_priorities,
-        }
+        _prio = int(num_networks / num_chassis)
+        expected_priorities = {idx + 1: _prio for idx in range(num_chassis)}
+        expected = {ch: expected_priorities for ch in ch_list}
         self.assertEqual(expected, sched_info)
 
     @tests_base.unstable_test("bug 2143336")

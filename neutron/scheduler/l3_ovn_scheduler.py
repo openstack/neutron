@@ -14,6 +14,7 @@
 
 import abc
 import copy
+import hashlib
 import secrets
 
 from oslo_log import log
@@ -212,10 +213,52 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
                 break
 
             leastload = min(chassis_load.values())
-            chassis = secrets.SystemRandom().choice(
-                [chassis for chassis, load in chassis_load.items()
-                 if load == leastload])
-            selected_chassis.append(chassis)
+            least_loaded = [ch for ch, load in chassis_load.items()
+                           if load == leastload]
+
+            # Tie-break among chassis that share the minimum load at *this*
+            # priority. Pure random (or hash of gateway name alone) is not
+            # enough: greedy per-priority selection means prio-2 and prio-1
+            # depend on what was chosen at higher priorities, so uncorrelated
+            # tie-breaks can leave one chassis with too many bindings at a
+            # single priority (see functional tests for multi-gateway routers).
+            #
+            # Strategy: sort so we prefer the chassis that is already heavier
+            # at *lower* priorities (nearest lower priority first). That
+            # pushes "overloaded below" chassis up to the current priority and
+            # frees the lower slots for others, which self-corrects imbalance
+            # across LRP scheduling rounds. When still tied (e.g. first cycle,
+            # all zeros), use a deterministic hash of (gateway_name, priority)
+            # XOR'd with hash(chassis) so each (LRP, priority) picks a stable
+            # but distinct ordering among candidates.
+            if len(least_loaded) > 1:
+                lower_prios = [p for p in priorities if p < priority]
+
+                if gateway_name:
+                    key = '%s_%d' % (gateway_name, priority)
+                    _hash = int(hashlib.sha512(
+                        key.encode()).hexdigest(), 16)
+                else:
+                    _hash = secrets.randbits(128)
+
+                def _sort_key(chassis, _lower_prios=lower_prios,
+                              h=_hash):
+                    loads = []
+                    for lp in _lower_prios:
+                        load_at_lp = sum(
+                            1 for lrp_name, prio in
+                            all_chassis_bindings.get(chassis, [])
+                            if prio == lp)
+                        # Descending sort on lower-priority counts: larger
+                        # load_at_lp -> smaller tuple element -> sorts first.
+                        loads.append(-load_at_lp)
+                    # Final key: spread ties across chassis when counts match.
+                    loads.append(h ^ hash(chassis))
+                    return tuple(loads)
+
+                least_loaded.sort(key=_sort_key)
+
+            selected_chassis.append(least_loaded[0])
 
         return self._reorder_by_az(nb_idl, sb_idl, selected_chassis)
 
