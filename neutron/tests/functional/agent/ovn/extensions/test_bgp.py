@@ -233,7 +233,7 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
             'Open_vSwitch', '.',
             external_ids={
                 constants.AGENT_BGP_PEER_BRIDGES: 'bgp-br-1,bgp-br-2'}
-            ).execute(check_error=True)
+        ).execute(check_error=True)
 
         expected_bms = 'bgp-br-1:bgp-br-1,bgp-br-2:bgp-br-2'
         self._check_bridge_mappings(expected_bms)

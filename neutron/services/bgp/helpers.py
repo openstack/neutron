@@ -100,7 +100,7 @@ def get_neutron_id_from_ovn_name(ovn_obj):
             f"OVN object {ovn_obj.name} does not contain a Neutron ID")
 
 
-## Router filtering helpers
+# Router filtering helpers
 def _get_lrps_by_external_id(router, external_id):
     return [lrp for lrp in router.ports
             if hasattr(lrp, 'external_ids') and
