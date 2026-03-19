@@ -372,7 +372,31 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"neutron/tests/*" = ["S"]
+"neutron/tests/*" = [
+    "S101", # Use of `assert` detected
+    "S105", # Possible hardcoded password assigned
+    "S108", # Probable insecure usage of temporary file or directory
+    "S110", # `try`-`except`-`pass` detected, consider logging the exception
+    "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+]
+"neutron/tests/common/agents/ovs_agent.py" = [
+    "S324" # Probable use of insecure hash functions
+]
+"neutron/tests/fullstack/resources/config.py" = [
+    "S103" # `os.chmod` setting a permissive mask on file or directory
+]
+"neutron/tests/functional/agent/linux/test_external_process.py" = [
+    "S103" # `os.chmod` setting a permissive mask on file or directory
+]
+"neutron/tests/functional/db/test_migrations.py" = [
+    "S602" # `subprocess` call with `shell=True` identified, security issue
+]
+"neutron/tests/unit/agent/linux/test_external_process.py" = [
+    "S103" # `os.chmod` setting a permissive mask on file or directory
+]
+"neutron/tests/unit/agent/metadata/test_proxy_base.py" = [
+    "S106" # Possible hardcoded password assigned to argument
+]
 
 [tool.ruff.lint.mccabe]
 # TODO(stephenfin): It would be good to get this...lower...
