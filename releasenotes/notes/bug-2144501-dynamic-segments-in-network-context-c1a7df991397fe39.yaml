@@ -1,0 +1,12 @@
+---
+fixes:
+  - |
+    Fixed an issue where NetworkContext excluded dynamic segments from its
+    network_segments list, causing mechanism drivers to fail when accessing
+    dynamically allocated segments during hierarchical binding operations.
+    The NetworkContext now includes dynamic segments by passing
+    filter_dynamic=None to get_network_segments(), allowing the _expand_segment()
+    method to successfully find dynamic segments in the in-memory cache.
+    This fixes hierarchical binding cleanup scenarios where later drivers
+    need to access segment information that was dynamically allocated by
+    earlier drivers. [`bug 2144501 <https://bugs.launchpad.net/neutron/+bug/2144501>`_]

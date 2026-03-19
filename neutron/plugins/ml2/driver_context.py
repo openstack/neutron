@@ -78,7 +78,8 @@ class NetworkContext(MechanismDriverContext, api.NetworkContext):
         self._network = network
         self._original_network = original_network
         self._segments = segments_db.get_network_segments(
-            plugin_context, network['id']) if segments is None else segments
+            plugin_context, network['id'],
+            filter_dynamic=None) if segments is None else segments
 
     @property
     def current(self):

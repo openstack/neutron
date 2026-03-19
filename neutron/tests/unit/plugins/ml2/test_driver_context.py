@@ -23,6 +23,36 @@ from neutron.plugins.ml2 import models
 from neutron.tests import base
 
 
+class TestNetworkContext(base.BaseTestCase):
+
+    def test_network_segments_includes_dynamic_segments(self):
+        plugin = mock.Mock()
+        plugin_context = mock.Mock()
+        network = {'id': 'test-network-id'}
+
+        with mock.patch.object(driver_context.segments_db,
+                               'get_network_segments') as mock_get_segments:
+            driver_context.NetworkContext(plugin, plugin_context, network)
+            mock_get_segments.assert_called_once_with(
+                plugin_context, 'test-network-id', filter_dynamic=None)
+
+    def test_network_segments_uses_provided_segments(self):
+        plugin = mock.Mock()
+        plugin_context = mock.Mock()
+        network = {'id': 'test-network-id'}
+        provided_segments = [
+            {'id': 'seg1', 'network_type': 'vlan'},
+            {'id': 'seg2', 'network_type': 'vlan', 'is_dynamic': True}
+        ]
+
+        with mock.patch.object(driver_context.segments_db,
+                               'get_network_segments') as mock_get_segments:
+            ctx = driver_context.NetworkContext(
+                plugin, plugin_context, network, segments=provided_segments)
+            mock_get_segments.assert_not_called()
+            self.assertEqual(provided_segments, ctx.network_segments)
+
+
 class TestPortContext(base.BaseTestCase):
 
     # REVISIT(rkukura): These was originally for DvrPortContext tests,
