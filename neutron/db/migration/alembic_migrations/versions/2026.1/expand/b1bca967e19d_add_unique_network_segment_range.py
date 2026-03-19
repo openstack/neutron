@@ -24,10 +24,15 @@ Create Date: 2025-04-08 11:28:47.791807
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db import migration
+
 
 # revision identifiers, used by Alembic.
 revision = 'b1bca967e19d'
 down_revision = 'd553edeb540f'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2026_1]
 
 network_segment_range_network_type = sa.Enum(
     'vlan', 'vxlan', 'gre', 'geneve',
