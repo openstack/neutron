@@ -14,7 +14,7 @@
 #    under the License.
 
 import ipaddress
-import subprocess  # nosec
+import subprocess
 import sys
 
 import click

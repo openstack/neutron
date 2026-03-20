@@ -32,7 +32,6 @@ import webob
 import webob.exc as webexc
 import webtest
 
-import neutron
 from neutron.api import extensions
 from neutron.api import wsgi
 from neutron.common import config
