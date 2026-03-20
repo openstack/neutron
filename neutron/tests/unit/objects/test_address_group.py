@@ -31,24 +31,6 @@ class AddressGroupDbObjectTestCase(
         self.objs[0].create()
         return self.objs[0]
 
-    def test_object_version_degradation_1_1_to_1_0_no_standard_attrs(self):
-        ag_obj = self._create_test_address_group()
-        ag_obj_1_0 = ag_obj.obj_to_primitive('1.0')
-        self.assertNotIn('revision_number',
-                         ag_obj_1_0['versioned_object.data'])
-        self.assertNotIn('created_at',
-                         ag_obj_1_0['versioned_object.data'])
-        self.assertNotIn('updated_at',
-                         ag_obj_1_0['versioned_object.data'])
-        # description filed was added to initial version separately
-        self.assertIn('description',
-                      ag_obj_1_0['versioned_object.data'])
-
-    def test_object_version_degradation_1_2_to_1_1_no_shared(self):
-        ag_obj = self._create_test_address_group()
-        ag_obj_1_1 = ag_obj.obj_to_primitive('1.1')
-        self.assertNotIn('shared', ag_obj_1_1['versioned_object.data'])
-
 
 class AddressGroupRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
                                        obj_test_base.BaseDbObjectTestCase,

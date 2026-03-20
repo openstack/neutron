@@ -193,11 +193,6 @@ class PortBindingLevel(base.NeutronDbObject):
         return super().get_objects(
             context, _pager, validate_filters, **kwargs)
 
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            primitive.pop('segment_id', None)
-
 
 @base.NeutronObjectRegistry.register
 class IPAllocation(base.NeutronDbObject):
@@ -601,34 +596,6 @@ class Port(base.NeutronDbObject):
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 2):
-            binding_levels = primitive.get('binding_levels', [])
-            for lvl in binding_levels:
-                lvl['versioned_object.version'] = '1.0'
-                lvl['versioned_object.data'].pop('segment_id', None)
-        if _target_version < (1, 3):
-            bindings = primitive.pop('distributed_bindings', [])
-            primitive['distributed_binding'] = (bindings[0]
-                                                if bindings else None)
-        if _target_version < (1, 4):
-            # In version 1.4 we add support for multiple port bindings.
-            # Previous versions only support one port binding. The following
-            # lines look for the active port binding, which is the only one
-            # needed in previous versions
-            if 'bindings' in primitive:
-                original_bindings = primitive.pop('bindings')
-                primitive['binding'] = None
-                for a_binding in original_bindings:
-                    if (a_binding['versioned_object.data']['status'] ==
-                            constants.ACTIVE):
-                        primitive['binding'] = a_binding
-                        break
-        if _target_version < (1, 5):
-            primitive.pop('qos_network_policy_id', None)
-        if _target_version < (1, 6):
-            primitive.pop('numa_affinity_policy', None)
-        if _target_version < (1, 7):
-            primitive.pop('device_profile', None)
         if _target_version < (1, 8):
             primitive.pop('hints', None)
         if _target_version < (1, 9):

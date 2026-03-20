@@ -18,7 +18,6 @@ from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_utils import versionutils
-from oslo_versionedobjects import exception
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import dns as dns_models
@@ -46,13 +45,6 @@ class NetworkRBAC(rbac.RBACBaseObject):
     VERSION = '1.3'
 
     db_model = rbac_db_models.NetworkRBAC
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            standard_fields = ['id', 'project_id']
-            for f in standard_fields:
-                primitive.pop(f, None)
 
 
 @base.NeutronObjectRegistry.register
@@ -349,11 +341,6 @@ class Network(rbac_db.NeutronRbacObject):
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version >= (1, 1):
-            if primitive['mtu'] is None:
-                # mtu will not be nullable after
-                raise exception.IncompatibleObjectVersion(
-                    objver=target_version, objname=self.__class__.__name__)
         if _target_version < (1, 2):
             primitive.pop('qinq', None)
 

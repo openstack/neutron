@@ -16,7 +16,6 @@ from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.objects import utils as obj_utils
-from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
 
@@ -83,12 +82,6 @@ class Agent(base.NeutronDbObject):
             fields['resource_versions'] = (
                 cls.load_json_from_str(fields['resource_versions']))
         return fields
-
-    def obj_make_compatible(self, primitive, target_version):
-        super().obj_make_compatible(primitive, target_version)
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            primitive.pop('resources_synced', None)
 
     @property
     def is_active(self):

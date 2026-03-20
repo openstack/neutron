@@ -22,7 +22,6 @@ from neutron.db.models import l3
 from neutron.db.models import port_forwarding as models
 from neutron.objects import base
 from neutron_lib import constants as lib_const
-from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 FIELDS_NOT_SUPPORT_FILTER = ['internal_ip_address', 'internal_port']
@@ -135,22 +134,6 @@ class PortForwarding(base.NeutronDbObject):
         super().from_db_object(db_obj)
         self._load_attr_from_fip(attrname='router_id')
         self._load_attr_from_fip(attrname='floating_ip_address')
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 2):
-            primitive.pop('description', None)
-        if _target_version < (1, 3):
-            primitive['internal_port'] = int(
-                str(primitive.pop(
-                    'internal_port_range',
-                    str(primitive.get('internal_port',
-                                      '')))).split(':', maxsplit=1)[0])
-            primitive['external_port'] = int(
-                str(primitive.pop(
-                    'external_port_range',
-                    str(primitive.get('external_port',
-                                      '')))).split(':', maxsplit=1)[0])
 
     @staticmethod
     def _modify_single_ports_to_db(result):

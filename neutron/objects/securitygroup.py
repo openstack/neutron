@@ -110,10 +110,6 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
                         rule['versioned_object.data'], version)
                     rule['versioned_object.version'] = version
 
-        if _target_version < (1, 1):
-            primitive.pop('shared')
-        if _target_version < (1, 2):
-            primitive.pop('stateful')
         if _target_version < (1, 3):
             if 'rules' in primitive:
                 _filter_rules(primitive['rules'], '1.0')
@@ -196,10 +192,6 @@ class SecurityGroupRule(base.NeutronDbObject):
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            primitive.pop('remote_address_group_id', None)
-        if _target_version < (1, 2):
-            primitive.pop('normalized_cidr', None)
         if _target_version < (1, 3):
             primitive.pop('belongs_to_default_sg', None)
 

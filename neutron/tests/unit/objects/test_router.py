@@ -176,14 +176,6 @@ class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             self.context, router_id=router_id)
         self.assertEqual([], gw_binding)
 
-    def test_object_version_degradation_1_1_to_1_0_no_qos_policy_id(self):
-        self.objs[0].create()
-        router_obj = self.objs[0]
-        router_dict = router_obj.obj_to_primitive('1.1')
-        self.assertIn('qos_policy_id', router_dict['versioned_object.data'])
-        router_dict = router_obj.obj_to_primitive('1.0')
-        self.assertNotIn('qos_policy_id', router_dict['versioned_object.data'])
-
     def test_get_router_ids_without_router_std_attrs(self):
         def create_r_attr_reg(idx):
             with db_api.CONTEXT_WRITER.using(self.context):
@@ -327,17 +319,6 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj = router.FloatingIP.get_object(self.context, id=obj.id)
         self.assertEqual(policy_obj.id, obj.qos_network_policy_id)
         self.assertIsNone(obj.qos_policy_id)
-
-    def test_v1_1_to_v1_0_drops_qos_policy_id(self):
-        obj = self._make_object(self.obj_fields[0])
-        obj_v1_0 = obj.obj_to_primitive(target_version='1.0')
-        self.assertNotIn('qos_policy_id', obj_v1_0['versioned_object.data'])
-
-    def test_v1_2_to_v1_1_drops_qos_network_policy_id(self):
-        obj = self._make_object(self.obj_fields[0])
-        obj_v1_1 = obj.obj_to_primitive(target_version='1.1')
-        self.assertNotIn('qos_network_policy_id',
-                         obj_v1_1['versioned_object.data'])
 
     def test_get_scoped_floating_ips(self):
         def compare_results(router_ids, original_fips, host=None):
