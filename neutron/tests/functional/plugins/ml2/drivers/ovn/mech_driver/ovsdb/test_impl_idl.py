@@ -28,6 +28,7 @@ from ovsdbapp.tests.functional import base
 from ovsdbapp.tests import utils
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb \
     import impl_idl_ovn as impl
@@ -589,6 +590,57 @@ class TestNbApi(BaseOvnIdlTest):
                 self.nbapi.lookup,
                 "BFD",
                 bfd_uuid)
+
+    def test_delete_acl_by_sg_id(self):
+        """Test ``delete_acl_by_sg_id`` deletes an ACL using the SG rule ID."""
+        sg_id = uuidutils.generate_uuid()
+        sg_rule_id = uuidutils.generate_uuid()
+        pg_name = ovn_utils.ovn_port_group_name(sg_id)
+        external_ids = {ovn_const.OVN_SG_EXT_ID_KEY: sg_id}
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.pg_add(name=pg_name, acls=[],
+                                     external_ids=external_ids))
+            acl = {
+                'port_group': pg_name,
+                'priority': ovn_const.ACL_PRIORITY_ALLOW,
+                'action': ovn_const.ACL_ACTION_ALLOW_RELATED,
+                'direction': 'to-lport',
+                'match': f'outport == @{pg_name} && ip4',
+                ovn_const.OVN_SG_RULE_EXT_ID_KEY: sg_rule_id,
+            }
+            txn.add(self.nbapi.pg_acl_add(**acl, may_exist=True))
+
+        port_group = self.nbapi.get_port_group(pg_name)
+        self.assertIsNotNone(port_group)
+        acls_before = [a for a in port_group.acls
+                       if (getattr(a, 'external_ids', {}).get(
+                           ovn_const.OVN_SG_RULE_EXT_ID_KEY) == sg_rule_id)]
+        self.assertEqual(1, len(acls_before),
+                         'ACL with sg_rule_id should exist before delete')
+
+        # Execute twice, the operation is idempotent: if the ACL does not
+        # exist, the command does nothing.
+        for _ in range(2):
+            self.nbapi.delete_acl_by_sg_id(sg_id, sg_rule_id).execute(
+                check_error=True)
+
+            port_group = self.nbapi.get_port_group(pg_name)
+            self.assertIsNotNone(port_group)
+            acls_after = [a for a in port_group.acls
+                          if (getattr(a, 'external_ids', {}).get(
+                              ovn_const.OVN_SG_RULE_EXT_ID_KEY) == sg_rule_id)]
+            self.assertEqual(0, len(acls_after),
+                            'ACL with sg_rule_id should be removed after '
+                            'delete')
+
+    def test_delete_acl_by_sg_id_port_group_missing(self):
+        """Try to delete an ACL in a missing port group, no exception raised"""
+        sg_id = uuidutils.generate_uuid()
+        sg_rule_id = uuidutils.generate_uuid()
+        # Should not raise when port group does not exist and if_exists=True
+        self.nbapi.delete_acl_by_sg_id(
+            sg_id, sg_rule_id, if_exists=True).execute(check_error=True)
 
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
