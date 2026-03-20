@@ -651,14 +651,6 @@ def get_virtual_port_parents(context, virtual_ip, subnet_id, port_id):
     return parents
 
 
-def sort_ips_by_version(addresses):
-    ip_map = {'ip4': [], 'ip6': []}
-    for addr in addresses:
-        ip_version = netaddr.IPNetwork(addr).version
-        ip_map['ip%d' % ip_version].append(addr)
-    return ip_map
-
-
 def is_lsp_router_port(neutron_port=None, lsp=None):
     if neutron_port:
         return neutron_port.get('device_owner') in const.ROUTER_PORT_OWNERS
