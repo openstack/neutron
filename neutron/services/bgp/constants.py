@@ -45,7 +45,7 @@ RELATED_RESOURCE_TAG = 'neutron-bgp-related-resource'
 class Enum(enum.Enum):
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
 
 class Action(Enum):

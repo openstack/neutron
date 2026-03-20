@@ -45,7 +45,7 @@ class Bridge:
     def _apply_flows_as_bundle(self, flows):
         """Apply multiple OpenFlow rules as a bundle using temporary file"""
         with tempfile.NamedTemporaryFile(mode='w', suffix='.flows',
-                                        prefix='bgp_', delete=True) as f:
+                                         prefix='bgp_', delete=True) as f:
             f.write("delete\n")
             for flow in flows:
                 f.write(f"{flow}\n")
@@ -147,9 +147,9 @@ class BGPChassisBridge(Bridge):
         per chassis BGP router, so we flood the traffic to both.
         """
         flows = [(f"priority=100,in_port={self.nic_ofport},icmp6,"
-                 f"icmp_type={icmp_type} "
-                 f"actions=NORMAL,mod_dl_dst:{self.lrp_mac},"
-                 f"output:{self.patch_port_ofport}")
+                  f"icmp_type={icmp_type} "
+                  f"actions=NORMAL,mod_dl_dst:{self.lrp_mac},"
+                  f"output:{self.patch_port_ofport}")
                  for icmp_type in [133, 134, 135, 136]]
 
         return flows
