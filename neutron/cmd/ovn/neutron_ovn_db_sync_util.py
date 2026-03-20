@@ -14,6 +14,7 @@
 
 import copy
 
+from neutron_lib.ovn import constants as ovn_const
 from neutron_lib.ovn import db_sync as db_sync_base
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -22,7 +23,6 @@ from oslo_log import log as logging
 from stevedore import enabled
 
 from neutron.common import config as common_config
-from neutron.common.ovn import constants as ovn_const
 from neutron.conf.agent import securitygroups_rpc
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_db_sync as sync_conf

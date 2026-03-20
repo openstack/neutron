@@ -25,6 +25,7 @@ from neutron_lib.api.definitions import port_security as ps
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib.ovn import constants as n_lib_ovn_const
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.services.qos import constants as qos_const
 from oslo_config import cfg
@@ -1764,21 +1765,21 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             self.assertIn(ext_pg['name'], pgs)
 
     def test_ovn_nb_sync_repair(self):
-        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+        self._test_ovn_nb_sync_helper(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
 
     def test_ovn_nb_sync_repair_delete_ovn_nb_db(self):
         # In this test case, the ovsdb-server for OVN NB DB is restarted
         # with empty OVN NB DB.
-        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_REPAIR,
+        self._test_ovn_nb_sync_helper(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR,
                                       modify_resources=False,
                                       restart_ovsdb_processes=True)
 
     def test_ovn_nb_sync_log(self):
-        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_LOG,
+        self._test_ovn_nb_sync_helper(n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG,
                                       should_match_after_sync=False)
 
     def test_ovn_nb_sync_off(self):
-        self._test_ovn_nb_sync_helper(ovn_const.OVN_DB_SYNC_MODE_OFF,
+        self._test_ovn_nb_sync_helper(n_lib_ovn_const.OVN_DB_SYNC_MODE_OFF,
                                       should_match_after_sync=False)
 
     def test_sync_port_qos_policies(self):
@@ -1842,8 +1843,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG,
-            is_maintenance=True)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG, is_maintenance=True)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_port_qos_policies(ctx)
         self._validate_qos_records()
@@ -1928,8 +1929,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         # Manually sync port QoS registers.
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG,
-            is_maintenance=True)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG, is_maintenance=True)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_fip_qos_policies(ctx)
         self._validate_qos_records()
@@ -1984,7 +1985,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self._validate_acls(should_match=False)
 
         nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         ctx = context.get_admin_context()
         nb_synchronizer.sync_acls(ctx)
         self._validate_acls()
@@ -2066,7 +2068,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                              group='ovn')
             nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
                 self.plugin, self.mech_driver,
-                ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+                n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
             nb_synchronizer.sync_fip_dnat_rules()
             nat = self.nb_api.get_floatingip(fip['id'])
             stateless = strutils.bool_from_string(nat['options']['stateless'])
@@ -2085,7 +2087,8 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         self.mock_set_lock = self._mock_set_lock.start()
         super().setUp(maintenance_worker=True)
         self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         self.addCleanup(self.sb_synchronizer.stop)
         self.ctx = context.get_admin_context()
         self.host1 = uuidutils.generate_uuid()

@@ -16,6 +16,7 @@ import collections
 from unittest import mock
 
 from neutron_lib import constants as const
+from neutron_lib.ovn import constants as n_lib_ovn_const
 from neutron_lib.services.logapi import constants as log_const
 from oslo_utils import uuidutils
 
@@ -1030,7 +1031,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         create_metadata_list = self.networks
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         self._test_ovn_nb_sync_helper(ovn_nb_synchronizer,
                                       self.networks,
                                       self.ports,
@@ -1090,7 +1092,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         create_metadata_list = []
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG)
         self._test_ovn_nb_sync_helper(ovn_nb_synchronizer,
                                       self.networks,
                                       self.ports,
@@ -1123,7 +1126,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                                   expected_added,
                                                   expected_deleted):
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         add_routes, del_routes = ovn_nb_synchronizer. \
             _calculate_routes_differences(ovn_routes, db_routes)
         self.assertEqual(add_routes, expected_added)
@@ -1365,7 +1369,8 @@ class TestIsRouterPortChanged(test_mech_driver.OVNMechanismDriverTestCase):
     def setUp(self):
         super().setUp()
         self.ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG)
 
         self.db_router_port = {
             'id': 'aa076509-915d-4b1c-8d9d-3db53d9c5faf',
@@ -1404,7 +1409,8 @@ class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
     def test_ovn_sb_sync(self):
         ovn_sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
-            self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG)
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG)
         ovn_api = ovn_sb_synchronizer.ovn_sb_api
         hostname_with_physnets = {'hostname1': ['physnet1', 'physnet2'],
                                   'hostname2': ['physnet1']}

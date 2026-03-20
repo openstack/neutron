@@ -17,6 +17,7 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.ovn import constants as n_lib_ovn_const
 from neutron_lib.ovn import db_sync as db_sync_base
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -90,7 +91,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         super().stop()
 
     def do_sync(self):
-        if self.mode == ovn_const.OVN_DB_SYNC_MODE_OFF:
+        if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_OFF:
             LOG.debug("Neutron sync mode is off, not checking OVN "
                       "Northbound DB for consistency")
             return
@@ -156,7 +157,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             LOG.warning('Number of Port Groups to add: %d, remove: %d',
                         len(add_pgs), len(remove_pgs))
 
-        if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR and (
+        if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR and (
                 add_pgs or remove_pgs):
             if add_pgs:
                 db_ports = self.core_plugin.get_ports(ctx)
@@ -370,7 +371,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                         {'add': num_acls_to_add,
                          'remove': num_acls_to_remove})
 
-        if (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR and
+        if (self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR and
                 (num_acls_to_add or num_acls_to_remove)):
             one_time_pg_resync = True
             with self.ovn_nb_api.transaction(check_error=True) as txn:
@@ -719,7 +720,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                 continue
             LOG.warning("Router found in Neutron but not in "
                         "OVN NB DB, router id=%s", router['id'])
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 try:
                     LOG.warning("Creating the router %s in OVN NB DB",
                                 router['id'])
@@ -760,7 +761,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         for rp_id, rrport in db_router_ports.items():
             LOG.warning("Router Port found in Neutron but not in OVN NB "
                         "DB, router port_id=%s", rrport['id'])
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 try:
                     LOG.warning("Creating the router port %s in OVN NB DB",
                                 rrport['id'])
@@ -775,7 +776,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             LOG.warning("Router Port port_id=%s needs to be updated in OVN NB "
                         "DB as network(s) have changed",
                         rport['id'])
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 try:
                     LOG.warning(
                         "Updating networks on router port %s in OVN NB DB",
@@ -789,7 +790,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             for lrouter in del_lrouters_list:
                 LOG.warning("Router found in OVN NB DB but not in "
                             "Neutron, router id=%s", lrouter['name'])
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     LOG.warning("Deleting the router %s from OVN NB DB",
                                 lrouter['name'])
                     txn.add(self.ovn_nb_api.lr_del(
@@ -798,7 +799,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             for lrport_info in del_lrouter_ports_list:
                 LOG.warning("Router Port found in OVN NB DB but not in "
                             "Neutron, port_id=%s", lrport_info['port'])
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     LOG.warning("Deleting the port %s from OVN NB DB",
                                 lrport_info['port'])
                     txn.add(self.ovn_nb_api.delete_lrouter_port(
@@ -810,7 +811,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.warning("Router %(id)s static routes %(route)s "
                                 "found in Neutron but not in OVN NB DB",
                                 {'id': sroute['id'], 'route': sroute['add']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning("Add static routes %s to OVN NB DB",
                                     sroute['add'])
                         for route in sroute['add']:
@@ -828,7 +829,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.warning("Router %(id)s static routes %(route)s "
                                 "found in OVN NB DB but not in Neutron",
                                 {'id': sroute['id'], 'route': sroute['del']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning("Delete static routes %s from OVN NB DB",
                                     sroute['del'])
                         routes_to_delete = [
@@ -842,7 +843,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.warning("Router %(id)s floating IPs %(fip)s "
                                 "found in OVN NB DB but not in Neutron",
                                 {'id': fip['id'], 'fip': fip['del']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning(
                             "Delete floating IPs %s from OVN NB DB",
                             fip['del'])
@@ -853,7 +854,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.warning("Router %(id)s floating IPs %(fip)s "
                                 "found in Neutron but not in OVN NB DB",
                                 {'id': fip['id'], 'fip': fip['add']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning("Add floating IPs %s to OVN NB DB",
                                     fip['add'])
                         for nat in fip['add']:
@@ -866,7 +867,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                                 "IPs %(fip)s found in OVN NB DB but not in "
                                 "Neutron",
                                 {'id': pf['id'], 'fip': pf['del']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning(
                             "Delete port forwarding for floating IPs %s from "
                             "OVN NB DB",
@@ -878,7 +879,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                                 "IPs %(fip)s Neutron out of sync or missing "
                                 "in OVN NB DB",
                                 {'id': pf['id'], 'fip': pf['add']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning("Add port forwarding for floating IPs %s "
                                     "to OVN NB DB",
                                     pf['add'])
@@ -891,7 +892,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.warning("Router %(id)s SNAT %(snat)s "
                                 "found in OVN NB DB but not in Neutron",
                                 {'id': snat['id'], 'snat': snat['del']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning("Delete SNATs %s from OVN NB DB",
                                     snat['del'])
                         for nat in snat['del']:
@@ -904,7 +905,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.warning("Router %(id)s SNAT %(snat)s "
                                 "found in Neutron but not in OVN NB DB",
                                 {'id': snat['id'], 'snat': snat['add']})
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning("Add SNATs %s to OVN NB DB",
                                     snat['add'])
                         for nat in snat['add']:
@@ -952,7 +953,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         for subnet_id, subnet in db_subnets.items():
             LOG.warning('DHCP options for subnet %s present in '
                         'Neutron but out of sync with OVN NB DB', subnet_id)
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 # If neutron-server is running we could race and find a
                 # subnet without a cached network, just skip it to avoid
                 # a KeyError below.
@@ -981,7 +982,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             LOG.warning('Out of sync DHCP options for subnet %s '
                         'found in OVN NB DB which need to be deleted',
                         dhcp_opt['external_ids']['subnet_id'])
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 LOG.warning('Deleting DHCP options for subnet %s ',
                             dhcp_opt['external_ids']['subnet_id'])
                 txn_commands.append(self.ovn_nb_api.delete_dhcp_options(
@@ -1004,7 +1005,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                         constants.IP_VERSION_6: 'dhcpv6_options'}
         ovn_port_dhcp_opts = {constants.IP_VERSION_4: ovn_port_dhcpv4_opts,
                               constants.IP_VERSION_6: ovn_port_dhcpv6_opts}
-        if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+        if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
             for port in ports_need_sync_dhcp_opts:
                 LOG.warning('Updating DHCP options for port %s in OVN NB DB',
                             port['id'])
@@ -1044,7 +1045,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                      'subnet_id': dhcp_opt['external_ids']['subnet_id'],
                      'port_id': port_id})
 
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     LOG.warning('Deleting port DHCPv%d options for '
                                 '(subnet %s, port %s)', ip_v,
                                 dhcp_opt['external_ids']['subnet_id'], port_id)
@@ -1076,7 +1077,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             if not metadata_ports:
                 LOG.warning('Missing metadata port found in Neutron for '
                             'network %s', net['id'])
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     try:
                         # Create the missing port in both Neutron and OVN.
                         LOG.warning('Creating missing metadata port in '
@@ -1093,7 +1094,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                 for port in metadata_ports[1:]:
                     LOG.warning('Unnecessary DHCP port %s for network %s '
                                 'found in Neutron', port['id'], net['id'])
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning('Deleting unnecessary DHCP port %s for '
                                     'network %s', port['id'], net['id'])
                         self.core_plugin.delete_port(ctx, port['id'])
@@ -1103,14 +1104,14 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.warning('Metadata port %s for network %s found in '
                                 'Neutron but not in OVN NB DB',
                                 port['id'], net['id'])
-                    if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                         LOG.warning('Creating metadata port %s for network '
                                     '%s in OVN NB DB',
                                     port['id'], net['id'])
                         self._create_port_in_ovn(ctx, port)
                     db_ports.pop(port['id'])
 
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 try:
                     # Make sure that this port has an IP address in all the
                     # subnets
@@ -1185,7 +1186,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         for network in db_networks.values():
             LOG.warning("Network found in Neutron but not in "
                         "OVN NB DB, network_id=%s", network['id'])
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 try:
                     LOG.warning('Creating network %s in OVN NB DB',
                                 network['id'])
@@ -1206,7 +1207,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         for port_id, port in db_ports.items():
             LOG.warning("Port found in Neutron but not in OVN NB "
                         "DB, port_id=%s", port['id'])
-            if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 try:
                     LOG.warning('Creating the port %s in OVN NB DB',
                                 port['id'])
@@ -1229,7 +1230,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             for lswitch in del_lswitchs_list:
                 LOG.warning("Network found in OVN NB DB but not in "
                             "Neutron, network_id=%s", lswitch['name'])
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     LOG.warning('Deleting network %s from OVN NB DB',
                                 lswitch['name'])
                     txn.add(self.ovn_nb_api.ls_del(lswitch['name']))
@@ -1242,7 +1243,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                             "network_id=%(net)s segment_id=%(seg)s",
                             {'net': network['id'],
                              'seg': segment['id']})
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     LOG.warning('Creating provider network port %s in '
                                 'OVN NB DB',
                                 utils.ovn_provnet_port_name(segment['id']))
@@ -1258,7 +1259,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                             "port_name=%(lport)s",
                             {'net': network,
                              'seg': lport})
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     LOG.warning('Deleting provider network port %s from '
                                 'OVN NB DB', lport)
                     txn.add(self.ovn_nb_api.delete_lswitch_port(
@@ -1268,7 +1269,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             for lport_info in del_lports_list:
                 LOG.warning("Port found in OVN NB DB but not in "
                             "Neutron, port_id=%s", lport_info['port'])
-                if self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                     LOG.warning('Deleting port %s from OVN NB DB',
                                 lport_info['port'])
                     txn.add(self.ovn_nb_api.delete_lswitch_port(
@@ -1294,7 +1295,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                   '%s', str(datetime.now()))
 
     def sync_port_dns_records(self, ctx):
-        if self.mode != ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+        if self.mode != n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
             return
         LOG.debug('OVN-NB Sync port DNS records started @ %s',
                   str(datetime.now()))
@@ -1351,7 +1352,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         if not _ports:
             # Nothing to do.
             pass
-        elif not (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR or
+        elif not (self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR or
                   self.is_maintenance):
             for port in _ports:
                 LOG.warning('Port QoS policy missing in OVN NB DB, port_id=%s',
@@ -1379,7 +1380,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         if not _fips:
             # Nothing to do.
             pass
-        elif not (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR or
+        elif not (self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR or
                   self.is_maintenance):
             for fip in _fips:
                 LOG.warning('Floating IP QoS policy missing in OVN NB DB, '
@@ -1406,7 +1407,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         if not nat_rules:
             # Nothing to do.
             pass
-        elif not (self.mode == ovn_const.OVN_DB_SYNC_MODE_REPAIR or
+        elif not (self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR or
                   self.is_maintenance):
             LOG.warning('The floating IP NAT rules must be updated to match '
                         'the ``stateless_nat_enabled`` configuration flag.')
