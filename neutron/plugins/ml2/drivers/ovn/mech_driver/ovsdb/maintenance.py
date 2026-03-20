@@ -86,6 +86,58 @@ def has_lock_periodic(*args, periodic_run_limit=0, **kwargs):
     return wrapper
 
 
+def log_maintenance_task(func=None, *, start_message=None):
+    """Wrap a maintenance task with timing logs.
+
+    Use ``@log_maintenance_task`` or pass optional ``start_message``: a static
+    string logged at DEBUG immediately after the standard "Starting OVN
+    maintenance task" line. For DEBUG lines that must run only after
+    in-method guards (early returns), keep those in the task body instead of
+    ``start_message``.
+    """
+
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapper(*args, **kwargs):
+            LOG.debug("Starting OVN maintenance task: %s", f.__name__)
+            if start_message:
+                LOG.debug("OVN maintenance task: %s", start_message)
+            watch = timeutils.StopWatch()
+            watch.start()
+            never_again = False
+            result = None
+            try:
+                result = f(*args, **kwargs)
+            except periodics.NeverAgain:
+                # Catch it, flag it, and move on to the shared logging below
+                never_again = True
+            except Exception:
+                # Real failures still get their own exception logging
+                watch.stop()
+                LOG.exception(
+                    "OVN maintenance task %(name)s failed after "
+                    "%(time).3f seconds",
+                    {'name': f.__name__, 'time': watch.elapsed()})
+                raise
+            # This handles BOTH normal success and NeverAgain
+            watch.stop()
+            LOG.info(
+                "OVN maintenance task %(name)s finished in "
+                "%(time).3f seconds",
+                {'name': f.__name__, 'time': watch.elapsed()})
+
+            # Re-raise the signal if the flag was set
+            if never_again:
+                raise periodics.NeverAgain()
+
+            return result
+        return wrapper
+
+    if func is not None:
+        return decorator(func)
+    return decorator
+
+
 class MaintenanceThread:
 
     def __init__(self):
@@ -180,7 +232,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         self._sb_idl = self._ovn_client._sb_idl
         self._idl = self._nb_idl.idl
         self._idl.set_lock(MAINTENANCE_NB_IDL_LOCK_NAME)
-        self._sync_timer = timeutils.StopWatch()
         super().__init__(ovn_client)
 
         self._resources_func_map = {
@@ -376,6 +427,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     @has_lock_periodic(spacing=ovn_const.DB_CONSISTENCY_CHECK_INTERVAL,
                        run_immediately=True)
+    @log_maintenance_task(
+        start_message='Checking Neutron and OVN revision consistency.')
     def check_for_inconsistencies(self):
         admin_context = n_context.get_admin_context()
         create_update_inconsistencies = (
@@ -390,7 +443,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                   'and OVN databases started')
         self._log_maintenance_inconsistencies(create_update_inconsistencies,
                                               delete_inconsistencies)
-        self._sync_timer.restart()
 
         dbg_log_msg = ('Maintenance task: Fixing resource %(res_uuid)s '
                        '(type: %(res_type)s) at %(type_)s')
@@ -435,10 +487,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                               'resource %(res_uuid)s (type: %(res_type)s)',
                               {'res_uuid': row.resource_uuid,
                                'res_type': row.resource_type})
-
-        self._sync_timer.stop()
-        LOG.info('Maintenance task: Synchronization completed '
-                 '(took %.2f seconds)', self._sync_timer.elapsed())
 
     def _create_lrouter_port(self, context, port):
         router_id = port['device_id']
@@ -496,15 +544,14 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Check missing prefix router_name',
+            'in external_ids of LRPs.'))
     def update_lrouter_ports_ext_ids_name_prefix(self):
         """Update OVN logical router ports if missing external ids
         "neutron-" prefix for router name.
         """
-        LOG.debug(
-            'Maintenance task: Check missing prefix router_name in '
-            'external_ids of LRPs.')
-        self._sync_timer.restart()
-
         lrp_key = ('external_ids', '!=',
                    {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: ''})
         lrp_router_id_map = {
@@ -529,9 +576,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                         'Logical_Router_Port', lrp_name,
                         ('external_ids', router_name)))
 
-        self._sync_timer.stop()
-        LOG.info('Maintenance task: Check missing prefix router_name in LRPs '
-                 '(took %.2f seconds)', self._sync_timer.elapsed())
         raise periodics.NeverAgain()
 
     # A static spacing value is used here, but this method will only run
@@ -540,13 +584,13 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Check global DHCP options consistency.')
     def check_global_dhcp_opts(self):
         if (not ovn_conf.get_global_dhcpv4_opts() and
                 not ovn_conf.get_global_dhcpv6_opts()):
             # No need to scan the subnets if the settings are unset.
             raise periodics.NeverAgain()
-        LOG.debug('Maintenance task: Checking DHCP options on subnets')
-        self._sync_timer.restart()
         fix_subnets = self._check_subnet_global_dhcp_opts()
         if fix_subnets:
             admin_context = n_context.get_admin_context()
@@ -563,10 +607,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     LOG.exception('Failed to update subnet %s',
                                   subnet['id'])
 
-        self._sync_timer.stop()
-        LOG.info('Maintenance task: DHCP options check completed '
-                 '(took %.2f seconds)', self._sync_timer.elapsed())
-
         raise periodics.NeverAgain()
 
     # A static spacing value is used here, but this method will only run
@@ -575,6 +615,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Check for IGMP snoop support.')
     def check_for_igmp_snoop_support(self):
         snooping_conf = ovs_conf.get_igmp_snooping_enabled()
         flood_conf = ovs_conf.get_igmp_flood_unregistered()
@@ -609,6 +651,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Ensure localnet ports have learn-fdb set per '
+            'configuration.'))
     def check_localnet_port_has_learn_fdb(self):
         ports = self._nb_idl.db_find_rows(
             "Logical_Switch_Port", ("type", "=", ovn_const.LSP_TYPE_LOCALNET)
@@ -639,6 +685,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Align router gateway redirect-type for provider '
+            'VLAN/FLAT networks.'))
     def check_redirect_type_router_gateway_ports(self):
         """Check OVN router gateway ports
         Check for the option "redirect-type=bridged" value for
@@ -709,6 +759,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Align reside-on-redirect-chassis on VLAN/FLAT '
+            'distributed ports.'))
     def check_provider_distributed_ports(self):
         """Check provider (VLAN and FLAT) distributed ports
         Check for the option "reside-on-redirect-chassis" value for
@@ -748,6 +802,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Apply FDB aging limits to NB_Global and provider '
+            'switches.'))
     def check_fdb_aging_settings(self):
         """Check FDB aging settings
 
@@ -789,6 +847,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Update MAC binding aging and router MAC age limits.')
     def update_mac_aging_settings(self):
         """Ensure that MAC_Binding aging options are set"""
         removal_limit = ovn_conf.get_ovn_mac_binding_removal_limit()
@@ -804,6 +864,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Sync baremetal port DHCP options with configuration.')
     def check_baremetal_ports_dhcp_options(self):
         """Update baremetal ports DHCP options
 
@@ -851,6 +913,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Remove default routes with empty destination from '
+            'routers.'))
     def check_router_default_route_empty_dst_ip(self):
         """Check routers with default route with empty dst-ip (LP: #2002993).
         """
@@ -880,6 +946,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Refresh ACL logging fair meter after configuration '
+            'reload.'))
     def check_fair_meter_consistency(self):
         """Update the logging meter after neutron-server reload
 
@@ -894,6 +964,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     @has_lock_periodic(spacing=86400, run_immediately=True)
+    @log_maintenance_task(
+        start_message='Purge stale hash ring nodes older than five days.')
     def cleanup_old_hash_ring_nodes(self):
         """Daily task to cleanup old stable Hash Ring node entries.
 
@@ -906,6 +978,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         hash_ring_db.cleanup_old_nodes(context, days=5)
 
     @has_lock_periodic(spacing=86400, run_immediately=True)
+    @log_maintenance_task(
+        start_message='Apply ovn_nb_global settings to NB_Global options.')
     def configure_nb_global(self):
         """Configure Northbound OVN NB_Global options
 
@@ -922,6 +996,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     @has_lock_periodic(spacing=86400, run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Sync router.distributed with distributed floating IP '
+            'config.'))
     def update_router_distributed_flag(self):
         """Set "enable_distributed_floating_ip" on the router.distributed flag.
 
@@ -945,6 +1023,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Set network type and physnet external_ids on logical '
+            'switches.'))
     def set_network_type_and_physnet(self):
         """Add the network type and physnet to the Logical_Switch registers"""
         context = n_context.get_admin_context()
@@ -980,6 +1062,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Sync broadcast-arps-to-all-routers on external '
+            'networks.'))
     def check_network_broadcast_arps_to_all_routers(self):
         """Check the broadcast-arps-to-all-routers config
 
@@ -1015,6 +1101,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # TODO(racosta): Remove this method in the E+2 cycle (SLURP release)
     @has_lock_periodic(spacing=600, run_immediately=True)
+    @log_maintenance_task(
+        start_message='Mark Neutron-owned static routes in OVN external_ids.')
     def update_router_static_routes(self):
         """Set external_ids column to any Neutron's owned static route.
         """
@@ -1060,6 +1148,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Set distributed floating IP flag in NB_Global.')
     def set_fip_distributed_flag(self):
         """Set the NB_Global.external_ids:fip-distributed flag.
 
@@ -1081,6 +1171,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Apply ovn_owned option on DNS records per '
+            'configuration.'))
     def set_ovn_owned_dns_option(self):
         """Set the ovn_owned option as configured for the DNS records"""
         cmds = []
@@ -1104,6 +1198,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Apply HA chassis failover BFD settings to NB_Global.')
     def update_ha_failover(self):
         """Set the OVN BFD settings to control the HA failover timeout"""
         strategy = cfg.CONF.ovn.ha_failover_strategy
@@ -1160,6 +1256,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Backfill network_id on DHCP_Options external_ids.')
     def check_dhcp_options_consistency(self):
         admin_context = n_context.get_admin_context()
         cmds = []
@@ -1199,6 +1297,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
+    @log_maintenance_task(
+        start_message='Repair Address_Sets and ACLs for address group rules.')
     def update_security_group_with_address_group(self):
         """Create all Address_Set and update the corresponding ACLs"""
         # 1. List all Address Groups with missing Address_Set registers.
