@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    ML2/OVN virtual ports no longer store the host information in the
+    port binding ``host`` field. Instead, the host where the virtual port
+    is active is now reported in the VIF details under the
+    ``parent_hostname`` key.

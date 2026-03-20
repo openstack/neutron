@@ -1216,6 +1216,38 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(ralonsoh): to remove in H+3=K (2028.1) cycle (2nd next SLURP
+    # release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def update_virtual_port_parent_hostname(self):
+        """Virtual ports should have parent_hostname, NOT portbinding.host"""
+        # 1. List and store all virtual ports with
+        # "external_ids:neutron:host_id"
+        lsp_with_host_id = []
+        for lsp in self._nb_idl.lsp_list().execute(check_error=True):
+            if lsp.type != ovn_const.LSP_TYPE_VIRTUAL:
+                continue
+
+            if lsp.external_ids.get(ovn_const.OVN_HOST_ID_EXT_ID_KEY):
+                lsp_with_host_id.append(lsp)
+
+        # 2. For all these LSPs, **if present** during this second loop,
+        # (2.1) update the LSP.external_ids dictionary, (2.2) remove the
+        # Neutron port host and (2.3) update the Neutron port VIF details.
+        admin_context = n_context.get_admin_context()
+        for lsp in lsp_with_host_id:
+            host_id = lsp.external_ids[ovn_const.OVN_HOST_ID_EXT_ID_KEY]
+            self._ovn_client.update_virtual_port_parent_host(
+                admin_context, lsp.name, hostname=host_id)
+            self._nb_idl.db_remove(
+                'Logical_Switch_Port', lsp.uuid, 'external_ids',
+                ovn_const.OVN_HOST_ID_EXT_ID_KEY).execute(check_error=True)
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics:
 

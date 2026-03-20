@@ -827,6 +827,31 @@ class OVNClient:
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
+    def update_virtual_port_parent_host(self, context, port_id,
+                                        chassis_id=None, hostname=None):
+        if chassis_id:
+            hostname = self._sb_idl.db_get(
+                'Chassis', chassis_id, 'hostname').execute(check_error=True)
+        else:
+            hostname = hostname or ''
+
+        # Updates neutron database with hostname for virtual port
+        self._plugin.update_virtual_port_parent_host(context, port_id,
+                                                     hostname)
+        db_port = self._plugin.get_port(context, port_id)
+        check_rev_cmd = self._nb_idl.check_revision_number(
+            port_id, db_port, ovn_const.TYPE_PORTS)
+        # Updates OVN NB database with the parent hostname for LSP virtual port
+        with self._nb_idl.transaction(check_error=True) as txn:
+            ext_ids = ('external_ids',
+                       {ovn_const.OVN_PARENT_HOSTNAME_EXT_ID_KEY: hostname})
+            txn.add(
+                self._nb_idl.db_set(
+                    'Logical_Switch_Port', port_id, ext_ids))
+            txn.add(check_rev_cmd)
+        if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
+            db_rev.bump_revision(context, db_port, ovn_const.TYPE_PORTS)
+
     def _delete_port(self, context, port_id, port_object=None):
         ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port_id)
         ovn_network_name = ovn_port.external_ids.get(

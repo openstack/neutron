@@ -1259,31 +1259,6 @@ class OVNMechanismDriver(api.MechanismDriver):
                                     vif_details)
                 break
 
-    def update_virtual_port_host(self, port_id, chassis_id):
-        if chassis_id:
-            hostname = self.sb_ovn.db_get(
-                'Chassis', chassis_id, 'hostname').execute(check_error=True)
-        else:
-            hostname = ''
-
-        # Updates neutron database with hostname for virtual port
-        context = n_context.get_admin_context()
-        self._plugin.update_virtual_port_host(context, port_id, hostname)
-        db_port = self._plugin.get_port(context, port_id)
-        check_rev_cmd = self.nb_ovn.check_revision_number(
-            port_id, db_port, ovn_const.TYPE_PORTS)
-        # Updates OVN NB database with hostname for lsp virtual port
-        with self.nb_ovn.transaction(check_error=True) as txn:
-            ext_ids = ('external_ids',
-                       {ovn_const.OVN_HOST_ID_EXT_ID_KEY: hostname})
-            txn.add(
-                self.nb_ovn.db_set(
-                    'Logical_Switch_Port', port_id, ext_ids))
-            txn.add(check_rev_cmd)
-        if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
-            ovn_revision_numbers_db.bump_revision(context, db_port,
-                                                  ovn_const.TYPE_PORTS)
-
     def get_workers(self):
         """Get any worker instances that should have their own process
 

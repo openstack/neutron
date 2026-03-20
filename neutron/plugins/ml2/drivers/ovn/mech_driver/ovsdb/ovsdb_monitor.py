@@ -665,6 +665,7 @@ class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
         events = (self.ROW_UPDATE, self.ROW_DELETE)
         super().__init__(events, table, None)
         self.event_name = 'PortBindingUpdateVirtualPortsEvent'
+        self.admin_context = neutron_context.get_admin_context()
 
     def match_fn(self, event, row, old):
         # This event should catch the events related to virtual parents (that
@@ -709,7 +710,8 @@ class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
                 ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
             chassis_uuid = (row.chassis[0].uuid if
                             row.chassis and virtual_parents else None)
-        self.driver.update_virtual_port_host(row.logical_port, chassis_uuid)
+        self.driver._ovn_client.update_virtual_port_parent_host(
+            self.admin_context, row.logical_port, chassis_id=chassis_uuid)
 
 
 class FIPAddDeleteEvent(row_event.RowEvent):
