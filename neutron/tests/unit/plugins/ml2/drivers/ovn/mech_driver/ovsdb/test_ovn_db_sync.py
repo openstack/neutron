@@ -33,6 +33,7 @@ from neutron.tests.unit.services.logapi.drivers.ovn import test_driver
 
 OvnPortInfo = collections.namedtuple('OvnPortInfo', ['name'])
 
+
 class FakeACL:
 
     def __init__(self, **kwargs):
@@ -1021,7 +1022,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                        'tcp.dst >= 1 && tcp.dst <= 65535'),
              'meter': 'acl_log_meter' if test_logging else [],
              ovn_const.OVN_SG_RULE_EXT_ID_KEY: 'ruleid2'
-            },
+             },
         ]
         del_acls_list = [
             ('pg_sg_stale', 'to-lport', 1000, 'outport == @pg_sg_stale')]

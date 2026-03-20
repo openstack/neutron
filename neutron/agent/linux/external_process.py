@@ -57,6 +57,7 @@ class ProcessManager(MonitoredProcess):
 
     Note: The manager expects uuid to be in cmdline.
     """
+
     def __init__(self, conf, uuid, namespace=None, service=None,
                  pids_path=None, default_cmd_callback=None,
                  cmd_addl_env=None, pid_file=None, run_as_root=False,

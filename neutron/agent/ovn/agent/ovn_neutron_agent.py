@@ -76,6 +76,7 @@ class ChassisPrivateCreateEvent(row_event.RowEvent):
     to do a full sync to make sure that we capture all changes while the
     connection to OVSDB was down.
     """
+
     def __init__(self, ovn_agent):
         self._first_time = True
         self.ovn_agent = ovn_agent

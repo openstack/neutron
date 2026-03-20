@@ -58,6 +58,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
     def test__flood_cache_for_query_pulls_once(self):
         resources = [OVOLikeThing(66), OVOLikeThing(67)]
         received_kw = []
+
         def receiver(r, e, t, payload):
             return received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_UPDATE)
@@ -117,6 +118,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
                  OVOLikeThing(4, size='xlarge'), OVOLikeThing(6, size='small')]
         for goose in geese:
             self.rcache.record_resource_update(self.ctx, 'goose', goose)
+
         def has_large(o):
             return 'large' in o.size
         self.assertCountEqual([geese[0], geese[2]],
@@ -139,6 +141,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
 
     def test_record_resource_update(self):
         received_kw = []
+
         def receiver(r, e, t, payload):
             return received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_UPDATE)
@@ -162,6 +165,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
 
     def test_record_resource_delete(self):
         received_kw = []
+
         def receiver(r, e, t, payload):
             return received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_DELETE)
@@ -179,6 +183,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
 
     def test_record_resource_delete_ignores_dups(self):
         received_kw = []
+
         def receiver(r, e, t, payload):
             return received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_DELETE)

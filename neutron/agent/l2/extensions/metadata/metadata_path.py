@@ -235,7 +235,7 @@ class MetadataPathAgentExtension(
             raise RuntimeError(
                 _("Failed to set mac address "
                   "for dev %(dev)s, error: %(error)s") %
-                  {'dev': self.META_DEV_NAME, 'error': e})
+                {'dev': self.META_DEV_NAME, 'error': e})
 
         cidr = "{}/{}".format(
             self.provider_gateway_ip,

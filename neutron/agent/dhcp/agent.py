@@ -996,6 +996,7 @@ class DhcpPluginApi(base_agent_rpc.BasePluginApi):
 
 class NetworkCache:
     """Agent cache of the current network state."""
+
     def __init__(self):
         self.cache = {}
         self.subnet_lookup = {}

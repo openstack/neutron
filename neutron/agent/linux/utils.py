@@ -434,6 +434,7 @@ def read_if_exists(path: str, run_as_root=False) -> str:
 
 class UnixDomainHTTPConnection(httplib.HTTPConnection):
     """Connection class for HTTP over UNIX domain socket."""
+
     def __init__(self, host, port=None, strict=None, timeout=None,
                  proxy_info=None):
         httplib.HTTPConnection.__init__(self, host, port, strict)

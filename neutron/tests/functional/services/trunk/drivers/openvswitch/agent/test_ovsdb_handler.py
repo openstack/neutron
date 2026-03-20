@@ -39,6 +39,7 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
     This suite aims for interaction between events coming from OVSDB monitor,
     agent and wiring ports via trunk bridge to integration bridge.
     """
+
     def setUp(self):
         """Prepare resources.
 

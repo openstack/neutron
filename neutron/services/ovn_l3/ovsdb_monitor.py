@@ -30,6 +30,7 @@ class LogicalRouterPortEvent(row_event.RowEvent):
     HA_Chassis_Group, matching the Logical_Router Gateway_Chassis.
     See LP#2125553.
     """
+
     def __init__(self, driver):
         self.driver = driver
         self.l3_plugin = directory.get_plugin(constants.L3)
@@ -95,6 +96,7 @@ class LogicalRouterPortGatewayChassisEvent(row_event.RowEvent):
     When the Gateway_Chassis list of a Logical_Router_Port changes, it is
     needed to update the linked HA_Chassis_Group registers.
     """
+
     def __init__(self, driver):
         self.driver = driver
         self.l3_plugin = directory.get_plugin(constants.L3)

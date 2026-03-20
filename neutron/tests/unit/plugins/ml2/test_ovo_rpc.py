@@ -32,6 +32,7 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
         self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self.received = []
+
         def receive(s, ctx, obs, evt):
             return self.received.append((obs[0], evt))
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'

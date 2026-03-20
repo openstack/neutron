@@ -156,6 +156,7 @@ class exception_logger:
               any occurred
 
     """
+
     def __init__(self, logger=None):
         self.logger = logger
 

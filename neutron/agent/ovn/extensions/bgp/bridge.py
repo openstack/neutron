@@ -64,6 +64,7 @@ class BGPChassisBridge(Bridge):
     The BGP bridge is the provider bridge that connects a chassis to a BGP
     physical interface connected to a BGP peer, typically a leaf switch.
     """
+
     def __init__(self, bgp_agent_api, name):
         super().__init__(bgp_agent_api, name)
         self._requirements = [

@@ -116,6 +116,7 @@ class TestBridgeHasInstancePort(base.BaseTestCase):
 
 class TestOVSDBHandler(base.BaseTestCase):
     """Test that RPC or OVSDB failures do not cause crash."""
+
     def setUp(self):
         super().setUp()
         self.ovsdb_handler = ovsdb_handler.OVSDBHandler(mock.sentinel.manager)

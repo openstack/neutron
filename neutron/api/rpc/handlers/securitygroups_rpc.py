@@ -41,6 +41,7 @@ class SecurityGroupServerRpcApi:
     SecurityGroupServerRpcCallback.  For more information about changing rpc
     interfaces, see doc/source/contributor/internals/rpc_api.rst.
     """
+
     def __init__(self, topic):
         target = oslo_messaging.Target(
             topic=topic, version='1.0',
@@ -239,6 +240,7 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
     from the updates delivered to the push notifications cache rather than
     calling the server.
     """
+
     def __init__(self, rcache):
         self.rcache = rcache
         registry.subscribe(self._clear_child_sg_rules, 'SecurityGroup',

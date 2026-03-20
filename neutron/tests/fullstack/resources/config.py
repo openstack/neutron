@@ -50,6 +50,7 @@ class ConfigFixture(config_fixtures.ConfigFileFixture):
     then the dynamic configuration values won't change. The correct usage
     is initializing a new instance of the class.
     """
+
     def __init__(self, env_desc, host_desc, temp_dir, base_filename):
         super().__init__(
             base_filename, config_fixtures.ConfigDict(), temp_dir)

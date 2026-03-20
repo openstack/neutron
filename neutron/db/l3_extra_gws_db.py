@@ -317,8 +317,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                         reason=_('could not match a gateway port attached to '
                                  'network %(net_id)s based on the specified '
                                  'fixed IPs %(fips)s') %
-                                 {'net_id': net_id,
-                                  'fips': gw_info['external_fixed_ips']})
+                        {'net_id': net_id,
+                         'fips': gw_info['external_fixed_ips']})
                 nonexistent_port_info.append(gw_info)
         return matched_port_ids, part_matched_port_ids, nonexistent_port_info
 

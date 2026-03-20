@@ -2244,7 +2244,7 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
                 'device_id': ['fake_device']
             })
         subnet_id = \
-                gw_ports[0]['fixed_ips'][0]['subnet_id'] if gw_ports else None
+            gw_ports[0]['fixed_ips'][0]['subnet_id'] if gw_ports else None
 
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-fake_device', ip_prefix=constants.IPv4_ANY,

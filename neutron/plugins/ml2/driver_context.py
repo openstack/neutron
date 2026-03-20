@@ -27,6 +27,7 @@ LOG = log.getLogger(__name__)
 
 class InstanceSnapshot:
     """Used to avoid holding references to DB objects in PortContext."""
+
     def __init__(self, obj):
         self._model_class = obj.__class__
         self._identity_key = sqlalchemy.orm.util.identity_key(instance=obj)[1]
@@ -58,6 +59,7 @@ class InstanceSnapshot:
 
 class MechanismDriverContext:
     """MechanismDriver context base class."""
+
     def __init__(self, plugin, plugin_context):
         self._plugin = plugin
         # This temporarily creates a reference loop, but the

@@ -196,6 +196,7 @@ def migrate_neutron_dbs_to_ovn(drv):
     LOG.info("Database migration from OVS to OVN by plugin %s completed",
              drv.name)
 
+
 def main():
     """Main method for syncing neutron networks and ports with ovn nb db.
 

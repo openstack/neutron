@@ -263,7 +263,7 @@ ovn_opts = [
                help=_('HA chassis group failover strategy. Determines how '
                       'aggressively OVN fails over to a new chassis when the '
                       'current one becomes unavailable. Supported values: %s')
-                      % ','.join(ovn_const.OVN_HA_FAILOVER_CHOICES),
+               % ','.join(ovn_const.OVN_HA_FAILOVER_CHOICES),
                ),
     cfg.IntOpt('bfd_min_rx',
                default=ovn_const.OVN_BFD_MIN_RX,

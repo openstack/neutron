@@ -62,6 +62,7 @@ class FdbPopulationAgentExtension(
         """FDB table tracker is a helper class
         intended to keep track of the existing FDB rules.
         """
+
         def __init__(self, devices):
             self.device_to_macs = {}
             self.portid_to_mac = {}

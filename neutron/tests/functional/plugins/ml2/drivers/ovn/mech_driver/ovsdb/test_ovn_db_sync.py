@@ -63,7 +63,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             maintenance.DBInconsistenciesPeriodics, 'has_lock',
             mock.PropertyMock(return_value=True))
         self.mock_has_lock = self._mock_has_lock.start()
-        self._mock_set_lock =mock.patch.object(
+        self._mock_set_lock = mock.patch.object(
             ovsdb_monitor.BaseOvnIdl, 'set_lock')
         self.mock_set_lock = self._mock_set_lock.start()
         super().setUp(maintenance_worker=True)
@@ -1402,10 +1402,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                     'neutron-' + str(router_id), None)
                 all_lports = getattr(lrouter, 'ports', [])
                 managed_lports = [
-                        lport for lport in all_lports
-                        if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY in
-                            lport.external_ids)
-                        ]
+                    lport for lport in all_lports
+                    if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY in
+                        lport.external_ids)
+                ]
 
                 plugin_lrouter_port_ids = [lport.name.replace('lrp-', '')
                                            for lport in managed_lports]
@@ -1438,10 +1438,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                     'neutron-' + router_id, None)
                 all_lports = getattr(lrouter, 'ports', [])
                 managed_lports = [
-                        lport for lport in all_lports
-                        if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY in
-                            lport.external_ids)
-                        ]
+                    lport for lport in all_lports
+                    if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY in
+                        lport.external_ids)
+                ]
                 monitor_lrouter_port_ids = [lport.name.replace('lrp-', '')
                                             for lport in managed_lports]
                 monitor_lport_networks = {
@@ -2082,7 +2082,7 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
             maintenance.DBInconsistenciesPeriodics, 'has_lock',
             mock.PropertyMock(return_value=True))
         self.mock_has_lock = self._mock_has_lock.start()
-        self._mock_set_lock =mock.patch.object(
+        self._mock_set_lock = mock.patch.object(
             ovsdb_monitor.BaseOvnIdl, 'set_lock')
         self.mock_set_lock = self._mock_set_lock.start()
         super().setUp(maintenance_worker=True)

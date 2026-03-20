@@ -303,7 +303,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         driver = self.drivers.get(network_type)
         if isinstance(driver.obj, api.TypeDriver):
             return driver.obj.allocate_tenant_segment(context.session,
-                                                       filters)
+                                                      filters)
         return driver.obj.allocate_tenant_segment(context, filters)
 
     def _allocate_project_net_segment(self, context, filters=None):

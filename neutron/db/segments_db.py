@@ -173,6 +173,7 @@ def network_segments_exist_in_range(context, network_type, physical_network,
     return bool(network_obj.NetworkSegment.count_segments(
         context, network_type, physical_network, segment_range=segment_range))
 
+
 def min_max_actual_segments_in_range(context, network_type, physical_network,
                                      segment_range=None):
     """Return the minimum and maximum segmentation IDs used in a network

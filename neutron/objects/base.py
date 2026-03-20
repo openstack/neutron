@@ -112,6 +112,7 @@ class Pager:
     This class represents a pager object. It is consumed by get_objects to
     specify sorting and pagination criteria.
     '''
+
     def __init__(self, sorts=None, limit=None, page_reverse=None, marker=None):
         '''Initialize
 

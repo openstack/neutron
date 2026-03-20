@@ -536,6 +536,7 @@ class LogicalSwitchPortUpdateUpEvent(row_event.RowEvent):
 
     This happens when the VM goes up.
     """
+
     def __init__(self, driver):
         self.driver = driver
         table = 'Logical_Switch_Port'
@@ -566,6 +567,7 @@ class LogicalSwitchPortUpdateDownEvent(row_event.RowEvent):
 
     This happens when the VM goes down or the port is disabled.
     """
+
     def __init__(self, driver):
         self.driver = driver
         table = 'Logical_Switch_Port'
@@ -594,6 +596,7 @@ class LogicalSwitchPortUpdateDownEvent(row_event.RowEvent):
 
 class LogicalSwitchPortUpdateLogicalRouterPortEvent(row_event.RowEvent):
     """Row update event - Logical_Switch_Port, that updates the sibling LRP"""
+
     def __init__(self, driver):
         self.driver = driver
         table = 'Logical_Switch_Port'
@@ -655,6 +658,7 @@ class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
     The goal of this event is to catch the events of the virtual ports and
     update the hostname in the related "portbinding" register.
     """
+
     def __init__(self, driver):
         self.driver = driver
         table = 'Port_Binding'
@@ -713,6 +717,7 @@ class FIPAddDeleteEvent(row_event.RowEvent):
 
     This happens when a FIP is created or removed.
     """
+
     def __init__(self, driver):
         self.driver = driver
         table = 'NAT'
@@ -736,6 +741,7 @@ class HAChassisGroupRouterEvent(row_event.RowEvent):
     updated), those routers with a HA_Chassis_Group related should update the
     "LR.options.chassis" value.
     """
+
     def __init__(self, driver):
         self.driver = driver
         table = 'HA_Chassis_Group'

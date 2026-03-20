@@ -447,10 +447,10 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             else:
                 external_ids = ovn_route.get('external_ids', {})
 
-                #NOTE(tpsilva): only add Neutron-managed routes
+                # NOTE(tpsilva): only add Neutron-managed routes
                 if (strutils.bool_from_string(
                     external_ids.get(
-                    ovn_const.OVN_LRSR_EXT_ID_KEY, 'false')) or
+                        ovn_const.OVN_LRSR_EXT_ID_KEY, 'false')) or
                         strutils.bool_from_string(
                         external_ids.get(
                         ovn_const.OVN_ROUTER_IS_EXT_GW, 'false'))):

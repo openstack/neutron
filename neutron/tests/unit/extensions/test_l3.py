@@ -4303,6 +4303,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_delete_precommit_event(self):
         deleted = []
+
         def auditor(r, e, t, payload):
             return deleted.append(payload.resource_id)
         registry.subscribe(auditor, resources.ROUTER, events.PRECOMMIT_DELETE)

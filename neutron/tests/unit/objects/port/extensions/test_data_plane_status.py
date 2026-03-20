@@ -30,6 +30,7 @@ class DataPlaneStatusDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def setUp(self):
         super().setUp()
         net = self._create_test_network()
+
         def getter():
             return self._create_test_port(network_id=net.id).id
         self.update_obj_fields({'port_id': getter})

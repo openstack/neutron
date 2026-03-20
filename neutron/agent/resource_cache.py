@@ -33,6 +33,7 @@ class RemoteResourceCache:
 
     This is currently only compatible with OVO objects that have an ID.
     """
+
     def __init__(self, resource_types):
         self.resource_types = resource_types
         self._cache_by_type_and_id = {rt: {} for rt in self.resource_types}

@@ -157,7 +157,6 @@ def get_provider_driver_class(driver, namespace=SERVICE_PROVIDERS):
 
 
 def parse_service_provider_opt(service_module='neutron', service_type=None):
-
     """Parse service definition opts and returns result."""
     def validate_name(name):
         if len(name) > db_const.NAME_FIELD_SIZE:

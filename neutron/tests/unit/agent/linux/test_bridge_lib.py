@@ -73,6 +73,7 @@ class BridgeLibTest(base.BaseTestCase):
 
     def test_owns_interface(self):
         br = bridge_lib.BridgeDevice('br-int')
+
         def exists(path):
             return path == "/sys/class/net/br-int/brif/abc"
         with mock.patch('os.path.exists', side_effect=exists):

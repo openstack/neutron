@@ -44,6 +44,7 @@ class MetadataPluginAPI(base_agent_rpc.BasePluginApi):
     API version history:
         1.0 - Initial version.
     """
+
     def __init__(self, topic):
         super().__init__(
             topic=topic,

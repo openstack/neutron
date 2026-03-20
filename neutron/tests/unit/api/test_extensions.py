@@ -610,6 +610,7 @@ class ExtensionManagerTest(base.BaseTestCase):
             This Extension doesn't implement extension methods :
             get_name, get_description and get_updated
             """
+
             def get_alias(self):
                 return "invalid_extension"
 
@@ -824,6 +825,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
             This will work with any plugin implementing NeutronPluginBase
             """
+
             def get_plugin_interface(self):
                 return None
 

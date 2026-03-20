@@ -56,6 +56,7 @@ class StringSetMatcher:
 
     Example: "a,b,45" == "b,45,a"
     """
+
     def __init__(self, string, separator=','):
         self.separator = separator
         self.set = set(string.split(self.separator))

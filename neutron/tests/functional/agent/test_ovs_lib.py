@@ -323,6 +323,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         # bond ports don't have records in the Interface table but they do in
         # the Port table
         orig = self.br.get_port_name_list
+
         def new_port_name_list():
             return orig() + ['bondport']
         mock.patch.object(self.br, 'get_port_name_list',
@@ -347,6 +348,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
 
         # return an extra port to make sure the db list ignores it
         orig = self.br.get_port_name_list
+
         def new_port_name_list():
             return orig() + ['anotherport']
         mock.patch.object(self.br, 'get_port_name_list',

@@ -69,6 +69,7 @@ def _sync_lock(f):
 class ChassisPrivateCreateEvent(extension_manager.OVNExtensionEvent,
                                 row_event.RowEvent):
     """Row create event - Chassis name == our_chassis."""
+
     def __init__(self, ovn_agent):
         self._first_time = True
         events = (self.ROW_CREATE,)

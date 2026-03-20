@@ -344,7 +344,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             raise RuntimeError(
                 _("Failed to set mac address to: %(mac)s; "
                   "Current mac: %(current_mac)s") %
-                  {'mac': mac_address, 'current_mac': current_mac})
+                {'mac': mac_address, 'current_mac': current_mac})
 
     def _ensure_device_address(self, device, mac_address):
         mac_address = converters.convert_to_sanitized_mac_address(mac_address)

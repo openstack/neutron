@@ -41,6 +41,7 @@ class FipRulePriorityAllocator(ItemAllocator):
         This class provides an allocator which saves the priorities
         to a datastore which will survive L3 agent restarts.
     """
+
     def __init__(self, data_store_path, priority_rule_start,
                  priority_rule_end):
         """Create the necessary pool and create the item allocator

@@ -33,6 +33,7 @@ class FakePlugin:
 
 class TestSnatLogRequestValidations(base.BaseTestCase):
     """Test validation for SNAT log request"""
+
     def setUp(self):
         self.log_plugin = FakePlugin()
         importutils.import_module('neutron.services.logapi.common.'

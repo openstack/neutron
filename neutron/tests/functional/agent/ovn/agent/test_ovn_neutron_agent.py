@@ -73,7 +73,7 @@ class TestOVNNeutronAgentBase(base.TestOVNFunctionalBase):
         for extension in ovn_agent.ext_manager:
             self.ovs_idl_events += extension.obj.ovs_idl_events
         self.ovs_idl_events = [e(ovn_agent) for e in
-                                         set(self.ovs_idl_events)]
+                               set(self.ovs_idl_events)]
         ovsdb = impl_idl.api_factory()
         ovsdb.idl.notify_handler.watch_events(self.ovs_idl_events)
 

@@ -177,6 +177,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
 
 class TestServiceTypeExtensionManager:
     """Mock extensions manager."""
+
     def get_resources(self):
         return (servicetype.Servicetype.get_resources() +
                 dp.Dummy.get_resources())
@@ -232,6 +233,7 @@ class ServiceTypeExtensionTestCase(ServiceTypeExtensionTestCaseBase):
 
 class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
     """Tests ServiceTypemanager as a public API."""
+
     def setUp(self):
         self.service_providers = mock.patch.object(
             provconf.NeutronModule, 'service_providers').start()
