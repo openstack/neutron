@@ -364,7 +364,7 @@ exclude = "(?x)(^neutron/tests/$)"
 line-length = 79
 
 [tool.ruff.lint]
-select = ["E4", "E5", "E7", "E9", "F", "G", "S", "UP"]
+select = ["C90", "E", "F", "G", "S", "UP", "W"]
 preview = true
 ignore = [
     "E741",  # Ambiguous variable name: `l`
@@ -376,3 +376,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "neutron/tests/*" = ["S"]
+
+[tool.ruff.lint.mccabe]
+# TODO(stephenfin): It would be good to get this...lower...
+max-complexity = 69

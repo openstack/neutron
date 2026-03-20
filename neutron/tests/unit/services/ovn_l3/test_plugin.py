@@ -136,7 +136,7 @@ class BaseTestOVNL3RouterPluginMixin:
         self.fake_external_fixed_ips = {
             'network_id': 'ext-network-id',
             'external_fixed_ips': [{'ip_address': '192.168.1.1',
-                                    'subnet_id': 'ext-subnet-id'}],}
+                                    'subnet_id': 'ext-subnet-id'}]}
         self.fake_router_with_ext_gw = {
             'id': 'router-id',
             'name': 'router',

@@ -700,7 +700,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
 
         }
         expect = binding_profile.copy()
-        del(expect[constants.PORT_CAP_PARAM])
+        expect.pop(constants.PORT_CAP_PARAM)
         self.assertEqual(
             utils.BPInfo(expect, portbindings.VNIC_DIRECT,
                          [constants.PORT_CAP_SWITCHDEV]),
@@ -716,7 +716,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
 
         }
         expect = binding_profile.copy()
-        del(expect[constants.PORT_CAP_PARAM])
+        expect.pop(constants.PORT_CAP_PARAM)
         self.assertEqual(
             utils.BPInfo(expect, portbindings.VNIC_DIRECT,
                          [constants.PORT_CAP_SWITCHDEV]),
@@ -751,7 +751,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             constants.PORT_CAP_PARAM: capabilities
         }
         expect = binding_profile.copy()
-        del(expect[constants.PORT_CAP_PARAM])
+        expect.pop(constants.PORT_CAP_PARAM)
         self.assertEqual(
             utils.BPInfo(expect, portbindings.VNIC_REMOTE_MANAGED,
                          capabilities),
@@ -769,8 +769,8 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'optional_information_provided_by_nova': 'not_consumed_by_neutron',
         }
         expect = binding_profile.copy()
-        del(expect[constants.PORT_CAP_PARAM])
-        del(expect['optional_information_provided_by_nova'])
+        expect.pop(constants.PORT_CAP_PARAM)
+        expect.pop('optional_information_provided_by_nova')
         self.assertEqual(
             utils.BPInfo(expect, portbindings.VNIC_DIRECT,
                          [constants.PORT_CAP_SWITCHDEV]),
@@ -825,17 +825,17 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'other_key': 'value',
         }
         # This param set is valid for VNIC_FAKE_NORMAL with 'other_key' pruned.
-        expected_bp = binding_profile.copy()
-        del(expected_bp['other_key'])
+        expect = binding_profile.copy()
+        expect.pop('other_key')
         self.assertEqual(
-            utils.BPInfo(expected_bp, self.VNIC_FAKE_NORMAL, []),
+            utils.BPInfo(expect, self.VNIC_FAKE_NORMAL, []),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
         # It is valid for VNIC_FAKE_THIRD
-        expected_bp = binding_profile.copy()
+        expect = binding_profile.copy()
         self.assertEqual(
-            utils.BPInfo(expected_bp, self.VNIC_FAKE_THIRD, []),
+            utils.BPInfo(expect, self.VNIC_FAKE_THIRD, []),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_THIRD,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
@@ -849,7 +849,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         }
         # This param set is not valid for VNIC_FAKE_THIRD without capability
         expect = binding_profile.copy()
-        del(expect['third_key'])
+        expect.pop('third_key')
         self.assertRaises(
             neutron_lib.exceptions.InvalidInput,
             utils.validate_and_get_data_from_binding_profile,
@@ -875,7 +875,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'third_key': 'value',
         }
         expect = binding_profile.copy()
-        del(expect[constants.PORT_CAP_PARAM])
+        expect.pop(constants.PORT_CAP_PARAM)
         self.assertEqual(
             utils.BPInfo(expect, self.VNIC_FAKE_OTHER,
                          [constants.PORT_CAP_SWITCHDEV]),

@@ -131,7 +131,7 @@ class DHCPIPv6ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
             self.no_gateway_port_info, has_gateway_ip=False, zero_time=True
         )
 
-    def _test_get_dhcp_options(self, port_info,has_gateway_ip=False,
+    def _test_get_dhcp_options(self, port_info, has_gateway_ip=False,
                                zero_time=False):
         ip_info = self.dhcp6_responer.get_port_ip(port_info, ip_version=6)
         mac = port_info['mac_address']

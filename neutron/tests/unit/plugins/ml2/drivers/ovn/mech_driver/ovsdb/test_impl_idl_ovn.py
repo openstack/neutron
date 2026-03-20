@@ -35,7 +35,7 @@ class TestDBImplIdlOvn(base.BaseTestCase):
             # Pre-populate ovs idl "._data"
             fake_data = copy.deepcopy(fake_attr)
             try:
-                del fake_data["unit_test_id"]
+                fake_data.pop("unit_test_id")
             except KeyError:
                 pass
             setattr(fake_row, "_data", fake_data)
@@ -656,7 +656,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
         # NOTE(fnordahl): The `Gateway_Chassis` table being present without
         # proper associations fools the test, remove for now.
-        del(self._tables['Gateway_Chassis'])
+        self._tables.pop('Gateway_Chassis')
 
         bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings()
         expected = {'host-1': [utils.ovn_lrouter_port_name('orp-id-a1'),
@@ -678,7 +678,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
         # NOTE(fnordahl): The `Gateway_Chassis` table being present without
         # proper associations fools the test, remove for now.
-        del(self._tables['Gateway_Chassis'])
+        self._tables.pop('Gateway_Chassis')
 
         chassis = self.nb_ovn_idl.get_gateway_chassis_binding(
             utils.ovn_lrouter_port_name('orp-id-a1'))
@@ -700,7 +700,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
         # NOTE(fnordahl): The `Gateway_Chassis` table being present without
         # proper associations fools the test, remove for now.
-        del(self._tables['Gateway_Chassis'])
+        self._tables.pop('Gateway_Chassis')
 
         # Port physnet-dict
         port_physnet_dict = {
@@ -740,7 +740,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
 
         # NOTE(fnordahl): The `Gateway_Chassis` table being present without
         # proper associations fools the test, remove for now.
-        del(self._tables['Gateway_Chassis'])
+        self._tables.pop('Gateway_Chassis')
 
         # The LRP is on host-2 now
         router_row = self._find_ovsdb_fake_row(self.lrp_table,

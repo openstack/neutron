@@ -108,7 +108,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
     @staticmethod
     def _reset_meter_id_generator_singleton():
         if hasattr(qos_driver.MeterIDGenerator, '_instance'):
-            del(qos_driver.MeterIDGenerator._instance)
+            del qos_driver.MeterIDGenerator._instance
 
     def _create_bw_limit_rule_obj(self, direction):
         rule_obj = rule.QosBandwidthLimitRule()

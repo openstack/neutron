@@ -48,35 +48,33 @@ class TestExtensionDriver(TestExtensionDriverBase):
         self.val_by_id = {}
 
     def _check_create(self, session, data, result):
-        assert(isinstance(session, oslo_db.sqlalchemy.session.Session))
-        assert(isinstance(data, dict))
-        assert('id' not in data)
-        assert(isinstance(result, dict))
-        assert(result['id'] is not None)
+        assert isinstance(session, oslo_db.sqlalchemy.session.Session)
+        assert isinstance(data, dict)
+        assert 'id' not in data
+        assert isinstance(result, dict)
+        assert result['id'] is not None
 
     def _check_update(self, session, data, result):
-        assert(isinstance(session, oslo_db.sqlalchemy.session.Session))
-        assert(isinstance(data, dict))
-        assert(isinstance(result, dict))
-        assert(result['id'] is not None)
+        assert isinstance(session, oslo_db.sqlalchemy.session.Session)
+        assert isinstance(data, dict)
+        assert isinstance(result, dict)
+        assert result['id'] is not None
 
     def _check_extend(self, session, result, entry,
                       expected_db_entry_class, expected_obj_entry_class=None):
         # TODO(slaweq): After converting all code to use Subnet OVO,
         # expected_db_entry_class can be removed as only OVO object
         # should be expected here
-        assert(isinstance(session, oslo_db.sqlalchemy.session.Session))
-        assert(isinstance(result, dict))
-        assert(result['id'] is not None)
+        assert isinstance(session, oslo_db.sqlalchemy.session.Session)
+        assert isinstance(result, dict)
+        assert result['id'] is not None
         if expected_obj_entry_class:
-            assert(
-                isinstance(
-                    entry, expected_db_entry_class | expected_obj_entry_class
-                )
+            assert isinstance(
+                entry, expected_db_entry_class | expected_obj_entry_class
             )
         else:
-            assert(isinstance(entry, expected_db_entry_class))
-        assert(entry.id == result['id'])
+            assert isinstance(entry, expected_db_entry_class)
+        assert entry.id == result['id']
 
     def _store_change(self, result, data, field):
         if field in data and data[field] != constants.ATTR_NOT_SPECIFIED:
