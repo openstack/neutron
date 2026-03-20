@@ -32,7 +32,6 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import event as row_event
-from ovsdbapp.backend.ovs_idl import rowview
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -44,8 +43,6 @@ from neutron.objects import network as network_obj
 from neutron.objects import ports as ports_obj
 from neutron.objects import router as router_obj
 from neutron.objects import securitygroup as sg_obj
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
-    as qos_extension
 from neutron import service
 
 
@@ -1130,29 +1127,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                    }
         self._nb_idl.set_nb_global_options(**options).execute(
             check_error=True)
-
-        raise periodics.NeverAgain()
-
-    # TODO(ralonsoh): to remove in E+4 cycle (2nd next SLURP release)
-    @has_lock_periodic(
-        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
-        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
-        run_immediately=True)
-    def update_qos_fip_rule_priority(self):
-        """The new QoS FIP rule priority is OVN_QOS_FIP_RULE_PRIORITY"""
-        cmds = []
-        table = self._nb_idl.tables['QoS']
-        for qos_rule in table.rows.values():
-            qos_rule = rowview.RowView(qos_rule)
-            if qos_rule.external_ids.get(ovn_const.OVN_FIP_EXT_ID_KEY):
-                cmds.append(self._nb_idl.db_set(
-                    'QoS', qos_rule.uuid,
-                    ('priority', qos_extension.OVN_QOS_FIP_RULE_PRIORITY)))
-
-        if cmds:
-            with self._nb_idl.transaction(check_error=True) as txn:
-                for cmd in cmds:
-                    txn.add(cmd)
 
         raise periodics.NeverAgain()
 
