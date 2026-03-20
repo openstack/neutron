@@ -61,6 +61,8 @@ class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
 
     def create_connection(self, schema):
         idl = self.idl_schema_map[schema](self._schema_map[schema])
+        if schema == 'OVN_Northbound':
+            idl.set_lock('test_bgp_topology_lock')
         return connection.Connection(idl, timeout=10)
 
     def setup_venv(self):
