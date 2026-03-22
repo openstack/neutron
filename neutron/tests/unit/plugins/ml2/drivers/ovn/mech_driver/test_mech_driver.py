@@ -5500,11 +5500,11 @@ class TestOVNAvailabilityZone(OVNMechanismDriverTestCase):
 
         azs = self.mech_driver.list_availability_zones(self.context)
         expected_azs = {'az0': {'name': 'az0', 'resource': 'router',
-                                'state': 'available', 'tenant_id': mock.ANY},
+                                'state': 'available', 'project_id': mock.ANY},
                         'az1': {'name': 'az1', 'resource': 'router',
-                                'state': 'available', 'tenant_id': mock.ANY},
+                                'state': 'available', 'project_id': mock.ANY},
                         'az2': {'name': 'az2', 'resource': 'router',
-                                'state': 'available', 'tenant_id': mock.ANY}}
+                                'state': 'available', 'project_id': mock.ANY}}
         self.assertEqual(expected_azs, azs)
 
     def test_list_availability_zones_no_azs(self):

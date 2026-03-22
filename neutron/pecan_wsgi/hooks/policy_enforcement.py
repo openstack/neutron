@@ -35,7 +35,7 @@ LOG = logging.getLogger(__name__)
 def _custom_getter(resource, resource_id):
     """Helper function to retrieve resources not served by any plugin."""
     if resource == quotasv2.RESOURCE_NAME:
-        return quota.get_tenant_quotas(resource_id)[quotasv2.RESOURCE_NAME]
+        return quota.get_project_quotas(resource_id)[quotasv2.RESOURCE_NAME]
 
 
 def fetch_resource(method, neutron_context, controller,
@@ -131,7 +131,7 @@ class PolicyHook(hooks.PecanHook):
             except (oslo_policy.PolicyNotAuthorized, oslo_policy.InvalidScope):
                 with excutils.save_and_reraise_exception() as ctxt:
                     controller = utils.get_controller(state)
-                    # If a tenant is modifying it's own object, it's safe to
+                    # If a project is modifying it's own object, it's safe to
                     # return a 403. Otherwise, pretend that it doesn't exist
                     # to avoid giving away information.
                     # It is also safe to return 403 if it's POST (CREATE)
@@ -227,8 +227,8 @@ class PolicyHook(hooks.PecanHook):
         """
         attributes_to_exclude = []
         for attr_name in list(data):
-            # TODO(amotoki): All attribute maps have tenant_id and
-            # it determines excluded attributes based on tenant_id.
+            # TODO(amotoki): All attribute maps have project_id and
+            # it determines excluded attributes based on project_id.
             # We need to migrate tenant_id to project_id later
             # as attr_info is referred to in various places and we need
             # to check all logs carefully.

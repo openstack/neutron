@@ -1003,16 +1003,16 @@ class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
                                                   filters=['device_id',
                                                            'device_owner'])
         self._assert_object_list_queries_constant(self.make_port, 'ports',
-                                                  filters=['tenant_id',
+                                                  filters=['project_id',
                                                            'name',
                                                            'device_id'])
 
 
-class TestMl2DbOperationBoundsTenant(TestMl2DbOperationBounds):
+class TestMl2DbOperationBoundsProject(TestMl2DbOperationBounds):
     admin = False
 
 
-class TestMl2DbOperationBoundsTenantRbac(TestMl2DbOperationBoundsTenant):
+class TestMl2DbOperationBoundsProjectRbac(TestMl2DbOperationBoundsProject):
 
     def make_port_in_shared_network(self):
         context_ = self._get_context()
@@ -3850,7 +3850,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
     def _reserve_segment(self, network, seg_id=None):
         segment = {'id': 'fake_id',
                    'network_id': network['network']['id'],
-                   'tenant_id': network['network']['project_id'],
+                   'project_id': network['network']['project_id'],
                    driver_api.NETWORK_TYPE: 'vlan',
                    driver_api.PHYSICAL_NETWORK: self.physnet}
         if seg_id:

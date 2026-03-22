@@ -27,12 +27,13 @@ from neutron.pecan_wsgi.controllers import utils
 from neutron.quota import resource_registry
 
 RESOURCE_NAME = "quota"
-TENANT_ID_ATTR = {'tenant_id':
-                  {'allow_post': False,
-                   'allow_put': False,
-                   'required_by_policy': True,
-                   'validate': {'type:string': db_const.PROJECT_ID_FIELD_SIZE},
-                   'is_visible': True}}
+PROJECT_ID_ATTR = {'project_id':
+                   {'allow_post': False,
+                    'allow_put': False,
+                    'required_by_policy': True,
+                    'validate': {'type:string':
+                                 db_const.PROJECT_ID_FIELD_SIZE},
+                    'is_visible': True}}
 
 
 class QuotasController(utils.NeutronPecanController):
@@ -50,8 +51,8 @@ class QuotasController(utils.NeutronPecanController):
             raise n_exc.AdminRequired(reason=reason)
 
     @utils.expose()
-    def _lookup(self, tenant_id, *remainder):
-        return QuotaController(self._driver, tenant_id), remainder
+    def _lookup(self, project_id, *remainder):
+        return QuotaController(self._driver, project_id), remainder
 
     @utils.expose(generic=True)
     def index(self):
@@ -75,9 +76,9 @@ class QuotasController(utils.NeutronPecanController):
 
 class QuotaController(utils.NeutronPecanController):
 
-    def __init__(self, _driver, tenant_id):
+    def __init__(self, _driver, project_id):
         self._driver = _driver
-        self._tenant_id = tenant_id
+        self._project_id = project_id
 
         super().__init__(
             "%ss" % RESOURCE_NAME, RESOURCE_NAME)
@@ -92,14 +93,14 @@ class QuotaController(utils.NeutronPecanController):
                 'validate': {
                     'type:range': [-1, db_const.DB_INTEGER_MAX_VALUE]},
                 'is_visible': True}
-        # The quota resource must always declare a tenant_id attribute,
+        # The quota resource must always declare a project_id attribute,
         # otherwise the attribute will be stripped off when generating the
         # response
-        attr_dict.update(TENANT_ID_ATTR)
+        attr_dict.update(PROJECT_ID_ATTR)
 
     @utils.expose(generic=True)
     def index(self):
-        return get_tenant_quotas(self._tenant_id, self._driver)
+        return get_project_quotas(self._project_id, self._driver)
 
     @utils.when(index, method='PUT')
     def put(self, *args, **kwargs):
@@ -108,40 +109,40 @@ class QuotaController(utils.NeutronPecanController):
         quota_data = request.context['resources'][0]
         for key, value in quota_data.items():
             self._driver.update_quota_limit(
-                neutron_context, self._tenant_id, key, value)
-        return get_tenant_quotas(self._tenant_id, self._driver)
+                neutron_context, self._project_id, key, value)
+        return get_project_quotas(self._project_id, self._driver)
 
     @utils.when_delete(index)
     def delete(self):
         neutron_context = request.context.get('neutron_context')
-        self._driver.delete_tenant_quota(neutron_context,
-                                         self._tenant_id)
+        self._driver.delete_project_quota(neutron_context,
+                                         self._project_id)
 
     @utils.when(index, method='POST')
     def not_supported(self):
         pecan.abort(405)
 
 
-def get_tenant_quotas(tenant_id, driver=None):
+def get_project_quotas(project_id, driver=None):
     if not driver:
         driver = importutils.import_class(cfg.CONF.QUOTAS.quota_driver)
 
     neutron_context = request.context.get('neutron_context')
-    if tenant_id == 'tenant':
+    if project_id == 'tenant':
         # NOTE(salv-orlando): Read the following before the code in order
         # to avoid puking.
         # There is a weird undocumented behaviour of the Neutron quota API
         # as 'tenant' is used as an API action to return the identifier
-        # of the tenant in the request context. This is used exclusively
+        # of the project in the request context. This is used exclusively
         # for interaction with python-neutronclient and is a possibly
         # unnecessary 'whoami' API endpoint. Pending resolution of this
         # API issue, this controller will just treat the magic string
         # 'tenant' (and only that string) and return the response expected
         # by python-neutronclient
-        return {'tenant': {'tenant_id': neutron_context.tenant_id}}
-    tenant_quotas = driver.get_tenant_quotas(
+        return {'project': {'project_id': neutron_context.project_id}}
+    project_quotas = driver.get_project_quotas(
         neutron_context,
         resource_registry.get_all_resources(),
-        tenant_id)
-    tenant_quotas['tenant_id'] = tenant_id
-    return {RESOURCE_NAME: tenant_quotas}
+        project_id)
+    project_quotas['project_id'] = project_id
+    return {RESOURCE_NAME: project_quotas}

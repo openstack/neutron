@@ -167,7 +167,15 @@ class SecurityGroupDbMixin(
         # GETS. TODO(arosen)  context handling can probably be improved here.
         filters = filters or {}
         if not default_sg and context.project_id:
-            project_id = filters.get('project_id') or filters.get('tenant_id')
+            # TODO(haleyb): migrate "tenant_id" to "project_id", remove in G+2
+            project_id = filters.get('project_id')
+            if not project_id and filters.get('tenant_id'):
+                project_id = filters['tenant_id']
+                LOG.warning('project_id key not found in filters, using '
+                            'tenant_id instead. This support has been '
+                            'deprecated and will be removed in a future '
+                            'release.')
+
             if project_id:
                 project_id = project_id[0]
             else:
@@ -1036,7 +1044,14 @@ class SecurityGroupDbMixin(
         pager = base_obj.Pager(
             sorts=sorts, marker=marker, limit=limit, page_reverse=page_reverse)
 
-        project_id = filters.get('project_id') or filters.get('tenant_id')
+        # TODO(haleyb): migrate "tenant_id" to "project_id", remove in G+2
+        project_id = filters.get('project_id')
+        if not project_id and filters.get('tenant_id'):
+            project_id = filters['tenant_id']
+            LOG.warning('project_id key not found in filters, using tenant_id '
+                        'instead. This support has been deprecated and will '
+                        'be removed in a future release.')
+
         if project_id:
             project_id = project_id[0]
         else:

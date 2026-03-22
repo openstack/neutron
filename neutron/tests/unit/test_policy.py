@@ -43,7 +43,7 @@ class PolicyFileTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         self.context = context.Context('fake', 'fake', is_admin=False)
-        self.target = {'tenant_id': 'fake'}
+        self.target = {'project_id': 'fake'}
 
     def test_modified_policy_reloads(self):
         tmpfilename = self.get_temp_file_path('policy')
@@ -55,7 +55,7 @@ class PolicyFileTestCase(base.BaseTestCase):
         with open(tmpfilename, "w") as policyfile:
             policyfile.write("""{"example:test": "!"}""")
         policy.refresh(policy_file=tmpfilename)
-        self.target = {'tenant_id': 'fake_project'}
+        self.target = {'project_id': 'fake_project'}
         self.assertRaises(oslo_policy.PolicyNotAuthorized,
                           policy.enforce,
                           self.context,
@@ -72,7 +72,8 @@ class PolicyTestCase(base.BaseTestCase):
             "example:allowed": '@',
             "example:denied": '!',
             "example:get_http": "http:http://www.example.com",
-            "example:my_file": "role:compute_admin or tenant_id:%(tenant_id)s",
+            "example:my_file": (
+                "role:compute_admin or project_id:%(project_id)s"),
             "example:early_and_fail": "! and @",
             "example:early_or_success": "@ or !",
             "example:lowercase_admin": "role:admin or role:sysadmin",
@@ -80,7 +81,7 @@ class PolicyTestCase(base.BaseTestCase):
             "example:only_system_admin_allowed": (
                 "role:admin and system_scope:all"),
             "example:only_project_user_allowed": (
-                "role:reader and tenant_id:%(tenant_id)s")
+                "role:reader and project_id:%(project_id)s")
         }
         policy.refresh()
         self._register_default_rules()
@@ -234,8 +235,8 @@ class PolicyTestCase(base.BaseTestCase):
             policy.enforce, system_admin_ctx, action, target)
 
     def test_templatized_enforcement(self):
-        target_mine = {'tenant_id': 'fake'}
-        target_not_mine = {'tenant_id': 'another'}
+        target_mine = {'project_id': 'fake'}
+        target_not_mine = {'project_id': 'another'}
         action = "example:my_file"
         policy.enforce(self.context, action, target_mine)
         self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
@@ -357,7 +358,7 @@ class CustomRulesTestCase(base.BaseTestCase):
         self.assertEqual(check_a.regex, check_b.regex)
 
     def test_owner_check_deepcopy(self):
-        check_a = policy.OwnerCheck('tenant_id', '%(tenant_id)s')
+        check_a = policy.OwnerCheck('project_id', '%(project_id)s')
         check_b = copy.deepcopy(check_a)
 
         self.assertIsNot(check_a, check_b)
@@ -392,9 +393,9 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             "context_is_admin": "role:admin",
             "context_is_advsvc": "role:advsvc",
             "admin_or_network_owner": "rule:context_is_admin or "
-                                      "tenant_id:%(network:tenant_id)s",
+                                      "project_id:%(network:project_id)s",
             "admin_or_owner": ("rule:context_is_admin or "
-                               "tenant_id:%(tenant_id)s"),
+                               "project_id:%(project_id)s"),
             "admin_only": "rule:context_is_admin",
             "regular_user": "role:user",
             "shared": "field:networks:shared=True",
@@ -440,7 +441,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def _test_action_on_attr(self, context, action, obj, attr, value,
                              exception=None, **kwargs):
         action = f"{action}_{obj}"
-        target = {'tenant_id': 'the_owner', attr: value}
+        target = {'project_id': 'the_owner', attr: value}
         if kwargs:
             target.update(kwargs)
         if exception:
@@ -495,7 +496,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_create_port_fixed_ips_on_shared_network(self):
 
         def fakegetnetwork(*args, **kwargs):
-            return {'tenant_id': 'fake',
+            return {'project_id': 'fake',
                     'shared': True}
 
         kwargs = {'network_id': _uuid()}
@@ -514,7 +515,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_create_port_fixed_ips_on_nonshared_network(self):
 
         def fakegetnetwork(*args, **kwargs):
-            return {'tenant_id': 'fake',
+            return {'project_id': 'fake',
                     'shared': False}
 
         kwargs = {'network_id': _uuid()}
@@ -583,7 +584,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_enforce_adminonly_attribute_nonadminctx_returns_403(self):
         action = "create_network"
-        target = {'shared': True, 'tenant_id': 'somebody_else'}
+        target = {'shared': True, 'project_id': 'somebody_else'}
         self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target)
 
@@ -592,7 +593,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         FAKE_RESOURCES['%ss' % FAKE_RESOURCE_NAME]['attr']['validate'] = (
             validate_value)
         action = "create_" + FAKE_RESOURCE_NAME
-        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
+        target = {'project_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
         self.assertFalse(policy._build_subattr_match_rule(
             'attr',
             FAKE_RESOURCES['%ss' % FAKE_RESOURCE_NAME]['attr'],
@@ -613,7 +614,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
                  {'sub_attr_str': 'y', 'sub_attr_bool': True},
                  {'sub_attr_bool': False},
                  {}]
-        target = {'tenant_id': 'fake', 'attr': attrs}
+        target = {'project_id': 'fake', 'attr': attrs}
         result_policy = policy._build_subattr_match_rule(
             'attr',
             FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
@@ -630,7 +631,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         action = 'create_' + FAKE_RESOURCE_LIST_OF_DICTS
         attrs = [{'sub_attr_str': 'x', 'sub_attr_int': 1},
                  {'sub_attr_str': 'y'}]
-        target = {'tenant_id': 'fake', 'attr': attrs}
+        target = {'project_id': 'fake', 'attr': attrs}
         result_policy = policy._build_subattr_match_rule(
             'attr',
             FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
@@ -645,7 +646,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test__build_subattr_match_rule_list_of_dict_rule_empty_list(self):
         action = 'create_' + FAKE_RESOURCE_LIST_OF_DICTS
         attrs = []
-        target = {'tenant_id': 'fake', 'attr': attrs}
+        target = {'project_id': 'fake', 'attr': attrs}
         result_policy = policy._build_subattr_match_rule(
             'attr',
             FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
@@ -656,7 +657,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test__build_subattr_match_rule_list_of_dict_rule_empty_dict(self):
         action = 'create_' + FAKE_RESOURCE_LIST_OF_DICTS
         attrs = [{}]
-        target = {'tenant_id': 'fake', 'attr': attrs}
+        target = {'project_id': 'fake', 'attr': attrs}
         result_policy = policy._build_subattr_match_rule(
             'attr',
             FAKE_RESOURCES['%ss' % FAKE_RESOURCE_LIST_OF_DICTS]['attr'],
@@ -685,13 +686,13 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_enforce_subattribute(self):
         action = "create_" + FAKE_RESOURCE_NAME
-        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
+        target = {'project_id': 'fake', 'attr': {'sub_attr_1': 'x'}}
         result = policy.enforce(self.context, action, target, None)
         self.assertTrue(result)
 
     def test_enforce_admin_only_subattribute(self):
         action = "create_" + FAKE_RESOURCE_NAME
-        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
+        target = {'project_id': 'fake', 'attr': {'sub_attr_1': 'x',
                                                 'sub_attr_2': 'y'}}
         result = policy.enforce(context.get_admin_context(),
                                 action, target, None)
@@ -699,28 +700,28 @@ class NeutronPolicyTestCase(base.BaseTestCase):
 
     def test_enforce_admin_only_subattribute_nonadminctx_returns_403(self):
         action = "create_" + FAKE_RESOURCE_NAME
-        target = {'tenant_id': 'fake', 'attr': {'sub_attr_1': 'x',
+        target = {'project_id': 'fake', 'attr': {'sub_attr_1': 'x',
                                                 'sub_attr_2': 'y'}}
         self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target, None)
 
     def test_enforce_regularuser_on_read(self):
         action = "get_network"
-        target = {'shared': True, 'tenant_id': 'somebody_else'}
+        target = {'shared': True, 'project_id': 'somebody_else'}
         result = policy.enforce(self.context, action, target)
         self.assertTrue(result)
 
-    def test_enforce_tenant_id_check(self):
+    def test_enforce_project_id_check(self):
         # Trigger a policy with rule admin_or_owner
         action = "create_network"
-        target = {'tenant_id': 'fake'}
+        target = {'project_id': 'fake'}
         result = policy.enforce(self.context, action, target)
         self.assertTrue(result)
 
-    def test_enforce_tenant_id_check_parent_resource(self):
+    def test_enforce_project_id_check_parent_resource(self):
 
         def fakegetnetwork(*args, **kwargs):
-            return {'tenant_id': 'fake'}
+            return {'project_id': 'fake'}
 
         action = "create_port:mac"
         with mock.patch.object(directory.get_plugin(),
@@ -750,7 +751,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_enforce_subattribute_as_list(self):
         action = "create_" + FAKE_RESOURCE_NAME
         target = {
-            'tenant_id': 'fake',
+            'project_id': 'fake',
             'list_attr': [{'user_element': 'x'}]}
         result = policy.enforce(self.context,
                                 action, target, None)
@@ -759,7 +760,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     def test_enforce_subattribute_as_list_forbiden(self):
         action = "create_" + FAKE_RESOURCE_NAME
         target = {
-            'tenant_id': 'fake',
+            'project_id': 'fake',
             'list_attr': [{'admin_element': 'x'}]}
         self.assertRaises(oslo_policy.PolicyNotAuthorized, policy.enforce,
                           self.context, action, target, None)
@@ -778,14 +779,14 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             except exceptions.NetworkNotFound:
                 self.assertEqual(2, get_network_mock.call_count)
 
-    def test_enforce_tenant_id_check_parent_resource_bw_compatibility(self):
+    def test_enforce_project_id_check_parent_resource_bw_compatibility(self):
 
         def fakegetnetwork(*args, **kwargs):
-            return {'tenant_id': 'fake'}
+            return {'project_id': 'fake'}
 
         self._set_rules(
             admin_or_network_owner="role:admin or "
-                                   "tenant_id:%(network_tenant_id)s")
+                                   "project_id:%(network_project_id)s")
         action = "create_port:mac"
         with mock.patch.object(directory.get_plugin(),
                                'get_network', new=fakegetnetwork):
@@ -793,39 +794,40 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             result = policy.enforce(self.context, action, target)
             self.assertTrue(result)
 
-    def test_tenant_id_check_no_target_field_raises(self):
+    def test_project_id_check_no_target_field_raises(self):
         # Try and add a bad rule
         self.assertRaises(
             exceptions.PolicyInitError,
             oslo_policy.Rules.from_dict,
-            {'test_policy': 'tenant_id:(wrong_stuff)'})
+            {'test_policy': 'project_id:(wrong_stuff)'})
 
-    def test_tenant_id_check_caches_extracted_fields(self):
+    def test_project_id_check_caches_extracted_fields(self):
 
         plugin = directory.get_plugin()
         with mock.patch.object(plugin, 'get_network',
-                               return_value={'tenant_id': 'fake'}) as getter:
+                               return_value={'project_id': 'fake'}) as getter:
             action = "create_port:mac"
             for i in range(2):
                 target = {'network_id': 'whatever'}
                 policy.enforce(self.context, action, target)
         self.assertEqual(1, getter.call_count)
 
-    def _test_enforce_tenant_id_raises(self, bad_rule):
+    def _test_enforce_project_id_raises(self, bad_rule):
         self._set_rules(admin_or_owner=bad_rule)
         # Trigger a policy with rule admin_or_owner
         action = "create_network"
-        target = {'tenant_id': 'fake'}
+        target = {'project_id': 'fake'}
         self.fakepolicyinit()
         self.assertRaises(exceptions.PolicyCheckError,
                           policy.enforce,
                           self.context, action, target)
 
-    def test_enforce_tenant_id_check_malformed_target_field_raises(self):
-        self._test_enforce_tenant_id_raises('tenant_id:%(malformed_field)s')
+    def test_enforce_project_id_check_malformed_target_field_raises(self):
+        self._test_enforce_project_id_raises('project_id:%(malformed_field)s')
 
-    def test_enforce_tenant_id_check_invalid_parent_resource_raises(self):
-        self._test_enforce_tenant_id_raises('tenant_id:%(foobaz_tenant_id)s')
+    def test_enforce_project_id_check_invalid_parent_resource_raises(self):
+        self._test_enforce_project_id_raises(
+            'project_id:%(foobaz_project_id)s')
 
     def test_process_rules(self):
         action = "create_" + FAKE_RESOURCE_NAME
@@ -859,7 +861,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
         action = 'create'
         attr = 'attr'
 
-        target = {attr: 'valueA', 'tgt-tenant': 'tenantA'}
+        target = {attr: 'valueA', 'tgt-project': 'projectA'}
         resource = {attr: {'allow_post': True,
                            'allow_put': True,
                            'is_visible': True,
@@ -870,7 +872,7 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             attr, resource, target, action)
         self.assertTrue(result)
 
-        target = {'tgt-tenant': 'tenantA'}
+        target = {'tgt-project': 'projectA'}
         result = policy._is_attribute_explicitly_set(
             attr, resource, target, action)
         self.assertFalse(result)
@@ -885,12 +887,13 @@ class NeutronPolicyTestCase(base.BaseTestCase):
             attr, resource, target, action)
         self.assertFalse(result)
 
-        target = {attr: 'DfltValue', 'tgt-tenant': 'tenantA'}
+        target = {attr: 'DfltValue', 'tgt-project': 'projectA'}
         result = policy._is_attribute_explicitly_set(
             attr, resource, target, action)
         self.assertFalse(result)
 
-        target = {attr: constants.ATTR_NOT_SPECIFIED, 'tgt-tenant': 'tenantA'}
+        target = {attr: constants.ATTR_NOT_SPECIFIED,
+                  'tgt-project': 'projectA'}
         result = policy._is_attribute_explicitly_set(
             attr, resource, target, action)
         self.assertFalse(result)
@@ -898,18 +901,18 @@ class NeutronPolicyTestCase(base.BaseTestCase):
     @mock.patch("neutron_lib.services.constants.EXT_PARENT_RESOURCE_MAPPING",
                 {'parentresource': 'registered_plugin_name'})
     @mock.patch("neutron_lib.plugins.directory.get_plugin")
-    def test_enforce_tenant_id_check_parent_resource_owner(
+    def test_enforce_project_id_check_parent_resource_owner(
             self, mock_get_plugin):
 
         def fakegetparent(*args, **kwargs):
-            return {'tenant_id': 'fake'}
+            return {'project_id': 'fake'}
         mock_plugin = mock.Mock()
         mock_plugin.get_parentresource = fakegetparent
         mock_get_plugin.return_value = mock_plugin
 
         self._set_rules(
             admin_or_ext_parent_owner="rule:context_is_admin or "
-                                      "tenant_id:%(ext_parent:tenant_id)s",
+                                      "project_id:%(ext_parent:project_id)s",
             create_parentresource_subresource="rule:admin_or_ext_parent_owner")
         self.fakepolicyinit()
         action = 'create_parentresource_subresource'

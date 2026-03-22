@@ -397,7 +397,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
     def test_quotas_get_project_from_empty_request_context_returns_400(self):
         env = {'neutron.context': context.Context('', '',
                                                   is_admin=True)}
-        res = self.api.get(_get_path('quotas/tenant', fmt=self.fmt),
+        res = self.api.get(_get_path('quotas/project', fmt=self.fmt),
                            extra_environ=env, expect_errors=True)
         self.assertEqual(400, res.status_int)
 

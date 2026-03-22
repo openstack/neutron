@@ -53,7 +53,7 @@ class APIPolicyTestCase(base.BaseLoggingTestCase):
                 'status': 'up',
                 'admin_state_up': True,
                 'shared': False,
-                'tenant_id': 'admin',
+                'project_id': 'admin',
                 'id': 'test_network',
                 'router:external': True}
 

@@ -28,9 +28,9 @@ class OwnershipValidationHook(hooks.PecanHook):
         if state.request.method != 'POST':
             return
         for item in state.request.context.get('resources', []):
-            self._validate_network_tenant_ownership(state, item)
+            self._validate_network_project_ownership(state, item)
 
-    def _validate_network_tenant_ownership(self, state, resource_item):
+    def _validate_network_project_ownership(self, state, resource_item):
         # TODO(salvatore-orlando): consider whether this check can be folded
         # in the policy engine
         neutron_context = state.request.context.get('neutron_context')
@@ -45,12 +45,12 @@ class OwnershipValidationHook(hooks.PecanHook):
         if network.get('shared'):
             return
 
-        network_owner = network['tenant_id']
+        network_owner = network['project_id']
 
-        if network_owner != resource_item['tenant_id']:
-            msg = _("Tenant %(tenant_id)s not allowed to "
+        if network_owner != resource_item['project_id']:
+            msg = _("Project %(project_id)s not allowed to "
                     "create %(resource)s on this network")
             raise webob.exc.HTTPForbidden(msg % {
-                "tenant_id": resource_item['tenant_id'],
+                "project_id": resource_item['project_id'],
                 "resource": resource,
             })

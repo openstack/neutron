@@ -263,7 +263,7 @@ class Controller:
                                pluralized=self._collection)
                 ret_value = getattr(self._plugin, name)(*arg_list, **kwargs)
                 # It is simply impossible to predict whether one of this
-                # actions alters resource usage. For instance a tenant port
+                # actions alters resource usage. For instance a project port
                 # is created when a router interface is added. Therefore it is
                 # important to mark as dirty resources whose counters have
                 # been altered by this operation
@@ -347,7 +347,7 @@ class Controller:
             collection[self._collection + "_links"] = pagination_links
         # Synchronize usage trackers, if needed
         resource_registry.resync_resource(
-            request.context, self._resource, request.context.tenant_id)
+            request.context, self._resource, request.context.project_id)
         return collection
 
     def _item(self, request, id, do_authz=False, field_list=None,
@@ -463,7 +463,7 @@ class Controller:
             items = body[self._collection]
         else:
             items = [body]
-        # Store requested resource amounts grouping them by tenant
+        # Store requested resource amounts grouping them by project
         # This won't work with multiple resources. However because of the
         # current structure of this controller there will hardly be more than
         # one resource for which reservations are being made
@@ -481,18 +481,18 @@ class Controller:
                            action,
                            item[self._resource],
                            pluralized=self._collection)
-            if 'tenant_id' not in item[self._resource]:
-                # no tenant_id - no quota check
+            if 'project_id' not in item[self._resource]:
+                # no project_id - no quota check
                 continue
-            tenant_id = item[self._resource]['tenant_id']
-            request_deltas[tenant_id] += 1
+            project_id = item[self._resource]['project_id']
+            request_deltas[project_id] += 1
         # Quota enforcement
         reservations = []
         try:
-            for (tenant, delta) in request_deltas.items():
+            for (project, delta) in request_deltas.items():
                 reservation = quota.QUOTAS.make_reservation(
                     request.context,
-                    tenant,
+                    project,
                     {self._resource: delta},
                     self._plugin)
                 if reservation:
@@ -695,7 +695,7 @@ class Controller:
         obj = obj_updater(request.context, id, **kwargs)
         # Usually an update operation does not alter resource usage, but as
         # there might be side effects it might be worth checking for changes
-        # in resource usage here as well (e.g: a tenant port is created when a
+        # in resource usage here as well (e.g: a project port is created when a
         # router interface is added)
         resource_registry.set_resources_dirty(request.context)
 
@@ -791,7 +791,7 @@ class Controller:
 
         network_owner = network['project_id']
 
-        if network_owner != resource_item['tenant_id']:
+        if network_owner != resource_item['project_id']:
             # NOTE(kevinbenton): we raise a 404 to hide the existence of the
             # network from the project since they don't have access to it.
             msg = _('The resource could not be found.')

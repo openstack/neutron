@@ -28,6 +28,7 @@ from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
 from neutron_lib.services import base as service_base
+from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -42,6 +43,8 @@ from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
 from neutron.objects import trunk as trunk_obj
 from neutron import policy
+
+LOG = logging.getLogger(__name__)
 
 
 TAG = 'tag'
@@ -175,10 +178,17 @@ class TaggingController:
                 for f_name, f_value in obj.to_dict().items():
                     if f_name in field_list:
                         obj_dict[f_name] = f_value
+                # TODO(haleyb): migrate "tenant_id" to "project_id",
+                # remove in G+2
                 project_id = obj_dict.get('project_id')
                 if not project_id:
                     project_id = obj_dict.get('tenant_id')
                     obj_dict['project_id'] = project_id
+                    if project_id:
+                        LOG.warning('project_id key not found in request, '
+                                    'using tenant_id instead. This support '
+                                    'has been deprecated and will be removed '
+                                    'in a future release.')
             except IndexError:
                 return EMPTY_RESOURCE_INFO
 

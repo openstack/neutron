@@ -276,8 +276,8 @@ class APIv2TestCase(APIv2TestBase):
         instance.get_networks.return_value = []
 
         self.api.get(_get_path('networks'), {'name': 'bar',
-                                             'tenant_id': 'bar2'})
-        filters = {'name': ['bar'], 'tenant_id': ['bar2']}
+                                             'project_id': 'bar2'})
+        filters = {'name': ['bar'], 'project_id': ['bar2']}
         kwargs = self._get_collection_kwargs(filters=filters)
         instance.get_networks.assert_called_once_with(mock.ANY, **kwargs)
 
@@ -508,6 +508,7 @@ class APIv2TestCase(APIv2TestBase):
         api.get(_get_path('networks'), {'sort_key': ['name', 'status'],
                                         'sort_dir': ['desc', 'asc'],
                                         'fields': ['subnets']})
+        # TODO(haleyb): "tenant_id" reference should be removed.
         kwargs = self._get_collection_kwargs(
             skipargs=['sorts', 'limit', 'marker', 'page_reverse'],
             fields=_ArgMatcher(_list_cmp, ['name',
@@ -590,14 +591,14 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                        'name': 'net1',
                        'admin_state_up': True,
                        'status': "ACTIVE",
-                       'tenant_id': '',
+                       'project_id': '',
                        'shared': False,
                        'subnets': []}
         input_dict2 = {'id': id2,
                        'name': 'net2',
                        'admin_state_up': True,
                        'status': "ACTIVE",
-                       'tenant_id': '',
+                       'project_id': '',
                        'shared': False,
                        'subnets': []}
         return_value = [input_dict1, input_dict2]
@@ -643,7 +644,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                       'name': 'net1',
                       'admin_state_up': True,
                       'status': "ACTIVE",
-                      'tenant_id': '',
+                      'project_id': '',
                       'shared': False,
                       'subnets': []}
         return_value = [input_dict]
@@ -704,7 +705,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                       'name': 'net1',
                       'admin_state_up': True,
                       'status': "ACTIVE",
-                      'tenant_id': '',
+                      'project_id': '',
                       'shared': False,
                       'subnets': []}
         return_value = [input_dict]
@@ -764,7 +765,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_create(self):
         net_id = _uuid()
         data = {'network': {'name': 'net1', 'admin_state_up': True,
-                            'tenant_id': _uuid()}}
+                            'project_id': _uuid()}}
         return_value = {'subnets': [], 'status': "ACTIVE",
                         'id': net_id}
         return_value.update(data['network'].copy())
@@ -934,13 +935,13 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self._test_create_failure_bad_request('networks', {'networks': []})
 
     def test_create_bulk_missing_attr(self):
-        data = {'ports': [{'what': 'who', 'tenant_id': _uuid()}]}
+        data = {'ports': [{'what': 'who', 'project_id': _uuid()}]}
         self._test_create_failure_bad_request('ports', data)
 
     def test_create_bulk_partial_body(self):
         data = {'ports': [{'device_id': 'device_1',
-                           'tenant_id': _uuid()},
-                          {'tenant_id': _uuid()}]}
+                           'project_id': _uuid()},
+                          {'project_id': _uuid()}]}
         self._test_create_failure_bad_request('ports', data)
 
     def test_create_attr_not_specified(self):
@@ -948,7 +949,6 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         project_id = _uuid()
         device_id = _uuid()
         initial_input = {'port': {'name': '', 'network_id': net_id,
-                                  'tenant_id': project_id,
                                   'project_id': project_id,
                                   'device_id': device_id,
                                   'admin_state_up': True}}
@@ -963,6 +963,9 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                         'device_id': device_id,
                         'device_owner': ''}
         return_value.update(initial_input['port'])
+
+        # TODO(haleyb): "tenant_id" reference should be removed.
+        full_input['port'].update({'tenant_id': project_id})
 
         instance = self.plugin.return_value
         instance.get_network.return_value = {
@@ -1188,11 +1191,11 @@ class V2Views(base.BaseTestCase):
 
     def test_port(self):
         keys = ('id', 'network_id', 'mac_address', 'fixed_ips',
-                'device_id', 'admin_state_up', 'tenant_id', 'status')
+                'device_id', 'admin_state_up', 'project_id', 'status')
         self._view(keys, 'ports', 'port')
 
     def test_subnet(self):
-        keys = ('id', 'network_id', 'tenant_id', 'gateway_ip',
+        keys = ('id', 'network_id', 'project_id', 'gateway_ip',
                 'ip_version', 'cidr', 'enable_dhcp')
         self._view(keys, 'subnets', 'subnet')
 
@@ -1374,7 +1377,6 @@ class ExtensionTestCase(base.BaseTestCase):
                                      'v2attrs:something_else': "abc"}}
         data = {'network': {'admin_state_up': True, 'shared': False}}
         data['network'].update(initial_input['network'])
-        # data['network'].update({'tenant_id': project_id})
 
         return_value = {'subnets': [], 'status': "ACTIVE",
                         'id': net_id,
@@ -1454,7 +1456,7 @@ class SortingTestCase(base.BaseTestCase):
     def test_get_sorts_with_project_id(self):
         path = '/?sort_key=project_id&sort_dir=desc'
         request = webob.Request.blank(path)
-        attr_info = {'tenant_id': {'key': 'val', 'is_sort_key': True}}
+        attr_info = {'project_id': {'key': 'val', 'is_sort_key': True}}
         expect_val = [('project_id', False)]
         actual_val = api_common.get_sorts(request, attr_info)
         self.assertEqual(expect_val, actual_val)
@@ -1504,10 +1506,11 @@ class FiltersTestCase(base.BaseTestCase):
     def test_attr_info_with_project_info_populated(self):
         path = '/?foo=4&bar=3&baz=2&qux=1'
         request = webob.Request.blank(path)
-        attr_info = {'tenant_id': {'key': 'val'}}
+        attr_info = {'project_id': {'key': 'val'}}
         expect_val = {'foo': ['4'], 'bar': ['3'], 'baz': ['2'], 'qux': ['1']}
         actual_val = api_common.get_filters(request, attr_info)
         self.assertEqual(expect_val, actual_val)
+        # TODO(haleyb): "tenant_id" reference should be removed.
         expect_attr_info = {'tenant_id': {'key': 'val'},
                             'project_id': {'key': 'val'}}
         self.assertEqual(expect_attr_info, attr_info)

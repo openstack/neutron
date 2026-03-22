@@ -473,7 +473,6 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             result = self.mixin._check_requirements(self.ctx, 'foo_project')
             expected = {
                 'id': 'dry-run=pass',
-                'tenant_id': 'foo_project',
                 'project_id': 'foo_project'}
             self.assertEqual(expected, result)
 

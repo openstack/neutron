@@ -72,7 +72,7 @@ class QuotaEngine:
 
         return res.count(context, *args, **kwargs)
 
-    def make_reservation(self, context, tenant_id, deltas, plugin):
+    def make_reservation(self, context, project_id, deltas, plugin):
         # Verify that resources are managed by the quota engine
         # Ensure no value is less than zero
         unders = [key for key, val in deltas.items() if val < 0]
@@ -94,7 +94,7 @@ class QuotaEngine:
         # APIs request them, this will be sorted out with a different patch.
         return self.get_driver().make_reservation(
             context,
-            tenant_id,
+            project_id,
             all_resources,
             deltas,
             plugin)
@@ -105,7 +105,7 @@ class QuotaEngine:
     def cancel_reservation(self, context, reservation_id):
         self.get_driver().cancel_reservation(context, reservation_id)
 
-    def limit_check(self, context, tenant_id, **values):
+    def limit_check(self, context, project_id, **values):
         """Check simple quota limits.
 
         For limits--those quotas for which there is no usage
@@ -119,12 +119,12 @@ class QuotaEngine:
         given resource is unknown or if it is not a countable resource.
 
         If any of the proposed values exceeds the respective quota defined
-        for the tenant, an OverQuota exception will be raised.
+        for the project, an OverQuota exception will be raised.
         The exception will include a sorted list with the resources
         which exceed the quota limit. Otherwise, the method returns nothing.
 
         :param context: Request context
-        :param tenant_id: Tenant for which the quota limit is being checked
+        :param project_id: Project for which the quota limit is being checked
         :param values: Dict specifying requested deltas for each resource
         """
         # TODO(salv-orlando): Deprecate calls to this API
@@ -141,7 +141,7 @@ class QuotaEngine:
                 unknown=sorted(unknown_resources))
 
         return self.get_driver().limit_check(
-            context, tenant_id, resource_registry.get_all_resources(), values)
+            context, project_id, resource_registry.get_all_resources(), values)
 
     def quota_limit_check(self, context, project_id, **deltas):
         return self.get_driver().quota_limit_check(

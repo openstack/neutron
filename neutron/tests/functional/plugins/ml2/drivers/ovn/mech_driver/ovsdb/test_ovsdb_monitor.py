@@ -214,7 +214,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             {'subnet_id': port['fixed_ips'][0]['subnet_id']})
         r1_f2 = self.l3_plugin.create_floatingip(
             self.context, {'floatingip': {
-                'tenant_id': self._project_id,
+                'project_id': self._project_id,
                 'floating_network_id': e1['network']['id'],
                 'subnet_id': None,
                 'floating_ip_address': fip_address,

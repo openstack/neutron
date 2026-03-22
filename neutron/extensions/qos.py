@@ -153,7 +153,7 @@ class QoSPluginBase(service_base.ServicePluginBase, metaclass=abc.ABCMeta):
                   u'bandwidth_limit_rule':
                   { 'max_burst_kbps': 0,
                     u'max_kbps': u'100',
-                    'tenant_id': u'a8a31c9434ff431cb789c809777505ec'}
+                    'project_id': u'a8a31c9434ff431cb789c809777505ec'}
                   },
               'policy_id': u'46985da5-9684-402e-b0d7-b7adac909c3a'
             }

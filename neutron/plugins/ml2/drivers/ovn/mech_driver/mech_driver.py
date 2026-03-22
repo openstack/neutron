@@ -1535,7 +1535,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             for azone in azones:
                 azs[azone] = {'name': azone, 'resource': 'router',
                               'state': 'available',
-                              'tenant_id': context.project_id}
+                              'project_id': context.project_id}
         return azs
 
     def responsible_for_ports_allocation(self, context):

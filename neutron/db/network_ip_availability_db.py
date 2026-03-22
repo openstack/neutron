@@ -27,7 +27,7 @@ SUBNET_NAME = 'subnet_name'
 SUPPORTED_FILTERS = {
     NETWORK_ID: mod.Network.id,
     NETWORK_NAME: mod.Network.name,
-    'tenant_id': mod.Network.tenant_id,
+    'tenant_id': mod.Network.project_id,
     'project_id': mod.Network.project_id,
     'ip_version': mod.Subnet.ip_version,
 }
