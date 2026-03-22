@@ -46,7 +46,7 @@ run_pylint () {
     echo "    pre-commit install --allow-missing-config"
     echo ""
     if [ -n "${files}" ]; then
-        pylint --rcfile=.pylintrc --output-format=colorized ${files}
+        pylint -j0 --rcfile=.pylintrc --output-format=colorized ${files}
     else
         echo "No python changes in this commit, pylint check not required."
         exit 0

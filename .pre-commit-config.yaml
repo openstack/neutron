@@ -132,4 +132,4 @@ repos:
 #       files: ^neutron/
 #       language: system
 #       types: [python]
-#       args: ['--rcfile=.pylintrc', '--output-format=colorized']
+#       args: ['-j0 --rcfile=.pylintrc', '--output-format=colorized']
