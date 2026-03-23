@@ -105,8 +105,6 @@
         - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-with-sqlalchemy-master
-        - neutron-ovs-tempest-fips
-        - neutron-ovn-tempest-ovs-release-fips
         - devstack-tobiko
         - ironic-tempest-bios-ipmi-direct
         - devstack-tobiko-ovs

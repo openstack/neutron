@@ -700,47 +700,6 @@
         '{{ devstack_log_dir }}/ovsdb-server-nb.log': 'logs'
         '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'
 
-- job:
-    name: neutron-ovs-tempest-fips
-    parent: neutron-ovs-tempest-base
-    nodeset: devstack-single-node-centos-9-stream
-    description: |
-      Scenario testing for a FIPS enabled Centos 9 system
-    pre-run: playbooks/enable-fips.yaml
-    vars:
-      nslookup_target: 'opendev.org'
-      configure_swap_size: 4096
-      devstack_services:
-        br-ex-tcpdump: true
-        br-int-flows: true
-      devstack_localrc:
-        # NOTE(ykarel) remove python3 override with 10-stream switch
-        PYTHON3_VERSION: 3.12
-      devstack_local_conf:
-        test-config:
-          "$TEMPEST_CONFIG":
-            validation:
-              ssh_key_type: 'ecdsa'
-
-- job:
-    name: neutron-ovn-tempest-ovs-release-fips
-    parent: neutron-ovn-tempest-ovs-release
-    nodeset: devstack-single-node-centos-9-stream
-    description: |
-      Scenario testing for a FIPS enabled Centos 9 system
-    pre-run: playbooks/enable-fips.yaml
-    vars:
-      nslookup_target: 'opendev.org'
-      configure_swap_size: 4096
-      devstack_localrc:
-        # NOTE(ykarel) remove python3 override with 10-stream switch
-        PYTHON3_VERSION: 3.12
-      devstack_local_conf:
-        test-config:
-          "$TEMPEST_CONFIG":
-            validation:
-              ssh_key_type: 'ecdsa'
-
 # TODO(slaweq): move this to be multinode job when it will be possible in Zuul
 - job:
     name: neutron-ovn-tempest-ipv6-only-base
