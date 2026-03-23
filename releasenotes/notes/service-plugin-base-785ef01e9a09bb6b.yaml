@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    All service plugins should inherit from
+    ``neutron_lib.services.base.ServicePluginBase``. A warning message will
+    be printed if the plugin doesn't match this condition with a recommendation
+    to file a Launchpad bug.

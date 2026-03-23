@@ -17,8 +17,8 @@ from neutron_lib.api.definitions import network_ip_availability
 from neutron_lib.api.definitions import network_ip_availability_details
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions
+from neutron_lib.services import base as service_base
 
-from neutron.db import db_base_plugin_v2
 from neutron.db import network_ip_availability_db as ip_availability_db
 from neutron.db \
     import network_ip_availability_details_db as ip_availability_details_db
@@ -27,7 +27,7 @@ from neutron.db \
 class NetworkIPAvailabilityPlugin(
         ip_availability_details_db.IpAvailabilityDetailsDbMixin,
         ip_availability_db.IpAvailabilityMixin,
-        db_base_plugin_v2.NeutronDbPluginV2):
+        service_base.ServicePluginBase):
     """This plugin exposes IP availability data for networks and subnets."""
     _instance = None
 
