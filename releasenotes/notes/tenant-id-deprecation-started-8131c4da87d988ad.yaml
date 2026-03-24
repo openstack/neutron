@@ -1,0 +1,8 @@
+---
+deprecations:
+  - |
+    The ``tenant_id`` key in API and plugin code has been deprecated.
+    Users should start using the ``project_id`` key in all objects
+    and calls, as support for ``tenant_id`` will be removed in a future
+    release. For more information see this `Neutron blueprint
+    <https://blueprints.launchpad.net/neutron/+spec/keystone-v3>`_
