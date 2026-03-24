@@ -187,7 +187,7 @@
 # replacement finishes. See LP#2112313.
 - job:
     name: neutron-tempest-plugin-ovn-with-ovn-metadata-agent
-    parent: neutron-tempest-plugin-ovn
+    parent: neutron-tempest-plugin-ovn-2026-1
     vars:
       devstack_services:
         q-ovn-metadata-agent: true

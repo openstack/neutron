@@ -1,7 +1,7 @@
 - project:
     templates:
       - integrated-gate-networking
-      - neutron-tempest-plugin-jobs
+      - neutron-tempest-plugin-jobs-2026-1
       - openstack-cover-jobs
       - openstack-python3-jobs
       - openstack-python3-jobs-arm64
