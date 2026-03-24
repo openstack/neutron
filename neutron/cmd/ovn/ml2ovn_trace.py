@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import argparse
 import ipaddress
 import subprocess  # nosec
 import sys
 
-import click
 import openstack
 
 from neutron._i18n import _
@@ -75,21 +75,25 @@ class OvnTrace:
 
 
 class Interface:
-    def __init__(self, query, direction, ctx):
+    def __init__(self, query, direction, cloud, net, from_net, to_net):
         # Only store the state for running the queries, we don't want to
         # make network connections until after argument parsing is done
         self.query = query
         self.direction = direction
-        self.ctx = ctx
+        self._cloud = cloud
+        self._net = net
+        self._from_net = from_net
+        self._to_net = to_net
 
     @property
     def network_param(self):
-        return (self.ctx.params.get('%s_net' % self.direction) or
-                self.ctx.params['net'])
+        direction_net = (
+            self._from_net if self.direction == 'from' else self._to_net)
+        return direction_net or self._net
 
     @property
     def cloud(self):
-        return self.ctx.cloud
+        return self._cloud
 
 
 class ServerInterface(Interface):
@@ -181,106 +185,120 @@ class MAC(Interface):
         return self.query
 
 
-class RequiredUnless(click.Option):
-    def __init__(self, *args, **kwargs):
-        try:
-            self.unless = kwargs.pop('unless')
-            kwargs['required'] = True
-        except KeyError:
-            raise TypeError(_("Missing required argument: 'unless'"))
-        super().__init__(*args, **kwargs)
-
-    def handle_parse_result(self, ctx, opts, args):
-        if self.unless in opts:
-            self.required = False
-        return super().handle_parse_result(ctx, opts, args)
+_FROM_TO_TYPES = {'server': ServerInterface, 'router': RouterInterface}
+_MAC_TYPES = dict(mac=MAC, **_FROM_TO_TYPES)
+_IP_TYPES = dict(ip=IP, **_FROM_TO_TYPES)
 
 
-class ObjEqValueParam(click.ParamType):
-    types = {}
-    name = "object=value"
-    default_type = ""
+def _parse_obj_value(value, types, default_type):
+    """Parse an 'object=value' argument string.
 
-    def __init__(self, direction):
-        if direction not in ('from', 'to'):
-            raise ValueError(_("Direction must be 'from' or 'to'"))
-        self.direction = direction
-        super().__init__()
-
-    def get_metavar(self, param):
-        return "[{}]=value".format("|".join(self.types.keys()))
-
-    def convert(self, value, param, ctx):
-        if isinstance(value, self.__class__):
-            return value
-        try:
-            obj, value = value.split('=')
-        except ValueError:
-            obj = self.default_type
-        try:
-            return self.types[obj](value, self.direction, ctx)
-        except KeyError:
-            self.fail(f"Unknown object type {obj!r}", param, ctx)
+    Returns a (class, query) tuple for later Interface construction.
+    """
+    try:
+        obj_type, query = value.split('=', 1)
+    except ValueError:
+        obj_type = default_type
+        query = value
+    if obj_type not in types:
+        raise argparse.ArgumentTypeError(
+            _("Unknown object type %r") % obj_type)
+    return types[obj_type], query
 
 
-class ToFromParam(ObjEqValueParam):
-    types = {'server': ServerInterface, 'router': RouterInterface}
-    default_type = 'server'
+def _from_to_type(value):
+    return _parse_obj_value(value, _FROM_TO_TYPES, 'server')
 
 
-class MacParam(ObjEqValueParam):
-    types = dict(mac=MAC, **ToFromParam.types)
-    default_type = "mac"
+def _mac_type(value):
+    return _parse_obj_value(value, _MAC_TYPES, 'mac')
 
 
-class IpParam(ObjEqValueParam):
-    types = dict(ip=IP, **ToFromParam.types)
-    default_type = "ip"
+def _ip_type(value):
+    return _parse_obj_value(value, _IP_TYPES, 'ip')
 
 
-def set_cloud(ctx, param, value):
-    ctx.cloud = openstack.connect(cloud=value)
-    return ctx.cloud
+def _make_interface(parsed_value, direction, cloud, net, from_net, to_net):
+    cls, query = parsed_value
+    return cls(query, direction, cloud, net, from_net, to_net)
 
 
-FromOpt = ToFromParam('from')
-ToOpt = ToFromParam('to')
-IpSrcOpt = IpParam('from')
-EthSrcOpt = MacParam('from')
-IpDstOpt = IpParam('to')
-EthDstOpt = MacParam('to')
+def main():
+    parser = argparse.ArgumentParser(
+        description='Trace a packet through OVN')
+    parser.add_argument(
+        '--cloud', '-c', default='devstack',
+        help='Cloud from clouds.yaml to connect to')
+    parser.add_argument(
+        '--net', '-n', help='Network to limit interface lookups to')
+    parser.add_argument(
+        '--from-net', help='Network to limit src interface lookups to')
+    parser.add_argument(
+        '--to-net', help='Network to limit dst interface lookups to')
+    parser.add_argument(
+        '--from', '-f', dest='from_', type=_from_to_type,
+        metavar='[server|router]=VALUE',
+        help='Fill eth-src/ip-src from the same object, e.g. server=vm1')
+    parser.add_argument(
+        '--eth-src', type=_mac_type, metavar='[mac|server|router]=VALUE',
+        help='Object from which to fill eth.src')
+    parser.add_argument(
+        '--ip-src', type=_ip_type, metavar='[ip|server|router]=VALUE',
+        help='Object from which to fill ip.src')
+    parser.add_argument(
+        '--to', '-t', type=_from_to_type, metavar='[server|router]=VALUE',
+        help='Fill eth-dst/ip-dst from the same object, e.g. server=vm2')
+    parser.add_argument(
+        '--eth-dst', '--via', type=_mac_type,
+        metavar='[mac|server|router]=VALUE',
+        help='Object from which to fill eth.dst')
+    parser.add_argument(
+        '--ip-dst', type=_ip_type, metavar='[ip|server|router]=VALUE',
+        help='Object from which to fill ip.dst')
+    parser.add_argument(
+        '--microflow', '-m', default='',
+        help='Additional microflow text to append to the one generated')
+    parser.add_argument(
+        '--verbose', '-v', action='store_true', help='Enables verbose mode')
+    parser.add_argument(
+        '--dry-run', action='store_true',
+        help="Print ovn-trace command, but don't run it")
 
+    args, ovntrace_args = parser.parse_known_args()
 
-@click.command()
-@click.option('--cloud', '-c', default='devstack', callback=set_cloud,
-              help='Cloud from clouds.yaml to connect to')
-@click.option('--net', '-n', help="Network to limit interfaces lookups to")
-@click.option('--from-net', help="Network to limit src interface lookups to")
-@click.option('--to-net', help="Network to limit dst interface lookups to")
-@click.option('--from', '-f', 'from_', type=FromOpt,
-              help='Fill eth-src/ip-src from the same object, e.g. server=vm1')
-@click.option('--eth-src', type=EthSrcOpt, cls=RequiredUnless, unless='from_',
-              help='Object from which to fill eth.src')
-@click.option('--ip-src', type=IpSrcOpt, cls=RequiredUnless, unless='from_',
-              help='Object from which to fill ip.src')
-@click.option('--to', '-t', type=ToOpt,
-              help='Fill eth-dst/ip-dst from the same object, e.g. server=vm2')
-@click.option('--eth-dst', '--via', '-v', type=EthDstOpt, cls=RequiredUnless,
-              unless='to', help='Object from which to fill eth.dst')
-@click.option('--ip-dst', type=IpDstOpt, cls=RequiredUnless, unless='to',
-              help='Object from which to fill ip.dst')
-@click.option('--microflow', '-m', default='',
-              help='Additional microflow text to append to the one generated')
-@click.option('--verbose', '-v', is_flag=True, help='Enables verbose mode')
-@click.option('--dry-run', is_flag=True,
-              help="Print ovn-trace output, but don't run it")
-@click.argument('ovntrace_args', nargs=-1, type=click.UNPROCESSED)
-def main(cloud, net, from_net, to_net, from_, eth_src, ip_src, to, eth_dst,
-         ip_dst, microflow, verbose, dry_run, ovntrace_args):
-    ovn_trace = OvnTrace(eth_src or from_, ip_src or from_,
-                         eth_dst or to, ip_dst or to, microflow, ovntrace_args)
-    if not dry_run:
-        if verbose:
+    if args.from_ is None:
+        if args.eth_src is None:
+            parser.error(
+                _('--eth-src is required when --from is not provided'))
+        if args.ip_src is None:
+            parser.error(
+                _('--ip-src is required when --from is not provided'))
+    if args.to is None:
+        if args.eth_dst is None:
+            parser.error(
+                _('--eth-dst is required when --to is not provided'))
+        if args.ip_dst is None:
+            parser.error(
+                _('--ip-dst is required when --to is not provided'))
+
+    cloud = openstack.connect(cloud=args.cloud)
+
+    def make(parsed_value, direction):
+        return _make_interface(
+            parsed_value, direction, cloud,
+            args.net, args.from_net, args.to_net)
+
+    from_obj = make(args.from_, 'from') if args.from_ else None
+    eth_src = make(args.eth_src, 'from') if args.eth_src else from_obj
+    ip_src = make(args.ip_src, 'from') if args.ip_src else from_obj
+    to_obj = make(args.to, 'to') if args.to else None
+    eth_dst = make(args.eth_dst, 'to') if args.eth_dst else to_obj
+    ip_dst = make(args.ip_dst, 'to') if args.ip_dst else to_obj
+
+    ovn_trace = OvnTrace(
+        eth_src, ip_src, eth_dst, ip_dst, args.microflow, tuple(ovntrace_args))
+    if not args.dry_run:
+        if args.verbose:
             sys.stderr.write("%s\n" % ovn_trace)
         ovn_trace.run()
     else:
