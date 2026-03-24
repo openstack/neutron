@@ -25,31 +25,31 @@ RESOURCE_PATH = '/networks/{id}'
 TAGS_PATH = RESOURCE_PATH + '/tags'
 TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
 
-ACTION_POST = [
+ACTION_POST: list[policy.Operation] = [
     {'method': 'POST', 'path': COLLECTION_PATH},
 ]
-ACTION_PUT = [
+ACTION_PUT: list[policy.Operation] = [
     {'method': 'PUT', 'path': RESOURCE_PATH},
 ]
-ACTION_DELETE = [
+ACTION_DELETE: list[policy.Operation] = [
     {'method': 'DELETE', 'path': RESOURCE_PATH},
 ]
-ACTION_GET = [
+ACTION_GET: list[policy.Operation] = [
     {'method': 'GET', 'path': COLLECTION_PATH},
     {'method': 'GET', 'path': RESOURCE_PATH},
 ]
-ACTION_GET_TAGS = [
+ACTION_GET_TAGS: list[policy.Operation] = [
     {'method': 'GET', 'path': TAGS_PATH},
     {'method': 'GET', 'path': TAG_PATH},
 ]
-ACTION_PUT_TAGS = [
+ACTION_PUT_TAGS: list[policy.Operation] = [
     {'method': 'PUT', 'path': TAGS_PATH},
     {'method': 'PUT', 'path': TAG_PATH},
 ]
-ACTION_POST_TAGS = [
+ACTION_POST_TAGS: list[policy.Operation] = [
     {'method': 'POST', 'path': TAGS_PATH},
 ]
-ACTION_DELETE_TAGS = [
+ACTION_DELETE_TAGS: list[policy.Operation] = [
     {'method': 'DELETE', 'path': TAGS_PATH},
     {'method': 'DELETE', 'path': TAG_PATH},
 ]

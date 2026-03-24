@@ -33,18 +33,18 @@ RULE_ADMIN_OR_SG_OWNER = 'rule:admin_or_sg_owner'
 RULE_ADMIN_OWNER_OR_SG_OWNER = 'rule:admin_owner_or_sg_owner'
 
 
-SG_ACTION_GET_TAGS = [
+SG_ACTION_GET_TAGS: list[policy.Operation] = [
     {'method': 'GET', 'path': SG_TAGS_PATH},
     {'method': 'GET', 'path': SG_TAG_PATH},
 ]
-SG_ACTION_PUT_TAGS = [
+SG_ACTION_PUT_TAGS: list[policy.Operation] = [
     {'method': 'PUT', 'path': SG_TAGS_PATH},
     {'method': 'PUT', 'path': SG_TAG_PATH},
 ]
-SG_ACTION_POST_TAGS = [
+SG_ACTION_POST_TAGS: list[policy.Operation] = [
     {'method': 'POST', 'path': SG_TAGS_PATH},
 ]
-SG_ACTION_DELETE_TAGS = [
+SG_ACTION_DELETE_TAGS: list[policy.Operation] = [
     {'method': 'DELETE', 'path': SG_TAGS_PATH},
     {'method': 'DELETE', 'path': SG_TAG_PATH},
 ]

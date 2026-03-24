@@ -23,18 +23,18 @@ RESOURCE_PATH = '/qos/policies/{id}'
 TAGS_PATH = RESOURCE_PATH + '/tags'
 TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
 
-ACTION_GET_TAGS = [
+ACTION_GET_TAGS: list[policy.Operation] = [
     {'method': 'GET', 'path': TAGS_PATH},
     {'method': 'GET', 'path': TAG_PATH},
 ]
-ACTION_PUT_TAGS = [
+ACTION_PUT_TAGS: list[policy.Operation] = [
     {'method': 'PUT', 'path': TAGS_PATH},
     {'method': 'PUT', 'path': TAG_PATH},
 ]
-ACTION_POST_TAGS = [
+ACTION_POST_TAGS: list[policy.Operation] = [
     {'method': 'POST', 'path': TAGS_PATH},
 ]
-ACTION_DELETE_TAGS = [
+ACTION_DELETE_TAGS: list[policy.Operation] = [
     {'method': 'DELETE', 'path': TAGS_PATH},
     {'method': 'DELETE', 'path': TAG_PATH},
 ]
