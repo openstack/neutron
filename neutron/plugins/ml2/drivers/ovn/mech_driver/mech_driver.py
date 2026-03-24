@@ -18,12 +18,12 @@ import copy
 import datetime
 import functools
 import multiprocessing
-import netaddr
 import operator
 import threading
 import types
 import uuid
 
+import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import segment as segment_def

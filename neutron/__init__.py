@@ -13,9 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import warnings
+
 # NOTE(ralonsoh): remove once the default backend is ``BackendType.THREADING``
 from oslo_service import backend as oslo_service_backend
-import warnings
 try:
     oslo_service_backend.init_backend(
         oslo_service_backend.BackendType.THREADING)
@@ -26,7 +27,7 @@ except oslo_service_backend.exceptions.BackendAlreadySelected:
 
 
 # pylint: disable=wrong-import-position
-import builtins  # noqa: E402
+import builtins  # noqa: E402,I100
 import gettext  # noqa: E402
 
 from neutron._i18n import _ as n_under  # noqa: E402
