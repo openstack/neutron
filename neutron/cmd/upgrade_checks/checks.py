@@ -501,7 +501,7 @@ class CoreChecks(base.BaseChecks):
                 _('The following projects have duplicated HA networks: '
                   '%(project_ids)s. This is the list of duplicated HA '
                   'networks: %(network_ids)s') %
-                  {'project_ids': project_ids, 'network_ids': network_ids})
+                {'project_ids': project_ids, 'network_ids': network_ids})
 
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
@@ -606,8 +606,8 @@ class CoreChecks(base.BaseChecks):
                   'resource and because of that limit creation of new '
                   'tags for the resources that exceed the limit will '
                   'not be possible until some of the tags are removed.') %
-                    {'limit': tagging.MAX_TAGS_COUNT})
+                {'limit': tagging.MAX_TAGS_COUNT})
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
             _('Number of tags for each resource is below the limit of %d. ') %
-              tagging.MAX_TAGS_COUNT)
+            tagging.MAX_TAGS_COUNT)

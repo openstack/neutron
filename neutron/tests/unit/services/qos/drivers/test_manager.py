@@ -65,6 +65,7 @@ class TestQosDriversManagerBase(base.BaseQosTestCase):
 
 class TestQosDriversManagerMulti(TestQosDriversManagerBase):
     """Test calls happen to all drivers"""
+
     def test_driver_manager_empty_with_no_drivers(self):
         driver_manager = self._create_manager_with_drivers({})
         self.assertEqual(len(driver_manager._drivers), 0)

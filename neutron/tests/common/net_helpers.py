@@ -482,7 +482,6 @@ class NetcatTester:
 
     def __init__(self, client_namespace, server_namespace, address,
                  dst_port, protocol, server_address=None, src_port=None):
-
         """Initialize NetcatTester
 
         Tool for testing connectivity on transport layer using netcat
@@ -731,6 +730,7 @@ class MacvtapFixture(fixtures.Fixture):
     :ivar ip_dev: created macvtap
     :type ip_dev: IPDevice
     """
+
     def __init__(self, src_dev=None, mode=None, prefix=MACVTAP_PREFIX):
         super().__init__()
         self.src_dev = src_dev
@@ -831,6 +831,7 @@ class OVSMetaBridgeFixture(fixtures.Fixture):
     :ivar bridge: created bridge
     :type bridge: OVSBridge
     """
+
     def __init__(self, name):
         super().__init__()
         self.name = name
@@ -843,6 +844,7 @@ class OVSMetaBridgeFixture(fixtures.Fixture):
 
 class OVSTrunkBridgeFixture(OVSBridgeFixture):
     """This bridge doesn't generate the name."""
+
     def _setUp(self):
         ovs = ovs_lib.BaseOVS()
         self.bridge = ovs.add_bridge(self.prefix)
@@ -961,6 +963,7 @@ class LinuxBridgeFixture(fixtures.Fixture):
     :ivar namespace: created bridge namespace
     :type namespace: str
     """
+
     def __init__(self, prefix=BR_PREFIX, namespace=UNDEFINED,
                  prefix_is_full_name=False):
         super().__init__()

@@ -735,7 +735,7 @@ class TestDhcpAgent(base.BaseTestCase):
                 dhcp,
                 'safe_get_network_info',
                 return_value=new_fake_network
-            ), \
+        ), \
             mock.patch.object(
                 dhcp, 'update_isolated_metadata_proxy') as ump:
             dhcp.configure_dhcp_for_network(fake_network)

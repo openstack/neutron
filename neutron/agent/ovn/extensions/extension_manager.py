@@ -48,6 +48,7 @@ class OVNExtensionEvent(metaclass=abc.ABCMeta):
     by the OVN agent (with the "metadata" extension) and this class removed,
     keeping only the compatibility with the OVN agent (to be removed in C+2).
     """
+
     def __init__(self, *args, extension_name=None, **kwargs):
         if extension_name is None:
             raise OVNExtensionEventEmptyExtensionName(

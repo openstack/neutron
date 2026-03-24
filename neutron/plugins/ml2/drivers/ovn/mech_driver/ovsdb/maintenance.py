@@ -959,9 +959,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
             net_id = utils.get_neutron_name(ls.name)
             physnet = net_physnet[net_id]
-            if (ovn_const.OVN_NETTYPE_EXT_ID_KEY not in ls.external_ids or
-                    (ovn_const.OVN_PHYSNET_EXT_ID_KEY not in ls.external_ids
-                     and physnet)):
+            if ovn_const.OVN_NETTYPE_EXT_ID_KEY not in ls.external_ids or (
+                ovn_const.OVN_PHYSNET_EXT_ID_KEY not in ls.external_ids and
+                physnet
+            ):
                 external_ids = {
                     ovn_const.OVN_NETTYPE_EXT_ID_KEY: net_type[net_id]}
                 if physnet:
@@ -1193,8 +1194,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
-
     # TODO(ralonsoh): to remove in G+4 (2028.1) cycle (2nd next SLURP release)
+
     @has_lock_periodic(
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,

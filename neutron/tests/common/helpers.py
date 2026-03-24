@@ -213,6 +213,7 @@ class TestTimer:
     timeout exception. The goal of this class is to use the SIGALRM event
     without affecting the test case timeout counter.
     """
+
     def __init__(self, timeout):
         self._timeout = int(timeout)
         self._old_handler = None

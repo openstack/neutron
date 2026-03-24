@@ -41,6 +41,7 @@ class LinkLocalAllocator(ItemAllocator):
     Persisting these in the database is unnecessary and would degrade
     performance.
     """
+
     def __init__(self, data_store_path, subnet):
         """Create the necessary pool and item allocator
             using ',' as the delimiter and LinkLocalAllocator as the

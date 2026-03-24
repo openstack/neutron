@@ -120,14 +120,14 @@ class TestMigrateNeutronDatabaseToOvn(
             # Check there are no vxlan allocations
             vxlan_allocations = session.query(
                 vxlanallocation.VxlanAllocation).filter(
-                    vxlanallocation.VxlanAllocation.allocated == True # noqa
+                    vxlanallocation.VxlanAllocation.allocated == True  # noqa
                         ).all()
             self.assertFalse(vxlan_allocations)
 
             # Check all the networks have Geneve allocations
             geneve_allocations = session.query(
                 geneveallocation.GeneveAllocation).filter(
-                    geneveallocation.GeneveAllocation.allocated == True # noqa
+                    geneveallocation.GeneveAllocation.allocated == True  # noqa
                         ).all()
             self.assertEqual(len(networks), len(geneve_allocations))
 

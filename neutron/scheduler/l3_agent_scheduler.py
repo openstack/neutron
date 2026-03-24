@@ -362,6 +362,7 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
        If a router is ha router, allocate L3 agents distributed AZs
        according to router's az_hints.
     """
+
     def _get_az_hints(self, router):
         return utils.get_az_hints(router)
 

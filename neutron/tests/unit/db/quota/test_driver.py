@@ -59,6 +59,7 @@ class TestResource:
 
 class TestTrackedResource(resource.TrackedResource):
     """Describes a test tracked resource for detailed quota checking"""
+
     def __init__(self, name, model_class, flag=None,
                  plural_name=None):
         super().__init__(
@@ -71,6 +72,7 @@ class TestTrackedResource(resource.TrackedResource):
 
 class TestCountableResource(resource.CountableResource):
     """Describes a test countable resource for detailed quota checking"""
+
     def __init__(self, name, count, flag=-1, plural_name=None):
         super().__init__(
             name, count, flag=flag, plural_name=None)

@@ -35,6 +35,7 @@ class IpConntrackUpdate:
     An instance of this object carries the information necessary to
     process a request to update the conntrack table.
     """
+
     def __init__(self, device_info_list, rule, remote_ips):
         self.device_info_list = device_info_list
         self.rule = rule

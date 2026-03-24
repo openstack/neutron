@@ -31,6 +31,7 @@ class NeutronBaseWorker(worker.BaseWorker):
 
 class PeriodicWorker(NeutronBaseWorker):
     """A worker that runs a function at a fixed interval."""
+
     def __init__(self, check_func, interval, initial_delay,
                  desc=None):
         super().__init__(worker_process_count=0, desc=desc)

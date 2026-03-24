@@ -49,6 +49,7 @@ class ResourceAllocator:
     instances of it may be initialized and used. A pool of resources
     is identified solely by the 'resource_name' argument.
     """
+
     def __init__(self, resource_name, allocator_function, validator=None):
         """Initialize a resource allocator.
 

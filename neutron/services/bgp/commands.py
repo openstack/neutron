@@ -115,6 +115,7 @@ class _LrAddCommand(nb_cmd.LrAddCommand):
     columns in the existing row are the same as the columns we are trying to
     set.
     """
+
     def run_idl(self, txn):
         try:
             self.row_result = self.result = self.api.lookup(
@@ -147,6 +148,7 @@ class _LrpAddCommand(nb_cmd.LrpAddCommand):
     columns in the existing row are the same as the columns we are trying to
     set.
     """
+
     def __init__(
             self, api, router_name, lrp_name, networks=None, **kwargs):
         networks = networks or []
@@ -176,6 +178,7 @@ class _HAChassisGroupAddCommand(nb_cmd.HAChassisGroupAddCommand):
     if the columns in the existing row are the same as the columns we are
     trying to set.
     """
+
     def run_idl(self, txn):
         try:
             self.row_result = self.result = self.api.lookup(
@@ -192,6 +195,7 @@ class _HAChassisGroupAddCommand(nb_cmd.HAChassisGroupAddCommand):
 class _LrPolicyAddCommand(nb_cmd.LrPolicyAddCommand):
     """An idempotent command to add a logical router policy.
     """
+
     def __init__(self, api, router, priority, match, action, output_port,
                  *args, **kwargs):
 
@@ -619,6 +623,7 @@ class ReconcileChassisPeerCommand(ovs_cmd.BaseCommand):
     rerouted with ECMP to the peer IP, that typically resides on the
     neighboring physical switch.
     """
+
     def __init__(
             self, api, chassis, network_name):
         super().__init__(api)

@@ -61,6 +61,7 @@ class TrunkBridge(ovs_lib.OVSBridge):
 
     A trunk bridge has a name that follows a specific naming convention.
     """
+
     def __init__(self, trunk_id):
         name = utils.gen_trunk_br_name(trunk_id)
         super().__init__(name)

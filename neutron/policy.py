@@ -266,6 +266,7 @@ class OwnerCheck(policy.Check):
     in the latter case it leverages the plugin to load the referenced
     resource and perform the check.
     """
+
     def __init__(self, kind, match):
         if kind == 'tenant_id':
             LOG.warning(

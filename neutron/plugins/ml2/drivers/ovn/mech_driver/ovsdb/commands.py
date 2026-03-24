@@ -905,7 +905,7 @@ class UpdateObjectExtIdsCommand(command.BaseCommand, metaclass=abc.ABCMeta):
             raise RuntimeError(
                 _("%(table)s %(record)s does not exist. "
                   "Cannot update external IDs") %
-                  {'table': self.table, 'record': self.record})
+                {'table': self.table, 'record': self.record})
 
         for ext_id_key, ext_id_value in self.external_ids.items():
             obj.setkey('external_ids', ext_id_key, ext_id_value)

@@ -80,6 +80,7 @@ class PluginReportStateAPI:
     information on changing rpc interfaces, see
     doc/source/contributor/internals/rpc_api.rst.
     """
+
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.4',
                                        namespace=constants.RPC_NAMESPACE_STATE)

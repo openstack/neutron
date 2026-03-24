@@ -38,6 +38,7 @@ from neutron.tests.unit import tests
 
 class _PortRange:
     """A linked list of port ranges."""
+
     def __init__(self, base, prev_ref=None):
         self.base = base
         self.mask = 0xffff

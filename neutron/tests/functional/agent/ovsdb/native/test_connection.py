@@ -47,7 +47,7 @@ class BridgeMonitorTestCase(base.BaseSudoTestCase):
         try:
             common_utils.wait_until_true(
                 lambda: set(bridges_to_monitor) ==
-                        set(_idl_mon._bridges_added_list),
+                set(_idl_mon._bridges_added_list),
                 timeout=10)
         except common_utils.WaitTimeout:
             self.fail(f'Bridges to monitor: {set(bridges_to_monitor)}, '

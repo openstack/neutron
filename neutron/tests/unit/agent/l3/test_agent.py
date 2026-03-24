@@ -3445,6 +3445,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             mock_delete.assert_called_once_with(pidfile, run_as_root=True)
             mock_delete.reset_mock()
             cmd = execute.call_args[0][0]
+
             def _join(*args):
                 return ' '.join(args)
             cmd = _join(*cmd)

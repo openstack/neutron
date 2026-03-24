@@ -47,7 +47,7 @@ def _initialize_network_segment_range_support(type_driver, start_time):
 
 
 class VlanTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
-                                   testlib_api.SqlTestCase):
+                                 testlib_api.SqlTestCase):
     def setUp(self):
         super().setUp()
         cfg.CONF.register_opts(common_config.core_opts)

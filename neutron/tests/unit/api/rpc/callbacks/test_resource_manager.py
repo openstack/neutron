@@ -101,6 +101,7 @@ class ProducerResourceCallbacksManagerTestCase(
     def test_get_callback_returns_proper_callback(self, *mocks):
         def callback1():
             return None
+
         def callback2():
             return None
         self.mgr.register(callback1, 'TYPE1')
@@ -127,6 +128,7 @@ class ConsumerResourceCallbacksManagerTestCase(
     def test_register_succeeds_on_multiple_calls(self, *mocks):
         def callback1():
             return None
+
         def callback2():
             return None
         self.mgr.register(callback1, 'TYPE')
@@ -142,6 +144,7 @@ class ConsumerResourceCallbacksManagerTestCase(
     def test_get_callbacks_returns_proper_callbacks(self, *mocks):
         def callback1():
             return None
+
         def callback2():
             return None
         self.mgr.register(callback1, 'TYPE1')

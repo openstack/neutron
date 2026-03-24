@@ -691,8 +691,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                 err_msg = (
                     _("IP addresses '%(ips)s' already used by the '%(dist)s' "
                       "port(s) in the same network") %
-                      {'ips': ";".join(common_ips),
-                       'dist': const.DEVICE_OWNER_DISTRIBUTED}
+                    {'ips': ";".join(common_ips),
+                     'dist': const.DEVICE_OWNER_DISTRIBUTED}
                 )
                 raise n_exc.InvalidInput(error_message=err_msg)
 

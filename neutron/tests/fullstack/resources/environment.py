@@ -36,6 +36,7 @@ class EnvironmentDescription:
 
     Does the setup, as a whole, support tunneling? How about l2pop?
     """
+
     def __init__(self, network_type='vxlan', l2_pop=True, qos=False,
                  mech_drivers='openvswitch',
                  service_plugins='router', arp_responder=False,
@@ -97,6 +98,7 @@ class HostDescription:
     What agents should the host spawn? What mode should each agent operate
     under?
     """
+
     def __init__(self, l3_agent=False, dhcp_agent=False,
                  l2_agent_type=constants.AGENT_TYPE_OVS,
                  firewall_driver='noop', availability_zone=None,

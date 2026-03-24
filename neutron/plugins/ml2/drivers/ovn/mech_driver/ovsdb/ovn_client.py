@@ -2034,7 +2034,7 @@ class OVNClient:
                 provider_net = self._plugin.get_network(
                     context, gw_port['network_id'])
                 self.set_gateway_mtu(context, provider_net, txn=txn,
-                                         router_id=router_id)
+                                     router_id=router_id)
 
             if _has_separate_snat_per_subnet(router):
                 for sid in subnet_ids:

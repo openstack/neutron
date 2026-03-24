@@ -308,7 +308,6 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                 time.sleep(0.25)
 
     def test_noresync_after_port_gone(self):
-
         '''This will test the scenario where a port is removed after listing
         it but before getting vif info about it.
         '''

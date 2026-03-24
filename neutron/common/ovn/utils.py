@@ -176,7 +176,7 @@ def ovn_context(txn_var_name='txn', idl_var_name='idl'):
             raise RuntimeError(
                 _('Could not find variables %(txn)s and %(idl)s in the method '
                   'signature') %
-                  {'txn': txn_var_name, 'idl': idl_var_name})
+                {'txn': txn_var_name, 'idl': idl_var_name})
 
         def retrieve_parameter(param_name, _args, _kwargs):
             # Position of the parameter "param_name" in the "args" tuple.
@@ -687,7 +687,7 @@ def get_lrouter_non_gw_routes(ovn_router):
                 external_ids.get(constants.OVN_ROUTER_IS_EXT_GW, 'false')):
             continue
 
-        #NOTE(tpsilva): only add Neutron-managed routes
+        # NOTE(tpsilva): only add Neutron-managed routes
         if strutils.bool_from_string(
                 external_ids.get(constants.OVN_LRSR_EXT_ID_KEY, 'false')):
             routes.append({'destination': route.ip_prefix,
@@ -1152,7 +1152,6 @@ def _sync_ha_chassis_group(nb_idl, hcg_info, txn):
     """
     def get_priority(ch_name):
         nonlocal priority
-        nonlocal hcg_info
         if hcg_info.priority:
             return hcg_info.priority[ch_name]
 

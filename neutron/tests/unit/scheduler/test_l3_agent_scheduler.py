@@ -2075,6 +2075,7 @@ class TestGetL3AgentsWithAgentModeFilter(TestGetL3AgentsWithFilter):
     This class tests the L3AgentSchedulerDbMixin.get_l3_agents()
     for the 'agent_mode' filter with various values.
     """
+
     def _get_agent_mode(self, agent):
         agent_conf = self.plugin.get_configuration_dict(agent)
         return agent_conf.get('agent_mode', 'None')
@@ -2094,6 +2095,7 @@ class TestGetL3AgentsWithHostFilter(TestGetL3AgentsWithFilter):
     This class tests the L3AgentSchedulerDbMixin.get_l3_agents()
     for the 'host' filter with various values.
     """
+
     def _get_host(self, agent):
         return agent.get('host', 'None')
 

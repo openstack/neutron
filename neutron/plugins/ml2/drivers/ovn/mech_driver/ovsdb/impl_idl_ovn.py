@@ -682,7 +682,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         for row in self.db_find_rows(
                 'DHCP_Options',
                 ('external_ids', '=', {'subnet_id': subnet_id})
-                ).execute(check_error=True):
+        ).execute(check_error=True):
             port_id = row.external_ids.get('port_id')
             if with_ports and port_id:
                 ports.append(self._format_dhcp_row(row))
@@ -698,7 +698,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             for row in self.db_find_rows(
                     'DHCP_Options',
                     ('external_ids', '=', {'subnet_id': subnet_id})
-                    ).execute(check_error=True):
+            ).execute(check_error=True):
                 if not row.external_ids.get('port_id'):
                     ret_opts.append(self._format_dhcp_row(row))
                     break

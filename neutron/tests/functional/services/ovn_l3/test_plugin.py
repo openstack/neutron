@@ -426,7 +426,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # we can test how many calls to the northbound idl we are using in
         # in order to create the new routers
         with mock.patch.object(ovn_client._nb_idl, 'get_lrouter_port',
-            wraps=ovn_client._nb_idl.get_lrouter_port) as nb_glrp:
+                wraps=ovn_client._nb_idl.get_lrouter_port) as nb_glrp:
             router = self._create_router('router-multi-gw%d' % i)
             self._add_external_gateways(
                 router['id'],

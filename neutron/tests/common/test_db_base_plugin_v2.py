@@ -35,7 +35,6 @@ from neutron_lib import fixture
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_const
 from neutron_lib.utils import helpers
-from neutron_lib.utils import net
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_utils import importutils
@@ -2050,9 +2049,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         # simulate duplicate mac generation to make sure DBDuplicate is retried
         responses = ['12:34:56:78:00:00', '12:34:56:78:00:00',
                      '12:34:56:78:00:01']
-        with mock.patch.object(
-                net, 'random_mac_generator',
-                return_value=itertools.cycle(responses)) as grand_mac:
+        with mock.patch(
+            'neutron_lib.utils.net.random_mac_generator',
+            return_value=itertools.cycle(responses)
+        ) as grand_mac:
             with self.subnet() as s:
                 with self.port(subnet=s) as p1, self.port(subnet=s) as p2:
                     self.assertEqual('12:34:56:78:00:00',
@@ -6825,6 +6825,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
 
 class DbModelMixin:
     """DB model tests."""
+
     def test_make_network_dict_outside_engine_facade_manager(self):
         mock.patch.object(directory, 'get_plugin').start()
         ctx = context.get_admin_context()

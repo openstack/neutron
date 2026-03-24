@@ -30,6 +30,7 @@ class ResourceUpdate:
     Priority values are ordered from higher (0) to lower (>0) by the caller,
     and are therefore not defined here, but must be done by the consumer.
     """
+
     def __init__(self, id, priority,
                  action=None, resource=None, timestamp=None, tries=5):
         self.priority = priority
@@ -161,6 +162,7 @@ class ExclusiveResourceProcessor:
 
 class ResourceProcessingQueue:
     """Manager of the queue of resources to process."""
+
     def __init__(self):
         self._queue = queue.PriorityQueue()
         self._run = True

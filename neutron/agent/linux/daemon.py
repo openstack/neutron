@@ -168,6 +168,7 @@ class Daemon:
 
     Usage: subclass the Daemon class and override the run() method
     """
+
     def __init__(self, pidfile, stdin=DEVNULL, stdout=DEVNULL,
                  stderr=DEVNULL, procname=sys.executable, uuid=None,
                  user=None, group=None):

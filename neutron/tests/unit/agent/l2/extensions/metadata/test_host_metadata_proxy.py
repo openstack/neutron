@@ -74,6 +74,7 @@ class TestHostMedataHAProxyDaemonMonitor(base.BaseTestCase):
         host_meta.config(instance_infos)
         host_meta.enable()
         cmd = execute.call_args[0][0]
+
         def _join(*args):
             return ' '.join(args)
         cmd = _join(*cmd)

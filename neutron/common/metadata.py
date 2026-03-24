@@ -277,7 +277,7 @@ class MetadataProxyHandlerBaseSocketServer(
                 title = '400 Bad Request'
                 msg = (_('Both network %(network)s and router %(router)s '
                          'defined.') %
-                         {'network': network_id, 'router': router_id})
+                       {'network': network_id, 'router': router_id})
                 LOG.warning(msg)
             elif network_id:
                 title = '404 Not Found'

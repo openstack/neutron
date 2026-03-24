@@ -64,6 +64,7 @@ class HaRouterNamespace(namespaces.RouterNamespace):
     It has to be disabled on all other nodes to avoid sending MLD packets
     which cause lost connectivity to Floating IPs.
     """
+
     def create(self):
         super().create(ipv6_forwarding=False)
         # HA router namespaces should have ip_nonlocal_bind enabled

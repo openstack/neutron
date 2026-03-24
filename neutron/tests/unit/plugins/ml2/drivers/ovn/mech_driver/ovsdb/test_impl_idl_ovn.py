@@ -197,14 +197,14 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
              'external_ids': {
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                      utils.ovn_name('lr-id-b'),
-             }, 'networks': ['20.0.2.0/24'],
-             'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'}},
+            }, 'networks': ['20.0.2.0/24'],
+                'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'}},
             {'name': utils.ovn_lrouter_port_name('orp-id-b3'),
              'external_ids': {
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                      utils.ovn_name('lr-id-b'),
-             }, 'networks': ['20.0.3.0/24'],
-             'options': {}},
+            }, 'networks': ['20.0.3.0/24'],
+                'options': {}},
             {'name': utils.ovn_lrouter_port_name('gwc'),
              'external_ids': {
                  ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
@@ -215,9 +215,9 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             {'name': utils.ovn_lrouter_port_name('not-managed'),
              'external_ids': {
                  'owner': 'not-owned-by-neutron',
-             },
-             'networks': ['10.0.5.0/24'],
-             'options': {}}],
+            },
+                'networks': ['10.0.5.0/24'],
+                'options': {}}],
         'gateway_chassis': [
             {'chassis_name': 'fake-chassis',
              'name': utils.ovn_lrouter_port_name('gwc') + '_fake-chassis'}],

@@ -19,6 +19,7 @@ import abc
 
 class NetworkSegment:
     """Represents a Neutron network segment"""
+
     def __init__(self, network_type, physical_network, segmentation_id,
                  mtu=None):
         self.network_type = network_type
@@ -33,6 +34,7 @@ class CommonAgentManagerRpcCallBackBase(metaclass=abc.ABCMeta):
     This class must be inherited by a RPC callback class that is used
     in combination with the common agent.
     """
+
     def __init__(self, context, agent, sg_agent):
         self.context = context
         self.agent = agent

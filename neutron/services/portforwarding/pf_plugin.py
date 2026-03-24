@@ -485,9 +485,9 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                     msg=_("There is a port collision with the %(key)s. The "
                           "following ranges collide: %(existing)s and "
                           "%(port)s") %
-                          {'key': port_key,
-                           'existing': existing_port,
-                           'port': port})
+                    {'key': port_key,
+                     'existing': existing_port,
+                     'port': port})
 
     def _check_port_collisions(self, context, floatingip_id, pf_dict,
                                id=None, internal_port_id=None,

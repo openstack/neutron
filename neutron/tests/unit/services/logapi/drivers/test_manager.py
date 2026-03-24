@@ -70,6 +70,7 @@ class TestLogDriversManagerBase(base.BaseLogTestCase):
 
 class TestLogDriversManagerMulti(TestLogDriversManagerBase):
     """Test calls happen to all drivers"""
+
     def test_driver_manager_empty_with_no_drivers(self):
         driver_manager = self._create_manager_with_drivers({})
         self.assertEqual(0, len(driver_manager.drivers))
@@ -93,6 +94,7 @@ class TestLogDriversManagerMulti(TestLogDriversManagerBase):
 
 class TestLogDriversManagerLoggingTypes(TestLogDriversManagerBase):
     """Test supported logging types"""
+
     def test_available_logging_types(self):
         driver_manager = self._create_manager_with_drivers(
             {'driver-A': {'is_loaded': True,

@@ -2426,10 +2426,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with mock.patch.object(
                 mech_driver.OVNMechanismDriver,
                 '_is_port_provisioning_required', lambda *_: True), \
-             mock.patch.object(
+            mock.patch.object(
                  mech_driver.OVNMechanismDriver,
                  '_notify_dhcp_updated') as mock_notify_dhcp, \
-             mock.patch.object(
+            mock.patch.object(
                  ovn_client.OVNClient, 'update_port') as mock_update_port:
 
             ovn_conf.cfg.CONF.set_override(

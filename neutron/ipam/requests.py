@@ -39,6 +39,7 @@ class SubnetRequest(metaclass=abc.ABCMeta):
     that is common to any type of request.  This class shouldn't be
     instantiated on its own.  Rather, a subclass of this class should be used.
     """
+
     def __init__(self, project_id, subnet_id,
                  gateway_ip=None, allocation_pools=None,
                  set_gateway_ip=True):
@@ -193,6 +194,7 @@ class SpecificSubnetRequest(SubnetRequest):
     allocation, even overlapping ones.  This can be expanded on by future
     blueprints.
     """
+
     def __init__(self, project_id, subnet_id, subnet_cidr,
                  gateway_ip=None, allocation_pools=None,
                  set_gateway_ip=True):
@@ -230,6 +232,7 @@ class AddressRequest(metaclass=abc.ABCMeta):
 
 class SpecificAddressRequest(AddressRequest):
     """For requesting a specified address from IPAM"""
+
     def __init__(self, address):
         """Initialize SpecificAddressRequest
 
@@ -246,6 +249,7 @@ class SpecificAddressRequest(AddressRequest):
 
 class BulkAddressRequest(AddressRequest):
     """For requesting a batch of available addresses from IPAM"""
+
     def __init__(self, num_addresses):
         """Initialize BulkAddressRequest
         :param num_addresses: The quantity of IP addresses being requested

@@ -116,6 +116,7 @@ class FakeFirewallDriver(firewall_base.FirewallDriver):
     FirewallDriver is base class for other types of drivers. To be able to
     use it in tests, it's needed to overwrite all abstract methods.
     """
+
     def prepare_port_filter(self, port):
         raise NotImplementedError()
 

@@ -35,6 +35,7 @@ class FakePlugin:
 
 class TestSGLogRequestValidations(base.BaseTestCase):
     """Test validation for a request"""
+
     def setUp(self):
         self.log_plugin = FakePlugin()
         importutils.import_module('neutron.services.logapi.common.sg_validate')

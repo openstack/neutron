@@ -52,6 +52,7 @@ class PidsInNamespaceException(Exception):
 
 class FakeDhcpPlugin:
     """Fake RPC plugin to bypass any RPC calls."""
+
     def __getattribute__(self, name):
         def fake_method(*args):
             pass

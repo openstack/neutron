@@ -27,6 +27,7 @@ class SanityTestCase(base.BaseLoggingTestCase):
     neutron-sanity-check runs without throwing an exception, as in the case
     where someone modifies the API without updating the check script.
     """
+
     def setUp(self):
         super().setUp()
         # needed for test_dnsmasq_version()

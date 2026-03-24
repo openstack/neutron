@@ -27,8 +27,8 @@ from neutron.tests.unit.extensions import test_l3
 
 
 class TestLogicalRouterPortEvent(
-    base.TestOVNFunctionalBase,
-    test_l3.L3NatTestCaseMixin):
+        base.TestOVNFunctionalBase,
+        test_l3.L3NatTestCaseMixin):
 
     def setUp(self, **kwargs):
         super().setUp(**kwargs)
@@ -194,8 +194,8 @@ class TestLogicalRouterPortEvent(
 
 
 class TestLogicalRouterPortGatewayChassisEvent(
-    base.TestOVNFunctionalBase,
-    test_l3.L3NatTestCaseMixin):
+        base.TestOVNFunctionalBase,
+        test_l3.L3NatTestCaseMixin):
 
     def setUp(self, **kwargs):
         super().setUp(**kwargs)

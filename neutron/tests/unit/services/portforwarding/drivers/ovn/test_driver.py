@@ -499,6 +499,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         ovn_conf.register_opts()
         self.pf_plugin = mock.Mock()
         self.handler = mock.Mock()
+
         def get_mock_pf_plugin(alias):
             return self.pf_plugin if (
                         alias == plugin_constants.PORTFORWARDING) else None

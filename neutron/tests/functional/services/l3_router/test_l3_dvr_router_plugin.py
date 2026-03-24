@@ -2001,7 +2001,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
 
             self.l3_plugin.l3_rpc_notifier.router_removed_from_agent.\
                 assert_called_once_with(
-                mock.ANY, router['id'], HOST1)
+                    mock.ANY, router['id'], HOST1)
 
     def test_router_auto_scheduling(self):
         router = self._create_router()

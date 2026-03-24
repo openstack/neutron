@@ -520,11 +520,11 @@ class QoSPlugin(qos.QoSPluginBase):
         original_rules = [
             r for r in original_rules
             if (isinstance(r, rule_object.QosMinimumBandwidthRule |
-                              rule_object.QosMinimumPacketRateRule))]
+                           rule_object.QosMinimumPacketRateRule))]
         desired_rules = [
             r for r in desired_rules
             if (isinstance(r, rule_object.QosMinimumBandwidthRule |
-                              rule_object.QosMinimumPacketRateRule))]
+                           rule_object.QosMinimumPacketRateRule))]
         if not original_rules and not desired_rules:
             return
 

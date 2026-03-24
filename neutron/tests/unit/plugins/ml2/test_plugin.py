@@ -1245,9 +1245,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_port_after_update_outside_transaction(self):
         self.tx_open = True
+
         def receive(r, e, t, payload):
             return setattr(self, 'tx_open',
-                            db_api.is_session_active(payload.context.session))
+                           db_api.is_session_active(payload.context.session))
 
         with self.port() as p:
             registry.subscribe(receive, resources.PORT, events.AFTER_UPDATE)
@@ -1257,9 +1258,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_port_after_delete_outside_transaction(self):
         self.tx_open = True
+
         def receive(r, e, t, payload):
             return setattr(self, 'tx_open',
-                            db_api.is_session_active(payload.context.session))
+                           db_api.is_session_active(payload.context.session))
 
         with self.port() as p:
             registry.subscribe(receive, resources.PORT, events.AFTER_DELETE)
@@ -1837,8 +1839,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         ctx = context.get_admin_context()
         b_update_events = []
         a_update_events = []
+
         def b_receiver(r, e, t, payload):
             return b_update_events.append(payload)
+
         def a_receiver(r, e, t, payload):
             return a_update_events.append(payload.latest_state)
 
@@ -2103,6 +2107,7 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
                        **host_arg) as port:
             port = plugin.get_port(ctx, port['port']['id'])
             updated_ports = []
+
             def receiver(r, e, t, payload):
                 return updated_ports.append(payload.latest_state)
 
@@ -2117,6 +2122,7 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
     def test_bind_port_bumps_revision(self):
         updated_ports = []
         created_ports = []
+
         def ureceiver(r, e, t, payload):
             return updated_ports.append(payload.latest_state)
 
