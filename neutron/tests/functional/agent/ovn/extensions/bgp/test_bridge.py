@@ -113,15 +113,20 @@ class BGPChassisBridgeTestCase(BgpTestCaseWithIdls):
             '172.24.4.10',
             hostname=chassis_name,
         ).execute(check_error=True)
+        self.bgp_bridge.bgp_agent_api.chassis_id = chassis.uuid
+        # Set the chassis_name just in case logger is called
+        self.bgp_bridge.bgp_agent_api.chassis_name = chassis_name
         self.sb_api.db_create(
             'Chassis_Private', name=chassis_name,
             chassis=chassis.uuid,
         ).execute(check_error=True)
 
         port_name = 'lrp-test'
-
-        pb_wait_event = test_bgp.WaitForPortBindingEvent(port_name)
-        self.sb_api.idl.notify_handler.watch_event(pb_wait_event)
+        pb_created_wait_event = test_bgp.WaitForPortBindingCreatedEvent(
+            port_name)
+        pb_updated_wait_event = test_bgp.WaitForPortBindingUpdatedEvent(
+            port_name, chassis.uuid)
+        self.sb_api.idl.notify_handler.watch_event(pb_created_wait_event)
 
         lrp_ext_ids = {
             constants.LRP_NETWORK_NAME_EXT_ID_KEY: self.test_bridge.br_name}
@@ -134,7 +139,12 @@ class BGPChassisBridgeTestCase(BgpTestCaseWithIdls):
                                         networks=['192.168.1.10/32'],
                                         external_ids=lrp_ext_ids))
 
-        self.assertTrue(pb_wait_event.wait())
+        self.assertTrue(pb_created_wait_event.wait())
+        self.sb_api.idl.notify_handler.watch_event(pb_updated_wait_event)
+
+        self.sb_api.lsp_bind(port_name, chassis.name).execute(check_error=True)
+
+        self.assertTrue(pb_updated_wait_event.wait())
 
         self.bgp_bridge.configure_flows()
 

@@ -118,8 +118,15 @@ class BGPChassisBridge(Bridge):
         port_bindings = self.sb_idl.db_find_rows(
             'Port_Binding',
             ('type', '=', ovn_const.PB_TYPE_L3GATEWAY),
-            ('external_ids', '=', ext_ids)).execute(
-                check_error=True)
+            ('external_ids', '=', ext_ids),
+            ('chassis', '=', self.bgp_agent_api.chassis_id),
+        ).execute(check_error=True)
+        if len(port_bindings) > 1:
+            LOG.warning("Expected 1 LRP MAC for bridge %s and chassis %s "
+                        "and got %s",
+                        self.name, self.bgp_agent_api.chassis_name,
+                        len(port_bindings))
+            return None
         if port_bindings:
             pb = port_bindings[0]
             try:

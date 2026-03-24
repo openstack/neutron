@@ -16,11 +16,34 @@
 from ovsdbapp.backend.ovs_idl import event
 
 
-class WaitForPortBindingEvent(event.WaitEvent):
-    event_name = 'WaitForPortBindingEvent'
+class WaitForPortBindingCreatedEvent(event.WaitEvent):
+    event_name = 'WaitForPortBindingCreatedEvent'
 
     def __init__(self, port_name):
         table = 'Port_Binding'
         events = (self.ROW_CREATE,)
         conditions = (('logical_port', '=', port_name),)
         super().__init__(events, table, conditions, timeout=10)
+
+
+class WaitForPortBindingUpdatedEvent(event.WaitEvent):
+    event_name = 'WaitForPortBindingUpdatedEvent'
+
+    def __init__(self, port_name, chassis_id):
+        table = 'Port_Binding'
+        events = (self.ROW_UPDATE,)
+        conditions = (('logical_port', '=', port_name),)
+        self.chassis_id = chassis_id
+        super().__init__(events, table, conditions, timeout=10)
+
+    def match_fn(self, event, row, old=None):
+        if not hasattr(old, 'chassis'):
+            return False
+
+        try:
+            if row.chassis[0].uuid != self.chassis_id:
+                return False
+        except IndexError:
+            return False
+
+        return True
