@@ -252,7 +252,7 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
     def _test_lrp_with_mac_helper(self, bridge_name):
         port_name = 'ovn-port-bgp'
         lrp_mac = '02:00:00:00:00:00'
-        pb_wait_event = test_bgp.WaitForPortBindingEvent(port_name)
+        pb_wait_event = test_bgp.WaitForPortBindingCreatedEvent(port_name)
         self.ovn_agent.sb_idl.idl.notify_handler.watch_event(pb_wait_event)
 
         lrp_ext_ids = {constants.LRP_NETWORK_NAME_EXT_ID_KEY: bridge_name}
@@ -270,6 +270,20 @@ class BGPExtensionTestCase(BGPExtensionBaseTestCase):
                 external_ids=lrp_ext_ids))
 
         self.assertTrue(pb_wait_event.wait())
+
+        chassis = self.ovn_agent.sb_idl.db_find_rows(
+            'Chassis',
+            name=self.chassis_name).execute(check_error=True)[0]
+
+        pb_updated_wait_event = test_bgp.WaitForPortBindingUpdatedEvent(
+            port_name, chassis.uuid)
+        self.ovn_agent.sb_idl.idl.notify_handler.watch_event(
+            pb_updated_wait_event)
+
+        self.ovn_agent.sb_idl.lsp_bind(port_name, self.chassis_name).execute(
+            check_error=True)
+
+        self.assertTrue(pb_updated_wait_event.wait())
 
         try:
             pb = self.ovn_agent.sb_idl.db_find_rows(
