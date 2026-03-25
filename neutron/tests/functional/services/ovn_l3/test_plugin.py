@@ -29,7 +29,6 @@ from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.scheduler import l3_ovn_scheduler as l3_sched
-from neutron.tests import base as tests_base
 from neutron.tests.functional import base
 from neutron.tests.functional.resources.ovsdb import events
 
@@ -353,7 +352,6 @@ class TestRouter(base.TestOVNFunctionalBase):
         expected = {ch: expected_priorities for ch in ch_list}
         self.assertEqual(expected, sched_info)
 
-    @tests_base.unstable_test("bug 2143336")
     def test_gateway_chassis_least_loaded_scheduler_anti_affinity(self):
         ovn_client = self.l3_plugin._ovn_client
         ovn_client._ovn_scheduler = l3_sched.OVNGatewayLeastLoadedScheduler()
