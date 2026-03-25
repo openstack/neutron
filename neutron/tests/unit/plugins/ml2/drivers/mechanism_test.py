@@ -38,14 +38,14 @@ class TestMechanismDriver(api.MechanismDriver):
         self.bound_ports = set()
 
     def _check_network_context(self, context, original_expected):
-        assert(isinstance(context, api.NetworkContext))
-        assert(isinstance(context.current, dict))
-        assert(context.current['id'] is not None)
+        assert isinstance(context, api.NetworkContext)
+        assert isinstance(context.current, dict)
+        assert context.current['id'] is not None
         if original_expected:
-            assert(isinstance(context.original, dict))
-            assert(context.current['id'] == context.original['id'])
+            assert isinstance(context.original, dict)
+            assert context.current['id'] == context.original['id']
         else:
-            assert(not context.original)
+            assert not context.original
 
     def create_network_precommit(self, context):
         self._check_network_context(context, False)
@@ -66,16 +66,16 @@ class TestMechanismDriver(api.MechanismDriver):
         self._check_network_context(context, False)
 
     def _check_subnet_context(self, context, original_expected):
-        assert(isinstance(context, api.SubnetContext))
-        assert(isinstance(context.current, dict))
-        assert(context.current['id'] is not None)
+        assert isinstance(context, api.SubnetContext)
+        assert isinstance(context.current, dict)
+        assert context.current['id'] is not None
         if original_expected:
-            assert(isinstance(context.original, dict))
-            assert(context.current['id'] == context.original['id'])
+            assert isinstance(context.original, dict)
+            assert context.current['id'] == context.original['id']
         else:
-            assert(not context.original)
+            assert not context.original
         network_context = context.network
-        assert(isinstance(network_context, api.NetworkContext))
+        assert isinstance(network_context, api.NetworkContext)
         self._check_network_context(network_context, False)
 
     def create_subnet_precommit(self, context):
@@ -97,7 +97,7 @@ class TestMechanismDriver(api.MechanismDriver):
         self._check_subnet_context(context, False)
 
     def _check_port_context(self, context, original_expected):
-        assert(isinstance(context, api.PortContext))
+        assert isinstance(context, api.PortContext)
 
         self._check_port_info(context.current, context.host,
                               context.vif_type, context.vif_details,
@@ -115,13 +115,13 @@ class TestMechanismDriver(api.MechanismDriver):
                 self._check_unbound(context.binding_levels,
                                     context.top_bound_segment,
                                     context.bottom_bound_segment)
-            assert((context.current['id'], context.host)
-                   not in self.bound_ports)
+            assert ((context.current['id'], context.host) not in
+                    self.bound_ports)
         else:
             self._check_bound(context.binding_levels,
                               context.top_bound_segment,
                               context.bottom_bound_segment)
-            assert((context.current['id'], context.host) in self.bound_ports)
+            assert (context.current['id'], context.host) in self.bound_ports
 
         if original_expected:
             self._check_port_info(context.original, context.original_host,
@@ -129,7 +129,7 @@ class TestMechanismDriver(api.MechanismDriver):
                                   context.original_vif_details,
                                   context.binding_levels)
 
-            assert(context.current['id'] == context.original['id'])
+            assert context.current['id'] == context.original['id']
 
             if (context.original_vif_type in
                 (portbindings.VIF_TYPE_UNBOUND,
@@ -142,65 +142,65 @@ class TestMechanismDriver(api.MechanismDriver):
                                   context.original_top_bound_segment,
                                   context.original_bottom_bound_segment)
         else:
-            assert(context.original is None)
-            assert(context.original_host is None)
-            assert(context.original_vif_type is None)
-            assert(context.original_vif_details is None)
-            assert(context.original_status is None)
+            assert context.original is None
+            assert context.original_host is None
+            assert context.original_vif_type is None
+            assert context.original_vif_details is None
+            assert context.original_status is None
             self._check_unbound(context.original_binding_levels,
                                 context.original_top_bound_segment,
                                 context.original_bottom_bound_segment)
 
         network_context = context.network
-        assert(isinstance(network_context, api.NetworkContext))
+        assert isinstance(network_context, api.NetworkContext)
         self._check_network_context(network_context, False)
 
     def _check_port_info(self, port, host, vif_type, vif_details,
                          binding_levels):
-        assert(isinstance(port, dict))
-        assert(port['id'] is not None)
-        assert(vif_type in (portbindings.VIF_TYPE_UNBOUND,
+        assert isinstance(port, dict)
+        assert port['id'] is not None
+        assert vif_type in (portbindings.VIF_TYPE_UNBOUND,
                             portbindings.VIF_TYPE_BINDING_FAILED,
                             portbindings.VIF_TYPE_DISTRIBUTED,
                             portbindings.VIF_TYPE_OVS,
-                            portbindings.VIF_TYPE_BRIDGE))
+                            portbindings.VIF_TYPE_BRIDGE)
         bound_drivers = port[portbindings.VIF_DETAILS].pop(
             portbindings.VIF_DETAILS_BOUND_DRIVERS, None)
         if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
-            assert(port[portbindings.HOST_ID] == '')
-            assert(port[portbindings.VIF_TYPE] ==
-                   portbindings.VIF_TYPE_DISTRIBUTED)
-            assert(port[portbindings.VIF_DETAILS] == {})
+            assert port[portbindings.HOST_ID] == ''
+            assert (port[portbindings.VIF_TYPE] ==
+                    portbindings.VIF_TYPE_DISTRIBUTED)
+            assert port[portbindings.VIF_DETAILS] == {}
         else:
-            assert(port[portbindings.HOST_ID] == host)
-            assert(port[portbindings.VIF_TYPE] !=
-                   portbindings.VIF_TYPE_DISTRIBUTED)
-            assert(port[portbindings.VIF_TYPE] == vif_type)
-            assert(isinstance(vif_details, dict))
+            assert port[portbindings.HOST_ID] == host
+            assert (port[portbindings.VIF_TYPE] !=
+                    portbindings.VIF_TYPE_DISTRIBUTED)
+            assert port[portbindings.VIF_TYPE] == vif_type
+            assert isinstance(vif_details, dict)
 
-            assert(port[portbindings.VIF_DETAILS] == vif_details)
+            assert port[portbindings.VIF_DETAILS] == vif_details
         if bound_drivers and binding_levels:
             bd_reference = {str(idx): bl['bound_driver'] for
                             idx, bl in enumerate(binding_levels)}
-            assert(bd_reference == bound_drivers)
+            assert bd_reference == bound_drivers
 
     def _check_unbound(self, levels, top_segment, bottom_segment):
-        assert(levels is None)
-        assert(top_segment is None)
-        assert(bottom_segment is None)
+        assert levels is None
+        assert top_segment is None
+        assert bottom_segment is None
 
     def _check_bound(self, levels, top_segment, bottom_segment):
-        assert(isinstance(levels, list))
+        assert isinstance(levels, list)
         top_level = levels[0]
-        assert(isinstance(top_level, dict))
-        assert(isinstance(top_segment, dict))
-        assert(top_segment == top_level[api.BOUND_SEGMENT])
-        assert('test' == top_level[api.BOUND_DRIVER])
+        assert isinstance(top_level, dict)
+        assert isinstance(top_segment, dict)
+        assert top_segment == top_level[api.BOUND_SEGMENT]
+        assert 'test' == top_level[api.BOUND_DRIVER]
         bottom_level = levels[-1]
-        assert(isinstance(bottom_level, dict))
-        assert(isinstance(bottom_segment, dict))
-        assert(bottom_segment == bottom_level[api.BOUND_SEGMENT])
-        assert('test' == bottom_level[api.BOUND_DRIVER])
+        assert isinstance(bottom_level, dict)
+        assert isinstance(bottom_segment, dict)
+        assert bottom_segment == bottom_level[api.BOUND_SEGMENT]
+        assert 'test' == bottom_level[api.BOUND_DRIVER]
 
     def create_port_precommit(self, context):
         self._check_port_context(context, False)

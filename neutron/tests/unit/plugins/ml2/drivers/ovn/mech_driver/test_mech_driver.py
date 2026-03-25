@@ -2795,7 +2795,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 net_obj.update()
 
                 grps.return_value = [{'port_id': port['port']['id'],
-                                      'network_id':network['network']['id']}]
+                                      'network_id': network['network']['id']}]
 
                 # Let's update the MTU to something different
                 network['network']['mtu'] = new_mtu
@@ -4747,7 +4747,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                     'external_ids': {'subnet_id': 'foo-subnet'},
                     'options': {
                         'classless_static_route':
-                            '{169.254.169.254/32,10.0.0.2}',},
+                            '{169.254.169.254/32,10.0.0.2}', },
                     'uuid': 'foo-uuid'})))
 
         # Expect both the subnet and port classless_static_route

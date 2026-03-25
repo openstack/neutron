@@ -555,7 +555,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                 ovn_port_binding_revision_number)
 
         check = functools.partial(
-            is_port_and_port_binding_same_revision_number,port_id)
+            is_port_and_port_binding_same_revision_number, port_id)
         n_utils.wait_until_true(check, timeout=10)
 
     def test_virtual_port_host_update_upon_failover(self):
