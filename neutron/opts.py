@@ -17,9 +17,12 @@ import operator
 from keystoneauth1 import loading as ks_loading
 from oslo_config import cfg
 
-import neutron.agent.agent_extensions_manager
-import neutron.agent.securitygroups_rpc
-import neutron.api.wsgi
+# FIXME(stephenfin): We are importing some of these modules (with the noqa
+# lines) for their side effects. That's a bad idea and we should explicitly
+# load all options.
+import neutron.agent.agent_extensions_manager  # noqa: F401
+import neutron.agent.securitygroups_rpc  # noqa: F401
+import neutron.api.wsgi  # noqa: F401
 import neutron.conf.agent.agent_extensions_manager
 import neutron.conf.agent.common
 import neutron.conf.agent.database.agents_db
@@ -27,7 +30,7 @@ import neutron.conf.agent.database.agentschedulers_db
 import neutron.conf.agent.dhcp
 import neutron.conf.agent.l3.config
 import neutron.conf.agent.l3.ha
-import neutron.conf.agent.linux
+import neutron.conf.agent.linux  # noqa: F401
 import neutron.conf.agent.metadata.config as meta_conf
 import neutron.conf.agent.ovs_conf
 import neutron.conf.agent.ovsdb_api
@@ -58,9 +61,9 @@ import neutron.conf.services.metering_agent
 import neutron.conf.services.provider_configuration
 import neutron.conf.wsgi
 import neutron.db.migration.cli
-import neutron.extensions.l3
-import neutron.extensions.securitygroup
-import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
+import neutron.extensions.l3  # noqa: F401
+import neutron.extensions.securitygroup  # noqa: F401
+import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config  # noqa: F401
 
 
 AUTH_GROUPS_OPTS = {
