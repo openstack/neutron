@@ -531,8 +531,6 @@ class Subnet(base.NeutronDbObject):
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):  # version 1.1 adds "dns_publish_fixed_ip"
-            primitive.pop('dns_publish_fixed_ip', None)
         if _target_version < (1, 2):  # version 1.2 adds "external"
             primitive.pop('external', None)
 

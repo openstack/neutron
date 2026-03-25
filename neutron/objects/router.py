@@ -303,11 +303,6 @@ class Router(base.NeutronDbObject):
 
         self.obj_reset_changes(fields_to_change)
 
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            primitive.pop('qos_policy_id', None)
-
     @staticmethod
     @db_api.CONTEXT_READER
     def get_router_ids_without_router_std_attrs(context):
@@ -411,13 +406,6 @@ class FloatingIP(base.NeutronDbObject):
                 db_obj.qos_network_policy_binding.policy_id)
             fields_to_change.append('qos_network_policy_binding')
         self.obj_reset_changes(fields_to_change)
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):
-            primitive.pop('qos_policy_id', None)
-        if _target_version < (1, 2):
-            primitive.pop('qos_network_policy_id', None)
 
     @classmethod
     @db_api.CONTEXT_READER

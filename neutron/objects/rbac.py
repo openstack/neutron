@@ -17,7 +17,6 @@ import abc
 
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
-from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_
 
@@ -59,8 +58,3 @@ class RBACBaseObject(base.NeutronDbObject, metaclass=abc.ABCMeta):
     def get_type_class_map(cls):
         return {klass.db_model.object_type: klass
                 for klass in cls.__subclasses__()}
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version < (1, 1):  # NOTE(ralonsoh): remove in Yoga + 4.
-            primitive['target_tenant'] = primitive.pop('target_project')

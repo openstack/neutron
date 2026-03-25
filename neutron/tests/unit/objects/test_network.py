@@ -49,13 +49,6 @@ class NetworkRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
         self.objs[0].create()
         return self.objs[0]
 
-    def test_object_version_degradation_1_1_to_1_0_no_id_no_project_id(self):
-        network_rbac_obj = self._create_test_network_rbac()
-        network_rbac_obj = network_rbac_obj.obj_to_primitive('1.0')
-        self.assertNotIn('project_id',
-                         network_rbac_obj['versioned_object.data'])
-        self.assertNotIn('id', network_rbac_obj['versioned_object.data'])
-
     def _create_random_parent_object(self):
         objclass_fields = self.get_random_db_fields(self._parent_class)
         objclass_fields.pop(az_def.AZ_HINTS)
