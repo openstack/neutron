@@ -116,7 +116,7 @@ class OvsdbServer(DaemonProcessFixture):
     def _setUp(self):
         if self.ovn_nb_db:
             self.ovsdb_server_processes.append(
-                {'db_path': os.path.join(self.temp_dir, 'ovn_nb.db'),
+                {'db_path': os.path.join(self.temp_dir, 'ovnnb_db.db'),
                  'schema_path': os.path.join(self.ovs_dir, 'ovn-nb.ovsschema'),
                  'remote_path': os.path.join(self.temp_dir, 'ovnnb_db.sock'),
                  'protocol': self.protocol,
@@ -124,14 +124,14 @@ class OvsdbServer(DaemonProcessFixture):
                  'remote_port': '0',
                  'pidfile': 'ovn-nb.pid',
                  'unixctl_path': os.path.join(self.temp_dir, 'ovnnb_db.ctl'),
-                 'log_file_path': os.path.join(self.temp_dir, 'ovn_nb.log'),
+                 'log_file_path': os.path.join(self.temp_dir, 'ovnnb_db.log'),
                  'db_type': 'nb',
                  'connection': 'db:OVN_Northbound,NB_Global,connections',
                  'ctl_cmd': 'ovn-nbctl'})
 
         if self.ovn_sb_db:
             self.ovsdb_server_processes.append(
-                {'db_path': os.path.join(self.temp_dir, 'ovn_sb.db'),
+                {'db_path': os.path.join(self.temp_dir, 'ovnsb_db.db'),
                  'schema_path': os.path.join(self.ovs_dir, 'ovn-sb.ovsschema'),
                  'remote_path': os.path.join(self.temp_dir, 'ovnsb_db.sock'),
                  'protocol': self.protocol,
@@ -139,7 +139,7 @@ class OvsdbServer(DaemonProcessFixture):
                  'remote_port': '0',
                  'pidfile': 'ovn-sb.pid',
                  'unixctl_path': os.path.join(self.temp_dir, 'ovnsb_db.ctl'),
-                 'log_file_path': os.path.join(self.temp_dir, 'ovn_sb.log'),
+                 'log_file_path': os.path.join(self.temp_dir, 'ovnsb_db.log'),
                  'db_type': 'sb',
                  'connection': 'db:OVN_Southbound,SB_Global,connections',
                  'ctl_cmd': 'ovn-sbctl'})
