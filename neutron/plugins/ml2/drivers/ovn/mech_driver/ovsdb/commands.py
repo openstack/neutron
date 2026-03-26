@@ -45,6 +45,11 @@ RESOURCE_TYPE_MAP = {
     ovn_const.TYPE_ADDRESS_GROUPS: 'Address_Set',
 }
 
+OVN_QOS_KEYS = (ovn_const.LSP_OPTIONS_QOS_MAX_RATE,
+                ovn_const.LSP_OPTIONS_QOS_BURST,
+                ovn_const.LSP_OPTIONS_QOS_MIN_RATE,
+                )
+
 
 def _addvalue_to_list(row, column, new_value):
     row.addvalue(column, new_value)
@@ -382,10 +387,10 @@ class UpdateLSwitchPortQosOptionsCommand(command.BaseCommand):
             raise RuntimeError(_('Logical Switch Port %s does not exist') %
                                port_id)
 
-        # TODO(ralonsoh): add a check to only modify the QoS related keys:
-        # qos_max_rate, qos_burst and qos_min_rate.
         for key, value in self.qos.items():
-            if value is None:
+            if key not in OVN_QOS_KEYS:
+                LOG.warning('Ignoring unsupported OVN QoS key %s', key)
+            elif value is None:
                 port.delkey('options', key)
             else:
                 port.setkey('options', key, value)
