@@ -76,6 +76,29 @@ class TestExclusiveResourceProcessor(base.BaseTestCase):
         primary.__exit__(None, None, None)
         self.assertNotIn(FAKE_ID, queue.ExclusiveResourceProcessor._primaries)
 
+    def test__exit__cleans_resource_timestamps(self):
+        with queue.ExclusiveResourceProcessor(FAKE_ID) as primary:
+            primary.fetched_and_processed(timeutils.utcnow())
+            self.assertIn(
+                FAKE_ID,
+                queue.ExclusiveResourceProcessor._resource_timestamps)
+        self.assertNotIn(
+            FAKE_ID,
+            queue.ExclusiveResourceProcessor._resource_timestamps)
+
+    def test__exit__non_primary_does_not_clean_resource_timestamps(self):
+        primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        primary.fetched_and_processed(timeutils.utcnow())
+        not_primary = queue.ExclusiveResourceProcessor(FAKE_ID)
+        not_primary.__exit__(None, None, None)
+        self.assertIn(
+            FAKE_ID,
+            queue.ExclusiveResourceProcessor._resource_timestamps)
+        primary.__exit__(None, None, None)
+        self.assertNotIn(
+            FAKE_ID,
+            queue.ExclusiveResourceProcessor._resource_timestamps)
+
     def test_data_fetched_since(self):
         primary = queue.ExclusiveResourceProcessor(FAKE_ID)
         self.assertEqual(datetime.datetime.min,

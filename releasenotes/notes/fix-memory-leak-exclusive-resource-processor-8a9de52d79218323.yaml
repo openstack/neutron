@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Fixed a memory leak in ``ExclusiveResourceProcessor`` where the
+    ``_resource_timestamps`` class-level dictionary was never cleaned up
+    when the primary processor exited. Over time, this caused stale
+    entries to accumulate for every resource ID that was ever processed.
