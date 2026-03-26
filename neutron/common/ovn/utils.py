@@ -1468,6 +1468,31 @@ def validate_port_binding_and_virtual_port(
             msg='A virtual logical switch port cannot be bound to a host')
 
 
+def validate_port_allowed_address_pairs_vrrp_mac(port):
+    """Validate that virtual MACs in allowed address pairs are RFC 5798 VRRP.
+
+    When an allowed address pair has a MAC address different from the port's
+    MAC address, it is treated as a VRRP virtual MAC. This function validates
+    that such MACs belong to the RFC 5798 ranges:
+      - IPv4 VRRP: 00:00:5e:00:01:XX
+      - IPv6 VRRP: 00:00:5e:00:02:XX
+    """
+    port_mac = port.get('mac_address', '')
+    for aap in port.get('allowed_address_pairs', []):
+        aap_mac = aap.get('mac_address', '')
+        if not aap_mac or aap_mac == port_mac:
+            continue
+        mac_lower = aap_mac.lower()
+        # An AAP always have "ip_address".
+        ip_version = common_utils.get_ip_version(aap['ip_address'])
+        if ip_version == const.IP_VERSION_4:
+            expected_prefix = constants.VRRP_VIRTUAL_MAC_PREFIX_IPV4
+        else:
+            expected_prefix = constants.VRRP_VIRTUAL_MAC_PREFIX_IPV6
+        if not mac_lower.startswith(expected_prefix):
+            raise ovn_exc.InvalidVirtualMACAddress(mac_address=aap_mac)
+
+
 def get_requested_chassis(requested_chassis):
     """Returns a list with the items in the LSP.options:requested-chassis"""
     if isinstance(requested_chassis, str):
