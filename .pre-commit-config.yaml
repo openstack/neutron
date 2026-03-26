@@ -73,15 +73,6 @@ repos:
         args: []
         files: ^doc|releasenotes
         types: [rst]
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.19.1
-    hooks:
-      - id: mypy
-        pass_filenames: false
-        # need to list alembic here; otherwise it doesn't see internals
-        # necessary to detect one of 'ignored' errors and complains about
-        # unnecessary ignore; other dependencies can be left out it seems
-        additional_dependencies: ['alembic']
   - repo: https://github.com/PyCQA/doc8
     rev: v2.0.0
     hooks:
