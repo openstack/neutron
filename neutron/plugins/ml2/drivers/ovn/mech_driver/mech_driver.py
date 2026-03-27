@@ -1368,6 +1368,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         except (os_db_exc.DBReferenceError, n_exc.PortNotFound):
             LOG.debug('Port not found during OVN status up report: %s',
                       port_id)
+            return
 
         # NOTE(lucasagomes): If needed, re-sync the HA Chassis Group for
         # the external port removing the chassis which the port is bound
