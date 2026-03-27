@@ -124,6 +124,7 @@ class ExclusiveResourceProcessor:
     def __exit__(self, type, value, traceback):
         if self._i_am_primary():
             del self._primaries[self._id]
+            self._resource_timestamps.pop(self._id, None)
 
     def _get_resource_data_timestamp(self):
         return self._resource_timestamps.get(self._id,
