@@ -163,6 +163,16 @@ class RpcCallbacksTestCase(base.BaseTestCase):
         res = self.callbacks.get_device_details(mock.Mock(), host='host')
         self.assertIn(constants.NO_ACTIVE_BINDING, res)
 
+    def test_get_device_details_port_honor_migrating_to(self):
+        port = collections.defaultdict(lambda: 'fake_port')
+        self.plugin.get_bound_port_context().current = port
+        port['device_owner'] = constants.DEVICE_OWNER_COMPUTE_PREFIX
+        port[portbindings.HOST_ID] = 'other-host'
+        port[portbindings.PROFILE] = {'migrating_to': 'host'}
+        res = self.callbacks.get_device_details(mock.Mock(), host='host')
+        self.assertNotIn(constants.NO_ACTIVE_BINDING, res)
+        self.assertIn('port_id', res)
+
     def test_get_device_details_qos_policy_id_from_port(self):
         port = collections.defaultdict(
             lambda: 'fake_port',

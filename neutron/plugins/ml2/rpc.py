@@ -26,6 +26,7 @@ from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_log import log
 import oslo_messaging
+from oslo_serialization import jsonutils
 from osprofiler import profiler
 from sqlalchemy.orm import exc
 
@@ -152,9 +153,10 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                          'vif_type': port_context.vif_type})
             return {'device': device}
 
+        migrating_to = _get_migrating_to_from_port(port)
         if (port['device_owner'].startswith(
                 n_const.DEVICE_OWNER_COMPUTE_PREFIX) and
-                port[portbindings.HOST_ID] != host):
+                port[portbindings.HOST_ID] != host and migrating_to != host):
             LOG.debug("Device %(device)s has no active binding in host "
                       "%(host)s", {'device': device,
                                    'host': host})
@@ -514,3 +516,17 @@ class AgentNotifierApi(dvr_rpc.DVRAgentRpcApiMixin,
         cctxt = self.client.prepare(topic=self.topic_port_binding_activate,
                                     fanout=True, version='1.5')
         cctxt.cast(context, 'binding_activate', port_id=port_id, host=host)
+
+
+def _get_migrating_to_from_port(port):
+    profile = port.get(portbindings.PROFILE)
+    if not profile:
+        return None
+    if isinstance(profile, str):
+        try:
+            profile = jsonutils.loads(profile)
+        except ValueError:
+            return None
+    migrating_to = profile.get("migrating_to")
+
+    return migrating_to
