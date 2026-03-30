@@ -87,7 +87,6 @@ to point out the relevant fields:
    $ openstack security group show ${SG} -f json -c rules | jq '.rules | .[2]' | grep -v 'null'
    {
     "id": "de4ea1e4-c946-40ed-b5b6-53c59418dc0b",
-    "tenant_id": "2600067ea3a446dba332d20a30ed44fa",
     "security_group_id": "c604e984-0789-4c9a-a297-3e7f62fa73fd",
     "ethertype": "IPv4",
     "direction": "egress",

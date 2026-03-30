@@ -650,8 +650,8 @@ Therefore removal of OVO version downgrade code should be removed in the fifth
 cycle after the code was introduced.  For example, if an object version was
 introduced in Ocata then it can be removed in Train.
 
-Backward compatibility for tenant_id
-------------------------------------
+Backward compatibility for project_id
+-------------------------------------
 All objects can support :code:`tenant_id` and :code:`project_id` filters and
 fields at the same time; it is automatically enabled for all objects that have
 a :code:`project_id` field. The base :code:`NeutronDbObject` class has support

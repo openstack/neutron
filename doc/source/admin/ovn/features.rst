@@ -34,9 +34,9 @@ services:
   service plugin. One has to enable the 'trunk' service plugin in neutron
   configuration files to use this feature.
 
-* VLAN tenant networks
+* VLAN project networks
 
-  The OVN driver does support VLAN tenant networks when used
+  The OVN driver does support VLAN project networks when used
   with OVN version 2.11 (or higher).
 
 * DNS
@@ -61,7 +61,7 @@ services:
   Allows for Network segments ranges to be used with OVN. Requires OVN
   version 20.06 or higher.
 
-.. TODO What about tenant networks?
+.. TODO What about project networks?
 
 * Routed provider networks
 

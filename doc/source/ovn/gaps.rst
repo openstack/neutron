@@ -26,9 +26,9 @@ at [1]_.
     [ovn]
     dns_servers = 203.0.113.8, 198.51.100.53
 
-  OVN answers queries for hosts and IP addresses in tenant networks by spoofing
-  responses from the configured DNS servers. This may lead to confusion in
-  debugging.
+  OVN answers queries for hosts and IP addresses in project networks by
+  spoofing responses from the configured DNS servers. This may lead to
+  confusion in debugging.
 
   OVN can only answer queries that are sent via UDP, queries that use TCP will
   be ignored by OVN and forwarded to the configured resolvers.

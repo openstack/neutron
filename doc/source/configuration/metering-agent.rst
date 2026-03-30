@@ -5,7 +5,7 @@ Neutron Metering system
 The Neutron metering service enables operators to account the traffic in/out
 of the OpenStack environment. The concept is quite simple, operators can
 create metering labels, and decide if the labels are applied to all projects
-(tenants) or if they are applied to a specific one. Then, the operator needs
+(projects) or if they are applied to a specific one. Then, the operator needs
 to create traffic rules in the metering labels. The traffic rules are used
 to match traffic in/out of the OpenStack environment, and the accounting of
 packets and bytes is sent to the notification queue for further processing
@@ -52,7 +52,7 @@ labels were applied.
     "last_update": "timeutils.utcnow_ts() of the last collection",
     "host": "<neutron metering agent host name>",
     "label_id": "<the label id>",
-    "tenant_id": "<the tenant id>"
+    "project_id": "<the project id>"
     }
 
 The ``first_update`` and ``last_update`` timestamps represent the moment
@@ -60,7 +60,7 @@ when the first and last data collection happened within the report interval.
 On the other hand, the ``time`` represents the difference between those two
 timestamp.
 
-The ``tenant_id`` is only consistent when labels are not shared. Otherwise,
+The ``project_id`` is only consistent when labels are not shared. Otherwise,
 they will contain the project id of the last router of the last project
 processed when the agent is started up. In other words, it is better not
 use it when dealing with shared labels.

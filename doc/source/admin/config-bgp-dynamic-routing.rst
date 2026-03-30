@@ -409,7 +409,6 @@ Create the provider and self-service networks
       | revision_number   | 1                                                  |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92               |
       | tags              | []                                                 |
-      | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |
       | updated_at        | 2016-03-17T23:20:20                                |
       +-------------------+----------------------------------------------------+
 
@@ -436,7 +435,6 @@ Create the provider and self-service networks
       | revision_number   | 1                                              |
       | subnetpool_id     | c7e9737a-cfd3-45b5-a861-d1cee1135a92           |
       | tags              | []                                             |
-      | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d               |
       | updated_at        | 2016-03-17T23:20:20                            |
       +-------------------+------------------------------------------------+
 
@@ -467,7 +465,6 @@ Create the provider and self-service networks
       | revision_number   | 1                                                  |
       | subnetpool_id     |                                                    |
       | tags              | []                                                 |
-      | tenant_id         | b3ac05ef10bf441fbf4aa17f16ae1e6d                   |
       | updated_at        | 2016-03-17T23:20:20                                |
       +-------------------+----------------------------------------------------+
 
@@ -594,7 +591,7 @@ networks and floating IP addresses for instances using those networks.
       | name                              | bgpspeaker                           |
       | networks                          |                                      |
       | peers                             |                                      |
-      | tenant_id                         | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
+      | project_id                        | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
       +-----------------------------------+--------------------------------------+
 
    Replace ``LOCAL_AS`` with an appropriate local autonomous system number.
@@ -628,7 +625,7 @@ networks and floating IP addresses for instances using those networks.
       | name                              | bgpspeaker                           |
       | networks                          | 68ec148c-181f-4656-8334-8f4eb148689d |
       | peers                             |                                      |
-      | tenant_id                         | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
+      | project_id                        | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
       +-----------------------------------+--------------------------------------+
 
 #. Verify the prefixes and next-hop IP addresses that the BGP speaker
@@ -651,16 +648,16 @@ networks and floating IP addresses for instances using those networks.
       $ openstack bgp peer create --peer-ip 10.0.0.2 \
         --remote-as REMOTE_AS bgppeer
       Created a new bgp_peer:
-      +-----------+--------------------------------------+
-      | Field     | Value                                |
-      +-----------+--------------------------------------+
-      | auth_type | none                                 |
-      | id        | 35c89ca0-ac5a-4298-a815-0b073c2362e9 |
-      | name      | bgppeer                              |
-      | peer_ip   | 10.0.0.2                             |
-      | remote_as | 64497                                |
-      | tenant_id | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
-      +-----------+--------------------------------------+
+      +------------+--------------------------------------+
+      | Field      | Value                                |
+      +------------+--------------------------------------+
+      | auth_type  | none                                 |
+      | id         | 35c89ca0-ac5a-4298-a815-0b073c2362e9 |
+      | name       | bgppeer                              |
+      | peer_ip    | 10.0.0.2                             |
+      | remote_as  | 64497                                |
+      | project_id | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
+      +------------+--------------------------------------+
 
    Replace ``REMOTE_AS`` with an appropriate remote autonomous system number.
    The example configuration uses AS 64497 which triggers EBGP peering.
@@ -693,7 +690,7 @@ networks and floating IP addresses for instances using those networks.
       | name                              | bgpspeaker                           |
       | networks                          | 68ec148c-181f-4656-8334-8f4eb148689d |
       | peers                             | 35c89ca0-ac5a-4298-a815-0b073c2362e9 |
-      | tenant_id                         | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
+      | project_id                        | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
       +-----------------------------------+--------------------------------------+
 
    .. note::
