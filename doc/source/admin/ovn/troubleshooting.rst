@@ -132,4 +132,5 @@ host after the crash, the administrator should follow the procedure described
 in the :ref:`Duplicated or deleted OVN agents<duplicated_ovn_agents>` section,
 and manually delete stale "Chassis" and "Chassis_Private" registers. Neutron
 will be notified of the deletion and will remove the corresponding
-"Gateway_Chassis" registers in the OVN Northbound database.
+"HA_Chassis" registers from the "HA_Chassis_Group" in the OVN Northbound
+database.

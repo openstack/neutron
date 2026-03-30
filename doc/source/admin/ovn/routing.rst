@@ -58,8 +58,9 @@ Ovn driver implements L3 high availability in a transparent way. You
 don't need to enable any config flags. As soon as you have more than
 one chassis capable of acting as an l3 gateway to the specific external
 network attached to the router it will schedule the router gateway port
-to multiple chassis, making use of the ``gateway_chassis`` column on OVN's
-``Logical_Router_Port`` table.
+to multiple chassis, making use of the ``HA_Chassis_Group`` table in OVN's
+Northbound database to associate multiple ``HA_Chassis`` with a
+``Logical_Router_Port``.
 
 In order to have external connectivity, either:
 

@@ -14,21 +14,31 @@ to a failed chassis, OVN will bind this port to the next chassis in the list.
 This list of chassis is prioritized; the ``Logical_Router_Port`` will be bound
 to the chassis in the defined order.
 
-This is done by associating multiple ``Gateway_Chassis`` rows with a
-``Logical_Router_Port`` in the OVN Northbound database. A ``Gateway_Chassis``
-register is just a link to a ``Chassis`` register and a priority. For the
-same ``Logical_Router_Port``, all ``Gateway_Chassis`` assigned will have
+This is done by creating an ``HA_Chassis_Group`` with multiple
+``HA_Chassis`` rows, and associating the group with a
+``Logical_Router_Port`` in the OVN Northbound database. An ``HA_Chassis``
+register is a link to a ``Chassis`` register and a priority. For the
+same ``Logical_Router_Port``, all ``HA_Chassis`` assigned will have
 a different priority, starting from 1 (the lowest priority) up to the number of
-``Gateway_Chassis`` assigned.
+``HA_Chassis`` assigned.
 
-The maximum number of ``Gateway_Chassis`` that can be assigned to a
+The maximum number of ``HA_Chassis`` that can be assigned to a
 ``Logical_Router_Port`` is 5. This number is hardcoded. That means in Neutron
-the highest priority a ``Gateway_Chassis`` will have is 5.
+the highest priority an ``HA_Chassis`` will have is 5.
 
 If no gateway chassis are available during the ``Logical_Router_Port``
-scheduling, no ``Gateway_Chassis`` will be assigned and no value will be set
+scheduling, no ``HA_Chassis_Group`` will be created and no value will be set
 in the "options" column of the ``Logical_Router`` register; that will be used
 to detect an unhosted router gateway port.
+
+.. note::
+
+   Previous versions of Neutron used the ``Gateway_Chassis`` table for
+   scheduling gateway router ports. This has been replaced by the
+   ``HA_Chassis_Group`` and ``HA_Chassis`` tables, which is the preferred
+   method for HA scheduling in OVN. A maintenance task automatically
+   migrates any existing ``Gateway_Chassis`` references to
+   ``HA_Chassis_Group``.
 
 
 Types of schedulers
@@ -66,26 +76,26 @@ Re-schedule ``Logical_Router_Port`` if a ``Chassis`` is removed
 ---------------------------------------------------------------
 
 When a gateway ``Chassis`` is removed from the environment, it creates a "hole"
-in the ``Gateway_Chassis`` assignation for a ``Logical_Router_Port``. The
-``Gateway_Chassis`` register associated to the removed ``Chassis`` is deleted
-and removed from the list of HA assigned ``Chassis``. This event is captured
-by Neutron, which re-schedules ``Gateway_Chassis`` to create a balanced list
+in the ``HA_Chassis`` assignation for a ``Logical_Router_Port``. The
+``HA_Chassis`` register associated to the removed ``Chassis`` is deleted
+and removed from the ``HA_Chassis_Group``. This event is captured
+by Neutron, which re-schedules the ``HA_Chassis`` to create a balanced list
 of assignations, same as done in ``OVNGatewayLeastLoadedScheduler``. This was
 implemented in [2]_.
 
-This process only applies to the lower priority ``Gateway_Chassis`` registers,
+This process only applies to the lower priority ``HA_Chassis`` registers,
 never the upper one; this is because the ``Logical_Router_Port`` is bound to
-this ``Chassis`` and could be transmitting. If the highest ``Gateway_Chassis``
+this ``Chassis`` and could be transmitting. If the highest ``HA_Chassis``
 is changed, the ``Logical_Router_Port`` is bound to the new ``Chassis`` and
 could break any active sessions.
 
 .. note::
 
-   Neutron does not support adding or modifying the ``Gateway_Chassis``
-   registers with the "ovn-nbctl lrp-set-gateway-chassis" or the
-   "ovn-nbctl set" commands. Operators should not use these commands to
-   modify the ``Gateway_Chassis`` registers because Neutron will not be able
-   to re-schedule the corresponding ``Logical_Router_Port`` properly.
+   Neutron does not support adding or modifying the ``HA_Chassis_Group``
+   or ``HA_Chassis`` registers with the "ovn-nbctl" commands. Operators
+   should not use these commands to modify the ``HA_Chassis_Group``
+   registers because Neutron will not be able to re-schedule the
+   corresponding ``Logical_Router_Port`` properly.
 
 .. end
 
@@ -118,7 +128,8 @@ ports at the layer 3 level.
 In addition to external dependencies such as BFD for liveness detection and
 ECMP for load sharing accross default routes, the feature required changes to
 the scheduler, the goal being that each ``Logical_Router_Port`` record for a
-``Logical_Router`` would have a different set of ``Chassis`` for each priority.
+``Logical_Router`` would have a different set of ``Chassis`` for each
+priority in their ``HA_Chassis_Group``.
 
 The Anti-Affinity is accomplished by having the OVN driver provide the router
 object subject to scheduling to the scheduler. The scheduler then checks

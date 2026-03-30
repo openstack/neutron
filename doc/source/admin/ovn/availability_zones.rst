@@ -204,35 +204,38 @@ in the OVN Southbound database:
 As mentioned in the `Router availability zones`_ section, the
 scheduling of the gateway router ports will take into consideration
 the availability zones that the router belongs to. We can confirm
-this behavior by looking in the ``Gateway_Chassis`` table from the OVN
-Northbound database:
+this behavior by looking at the ``HA_Chassis_Group`` associated with
+the gateway ``Logical_Router_Port`` in the OVN Northbound database:
 
 .. code-block:: bash
 
-   $ ovn-nbctl list Gateway_Chassis
+   $ ovn-nbctl list HA_Chassis_Group neutron-ha-lrp-5a40eeca-5233-4029-a470-9018aa8b3de9
+   _uuid               : f6a49abb-dc97-4e2a-955a-6f8e8be4865e
+   external_ids        : {}
+   ha_chassis          : [ac61b70f-ff51-43d9-830b-f9bc6d74090a, c1b7763b-1784-4e5a-a948-853662faeddc]
+   name                : neutron-ha-lrp-5a40eeca-5233-4029-a470-9018aa8b3de9
+
+   $ ovn-nbctl list HA_Chassis ac61b70f-ff51-43d9-830b-f9bc6d74090a
    _uuid               : ac61b70f-ff51-43d9-830b-f9bc6d74090a
    chassis_name        : "2d1924b2-99a4-4c6c-a4f2-0be64c0cec8c"
    external_ids        : {}
-   name                : lrp-5a40eeca-5233-4029-a470-9018aa8b3de9_2d1924b2-99a4-4c6c-a4f2-0be64c0cec8c
-   options             : {}
    priority            : 2
 
+   $ ovn-nbctl list HA_Chassis c1b7763b-1784-4e5a-a948-853662faeddc
    _uuid               : c1b7763b-1784-4e5a-a948-853662faeddc
    chassis_name        : "1cde2542-69f9-4598-b20b-d4f68304deb0"
    external_ids        : {}
-   name                : lrp-5a40eeca-5233-4029-a470-9018aa8b3de9_1cde2542-69f9-4598-b20b-d4f68304deb0
-   options             : {}
    priority            : 1
 
 .. end
 
-Each entry on this table represents an instance of the gateway port
-(L3 HA, for more information see :ref:`Routing in OVN<ovn_routing>`),
-the ``chassis_name`` column indicates which Chassis that port instance
-is scheduled onto. If we co-relate each entry and their ``chassis_name``
-we will see that this port has been only scheduled to Chassis matching
-with the router's availability zones and with priority to distribute
-over each zones.
+Each ``HA_Chassis`` entry in the group represents an instance of the
+gateway port (L3 HA, for more information see
+:ref:`Routing in OVN<ovn_routing>`), the ``chassis_name`` column
+indicates which Chassis that port instance is scheduled onto. If we
+co-relate each entry and their ``chassis_name`` we will see that this
+port has been only scheduled to Chassis matching with the router's
+availability zones and with priority to distribute over each zones.
 
 Network Availability Zones
 --------------------------
