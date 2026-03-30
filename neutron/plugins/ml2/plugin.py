@@ -21,6 +21,8 @@ from netaddr.strategy import eui48
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
 from neutron_lib.api import converters
+from neutron_lib.api.definitions import aap_reject_multicast as \
+    aap_reject_multicast_apidef
 from neutron_lib.api.definitions import address_group as addrgrp_def
 from neutron_lib.api.definitions import address_scope
 from neutron_lib.api.definitions import agent as agent_apidef
@@ -225,6 +227,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     dhcpagentscheduler.ALIAS,
                                     multiprovidernet.ALIAS,
                                     addr_apidef.ALIAS,
+                                    aap_reject_multicast_apidef.ALIAS,
                                     edo_ext.ALIAS, "subnet_allocation",
                                     mtu_apidef.ALIAS,
                                     mtuw_apidef.ALIAS,
