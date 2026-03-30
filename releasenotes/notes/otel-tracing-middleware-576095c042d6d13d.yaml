@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Added support for the OpenTelemetry tracing middleware provided by
+    ``oslo.middleware``. The middleware is wired into the Neutron API paste
+    pipeline and is disabled by default, acting as a zero-overhead passthrough
+    when off. To enable distributed tracing, set ``enabled = True`` under the
+    ``[oslo_middleware_tracing]`` group in ``neutron.conf`` and install the
+    optional OpenTelemetry packages.

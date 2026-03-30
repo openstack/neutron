@@ -27,6 +27,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_middleware import cors
+from oslo_middleware import tracing
 from oslo_reports import guru_meditation_report as gmr
 from oslo_reports import opts as gmr_opts
 from oslo_service import wsgi
@@ -37,6 +38,8 @@ from neutron import policy
 
 
 LOG = logging.getLogger(__name__)
+
+tracing.set_defaults(service_name='neutron-server')
 
 _COMMON_OPTIONS_ALREADY_REGISTERED = False
 
