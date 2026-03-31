@@ -308,8 +308,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 try:
                     ports_impacted.append(utils.get_port_id_from_gwc_row(gwc))
                 except AttributeError:
-                    # Malformed GWC format.
-                    pass
+                    LOG.warning('Malformed Gateway_Chassis register name '
+                                'format: %s', gwc.name)
             port_physnet_dict = {
                 k: v
                 for k, v in port_physnet_dict.items()
