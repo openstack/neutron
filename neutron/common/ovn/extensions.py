@@ -43,6 +43,8 @@ from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import floatingip_pools
 from neutron_lib.api.definitions import ip_allocation
 from neutron_lib.api.definitions import l3
+from neutron_lib.api.definitions import \
+    l3_agent_scheduler_ha_chassis_priority
 from neutron_lib.api.definitions import l3_enable_default_route_bfd
 from neutron_lib.api.definitions import l3_enable_default_route_ecmp
 from neutron_lib.api.definitions import l3_ext_gw_mode
@@ -137,7 +139,9 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     agent_def.ALIAS,
     az_def.ALIAS,
     raz_def.ALIAS,
+    constants.L3_AGENT_SCHEDULER_EXT_ALIAS,
     flavors.ALIAS,
+    l3_agent_scheduler_ha_chassis_priority.ALIAS,
     l3_flavors.ALIAS,
     l3_ext_gw_multihoming.ALIAS,
     l3_enable_default_route_bfd.ALIAS,

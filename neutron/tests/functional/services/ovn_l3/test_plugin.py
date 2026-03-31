@@ -11,7 +11,6 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 from unittest import mock
 
 import ddt
@@ -29,8 +28,10 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron.extensions import l3agentscheduler
 from neutron.scheduler import l3_ovn_scheduler as l3_sched
 from neutron.tests.functional import base
+from neutron.tests.functional.common.ovn import test_utils as ovn_test_utils
 from neutron.tests.functional.resources.ovsdb import events
 
 
@@ -1116,3 +1117,185 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.assertEqual(len(routes), 1)
         self.assertEqual(routes[0].ip_prefix, n_consts.IPv4_ANY)
         self.assertEqual(routes[0].nexthop, '120.0.0.2')
+
+    def _create_router_with_gw_chassis(self):
+        """Helper to create a router with gateway and return chassis info."""
+        ext = self._create_ext_network(
+            'ext1', 'flat', 'physnet3', None, "20.0.0.1", "20.0.0.0/24")
+        gw_info = {'network_id': ext['network']['id']}
+        router = self._create_router('router1', gw_info=gw_info)
+        return router
+
+    def _is_chassis_scheduled_on_router(self, router_id, chassis_name):
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router_id)
+        return chassis_name in {a['id'] for a in result['agents']}
+
+    def test_list_l3_agents_hosting_router(self):
+        router = self._create_router_with_gw_chassis()
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+
+        agents = result['agents']
+        self.assertEqual(2, len(agents))
+        agent_ids = {a['id'] for a in agents}
+        self.assertEqual({self.chassis1, self.chassis2}, agent_ids)
+        for agent in agents:
+            self.assertIn('ha_chassis_priority', agent)
+            self.assertIn(agent['ha_chassis_priority'], [1, 2])
+
+    def test_list_l3_agents_hosting_router_no_gateway(self):
+        router = self._create_router('router_no_gw')
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        self.assertEqual([], result['agents'])
+
+    def test_list_routers_on_l3_agent(self):
+        router = self._create_router_with_gw_chassis()
+        result = self.l3_plugin.list_routers_on_l3_agent(
+            self.context, self.chassis1)
+
+        router_ids = [r['id'] for r in result['routers']]
+        self.assertIn(router['id'], router_ids)
+
+    def test_list_routers_on_l3_agent_no_routers(self):
+        ch_event = ovn_test_utils.WaitForChassisCreate('ovs-host3')
+        self.sb_api.idl.notify_handler.watch_event(ch_event)
+        chassis3 = self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet3'],
+            enable_chassis_as_gw=True, azs=[])
+        ch_event.wait()
+        result = self.l3_plugin.list_routers_on_l3_agent(
+            self.context, chassis3)
+        self.assertEqual([], result['routers'])
+
+    def test_add_router_to_l3_agent(self):
+        ext = self._create_ext_network(
+            'ext1', 'flat', 'physnet3', None, "20.0.0.1", "20.0.0.0/24")
+        gw_info = {'network_id': ext['network']['id']}
+        router = self._create_router('router1', gw_info=gw_info)
+        ch_event = ovn_test_utils.WaitForChassisCreate('ovs-host3')
+        self.sb_api.idl.notify_handler.watch_event(ch_event)
+        chassis3 = self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet3'],
+            enable_chassis_as_gw=True, azs=[])
+        ch_event.wait()
+
+        # The ChassisEvent will automatically schedule the new gateway
+        # chassis into the HA_Chassis_Group. Wait for that to happen,
+        # then remove it so we can test add_router_to_l3_agent.
+        n_utils.wait_until_true(
+            lambda: self._is_chassis_scheduled_on_router(
+                router['id'], chassis3),
+            timeout=10)
+        self.l3_plugin.remove_router_from_l3_agent(
+            self.context, chassis3, router['id'])
+
+        self.l3_plugin.add_router_to_l3_agent(
+            self.context, chassis3, router['id'], ha_chassis_priority=100)
+
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        agent_ids = {a['id'] for a in result['agents']}
+        self.assertIn(chassis3, agent_ids)
+        chassis3_agent = [a for a in result['agents']
+                          if a['id'] == chassis3][0]
+        self.assertEqual(100, chassis3_agent['ha_chassis_priority'])
+
+    def test_add_router_to_l3_agent_invalid_chassis(self):
+        ext = self._create_ext_network(
+            'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
+        gw_info = {'network_id': ext['network']['id']}
+        router = self._create_router('router1', gw_info=gw_info)
+        # chassis2 has physnet2, not physnet1
+        self.assertRaises(
+            l3agentscheduler.InvalidL3Agent,
+            self.l3_plugin.add_router_to_l3_agent,
+            self.context, self.chassis2, router['id'],
+            ha_chassis_priority=100)
+
+    def test_add_router_to_l3_agent_already_hosted(self):
+        router = self._create_router_with_gw_chassis()
+        self.assertRaises(
+            l3agentscheduler.RouterHostedByL3Agent,
+            self.l3_plugin.add_router_to_l3_agent,
+            self.context, self.chassis1, router['id'],
+            ha_chassis_priority=100)
+
+    def test_update_router_in_l3_agent(self):
+        router = self._create_router_with_gw_chassis()
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        agent = result['agents'][0]
+        original_priority = agent['ha_chassis_priority']
+
+        new_priority = 500
+        self.assertNotEqual(original_priority, new_priority)
+        self.l3_plugin.update_router_in_l3_agent(
+            self.context, agent['id'], router['id'],
+            ha_chassis_priority=new_priority)
+
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        updated_agent = [a for a in result['agents']
+                         if a['id'] == agent['id']][0]
+        self.assertEqual(new_priority, updated_agent['ha_chassis_priority'])
+
+    def test_update_router_in_l3_agent_not_hosted(self):
+        router = self._create_router_with_gw_chassis()
+        ch_event = ovn_test_utils.WaitForChassisCreate('ovs-host3')
+        self.sb_api.idl.notify_handler.watch_event(ch_event)
+        # The chassis is NOT a gateway chassis. It cannot be assigned to
+        # a router.
+        chassis3 = self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet3'],
+            enable_chassis_as_gw=False, azs=[])
+        ch_event.wait()
+        self.assertRaises(
+            l3agentscheduler.RouterNotHostedByL3Agent,
+            self.l3_plugin.update_router_in_l3_agent,
+            self.context, chassis3, router['id'],
+            ha_chassis_priority=100)
+
+    def test_update_router_in_l3_agent_priority_already_assigned(self):
+        router = self._create_router_with_gw_chassis()
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        agents = result['agents']
+        other_agent = [a for a in agents
+                       if a['id'] != agents[0]['id']][0]
+        self.assertRaises(
+            l3agentscheduler.HAChassisPriorityAlreadyAssigned,
+            self.l3_plugin.update_router_in_l3_agent,
+            self.context, agents[0]['id'], router['id'],
+            ha_chassis_priority=other_agent['ha_chassis_priority'])
+
+    def test_remove_router_from_l3_agent(self):
+        router = self._create_router_with_gw_chassis()
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        self.assertEqual(2, len(result['agents']))
+
+        self.l3_plugin.remove_router_from_l3_agent(
+            self.context, self.chassis1, router['id'])
+
+        result = self.l3_plugin.list_l3_agents_hosting_router(
+            self.context, router['id'])
+        agent_ids = {a['id'] for a in result['agents']}
+        self.assertNotIn(self.chassis1, agent_ids)
+        self.assertIn(self.chassis2, agent_ids)
+
+    def test_remove_router_from_l3_agent_not_hosted(self):
+        router = self._create_router_with_gw_chassis()
+        ch_event = ovn_test_utils.WaitForChassisCreate('ovs-host3')
+        self.sb_api.idl.notify_handler.watch_event(ch_event)
+        # The chassis is NOT a gateway chassis. It cannot be assigned to
+        # a router.
+        chassis3 = self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet3'],
+            enable_chassis_as_gw=False, azs=[])
+        ch_event.wait()
+        self.assertRaises(
+            l3agentscheduler.RouterNotHostedByL3Agent,
+            self.l3_plugin.remove_router_from_l3_agent,
+            self.context, chassis3, router['id'])

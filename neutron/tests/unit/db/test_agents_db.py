@@ -239,6 +239,13 @@ class TestAgentsDbMixin(TestAgentsDbBase):
             self.assertEqual({}, conf1)
             self.assertTrue(warn.called)
 
+    def test_make_agent_dict_ha_chassis_priority_default(self):
+        self.plugin.create_or_update_agent(self.context, self.agent_status,
+                                           timeutils.utcnow())
+        agent = self.plugin.get_agents(self.context)[0]
+        self.assertIn('ha_chassis_priority', agent)
+        self.assertIsNone(agent['ha_chassis_priority'])
+
     def get_configurations_dict(self):
         db_obj = mock.Mock(configurations='{"cfg1": "val1"}')
         cfg = self.plugin.get_configuration_dict(db_obj)

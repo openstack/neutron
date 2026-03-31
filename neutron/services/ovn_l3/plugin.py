@@ -15,6 +15,8 @@
 import netaddr
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import \
+    l3_agent_scheduler_ha_chassis_priority as l3_ha_prio_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
@@ -28,6 +30,7 @@ from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -50,6 +53,7 @@ from neutron.db import l3_fip_port_details
 from neutron.db import l3_fip_qos
 from neutron.db import l3_gateway_ip_qos
 from neutron.db.models import l3 as l3_models
+from neutron.extensions import l3agentscheduler
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.quota import resource_registry
 from neutron.scheduler import l3_ovn_scheduler
@@ -73,6 +77,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                         l3_gateway_ip_qos.L3_gw_ip_qos_dbonly_mixin,
                         l3_fip_pools_db.FloatingIPPoolsMixin,
                         l3_extra_gws_db.ExtraGatewaysDbOnlyMixin,
+                        l3agentscheduler.L3AgentSchedulerPluginBase,
                         ):
     """Implementation of the OVN L3 Router Service Plugin.
 
@@ -122,6 +127,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         if not hasattr(self, '_aliases'):
             self._aliases = self._supported_extension_aliases[:]
             self._disable_qos_extensions_by_extension_drivers(self._aliases)
+            self._aliases.append(l3_ha_prio_apidef.ALIAS)
         return self._aliases
 
     @property
@@ -442,3 +448,170 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
     def update_router_gw_ports(self, context, network, subnet):
         self._update_router_gateway_ports(context, network, subnet)
+
+    def _get_ha_chassis_priority_for_router(self, router_id):
+        """Return a dict mapping chassis_name to HA_Chassis priority."""
+        lrouter_name = utils.ovn_name(router_id)
+        nb_idl = self._nb_ovn
+        hcg = nb_idl.lookup('HA_Chassis_Group', lrouter_name, default=None)
+        if not hcg:
+            return {}
+        return {hc.chassis_name: hc.priority
+                for hc in getattr(hcg, 'ha_chassis', [])}
+
+    def list_l3_agents_hosting_router(self, context, router_id):
+        chassis_priorities = self._get_ha_chassis_priority_for_router(
+            router_id)
+        if not chassis_priorities:
+            return {'agents': []}
+
+        router_agents = []
+        gw_agents = self._plugin.get_agents(
+            context,
+            filters={'id': list(chassis_priorities),
+                     'agent_type': ovn_const.OVN_CONTROLLER_GW_AGENT})
+        gw_agents = {ag['id']: ag for ag in gw_agents}
+        for chassis_name, priority in chassis_priorities.items():
+            agent = gw_agents.get(chassis_name)
+            if agent:
+                agent['ha_chassis_priority'] = priority
+                router_agents.append(agent)
+        return {'agents': router_agents}
+
+    def list_routers_on_l3_agent(self, context, agent_id):
+        try:
+            agent = self._plugin.get_agent(context, agent_id)
+        except agent_exc.AgentNotFound:
+            raise l3agentscheduler.InvalidL3Agent(id=agent_id)
+
+        chassis_name = agent['id']
+        chassis_bindings = self._nb_ovn.get_all_chassis_gateway_bindings(
+            chassis_candidate_list=[chassis_name])
+        router_ids = set()
+        for lrp_name, _prio in chassis_bindings.get(chassis_name, []):
+            lrp = self._nb_ovn.lookup(
+                'Logical_Router_Port', lrp_name, default=None)
+            if lrp:
+                router_name = lrp.external_ids.get(
+                    ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
+                if router_name:
+                    router_ids.add(utils.get_neutron_name(router_name))
+        if not router_ids:
+            return {'routers': []}
+
+        routers = self.get_routers(
+            context, filters={'id': list(router_ids)})
+        return {'routers': routers}
+
+    def add_router_to_l3_agent(self, context, agent_id, router_id,
+                               ha_chassis_priority=None):
+        if ha_chassis_priority is not None and not (
+                ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY <=
+                ha_chassis_priority <=
+                ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY):
+            # This check should be done in the API.
+            raise l3agentscheduler.InvalidHAChassisPriority()
+
+        # TODO(ralonsoh): use the Logical_Router_Port to retrieve the AZs.
+        router = self.get_router(context, router_id)
+        try:
+            self._plugin.get_agent(context, agent_id)
+        except agent_exc.AgentNotFound:
+            raise l3agentscheduler.InvalidL3Agent(id=agent_id)
+
+        chassis_priorities = self._get_ha_chassis_priority_for_router(
+            router_id)
+        if agent_id in chassis_priorities:
+            raise l3agentscheduler.RouterHostedByL3Agent(
+                router_id=router_id, agent_id=agent_id)
+
+        if ha_chassis_priority in chassis_priorities.values():
+            raise l3agentscheduler.HAChassisPriorityAlreadyAssigned(
+                ha_chassis_priority=ha_chassis_priority)
+
+        chassis_with_physnets = self._sb_ovn.get_chassis_and_physnets()
+        all_gw_chassis = self._sb_ovn.get_gateway_chassis_from_cms_options()
+        chassis_with_azs = self._sb_ovn.get_chassis_and_azs()
+        gw_ports = self._nb_ovn.get_lrouter_gw_ports(utils.ovn_name(router_id))
+        az_hints = router.get('availability_zone_hints', [])
+        for gw_port in gw_ports:
+            ls_name = gw_port.external_ids.get(
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
+            ls = self._nb_ovn.get_lswitch(ls_name)
+            if not ls:
+                # This is highly improbable to happen.
+                LOG.warning('Logical_Switch %s, stored in the gateway '
+                            'Logical_Router_Port %s, does not exist',
+                            ls_name, gw_port.name)
+                continue
+
+            physnet = ls.external_ids.get(ovn_const.OVN_PHYSNET_EXT_ID_KEY)
+            if utils.is_gateway_chassis_invalid(
+                    agent_id, all_gw_chassis, physnet,
+                    chassis_with_physnets, az_hints, chassis_with_azs):
+                raise l3agentscheduler.InvalidL3Agent(id=agent_id)
+
+        if ha_chassis_priority is None:
+            # By default, if no chassis is assigned to the router, the default
+            # priority to be set will be ``MAX_GW_CHASSIS`` (=5).
+            ha_chassis_priority = min(chassis_priorities.values(),
+                                      default=ovn_const.MAX_GW_CHASSIS + 1) - 1
+            if (ha_chassis_priority <
+                    ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY):
+                raise l3agentscheduler.InvalidHAChassisPriority()
+
+        lrouter_name = utils.ovn_name(router_id)
+        with self._nb_ovn.transaction(check_error=True) as txn:
+            txn.add(self._nb_ovn.ha_chassis_group_add_chassis(
+                lrouter_name, agent_id, priority=ha_chassis_priority))
+
+    def update_router_in_l3_agent(self, context, agent_id, router_id,
+                                  ha_chassis_priority=None):
+        if ha_chassis_priority is None:
+            # Currently only the ``ha_chassis_priority`` parameter update is
+            # supported.
+            return
+
+        if not (ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY <=
+                ha_chassis_priority <=
+                ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY):
+            # This check should be done in the API.
+            raise l3agentscheduler.InvalidHAChassisPriority()
+
+        try:
+            self._plugin.get_agent(context, agent_id)
+        except agent_exc.AgentNotFound:
+            raise l3agentscheduler.InvalidL3Agent(id=agent_id)
+
+        chassis_priorities = self._get_ha_chassis_priority_for_router(
+            router_id)
+        if agent_id not in chassis_priorities:
+            raise l3agentscheduler.RouterNotHostedByL3Agent(
+                router_id=router_id, agent_id=agent_id)
+
+        if ha_chassis_priority in chassis_priorities.values():
+            raise l3agentscheduler.HAChassisPriorityAlreadyAssigned(
+                ha_chassis_priority=ha_chassis_priority)
+
+        with self._nb_ovn.transaction(check_error=True) as txn:
+            txn.add(self._nb_ovn.ha_chassis_group_add_chassis(
+                utils.ovn_name(router_id), agent_id,
+                priority=ha_chassis_priority))
+
+    def remove_router_from_l3_agent(self, context, agent_id, router_id):
+        try:
+            agent = self._plugin.get_agent(context, agent_id)
+        except agent_exc.AgentNotFound:
+            raise l3agentscheduler.InvalidL3Agent(id=agent_id)
+
+        chassis_name = agent['id']
+        chassis_priorities = self._get_ha_chassis_priority_for_router(
+            router_id)
+        if chassis_name not in chassis_priorities:
+            raise l3agentscheduler.RouterNotHostedByL3Agent(
+                router_id=router_id, agent_id=agent_id)
+
+        lrouter_name = utils.ovn_name(router_id)
+        with self._nb_ovn.transaction(check_error=True) as txn:
+            txn.add(self._nb_ovn.ha_chassis_group_del_chassis(
+                lrouter_name, chassis_name, if_exists=True))

@@ -38,9 +38,11 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers import driver_type as driver_type_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
+from neutron.db import agents_db
 from neutron.db import extraroute_db
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import ovn as ovn_models
+from neutron.extensions import l3agentscheduler
 from neutron import manager as neutron_manager
 from neutron.plugins.ml2 import managers
 from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
@@ -2114,6 +2116,141 @@ class BaseTestOVNL3RouterPluginMixin:
             self.l3_inst.validate_availability_zones(
                 self.context, 'router', []))
         mock_list_azs.assert_not_called()
+
+    def test_get_ha_chassis_priority_for_router(self):
+        router_id = 'fake-router-id'
+        hc1 = mock.Mock(chassis_name='chassis-1', priority=5)
+        hc2 = mock.Mock(chassis_name='chassis-2', priority=3)
+        hc3 = mock.Mock(chassis_name='chassis-3', priority=1)
+        hcg = mock.Mock(ha_chassis=[hc1, hc2, hc3])
+        self.l3_inst._nb_ovn.lookup.return_value = hcg
+
+        result = self.l3_inst._get_ha_chassis_priority_for_router(router_id)
+
+        self.assertEqual({'chassis-1': 5, 'chassis-2': 3, 'chassis-3': 1},
+                         result)
+
+    def test_get_ha_chassis_priority_for_router_no_hcg(self):
+        router_id = 'fake-router-id'
+        self.l3_inst._nb_ovn.lookup.return_value = None
+
+        result = self.l3_inst._get_ha_chassis_priority_for_router(router_id)
+
+        self.assertEqual({}, result)
+
+    def test_get_ha_chassis_priority_for_router_empty_ha_chassis(self):
+        router_id = 'fake-router-id'
+        hcg = mock.Mock(ha_chassis=[])
+        self.l3_inst._nb_ovn.lookup.return_value = hcg
+
+        result = self.l3_inst._get_ha_chassis_priority_for_router(router_id)
+
+        self.assertEqual({}, result)
+
+    @mock.patch.object(agents_db.AgentDbMixin, 'get_agents')
+    def test_list_l3_agents_hosting_router_with_priorities(
+            self, mock_get_agents):
+        router_id = 'fake-router-id'
+        hc1 = mock.Mock(chassis_name='chassis-1', priority=5)
+        hc2 = mock.Mock(chassis_name='chassis-2', priority=3)
+        hc3 = mock.Mock(chassis_name='chassis-3', priority=1)
+        hcg = mock.Mock(ha_chassis=[hc1, hc2, hc3])
+        self.l3_inst._nb_ovn.lookup.return_value = hcg
+
+        fake_agents = [
+            {'id': 'chassis-1', 'host': 'chassis-1'},
+            {'id': 'chassis-2', 'host': 'chassis-2'},
+            {'id': 'chassis-3', 'host': 'chassis-3'},
+        ]
+        mock_get_agents.return_value = fake_agents
+
+        result = self.l3_inst.list_l3_agents_hosting_router(
+            self.admin_context, router_id)
+
+        agents = result['agents']
+        self.assertEqual(3, len(agents))
+        priorities = {a['host']: a['ha_chassis_priority'] for a in agents}
+        self.assertEqual(5, priorities['chassis-1'])
+        self.assertEqual(3, priorities['chassis-2'])
+        self.assertEqual(1, priorities['chassis-3'])
+
+    def test_list_l3_agents_hosting_router_no_hcg(self):
+        router_id = 'fake-router-id'
+        self.l3_inst._nb_ovn.lookup.return_value = None
+
+        result = self.l3_inst.list_l3_agents_hosting_router(
+            self.admin_context, router_id)
+
+        agents = result['agents']
+        self.assertEqual(0, len(agents))
+
+    def test_update_router_in_l3_agent(self):
+        router_id = 'fake-router-id'
+        agent_id = 'chassis-1'
+        hc1 = mock.Mock(chassis_name='chassis-1', priority=5)
+        hcg = mock.Mock(ha_chassis=[hc1])
+        self.l3_inst._nb_ovn.lookup.return_value = hcg
+
+        with mock.patch.object(self.l3_inst._plugin, 'get_agent',
+                               return_value={'id': agent_id}):
+            self.l3_inst.update_router_in_l3_agent(
+                self.admin_context, agent_id, router_id,
+                ha_chassis_priority=100)
+
+        self.l3_inst._nb_ovn.ha_chassis_group_add_chassis.\
+            assert_called_once_with(
+                utils.ovn_name(router_id), agent_id, priority=100)
+
+    def test_update_router_in_l3_agent_not_hosted(self):
+        router_id = 'fake-router-id'
+        agent_id = 'chassis-99'
+        hc1 = mock.Mock(chassis_name='chassis-1', priority=5)
+        hcg = mock.Mock(ha_chassis=[hc1])
+        self.l3_inst._nb_ovn.lookup.return_value = hcg
+
+        with mock.patch.object(self.l3_inst._plugin, 'get_agent',
+                               return_value={'id': agent_id}):
+            self.assertRaises(
+                l3agentscheduler.RouterNotHostedByL3Agent,
+                self.l3_inst.update_router_in_l3_agent,
+                self.admin_context, agent_id, router_id,
+                100)
+
+    def test_update_router_in_l3_agent_invalid_priority(self):
+        router_id = 'fake-router-id'
+        agent_id = 'chassis-1'
+        hc1 = mock.Mock(chassis_name='chassis-1', priority=5)
+        hcg = mock.Mock(ha_chassis=[hc1])
+        self.l3_inst._nb_ovn.lookup.return_value = hcg
+
+        with mock.patch.object(self.l3_inst._plugin, 'get_agent',
+                               return_value={'id': agent_id}):
+            self.assertRaises(
+                n_exc.BadRequest,
+                self.l3_inst.update_router_in_l3_agent,
+                self.admin_context, agent_id, router_id,
+                -1)
+
+            self.assertRaises(
+                n_exc.BadRequest,
+                self.l3_inst.update_router_in_l3_agent,
+                self.admin_context, agent_id, router_id,
+                40000)
+
+    def test_update_router_in_l3_agent_no_priority(self):
+        router_id = 'fake-router-id'
+        agent_id = 'chassis-1'
+        hc1 = mock.Mock(chassis_name='chassis-1', priority=5)
+        hcg = mock.Mock(ha_chassis=[hc1])
+        self.l3_inst._nb_ovn.lookup.return_value = hcg
+
+        with mock.patch.object(self.l3_inst._plugin, 'get_agent',
+                               return_value={'id': agent_id}):
+            self.l3_inst.update_router_in_l3_agent(
+                self.admin_context, agent_id, router_id)
+
+        self.l3_inst._nb_ovn.ha_chassis_group_add_chassis.\
+            assert_not_called()
 
     def test_ovn_l3_router_plugin_without_ovn_mech_driver(self):
         cfg.CONF.set_override('mechanism_drivers', [], group='ml2')

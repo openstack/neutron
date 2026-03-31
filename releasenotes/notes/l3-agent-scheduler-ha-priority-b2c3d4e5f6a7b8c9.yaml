@@ -1,0 +1,26 @@
+---
+features:
+  - |
+    Added the ``l3-agent-scheduler-ha-priority`` API extension for
+    ML2/OVN, which exposes the OVN ``HA_Chassis`` priority in the
+    L3 Agent Scheduler API. The ``ha_chassis_priority`` field indicates
+    the gateway failover ordering within the ``HA_Chassis_Group``: the
+    highest value is the active (primary) gateway chassis, lower values
+    are ranked backups.
+
+    The following API operations are supported:
+
+    * ``GET /v2.0/routers/{router_id}/l3-agents`` -- list gateway
+      agents hosting a router, including their ``ha_chassis_priority``.
+    * ``GET /v2.0/agents/{agent_id}/l3-routers`` -- list routers
+      scheduled on a given gateway agent.
+    * ``POST /v2.0/agents/{agent_id}/l3-routers`` -- add a router to
+      a gateway agent with an optional ``ha_chassis_priority``.
+    * ``PUT /v2.0/agents/{agent_id}/l3-routers/{router_id}`` -- update
+      the ``ha_chassis_priority`` of an existing router-agent binding.
+    * ``DELETE /v2.0/agents/{agent_id}/l3-routers/{router_id}`` --
+      remove a router from a gateway agent.
+
+    For other mechanism drivers (ML2/OVS), the ``ha_chassis_priority``
+    field is always ``null`` since the classic L3 agent model does not
+    use ``HA_Chassis`` priorities.
