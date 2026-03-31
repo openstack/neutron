@@ -433,7 +433,14 @@ LS_OPTIONS_FDB_AGE_THRESHOLD = 'fdb_age_threshold'
 FDB_AGE_THRESHOLD_DEFAULT = 300
 
 # MAC ageing settings.
-MAC_BINDING_AGE_THRESHOLD = 300
+# NOTE(ralonsoh): this variable is set to 0 in 2026.1. That will prevent from
+# errors in the gateway ``Logical_Router_Port`` from being claimed from other
+# chassis. Although it is recommended to have a reasonable value defined for
+# the OVN ``MAC_Binding`` table aging, it is first needed to have the OVN
+# patch [1] installed. See LP#2146769 for more details.
+# [1] https://patchwork.ozlabs.org/project/ovn/patch/
+#   20260309101549.136241-2-felix.moebius@digits.schwarz/
+MAC_BINDING_AGE_THRESHOLD = 0
 
 LS_OPTIONS_BROADCAST_ARPS_ROUTERS = 'broadcast-arps-to-all-routers'
 
