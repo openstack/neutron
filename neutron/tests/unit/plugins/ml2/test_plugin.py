@@ -1232,6 +1232,35 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                          self.context, resource_id=port_id))
             mock_pstatus.assert_not_called()
 
+    def test_port_precommit_create_callback(self):
+        precommit_create = mock.Mock()
+        registry.subscribe(precommit_create, resources.PORT,
+                           events.PRECOMMIT_CREATE)
+        with self.port() as p:
+            precommit_create.assert_called_once_with(
+                resources.PORT, events.PRECOMMIT_CREATE, mock.ANY,
+                payload=mock.ANY)
+            payload = precommit_create.mock_calls[0][2]['payload']
+            self.assertEqual(p['port']['id'], payload.resource_id)
+            self.assertIsNotNone(payload.request_body)
+            self.assertEqual(p['port']['network_id'],
+                             payload.request_body['network_id'])
+
+    def test_port_precommit_create_bulk_callback(self):
+        precommit_create = mock.Mock()
+        registry.subscribe(precommit_create, resources.PORT,
+                           events.PRECOMMIT_CREATE)
+        with self.network() as net:
+            res = self._create_port_bulk(
+                self.fmt, 2, net['network']['id'], 'test', True)
+            self.deserialize(self.fmt, res)
+            self.assertEqual(2, precommit_create.call_count)
+            for call in precommit_create.call_args_list:
+                payload = call[1]['payload']
+                self.assertIsNotNone(payload.request_body)
+                self.assertEqual(net['network']['id'],
+                                 payload.request_body['network_id'])
+
     def test_port_after_create_outside_transaction(self):
         self.tx_open = True
 
