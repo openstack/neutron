@@ -1657,7 +1657,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                              payload=events.DBEventPayload(
                                  context,
                                  resource_id=result['id'],
-                                 states=(result,)))
+                                 states=(result,),
+                                 request_body=attrs))
             self.mechanism_manager.create_port_precommit(mech_context)
             self._setup_dhcp_agent_provisioning_component(context, result)
 
@@ -1862,7 +1863,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                  payload=events.DBEventPayload(
                                      context,
                                      resource_id=db_port_obj['id'],
-                                     states=(db_port_obj,)))
+                                     states=(db_port_obj,),
+                                     request_body=pdata))
 
                 self.mechanism_manager.create_port_precommit(mech_context)
 
