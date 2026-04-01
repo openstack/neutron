@@ -612,6 +612,13 @@ def get_allowed_address_pairs_ip_addresses(port):
             if 'ip_address' in x]
 
 
+def get_lsp_ips(ovn_port):
+    """Return (primary_ips, port_security_ips) from an OVN port."""
+    primary = remove_macs_from_lsp_addresses(ovn_port.addresses)
+    ps = remove_macs_from_lsp_addresses(ovn_port.port_security)
+    return primary, ps
+
+
 def get_allowed_address_pairs_ip_addresses_from_ovn_port(ovn_port):
     """Return a list of IP addresses from ovn port.
 
@@ -621,9 +628,8 @@ def get_allowed_address_pairs_ip_addresses_from_ovn_port(ovn_port):
     :param ovn_port: A OVN port
     :returns: A list of IP addresses (v4 and v6)
     """
-    addresses = remove_macs_from_lsp_addresses(ovn_port.addresses)
-    port_security = remove_macs_from_lsp_addresses(ovn_port.port_security)
-    return [x for x in port_security if x not in addresses]
+    primary, ps = get_lsp_ips(ovn_port)
+    return [x for x in ps if x not in primary]
 
 
 def get_ovn_port_security_groups(ovn_port, skip_trusted_port=True):
@@ -632,12 +638,6 @@ def get_ovn_port_security_groups(ovn_port, skip_trusted_port=True):
             'device_owner': ovn_port.external_ids.get(
                 constants.OVN_DEVICE_OWNER_EXT_ID_KEY, '')}
     return get_lsp_security_groups(info, skip_trusted_port=skip_trusted_port)
-
-
-def get_ovn_port_addresses(ovn_port):
-    addresses = remove_macs_from_lsp_addresses(ovn_port.addresses)
-    port_security = remove_macs_from_lsp_addresses(ovn_port.port_security)
-    return list(set(addresses + port_security))
 
 
 def get_virtual_port_parents(context, virtual_ip, subnet_id, port_id):
