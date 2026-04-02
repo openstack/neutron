@@ -204,7 +204,7 @@ are:
     as of 2.5 and with no ongoing plan for integration.
 
 * Going full openflow: in layman's terms, this means programming the
-  dataplane using OpenFlow in order to provide tenant isolation, and
+  dataplane using OpenFlow in order to provide project isolation, and
   packet processing. This solution has the following design implications:
 
   * Design complexity: this requires a big rearchitecture of the
@@ -225,7 +225,7 @@ are:
     to fully exploit the capabilities of DPDK, at least until
     `user space <https://patchwork.ozlabs.org/patch/611282/>`_
     connection tracking becomes available in OVS.
-  * Feature compatibility: with the adoption of Open Flow, tenant
+  * Feature compatibility: with the adoption of Open Flow, project
     isolation will no longer be provided by means of local vlan
     provisioning, thus making the requirement of QinQ support
     no longer strictly necessary for Open vSwitch.

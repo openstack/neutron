@@ -171,7 +171,7 @@ Neutron provides two additional policy rule classes in order to support the
 OwnerCheck: Extended Checks for Resource Ownership
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This class is registered for rules matching the ``tenant_id`` keyword and
+This class is registered for rules matching the ``project_id`` keyword and
 overrides the generic check performed by oslo_policy in this case.
 It uses for those cases where neutron needs to check whether the project
 submitting a request for a new resource owns the parent resource of the one
@@ -190,12 +190,12 @@ The check, performed in the ``__call__`` method, works as follows:
   simply verify whether the value for the target field in target data
   is equal to value for the same field in credentials, just like
   ``oslo_policy.GenericCheck`` would do. This is also the most frequent case
-  as the target field is usually ``tenant_id``;
+  as the target field is usually ``project_id``;
 * if the previous check failed, extract a parent resource type and a
   parent field name from the target field. For instance
-  ``networks:tenant_id`` identifies the ``tenant_id`` attribute of the
+  ``networks:project_id`` identifies the ``project_id`` attribute of the
   ``network`` resource. For extension parent resource case,
-  ``ext_parent:tenant_id`` identifies the ``tenant_id`` attribute of the
+  ``ext_parent:project_id`` identifies the ``project_id`` attribute of the
   registered extension resource in ``EXT_PARENT_RESOURCE_MAPPING``;
 * if no parent resource or target field could be identified raise a
   ``PolicyCheckError`` exception;
@@ -208,8 +208,8 @@ The check, performed in the ``__call__`` method, works as follows:
   'parent foreign key' as an identifier;
 * Finally, verify whether the target field in this resource matches the
   one in the initial request data. For instance, for a port create request,
-  verify whether the ``tenant_id`` of the port data structure matches the
-  ``tenant_id`` of the network where this port is being created.
+  verify whether the ``project_id`` of the port data structure matches the
+  ``project_id`` of the network where this port is being created.
 
 
 FieldCheck: Verify Resource Attributes
@@ -248,14 +248,14 @@ served by Neutron "core" and for the APIs served by the various Neutron
   number of resources;
 * Some resource attributes, even if not directly used in policy checks
   might still be required by the policy engine. This is for instance the
-  case of the ``tenant_id`` attribute. For these attributes the
+  case of the ``project_id`` attribute. For these attributes the
   ``required_by_policy`` attribute should always set to ``True``. This will
   ensure that the attribute is included in the resource data sent to the
   policy engine for evaluation;
-* The ``tenant_id`` attribute is a fundamental one in Neutron API request
+* The ``project_id`` attribute is a fundamental one in Neutron API request
   authorization. The default policy, ``admin_or_owner``, uses it to validate
   if a project owns the resource it is trying to operate on. To this aim,
-  if a resource without a tenant_id is created, it is important to ensure
+  if a resource without a project_id is created, it is important to ensure
   that ad-hoc authZ policies are specified for this resource.
 * There is still only one check which is hardcoded in Neutron's API layer:
   the check to verify that a project owns the network on which it is creating

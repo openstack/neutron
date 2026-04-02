@@ -105,7 +105,7 @@ to allow users to experiment with configuring service subnets.
       | revision_number   | 1                                    |
       | service_types     | ['compute:nova']                     |
       | tags              | []                                   |
-      | tenant_id         | a8b3054cc1214f18b1186b291525650f     |
+      | project_id        | a8b3054cc1214f18b1186b291525650f     |
       +-------------------+--------------------------------------+
 
 #. Optionally, create another subnet on the network with a different service
@@ -126,7 +126,7 @@ to allow users to experiment with configuring service subnets.
       | revision_number   | 1                                    |
       | service_types     | ['compute:foo']                      |
       | tags              | []                                   |
-      | tenant_id         | a8b3054cc1214f18b1186b291525650f     |
+      | project_id        | a8b3054cc1214f18b1186b291525650f     |
       +-------------------+--------------------------------------+
 
 #. Launch an instance using the network. For example, using the ``cirros``

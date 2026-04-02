@@ -31,10 +31,10 @@ digraph {
             label = "neutron-dhcp-agent"
         ]
         neutron_metadata_agent [
-            label = "neutron-metadata-agent\n\nadds HTTP headers:\nX-Tenant-ID: project-UUID\nX-Instance-ID: instance-UUID\nX-Instance-ID-Signature: ...\n\nremoves HTTP header:\n X-Neutron-Network-ID"
+            label = "neutron-metadata-agent\n\nadds HTTP headers:\nX-Project-ID: project-UUID\nX-Instance-ID: instance-UUID\nX-Instance-ID-Signature: ...\n\nremoves HTTP header:\n X-Neutron-Network-ID"
         ]
         subgraph cluster_neutron_dhcp_namespace {
-            label = "neutron DHCP namespace\n(for isolated tenant net)"
+            label = "neutron DHCP namespace\n(for isolated project net)"
             neutron_dhcp_ns_metadata_proxy [
                 label = "neutron ns-metadata-proxy\n\nadds HTTP headers:\nX-Forwarded-For: instance-IP\nX-Neutron-Network-ID: network-UUID"
             ]
@@ -47,8 +47,8 @@ digraph {
         }
     }
 
-    subgraph cluster_tenant_net_isolated {
-        label = "isolated tenant net\n(i.e. without gateway)"
+    subgraph cluster_project_net_isolated {
+        label = "isolated project net\n(i.e. without gateway)"
         instance [
             label = "openstack instance\nno 169.254 IP configured locally"
         ]

@@ -99,7 +99,7 @@ Create a logging resource with security group as resource type:
      | Type            | security_group                       |
      | created_at      | 2023-07-31T09:44:34Z                 |
      | revision_number | 0                                    |
-     | tenant_id       | 74731b187a824a8d9b85a12b6eacbcbb     |
+     | project_id      | 74731b187a824a8d9b85a12b6eacbcbb     |
      | updated_at      | 2023-07-31T09:44:34Z                 |
      +-----------------+--------------------------------------+
 
@@ -299,7 +299,7 @@ Service workflow for Operator
         | Type            | security_group                                 |
         | created_at      | 2017-07-05T02:56:43Z                           |
         | revision_number | 0                                              |
-        | tenant_id       | 02568bd62b414221956f15dbe9527d16               |
+        | project_id      | 02568bd62b414221956f15dbe9527d16               |
         | updated_at      | 2017-07-05T02:56:43Z                           |
         +-----------------+------------------------------------------------+
 
@@ -362,7 +362,7 @@ Service workflow for Operator
        | Type            | security_group                                 |
        | created_at      | 2017-07-05T02:56:43Z                           |
        | revision_number | 1                                              |
-       | tenant_id       | 02568bd62b414221956f15dbe9527d16               |
+       | project_id      | 02568bd62b414221956f15dbe9527d16               |
        | updated_at      | 2017-07-05T03:12:01Z                           |
        +-----------------+------------------------------------------------+
 

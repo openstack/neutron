@@ -179,7 +179,7 @@ The following is an example of an instance creation, showing how its
    | progress                             | 0                                                              |
    | security_groups                      | default                                                        |
    | status                               | BUILD                                                          |
-   | tenant_id                            | d5660cb1e6934612a01b4fb2fb630725                               |
+   | project_id                           | d5660cb1e6934612a01b4fb2fb630725                               |
    | updated                              | 2016-02-05T21:35:04Z                                           |
    | user_id                              | 8bb6e578cba24e7db9d3810633124525                               |
    +--------------------------------------+----------------------------------------------------------------+

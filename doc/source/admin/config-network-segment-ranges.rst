@@ -6,16 +6,16 @@ Network Segment Ranges
 
 The network segment range service exposes the segment range management to be
 administered via the Neutron API. In addition, it introduces the ability for
-the administrator to control the segment ranges globally or on a per-tenant
+the administrator to control the segment ranges globally or on a per-project
 basis.
 
 Why you need it
 ~~~~~~~~~~~~~~~
 
 Before Stein, network segment ranges were configured as an entry in ML2
-config file ``ml2_conf.ini`` that was statically defined for tenant network
+config file ``ml2_conf.ini`` that was statically defined for project network
 allocation and therefore had to be managed as part of the host deployment and
-management. When a regular tenant user creates a network, Neutron assigns the
+management. When a regular project user creates a network, Neutron assigns the
 next free segmentation ID (VLAN ID, VNI etc.) from the configured segment
 ranges. Only an administrator can assign a specific segment ID via the
 provider extension.
@@ -32,7 +32,7 @@ capabilities that the administrator may be interested in:
    privacy or dedicated business connection needs. This includes:
 
    * global shared network segment ranges
-   * tenant-specific network segment ranges
+   * project-specific network segment ranges
 
 #. To dynamically update a network segment range to offer the ability to adapt
    to the connection mapping changes.
@@ -54,14 +54,14 @@ As a regular project in an OpenStack cloud, you can not create a network
 segment range of your own and you just create networks in regular way.
 
 If you are an admin, you can create a network segment range which can be
-shared (i.e. used by any regular project) or tenant-specific (i.e.
-assignment on a per-tenant basis). Your network segment ranges will not be
+shared (i.e. used by any regular project) or project-specific (i.e.
+assignment on a per-project basis). Your network segment ranges will not be
 visible to any other regular projects. Other CRUD operations are also
 supported.
 
-When a tenant allocates a segment, it will first be allocated from an available
-segment range assigned to the tenant, and then a shared range if no tenant
-specific allocation is possible.
+When a project allocates a segment, it will first be allocated from an
+available segment range assigned to the project, and then a shared range
+if no project specific allocation is possible.
 
 Default network segment ranges
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,7 +75,7 @@ server starts or restarts. The ``default`` network segment ranges are
 allocation.
 
 The administrator can use the default network segment range information to
-make shared and/or per-tenant range creation and assignment.
+make shared and/or per-project range creation and assignment.
 
 Example configuration
 ~~~~~~~~~~~~~~~~~~~~~
@@ -127,12 +127,12 @@ the following:
 #. The Cloud administrator:
 
    * Lists the existing network segment ranges.
-   * Creates a shared or a tenant-specific network segment range based on the
+   * Creates a shared or a project-specific network segment range based on the
      requirement.
 
-#. A regular tenant creates a network in regular way. The network created
+#. A regular project creates a network in regular way. The network created
    will automatically allocate a segment from the segment ranges assigned to
-   the tenant or shared if no tenant specific range available.
+   the project or shared if no project specific range available.
 
 At a high level, the basic workflow for a network segment range update is
 the following:
@@ -143,7 +143,7 @@ the following:
      needs to be updated.
    * Updates the network segment range based on the requirement.
 
-#. A regular tenant creates a network in regular way. The network created
+#. A regular project creates a network in regular way. The network created
    will automatically allocate a segment from the updated network segment
    ranges available.
 
@@ -169,7 +169,7 @@ As admin, list the existing network segment ranges:
 
 The network segment ranges with ``Default`` as ``True`` are the ranges
 specified by the operators in the ML2 config file. Besides, there
-are also shared and tenant specific network segment ranges created by the
+are also shared and project specific network segment ranges created by the
 admin previously.
 
 The admin is also able to check/show the detailed information (e.g.
@@ -228,8 +228,8 @@ Update a network segment range based on your requirement:
     $ openstack network segment range set --minimum 100 --maximum 150 \
     test_range_4
 
-Create a tenant network
------------------------
+Create a project network
+------------------------
 
 Now, as project ``demo`` (to source the client environment script
 ``demo-openrc`` for ``demo`` project according to
@@ -274,7 +274,7 @@ create a network in a regular way.
     +---------------------------+--------------------------------------+
 
 
-Then, switch back to the admin to check the segmentation ID of the tenant
+Then, switch back to the admin to check the segmentation ID of the project
 network created.
 
 .. code-block:: console
@@ -314,19 +314,19 @@ network created.
     | updated_at                | 2019-02-25T23:20:36Z                 |
     +---------------------------+--------------------------------------+
 
-The tenant network created automatically allocates a segment with
+The project network created automatically allocates a segment with
 segmentation ID ``137`` from the network segment range with segmentation
-ID range ``120-140`` that is assigned to the tenant.
+ID range ``120-140`` that is assigned to the project.
 
 If no more available segment in the network segment range assigned to this
-tenant, then the segment allocation would refer to the ``shared`` segment
+project, then the segment allocation would refer to the ``shared`` segment
 ranges to check whether there's one segment available. If still there is no
 segment available, the allocation will fail as follows:
 
 .. code-block:: console
 
     $ openstack network create test_net
-    $ Unable to create the network. No tenant network is available for
+    $ Unable to create the network. No project network is available for
       allocation.
 
 In this case, the admin is advised to check the availability and usage

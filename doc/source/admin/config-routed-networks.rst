@@ -534,8 +534,8 @@ one segment to a routed one.
       +------------+--------------------------------------+
 
 
-Routed provider networks as external networks for tenant routed networks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Routed provider networks as external networks for project routed networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
 
@@ -547,17 +547,17 @@ operation. The communication (routing) between segments is done using the
 underlying network infrastructure, not managed by Neutron.
 
 Could be the case that the user needs to split the communication between
-several hosts. It is possible to create tenant networks and connect them using
+several hosts. It is possible to create project networks and connect them using
 a router. To access to the routed provider network, it should be connected
 as router gateway.
 
 .. code-block:: bash
 
-   Tenant net1  ┌─────────────────────┐
+   Project net1 ┌─────────────────────┐
    ─────────────┤                     │
                 │                     │ Routed provided network
                 │             GW port ├────────────────────────
-   Tenant net2  │                     │
+   Project net2 │                     │
    ─────────────┤                     │
                 └─────────────────────┘
 
@@ -584,7 +584,7 @@ that belong to the host segment:
 
 For example, let's consider the following configuration:
 
-* Two tenant networks with CIDRs 10.1.0.0/24 and 10.2.0.0/24.
+* Two project networks with CIDRs 10.1.0.0/24 and 10.2.0.0/24.
 * A RPN with two segments; each segment with two subnets: segment 1 with
   10.51.0.0/24 and 10.52.0.0/24, segment 2 with 10.53.0.0/24 and 10.54.0.0/24.
 * The router is connected to the first segment and the gateway port has an IP
@@ -598,8 +598,8 @@ is the routing table set in the router namespace:
 
    $ ip netns exec $r ip r
    default via 10.51.0.1 dev qg-gwport proto static
-   10.1.0.0/24 dev qr-tenant1 proto kernel scope link src 10.1.0.1
-   10.2.0.0/24 dev qr-tenant2 proto kernel scope link src 10.2.0.1
+   10.1.0.0/24 dev qr-project1 proto kernel scope link src 10.1.0.1
+   10.2.0.0/24 dev qr-project2 proto kernel scope link src 10.2.0.1
    10.51.0.0/24 dev qg-gwport proto kernel scope link src 10.100.0.15
    10.52.0.0/24 dev qg-gwport proto static scope link
    10.53.0.0/24 dev qg-gwport proto static scope link  <-- should be removed, belongs to segment 2

@@ -23,12 +23,12 @@
 <title>cluster_neutron_dhcp_namespace</title>
 <polygon fill="none" stroke="black" points="16,-155 16,-399 512,-399 512,-155 16,-155"/>
 <text text-anchor="middle" x="264" y="-383.8" font-family="Times,serif" font-size="14.00">neutron DHCP namespace</text>
-<text text-anchor="middle" x="264" y="-368.8" font-family="Times,serif" font-size="14.00">(for isolated tenant net)</text>
+<text text-anchor="middle" x="264" y="-368.8" font-family="Times,serif" font-size="14.00">(for isolated project net)</text>
 </g>
 <g id="clust4" class="cluster">
-<title>cluster_tenant_net_isolated</title>
+<title>cluster_project_net_isolated</title>
 <polygon fill="none" stroke="black" points="189,-8 189,-101 453,-101 453,-8 189,-8"/>
-<text text-anchor="middle" x="321" y="-85.8" font-family="Times,serif" font-size="14.00">isolated tenant net</text>
+<text text-anchor="middle" x="321" y="-85.8" font-family="Times,serif" font-size="14.00">isolated project net</text>
 <text text-anchor="middle" x="321" y="-70.8" font-family="Times,serif" font-size="14.00">(i.e. without gateway)</text>
 </g>
 <!-- nova_metadata -->
@@ -43,7 +43,7 @@
 <polygon fill="none" stroke="black" points="55.5,-470.5 55.5,-615.5 282.5,-615.5 282.5,-470.5 55.5,-470.5"/>
 <text text-anchor="middle" x="169" y="-600.3" font-family="Times,serif" font-size="14.00">neutron&#45;metadata&#45;agent</text>
 <text text-anchor="middle" x="169" y="-569.3" font-family="Times,serif" font-size="14.00">adds HTTP headers:</text>
-<text text-anchor="middle" x="169" y="-554.3" font-family="Times,serif" font-size="14.00">X&#45;Tenant&#45;ID: project&#45;UUID</text>
+<text text-anchor="middle" x="169" y="-554.3" font-family="Times,serif" font-size="14.00">X&#45;Project&#45;ID: project&#45;UUID</text>
 <text text-anchor="middle" x="169" y="-539.3" font-family="Times,serif" font-size="14.00">X&#45;Instance&#45;ID: instance&#45;UUID</text>
 <text text-anchor="middle" x="169" y="-524.3" font-family="Times,serif" font-size="14.00">X&#45;Instance&#45;ID&#45;Signature: ...</text>
 <text text-anchor="middle" x="169" y="-493.3" font-family="Times,serif" font-size="14.00">removes HTTP header:</text>

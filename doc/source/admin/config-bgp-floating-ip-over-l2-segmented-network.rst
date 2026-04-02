@@ -116,7 +116,7 @@ so the speaker initiates a BGP session to the network equipment.
    $ openstack bgp speaker add peer \
          mycloud-compute-1.example.com rack1-switch-1
 
-   $ # Tell the speaker not to advertize tenant networks
+   $ # Tell the speaker not to advertise project networks
    $ openstack bgp speaker set \
          --no-advertise-tenant-networks mycloud-compute-1.example.com
 
@@ -300,10 +300,10 @@ subnet itself is created:
          --network provider-network
 
 The service-type network:routed ensures we're using BGP through the provider
-network to advertize the IPs. network:floatingip and network:router_gateway
+network to advertise the IPs. network:floatingip and network:router_gateway
 limits the use of these IPs to floating IPs and router gateways.
 
-Setting-up BGP advertizing
+Setting-up BGP advertising
 --------------------------
 
 The provider network needs to be added to each of the BGP speakers. This means
@@ -327,42 +327,42 @@ Per project operation
 ---------------------
 
 This can be done by each customer. A subnet pool isn't mandatory, but it is
-nice to have. Typically, the customer network will not be advertized through
+nice to have. Typically, the customer network will not be advertised through
 BGP (but this can be done if needed).
 
 .. code-block:: console
 
-   $ # Create the tenant private network
-   $ openstack network create tenant-network
+   $ # Create the project private network
+   $ openstack network create project-network
 
    $ # Self-service network pool:
    $ openstack subnet pool create \
          --pool-prefix 192.168.130.0/23 \
          --share \
-         tenant-subnet-pool
+         project-subnet-pool
 
    $ # Self-service subnet:
    $ openstack subnet create \
-         --network tenant-network \
-         --subnet-pool tenant-subnet-pool \
+         --network project-network \
+         --subnet-pool project-subnet-pool \
          --prefix-length 24 \
-         tenant-subnet-1
+         project-subnet-1
 
    $ # Create the router
-   $ openstack router create tenant-router
+   $ openstack router create project-router
 
-   $ # Add the tenant subnet to the tenant router
+   $ # Add the project subnet to the project router
    $ openstack router add subnet \
-         tenant-router tenant-subnet-1
+         project-router project-subnet-1
 
    $ # Set the router's default gateway. This will use one public IP.
    $ openstack router set \
-         --external-gateway provider-network tenant-router
+         --external-gateway provider-network project-router
 
-   $ # Create a first VM on the tenant subnet
+   $ # Create a first VM on the project subnet
    $ openstack server create --image debian-10.5.0-openstack-amd64.qcow2 \
          --flavor cpu2-ram6-disk20 \
-         --nic net-id=tenant-network \
+         --nic net-id=project-network \
          --key-name yubikey-zigo \
          test-server-1
 
@@ -443,13 +443,13 @@ procedure, if having 2 switches per rack, looks like this:
 Verification
 ------------
 
-If everything goes well, the floating IPs are advertized over BGP through the
+If everything goes well, the floating IPs are advertised over BGP through the
 provider network. Here is an example with 4 VMs deployed on 2 racks. Neutron
 is here picking-up IPs on the segmented network as Nexthop.
 
 .. code-block:: console
 
-   $ # Check the advertized routes:
+   $ # Check the advertised routes:
    $ openstack bgp speaker list advertised routes \
          mycloud-compute-4.example.com
    +-----------------+-----------+

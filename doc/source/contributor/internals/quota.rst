@@ -118,7 +118,7 @@ quotas using ``policy.yaml``.
 
 The driver operations dealing with quota management are:
 
-* ``delete_tenant_quota``, which simply removes all entries from the 'quotas'
+* ``delete_project_quota``, which simply removes all entries from the 'quotas'
   table for a given project identifier;
 * ``update_quota_limit``, which adds or updates an entry in the 'quotas'
   project for a given project identifier and a given resource name;

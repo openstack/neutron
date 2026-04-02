@@ -31,10 +31,10 @@ digraph {
             label = "neutron-l3-agent"
         ]
         neutron_metadata_agent [
-            label = "neutron-metadata-agent\n\nadds HTTP headers:\nX-Tenant-ID: project-UUID\nX-Instance-ID: instance-UUID\nX-Instance-ID-Signature: ...\n\nremoves HTTP header:\n X-Neutron-Router-ID"
+            label = "neutron-metadata-agent\n\nadds HTTP headers:\nX-Project-ID: project-UUID\nX-Instance-ID: instance-UUID\nX-Instance-ID-Signature: ...\n\nremoves HTTP header:\n X-Neutron-Router-ID"
         ]
         subgraph cluster_neutron_router_namespace {
-            label = "neutron router namespace\n(for tenant router)"
+            label = "neutron router namespace\n(for project router)"
             neutron_l3_ns_metadata_proxy [
                 label = "neutron ns-metadata-proxy\n\nadds HTTP headers:\nX-Forwarded-For: instance-IP\nX-Neutron-Router-ID: router-UUID"
             ]
@@ -47,8 +47,8 @@ digraph {
         }
     }
 
-    subgraph cluster_tenant_net_with_gateway {
-        label = "tenant net with gateway"
+    subgraph cluster_project_net_with_gateway {
+        label = "project net with gateway"
         instance [
             label = "openstack instance\nno 169.254 IP configured locally\nroute: 169.254.169.254 via subnet-gw-IP"
         ]

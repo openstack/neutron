@@ -75,7 +75,7 @@ Example response ::
                         "used_ips": 3
                     }
                 ],
-                "tenant_id": "test-project",
+                "project_id": "test-project",
                 "total_ips": 253,
                 "used_ips": 3
             },
@@ -83,7 +83,7 @@ Example response ::
                 "network_id": "47035bae-4f29-4fef-be2e-2941b72528a8",
                 "network_name": "net2",
                 "subnet_ip_availability": [],
-                "tenant_id": "test-project",
+                "project_id": "test-project",
                 "total_ips": 0,
                 "used_ips": 0
             },
@@ -100,7 +100,7 @@ Example response ::
                         "used_ips": 2
                     }
                 ],
-                "tenant_id": "test-project",
+                "project_id": "test-project",
                 "total_ips": 253,
                 "used_ips": 2
             }
@@ -137,7 +137,7 @@ Example response ::
                     "used_ips": 3
                 }
             ],
-            "tenant_id": "test-project",
+            "project_id": "test-project",
             "total_ips": 253,
             "used_ips": 3
         }
@@ -153,7 +153,7 @@ This API currently supports the following query parameters:
   response form as a list rather than as an item.
 * **network_name**: Returns availability for network matching
   the provided name
-* **tenant_id**: Returns availability for all networks owned by the provided
+* **project_id**: Returns availability for all networks owned by the provided
   project ID.
 * **ip_version**: Filters network subnets by those supporting the supplied
   ip version. Values can be either 4 or 6.
@@ -163,7 +163,7 @@ will match all criteria. When a parameter is specified more
 than once, it will return results that match both. Examples: ::
 
     # Fetch IPv4 availability for a specific project uuid
-    GET /v2.0/network-ip-availabilities?ip_version=4&tenant_id=example-project-uuid
+    GET /v2.0/network-ip-availabilities?ip_version=4&project_id=example-project-uuid
 
     # Fetch multiple networks by their ids
     GET /v2.0/network-ip-availabilities?network_id=uuid_sample_1&network_id=uuid_sample_2

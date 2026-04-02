@@ -810,7 +810,7 @@ Improve database RBAC query operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Since [1]_, present in Yoga version, Neutron has indexes for
-"target_tenant" (now "target_project") and "action" columns in all
+"target_project" and "action" columns in all
 RBAC related tables. That improves the SQL queries involving the
 RBAC tables [2]_. Any system before Yoga won't have these indexes
 but the system administrator can manually add them to the Neutron
@@ -823,11 +823,11 @@ database following the next steps:
     $ tables=`mysql -e "use ovs_neutron; show tables;" | grep rbac`
 
 
-* Insert the indexes for the "target_tenant" and "action" columns:
+* Insert the indexes for the "target_project" and "action" columns:
 
     $ for table in $tables do; mysql -e \
         "alter table $table add key (action); \
-         alter table $table add key (target_tenant);"; done
+         alter table $table add key (target_project);"; done
 
 
 In order to prevent errors during a system upgrade, [3]_ was

@@ -22,7 +22,7 @@ Network
         subnets
         admin_state_up
         status
-        tenant_id
+        project_id
 
 Once a network is created, we should create an entry in the Logical Switch
 table.
@@ -50,7 +50,7 @@ Subnet
         allocation_pools
         dns_nameservers
         host_routers
-        tenant_id
+        project_id
         enable_dhcp
         ipv6_ra_mode
         ipv6_address_mode
@@ -81,7 +81,7 @@ Port
         fixed_ips
         device_id
         device_owner
-        tenant_id
+        project_id
         status
 
 When a port is created, we should create an entry in the Logical Switch Ports
@@ -122,7 +122,7 @@ Router
         name
         admin_state_up
         status
-        tenant_id
+        project_id
         external_gw_info:
             network_id
             external_fixed_ips: list of dicts
@@ -162,12 +162,12 @@ Security Groups
    Neutron Security Group
        id
        name
-       tenant_id
+       project_id
        security_group_rules
 
    Neutron Security Group Rule
        id
-       tenant_id
+       project_id
        security_group_id
        direction
        remote_group_id

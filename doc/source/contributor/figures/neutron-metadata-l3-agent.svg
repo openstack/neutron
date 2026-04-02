@@ -23,12 +23,12 @@
 <title>cluster_neutron_router_namespace</title>
 <polygon fill="none" stroke="black" points="16,-155 16,-429 436,-429 436,-155 16,-155"/>
 <text text-anchor="middle" x="226" y="-413.8" font-family="Times,serif" font-size="14.00">neutron router namespace</text>
-<text text-anchor="middle" x="226" y="-398.8" font-family="Times,serif" font-size="14.00">(for tenant router)</text>
+<text text-anchor="middle" x="226" y="-398.8" font-family="Times,serif" font-size="14.00">(for project router)</text>
 </g>
 <g id="clust4" class="cluster">
-<title>cluster_tenant_net_with_gateway</title>
+<title>cluster_project_net_with_gateway</title>
 <polygon fill="none" stroke="black" points="68,-8 68,-101 392,-101 392,-8 68,-8"/>
-<text text-anchor="middle" x="230" y="-85.8" font-family="Times,serif" font-size="14.00">tenant net with gateway</text>
+<text text-anchor="middle" x="230" y="-85.8" font-family="Times,serif" font-size="14.00">project net with gateway</text>
 </g>
 <!-- nova_metadata -->
 <g id="node1" class="node">
@@ -42,7 +42,7 @@
 <polygon fill="none" stroke="black" points="42.5,-485.5 42.5,-630.5 269.5,-630.5 269.5,-485.5 42.5,-485.5"/>
 <text text-anchor="middle" x="156" y="-615.3" font-family="Times,serif" font-size="14.00">neutron&#45;metadata&#45;agent</text>
 <text text-anchor="middle" x="156" y="-584.3" font-family="Times,serif" font-size="14.00">adds HTTP headers:</text>
-<text text-anchor="middle" x="156" y="-569.3" font-family="Times,serif" font-size="14.00">X&#45;Tenant&#45;ID: project&#45;UUID</text>
+<text text-anchor="middle" x="156" y="-569.3" font-family="Times,serif" font-size="14.00">X&#45;Project&#45;ID: project&#45;UUID</text>
 <text text-anchor="middle" x="156" y="-554.3" font-family="Times,serif" font-size="14.00">X&#45;Instance&#45;ID: instance&#45;UUID</text>
 <text text-anchor="middle" x="156" y="-539.3" font-family="Times,serif" font-size="14.00">X&#45;Instance&#45;ID&#45;Signature: ...</text>
 <text text-anchor="middle" x="156" y="-508.3" font-family="Times,serif" font-size="14.00">removes HTTP header:</text>

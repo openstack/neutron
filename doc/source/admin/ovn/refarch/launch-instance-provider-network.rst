@@ -41,7 +41,7 @@ Launch an instance on a provider network
       | progress                             | 0                                             |
       | security_groups                      | default                                       |
       | status                               | BUILD                                         |
-      | tenant_id                            | f5b2ccaa75ac413591f12fcaa096aa5c              |
+      | project_id                           | f5b2ccaa75ac413591f12fcaa096aa5c              |
       | updated                              | 2015-09-17T21:58:18Z                          |
       | user_id                              | 684286a9079845359882afc3aa5011fb              |
       +--------------------------------------+-----------------------------------------------+

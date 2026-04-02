@@ -188,7 +188,7 @@ Following is an example of these steps:
    | progress                             | 0                                                              |
    | security_groups                      | default                                                        |
    | status                               | BUILD                                                          |
-   | tenant_id                            | d5660cb1e6934612a01b4fb2fb630725                               |
+   | project_id                           | d5660cb1e6934612a01b4fb2fb630725                               |
    | updated                              | 2016-02-15T19:27:34Z                                           |
    | user_id                              | 8bb6e578cba24e7db9d3810633124525                               |
    +--------------------------------------+----------------------------------------------------------------+
@@ -383,7 +383,7 @@ allocated for the instance:
    | progress                             | 0                                                              |
    | security_groups                      | default                                                        |
    | status                               | BUILD                                                          |
-   | tenant_id                            | d5660cb1e6934612a01b4fb2fb630725                               |
+   | project_id                           | d5660cb1e6934612a01b4fb2fb630725                               |
    | updated                              | 2016-02-15T19:42:44Z                                           |
    | user_id                              | 8bb6e578cba24e7db9d3810633124525                               |
    +--------------------------------------+----------------------------------------------------------------+
@@ -540,7 +540,7 @@ while at the same time IPs from other subnets having the flag set to
 criteria from the other use cases below.
 
 A typical scenario for this use case is a dual stack deployment, where a
-tenant network would be configured with both an IPv4 and an IPv6 subnet.
+project network would be configured with both an IPv4 and an IPv6 subnet.
 The IPv4 subnet will usually be using some RFC1918 address space and being
 NATted towards the outside on the attached router, therefore the fixed IPs
 from this subnet will not be globally routed and they also should not be
@@ -855,7 +855,7 @@ external DNS service. This is an example:
    | progress                             | 0                                                              |
    | security_groups                      | default                                                        |
    | status                               | BUILD                                                          |
-   | tenant_id                            | d5660cb1e6934612a01b4fb2fb630725                               |
+   | project_id                           | d5660cb1e6934612a01b4fb2fb630725                               |
    | updated                              | 2016-02-15T19:10:43Z                                           |
    | user_id                              | 8bb6e578cba24e7db9d3810633124525                               |
    +--------------------------------------+----------------------------------------------------------------+
@@ -928,7 +928,7 @@ meet the following requirements:
 
 This usually implies that these use cases only work for networks specifically
 created for this purpose by an admin, they do not work for networks
-which tenants can create on their own.
+which projects can create on their own.
 
 .. _config-dns-int-ext-dns-assignment:
 
