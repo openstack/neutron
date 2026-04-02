@@ -376,4 +376,4 @@ ignore = [
 
 [tool.ruff.lint.mccabe]
 # TODO(stephenfin): It would be good to get this...lower...
-max-complexity = 69
+max-complexity = 37
