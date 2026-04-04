@@ -16,6 +16,7 @@
 import time
 
 from neutron_lib.api.definitions import agent as agent_apidef
+from neutron_lib.api.definitions import agent_sort_key as agent_sort_key_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_config import cfg
@@ -53,7 +54,8 @@ class AgentTestExtensionManager:
 # This plugin class is just for testing
 class TestAgentPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                       agents_db.AgentDbMixin):
-    supported_extension_aliases = [agent_apidef.ALIAS]
+    supported_extension_aliases = [agent_apidef.ALIAS,
+                                   agent_sort_key_apidef.ALIAS]
 
 
 class AgentDBTestMixIn:
@@ -147,3 +149,65 @@ class AgentDBTestCase(AgentDBTestMixIn,
             query_string=('binary=' + constants.AGENT_PROCESS_L3 +
                           '&host=' + L3_HOSTB))
         self.assertFalse(agents['agents'][0]['alive'])
+
+    def test_list_agents_sorted_by_host_asc(self):
+        agents = self._register_agent_states()
+        res = self._list(
+            "agents", as_admin=True, query_params="sort_key=host&sort_dir=asc"
+        )
+
+        hosts = [agent['host'] for agent in res['agents']]
+        self.assertEqual(['hosta', 'hosta', 'hostb', 'hostc'], hosts)
+        self.assertEqual(len(agents), len(res['agents']))
+
+    def test_list_agents_sorted_by_host_desc(self):
+        agents = self._register_agent_states()
+        res = self._list(
+            "agents", as_admin=True, query_params="sort_key=host&sort_dir=desc"
+        )
+
+        hosts = [agent['host'] for agent in res['agents']]
+        self.assertEqual(['hostc', 'hostb', 'hosta', 'hosta'], hosts)
+        self.assertEqual(len(agents), len(res['agents']))
+
+    def test_list_agents_with_invalid_sort_key(self):
+        self._register_agent_states()
+
+        invalid_key = "foo"
+        res = self._list(
+            "agents",
+            query_params=f"sort_key={invalid_key}&sort_dir=asc",
+            as_admin=True,
+            expected_code=exc.HTTPBadRequest.code,
+        )
+
+        expected_error_message = (
+            f"['{invalid_key}'] is invalid attribute for sort_keys"
+        )
+
+        self.assertEqual(
+            expected_error_message, res["NeutronError"]["message"]
+        )
+
+    def test_list_agents_with_sort_key_without_sort_dir(self):
+        self._register_agent_states()
+
+        res = self._list('agents',
+                query_params='sort_key=host',
+                as_admin=True,
+                expected_code=exc.HTTPBadRequest.code)
+
+        expected_error_message = (
+            "The number of sort_keys and sort_dirs must be same"
+        )
+
+        self.assertEqual(
+            expected_error_message, res["NeutronError"]["message"]
+        )
+
+    def test_list_agents_with_limit(self):
+        self._register_agent_states()
+
+        res = self._list_agents(query_string='limit=2')
+
+        self.assertEqual(2, len(res['agents']))

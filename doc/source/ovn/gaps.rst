@@ -67,6 +67,11 @@ at [1]_.
 * QoS packet rate limit and minimum packet rate rules are not supported
   :doc:`Quality of Service (QoS) <../admin/config-qos>`.
 
+* Listing ML2/OVN agents with sort and/or limit (paging)
+
+  Currently, only L3 agents support sorting and paging features.
+  See the related bug report at [9]_.
+
 References
 ----------
 
@@ -78,3 +83,4 @@ References
 .. [6] https://bugzilla.redhat.com/show_bug.cgi?id=2238494
 .. [7] https://bugs.launchpad.net/neutron/+bug/2048773
 .. [8] https://bugs.launchpad.net/neutron/+bug/2028846
+.. [9] https://bugs.launchpad.net/neutron/+bug/1877254

@@ -1577,7 +1577,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         return False
 
 
-def get_agents(self, context, filters=None, fields=None, _driver=None):
+def get_agents(self, context, filters=None, fields=None, _driver=None,
+               sorts=None, limit=None, marker=None, page_reverse=False):
     _driver.ping_all_chassis()
     filters = filters or {}
     agent_list = n_agent.AgentCache().get_agents(filters)
