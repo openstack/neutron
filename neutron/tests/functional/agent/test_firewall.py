@@ -19,6 +19,7 @@
 
 import copy
 import functools
+import unittest
 from unittest import mock
 
 import netaddr
@@ -674,11 +675,12 @@ class FirewallTestCaseIPv6(BaseFirewallTestCase):
     scenarios = BaseFirewallTestCase.scenarios_ovs_fw_interfaces
     ip_cidr = '2001:db8:aaaa::1/64'
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def setUp(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
+        pass
 
     def test_icmp_from_specific_address(self):
         sg_rules = [{'ethertype': constants.IPv6,

@@ -17,6 +17,7 @@ import copy
 import signal
 import sys
 import time
+import unittest
 from unittest import mock
 
 import netaddr
@@ -1303,11 +1304,11 @@ class TestOvsNeutronAgent:
              'added': {'eth1'},
              're_added': {'eth1'}})
 
+    # TODO(ralonsoh): it is needed to refactor this test case
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     @mock.patch.object(linux_utils, 'execute', return_value=False)
     def test_hybrid_plug_flag_based_on_firewall(self, *args):
-        # TODO(ralonsoh): it is needed to refactor this test case
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         cfg.CONF.set_default(
             'firewall_driver',
             'neutron.agent.firewall.NoopFirewallDriver',
@@ -1332,10 +1333,10 @@ class TestOvsNeutronAgent:
             agt = self._make_agent()
         self.assertTrue(agt.agent_state['configurations']['ovs_hybrid_plug'])
 
+    # TODO(ralonsoh): it is needed to refactor this test case
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_report_state(self):
-        # TODO(ralonsoh): it is needed to refactor this test case
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         with mock.patch.object(self.agent.state_rpc,
                                "report_state") as report_st:
             self.agent.int_br_device_count = 5

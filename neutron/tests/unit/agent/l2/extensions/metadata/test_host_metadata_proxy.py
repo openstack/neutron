@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest
 from unittest import mock
 
 from oslo_config import cfg
@@ -43,11 +44,11 @@ class TestHostMedataHAProxyDaemonMonitor(base.BaseTestCase):
             'neutron_lib.utils.file.replace_file')
         self.utils_replace_file = self.utils_replace_file_p.start()
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_spawn_host_metadata_haproxy(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         cfg.CONF.set_override('metadata_proxy_shared_secret',
                               'secret', group='METADATA')
         conffile = '/fake/host_metadata_proxy.haproxy.conf'

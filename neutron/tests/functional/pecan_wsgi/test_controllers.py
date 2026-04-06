@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest
 from unittest import mock
 
 from neutron_lib import constants as n_const
@@ -819,9 +820,9 @@ class TestRequestProcessing(TestRootController):
             expect_errors=True)
         self.assertEqual(400, response.status_int)
 
+    # TODO(kevinbenton): fix the unit test setup to include an l3 plugin
+    @unittest.skip("A dummy l3 plugin needs to be setup")
     def test_service_plugin_identified(self):
-        # TODO(kevinbenton): fix the unit test setup to include an l3 plugin
-        self.skipTest("A dummy l3 plugin needs to be setup")
         self.app.get('/v2.0/routers.json')
         self.assertEqual('router', self.req_stash['resource_type'])
         # make sure the core plugin was identified as the handler for ports

@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest
+
 from neutron_lib import constants as n_const
 from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_config import cfg
@@ -46,11 +48,11 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
                        base.BaseSudoTestCase,
                        l2_base.OVSOFControllerHelper):
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def setUp(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         super().setUp()
         self.br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.start_of_controller(cfg.CONF)

@@ -20,6 +20,7 @@ import datetime
 import signal
 import sys
 import time
+import unittest
 from unittest import mock
 import uuid
 
@@ -349,11 +350,11 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp.init_host()
             sync_state.assert_called_once_with()
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_dhcp_agent_manager(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         state_rpc_str = 'neutron.agent.rpc.PluginReportStateAPI'
         # sync_state is needed for this test
         cfg.CONF.set_override('report_interval', 1, 'AGENT')
@@ -1978,11 +1979,11 @@ class TestNetworkCache(base.BaseTestCase):
         self.assertEqual(set(), self.nc._deleted_ports)
         self.assertEqual([], self.nc._deleted_ports_ts)
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_cleanup_deleted_ports_loop_call(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         self.addCleanup(self._reset_deleted_port_max_age,
                         dhcp_agent.DELETED_PORT_MAX_AGE)
         dhcp_agent.DELETED_PORT_MAX_AGE = 2

@@ -17,6 +17,7 @@ import copy
 import functools
 import os.path
 import time
+import unittest
 from unittest import mock
 
 import fixtures
@@ -355,11 +356,11 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
             exception=RuntimeError("Metadata proxy didn't spawn"))
         return (pm, network)
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_metadata_proxy_respawned(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         pm, network = self._spawn_network_metadata_proxy()
         old_pid = pm.pid
 
@@ -429,11 +430,11 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         self.conf.set_override('enable_isolated_metadata', False)
         self._test_metadata_proxy_spawn_kill_with_subnet_create_delete()
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_notify_port_ready_after_enable_dhcp(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         network = self.network_dict_for_dhcp()
         dhcp_port = self.create_port_dict(
             network.id, network.subnets[0].id,

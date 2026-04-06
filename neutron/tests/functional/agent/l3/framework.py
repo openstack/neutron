@@ -16,6 +16,7 @@
 import copy
 import functools
 import os
+import unittest
 from unittest import mock
 
 import netaddr
@@ -91,9 +92,11 @@ def get_ovs_bridge(br_name):
 class L3AgentTestFramework(base.BaseSudoTestCase):
     NESTED_NAMESPACE_SEPARATOR = '@'
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def setUp(self):
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         super().setUp()
         self.mock_plugin_api = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi').start().return_value

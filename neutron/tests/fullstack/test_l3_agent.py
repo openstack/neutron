@@ -15,6 +15,7 @@
 import functools
 import os
 import time
+import unittest
 
 from datetime import datetime
 
@@ -380,8 +381,8 @@ class TestHAL3Agent(TestL3Agent):
     # When it will be fixed DHCP can be used here again.
     use_dhcp = False
 
+    @unittest.skip('Skip test until eventlet is removed')
     def setUp(self):
-        self.skipTest('Skip test until eventlet is removed')
         # Two hosts with L3 agent to host HA routers
         host_descriptions = [
             environment.HostDescription(l3_agent=True,

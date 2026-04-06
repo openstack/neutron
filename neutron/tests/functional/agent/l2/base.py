@@ -16,6 +16,7 @@
 
 import random
 import threading
+import unittest
 from unittest import mock
 
 import fixtures
@@ -111,11 +112,11 @@ class OVSOFControllerHelper:
 
 class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def setUp(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         super().setUp()
         agent_rpc = ('neutron.plugins.ml2.drivers.openvswitch.agent.'
                      'ovs_neutron_agent.OVSPluginApi')

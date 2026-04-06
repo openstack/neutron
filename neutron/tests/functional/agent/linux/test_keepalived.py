@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest
 
 from oslo_config import cfg
 
@@ -126,14 +127,14 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
 
         self._spawn_keepalived(self.manager)
 
+    @unittest.skip('bug 1921154')
     def test_keepalived_spawns_conflicting_pid_base_process(self):
-        self.skipTest('bug 1921154')
         process = self.manager.get_process()
         pid_file = process.get_pid_file_name()
         self._test_keepalived_spawns_conflicting_pid(process, pid_file)
 
+    @unittest.skip('bug 1921154')
     def test_keepalived_spawns_conflicting_pid_vrrp_subprocess(self):
-        self.skipTest('bug 1921154')
         process = self.manager.get_process()
         pid_file = process.get_pid_file_name()
         self._test_keepalived_spawns_conflicting_pid(

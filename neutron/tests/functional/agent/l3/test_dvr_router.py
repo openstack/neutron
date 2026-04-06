@@ -15,6 +15,7 @@
 
 import copy
 import functools
+import unittest
 from unittest import mock
 
 import netaddr
@@ -220,8 +221,8 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         self._dvr_router_lifecycle(enable_ha=False, enable_snat=True,
                                    snat_bound_fip=True, enable_gw=False)
 
+    @unittest.skip('Skip test until eventlet is removed')
     def test_dvr_lifecycle_ha_with_snat_with_fips_with_cent_fips_no_gw(self):
-        self.skipTest('Skip test until eventlet is removed')
         self._dvr_router_lifecycle(enable_ha=True, enable_snat=True,
                                    snat_bound_fip=True, enable_gw=False)
 
@@ -1720,8 +1721,8 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
     def test_dvr_ha_router_failover_with_gw(self):
         self._test_dvr_ha_router_failover(enable_gw=True, vrrp_id=10)
 
+    @unittest.skip('Skip test until eventlet is removed')
     def test_dvr_ha_router_failover_with_gw_and_floatingip(self):
-        self.skipTest('Skip test until eventlet is removed')
         self._test_dvr_ha_router_failover_with_gw_and_fip(
             enable_gw=True, enable_centralized_fip=True, snat_bound_fip=True,
             vrrp_id=11)
@@ -2392,6 +2393,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
     def test_dvr_router_interface_mtu_update(self):
         self._test_router_interface_mtu_update(ha=False)
 
+    @unittest.skip('Skip test until eventlet is removed')
     def test_dvr_ha_router_interface_mtu_update(self):
-        self.skipTest('Skip test until eventlet is removed')
         self._test_router_interface_mtu_update(ha=True)

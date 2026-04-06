@@ -34,13 +34,13 @@ class TestSignalHandling(unittest.TestCase):
         os.environ['OSKEN_HUB_TYPE'] = 'native'
         self.ovs_oskenapp = importutils.import_module(MODULE)
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     @mock.patch('neutron.plugins.ml2.drivers.openvswitch.agent.openflow.'
                 'native.ovs_oskenapp.ovs_agent.main')
     def test_signal_execution_in_thread(self, mock_ovs_agent_main):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         # The event is used to validate the handler stop_running() has
         # been called and to synchronize the test
         stop_event = threading.Event()

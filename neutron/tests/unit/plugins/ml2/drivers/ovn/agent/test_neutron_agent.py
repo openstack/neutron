@@ -16,6 +16,7 @@ import collections
 import datetime
 import random
 import time
+import unittest
 from unittest import mock
 
 from oslo_utils import timeutils
@@ -91,12 +92,11 @@ class AgentCacheTestCase(base.BaseTestCase):
         self.agent_cache.update(ovn_const.OVN_CONTROLLER_AGENT,
                                 chassis_private)
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_update_while_iterating_agents(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
-
         # NOTE(ralonsoh): I'm keeping the old code commented in order to
         # refactor it. It is commented because eventlet library is removed.
         # pool = eventlet.GreenPool(2)
@@ -104,6 +104,7 @@ class AgentCacheTestCase(base.BaseTestCase):
         # pool.spawn(self._add_and_delete_agents)
         # pool.waitall()
         # self.assertEqual(list(self.agents.keys()), self.names_read)
+        pass
 
     def test_agents_by_chassis_private(self):
         ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: 'chassis5'}

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest
 from unittest import mock
 
 import netaddr
@@ -108,13 +109,13 @@ class PortForwardingExtensionBaseTestCase(
 class FipPortForwardingExtensionInitializeTestCase(
      PortForwardingExtensionBaseTestCase):
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     @mock.patch.object(registry, 'register')
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         call_to_patch = 'neutron_lib.rpc.Connection'
         with mock.patch(call_to_patch,
                         return_value=self.connection) as create_connection:

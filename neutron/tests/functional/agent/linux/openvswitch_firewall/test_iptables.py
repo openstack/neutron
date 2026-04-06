@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unittest
+
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
@@ -26,11 +28,11 @@ from neutron.tests.functional import base
 
 
 class TestHelper(base.BaseSudoTestCase):
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def setUp(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         super().setUp()
         self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name

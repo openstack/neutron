@@ -14,6 +14,7 @@
 #    under the License.
 
 from concurrent import futures
+import unittest
 from unittest import mock
 
 from neutron_lib.api.definitions import port as port_def
@@ -577,11 +578,11 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             retrieved_bindings, const.INACTIVE)
         self._assert_unbound_port_binding(retrieved_inactive_binding)
 
+    # TODO(ralonsoh): refactor this test to make it compatible after the
+    # eventlet removal.
+    @unittest.skip('This test is skipped after the eventlet removal and '
+                   'needs to be refactored')
     def test_activate_port_binding_concurrency(self):
-        # TODO(ralonsoh): refactor this test to make it compatible after the
-        # eventlet removal.
-        self.skipTest('This test is skipped after the eventlet removal and '
-                      'needs to be refactored')
         port, _ = self._create_port_and_binding()
         with mock.patch.object(mechanism_test.TestMechanismDriver,
                                '_check_port_context'):
