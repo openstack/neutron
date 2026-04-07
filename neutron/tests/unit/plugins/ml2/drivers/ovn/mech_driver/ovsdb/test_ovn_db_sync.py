@@ -1434,3 +1434,49 @@ class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                 for host in hostname_with_physnets]
             ovn_driver.update_segment_host_mapping.assert_has_calls(
                 update_segment_host_mapping_calls, any_order=True)
+
+
+class TestSyncFipDnatRules(test_mech_driver.OVNMechanismDriverTestCase):
+    def setUp(self):
+        super().setUp()
+        self.synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+        self.nb_api = self.synchronizer.ovn_nb_api
+
+    def _make_nat_rule(self, fip_id=None, stateless=None):
+        external_ids = {}
+        if fip_id is not None:
+            external_ids[ovn_const.OVN_FIP_EXT_ID_KEY] = fip_id
+        options = {}
+        if stateless is not None:
+            options['stateless'] = stateless
+        return {'_uuid': uuidutils.generate_uuid(),
+                'external_ids': external_ids,
+                'options': options}
+
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb'
+                '.ovn_db_sync.ovn_conf.is_stateless_nat_enabled',
+                return_value=True)
+    def test_non_neutron_nat_rules_skipped(self, mock_stateless):
+        neutron_nat = self._make_nat_rule(fip_id='fip-uuid', stateless='false')
+        non_neutron_nat = self._make_nat_rule(stateless='false')
+        self.nb_api.get_floatingips.return_value = [
+            neutron_nat, non_neutron_nat]
+
+        self.synchronizer.sync_fip_dnat_rules()
+
+        self.nb_api.db_set.assert_called_once_with(
+            'NAT', neutron_nat['_uuid'],
+            ('options', {'stateless': 'true'}))
+
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb'
+                '.ovn_db_sync.ovn_conf.is_stateless_nat_enabled',
+                return_value=True)
+    def test_already_correct_neutron_nat_not_updated(self, mock_stateless):
+        neutron_nat = self._make_nat_rule(fip_id='fip-uuid', stateless='true')
+        self.nb_api.get_floatingips.return_value = [neutron_nat]
+
+        self.synchronizer.sync_fip_dnat_rules()
+
+        self.nb_api.db_set.assert_not_called()
