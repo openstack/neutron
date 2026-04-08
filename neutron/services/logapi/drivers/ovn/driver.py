@@ -111,6 +111,18 @@ class OVNDriver(base.DriverBase):
                 ovn_const.ACL_ACTION_ALLOW_STATELESS,
                 ovn_const.ACL_ACTION_ALLOW}
 
+    @staticmethod
+    def _acl_log_needs_update(acl, expected_log, log_name, meter_name):
+        """Return True if the ACL logging attributes need to be updated."""
+        # ``getattr`` is used for the label because the ACL may not have
+        # that column yet (OVN < 22.03). When the column is missing the ACL
+        # is always updated, keeping the previous behaviour.
+        return (acl.log != expected_log or
+                acl.name != [log_name] or
+                acl.meter != [meter_name] or
+                acl.severity != ['info'] or
+                getattr(acl, 'label', 0) == 0)
+
     def _remove_acls_log(self, pgs, ovn_txn, log_name=None):
         acl_absents, acl_changes, acl_visits = 0, 0, 0
         for pg in pgs:
@@ -173,8 +185,14 @@ class OVNDriver(base.DriverBase):
                 # skip acls used by a different network log
                 if acl.name and acl.name[0] != log_name:
                     continue
+
+                expected_log = acl.action in actions_enabled
+                if not self._acl_log_needs_update(
+                        acl, expected_log, log_name, meter_name):
+                    continue
+
                 columns = {
-                    'log': acl.action in actions_enabled,
+                    'log': expected_log,
                     'meter': meter_name,
                     'name': log_name,
                     'severity': "info"
