@@ -124,9 +124,10 @@ class TestOVNDriver(TestOVNDriverBase):
     class _fake_acl:
         def __init__(self, name=None, **acl_dict):
             acl_defaults_dict = {
-                "name": [name] if name else [],
-                "action": ovn_const.ACL_ACTION_ALLOW_RELATED,
-                "label": FAKE_LABEL
+                'name': [name] if name else [],
+                'action': ovn_const.ACL_ACTION_ALLOW_RELATED,
+                'label': FAKE_LABEL,
+                'log': True,
             }
             self.__dict__ = {**acl_defaults_dict, **acl_dict}
 
