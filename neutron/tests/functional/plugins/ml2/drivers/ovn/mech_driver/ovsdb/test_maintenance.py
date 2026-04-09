@@ -123,6 +123,13 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
                     ovn_const.OVN_PORT_NAME_EXT_ID_KEY) == name):
                 return row
 
+    def _find_lswitch_port_row_by_name(self, name):
+        """Return Logical_Switch_Port row by its OVN name (e.g. provnet-*)."""
+        cmd = self.nb_api.db_find_rows(
+            'Logical_Switch_Port', ('name', '=', name))
+        rows = cmd.execute(check_error=True)
+        return rows[0] if rows else None
+
     def _set_global_dhcp_opts(self, ip_version, opts):
         opt_string = ','.join([f'{key}:{value}'
                                for key, value
@@ -1720,6 +1727,69 @@ class TestMaintenance(_TestMaintenanceHelper):
                 self.fail(f'HA_Chassis with chassis name '
                           f'{ha_chassis.chassis_name} not present in the '
                           f'chassis list')
+
+    def test_add_provnet_ext_id_to_localnet_ports(self):
+        n1 = self._create_network(
+            'n_provnet_maint_1', provider='physnet1', net_type='flat')
+        n2 = self._create_network(
+            'n_provnet_maint_2', provider='physnet2', net_type='vlan')
+
+        seg1 = self.segments_plugin.get_segments(
+            self.context, filters={'network_id': [n1['id']]})[0]
+        seg2 = self.segments_plugin.get_segments(
+            self.context, filters={'network_id': [n2['id']]})[0]
+
+        localnet1_name = utils.ovn_provnet_port_name(seg1['id'])
+        localnet2_name = utils.ovn_provnet_port_name(seg2['id'])
+
+        localnet1 = self._find_lswitch_port_row_by_name(localnet1_name)
+        localnet2 = self._find_lswitch_port_row_by_name(localnet2_name)
+        self.assertIsNotNone(localnet1)
+        self.assertIsNotNone(localnet2)
+        self.assertEqual(
+            'physnet2',
+            localnet2.external_ids.get(ovn_const.OVN_PHYSNET_EXT_ID_KEY))
+
+        # Simulate pre-upgrade OVN: Neutron-owned port missing the marker.
+        self.nb_api.db_remove(
+            'Logical_Switch_Port', localnet1.uuid, 'external_ids',
+            ovn_const.OVN_PHYSNET_EXT_ID_KEY).execute(check_error=True)
+
+        localnet1 = self._find_lswitch_port_row_by_name(localnet1_name)
+        self.assertNotIn(ovn_const.OVN_PHYSNET_EXT_ID_KEY,
+                         localnet1.external_ids)
+
+        # Third-party localnet: name does not match any Neutron segment.
+        coexist_name = (
+            'provnet-my-coexisting-service-' + uuidutils.generate_uuid())
+        ls_name = utils.ovn_name(n1['id'])
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.create_lswitch_port(
+                coexist_name, ls_name, True,
+                addresses=[ovn_const.UNKNOWN_ADDR],
+                type=ovn_const.LSP_TYPE_LOCALNET,
+                options={'network_name': 'physnet1'}))
+
+        localnet_coexist = self._find_lswitch_port_row_by_name(coexist_name)
+        self.assertIsNotNone(localnet_coexist)
+        self.assertNotIn(ovn_const.OVN_PHYSNET_EXT_ID_KEY,
+                         localnet_coexist.external_ids)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.add_provnet_ext_id_to_localnet_ports)
+
+        localnet1 = self._find_lswitch_port_row_by_name(localnet1_name)
+        self.assertEqual(
+            'physnet1',
+            localnet1.external_ids.get(ovn_const.OVN_PHYSNET_EXT_ID_KEY))
+        localnet2 = self._find_lswitch_port_row_by_name(localnet2_name)
+        self.assertEqual(
+            'physnet2',
+            localnet2.external_ids.get(ovn_const.OVN_PHYSNET_EXT_ID_KEY))
+        localnet_coexist = self._find_lswitch_port_row_by_name(coexist_name)
+        self.assertNotIn(ovn_const.OVN_PHYSNET_EXT_ID_KEY,
+                         localnet_coexist.external_ids)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,

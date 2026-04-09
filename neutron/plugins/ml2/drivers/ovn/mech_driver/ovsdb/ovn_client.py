@@ -2149,7 +2149,7 @@ class OVNClient:
             lswitch_name=utils.ovn_name(network_id),
             network_id=network_id,
             addresses=[ovn_const.UNKNOWN_ADDR],
-            external_ids={},
+            external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: physnet},
             type=ovn_const.LSP_TYPE_LOCALNET,
             tag=tag,
             options=options)

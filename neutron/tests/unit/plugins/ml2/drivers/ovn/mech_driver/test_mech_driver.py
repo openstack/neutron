@@ -1003,8 +1003,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_create_network_create_localnet_port_physical_network_type(self):
         nb_idl = self.mech_driver._ovn_client._nb_idl
+        physnet_name = 'physnet1'
         net_arg = {pnet.NETWORK_TYPE: 'vlan',
-                   pnet.PHYSICAL_NETWORK: 'physnet1',
+                   pnet.PHYSICAL_NETWORK: physnet_name,
                    pnet.SEGMENTATION_ID: '2'}
         net = self._make_network(self.fmt, 'net1', True,
                                  as_admin=True,
@@ -1017,11 +1018,11 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         nb_idl.create_lswitch_port.assert_called_once_with(
             addresses=[ovn_const.UNKNOWN_ADDR],
             network_id=net['id'],
-            external_ids={},
+            external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: physnet_name},
             lport_name=ovn_utils.ovn_provnet_port_name(segments[0]['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
             options={
-                'network_name': 'physnet1',
+                'network_name': physnet_name,
                 ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
                     ovs_conf.get_igmp_flood_reports(),
                 ovn_const.LSP_OPTIONS_MCAST_FLOOD:
@@ -3994,17 +3995,18 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         ovn_nb_api = self.mech_driver.nb_ovn
         with self.network() as network:
             net = network['network']
+        physnet1_name = 'physnet1'
         new_segment = self._test_create_segment(
-            network_id=net['id'], physical_network='physnet1',
+            network_id=net['id'], physical_network=physnet1_name,
             segmentation_id=200, network_type='vlan')['segment']
         ovn_nb_api.create_lswitch_port.assert_called_once_with(
             addresses=[ovn_const.UNKNOWN_ADDR],
             network_id=net['id'],
-            external_ids={},
+            external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: physnet1_name},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
             options={
-                'network_name': 'physnet1',
+                'network_name': physnet1_name,
                 ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
                     ovs_conf.get_igmp_flood_reports(),
                 ovn_const.LSP_OPTIONS_MCAST_FLOOD:
@@ -4013,17 +4015,18 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             tag=200,
             type='localnet')
         ovn_nb_api.create_lswitch_port.reset_mock()
+        physnet2_name = 'physnet2'
         new_segment = self._test_create_segment(
-            network_id=net['id'], physical_network='physnet2',
+            network_id=net['id'], physical_network=physnet2_name,
             segmentation_id=300, network_type='vlan')['segment']
         ovn_nb_api.create_lswitch_port.assert_called_once_with(
             addresses=[ovn_const.UNKNOWN_ADDR],
             network_id=net['id'],
-            external_ids={},
+            external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: physnet2_name},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
             options={
-                'network_name': 'physnet2',
+                'network_name': physnet2_name,
                 ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
                     ovs_conf.get_igmp_flood_reports(),
                 ovn_const.LSP_OPTIONS_MCAST_FLOOD:
