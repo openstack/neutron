@@ -131,15 +131,12 @@ class OVNDriver(base.DriverBase):
                     'log': False,
                     'meter': [],
                     'name': [],
-                    'severity': []
+                    'severity': [],
+                    'label': 0,
                 }
-                # TODO(egarciar): There wont be a need to check if label exists
-                # once minimum version for OVN is >= 22.03
-                if hasattr(acl, 'label'):
-                    columns['label'] = 0
-                    ovn_txn.add(self.ovn_nb.db_remove(
-                        "ACL", acl_uuid, 'options', 'log-related',
-                        if_exists=True))
+                ovn_txn.add(self.ovn_nb.db_remove(
+                    "ACL", acl_uuid, 'options', 'log-related',
+                    if_exists=True))
                 ovn_txn.add(self.ovn_nb.db_set(
                     "ACL", acl_uuid, *columns.items()))
                 acl_changes += 1
@@ -173,19 +170,18 @@ class OVNDriver(base.DriverBase):
                 # skip acls used by a different network log
                 if acl.name and acl.name[0] != log_name:
                     continue
+
+                # Label needs to be an unsigned 32 bit number and not 0. Label
+                # 0 is used for ACLs without a log meter associated.
                 columns = {
                     'log': acl.action in actions_enabled,
                     'meter': meter_name,
                     'name': log_name,
-                    'severity': "info"
+                    'severity': "info",
+                    'label': secrets.SystemRandom().randrange(
+                        1, MAX_INT_LABEL),
+                    'options': {'log-related': "true"},
                 }
-                # TODO(egarciar): There wont be a need to check if label exists
-                # once minimum version for OVN is >= 22.03
-                if hasattr(acl, "label"):
-                    # Label needs to be an unsigned 32 bit number and not 0.
-                    columns["label"] = secrets.SystemRandom().randrange(
-                        1, MAX_INT_LABEL)
-                    columns["options"] = {'log-related': "true"}
                 ovn_txn.add(self.ovn_nb.db_set(
                     "ACL", acl_uuid, *columns.items()))
                 acl_changes += 1
