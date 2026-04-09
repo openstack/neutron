@@ -270,7 +270,8 @@ ovn_opts = [
                help=_('BFD minimum RX interval in milliseconds. This sets '
                       'the minimum interval between BFD control packets '
                       'received by the local system. This option will apply '
-                      'only if "ha_failover_strategy=manual"'),
+                      'only if "ha_failover_strategy=%s"') %
+               ovn_const.OVN_HA_FAILOVER_MANUAL,
                ),
     cfg.IntOpt('bfd_min_tx',
                default=ovn_const.OVN_BFD_MIN_TX,
@@ -278,7 +279,8 @@ ovn_opts = [
                help=_('BFD minimum TX interval in milliseconds. This sets '
                       'the minimum interval between BFD control packets '
                       'sent by the local system. This option will apply '
-                      'only if "ha_failover_strategy=manual"'),
+                      'only if "ha_failover_strategy=%s"') %
+               ovn_const.OVN_HA_FAILOVER_MANUAL,
                ),
     cfg.IntOpt('bfd_mult',
                default=ovn_const.OVN_BFD_MULT,
@@ -287,7 +289,8 @@ ovn_opts = [
                help=_('BFD detection multiplier. The number of BFD control '
                       'packets that must be missed in a row before the '
                       'session is declared down. This option will apply '
-                      'only if "ha_failover_strategy=manual"'),
+                      'only if "ha_failover_strategy=%s"') %
+               ovn_const.OVN_HA_FAILOVER_MANUAL,
                ),
 ]
 
