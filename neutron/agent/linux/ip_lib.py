@@ -89,17 +89,6 @@ IP_ROUTE_METRIC_DEFAULT = {constants.IP_VERSION_4: 0,
 ARPING_SLEEP = 2
 
 
-def remove_interface_suffix(interface):
-    """Remove a possible "<if>@<endpoint>" suffix from an interface' name.
-
-    This suffix can appear in some kernel versions, and intends on specifying,
-    for example, a veth's pair. However, this interface name is useless to us
-    as further 'ip' commands require that the suffix be removed.
-    """
-    # If '@' is not present, this will do nothing.
-    return interface.partition("@")[0]
-
-
 class AddressNotReady(exceptions.NeutronException):
     message = _("Failure waiting for address %(address)s to "
                 "become ready: %(reason)s")
