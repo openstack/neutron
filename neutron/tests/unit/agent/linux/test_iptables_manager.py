@@ -882,8 +882,8 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         # call.
         # Failure without a specific line number in the error should cause
         # all lines to be logged with numbers.
-        logged = ['%7d. %s' % (n, l)
-                  for n, l in enumerate(self.input_lines, 1)]
+        logged = ['%7d. %s' % (num, line)
+                  for num, line in enumerate(self.input_lines, 1)]
         log.error.assert_called_once_with(_(
             'IPTablesManager.apply failed to apply the '
             'following set of iptables rules:\n%s'),
@@ -927,9 +927,9 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
         ctx = iptables_manager.IPTABLES_ERROR_LINES_OF_CONTEXT
         log_start = max(0, 11 - ctx)
         log_end = 11 + ctx
-        logged = ['%7d. %s' % (n, l)
-                  for n, l in enumerate(self.input_lines[log_start:log_end],
-                                        log_start + 1)]
+        logged = ['%7d. %s' % (n, li)
+                  for n, li in enumerate(self.input_lines[log_start:log_end],
+                                         log_start + 1)]
         log.error.assert_called_once_with(_(
             'IPTablesManager.apply failed to apply the '
             'following set of iptables rules:\n%s'),

@@ -68,11 +68,11 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
         trace = {}
         trace_lines = t.splitlines()
         for line in trace_lines:
-            (l, sep, r) = line.partition(':')
+            (b, sep, a) = line.partition(':')
             if not sep:
                 continue
-            if l in required_keys:
-                trace[l] = r
+            if b in required_keys:
+                trace[b] = a
         for k in required_keys:
             if k not in trace:
                 self.fail(f"{k} not found in trace {trace_lines}")
