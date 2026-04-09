@@ -188,7 +188,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         # Register needed events.
         self._nb_ovn.idl.notify_handler.watch_events([
             ovsdb_monitor.LogicalRouterPortEvent(self),
-            ovsdb_monitor.LogicalRouterPortGatewayChassisEvent(self),
+            ovsdb_monitor.RouterHAChassisGroupEvent(self),
         ])
 
     def _add_neutron_router_interface(self, context, router_id,

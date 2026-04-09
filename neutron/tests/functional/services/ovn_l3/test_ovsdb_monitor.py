@@ -193,7 +193,7 @@ class TestLogicalRouterPortEvent(
                               mock_update_router_called, timeout=2)
 
 
-class TestLogicalRouterPortGatewayChassisEvent(
+class TestRouterHAChassisGroupEvent(
         base.TestOVNFunctionalBase,
         test_l3.L3NatTestCaseMixin):
 
@@ -215,7 +215,7 @@ class TestLogicalRouterPortGatewayChassisEvent(
         self.net_ext_id = self.net_ext['network']['id']
         self.subnet_id = self.subnet['subnet']['id']
 
-    def test_add_and_remove_gateway_chassis(self):
+    def test_add_and_remove_ha_chassis(self):
         def is_called():
             try:
                 mock_update_router.assert_called_once_with(
@@ -228,20 +228,20 @@ class TestLogicalRouterPortGatewayChassisEvent(
         for idx in range(5):
             ch_list.append(self.add_fake_chassis(f'host-{idx}'))
         self._add_external_gateway_to_router(self.router_id, self.net_ext_id)
-        lr = self.l3_plugin._nb_ovn.lookup('Logical_Router',
-                                           ovn_utils.ovn_name(self.router_id))
-        lrp_gw = lr.ports[0]
+        hcg_name = ovn_utils.ovn_name(self.router_id)
         with mock.patch.object(
                 self.l3_plugin._ovn_client,
                 'update_router_ha_chassis_group') as mock_update_router:
-            for ch_name in ch_list:
-                self.l3_plugin._nb_ovn.lrp_set_gateway_chassis(
-                    lrp_gw.uuid, ch_name).execute(check_error=True)
+            for idx, ch_name in enumerate(ch_list):
+                self.l3_plugin._nb_ovn.ha_chassis_group_add_chassis(
+                    hcg_name, ch_name,
+                    priority=idx + 1).execute(check_error=True)
                 n_utils.wait_until_true(is_called, timeout=10)
                 mock_update_router.reset_mock()
 
             for ch_name in ch_list:
-                self.l3_plugin._nb_ovn.lrp_del_gateway_chassis(
-                    lrp_gw.uuid, ch_name).execute(check_error=True)
+                self.l3_plugin._nb_ovn.ha_chassis_group_del_chassis(
+                    hcg_name, ch_name,
+                    if_exists=True).execute(check_error=True)
                 n_utils.wait_until_true(is_called, timeout=10)
                 mock_update_router.reset_mock()
