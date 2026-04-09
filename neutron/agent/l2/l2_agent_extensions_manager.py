@@ -57,3 +57,15 @@ class L2AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                     "implement method delete_port",
                     {'name': extension.name}
                 )
+
+    def handle_switch_restart(self):
+        """Notify agent extensions that the managed switch was restarted."""
+        for extension in self:
+            if hasattr(extension.obj, 'handle_switch_restart'):
+                extension.obj.handle_switch_restart()
+            else:
+                LOG.debug(
+                    "Agent Extension '%(name)s' does not "
+                    "implement method handle_switch_restart",
+                    {'name': extension.name}
+                )

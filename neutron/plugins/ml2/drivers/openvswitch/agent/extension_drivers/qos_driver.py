@@ -341,6 +341,9 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
         self.meter_cache_bps = MeterRuleManager(
             self.br_int, type_=comm_consts.METER_FLAG_BPS)
 
+    def handle_switch_restart(self):
+        self._qos_bandwidth_initialize()
+
     def create_bandwidth_limit(self, port, rule):
         self.update_bandwidth_limit(port, rule)
 

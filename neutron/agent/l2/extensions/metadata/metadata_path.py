@@ -462,3 +462,11 @@ class MetadataPathAgentExtension(
                         table=p_const.ARP_SPOOF_TABLE,
                         in_port=port_info["ofport"])
             self.NETWORK_PORTS.pop(port_info['network_id'], [])
+
+    def handle_switch_restart(self):
+        self.install_arp_responder(
+            bridge=self.int_br,
+            ip=metadata_flows_process.METADATA_V4_IP,
+            mac=METADATA_DEFAULT_MAC,
+            table=p_const.TRANSIENT_TABLE)
+        self.init_br_snat_metadata_path()
