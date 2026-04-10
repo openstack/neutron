@@ -380,3 +380,39 @@ class LogApiTestCaseComplex(LogApiTestCaseBase):
         self.log_plugin.update_log(self.ctxt, log_obj1['id'], log_data1)
         self._check_sgrs(sgrs=sgrs, is_enabled=False)
         self._check_acl_log_drop(is_enabled=True)
+
+    def test_add_rule_skips_already_configured_acls(self):
+        """Adding a SG rule must not re-update ACLs that already have logging.
+
+        When network logging is enabled and a new SG rule is created, only
+        the newly created ACL should be updated. Existing ACLs that already
+        have the correct logging configuration must be skipped. This is
+        verified by checking that labels on pre-existing ACLs remain
+        unchanged (labels are randomized on every _set_acls_log update).
+        """
+        log_obj = self.log_plugin.create_log(
+            self.ctxt, self._log_data(sg_id=self.sg3))
+
+        # Verify initial ACLs have logging enabled and record their labels.
+        initial_labels = {}
+        for sgr in self.sg3rs:
+            acl = self._check_acl_log(sgr, is_enabled=True)
+            self.assertEqual(utils.ovn_name(log_obj['id']), acl.name[0])
+            initial_labels[sgr] = acl.label
+
+        # Add a new rule to sg1; this triggers AFTER_CREATE → resource_update
+        # → _set_acls_log on ALL ACLs of the port group.
+        new_sgr = self._create_security_group_rule(self.sg3, 443)
+
+        # The new ACL must have logging configured.
+        new_acl = self._check_acl_log(new_sgr, is_enabled=True)
+        self.assertEqual(utils.ovn_name(log_obj['id']), new_acl.name[0])
+
+        # Pre-existing ACLs must NOT have been re-updated: their labels
+        # must remain identical to the ones recorded before the new rule
+        # was added.
+        for sgr in self.sg3rs:
+            acl = self._check_acl_log(sgr, is_enabled=True)
+            self.assertEqual(initial_labels[sgr], acl.label,
+                             'ACL for rule %s was unnecessarily re-updated'
+                             % sgr)
