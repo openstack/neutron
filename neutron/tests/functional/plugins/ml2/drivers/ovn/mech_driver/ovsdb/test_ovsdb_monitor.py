@@ -38,7 +38,7 @@ from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db as db_hash_ring
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
-from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests.functional import base
 from neutron.tests.functional.resources.ovsdb import events as test_events
@@ -445,9 +445,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         check = functools.partial(is_port_virtual_parents, port_id, vparents)
         n_utils.wait_until_true(check, timeout=10)
 
-    @mock.patch.object(mech_driver.OVNMechanismDriver,
-                       'update_virtual_port_host')
-    def test_virtual_port_host_update(self, mock_update_vip_host):
+    @mock.patch.object(ovn_client.OVNClient, 'update_virtual_port_parent_host')
+    def test_virtual_port_parent_host_update(self, mock_update_vip_phost):
         # NOTE: because we can't simulate traffic from a port, this check is
         # not done in this test. This test checks the VIP host is unset when
         # the port allowed address pairs are removed.
@@ -473,20 +472,21 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # when an ovn-controller detects traffic with the VIP and assign the
         # port hosting the VIP as virtual parent.
         self._set_port_binding_virtual_parent(vip['id'], port['id'])
-        mock_update_vip_host.reset_mock()
+        mock_update_vip_phost.reset_mock()
         data = {'port': {'allowed_address_pairs': []}}
         req = self.new_update_request('ports', data, port['id'])
         req.get_response(self.api)
         self._check_port_binding_type(vip['id'], '')
         self._check_port_virtual_parents(vip['id'], None)
-        n_utils.wait_until_true(lambda: mock_update_vip_host.called,
+        n_utils.wait_until_true(lambda: mock_update_vip_phost.called,
                                 timeout=10)
         # The virtual port is no longer considered as virtual. The
         # "Port_Binding" register is deleted.
-        mock_update_vip_host.assert_called_once_with(vip['id'], None)
+        mock_update_vip_phost.assert_called_once_with(
+            mock.ANY, vip['id'], chassis_id=None)
 
         # 3) Set again the allowed address pairs.
-        mock_update_vip_host.reset_mock()
+        mock_update_vip_phost.reset_mock()
         data = {'port': {'allowed_address_pairs': allowed_address_pairs}}
         req = self.new_update_request('ports', data, port['id'])
         req.get_response(self.api)
@@ -494,32 +494,32 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # and the corresponding "virtual-parents".
         self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
         self._check_port_virtual_parents(vip['id'], port['id'])
-        mock_update_vip_host.reset_mock()
+        mock_update_vip_phost.reset_mock()
         self._delete('ports', vip['id'])
-        n_utils.wait_until_true(lambda: mock_update_vip_host.called,
+        n_utils.wait_until_true(lambda: mock_update_vip_phost.called,
                                 timeout=10)
         # The virtual port is deleted and so the associated "Port_Binding".
         # With OVN v22.03.3 sometimes 2 delete events are received with the
         # same arguments.
         # TODO(lajoskatona): check when new OVN version is out
         # if this behaviour is changed.
-        mock_update_vip_host.assert_called_with(vip['id'], None)
+        mock_update_vip_phost.assert_called_with(
+            mock.ANY, vip['id'], chassis_id=None)
 
-    @mock.patch.object(mech_driver.OVNMechanismDriver,
-                       'update_virtual_port_host')
-    def test_non_virtual_port_no_host_update(self, mock_update_vip_host):
+    @mock.patch.object(ovn_client.OVNClient, 'update_virtual_port_parent_host')
+    def test_non_virtual_port_no_host_update(self, mock_update_vip_phost):
         # The ``PortBindingUpdateVirtualPortsEvent`` delete event should affect
         # only to virtual ports. This check is done for virtual ports in
-        # ``test_virtual_port_host_update``.
+        # ``update_virtual_port_parent_host``.
         port = self.create_port()
         self._delete('ports', port['id'])
         # We actively wait for 5 seconds for the ``Port_Binding`` event to
         # arrive and be processed, but the port host must not be updated.
         self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
-                          lambda: mock_update_vip_host.called, timeout=5)
+                          lambda: mock_update_vip_phost.called, timeout=5)
 
-    def _check_port_host_set(self, port_id, host_id):
-        # This function checks if given host_id matches the values in the
+    def _check_port_parent_host_set(self, port_id, hostname):
+        # This function checks if given hostname matches the values in the
         # neutron DB as well as in the OVN DB for the port with given port_id
         core_plugin = directory.get_plugin()
 
@@ -528,11 +528,13 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             self.context, filters={'id': [port_id]})[0]
 
         # Get port from OVN DB
-        bp = self._find_port_binding(port_id)
-        ovn_host_id = bp.external_ids.get(ovn_const.OVN_HOST_ID_EXT_ID_KEY)
+        pb = self._find_port_binding(port_id)
+        ovn_pb_hostname = pb.external_ids.get(
+            ovn_const.OVN_PARENT_HOSTNAME_EXT_ID_KEY)
 
-        # Check that both neutron and ovn are the same as given host_id
-        return port[portbindings.HOST_ID] == host_id == ovn_host_id
+        # Check that both neutron and ovn are the same as given hostname
+        return port[portbindings.VIF_DETAILS][
+            'parent_hostname'] == hostname == ovn_pb_hostname
 
     def _check_port_and_port_binding_revision_number(self, port_id):
 
@@ -558,15 +560,17 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             is_port_and_port_binding_same_revision_number, port_id)
         n_utils.wait_until_true(check, timeout=10)
 
-    def test_virtual_port_host_update_upon_failover(self):
+    def test_virtual_port_parent_host_update_upon_failover(self):
         # NOTE: we can't simulate traffic, but we can simulate the event that
         # would've been triggered by OVN, which is what we do.
 
         # The test is based to test_virtual_port_host_update, though in this
-        # test we actually test the OVNMechanismDriver.update_virtual_port_host
-        # method, that updates the hostname in neutron and OVN
-        # We do not extensively check if the allowed-address-pair is being kept
-        # up-to-date, since test_virtual_port_host_update does this already.
+        # test we actually test the
+        # ``OVNMechanismDriver.update_virtual_port_parent_host`` method,
+        # that updates the parent hostname in the Neutron port VIF details and
+        # OVN. We do not extensively check if the allowed-address-pair is
+        # being kept up-to-date, since test_virtual_port_host_update does this
+        # already.
 
         # 1) Setup a second chassis
         second_chassis_name = 'ovs-host2'
@@ -604,18 +608,19 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self._test_port_binding_and_status(ports[1]['id'], 'bind', 'ACTIVE')
         self._check_port_and_port_binding_revision_number(vip['id'])
 
-        # 6) For both ports, bind vip on parent and check hostname in DBs
+        # 6) For both ports, bind vip on parent and check parent hostname in
+        # DBs
         for idx in range(len(ports)):
             # Set port binding to the first port, and update the chassis
             self._set_port_binding_virtual_parent(vip['id'], ports[idx]['id'])
             self._check_port_and_port_binding_revision_number(vip['id'])
 
-            # Check if the host_id has been updated in OVN and DB
+            # Check if the parent hostname has been updated in OVN and DB
             # by the event that eventually calls for method
-            # OVNMechanismDriver.update_virtual_port_host
+            # OVNMechanismDriver.update_virtual_port_parent_host
             n_utils.wait_until_true(
-                lambda: self._check_port_host_set(vip['id'], hosts[idx]),
-                timeout=10)
+                lambda: self._check_port_parent_host_set(
+                    vip['id'], hosts[idx]), timeout=10)
             self._check_port_and_port_binding_revision_number(vip['id'])
 
     def _create_router(self):

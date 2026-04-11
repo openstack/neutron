@@ -33,6 +33,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.services.portforwarding import constants as pf_consts
 from neutron.tests.functional import base
@@ -1630,6 +1631,41 @@ class TestMaintenance(_TestMaintenanceHelper):
             sg_rule_v6['id'])
         self.assertIsNotNone(acl_v6_after)
         self.assertIn(ag_as_name_v6, acl_v6_after.match)
+
+    def test_update_virtual_port_parent_hostname(self):
+        net = self._create_network(uuidutils.generate_uuid())
+        self._create_subnet(uuidutils.generate_uuid(), net['id'])
+        port = self._create_port(uuidutils.generate_uuid(), net['id'])
+
+        # Manually add the LSP.external_ids:neutron:host_id and the "virtual"
+        # type to the port.
+        ext_ids = {ovn_const.OVN_HOST_ID_EXT_ID_KEY: 'random_host'}
+        self.nb_api.db_set(
+            'Logical_Switch_Port', port['id'],
+            ('external_ids', ext_ids)).execute(check_error=True)
+        self.nb_api.db_set(
+            'Logical_Switch_Port', port['id'],
+            ('type', ovn_const.LSP_TYPE_VIRTUAL)).execute(check_error=True)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.update_virtual_port_parent_hostname)
+
+        # Check the LSP.external_ids.
+        lsp = self.nb_api.lookup('Logical_Switch_Port', port['id'])
+        self.assertEqual(
+            'random_host',
+            lsp.external_ids[ovn_const.OVN_PARENT_HOSTNAME_EXT_ID_KEY])
+        self.assertIsNone(
+            lsp.external_ids.get(ovn_const.OVN_HOST_ID_EXT_ID_KEY))
+
+        # Check the VIF details and the port bindings host.
+        pbindings = ports_obj.PortBinding.get_objects(
+            self.context, port_id=port['id'])
+        self.assertEqual(1, len(pbindings))
+        self.assertEqual('random_host',
+                         pbindings[0].vif_details['parent_hostname'])
+        self.assertEqual('', pbindings[0].host)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,

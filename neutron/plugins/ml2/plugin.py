@@ -2173,11 +2173,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
-    def update_virtual_port_host(self, context, port_id, hostname):
-        """Create a new portbinding register with the updated hostname
+    def update_virtual_port_parent_host(self, context, port_id, hostname):
+        """Create a new portbinding register with the updated parent hostname
 
         A virtual port is not actually bound, therefore the portbinding default
-        register is always VIF_TYPE_UNBOUND. However this method updates the
+        register is always VIF_TYPE_UNBOUND. However, this method updates the
         host information to reflect where the associated port that is sending
         or receiving traffic, using the VIP address, is hosted.
         """
@@ -2195,10 +2195,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             attrs = {'port_id': port_id,
                      'vnic_type': portbindings.VNIC_NORMAL,
-                     'vif_details': {},
+                     'vif_details': {'parent_hostname': hostname},
                      'profile': {},
                      'vif_type': portbindings.VIF_TYPE_UNBOUND,
-                     'host': hostname}
+                     'host': ''}
             ports_obj.PortBinding(context, **attrs).create()
 
     def _pre_delete_port(self, context, port_id, port_check, port=None):
