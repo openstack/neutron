@@ -42,7 +42,7 @@ class QuotaEnforcementHook(hooks.PecanHook):
         plugin = manager.NeutronManager.get_plugin_for_resource(collection)
         parent_id = state.request.context.get('parent_id')
         parent_project_id = None
-        if parent_id and any(not x.get('tenant_id') for x in items):
+        if parent_id and any(not x.get('project_id') for x in items):
             parent_getter = getattr(
                 plugin, 'get_%s' % utils.get_controller(state).parent)
             try:
@@ -50,9 +50,9 @@ class QuotaEnforcementHook(hooks.PecanHook):
                     context.get_admin_context(), parent_id).get('project_id')
             except exceptions.NotFound:
                 pass
-        # Store requested resource amounts grouping them by tenant
+        # Store requested resource amounts grouping them by project
         deltas = collections.Counter(
-            map(lambda x: x.get('tenant_id', parent_project_id), items))
+            map(lambda x: x.get('project_id', parent_project_id), items))
         # Perform quota enforcement
         reservations = []
         neutron_context = state.request.context.get('neutron_context')

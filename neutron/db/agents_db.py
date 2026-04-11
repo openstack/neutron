@@ -141,19 +141,19 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
         """Return a list of availability zones."""
         if self._is_az_filter_supported or self.is_az_filter_supported:
             filter_states = filters.pop('state', [])
-            # NOTE(hichihara): 'tenant_id' is dummy for policy check.
+            # NOTE(hichihara): 'project_id' is dummy for policy check.
             # it is not visible via API.
             return [{'state': v,
                      'name': k[0], 'resource': k[1],
-                     'tenant_id': context.project_id}
+                     'project_id': context.project_id}
                     for k, v in self._list_availability_zones(
                         context, filters).items()
                     if not filter_states or v in filter_states]
-        # NOTE(hichihara): 'tenant_id' is dummy for policy check. it is not
+        # NOTE(hichihara): 'project_id' is dummy for policy check. it is not
         # visible via API.
         return [{'state': v,
                  'name': k[0], 'resource': k[1],
-                 'tenant_id': context.project_id}
+                 'project_id': context.project_id}
                 for k, v in self._list_availability_zones(
                     context, filters).items()]
 
