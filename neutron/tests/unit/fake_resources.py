@@ -212,6 +212,7 @@ class FakeOvsdbSbOvnIdl:
 class FakeOvsdbTransaction:
     def __init__(self, **kwargs):
         self.insert = mock.Mock()
+        self.idl = mock.Mock()
 
 
 class FakePlugin:
