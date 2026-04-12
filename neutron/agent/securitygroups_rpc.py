@@ -19,6 +19,8 @@ import functools
 from neutron_lib.api.definitions import aap_reject_multicast
 from neutron_lib.api.definitions import rbac_address_groups as rbac_ag_apidef
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
+from neutron_lib.api.definitions import security_groups_default_statefulness \
+    as sg_ds_def
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group \
     as sgag_def
@@ -66,6 +68,7 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension('address-group', aliases)
         _disable_extension(rbac_ag_apidef.ALIAS, aliases)
         _disable_extension(sg_rules_default_sg_def.ALIAS, aliases)
+        _disable_extension(sg_ds_def.ALIAS, aliases)
 
 
 def skip_if_noopfirewall_or_firewall_disabled(func):

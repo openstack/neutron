@@ -39,6 +39,7 @@ from neutron.common import _constants as const
 from neutron.db import address_group_db as ag_db
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_mixin as rbac_mixin
+from neutron.db import security_groups_default_statefulness as sg_stateful
 from neutron.extensions import security_groups_default_rules as \
     ext_sg_default_rules
 from neutron.extensions import securitygroup as ext_sg
@@ -60,9 +61,10 @@ DEFAULT_SG_DESCRIPTION = _('Default security group')
 class SecurityGroupDbMixin(
         ext_sg.SecurityGroupPluginBase,
         ext_sg_default_rules.SecurityGroupDefaultRulesPluginBase,
-        rbac_mixin.RbacPluginMixin):
+        rbac_mixin.RbacPluginMixin,
+        sg_stateful.SecurityGroupDefaultStatefulnessMixin,
+):
     """Mixin class to add security group to db_base_plugin_v2."""
-
     __native_bulk_support = True
 
     def create_security_group_bulk(self, context, security_groups):
@@ -100,6 +102,9 @@ class SecurityGroupDbMixin(
 
         project_id = s['project_id']
         stateful = s.get('stateful', True)
+        if stateful is constants.ATTR_NOT_SPECIFIED:
+            stateful = self.get_default_stateful_for_project(context,
+                                                             project_id)
 
         if default_sg:
             existing_def_sg_id = self._get_default_sg_id(context, project_id)

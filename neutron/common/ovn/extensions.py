@@ -87,6 +87,7 @@ from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups
 from neutron_lib.api.definitions import router_availability_zone as raz_def
 from neutron_lib.api.definitions import router_enable_snat
+from neutron_lib.api.definitions import security_groups_default_statefulness
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import \
@@ -113,7 +114,6 @@ from neutron_lib import constants
 
 from neutron.extensions import quotasv2_detail
 from neutron.extensions import security_groups_default_rules
-
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
 # to be able to easily import it and export the info without any dependencies
 # on external imports.
@@ -199,6 +199,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'standard-attr-revisions',
     'security-group',
     security_groups_default_rules.ALIAS,
+    security_groups_default_statefulness.ALIAS,
     security_groups_normalized_cidr.ALIAS,
     security_groups_remote_address_group.ALIAS,
     security_groups_rules_belongs_to_default_sg.ALIAS,

@@ -117,6 +117,7 @@ object_data = {
     'RouterRoute': '1.0-07fc5337c801fb8c6ccfbcc5afb45907',
     'SecurityGroup': '1.6-7eb8e44c327512e7bb1759ab41ede44b',
     'SecurityGroupDefaultRule': '1.0-d498fd4993b6732f3f266c4b7e292e22',
+    'SecurityGroupDefaultStatefulness': '1.0-499b42fe3496654e05c7aa104138c80e',
     'SecurityGroupPortBinding': '1.0-6879d5c0af80396ef5a72934b6a6ef20',
     'SecurityGroupRBAC': '1.1-be82ed54376b85ee4f963d479ac48c91',
     'SecurityGroupRule': '1.3-60cdd6434e35979d2b280ed28a9598d3',

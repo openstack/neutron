@@ -43,6 +43,7 @@ from neutron.conf.policies import quotas
 from neutron.conf.policies import rbac
 from neutron.conf.policies import router
 from neutron.conf.policies import security_group
+from neutron.conf.policies import security_groups_default_statefulness
 from neutron.conf.policies import segment
 from neutron.conf.policies import service_type
 from neutron.conf.policies import subnet
@@ -81,6 +82,7 @@ def list_rules():
         rbac.list_rules(),
         router.list_rules(),
         security_group.list_rules(),
+        security_groups_default_statefulness.list_rules(),
         segment.list_rules(),
         service_type.list_rules(),
         subnet.list_rules(),
