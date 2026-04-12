@@ -2766,19 +2766,21 @@ class OVNClient:
             db_rev.delete_revisions(context, sg_rule_ids,
                                     ovn_const.TYPE_SECURITY_GROUP_RULES)
 
-    def _process_security_group_rule(self, context, rule, is_add_acl=True):
+    def _process_security_group_rule(self, context, rule, is_add_acl=True,
+                                     txn=None):
         ovn_acl.update_acls_for_security_group(
             self._plugin, context.elevated(), self._nb_idl,
             rule['security_group_id'], rule,
-            is_add_acl=is_add_acl)
+            is_add_acl=is_add_acl, txn=txn)
 
-    def create_security_group_rule(self, context, rule):
-        self._process_security_group_rule(context, rule)
+    def create_security_group_rule(self, context, rule, txn=None):
+        self._process_security_group_rule(context, rule, txn=txn)
         db_rev.bump_revision(
             context, rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
-    def delete_security_group_rule(self, context, rule):
-        self._process_security_group_rule(context, rule, is_add_acl=False)
+    def delete_security_group_rule(self, context, rule, txn=None):
+        self._process_security_group_rule(context, rule, is_add_acl=False,
+                                          txn=txn)
         db_rev.delete_revision(
             context, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
 

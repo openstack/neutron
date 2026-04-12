@@ -352,9 +352,11 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             # we will update the SG rules
             ovn_acl_up.assert_has_calls([
                 mock.call(mock.ANY, mock.ANY, mock.ANY,
-                          rule['security_group_id'], rule, is_add_acl=False),
+                          rule['security_group_id'], rule, is_add_acl=False,
+                          txn=mock.ANY),
                 mock.call(mock.ANY, mock.ANY, mock.ANY,
-                          rule['security_group_id'], rule, is_add_acl=True)
+                          rule['security_group_id'], rule, is_add_acl=True,
+                          txn=mock.ANY)
             ])
 
             mock_del.assert_called_once_with(
@@ -386,7 +388,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     self.context, states=(rule,)))
             has_same_rules.assert_not_called()
             ovn_acl_up.assert_called_once_with(
-                mock.ANY, mock.ANY, mock.ANY, 'sg_id', rule, is_add_acl=True)
+                mock.ANY, mock.ANY, mock.ANY, 'sg_id', rule,
+                is_add_acl=True, txn=None)
             mock_bump.assert_called_once_with(
                 mock.ANY, rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
@@ -406,7 +409,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     self.context, states=(rule,)))
             has_same_rules.assert_not_called()
             ovn_acl_up.assert_called_once_with(
-                mock.ANY, mock.ANY, mock.ANY, 'sg_id', rule, is_add_acl=True)
+                mock.ANY, mock.ANY, mock.ANY, 'sg_id', rule,
+                is_add_acl=True, txn=None)
             mock_bump.assert_called_once_with(
                 mock.ANY, rule, ovn_const.TYPE_SECURITY_GROUP_RULES)
 
@@ -423,7 +427,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 payload=events.DBEventPayload(
                     self.context, states=(rule,)))
             ovn_acl_up.assert_called_once_with(
-                mock.ANY, mock.ANY, mock.ANY, 'sg_id', rule, is_add_acl=False)
+                mock.ANY, mock.ANY, mock.ANY, 'sg_id', rule,
+                is_add_acl=False, txn=None)
             mock_delrev.assert_called_once_with(
                 mock.ANY, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
 

@@ -291,7 +291,8 @@ def update_acls_for_security_group(plugin,
                                    ovn,
                                    security_group_id,
                                    security_group_rule,
-                                   is_add_acl=True):
+                                   is_add_acl=True,
+                                   txn=None):
 
     # Skip ACLs if security groups aren't enabled
     if not is_sg_enabled():
@@ -320,11 +321,15 @@ def update_acls_for_security_group(plugin,
         if not keep_name_severity:
             acl.pop('name')
             acl.pop('severity')
-        ovn.pg_acl_add(**acl, may_exist=True).execute(check_error=True)
+        cmd = ovn.pg_acl_add(**acl, may_exist=True)
     else:
-        ovn.pg_acl_del(acl['port_group'], acl['direction'],
-                       acl['priority'], acl['match']).execute(
-                           check_error=True)
+        cmd = ovn.pg_acl_del(acl['port_group'], acl['direction'],
+                             acl['priority'], acl['match'])
+
+    if txn is not None:
+        txn.add(cmd)
+    else:
+        cmd.execute(check_error=True)
 
 
 def filter_acl_dict(acl, extra_fields=None):
