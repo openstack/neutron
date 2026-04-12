@@ -121,7 +121,7 @@ class TestAddressGroup(AddressGroupTestCase):
 
     def test_create_address_group_without_description_or_addresses(self):
         expected_ag = {'name': 'foo',
-                       'tenant_id': self._project_id,
+                       'project_id': self._project_id,
                        'description': '',
                        'addresses': []}
         self._test_create_address_group(name='foo',
@@ -130,7 +130,7 @@ class TestAddressGroup(AddressGroupTestCase):
     def test_create_address_group_with_description_and_addresses(self):
         expected_ag = {'name': 'foo',
                        'description': 'bar',
-                       'tenant_id': self._project_id,
+                       'project_id': self._project_id,
                        'addresses': ['10.0.1.0/24', '192.168.0.1/32']}
         self._test_create_address_group(name='foo', description='bar',
                                         addresses=['10.0.1.0/24',

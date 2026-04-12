@@ -248,7 +248,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         On creation, verify that the creator is an admin or that it owns the
         network it is sharing.
 
-        On update and delete, make sure the tenant losing access does not have
+        On update and delete, make sure the project losing access does not have
         resources that depend on that access.
         """
         object_type = payload.metadata.get('object_type')

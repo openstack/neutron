@@ -60,7 +60,7 @@ def set_resources_dirty(context):
 
     This routine scans all registered resources, and, for those whose
     dirty status is True, sets the dirty bit to True in the database
-    for the appropriate tenants.
+    for the appropriate projects.
 
     :param context: a Neutron request context with a DB session
     """
@@ -73,14 +73,14 @@ def set_resources_dirty(context):
                 res.mark_dirty(context)
 
 
-def resync_resource(context, resource_name, tenant_id):
+def resync_resource(context, resource_name, project_id):
     if not cfg.CONF.QUOTAS.track_quota_usage:
         return
 
     if is_tracked(resource_name):
         res = get_resource(resource_name)
         # If the resource is tracked count supports the resync_usage parameter
-        res.resync(context, tenant_id)
+        res.resync(context, project_id)
 
 
 def mark_resources_dirty(f):

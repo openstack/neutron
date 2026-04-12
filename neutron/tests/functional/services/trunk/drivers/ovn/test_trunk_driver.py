@@ -78,7 +78,7 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
                     project_id = uuidutils.generate_uuid()
                     trunk = {'trunk': {
                         'port_id': parent_port['port']['id'],
-                        'tenant_id': project_id, 'project_id': project_id,
+                        'project_id': project_id,
                         'admin_state_up': True,
                         'name': 'trunk', 'sub_ports': sub_ports}}
                     trunk = self.trunk_plugin.create_trunk(self.context, trunk)

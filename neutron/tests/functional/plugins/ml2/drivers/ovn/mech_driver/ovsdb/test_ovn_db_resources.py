@@ -790,7 +790,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
             'network':
                 {'name': 'foo',
                  'dns_domain': 'foo.com.',
-                 'tenant_id': self._project_id}}
+                 'project_id': self._project_id}}
         req = self.new_create_request('networks', data, self.fmt)
         res = req.get_response(self.api)
         net = self.deserialize(self.fmt, res)['network']

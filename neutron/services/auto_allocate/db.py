@@ -201,7 +201,6 @@ class AutoAllocatedTopologyMixin:
             raise exceptions.AutoAllocationFailure(
                 reason=_("No default subnetpools defined"))
         return {'id': 'dry-run=pass',
-                'tenant_id': project_id,
                 'project_id': project_id}
 
     def _validate(self, context, project_id):
@@ -233,7 +232,7 @@ class AutoAllocatedTopologyMixin:
         """Build response for auto-allocated network."""
         res = {
             'id': network_id,
-            'tenant_id': project_id
+            'project_id': project_id
         }
         return db_utils.resource_fields(res, fields)
 

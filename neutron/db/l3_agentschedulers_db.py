@@ -147,7 +147,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                 if router.get('ha'):
                     self.router_scheduler.create_ha_port_and_bind(
                         plugin, context, router['id'],
-                        router['tenant_id'], agent,
+                        router['project_id'], agent,
                         is_manual_scheduling=True)
                 else:
                     self.router_scheduler.bind_router(

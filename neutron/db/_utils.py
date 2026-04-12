@@ -83,7 +83,7 @@ def model_query(context, model):
     # define basic filter condition for model query
     query_filter = None
     if db_utils.model_query_scope_is_project(context, model):
-        query_filter = (model.tenant_id == context.tenant_id)
+        query_filter = (model.project_id == context.project_id)
 
     if query_filter is not None:
         query = query.filter(query_filter)

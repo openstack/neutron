@@ -111,7 +111,7 @@ class External_net_db_mixin:
         if external:
             net_obj.ExternalNetwork(
                 context, network_id=net_data['id']).create()
-            net_rbac_args = {'project_id': net_data['tenant_id'],
+            net_rbac_args = {'project_id': net_data['project_id'],
                              'object_id': net_data['id'],
                              'action': rbac_db_models.ACCESS_EXTERNAL,
                              'target_project': '*'}
@@ -132,7 +132,7 @@ class External_net_db_mixin:
                 context, network_id=net_id).create()
             net_data[extnet_apidef.EXTERNAL] = True
             if allow_all:
-                net_rbac_args = {'project_id': net_data['tenant_id'],
+                net_rbac_args = {'project_id': net_data['project_id'],
                                  'object_id': net_id,
                                  'action': rbac_db_models.ACCESS_EXTERNAL,
                                  'target_project': '*'}
@@ -169,7 +169,7 @@ class External_net_db_mixin:
                 policy['action'] != rbac_db_models.ACCESS_EXTERNAL):
             return
         net = self.get_network(context, policy['object_id'])
-        if not context.is_admin and net['tenant_id'] != context.tenant_id:
+        if not context.is_admin and net['project_id'] != context.project_id:
             msg = _("Only admins can manipulate policies on networks they "
                     "do not own")
             raise n_exc.InvalidInput(error_message=msg)
@@ -200,8 +200,8 @@ class External_net_db_mixin:
 
     @registry.receives(resources.RBAC_POLICY, (events.BEFORE_UPDATE,
                                                events.BEFORE_DELETE))
-    def _validate_ext_not_in_use_by_tenant(self, resource, event, trigger,
-                                           payload=None):
+    def _validate_ext_not_in_use_by_project(self, resource, event, trigger,
+                                            payload=None):
         object_type = payload.metadata.get('object_type')
         policy = payload.latest_state
         context = payload.context
@@ -213,7 +213,7 @@ class External_net_db_mixin:
         if event == events.BEFORE_UPDATE:
             new_project = payload.request_body['target_project']
             if new_project == policy['target_project']:
-                # nothing to validate if the tenant didn't change
+                # nothing to validate if the project didn't change
                 return
 
         gw_ports = port_obj.Port.get_gateway_port_ids_by_network(
@@ -231,7 +231,7 @@ class External_net_db_mixin:
                 return
             router_exist = l3_obj.Router.objects_exist(context, **filters)
         else:
-            # deleting the wildcard is okay as long as the tenants with
+            # deleting the wildcard is okay as long as the projects with
             # attached routers have their own entries and the network is
             # not the default external network.
             if net_obj.ExternalNetwork.objects_exist(

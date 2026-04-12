@@ -110,7 +110,7 @@ class Rbac(api_extensions.ExtensionDescriptor):
     @classmethod
     def get_description(cls):
         return ("Allows creation and modification of policies that control "
-                "tenant access to resources.")
+                "project access to resources.")
 
     @classmethod
     def get_updated(cls):

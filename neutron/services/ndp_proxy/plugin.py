@@ -341,9 +341,15 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
                 ext_address_scope=ext_address_scope,
                 internal_address_scope=internal_address_scope)
 
+        # TODO(haleyb): "tenant_id" reference should be removed
         tenant_id = ndp_proxy.pop('tenant_id', None)
         if not ndp_proxy.get('project_id', None):
             ndp_proxy['project_id'] = tenant_id
+            if tenant_id:
+                LOG.warning('project_id key not found in ndp_proxy '
+                            'dictionary, using tenant_id instead. This '
+                            'support has been deprecated and will be '
+                            'removed in a future release.')
 
         with db_api.CONTEXT_WRITER.using(context):
             np_obj = np.NDPProxy(context, **ndp_proxy)
