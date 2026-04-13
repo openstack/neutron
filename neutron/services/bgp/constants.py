@@ -23,6 +23,8 @@ LRP_NETWORK_NAME_EXT_ID_KEY = 'neutron-bgp-network-name'
 LR_OPTIONS_DYNAMIC_ROUTING = 'dynamic-routing'
 LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE = 'dynamic-routing-redistribute'
 LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID = 'dynamic-routing-vrf-id'
+LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE_LOCAL = (
+    'dynamic-routing-redistribute-local-only')
 
 HA_CHASSIS_GROUP_PRIORITY = 10
 
