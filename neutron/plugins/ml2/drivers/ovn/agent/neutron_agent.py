@@ -31,6 +31,7 @@ LOG = logging.getLogger(__name__)
 
 class DeletedChassis(object):
     external_ids = {}
+    other_config = {}
     hostname = '("Chassis" register deleted)'
     name = '("Chassis" register deleted)'
 
