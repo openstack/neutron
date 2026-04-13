@@ -1633,6 +1633,9 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertIn(ag_as_name_v6, acl_v6_after.match)
 
     def test_update_virtual_port_parent_hostname(self):
+        # ``set_port_status_down`` is removing the OVN_HOST_ID_EXT_ID_KEY key
+        # from the LSP.external_ids. Let's avoid this.
+        mock.patch.object(self.mech_driver, 'set_port_status_down').start()
         net = self._create_network(uuidutils.generate_uuid())
         self._create_subnet(uuidutils.generate_uuid(), net['id'])
         port = self._create_port(uuidutils.generate_uuid(), net['id'])
