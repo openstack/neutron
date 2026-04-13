@@ -31,7 +31,8 @@ class TestBGPAgentExtensionWatchPortCreatedEvent(base.BaseTestCase):
         self.bgp_bridge.name = 'br-bgp'
 
     def test_port_already_exists_configures_flows(self):
-        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_type.return_value = [5]
+        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_types.return_value = [
+            5]
         self.bgp_bridge.check_requirements_for_flows_met.return_value = True
 
         self.extension.watch_port_created_event(self.bgp_bridge, 'patch')
@@ -39,7 +40,8 @@ class TestBGPAgentExtensionWatchPortCreatedEvent(base.BaseTestCase):
         self.bgp_bridge.configure_flows.assert_called_once()
 
     def test_port_already_exists_requirements_not_met_no_configure_flows(self):
-        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_type.return_value = [5]
+        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_types.return_value = [
+            5]
         self.bgp_bridge.check_requirements_for_flows_met.return_value = False
 
         self.extension.watch_port_created_event(self.bgp_bridge, 'patch')
@@ -47,7 +49,7 @@ class TestBGPAgentExtensionWatchPortCreatedEvent(base.BaseTestCase):
         self.bgp_bridge.configure_flows.assert_not_called()
 
     def test_port_missing_watches_event(self):
-        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_type.return_value = []
+        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_types.return_value = []
 
         self.extension.watch_port_created_event(self.bgp_bridge, 'patch')
 
@@ -55,7 +57,7 @@ class TestBGPAgentExtensionWatchPortCreatedEvent(base.BaseTestCase):
         self.bgp_bridge.configure_flows.assert_not_called()
 
     def test_port_created_in_meantime_unwatches_and_configures_flows(self):
-        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_type.side_effect = [
+        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_types.side_effect = [
             [],
             [7],
         ]
@@ -69,7 +71,7 @@ class TestBGPAgentExtensionWatchPortCreatedEvent(base.BaseTestCase):
 
     def test_port_created_in_meantime_requirements_not_met_no_configure_flows(
             self):
-        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_type.side_effect = [
+        self.bgp_bridge.ovs_bridge.get_iface_ofports_by_types.side_effect = [
             [],
             [3],
         ]
