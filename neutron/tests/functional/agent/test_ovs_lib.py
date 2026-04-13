@@ -289,12 +289,12 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         ifaces = {self.create_ovs_port()[0] for i in range(5)}
         self.assertSetEqual(ifaces, set(self.br.get_iface_name_list()))
 
-    def test_get_iface_ofports_by_type(self):
+    def test_get_iface_ofports_by_types(self):
         internal_port_ofport = self.create_ovs_port()[1]
         patch_port_ofport = self.create_ovs_port(('type', 'patch'))[1]
-        observed_internal_ofports = self.br.get_iface_ofports_by_type(
+        observed_internal_ofports = self.br.get_iface_ofports_by_types(
             'internal')
-        observed_patch_ofports = self.br.get_iface_ofports_by_type(
+        observed_patch_ofports = self.br.get_iface_ofports_by_types(
             'patch')
         self.assertCountEqual(
             observed_internal_ofports, [internal_port_ofport])

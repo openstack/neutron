@@ -90,7 +90,7 @@ class BGPChassisBridge(Bridge):
 
     @property
     def patch_port_ofport(self):
-        patch_ports_ofports = self.ovs_bridge.get_iface_ofports_by_type(
+        patch_ports_ofports = self.ovs_bridge.get_iface_ofports_by_types(
             'patch')
         if len(patch_ports_ofports) > 1:
             LOG.warning("The patch port for bridge %s has multiple ofports: "
@@ -106,7 +106,8 @@ class BGPChassisBridge(Bridge):
     @property
     def nic_ofport(self):
         # REVISIT(jlibosva): we can consider supporting OVS bonds too
-        nics_ofports = self.ovs_bridge.get_iface_ofports_by_type('')
+        nics_ofports = self.ovs_bridge.get_iface_ofports_by_types(
+            *bgp_const.BGP_BRIDGE_NIC_TYPES)
         if len(nics_ofports) != 1:
             LOG.warning("Expected 1 NIC for bridge %s, got %s",
                         self.name, len(nics_ofports))
