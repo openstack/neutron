@@ -1,5 +1,11 @@
 - hosts: all
   roles:
+    - role: ensure-python
+      vars:
+        python_version: "{{ PYTHON3_VERSION }}"
+      when:
+        - enable_fips is defined and enable_fips|bool
+        - PYTHON3_VERSION is defined
     - role: ensure-tox
       vars:
         ensure_tox_version: "<4"
