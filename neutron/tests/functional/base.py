@@ -87,7 +87,6 @@ class LogCollector(fixtures.Fixture):
             self.DEFAULT_LOG_DIR, test_id)
 
     def _setUp(self):
-        fileutils.ensure_tree(self.destination_dir, mode=0o755)
         self.addCleanup(self._collect_ovn_process_logs)
 
     def _copy_file(self, src_filename, dst_filename):
@@ -100,6 +99,7 @@ class LogCollector(fixtures.Fixture):
             LOG.info("File %s not found", filepath)
 
     def _collect_ovn_process_logs(self):
+        fileutils.ensure_tree(self.destination_dir, mode=0o755)
         timestamp = datetime.now().strftime('%y-%m-%d_%H-%M-%S')
         # A list of tuples (src_filename, dst_filename) to copy.
         files_to_copy = []
@@ -232,10 +232,7 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
         log_driver.DRIVER = None
         super().setUp()
         self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
-        log_collector = LogCollector(self.temp_dir, self.id())
-        self.useFixture(log_collector)
-        base.setup_test_logging(
-            cfg.CONF, log_collector.destination_dir, "testrun.txt")
+        self.useFixture(LogCollector(self.temp_dir, self.id()))
 
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
