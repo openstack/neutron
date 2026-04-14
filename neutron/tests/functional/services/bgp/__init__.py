@@ -14,8 +14,8 @@
 #    under the License.
 
 import os
-import tempfile
 
+import fixtures as test_fixtures
 from oslo_config import cfg
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import connection
@@ -27,7 +27,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.conf.services import bgp as bgp_config
 from neutron.services.bgp import ovn as bgp_ovn
 from neutron.tests.functional import base as n_base
-from neutron.tests.functional.services.bgp import fixtures
+from neutron.tests.functional.services.bgp import fixtures as bgp_fixtures
 
 
 class OvsTestIdl(connection.OvsdbIdl):
@@ -56,16 +56,18 @@ class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
         ovn_conf.register_opts()
         bgp_config.register_opts(cfg.CONF)
         super().setUp()
-        self.setup_venv()
+        test_temp_dir = self.useFixture(test_fixtures.TempDir()).path
+        self.setup_venv(test_temp_dir)
         self.create_idls()
+        self.useFixture(n_base.LogCollector(test_temp_dir, self.id()))
 
     def create_connection(self, schema):
         idl = self.idl_schema_map[schema](self._schema_map[schema])
         return connection.Connection(idl, timeout=10)
 
-    def setup_venv(self):
+    def setup_venv(self, test_temp_dir):
         ovsvenv = venv.OvsOvnVenvFixture(
-            tempfile.mkdtemp(),
+            test_temp_dir,
             ovsdir=os.getenv('OVS_SRCDIR'),
             ovndir=os.getenv('OVN_SRCDIR'),
             remove=True)
@@ -83,13 +85,13 @@ class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
             connection = self.create_connection(schema)
             if schema == 'OVN_Northbound':
                 self.nb_api = self.useFixture(
-                    fixtures.OvnNbIdlApiFixture(connection)).obj
+                    bgp_fixtures.OvnNbIdlApiFixture(connection)).obj
             elif schema == 'OVN_Southbound':
                 self.sb_api = self.useFixture(
-                    fixtures.OvnSbIdlApiFixture(connection)).obj
+                    bgp_fixtures.OvnSbIdlApiFixture(connection)).obj
             elif schema == 'Open_vSwitch':
                 self.ovs_api = self.useFixture(
-                    fixtures.OvsApiFixture(connection)).obj
+                    bgp_fixtures.OvsApiFixture(connection)).obj
 
 
 class BaseBgpNbIdlTestCase(BaseBgpIDLTestCase):

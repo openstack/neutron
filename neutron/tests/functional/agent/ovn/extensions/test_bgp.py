@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import tempfile
 from unittest import mock
 import weakref
 
@@ -28,6 +27,7 @@ from neutron.tests.common.exclusive_resources import ip_address
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.ovn.agent import test_ovn_neutron_agent
 from neutron.tests.functional.agent.ovn.extensions import bgp as test_bgp
+from neutron.tests.functional import base as n_base
 
 
 class FakeLoopbackContext:
@@ -117,9 +117,10 @@ class BGPExtensionBaseTestCase(test_ovn_neutron_agent.TestOVNNeutronAgentBase):
 class BGPExtensionTestCase(BGPExtensionBaseTestCase):
     def setUp(self, **kwargs):
         self.ovs_venv = self.useFixture(venv.OvsVenvFixture(
-            tempfile.mkdtemp(),
             remove=True,
         ))
+        self.useFixture(n_base.LogCollector(
+            self.ovs_venv.venv.venvdir, self.id()))
         _orig_ovsdb_connection = cfg.CONF.OVS.ovsdb_connection
         cfg.CONF.set_override(
             'ovsdb_connection', self.ovs_venv.ovs_connection, group='OVS')

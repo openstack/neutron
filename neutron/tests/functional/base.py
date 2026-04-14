@@ -28,6 +28,7 @@ from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import fileutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from sqlalchemy.dialects.mysql import dialect as mysql_dialect
@@ -64,6 +65,56 @@ LOG = log.getLogger(__name__)
 # This is the directory from which infra fetches log files for functional tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-functional-logs')
+
+
+class LogCollector(fixtures.Fixture):
+    # Store it to the class in case we want to remove the global variable
+    DEFAULT_LOG_DIR = DEFAULT_LOG_DIR
+
+    NORTHBOUND_DATABASE_NAME = "ovnnb_db"
+    SOUTHBOUND_DATABASE_NAME = "ovnsb_db"
+    LOCAL_OVS_DATABASE_NAME = "db"
+
+    DBS_TO_COPY = [
+        NORTHBOUND_DATABASE_NAME,
+        SOUTHBOUND_DATABASE_NAME,
+        LOCAL_OVS_DATABASE_NAME,
+    ]
+
+    def __init__(self, source_dir, test_id):
+        self.source_dir = source_dir
+        self.destination_dir = os.path.join(
+            self.DEFAULT_LOG_DIR, test_id)
+
+    def _setUp(self):
+        fileutils.ensure_tree(self.destination_dir, mode=0o755)
+        self.addCleanup(self._collect_ovn_process_logs)
+
+    def _copy_file(self, src_filename, dst_filename):
+        """Copy a single file from ``source_dir`` to ``destination_dir``."""
+        filepath = os.path.join(self.source_dir, src_filename)
+        try:
+            shutil.copyfile(
+                filepath, os.path.join(self.destination_dir, dst_filename))
+        except FileNotFoundError:
+            LOG.info("File %s not found", filepath)
+
+    def _collect_ovn_process_logs(self):
+        timestamp = datetime.now().strftime('%y-%m-%d_%H-%M-%S')
+        # A list of tuples (src_filename, dst_filename) to copy.
+        files_to_copy = []
+        # local OVS database file is called "db"
+        for database in self.DBS_TO_COPY:
+            for file_suffix in ("log", "db"):
+                src_filename = f"{database}.{file_suffix}"
+                dst_filename = f"{database}-{timestamp}.{file_suffix}"
+                files_to_copy.append((src_filename, dst_filename))
+
+        files_to_copy.append(
+            ("ovn_northd.log", f"ovn_northd-{timestamp}.log"))
+
+        for src_filename, dst_filename in files_to_copy:
+            self._copy_file(src_filename, dst_filename)
 
 
 def config_decorator(method_to_decorate, config_tuples):
@@ -181,9 +232,10 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
         log_driver.DRIVER = None
         super().setUp()
         self.assertEqual(mysql_dialect.name, self.db.engine.dialect.name)
-        self.test_log_dir = os.path.join(DEFAULT_LOG_DIR, self.id())
+        log_collector = LogCollector(self.temp_dir, self.id())
+        self.useFixture(log_collector)
         base.setup_test_logging(
-            cfg.CONF, self.test_log_dir, "testrun.txt")
+            cfg.CONF, log_collector.destination_dir, "testrun.txt")
 
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
@@ -332,7 +384,6 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
         cfg.CONF.set_override(
             'ovsdb_connection_timeout', 30,
             'ovn')
-        self.addCleanup(self._collect_processes_logs)
 
     def _start_idls(self):
         class TriggerCls(mock.MagicMock):
@@ -361,41 +412,6 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
 
         self.nb_api = self.mech_driver.nb_ovn
         self.sb_api = self.mech_driver.sb_ovn
-
-    def _collect_processes_logs(self):
-        timestamp = datetime.now().strftime('%y-%m-%d_%H-%M-%S')
-        for database in ("nb", "sb"):
-            for file_suffix in ("log", "db"):
-                src_filename = "ovn_{db}.{suffix}".format(
-                    db=database,
-                    suffix=file_suffix
-                )
-                dst_filename = "ovn_{db}-{timestamp}.{suffix}".format(
-                    db=database,
-                    suffix=file_suffix,
-                    timestamp=timestamp,
-                )
-                try:
-                    self._copy_log_file(src_filename, dst_filename)
-                except FileNotFoundError:
-                    # Some testcases add the method ``_collect_processes_logs``
-                    # twice in the cleanup methods. The second time this method
-                    # is called, the logs and DBs have been already deleted.
-                    pass
-
-        # Copy northd logs
-        northd_log = "ovn_northd"
-        dst_northd = "{northd}-{timestamp}.log".format(
-            northd=northd_log,
-            timestamp=timestamp,
-        )
-        self._copy_log_file("%s.log" % northd_log, dst_northd)
-
-    def _copy_log_file(self, src_filename, dst_filename):
-        """Copy log file from temporary dict to the test directory."""
-        filepath = os.path.join(self.temp_dir, src_filename)
-        shutil.copyfile(
-            filepath, os.path.join(self.test_log_dir, dst_filename))
 
     def stop(self):
         if self.maintenance_worker:
