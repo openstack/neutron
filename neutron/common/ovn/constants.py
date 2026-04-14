@@ -457,6 +457,7 @@ EXTERNAL_PORT_TYPES = (portbindings.VNIC_DIRECT,
 
 NEUTRON_AVAILABILITY_ZONES = 'neutron-availability-zones'
 OVN_CMS_OPTIONS = 'ovn-cms-options'
+OVN_BRIDGE_MAPPINGS = 'ovn-bridge-mappings'
 CMS_OPT_CHASSIS_AS_GW = 'enable-chassis-as-gw'
 CMS_OPT_CHASSIS_AS_EXTPORT_HOST = 'enable-chassis-as-extport-host'
 CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'

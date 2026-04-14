@@ -85,7 +85,7 @@ class NeutronAgent(abc.ABC):
             'configurations': {
                 'chassis_name': self.chassis.name,
                 'bridge-mappings':
-                    self.chassis.other_config.get('ovn-bridge-mappings', '')},
+                    ovn_utils.get_ovn_bridge_mappings(self.chassis)},
             'start_flag': True,
             'agent_type': self.agent_type,
             'id': self.agent_id,
@@ -143,8 +143,7 @@ class ControllerAgent(NeutronAgent):
     @staticmethod  # it is by default, but this makes pep8 happy
     def __new__(cls, chassis_private, driver):
         _chassis = cls._get_chassis(chassis_private)
-        if 'enable-chassis-as-gw' in _chassis.other_config.get(
-                'ovn-cms-options', []):
+        if ovn_utils.is_gateway_chassis(_chassis):
             cls = ControllerGatewayAgent
         return super().__new__(cls)
 
@@ -167,8 +166,7 @@ class ControllerAgent(NeutronAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        if 'enable-chassis-as-gw' in self.chassis.other_config.get(
-                'ovn-cms-options', []):
+        if ovn_utils.is_gateway_chassis(self.chassis):
             self.__class__ = ControllerGatewayAgent
 
 
@@ -177,8 +175,7 @@ class ControllerGatewayAgent(ControllerAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        if ('enable-chassis-as-gw' not in
-                self.chassis.other_config.get('ovn-cms-options', [])):
+        if not ovn_utils.is_gateway_chassis(self.chassis):
             self.__class__ = ControllerAgent
 
 

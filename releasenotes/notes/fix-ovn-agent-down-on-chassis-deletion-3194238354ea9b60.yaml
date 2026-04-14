@@ -1,0 +1,13 @@
+---
+fixes:
+  - |
+    Fixed an issue in the OVN mechanism driver where agents would remain in an
+    "UP" state after their corresponding OVN Chassis record was deleted (e.g.,
+    via ``ovn-sbctl destroy Chassis <UUID>``). This could cause Neutron to bind
+    new ports to a non-existent chassis, report stale agent status to operators
+    via the ``GET /v2.0/agents`` API, and delay L3 gateway rescheduling since
+    dependent agents (metadata, OVN neutron agent) also rely on the controller
+    agent's liveness. Neutron now immediately detects when the ``chassis``
+    reference in the ``Chassis_Private`` table is cleared and marks the
+    associated agents as down. For more information, see
+    `bug 2148211 <https://bugs.launchpad.net/neutron/+bug/2148211>`_.
