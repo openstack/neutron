@@ -86,6 +86,10 @@ class OvnNbIdl(OvnIdl):
         self.set_lock(self.LOCK_NAME)
         return super().start(timeout)
 
+    def notify(self, event, row, updates=None):
+        if self.has_lock:
+            super().notify(event, row, updates)
+
 
 class OvnSbIdl(OvnIdl):
     SCHEMA = 'OVN_Southbound'
