@@ -510,10 +510,14 @@ class OVNMechanismDriver(api.MechanismDriver):
                                          payload):
         context = payload.context
         security_group_id = payload.resource_id
-        for sg_rule in self._plugin.get_security_group_rules(
-                context, filters={'remote_group_id': [security_group_id]}):
-            self._ovn_client.delete_security_group_rule(
-                context.elevated(), sg_rule)
+        rules = self._plugin.get_security_group_rules(
+            context, filters={'remote_group_id': [security_group_id]})
+        if rules:
+            with self._ovn_client._nb_idl.transaction(
+                    check_error=True) as txn:
+                for sg_rule in rules:
+                    self._ovn_client.delete_security_group_rule(
+                        context.elevated(), sg_rule, txn=txn)
 
     def _delete_security_group(self, resource, event, trigger, payload):
         context = payload.context
@@ -529,10 +533,16 @@ class OVNMechanismDriver(api.MechanismDriver):
         old_stateful = ovn_acl.is_sg_stateful(old_state)
         new_stateful = ovn_acl.is_sg_stateful(new_state)
         if old_stateful != new_stateful:
-            for rule in self._plugin.get_security_group_rules(
-                    context, {'security_group_id': [security_group['id']]}):
-                self._ovn_client.delete_security_group_rule(context, rule)
-                self._ovn_client.create_security_group_rule(context, rule)
+            rules = self._plugin.get_security_group_rules(
+                context, {'security_group_id': [security_group['id']]})
+            if rules:
+                with self._ovn_client._nb_idl.transaction(
+                        check_error=True) as txn:
+                    for rule in rules:
+                        self._ovn_client.delete_security_group_rule(
+                            context, rule, txn=txn)
+                        self._ovn_client.create_security_group_rule(
+                            context, rule, txn=txn)
 
         ovn_revision_numbers_db.bump_revision(
             context, security_group, ovn_const.TYPE_SECURITY_GROUPS)
