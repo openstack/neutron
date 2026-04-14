@@ -137,6 +137,16 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                                             ovn_utils.ovn_name(router_id))
                     self.assertEqual([], lr.ports)
                     self.assertNotIn('chassis', lr.options)
+                    # The HCG is not deleted within the gateway LRP.
+                    hcg = self.nb_api.lookup('HA_Chassis_Group',
+                                             ovn_utils.ovn_name(router_id),
+                                             default=None)
+                    self.assertIsNotNone(hcg)
+
+                    # Delete the router and check that the HCG is no longer
+                    # present.
+                    req = self.new_delete_request('routers', router_id)
+                    req.get_response(self.api)
                     hcg = self.nb_api.lookup('HA_Chassis_Group',
                                              ovn_utils.ovn_name(router_id),
                                              default=None)

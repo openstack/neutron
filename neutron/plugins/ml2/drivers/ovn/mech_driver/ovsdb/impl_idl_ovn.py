@@ -516,33 +516,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def set_static_route(self, sroute, **columns):
         return cmd.SetStaticRouteCommand(self, sroute, **columns)
 
-    def _get_logical_router_port_gateway_chassis(self, lrp, priorities=None):
-        """Get the list of chassis hosting this gateway port.
-
-        @param   lrp: logical router port
-        @type    lrp: Logical_Router_Port row
-        @param   priorities: a list of gateway chassis priorities to search for
-        @type    priorities: list of int
-        @return: List of tuples (chassis_name, priority) sorted by priority. If
-                 ``priorities`` is set then only chassis matching of of these
-                 priorities are returned.
-        """
-        # Try retrieving gateway_chassis with new schema. If new schema is not
-        # supported or user is using old schema, then use old schema for
-        # getting gateway_chassis
-        chassis = []
-        if self._tables.get('Gateway_Chassis'):
-            for gwc in getattr(lrp, 'gateway_chassis', set()):
-                if priorities is not None and gwc.priority not in priorities:
-                    continue
-                chassis.append((gwc.chassis_name, gwc.priority))
-        else:
-            rc = lrp.options.get(ovn_const.OVN_GATEWAY_CHASSIS_KEY)
-            if rc:
-                chassis.append((rc, 0))
-        # make sure that chassis are sorted by priority
-        return sorted(chassis, reverse=True, key=lambda x: x[1])
-
     @staticmethod
     def _get_logical_router_port_ha_chassis_group(lrp, priorities=None):
         """Get the list of chassis hosting this gateway port.
@@ -576,7 +549,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         for lrp in self._tables['Logical_Router_Port'].rows.values():
             if not lrp.name.startswith('lrp-'):
                 continue
-            chassis = self._get_logical_router_port_gateway_chassis(
+            chassis = self._get_logical_router_port_ha_chassis_group(
                 lrp, priorities=priorities)
             for chassis_name, prio in chassis:
                 if (not chassis_candidate_list or
@@ -590,7 +563,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         try:
             lrp = idlutils.row_by_value(
                 self.idl, 'Logical_Router_Port', 'name', gateway_name)
-            chassis_list = self._get_logical_router_port_gateway_chassis(lrp)
+            chassis_list = self._get_logical_router_port_ha_chassis_group(lrp)
             return [chassis for chassis, prio in chassis_list]
         except idlutils.RowNotFound:
             return []
@@ -615,6 +588,33 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         gw_chassis = self.db_find_rows(
             'Gateway_Chassis', ('chassis_name', '=', chassis_name))
         return gw_chassis.execute(check_error=True)
+
+    def get_ha_chassis_group_from_chassis(self, chassis_name):
+        """Return the HA_Chassis_Group that contains a particular Chassis
+
+        A HA_Chassis_Group have associated several HA_Chassis registers. These
+        HA_Chassis register are linked to a Chassis (field ``chassis_name``).
+        This method returns all HA_Chassis_Group with HA_Chassis that are
+        linked to this particular Chassis.
+        """
+        ret = []
+        for hcg in self.db_list_rows('HA_Chassis_Group').execute(
+                check_error=True):
+            # If one of the HC of the HCG is associated to the chassis, append
+            # it and return.
+            if any(hc for hc in hcg.ha_chassis if
+                    hc.chassis_name == chassis_name):
+                ret.append(hcg)
+        return ret
+
+    def get_lrp_from_ha_chassis_group(self, ha_chassis_groups):
+        """Return the Logical_Router_Ports associated to the HCGs"""
+        ret = []
+        for hcg in ha_chassis_groups:
+            ret += self.db_find_rows(
+                'Logical_Router_Port',
+                ('ha_chassis_group', '=', hcg.uuid)).execute(check_error=True)
+        return ret
 
     def get_unhosted_gateways(self, port_physnet_dict, chassis_with_physnets,
                               all_gw_chassis, chassis_with_azs):
