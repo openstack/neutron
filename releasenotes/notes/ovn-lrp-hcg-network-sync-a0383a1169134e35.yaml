@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    ML2/OVN now reads the ``Logical_Router_Port`` ``HA_Chassis_Group`` instead
+    of the legacy ``Gateway_Chassis`` when syncing the external ports
+    ``HA_Chassis_Group`` of the connected networks. The ``HA_Chassis_Group``
+    change event on the router is now monitored to keep both the router and
+    the network chassis groups in sync.

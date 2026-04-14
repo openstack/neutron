@@ -27,7 +27,7 @@ class LogicalRouterPortEvent(row_event.RowEvent):
 
     If a Logical_Router_Port is deleted or added, first check if this LRP is a
     gateway port or not. Then update the corresponding network (or networks)
-    HA_Chassis_Group, matching the Logical_Router Gateway_Chassis.
+    HA_Chassis_Group, matching the Logical_Router_Port HA_Chassis_Group.
     See LP#2125553.
     """
 
@@ -90,31 +90,32 @@ class LogicalRouterPortEvent(row_event.RowEvent):
                     self.admin_context, router_id)
 
 
-class LogicalRouterPortGatewayChassisEvent(row_event.RowEvent):
-    """Logical_Router_Port Gateway_Chassis change event.
+class RouterHAChassisGroupEvent(row_event.RowEvent):
+    """HA_Chassis_Group change event for router gateway ports.
 
-    When the Gateway_Chassis list of a Logical_Router_Port changes, it is
-    needed to update the linked HA_Chassis_Group registers.
+    When the HA_Chassis list of a router's HA_Chassis_Group changes, it is
+    needed to update the linked network HA_Chassis_Group registers.
     """
 
     def __init__(self, driver):
         self.driver = driver
         self.l3_plugin = directory.get_plugin(constants.L3)
         self.admin_context = neutron_context.get_admin_context()
-        table = 'Logical_Router_Port'
+        table = 'HA_Chassis_Group'
         events = (self.ROW_UPDATE, )
         super().__init__(events, table, None)
 
     def match_fn(self, event, row, old):
-        if hasattr(old, 'gateway_chassis'):
-            # NOTE: when a Gateway_Chassis register is deleted, is no longer
-            # present in the old.gateway_chassis list.
-            return True
+        if not hasattr(old, 'ha_chassis'):
+            return False
 
-        return False
+        # Only match router HA_Chassis_Groups (those with a router_id tag
+        # but without a network_id tag, to exclude network HCGs).
+        ext_ids = row.external_ids
+        return (bool(ext_ids.get(ovn_const.OVN_ROUTER_ID_EXT_ID_KEY)) and
+                ovn_const.OVN_NETWORK_ID_EXT_ID_KEY not in ext_ids)
 
     def run(self, event, row, old=None):
-        lr_name = row.external_ids.get(ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
-        router_id = utils.get_neutron_name(lr_name)
+        router_id = row.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY]
         self.l3_plugin._ovn_client.update_router_ha_chassis_group(
             self.admin_context, router_id)

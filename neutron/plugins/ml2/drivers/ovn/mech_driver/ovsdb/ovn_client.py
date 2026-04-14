@@ -2383,11 +2383,11 @@ class OVNClient:
         """Link a unified HCG for all network ext. ports if connected to router
 
         If a network is connected to a router, this method checks if the router
-        has a gateway port and the corresponding "Gateway_Chassis" registers.
-        In that case, it creates a unified "HA_Chassis_Group" for this network
-        and assign it to all external ports. That will collocate the external
-        ports in the same gateway chassis as the router gateway port, allowing
-        N/S communication. See LP#2125553
+        has a gateway port and its ``HA_Chassis_Group``. In that case, it
+        creates a unified ``HA_Chassis_Group`` for this network and assigns it
+        to all external ports. That will collocate the external ports in the
+        same gateway chassis as the router gateway port, allowing N/S
+        communication. See LP#2125553
         """
         if not self._nb_idl.lookup('Logical_Router', utils.ovn_name(router_id),
                                    default=None):
@@ -2401,11 +2401,12 @@ class OVNClient:
             self.unlink_network_ha_chassis_group(network_id)
             return
 
-        # Retrieve all "Gateway_Chassis" and build the "chassis_prio"
-        # dictionary.
+        if not gw_lrps[0].ha_chassis_group:
+            return
+
         chassis_prio = {}
-        for gc in gw_lrps[0].gateway_chassis:
-            chassis_prio[gc.chassis_name] = gc.priority
+        for hc in gw_lrps[0].ha_chassis_group[0].ha_chassis:
+            chassis_prio[hc.chassis_name] = hc.priority
 
         with self._nb_idl.transaction(check_error=True) as txn:
             # Create the "HA_Chassis_Group" associated to this network.
