@@ -2812,10 +2812,10 @@ class OVNClient:
                                 ovn_const.TYPE_ADDRESS_GROUPS))
                         }
         attrs = [('external_ids', external_ids),]
-        for ip_version in const.IP_ALLOWED_VERSIONS:
-            as_name = utils.ovn_ag_addrset_name(address_group['id'],
-                                                'ip' + str(ip_version))
-            with self._nb_idl.transaction(check_error=True) as txn:
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for ip_version in const.IP_ALLOWED_VERSIONS:
+                as_name = utils.ovn_ag_addrset_name(address_group['id'],
+                                                    'ip' + str(ip_version))
                 txn.add(self._nb_idl.address_set_add(
                     as_name, addresses=addr_map_all[ip_version],
                     may_exist=True))
@@ -2826,26 +2826,23 @@ class OVNClient:
 
     def update_address_group(self, context, address_group):
         addr_map_db = self._checkout_ip_list(address_group['addresses'])
-        for ip_version in const.IP_ALLOWED_VERSIONS:
-            as_name = utils.ovn_ag_addrset_name(address_group['id'],
-                                                'ip' + str(ip_version))
-            check_rev_cmd = self._nb_idl.check_revision_number(
-                as_name, address_group, ovn_const.TYPE_ADDRESS_GROUPS)
-            with self._nb_idl.transaction(check_error=True) as txn:
+        check_rev_cmd = None
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for ip_version in const.IP_ALLOWED_VERSIONS:
+                as_name = utils.ovn_ag_addrset_name(address_group['id'],
+                                                    'ip' + str(ip_version))
+                check_rev_cmd = self._nb_idl.check_revision_number(
+                    as_name, address_group, ovn_const.TYPE_ADDRESS_GROUPS)
                 txn.add(check_rev_cmd)
-                # For add/remove addresses
-                addr_ovn = self._nb_idl.get_address_set(as_name)[0].addresses
+                addr_ovn = self._nb_idl.get_address_set(
+                    as_name)[0].addresses
                 added = set(addr_map_db[ip_version]) - set(addr_ovn)
                 removed = set(addr_ovn) - set(addr_map_db[ip_version])
                 txn.add(self._nb_idl.address_set_add_addresses(
-                    as_name,
-                    added
-                ))
+                    as_name, added))
                 txn.add(self._nb_idl.address_set_remove_addresses(
-                    as_name,
-                    removed
-                ))
-        if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
+                    as_name, removed))
+        if check_rev_cmd and check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(
                 context, address_group, ovn_const.TYPE_ADDRESS_GROUPS)
 
