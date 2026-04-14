@@ -1679,8 +1679,23 @@ class TestMaintenance(_TestMaintenanceHelper):
         ext_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lr_name}
         self.nb_api.add_lrouter_port(
             lrp_name, lr_name, mac=mac,
-            networks=networks, gateway_chassis=gateway_chassis,
+            networks=networks,
             external_ids=ext_ids).execute(check_error=True)
+
+        # Manually create Gateway_Chassis rows and assign them to the LRP
+        # in a single transaction, simulating the legacy state before the
+        # migration to HA_Chassis_Group.
+        with self.nb_api.transaction(check_error=True) as txn:
+            prio = len(gateway_chassis)
+            for chassis in gateway_chassis:
+                gwc_name = f'{lrp_name}_{chassis}'
+                gwc_cmd = txn.add(self.nb_api.db_create(
+                    'Gateway_Chassis', name=gwc_name,
+                    chassis_name=chassis, priority=prio))
+                txn.add(self.nb_api.db_add(
+                    'Logical_Router_Port', lrp_name,
+                    'gateway_chassis', gwc_cmd))
+                prio -= 1
 
         hcg = self.nb_api.lookup('HA_Chassis_Group', lr_name, default=None)
         self.assertIsNone(hcg)
