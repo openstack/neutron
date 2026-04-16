@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+#    Licensed under the Apache License, Version 2.0 (the "License"); you may
+#    not use this file except in compliance with the License. You may obtain
+#    a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#    License for the specific language governing permissions and limitations
+#    under the License.
+
+FRR_ETC_SRC_DIR=$DEST/neutron/devstack/etc
+
+function install_frr {
+    echo_summary "Installing FRR"
+
+    install_package frr
+}
+
+function configure_frr {
+    echo_summary "Configuring FRR"
+
+    # Create the configuration dir
+    sudo install -d -o $STACK_USER $FRR_CONF_DIR
+
+    # Configure frr daemons
+    if [[ "$FRR_USE_BFD" == "True" ]]; then
+        sudo install -o root -g root -m 644 $FRR_ETC_SRC_DIR/frr_with_bfd/* $FRR_CONF_DIR/
+    else
+        sudo install -o root -g root -m 644 $FRR_ETC_SRC_DIR/frr/* $FRR_CONF_DIR/
+    fi
+
+}
+
+function init_frr {
+    echo_summary "Initializing (restart) FRR"
+    enable_service $FRR_SYSTEMD_SERVICE
+    restart_service $FRR_SYSTEMD_SERVICE
+}
+
+function start_frr {
+    echo_summary "Starting FRR"
+    start_service $FRR_SYSTEMD_SERVICE
+}
+
+function stop_frr {
+    echo_summary "Stopping FRR"
+    stop_service $FRR_SYSTEMD_SERVICE
+}
+
+function cleanup_frr {
+    echo_summary "Cleaning FRR"
+
+    # Remove FRR
+    disable_service $FRR_SYSTEMD_SERVICE
+    uninstall_package frr
+
+    # Clean the FRRt configuration dir
+    sudo rm -rf $FRR_CONF_DIR
+}
+

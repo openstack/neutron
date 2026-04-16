@@ -1,0 +1,131 @@
+---
+- name: Workaround router advertisement packets polluting routing tables
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      for i in $(ls /proc/sys/net/ipv6/conf/*/forwarding); do echo 1 > $i; done
+  changed_when: false
+
+- name: Register interfaces
+  ansible.builtin.shell:
+    cmd: "ls -1 /proc/sys/net/ipv4/conf/*/rp_filter | cut -d/ -f7"
+  register: interfaces
+  changed_when: false
+
+- name: Disable reverse path forwarding validation
+  become: true
+  ansible.posix.sysctl:
+    name: "net.ipv4.conf.{{ item }}.rp_filter"
+    value: "0"
+    sysctl_set: true
+    sysctl_file: /etc/sysctl.d/99-sysctl.conf
+    state: present
+    reload: true
+  loop: "{{ interfaces.stdout_lines }}"
+  register: result
+  retries: 3
+  timeout: 60
+  until: result is not failed
+
+- name: Disable reverse path forwarding validation
+  become: true
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    sysctl_file: /etc/sysctl.d/99-sysctl.conf
+    state: present
+    reload: true
+  with_dict:
+    net.ipv4.conf.all.rp_filter: '0'
+    net.ipv4.conf.default.rp_filter: '0'
+  register: result
+  retries: 3
+  timeout: 60
+  until: result is not failed
+
+- name: Set IPv4 forwarding
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: true
+    sysctl_file: /etc/sysctl.d/90-network.conf
+    state: present
+    reload: true
+
+- name: Set IPv6 forwarding
+  become: true
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: '1'
+    sysctl_set: true
+    sysctl_file: /etc/sysctl.d/90-network.conf
+    state: present
+    reload: true
+
+- name: Check installed packages
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Install frr
+  become: true
+  ansible.builtin.package:
+    name: frr
+    state: present
+
+- name: Enable FRR BGP daemon
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/frr/daemons
+    regexp: "^bgpd="
+    line: "bgpd=yes"
+    owner: frr
+    group: frr
+    mode: '640'
+
+- name: Enable FRR BFD daemon
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/frr/daemons
+    regexp: "^bfdd="
+    line: "bfdd=yes"
+    owner: frr
+    group: frr
+    mode: '640'
+
+- name: Enable retain option of zebra
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/frr/daemons
+    regexp: "^zebra_options="
+    line: "zebra_options=\"  -A 127.0.0.1 -s 90000000 -r \""
+    owner: frr
+    group: frr
+    mode: '640'
+
+- name: Configure FRR
+  become: true
+  ansible.builtin.template:
+    src: frr.conf.j2
+    dest: /etc/frr/frr.conf
+    owner: frr
+    group: frr
+    mode: '640'
+
+- name: Enable FRR Zebra daemon
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/frr/daemons
+    regexp: "^zebra="
+    line: "zebra=yes"
+    owner: frr
+    group: frr
+    mode: '640'
+
+- name: Enable and start FRR
+  become: true
+  ansible.builtin.service:
+    name: frr
+    enabled: true
+    state: restarted
