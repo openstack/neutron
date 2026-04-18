@@ -399,6 +399,7 @@ class ReconcileMainRouterCommand(ReconcileRouterCommand):
                 constants.BGP_ROUTER_REDISTRIBUTE,
             constants.LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID:
                 str(bgp_config.get_main_router_vrf_id()),
+            constants.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE_LOCAL: 'true',
         }
 
     def run_idl(self, txn):
