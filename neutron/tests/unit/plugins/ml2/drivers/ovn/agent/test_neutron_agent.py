@@ -124,7 +124,7 @@ class AgentCacheTestCase(base.BaseTestCase):
         agent.chassis.hostname = 'fake-hostname'
         agent.updated_at = datetime.datetime(
             year=2023, month=2, day=23, hour=1, minute=2, second=3,
-            microsecond=456789).replace(tzinfo=datetime.timezone.utc)
+            microsecond=456789).replace(tzinfo=datetime.UTC)
 
         # Verify that both microseconds and timezone are dropped
         self.assertEqual(str(agent.as_dict()['heartbeat_timestamp']),

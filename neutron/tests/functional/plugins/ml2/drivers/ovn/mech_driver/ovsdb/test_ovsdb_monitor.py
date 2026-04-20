@@ -783,7 +783,7 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
                 'Chassis_Private', self.chassis_name,
                 'nb_cfg_timestamp').execute(check_error=True)
             updated_at = datetime.datetime.fromtimestamp(
-                int(chassis_ts / 1000), datetime.timezone.utc)
+                int(chassis_ts / 1000), datetime.UTC)
             return agent.updated_at == updated_at
 
         timestamp = timeutils.utcnow_ts()

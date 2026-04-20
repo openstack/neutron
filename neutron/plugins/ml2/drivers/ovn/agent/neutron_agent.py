@@ -51,8 +51,7 @@ class NeutronAgent(abc.ABC):
     def update(self, chassis_private, clear_down=False):
         self.chassis_private = chassis_private
         updated_at = datetime.datetime.fromtimestamp(
-            chassis_private.nb_cfg_timestamp / 1000,
-            datetime.timezone.utc)
+            chassis_private.nb_cfg_timestamp / 1000, datetime.UTC)
         self.updated_at = updated_at
         if clear_down:
             self.set_down = False
