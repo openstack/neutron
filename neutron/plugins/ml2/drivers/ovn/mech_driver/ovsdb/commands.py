@@ -498,8 +498,14 @@ class ScheduleUnhostedGatewaysCommand(command.BaseCommand):
         chassis_priority = utils.get_chassis_priority(chassis)
         lrouter_name = lrouter_port.external_ids[
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
+        router_id = utils.get_neutron_name(lrouter_name)
+        external_ids = {
+            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints),
+            ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id,
+        }
         hcg = _sync_ha_chassis_group(txn, self.api, lrouter_name,
-                                     chassis_priority, may_exist=True)
+                                     chassis_priority, may_exist=True,
+                                     external_ids=external_ids)
         setattr(lrouter_port, 'ha_chassis_group', ovsdbapp_utils.get_uuid(hcg))
 
 
@@ -526,8 +532,14 @@ class ScheduleNewGatewayCommand(command.BaseCommand):
             target_lrouter=lrouter)
         if chassis:
             chassis_priority = utils.get_chassis_priority(chassis)
+            router_id = utils.get_neutron_name(self.lrouter_name)
+            external_ids = {
+                ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(self.az_hints),
+                ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id,
+            }
             hcg = _sync_ha_chassis_group(txn, self.api, self.lrouter_name,
-                                         chassis_priority, may_exist=True)
+                                         chassis_priority, may_exist=True,
+                                         external_ids=external_ids)
             setattr(lrouter_port, 'ha_chassis_group',
                     ovsdbapp_utils.get_uuid(hcg))
 
