@@ -668,9 +668,9 @@ class OVSBridge(BaseOVS):
         # get the interface name list for this bridge
         return self.ovsdb.list_ifaces(self.br_name).execute(check_error=True)
 
-    def get_iface_ofports_by_type(self, type_):
-        return _GetBridgeInterfacesOfportsByTypeCommand(
-            self.ovsdb, self.br_name, type_).execute(check_error=True)
+    def get_iface_ofports_by_types(self, *types):
+        return _GetBridgeInterfacesOfportsByTypesCommand(
+            self.ovsdb, self.br_name, *types).execute(check_error=True)
 
     def get_port_name_list(self):
         # get the port name list for this bridge
@@ -1398,18 +1398,18 @@ class DeferredOVSBridge:
                           self.br.br_name)
 
 
-class _GetBridgeInterfacesOfportsByTypeCommand(ovs_cmd.ReadOnlyCommand):
-    def __init__(self, api, bridge_name, type_):
+class _GetBridgeInterfacesOfportsByTypesCommand(ovs_cmd.ReadOnlyCommand):
+    def __init__(self, api, bridge_name, *types):
         super().__init__(api)
         self.bridge_name = bridge_name
-        self.type = type_
+        self.types = types
 
     def run_idl(self, txn):
         br = idlutils.row_by_value(
             self.api.idl, 'Bridge', 'name', self.bridge_name)
         self.result = [
             i.ofport[0] for p in br.ports if p.name != self.bridge_name
-            for i in p.interfaces if i.type == self.type and i.ofport]
+            for i in p.interfaces if i.type in self.types and i.ofport]
 
 
 def _build_flow_expr_str(flow_dict, cmd, strict):

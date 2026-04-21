@@ -112,22 +112,22 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
             bridge_name_list
         ).execute(check_error=True)
 
-    def watch_port_created_event(self, bgp_bridge, port_type):
+    def watch_port_created_event(self, bgp_bridge, *port_types):
         # Check the port doesn't exist on the bridge
-        ports_ofports = bgp_bridge.ovs_bridge.get_iface_ofports_by_type(
-            port_type)
+        ports_ofports = bgp_bridge.ovs_bridge.get_iface_ofports_by_types(
+            *port_types)
 
         if not ports_ofports:
             LOG.debug("Waiting for a %s port creation on bridge %s",
-                      port_type, bgp_bridge.name)
+                      port_types, bgp_bridge.name)
             event_handler = self.agent_api.ovs_idl.idl.notify_handler
             event = events.BGPBridgePortCreatedEvent(
-                self.agent_api, bgp_bridge.name, port_type)
+                self.agent_api, bgp_bridge.name, *port_types)
             event_handler.watch_event(event)
 
             # Check the port again in case it was created in the meantime
             ports_ofports = (
-                bgp_bridge.ovs_bridge.get_iface_ofports_by_type(port_type))
+                bgp_bridge.ovs_bridge.get_iface_ofports_by_types(*port_types))
 
             # FIXME(jlibosva): Check if there could be a race condition here
             #                  where we receive the event, it configures the
@@ -137,12 +137,12 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
                 LOG.debug(
                     "The %s port was created in the meantime on bridge %s "
                     "with ofport %d, removing the onetime event from the "
-                    "queue.", port_type, bgp_bridge.name, ports_ofports[0])
+                    "queue.", port_types, bgp_bridge.name, ports_ofports[0])
                 event_handler.unwatch_event(event)
                 if bgp_bridge.check_requirements_for_flows_met():
                     bgp_bridge.configure_flows()
         else:
             LOG.debug("The BGP bridge %s already has a %s port with ofport"
-                      " %d", bgp_bridge.name, port_type, ports_ofports[0])
+                      " %d", bgp_bridge.name, port_types, ports_ofports[0])
             if bgp_bridge.check_requirements_for_flows_met():
                 bgp_bridge.configure_flows()

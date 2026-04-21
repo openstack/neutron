@@ -180,8 +180,8 @@ class NewBgpBridgeEvent(BGPAgentEvent):
     def run(self, event, row, old):
         bgp_bridge = self.bgp_agent.create_bgp_bridge(row.name)
         self.bgp_agent.watch_port_created_event(bgp_bridge, 'patch')
-        # Empty string is for the NIC connecting to the leaf switch
-        self.bgp_agent.watch_port_created_event(bgp_bridge, '')
+        self.bgp_agent.watch_port_created_event(
+            bgp_bridge, *constants.BGP_BRIDGE_NIC_TYPES)
         if bgp_bridge.check_requirements_for_flows_met():
             bgp_bridge.configure_flows()
 
@@ -228,15 +228,15 @@ class BGPBridgePortCreatedEvent(BGPAgentEvent):
     TABLE = 'Interface'
     ONETIME = True
 
-    def __init__(self, agent_api, bgp_bridge_name, port_type):
+    def __init__(self, agent_api, bgp_bridge_name, *port_types):
         super().__init__(agent_api)
         self.bgp_bridge_name = bgp_bridge_name
-        self.port_type = port_type
+        self.port_types = port_types
 
     @property
     def key(self):
         return (self.__class__, self.table,
-                tuple(self.events), self.bgp_bridge_name)
+                tuple(self.events), self.bgp_bridge_name, *self.port_types)
 
     def _get_port_bridge(self, port_name):
         # We just need access to BaseOVS
@@ -247,7 +247,7 @@ class BGPBridgePortCreatedEvent(BGPAgentEvent):
         if not super().match_fn(event, row, old):
             return False
 
-        if row.type != self.port_type:
+        if row.type not in self.port_types:
             return False
 
         try:
