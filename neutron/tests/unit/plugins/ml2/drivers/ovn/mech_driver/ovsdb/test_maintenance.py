@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import threading
+import time
 from unittest import mock
 
 from futurist import periodics
@@ -33,6 +35,49 @@ from neutron.tests.unit.extensions import test_address_group as test_ag
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2 import test_security_group as test_sg
 from neutron.tests.unit import testlib_api
+
+
+class TestMaintenanceThread(base.BaseTestCase):
+
+    def test_start_bounds_thread_pool_executor(self):
+        """Verify MaintenanceThread runs periodic tasks with one worker."""
+        num_tasks = 5
+        run_counter = [0] * num_tasks
+        active_threads = []
+        target_runs = 5
+
+        class _PeriodicTask:
+            def __init__(self, idx):
+                self.idx = idx
+
+            @periodics.periodic(spacing=0.05)
+            def trivial_task(self):
+                run_counter[self.idx] += 1
+                active_threads.append(threading.active_count())
+                time.sleep(0)
+                if run_counter[self.idx] >= target_runs:
+                    raise periodics.NeverAgain
+
+        mt = maintenance.MaintenanceThread()
+        for idx in range(num_tasks):
+            mt.add_periodics(_PeriodicTask(idx))
+
+        threads_before = threading.active_count()
+        mt.start()
+        threads_after_start = threading.active_count()
+        self.assertGreater(threads_after_start, threads_before)
+
+        executor = mt._worker._executor_factory()
+        # Let some tasks be executed.
+        time.sleep(2)
+        threads_after_wait = threading.active_count()
+        self.assertEqual(threads_after_wait, threads_after_start + 1)
+
+        executor.shutdown(wait=False)
+        mt._thread.join(timeout=3)
+        threads_end = threading.active_count()
+        self.assertEqual(threads_end, threads_after_wait)
+        self.assertTrue(all(target_runs == _c for _c in run_counter))
 
 
 class TestHasLockPeriodicDecorator(base.BaseTestCase):
