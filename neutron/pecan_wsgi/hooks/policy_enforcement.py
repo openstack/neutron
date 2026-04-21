@@ -227,14 +227,13 @@ class PolicyHook(hooks.PecanHook):
         """
         attributes_to_exclude = []
         for attr_name in list(data):
-            # TODO(amotoki): All attribute maps have project_id and
-            # it determines excluded attributes based on project_id.
-            # We need to migrate tenant_id to project_id later
-            # as attr_info is referred to in various places and we need
-            # to check all logs carefully.
-            if attr_name == 'project_id':
-                continue
+            # NOTE(haleyb): If no attribute data was found and this
+            # attribute name is 'project_id', we must also check if there
+            # is data for 'tenant_id'. This can happen for some of the
+            # older object definitions like Port, Network, Subnet, etc.
             attr_data = controller.resource_info.get(attr_name)
+            if not attr_data and attr_name == 'project_id':
+                attr_data = self._attr_info.get('tenant_id')
             if attr_data and attr_data['is_visible']:
                 if policy.check(
                         context,
@@ -249,11 +248,10 @@ class PolicyHook(hooks.PecanHook):
             # if the code reaches this point then either the policy check
             # failed or the attribute was not visible in the first place
             attributes_to_exclude.append(attr_name)
-            # TODO(amotoki): As mentioned in the above TODO,
-            # we treat project_id and tenant_id equivalently.
-            # This should be migrated to project_id later.
-            if attr_name == 'tenant_id':
-                attributes_to_exclude.append('project_id')
+            # NOTE(haleyb): As mentioned above, we treat 'project_id'
+            # and 'tenant_id' as equivalent.
+            if attr_name == 'project_id':
+                attributes_to_exclude.append('tenant_id')
         if attributes_to_exclude:
             LOG.debug("Attributes excluded by policy engine: %s",
                       attributes_to_exclude)
