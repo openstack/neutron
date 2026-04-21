@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import os
 import pprint
 
@@ -31,12 +32,12 @@ object_data = {
     'AddressGroupRBAC': '1.1-be82ed54376b85ee4f963d479ac48c91',
     'AddressScope': '1.1-dd0dfdb67775892d3adc090e28e43bd8',
     'AddressScopeRBAC': '1.1-be82ed54376b85ee4f963d479ac48c91',
-    'Agent': '1.1-64b670752d57b3c7602cb136e0338507',
+    'Agent': '1.1-4feb0abf8732a17c16dee962091d9203',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'AutoAllocatedTopology': '1.0-74642e58c53bf3610dc224c59f81b242',
     'ConntrackHelper': '1.0-b1a50cfe18178db50c7f206e75613f4b',
     'DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
-    'DistributedPortBinding': '1.0-39c0d17b281991dcb66716fee5a8bef2',
+    'DistributedPortBinding': '1.0-575793af113535b8eae1a0c1eab906e2',
     'DNSNameServer': '1.0-bf87a85327e2d812d1666ede99d9918b',
     'ExternalNetwork': '1.0-53d885e033cb931f9bb3bdd6bbe3f0ce',
     'DvrFipGatewayPortAgentBinding': '1.0-ee2af3296265a5463de0bc3695b35b51',
@@ -76,9 +77,9 @@ object_data = {
     'Port': '1.10-ae84f686bfc3deb4017495134da6ef04',
     'PortHardwareOffloadType': '1.0-5f424d02b144fd1832ac3e6b03662674',
     'PortDeviceProfile': '1.0-b98c7083cc3e93d176fd7a91ae13af32',
-    'PortHints': '1.0-9ebf6e12fa427809476a92c7432352b8',
+    'PortHints': '1.0-e6d029e62d66b4384dfbe220cc027c21',
     'PortNumaAffinityPolicy': '1.0-38fcea43e7bfb2536461f3d053c43aa3',
-    'PortBinding': '1.0-3306deeaa6deb01e33af06777d48d578',
+    'PortBinding': '1.0-8c30695f87c700d9f435b160519e3400',
     'PortBindingLevel': '1.1-50d47f63218f87581b6cd9a62db574e5',
     'PortDataPlaneStatus': '1.0-25be74bda46c749653a10357676c0ab2',
     'PortDNS': '1.1-c5ca2dc172bdd5fafee3fc986d1d7023',
@@ -154,7 +155,32 @@ class TestObjectVersions(test_base.BaseTestCase):
                 hashes_file.write(pprint.pformat(fingerprints))
 
         expected, actual = checker.test_hashes(object_data)
-        self.assertEqual(expected, actual,
-                         'Some objects have changed; please make sure the '
-                         'versions have been bumped, and then update their '
-                         'hashes in the object_data map in this test module.')
+        try:
+            self.assertEqual(
+                expected, actual,
+                'Some objects have changed; please make sure the '
+                'versions have been bumped, and then update their '
+                'hashes in the object_data map in this test module.')
+        except Exception:
+            # FIXME(stephenfin): This is workaround for a bug fix in
+            # neutron-lib which had the side effect of changing hashes. The
+            # change in hash has no impact at runtime since our behavior and
+            # data remain unchanged. We should drop all of the below and the
+            # try-except above once we bump our neutron-lib minimum to a
+            # version that includes the fix [1].
+            #
+            # [1] https://review.opendev.org/c/openstack/neutron-lib/+/985636
+            old_object_data = copy.copy(object_data)
+            old_object_data.update({
+                'Agent': '1.1-64b670752d57b3c7602cb136e0338507',
+                'DistributedPortBinding': '1.0-39c0d17b281991dcb66716fee5a8bef2',  # noqa: E501
+                'PortBinding': '1.0-3306deeaa6deb01e33af06777d48d578',
+                'PortHints': '1.0-9ebf6e12fa427809476a92c7432352b8',
+            })
+
+            expected, actual = checker.test_hashes(old_object_data)
+            self.assertEqual(
+                expected, actual,
+                'Some objects have changed; please make sure the '
+                'versions have been bumped, and then update their '
+                'hashes in the object_data map in this test module.')
