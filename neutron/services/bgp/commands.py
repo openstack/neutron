@@ -287,7 +287,6 @@ class ReconcileNeutronSwitchCommand(_NeutronSwitchBase):
         ReconcileMainRouterPoliciesForProviderCommand(
             self.api,
             self.interconnect_switch_name,
-            related_resource=self.n_switch,
         ).run_idl(txn)
 
 
@@ -323,10 +322,9 @@ class DeleteNeutronSwitchCommand(_NeutronSwitchBase):
 
 
 class ReconcileMainRouterPoliciesForProviderCommand(ovs_cmd.BaseCommand):
-    def __init__(self, api, interconnect_switch_name, related_resource=None):
+    def __init__(self, api, interconnect_switch_name):
         super().__init__(api)
         self.interconnect_switch_name = interconnect_switch_name
-        self.related_resource = related_resource
 
     def run_idl(self, txn):
         router = _get_main_router(self.api)
@@ -338,26 +336,18 @@ class ReconcileMainRouterPoliciesForProviderCommand(ovs_cmd.BaseCommand):
                 router,
                 lrp_interconnect_name,
                 lrp,
-                self.related_resource,
             ).run_idl(txn)
 
 
 class ReconcileMainRouterPoliciesCommand(ovs_cmd.BaseCommand):
-    def __init__(self, api, router, interconnect_lrp_name, chassis_lrp,
-                 related_resource=None):
+    def __init__(self, api, router, interconnect_lrp_name, chassis_lrp):
         super().__init__(api)
         self.router = router
         self.interconnect_lrp_name = interconnect_lrp_name
         self.chassis_lrp = chassis_lrp
-        self.related_resource = related_resource
 
     def run_idl(self, txn):
         lrp_peer_ip = _get_lrp_peer_ip(self.api, self.chassis_lrp)
-        external_ids = {}
-
-        if self.related_resource:
-            external_ids[constants.RELATED_RESOURCE_TAG] = str(
-                self.related_resource.uuid)
 
         # An egress policy to reroute traffic to the chassis router that is
         # local to the chassis where the traffic originated from
@@ -370,7 +360,6 @@ class ReconcileMainRouterPoliciesCommand(ovs_cmd.BaseCommand):
             action='reroute',
             output_port=self.chassis_lrp,
             nexthops=[lrp_peer_ip],
-            external_ids=external_ids,
         ).run_idl(txn)
 
 
@@ -682,7 +671,7 @@ class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
             },
         ).run_idl(txn)
 
-        _LrpAddCommand(
+        self.row_result = _run_idl_command(_LrpAddCommand(
             self.api,
             main_router_name,
             lrp_main,
@@ -693,7 +682,27 @@ class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
             external_ids={
                 constants.BGP_LRP_TO_CHASSIS: self.router_name,
             },
-        ).run_idl(txn)
+        ), txn)
+
+
+class ReconcileMainRouterPoliciesForChassisCommand(ovs_cmd.BaseCommand):
+    def __init__(self, api, chassis_lrp):
+        super().__init__(api)
+        self.chassis_lrp = chassis_lrp
+
+    def run_idl(self, txn):
+        router = _get_main_router(self.api)
+        for switch in _get_all_provider_switches(self.api):
+            interconnect_switch_name = (
+                helpers.get_provider_interconnect_switch_name(switch.name))
+            lrp_interconnect_name = helpers.get_lrp_name(
+                router.name, interconnect_switch_name)
+            ReconcileMainRouterPoliciesCommand(
+                self.api,
+                router,
+                lrp_interconnect_name,
+                self.chassis_lrp,
+            ).run_idl(txn)
 
 
 class ReconcileChassisCommand(ovs_cmd.BaseCommand):
@@ -727,11 +736,16 @@ class ReconcileChassisCommand(ovs_cmd.BaseCommand):
             self.chassis,
         ).run_idl(txn)
 
-        # Connect chassis router to the main router
-        ConnectChassisRouterToMainRouterCommand(
+        chassis_lrp = _run_idl_command(
+            ConnectChassisRouterToMainRouterCommand(
+                self.api,
+                self.chassis,
+                hcg.uuid,
+            ), txn)
+
+        ReconcileMainRouterPoliciesForChassisCommand(
             self.api,
-            self.chassis,
-            hcg.uuid,
+            chassis_lrp,
         ).run_idl(txn)
 
         for bgp_bridge in helpers.get_chassis_bgp_bridges(self.chassis):
