@@ -1402,9 +1402,13 @@ class TestIsRouterPortChanged(test_mech_driver.OVNMechanismDriverTestCase):
 
 class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
+    def _clean_agent_cache(self, ovn_sb_synchronizer):
+        del ovn_sb_synchronizer.agent_cache
+
     def test_ovn_sb_sync(self):
         ovn_sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
             self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_LOG)
+        self.addCleanup(self._clean_agent_cache, ovn_sb_synchronizer)
         ovn_api = ovn_sb_synchronizer.ovn_sb_api
         hostname_with_physnets = {'hostname1': ['physnet1', 'physnet2'],
                                   'hostname2': ['physnet1']}
@@ -1416,7 +1420,8 @@ class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
         with mock.patch.object(ovn_db_sync.segments_db,
                                'get_hosts_mapped_with_segments',
-                               return_value=hosts_in_neutron) as mock_ghmws:
+                               return_value=hosts_in_neutron) as mock_ghmws, \
+                mock.patch.object(ovn_sb_synchronizer.agent_cache, 'populate'):
             ovn_sb_synchronizer.sync_hostname_and_physical_networks(mock.ANY)
             mock_ghmws.assert_called_once_with(mock.ANY)
             self.assertEqual(
