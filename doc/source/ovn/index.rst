@@ -13,4 +13,5 @@ OVN Driver
    ml2ovn_trace.rst
    faq/index.rst
    ovn_agent.rst
+   bgp_tempest_job.rst
    virtual_ips.rst
