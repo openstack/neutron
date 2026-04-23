@@ -18,7 +18,6 @@ Utility methods for working with WSGI servers
 """
 from neutron_lib import context
 from neutron_lib import exceptions as exception
-from oslo_config import cfg
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
@@ -29,10 +28,6 @@ import webob.dec
 import webob.exc
 
 from neutron._i18n import _
-from neutron.conf import wsgi as wsgi_config
-
-CONF = cfg.CONF
-wsgi_config.register_socket_opts()
 
 LOG = logging.getLogger(__name__)
 

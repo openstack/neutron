@@ -22,7 +22,6 @@ from oslo_config import cfg
 # load all options.
 import neutron.agent.agent_extensions_manager  # noqa: F401
 import neutron.agent.securitygroups_rpc  # noqa: F401
-import neutron.api.wsgi  # noqa: F401
 import neutron.conf.agent.agent_extensions_manager
 import neutron.conf.agent.common
 import neutron.conf.agent.database.agents_db
@@ -59,7 +58,6 @@ import neutron.conf.services.extdns_designate_driver
 import neutron.conf.services.logging
 import neutron.conf.services.metering_agent
 import neutron.conf.services.provider_configuration
-import neutron.conf.wsgi
 import neutron.db.migration.cli
 import neutron.extensions.l3  # noqa: F401
 import neutron.extensions.securitygroup  # noqa: F401
@@ -186,7 +184,6 @@ def list_opts():
          itertools.chain(
              neutron.conf.common.core_cli_opts,
              neutron.conf.common.core_opts,
-             neutron.conf.wsgi.socket_opts,
              neutron.conf.service.SERVICE_OPTS,
              neutron.conf.service.RPC_EXTRA_OPTS)
          ),
