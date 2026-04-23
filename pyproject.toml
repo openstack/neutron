@@ -344,6 +344,18 @@ packages = [
     "etc/neutron/rootwrap.d/*",
 ]
 
+[tool.coverage.run]
+branch = true
+source = ["neutron"]
+omit = [
+    "neutron/tests/*",
+    "neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/api.py",
+    "neutron/services/loki/loki_plugin.py",
+]
+
+[tool.coverage.report]
+ignore_errors = true
+
 [tool.mypy]
 pretty = true
 show_error_context = true
