@@ -1,0 +1,11 @@
+---
+upgrade:
+  - |
+    The OVN L3 scheduler now uses ``HA_Chassis_Group`` and ``HA_Chassis``
+    tables instead of the deprecated ``Gateway_Chassis`` table for scheduling
+    gateway ``Logical_Router_Port``. This aligns with the preferred HA
+    scheduling method in OVN since version 20.03.0. The
+    ``redirect-chassis`` option in the ``Logical_Router_Port`` is no longer
+    used. A new maintenance task automatically migrates any existing
+    ``Gateway_Chassis`` references to the equivalent ``HA_Chassis_Group``
+    configuration.

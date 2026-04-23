@@ -38,14 +38,13 @@ North/South routing
 
 A network with an external port (SR-IOV, baremetal), will create a
 ``HA_Chassis_Group`` register to schedule these external ports in gateway
-chassis. The routers (still) use a set of ``Gateway_Chassis`` registers to
-execute the scheduling of the gateway port. Now, since the implementation of
-[1]_, when a network is connected as an internal network, the Neutron API will
-sync the network ``HA_Chassis_Group`` with the gateway port ``Gateway_Chassis``
-set. That will make both scheduling methods to be in sync and will collocate
-the gateway router port and the external port in the same OVN gateway chassis;
-that allows OVN to route the traffic from the external port through the gateway
-port.
+chassis. The routers also use ``HA_Chassis_Group`` registers to execute the
+scheduling of the gateway port. Since the implementation of [1]_, when a
+network is connected as an internal network, the Neutron API will sync the
+network ``HA_Chassis_Group`` with the gateway port ``HA_Chassis_Group``. That
+will make both scheduling methods to be in sync and will collocate the gateway
+router port and the external port in the same OVN gateway chassis; that allows
+OVN to route the traffic from the external port through the gateway port.
 
 When the network ``HA_Chassis_Group`` is updated, it could be possible that
 the currently assigned gateway chassis changes. However, before connecting the

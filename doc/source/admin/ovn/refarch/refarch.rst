@@ -170,7 +170,8 @@ output in this section uses these commands with various output filters.
    $ ovn-nbctl list Address_Set
    $ ovn-nbctl list Logical_Router
    $ ovn-nbctl list Logical_Router_Port
-   $ ovn-nbctl list Gateway_Chassis
+   $ ovn-nbctl list HA_Chassis_Group
+   $ ovn-nbctl list HA_Chassis
 
    $ ovn-sbctl list Chassis
    $ ovn-sbctl list Encap
@@ -180,7 +181,6 @@ output in this section uses these commands with various output filters.
    $ ovn-sbctl list Datapath_Binding
    $ ovn-sbctl list Port_Binding
    $ ovn-sbctl list MAC_Binding
-   $ ovn-sbctl list Gateway_Chassis
 
 .. note::
 
