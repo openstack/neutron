@@ -56,7 +56,6 @@
       devstack_localrc:
         INSTALL_TESTONLY_PACKAGES: true
         DATABASE_PASSWORD: stackdb
-        NEUTRON_DEPLOY_MOD_WSGI: true
       tox_envlist: dsvm-functional-gate
       tox_environment:
         PYTHONPATH: /opt/stack/data/venv/lib/python3.12/site-packages

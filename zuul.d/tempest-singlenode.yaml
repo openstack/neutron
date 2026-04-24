@@ -16,7 +16,6 @@
         CIRROS_VERSION: 0.6.3
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -180,7 +179,6 @@
         CIRROS_VERSION: 0.6.3
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: true
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
@@ -303,7 +301,6 @@
         CIRROS_VERSION: 0.6.3
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: true
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
@@ -388,7 +385,6 @@
         CIRROS_VERSION: 0.6.3
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: true
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
@@ -496,7 +492,6 @@
         # sources, new job, inheriting from this one, should be created and
         # that option should be overwritten there.
         OVN_BUILD_FROM_SOURCE: False
-        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
       zuul_copy_output:
@@ -754,7 +749,6 @@
         CIRROS_VERSION: 0.6.3
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: true
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
@@ -824,7 +818,6 @@
         CIRROS_VERSION: 0.6.3
         DEFAULT_IMAGE_NAME: cirros-0.6.3-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.3-x86_64-uec.tar.gz
-        NEUTRON_DEPLOY_MOD_WSGI: true
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
