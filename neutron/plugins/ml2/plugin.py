@@ -601,15 +601,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if profile not in (None, const.ATTR_NOT_SPECIFIED,
                            self._get_profile(binding)):
             profile_json = jsonutils.dumps(profile)
-            # TODO(slaweq): Remove warning and raise InvalidInput exception
-            # instead in the 2026.1 release
             if 'trusted' in profile_json:
-                LOG.warning("Marking VIF as 'trusted' directly through the "
-                            "'binding:profile' field of the port is "
-                            "deprecated and will be forbidden in future. "
-                            "Please enable 'port_trusted' ML2 plugin's "
-                            "extension and use 'trusted' field of the port "
-                            "instead")
+                msg = _("Marking VIF as 'trusted' directly through the "
+                        "'binding:profile' field of the port is not "
+                        "allowed. Please enable the 'port_trusted_vif' ML2 "
+                        "plugin's extension and use the 'trusted' field "
+                        "of the port instead")
+                raise exc.InvalidInput(error_message=msg)
             binding.profile = profile_json
             if len(binding.profile) > models.BINDING_PROFILE_LEN:
                 msg = _("binding:profile value too large")
