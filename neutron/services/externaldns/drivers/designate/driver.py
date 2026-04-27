@@ -46,7 +46,8 @@ def get_clients(context):
     client = d_client.Client(session=_SESSION, auth=auth)
     admin_auth = loading.load_auth_from_conf_options(CONF, 'designate')
     admin_client = d_client.Client(session=_SESSION, auth=admin_auth,
-                                   endpoint_override=CONF.designate.url)
+                                   endpoint_override=CONF.designate.url,
+                                   edit_managed=True)
     return client, admin_client
 
 
@@ -149,7 +150,12 @@ class Designate(driver.ExternalDNSService):
                     dns_name, dns_domain), records, client)
 
         for _id in ids_to_delete:
-            client.recordsets.delete(dns_domain, _id)
+            # Try user client first: admin_client can't see user-owned zones.
+            # Fall back to admin_client for managed records (edit_managed).
+            try:
+                client.recordsets.delete(dns_domain, _id)
+            except d_exc.BadRequest:
+                admin_client.recordsets.delete(dns_domain, _id)
         if not CONF.designate.allow_reverse_dns_lookup:
             return
 
