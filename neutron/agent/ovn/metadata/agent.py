@@ -629,7 +629,7 @@ class MetadataAgent:
         if not port.mac:
             LOG.warning("Port %s MAC column is empty, cannot retrieve IP "
                         "addresses", port.uuid)
-            return []
+            return [], False
         mac, ips = ovn_utils.get_mac_and_ips_from_port_binding(port)
         if not ips:
             LOG.debug("Port %s IP addresses were not retrieved from the "
