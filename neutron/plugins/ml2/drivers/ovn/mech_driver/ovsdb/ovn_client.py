@@ -2814,16 +2814,13 @@ class OVNClient:
                                 address_group,
                                 ovn_const.TYPE_ADDRESS_GROUPS))
                         }
-        attrs = [('external_ids', external_ids),]
         with self._nb_idl.transaction(check_error=True) as txn:
             for ip_version in const.IP_ALLOWED_VERSIONS:
                 as_name = utils.ovn_ag_addrset_name(address_group['id'],
                                                     'ip' + str(ip_version))
                 txn.add(self._nb_idl.address_set_add(
                     as_name, addresses=addr_map_all[ip_version],
-                    may_exist=True))
-                txn.add(self._nb_idl.db_set(
-                    'Address_Set', as_name, *attrs))
+                    may_exist=True, external_ids=external_ids))
         db_rev.bump_revision(
             context, address_group, ovn_const.TYPE_ADDRESS_GROUPS)
 
