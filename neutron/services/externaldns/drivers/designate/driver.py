@@ -156,7 +156,15 @@ class Designate(driver.ExternalDNSService):
         for record in records:
             in_addr_name = netaddr.IPAddress(record).reverse_dns
             in_addr_zone_name = self._get_in_addr_zone_name(in_addr_name)
-            admin_client.recordsets.delete(in_addr_zone_name, in_addr_name)
+            try:
+                admin_client.recordsets.delete(in_addr_zone_name, in_addr_name)
+            except d_exc.NotFound:
+                LOG.warning(
+                    "While deleting PTR record, either zone %(zone)s "
+                    "or recordset %(recordset)s could not be found. "
+                    "Double check that they were not left as orphans.",
+                    {"zone": in_addr_zone_name, "recordset": in_addr_name}
+                )
 
     def _get_ids_ips_to_delete(self, dns_domain, name, records,
                                designate_client):
