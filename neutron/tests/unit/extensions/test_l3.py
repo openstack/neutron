@@ -453,12 +453,14 @@ class L3NatTestCaseMixin:
                                  expected_body=None,
                                  project_id=None,
                                  msg=None,
-                                 as_admin=False):
+                                 as_admin=False,
+                                 **kwargs):
         interface_data = {}
         if subnet_id is not None:
             interface_data.update({'subnet_id': subnet_id})
         if port_id is not None:
             interface_data.update({'port_id': port_id})
+        interface_data.update(kwargs)
 
         req = self.new_action_request('routers', interface_data, router_id,
                                       "%s_router_interface" % action,
