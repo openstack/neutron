@@ -640,7 +640,7 @@ class MetadataAgent(object):
         if not port.mac:
             LOG.warning("Port %s MAC column is empty, cannot retrieve IP "
                         "addresses", port.uuid)
-            return []
+            return [], False
         mac_field_attrs = port.mac[0].split()
         ips = mac_field_attrs[1:]
         if not ips:
