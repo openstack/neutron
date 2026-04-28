@@ -123,7 +123,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             # shares the object globally
             wildcard_sharing_entries = db_obj_sharing_entries.filter(
                 rb_model.target_project == '*')
-            if wildcard_sharing_entries.count():
+            if wildcard_sharing_entries.first() is not None:
                 return
             if target_project in bound_project_ids:
                 raise_policy_in_use()

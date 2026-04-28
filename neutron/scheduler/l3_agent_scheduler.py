@@ -58,7 +58,7 @@ class L3Scheduler(metaclass=abc.ABCMeta):
         query = query.filter(router_binding_model.router_id == router_id,
                              router_binding_model.l3_agent_id == l3_agent_id)
 
-        return query.count() > 0
+        return query.first() is not None
 
     def _get_routers_can_schedule(self, plugin, context, routers, l3_agent):
         """Get the subset of routers that can be scheduled on the L3 agent."""

@@ -266,7 +266,7 @@ class Router(base.NeutronDbObject):
         query = query.filter(
             ~l3.Router.project_id.in_(projects))
 
-        return bool(query.count())
+        return query.first() is not None
 
     def _attach_qos_policy(self, qos_policy_id):
         qos_binding.QosPolicyRouterGatewayIPBinding.delete_objects(

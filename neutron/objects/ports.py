@@ -733,7 +733,7 @@ class Port(base.NeutronDbObject):
         else:
             query = query.filter(
                 ml2_models.PortBinding.vif_type.in_(binding_types))
-        return bool(query.count())
+        return query.first() is not None
 
     @classmethod
     @db_api.CONTEXT_READER

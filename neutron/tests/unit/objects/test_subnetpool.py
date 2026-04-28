@@ -127,7 +127,7 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             address_scope_id=fake_address_scope_id
         )
         filter_mock = mock.Mock(
-            return_value=mock.Mock(count=mock.Mock(return_value=0))
+            return_value=mock.Mock(first=mock.Mock(return_value=None))
         )
         mock_query_with_hooks.return_value = mock.Mock(filter=filter_mock)
 

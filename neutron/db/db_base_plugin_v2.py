@@ -324,7 +324,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         target_project='*'):
                     return
                 ports = ports.filter(models_v2.Port.project_id == project_id)
-            if ports.count():
+            if ports.first() is not None:
                 raise exc.InvalidSharedSetting(network=network_id)
 
     def set_ipam_backend(self):
@@ -574,8 +574,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             models_v2.Port.id).filter_by(network_id=net_id).filter(
                 ~models_v2.Port.device_owner.in_(
                     _constants.AUTO_DELETE_PORT_OWNERS))
-        if non_auto_ports.count():
-            ports = [port.id for port in non_auto_ports.all()]
+        ports = [port.id for port in non_auto_ports.all()]
+        if ports:
             reason = _("There are one or more ports still in use on the "
                        "network, id for these ports is: %s") % ",".join(ports)
             raise exc.NetworkInUse(net_id=net_id, reason=reason)
