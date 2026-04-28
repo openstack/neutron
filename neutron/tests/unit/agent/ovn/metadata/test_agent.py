@@ -483,10 +483,49 @@ class TestMetadataAgent(base.BaseTestCase):
         self._test__get_provision_params_returns_provision_parameters(
             'fe80::f816:3eff:feb6:c0c0')
 
+    def test__get_provision_params_skips_port_with_unknown_mac(self):
+        """Should skip ports with mac=['unknown'] and return valid ports."""
+        network_id = '1'
+        datapath = DatapathInfo(uuid='test123',
+                                external_ids={'name': f'neutron-{network_id}'})
+        valid_port = makePort(datapath,
+                              mac=['fa:16:3e:e7:ac:ab 1.2.3.4'])
+        unknown_mac_port = mock.Mock()
+        unknown_mac_port.type = ''
+        unknown_mac_port.mac = [ovn_const.UNKNOWN_ADDR]
+        unknown_mac_port.datapath = datapath
+        unknown_mac_port.uuid = 'fake-uuid'
+        metadadata_port = makePort(
+            datapath,
+            mac=['fa:16:3e:22:65:18 10.204.0.1'],
+            external_ids={'neutron:cidrs': '10.204.0.10/29'},
+            logical_port='3b66c176-199b-48ec-8331-c1fd3f6e2b44')
+
+        with mock.patch.object(self.agent.sb_idl, 'get_metadata_port',
+                               return_value=metadadata_port),\
+            mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
+                              return_value=[valid_port, unknown_mac_port]):
+            actual_params = self.agent._get_provision_params(datapath)
+
+        net_name, datapath_port_ips, any_ip6, metadata_port_info = (
+            actual_params)
+        self.assertEqual(network_id, net_name)
+        self.assertListEqual(['1.2.3.4'], datapath_port_ips)
+        self.assertFalse(any_ip6)
+
     def test__get_port_ip4_ips_and_ip6_flag_empty_mac(self):
         """Should return empty IPs for ports with empty MAC column."""
         port = mock.Mock()
         port.mac = []
+        port.uuid = 'fake-uuid'
+        ip4_ips, any_ip6 = self.agent._get_port_ip4_ips_and_ip6_flag(port)
+        self.assertEqual([], ip4_ips)
+        self.assertFalse(any_ip6)
+
+    def test__get_port_ip4_ips_and_ip6_flag_unknown_mac(self):
+        """Should return empty IPs for ports with mac=['unknown']."""
+        port = mock.Mock()
+        port.mac = [ovn_const.UNKNOWN_ADDR]
         port.uuid = 'fake-uuid'
         ip4_ips, any_ip6 = self.agent._get_port_ip4_ips_and_ip6_flag(port)
         self.assertEqual([], ip4_ips)
