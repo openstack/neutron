@@ -355,6 +355,8 @@ class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):
         self.row = self.ovsdb_row(
             attrs={'_table': self.pbtable,
                    'chassis': 'newchassis',
+                   'external_ids': {
+                       ovn_const.OVN_PORT_NAME_EXT_ID_KEY: 'fake-port'},
                    'options': {
                        'virtual-parents': 'uuid1,uuid2'}})
 
@@ -366,8 +368,30 @@ class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):
             None))
         self.assertTrue(self.event.match_fn(
             self.event.ROW_DELETE,
-            self.ovsdb_row(attrs={'_table': self.pbtable, 'type': 'virtual'}),
+            self.ovsdb_row(attrs={
+                '_table': self.pbtable, 'type': 'virtual',
+                'external_ids': {
+                    ovn_const.OVN_PORT_NAME_EXT_ID_KEY: 'fake-port'}}),
             None))
+
+    def test_delete_event_non_neutron_port_skipped(self):
+        self.assertFalse(self.event.match_fn(
+            self.event.ROW_DELETE,
+            self.ovsdb_row(attrs={
+                '_table': self.pbtable, 'type': 'virtual',
+                'external_ids': {}}),
+            None))
+
+    def test_update_event_non_neutron_port_skipped(self):
+        non_neutron_row = self.ovsdb_row(
+            attrs={'_table': self.pbtable,
+                   'chassis': 'newchassis',
+                   'external_ids': {},
+                   'options': {'virtual-parents': 'uuid1,uuid2'}})
+        self.assertFalse(self.event.match_fn(
+            self.event.ROW_UPDATE, non_neutron_row,
+            self.ovsdb_row(attrs={'_table': self.pbtable,
+                                  'chassis': 'oldchassis'})))
 
     def test_event_no_match_no_options(self):
         # Unrelated portbind change (no options in old, so no virtual parents)
@@ -437,7 +461,10 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.idl.notify_handler.notify_loop()
 
     def test_lsp_create_event(self):
-        row_data = {'name': 'foo'}
+        row_data = {
+            'name': 'foo',
+            'external_ids': [
+                "map", [[ovn_const.OVN_PORT_NAME_EXT_ID_KEY, 'foo']]]}
 
         # up and enabled
         row_data.update({'up': True, 'enabled': True})
@@ -473,16 +500,38 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.assertFalse(self.mech_driver.set_port_status_up.called)
         self.mech_driver.set_port_status_down.assert_called_once_with('foo')
 
+    def test_lsp_create_event_non_neutron_port_skipped(self):
+        row_data = {'name': 'foo', 'up': True, 'enabled': True,
+                    'external_ids': ["map", []]}
+        self._test_lsp_helper('create', row_data)
+        self.assertFalse(self.mech_driver.set_port_status_up.called)
+        self.assertFalse(self.mech_driver.set_port_status_down.called)
+
     def test_lsp_up_update_event(self):
-        new_row_json = {'up': True, 'enabled': True, 'name': 'foo-name'}
+        new_row_json = {
+            'up': True, 'enabled': True, 'name': 'foo-name',
+            'external_ids': [
+                "map", [[ovn_const.OVN_PORT_NAME_EXT_ID_KEY, 'foo-name']]]}
         old_row_json = {"up": False}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=old_row_json)
         self.mech_driver.set_port_status_up.assert_called_once_with("foo-name")
         self.assertFalse(self.mech_driver.set_port_status_down.called)
 
+    def test_lsp_up_update_event_non_neutron_port_skipped(self):
+        new_row_json = {'up': True, 'enabled': True, 'name': 'foo-name',
+                        'external_ids': ["map", []]}
+        old_row_json = {"up": False}
+        self._test_lsp_helper('update', new_row_json,
+                              old_row_json=old_row_json)
+        self.assertFalse(self.mech_driver.set_port_status_up.called)
+        self.assertFalse(self.mech_driver.set_port_status_down.called)
+
     def test_lsp_down_update_event(self):
-        new_row_json = {'up': False, 'enabled': False, 'name': 'foo-name'}
+        new_row_json = {
+            'up': False, 'enabled': False, 'name': 'foo-name',
+            'external_ids':
+                ["map", [[ovn_const.OVN_PORT_NAME_EXT_ID_KEY, 'foo-name']]]}
         old_row_json = {"up": True}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=old_row_json)
@@ -490,23 +539,40 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
             "foo-name")
         self.assertFalse(self.mech_driver.set_port_status_up.called)
 
+    def test_lsp_down_update_event_non_neutron_port_skipped(self):
+        new_row_json = {'up': False, 'enabled': False, 'name': 'foo-name'}
+        old_row_json = {"up": True}
+        self._test_lsp_helper('update', new_row_json,
+                              old_row_json=old_row_json)
+        self.assertFalse(self.mech_driver.set_port_status_up.called)
+        self.assertFalse(self.mech_driver.set_port_status_down.called)
+
     def test_lsp_up_update_event_no_old_data(self):
-        new_row_json = {'up': True, 'enabled': True, 'name': 'foo-name'}
+        new_row_json = {
+            'up': True, 'enabled': True, 'name': 'foo-name',
+            'external_ids': [
+                "map", [[ovn_const.OVN_PORT_NAME_EXT_ID_KEY, 'foo-name']]]}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=None)
         self.assertFalse(self.mech_driver.set_port_status_up.called)
         self.assertFalse(self.mech_driver.set_port_status_down.called)
 
     def test_lsp_down_update_event_no_old_data(self):
-        new_row_json = {"up": False, "name": "foo-name"}
+        new_row_json = {
+            "up": False, "name": "foo-name",
+            'external_ids': [
+                "map", [[ovn_const.OVN_PORT_NAME_EXT_ID_KEY, 'foo-name']]]}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=None)
         self.assertFalse(self.mech_driver.set_port_status_up.called)
         self.assertFalse(self.mech_driver.set_port_status_down.called)
 
     def test_lsp_other_column_update_event(self):
-        new_row_json = {"up": False, "name": "foo-name",
-                        "addresses": ["10.0.0.2"]}
+        new_row_json = {
+            "up": False, "name": "foo-name",
+            "addresses": ["10.0.0.2"],
+            'external_ids': [
+                "map", [[ovn_const.OVN_PORT_NAME_EXT_ID_KEY, 'foo-name']]]}
         old_row_json = {"addresses": ["10.0.0.3"]}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=old_row_json)
@@ -865,3 +931,38 @@ class TestChassisOVNAgentWriteEvent(base.BaseTestCase):
             agent_cache.assert_has_calls([
                 mock.call().update(
                     ovn_const.OVN_METADATA_AGENT, row, clear_down=True)])
+
+
+class TestFIPAddDeleteEvent(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.driver = mock.Mock()
+        self.event = ovsdb_monitor.FIPAddDeleteEvent(self.driver)
+        self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+
+    def test_match_fn_neutron_fip(self):
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_FIP_EXT_ID_KEY: 'fip-uuid-123'},
+                   'external_ip': '1.2.3.4'})
+        self.assertTrue(self.event.match_fn(self.event.ROW_CREATE, row))
+
+    def test_match_fn_non_neutron_nat_skipped(self):
+        row = self.ovsdb_row(
+            attrs={'external_ids': {},
+                   'external_ip': '1.2.3.4'})
+        self.assertFalse(self.event.match_fn(self.event.ROW_CREATE, row))
+
+    def test_match_fn_delete_neutron_fip(self):
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_FIP_EXT_ID_KEY: 'fip-uuid-123'},
+                   'external_ip': '1.2.3.4'})
+        self.assertTrue(self.event.match_fn(self.event.ROW_DELETE, row))
+
+    def test_match_fn_delete_non_neutron_nat_skipped(self):
+        row = self.ovsdb_row(
+            attrs={'external_ids': {},
+                   'external_ip': '1.2.3.4'})
+        self.assertFalse(self.event.match_fn(self.event.ROW_DELETE, row))

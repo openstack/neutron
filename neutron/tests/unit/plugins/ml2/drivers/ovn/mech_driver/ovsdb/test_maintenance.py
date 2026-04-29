@@ -814,7 +814,8 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         router0 = fakes.FakeOvsdbRow.create_one_ovsdb_row()
         router1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
                 attrs={
-                    'external_ids': {constants.OVN_REV_NUM_EXT_ID_KEY: 1}
+                    'external_ids': {
+                        constants.OVN_ROUTER_NAME_EXT_ID_KEY: 'router1'}
                 })
         nb_idl.lr_list.return_value.execute.return_value = (router0, router1)
         nb_idl.lr_route_list.return_value.execute.return_value = (

@@ -350,8 +350,10 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         def get_num_acls(ovn_acls):
             return len([item for sublist in ovn_acls for item in sublist[1]])
 
-        ovn_acls_from_ls = [(row.name, row.acls) for row in (
-            self.ovn_nb_api._tables['Logical_Switch'].rows.values())]
+        ovn_acls_from_ls = [
+            (row.name, row.acls)
+            for row in self.ovn_nb_api._tables['Logical_Switch'].rows.values()
+            if ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY in row.external_ids]
         num_acls_to_remove_from_ls = get_num_acls(ovn_acls_from_ls)
 
         # Remove the common ones
@@ -1426,6 +1428,9 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                          'false')
         nat_rules = []
         for nat_rule in self.ovn_nb_api.get_floatingips():
+            if ovn_const.OVN_FIP_EXT_ID_KEY not in nat_rule.get(
+                    'external_ids', {}):
+                continue
             if nat_rule.get('options', {}).get('stateless') != stateless_nat:
                 nat_rules.append(nat_rule)
 

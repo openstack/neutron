@@ -967,7 +967,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         """
         cmds = []
         for router in self._nb_idl.lr_list().execute(check_error=True):
-            if not router.external_ids.get(ovn_const.OVN_REV_NUM_EXT_ID_KEY):
+            if ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY not in router.external_ids:
                 continue
             routes_to_delete = [
                 (r.ip_prefix, '')
