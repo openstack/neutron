@@ -1681,8 +1681,8 @@ class TestMaintenance(_TestMaintenanceHelper):
     def test_migrate_lrp_gateway_chassis_to_ha_chassis_group(self):
         mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
         networks = ['192.0.2.0/24']
-        lr_name = uuidutils.generate_uuid()
-        lrp_name = uuidutils.generate_uuid()
+        lr_name = utils.ovn_name(uuidutils.generate_uuid())
+        lrp_name = utils.ovn_lrouter_port_name(uuidutils.generate_uuid())
         gateway_chassis = ['gw_ch1', 'gw_ch2', 'gw_ch3']
 
         self.nb_api.lr_add(lr_name).execute(check_error=True)
@@ -1720,6 +1720,12 @@ class TestMaintenance(_TestMaintenanceHelper):
 
         hcg = self.nb_api.lookup('HA_Chassis_Group', lr_name, default=None)
         self.assertEqual(len(chassis_prio), len(hcg.ha_chassis))
+        self.assertEqual(
+            '',
+            hcg.external_ids[ovn_const.OVN_AZ_HINTS_EXT_ID_KEY])
+        self.assertEqual(
+            utils.get_neutron_name(lr_name),
+            hcg.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY])
         for ha_chassis in hcg.ha_chassis:
             try:
                 # The priority and the chassis_name of the former

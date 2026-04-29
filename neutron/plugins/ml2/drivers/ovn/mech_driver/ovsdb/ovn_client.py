@@ -1846,6 +1846,10 @@ class OVNClient:
             port_net = self._plugin.get_network(
                 context.elevated(), port['network_id'])
             physnet = self._get_physnet(port_net)
+            # TODO(ralonsoh): both paths (with and without physnet) now create
+            # a ``HA_Chassis_Group`` per router, set to the
+            # ``Logical_Router_Port``. Optimize this code to call the HCG
+            # creation once, with the needed parameters.
             if physnet is None:
                 # The external network is tunnelled, pin the router to a
                 # chassis.

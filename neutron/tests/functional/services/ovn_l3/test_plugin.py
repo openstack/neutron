@@ -14,6 +14,7 @@
 
 from unittest import mock
 
+import ddt
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
@@ -33,6 +34,7 @@ from neutron.tests.functional import base
 from neutron.tests.functional.resources.ovsdb import events
 
 
+@ddt.ddt
 class TestRouter(base.TestOVNFunctionalBase):
     def setUp(self, **kwargs):
         super().setUp(**kwargs)
@@ -141,18 +143,36 @@ class TestRouter(base.TestOVNFunctionalBase):
                         'ovn-cms-options': 'enable-chassis-as-gw'}))
         return chassis_added
 
-    def test_gateway_chassis_on_router_gateway_port(self):
+    @ddt.data([], ['az1'])
+    def test_gateway_chassis_on_router_gateway_port(self, az_hints):
+        ch_name_list = [
+            self.add_fake_chassis(
+                'ovs-host1', physical_nets=['physnet50'],
+                enable_chassis_as_gw=True, azs=az_hints),
+            self.add_fake_chassis(
+                'ovs-host2', physical_nets=['physnet50'],
+                enable_chassis_as_gw=True, azs=az_hints),
+        ]
         ext2 = self._create_ext_network(
-            'ext2', 'flat', 'physnet3', None, "20.0.0.1", "20.0.0.0/24")
+            'ext2', 'flat', 'physnet50', None, "20.0.0.1", "20.0.0.0/24")
         gw_info = {'network_id': ext2['network']['id']}
-        self._create_router('router1', gw_info=gw_info)
-        expected = [row.name for row in
-                    self.sb_api.tables['Chassis'].rows.values()]
+        router = self._create_router('router1', gw_info=gw_info,
+                                     az_hints=az_hints)
         for row in self.nb_api.tables[
                 'Logical_Router_Port'].rows.values():
             chassis = [hc.chassis_name for hc in
                        row.ha_chassis_group[0].ha_chassis]
-            self.assertCountEqual(expected, chassis)
+            self.assertCountEqual(ch_name_list, chassis)
+        hcg = self.l3_plugin._ovn_client._nb_idl.lookup(
+            'HA_Chassis_Group', ovn_utils.ovn_name(router['id']))
+        self.assertEqual(
+            router['id'],
+            hcg.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY]
+        )
+        self.assertEqual(
+            ','.join(az_hints),
+            hcg.external_ids[ovn_const.OVN_AZ_HINTS_EXT_ID_KEY]
+        )
 
     def _check_gateway_chassis_candidates(self, candidates,
                                           router_az_hints=None,
@@ -173,11 +193,21 @@ class TestRouter(base.TestOVNFunctionalBase):
             # candidates, this method returns None.
             return ['a-random-chassis'] if candidates else None
 
+        def check_ha_chassis_group(router_id, az_hints):
+            lr_name = ovn_utils.ovn_name(router_id)
+            hcg = ovn_client._nb_idl.lookup('HA_Chassis_Group', lr_name)
+            self.assertEqual(
+                router_id,
+                hcg.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY])
+            self.assertEqual(
+                ','.join(az_hints or []),
+                hcg.external_ids[ovn_const.OVN_AZ_HINTS_EXT_ID_KEY])
+
         with mock.patch.object(self.l3_plugin.scheduler, 'select',
                                side_effect=fake_select) as plugin_select:
             gw_info = {'network_id': ext1['network']['id']}
-            self._create_router('router1', gw_info=gw_info,
-                                az_hints=router_az_hints)
+            router = self._create_router('router1', gw_info=gw_info,
+                                         az_hints=router_az_hints)
             # If the network is tunnelled, the scheduler is not called.
             check = self.assertTrue if physnet else self.assertFalse
             check(plugin_select.called)
@@ -187,6 +217,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             # will try to schedule it.
             self._unset_lrp_gw_chassis(ovn_client)
             self.l3_plugin.schedule_unhosted_gateways()
+            check_ha_chassis_group(router['id'], router_az_hints)
             check = self.assertTrue if candidates else self.assertFalse
             check(plugin_select.called)
 

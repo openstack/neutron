@@ -1421,9 +1421,26 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 chassis_prio = {}
                 for gc in lrp.gateway_chassis:
                     chassis_prio[gc.chassis_name] = gc.priority
+
+                lr = self._nb_idl.lookup('Logical_Router', r_name,
+                                         default=None)
+                if not lr:
+                    # NOTE(ralonsoh): this is almost impossible to have a
+                    # LRP without a LR, but we consider this case too.
+                    LOG.warning('Logical_Router %s does not exist', r_name)
+                    continue
+
+                az_hints = lr.external_ids.get(
+                    ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
+                router_id = utils.get_neutron_name(r_name)
                 # Add the new HA_Chassis_Group and assign to the LRP.
+                external_ids = {
+                    ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints),
+                    ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id,
+                }
                 hcg_cmd = txn.add(self._nb_idl.ha_chassis_group_with_hc_add(
-                    r_name, chassis_prio, may_exist=True))
+                    r_name, chassis_prio, may_exist=True,
+                    external_ids=external_ids))
                 txn.add(self._nb_idl.db_set(
                     'Logical_Router_Port', lrp.uuid,
                     ('ha_chassis_group', hcg_cmd)))
