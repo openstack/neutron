@@ -34,8 +34,6 @@ class RevisionPlugin(service_base.ServicePluginBase):
     supported_extension_aliases = ['standard-attr-revisions',
                                    revisionifmatch.ALIAS]
 
-    __filter_validation_support = True
-
     def __init__(self):
         super().__init__()
         # background on these event hooks:

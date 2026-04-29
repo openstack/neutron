@@ -285,9 +285,18 @@ def is_native_sorting_supported(plugin):
 
 
 def is_filter_validation_supported(plugin):
-    filter_validation_attr_name = ("_%s__filter_validation_support"
-                                   % plugin.__class__.__name__)
-    return getattr(plugin, filter_validation_attr_name, False)
+    try:
+        return plugin.filter_validation_support
+    except AttributeError:
+        klass = plugin.__class__
+        LOG.warning(
+            'The plugin class %s should inherit from ``ServicePluginBase`` or '
+            '``NeutronDbPluginV2``. This class needs to be refactored. Please '
+            'report a Launchpad bug in https://bugs.launchpad.net/neutron.',
+            klass.__module__ + '.' + klass.__name__)
+        filter_validation_attr_name = ("_%s__filter_validation_support"
+                                       % klass.__name__)
+        return getattr(plugin, filter_validation_attr_name, False)
 
 
 class PaginationHelper:

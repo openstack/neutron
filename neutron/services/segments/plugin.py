@@ -80,6 +80,9 @@ class Plugin(service_base.ServicePluginBase,
 
     __native_pagination_support = True
     __native_sorting_support = True
+    # TODO(ralonsoh): this class should inherit from
+    # ``neutron_lib.services.base.ServicePluginBase``, then this attribute
+    # should be deleted.
     __filter_validation_support = True
 
     def __init__(self):

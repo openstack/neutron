@@ -1,0 +1,9 @@
+---
+upgrade:
+  - |
+    Now all service plugins, inheriting from ``ServicePluginBase`` class, and
+    the ML2 plugins, will have the extension "filter-validation" enabled by
+    default. That enforces the API filter validation in the queries, returning
+    a ``HTTPBadRequest`` in case of using an invalid attribute. This extension
+    can be enabled or disabled using the Neutron configuration variable
+    ``[DEFAULT]filter_validation``.

@@ -96,7 +96,6 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
 
     __native_pagination_support = True
     __native_sorting_support = True
-    __filter_validation_support = True
 
     def __init__(self):
         super().__init__()

@@ -27,8 +27,6 @@ class FlavorsPlugin(service_base.ServicePluginBase,
 
     supported_extension_aliases = [flavors.ALIAS, servicetype.ALIAS]
 
-    __filter_validation_support = True
-
     @classmethod
     def get_plugin_type(cls):
         return constants.FLAVORS

@@ -34,8 +34,6 @@ class NetworkIPAvailabilityPlugin(
     supported_extension_aliases = [network_ip_availability.ALIAS,
                                    network_ip_availability_details.ALIAS]
 
-    __filter_validation_support = True
-
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
