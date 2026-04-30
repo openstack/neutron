@@ -1,0 +1,17 @@
+---
+fixes:
+  - |
+    The address group API was missing explicit policy rules for the
+    ``create_address_group``, ``update_address_group``,
+    ``delete_address_group``, ``add_addresses``, and ``remove_addresses``
+    actions. Without these rules, oslo.policy could not properly enforce
+    access control on those operations, falling back to a default allow-all
+    behaviour. Explicit ``DocumentedRuleDefault`` entries have been added for
+    each action, aligned with the existing ``get_address_group`` rule style.
+upgrade:
+  - |
+    New default policy rules have been added for the address group CRUD and
+    action operations (``create_address_group``, ``update_address_group``,
+    ``delete_address_group``, ``add_addresses``, ``remove_addresses``).
+    Each rule now requires the ``admin_or_project_member`` role by default,
+    with ``scope_types=['project']``.
