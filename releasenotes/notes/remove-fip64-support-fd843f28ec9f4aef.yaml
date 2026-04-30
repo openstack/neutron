@@ -1,0 +1,9 @@
+---
+upgrade:
+  - |
+    The ``fip64`` extension support has been removed from the floating IP
+    pools code. This extension was only used by networking-midonet, which
+    is no longer maintained. The ``is_v6_supported`` property and the
+    ``fip64`` extension check have been removed from
+    ``FloatingIPPoolsDbMixin``. Floating IP pools now only return IPv4
+    subnets.

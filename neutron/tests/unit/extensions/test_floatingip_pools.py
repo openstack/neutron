@@ -14,7 +14,6 @@
 
 from unittest import mock
 
-import ddt
 from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import floatingip_pools as apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
@@ -57,32 +56,19 @@ class TestFloatingIPPoolsL3NatServicePlugin(
     supported_extension_aliases = [l3_apidef.ALIAS, apidef.ALIAS]
 
 
-@ddt.ddt
 class FloatingIPPoolsDBTestCaseBase(test_l3.L3NatTestCaseMixin):
 
     def test_get_floatingip_pools_ipv4(self):
-        self._test_get_floatingip_pools(lib_const.IP_VERSION_4, False)
-
-    @ddt.data(True, False)
-    def test_get_floatingip_pools_ipv6(self, fake_is_v6_supported):
-        self._test_get_floatingip_pools(lib_const.IP_VERSION_6,
-                                        fake_is_v6_supported)
-
-    def _test_get_floatingip_pools(self, ip_version, is_v6_supported):
         fake_network_id = uuidutils.generate_uuid()
         fake_subnet_id = uuidutils.generate_uuid()
         fake_ext_network = mock.Mock(network_id=fake_network_id)
-        if ip_version == lib_const.IP_VERSION_4:
-            fake_cidr = '10.0.0.0/24'
-        else:
-            fake_cidr = 'fe80:cafe::/64'
+        fake_cidr = '10.0.0.0/24'
         fake_subnet = mock.Mock(id=fake_subnet_id,
                                 network_id=fake_network_id,
                                 cidr=fake_cidr,
-                                ip_version=ip_version,
+                                ip_version=lib_const.IP_VERSION_4,
                                 project_id='fake_project')
         fake_subnet.name = 'fake_subnet'
-        self.plugin._is_v6_supported = is_v6_supported
         with mock.patch.object(
             subnet_obj.Subnet, 'get_objects',
             return_value=[fake_subnet]
@@ -95,20 +81,41 @@ class FloatingIPPoolsDBTestCaseBase(test_l3.L3NatTestCaseMixin):
         ) as mock_context_elevated:
             fip_pools = self.plugin.get_floatingip_pools(self.ctxt)
 
-        expected_fip_pools = []
-        if ip_version == lib_const.IP_VERSION_4 or is_v6_supported:
-            # TODO(haleyb): "tenant_id" reference should be removed
-            expected_fip_pools = [{'cidr': fake_cidr,
-                                   'subnet_id': fake_subnet_id,
-                                   'subnet_name': 'fake_subnet',
-                                   'network_id': fake_network_id,
-                                   'project_id': 'fake_project',
-                                   'tenant_id': 'fake_project'}]
+        # TODO(haleyb): "tenant_id" reference should be removed
+        expected_fip_pools = [{'cidr': fake_cidr,
+                               'subnet_id': fake_subnet_id,
+                               'subnet_name': 'fake_subnet',
+                               'network_id': fake_network_id,
+                               'project_id': 'fake_project',
+                               'tenant_id': 'fake_project'}]
         self.assertEqual(expected_fip_pools, fip_pools)
         mock_subnet_get_objects.assert_called_once_with(
             self.admin_ctxt, _pager=mock.ANY, network_id=[fake_network_id])
         mock_extnet_get_objects.assert_called_once_with(self.ctxt)
         mock_context_elevated.assert_called_once_with()
+
+    def test_get_floatingip_pools_ipv6_excluded(self):
+        fake_network_id = uuidutils.generate_uuid()
+        fake_ext_network = mock.Mock(network_id=fake_network_id)
+        fake_subnet = mock.Mock(id=uuidutils.generate_uuid(),
+                                network_id=fake_network_id,
+                                cidr='fe80:cafe::/64',
+                                ip_version=lib_const.IP_VERSION_6,
+                                project_id='fake_project')
+        fake_subnet.name = 'fake_subnet'
+        with mock.patch.object(
+            subnet_obj.Subnet, 'get_objects',
+            return_value=[fake_subnet]
+        ), mock.patch.object(
+            net_obj.ExternalNetwork, 'get_objects',
+            return_value=[fake_ext_network]
+        ), mock.patch.object(
+            self.ctxt, 'elevated',
+            return_value=self.admin_ctxt
+        ):
+            fip_pools = self.plugin.get_floatingip_pools(self.ctxt)
+
+        self.assertEqual([], fip_pools)
 
 
 class FloatingIPPoolsDBIntTestCase(test_l3.L3BaseForIntTests,
