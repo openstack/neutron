@@ -19,6 +19,8 @@ from oslo_log import log
 
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
+from neutron.agent.ovn.extensions.evpn import fsm
+
 
 LOG = log.getLogger(__name__)
 # EVPN VRF name has EVPN_VRF_NAME_LEN characters:
@@ -35,9 +37,10 @@ class VrfHandler:
     messages from state changes.
     """
 
-    def __init__(self):
+    def __init__(self, evpn_fsm):
         self._known_vrfs = set()
         self._replay_vrfs = None
+        self._evpn_fsm = evpn_fsm
 
     def _is_in_replay(self):
         return self._replay_vrfs is not None
@@ -64,6 +67,12 @@ class VrfHandler:
         self._replay_vrfs = set()
 
     def replay_end(self):
+        stale_vrfs = self._known_vrfs - self._replay_vrfs
+        # Treat stale VRFs as deleted VRFs
+        for vrf in stale_vrfs:
+            LOG.debug("Stale VRF removed during replay (VRF %s)", vrf)
+            self._evpn_fsm.advance(
+                fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
         self._known_vrfs = self._replay_vrfs
         self._replay_vrfs = None
 
@@ -75,13 +84,13 @@ class VrfHandler:
             return
         if self._is_in_replay():
             self._replay_vrfs.add(evpnvrf)
-            LOG.info("VRF previously created: %s", evpnvrf)
-        else:
-            # The kernel sends multiple RTM_NEWLINK messages during VRF
-            # creation; only process the first one.
-            if evpnvrf not in self._known_vrfs:
-                self._known_vrfs.add(evpnvrf)
-                LOG.info("VRF created: %s", evpnvrf)
+            LOG.debug("VRF previously created: %s", evpnvrf)
+        # The kernel sends multiple RTM_NEWLINK messages during VRF
+        # creation; only process the first one.
+        if evpnvrf not in self._known_vrfs:
+            self._known_vrfs.add(evpnvrf)
+            LOG.debug("VRF created: %s", evpnvrf)
+            self._evpn_fsm.advance(fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, evpnvrf)
 
     def handle_dellink(self, msg):
         try:
@@ -89,5 +98,10 @@ class VrfHandler:
         except (evpn_exc.UnknownMessage, evpn_exc.UnknownVrfMessage):
             # This is not an EVPN VRF
             return
-        self._known_vrfs.discard(evpnvrf)
-        LOG.info("VRF deleted: %s", evpnvrf)
+        try:
+            self._known_vrfs.remove(evpnvrf)
+        except KeyError:
+            # VRF not previously tracked
+            return
+        LOG.debug("VRF deleted: %s", evpnvrf)
+        self._evpn_fsm.advance(fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, evpnvrf)
