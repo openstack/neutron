@@ -604,7 +604,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if (not address_scopes_match or
                     (self.agent_conf.agent_mode ==
                      lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
-                internal_dev = self.get_internal_device_name(p['id'])
+                internal_dev = self.get_internal_device_name(
+                    p['id'])  # pylint: disable=invalid-sequence-index
                 self._snat_redirect_add(gateway, p, internal_dev)
 
     def disable_snat_redirect_rules(self, ex_gw_port):
@@ -618,7 +619,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if (not address_scopes_match or
                     (self.agent_conf.agent_mode ==
                      lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
-                internal_dev = self.get_internal_device_name(p['id'])
+                internal_dev = self.get_internal_device_name(
+                    p['id'])  # pylint: disable=invalid-sequence-index
                 self._snat_redirect_remove(gateway, p, internal_dev)
 
     def external_gateway_added(self, ex_gw_port, interface_name):
