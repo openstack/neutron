@@ -764,6 +764,49 @@ class FIPAddDeleteEvent(row_event.RowEvent):
         self.driver.delete_mac_binding_entries(row.external_ip)
 
 
+class FIPAddExternalMacEvent(row_event.RowEvent):
+    """Row create event - NAT 'dnat_and_snat' entry added
+
+    When a NAT entry is created without external_mac (because the LSP was
+    already UP before the NAT was committed), this event sets external_mac
+    if the LSP is currently UP. This closes the race window where
+    FIP creation and LSP UP happen concurrently.
+    """
+
+    def __init__(self, driver):
+        self.driver = driver
+        table = 'NAT'
+        events = (self.ROW_CREATE,)
+        super().__init__(
+            events, table, (('type', '=', 'dnat_and_snat'),))
+        self.event_name = 'FIPAddExternalMacEvent'
+
+    def match_fn(self, event, row, old=None):
+        if (not super().match_fn(event, row, old) or
+                not ovn_conf.is_ovn_distributed_floating_ip() or
+                ovn_const.OVN_FIP_EXT_MAC_KEY not in row.external_ids or
+                not row.logical_port):
+            return False
+        return True
+
+    def run(self, event, row, old):
+        logical_port = row.logical_port[0]
+        lsp = self.driver.nb_ovn.lookup(
+            'Logical_Switch_Port', logical_port, default=None)
+        if not lsp:
+            LOG.warning('Logical Switch Port %s not found for '
+                        'NAT entry %s', logical_port, row.uuid)
+            return
+
+        external_mac = row.external_ids[ovn_const.OVN_FIP_EXT_MAC_KEY]
+        if utils.is_lsp_up(lsp) and row.external_mac != [external_mac]:
+            LOG.debug('Setting external_mac of NAT entry %s to %s',
+                      row.uuid, external_mac)
+            self.driver.nb_ovn.db_set(
+                'NAT', row.uuid, ('external_mac', external_mac)).execute(
+                check_error=True)
+
+
 class HAChassisGroupRouterEvent(row_event.RowEvent):
     """Row update event - the HA_Chassis list changes in a router HCG
 
@@ -964,12 +1007,14 @@ class OvnNbIdl(OvnIdlDistributedLock):
         self._lsp_lrp_event = (
             LogicalSwitchPortUpdateLogicalRouterPortEvent(driver))
         self._fip_create_delete_event = FIPAddDeleteEvent(driver)
+        self._nat_dnat_and_snat_event = FIPAddExternalMacEvent(driver)
         self._ha_chassis_group_event = HAChassisGroupRouterEvent(driver)
 
         self.notify_handler.watch_events([self._lsp_create_event,
                                           self._lsp_update_up_event,
                                           self._lsp_update_down_event,
                                           self._fip_create_delete_event,
+                                          self._nat_dnat_and_snat_event,
                                           self._lsp_lrp_event,
                                           self._ha_chassis_group_event,
                                           ])
