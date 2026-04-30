@@ -62,7 +62,7 @@ class BaseRouterInfo(metaclass=abc.ABCMeta):
         self.driver = interface_driver
         self.use_ipv6 = use_ipv6
 
-        self.internal_ports = []
+        self.internal_ports: list[dict] = []
         self.ns_name = None
         self.process_monitor = None
 
