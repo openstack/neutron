@@ -20,6 +20,15 @@ function install_frr {
     install_package frr
 }
 
+function install_frr_vrf_modules {
+    if is_ubuntu; then
+        install_package linux-modules-extra-$(uname -r)
+    elif is_fedora; then
+        install_package kernel-modules-extra-$(uname -r)
+    fi
+    sudo modprobe vrf
+}
+
 function configure_frr {
     echo_summary "Configuring FRR"
 
@@ -27,7 +36,10 @@ function configure_frr {
     sudo install -d -o $STACK_USER $FRR_CONF_DIR
 
     # Configure frr daemons
-    if [[ "$FRR_USE_BFD" == "True" ]]; then
+    if [[ "$FRR_USE_EVPN" == "True" ]]; then
+        sudo install -o root -g root -m 644 $FRR_ETC_SRC_DIR/frr_with_evpn/* $FRR_CONF_DIR/
+        install_frr_vrf_modules
+    elif [[ "$FRR_USE_BFD" == "True" ]]; then
         sudo install -o root -g root -m 644 $FRR_ETC_SRC_DIR/frr_with_bfd/* $FRR_CONF_DIR/
     else
         sudo install -o root -g root -m 644 $FRR_ETC_SRC_DIR/frr/* $FRR_CONF_DIR/
@@ -61,4 +73,3 @@ function cleanup_frr {
     # Clean the FRRt configuration dir
     sudo rm -rf $FRR_CONF_DIR
 }
-

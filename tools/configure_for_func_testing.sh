@@ -25,6 +25,7 @@ DATABASE_USER=${DATABASE_USER:-openstack_citest}
 DATABASE_NAME=${DATABASE_NAME:-openstack_citest}
 MEMORY_TRACKER=${MEMORY_TRACKER:-False}
 MYSQL_REDUCE_MEMORY=${MYSQL_REDUCE_MEMORY:-True}
+ENABLE_FRR=${ENABLE_FRR:-False}
 
 
 if [[ "$IS_GATE" != "True" ]] && [[ "$#" -lt 1 ]]; then
@@ -105,6 +106,7 @@ function _init {
 
     GetDistro
     source $DEVSTACK_PATH/tools/fixup_stuff.sh
+    source $DEST/neutron/devstack/lib/frr
 }
 
 function _install_base_deps {
@@ -248,6 +250,11 @@ function _install_post_devstack {
 
     _install_database
     _install_rootwrap_sudoers
+
+    if [[ "$ENABLE_FRR" == "True" ]]; then
+        install_frr
+        install_frr_vrf_modules
+    fi
 
     if is_ubuntu; then
         install_package isc-dhcp-client
