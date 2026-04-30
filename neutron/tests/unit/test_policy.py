@@ -189,8 +189,6 @@ class PolicyTestCase(base.BaseTestCase):
     def test_check_invalid_scope(self):
         cfg.CONF.set_override(
             'enforce_new_defaults', True, group='oslo_policy')
-        cfg.CONF.set_override(
-            'enforce_scope', True, group='oslo_policy')
         action = "get_example:only_project_user_allowed"
         target = {'project_id': 'some-project'}
         system_admin_ctx = context.Context(
@@ -222,8 +220,6 @@ class PolicyTestCase(base.BaseTestCase):
     def test_enforce_invalid_scope(self):
         cfg.CONF.set_override(
             'enforce_new_defaults', True, group='oslo_policy')
-        cfg.CONF.set_override(
-            'enforce_scope', True, group='oslo_policy')
         action = "get_example:only_project_user_allowed"
         target = {'project_id': 'some-project'}
         system_admin_ctx = context.Context(
