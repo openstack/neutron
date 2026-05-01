@@ -195,10 +195,7 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
     OVN_DISTRIBUTION = 'ovn'
     OVN_SCHEMA_FILES = ['ovn-nb.ovsschema', 'ovn-sb.ovsschema']
 
-    # NOTE(ralonsoh): during the eventlet removal, the "logger" mech
-    # driver has been removed from this list. Re-add it once the removal
-    # is finished or the mech driver does not call monkey_patch().
-    _mechanism_drivers = ['ovn']
+    _mechanism_drivers = ['logger', 'ovn']
     _extension_drivers = ['port_security', 'external-gateway-multihoming']
     _counter = 0
     l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
