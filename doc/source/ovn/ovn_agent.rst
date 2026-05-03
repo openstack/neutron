@@ -81,11 +81,8 @@ agent.
 Zuul CI testing
 ---------------
 
-In order to enable this new agent, it is needed:
-
-* To disable the default OVN Metadata agent (devstack service
-  ``q-ovn-metadata-agent``).
-* To enable the OVN agent (devstack service ``q-ovn-agent``).
+The OVN agent is now enabled by default in devstack so explicit setting is
+not needed.
 
 Check the Neutron CI job ``neutron-tempest-plugin-ovn`` definition and
 `[OVN] Use the OVN agent in "neutron-tempest-plugin-ovn"
