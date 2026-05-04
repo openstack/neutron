@@ -18,17 +18,15 @@ from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as n_const
 from neutron_lib.db import resource_extend
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 
+from neutron.db import evpn_db
+
 LOG = logging.getLogger(__name__)
-
-
-# TODO(jlibosva):  Remove once the DB layer is implemented
-def _fake_db_call(action):
-    pass
 
 
 @resource_extend.has_resource_extenders
@@ -38,6 +36,9 @@ class EVPNPlugin(service_base.ServicePluginBase):
 
     This plugin extends the router API with an ``evpn_vni`` attribute
     and the router-interface API with EVPN advertisement controls.
+
+    Router deletion with a VNI is blocked by RESTRICT FK - user must
+    explicitly remove the VNI via update_router(evpn_vni=None) first.
     """
 
     supported_extension_aliases = [evpn_apidef.ALIAS]
@@ -47,6 +48,7 @@ class EVPNPlugin(service_base.ServicePluginBase):
 
     def __init__(self):
         super().__init__()
+        self._evpn_db = evpn_db.EVPNVNIDbHelper()
         LOG.info("Starting EVPN service plugin")
 
     def get_plugin_description(self):
@@ -62,26 +64,48 @@ class EVPNPlugin(service_base.ServicePluginBase):
         LOG.debug("EVPN extending router dict router_res: %s "
                   "router_db: %s", router_res, router_db)
         router_res[evpn_apidef.EVPN_VNI] = None
-        if router_db.get('evpn_vni_allocation'):
+        evpn_instance = router_db.get('evpn_instance')
+        if evpn_instance:
             router_res[evpn_apidef.EVPN_VNI] = (
-                router_db['evpn_vni_allocation'].evpn_vni)
+                evpn_instance.mapping.vni_allocation.vni)
         return router_res
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _process_router_create(self, resource, event, trigger, payload):
-        LOG.debug("EVPN processing router create - resource: %s "
-                  "event: %s trigger: %s payload: %s",
-                  resource, event, trigger, payload)
-        # TODO(jlibosva):  Implement the actual DB call
-        _fake_db_call('create evpn')
+        """Handle EVPN VNI allocation during router creation.
+
+        If evpn_vni is specified in the request (including 0 for auto),
+        allocate the VNI within the same transaction.
+        """
+        router = payload.latest_state
+        router_id = payload.resource_id
+
+        LOG.debug("Processing router create: %s", router)
+        requested_vni = router[evpn_apidef.EVPN_VNI]
+        if requested_vni is n_const.ATTR_NOT_SPECIFIED:
+            LOG.debug("No EVPN VNI requested for router %s", router_id)
+            return
+
+        LOG.debug("Allocating EVPN VNI for router %s, requested_vni=%s",
+                  router_id, requested_vni)
+
+        vni = self._evpn_db.allocate_vni_for_router(
+            payload.context, router_id, requested_vni)
+        LOG.info("Allocated EVPN VNI %s for router %s", vni, router_id)
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE])
     def _process_router_delete(self, resource, event, trigger, payload):
-        LOG.debug("EVPN processing router delete - resource: %s "
-                  "event: %s trigger: %s payload: %s",
-                  resource, event, trigger, payload)
-        # TODO(jlibosva):  Implement the actual DB call
-        _fake_db_call('delete evpn')
+        """Clean up EVPN VNI before router deletion.
+
+        Must delete evpn_vnis first (CASCADE deletes evpn_router_instances)
+        to satisfy RESTRICT FK on router_id before router is deleted.
+        """
+        context = payload.context
+        router_id = payload.resource_id
+
+        LOG.debug("Deallocating EVPN VNI for router %s", router_id)
+        self._evpn_db.deallocate_vni_for_router(context, router_id)
+        LOG.info("Deallocated EVPN VNI for router %s", router_id)
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_CREATE])
     def _process_router_interface_create(self, resource, event, trigger,
@@ -92,6 +116,7 @@ class EVPNPlugin(service_base.ServicePluginBase):
         evpn_networks and evpn_advertised_ports entries within the same
         transaction as the router interface creation.
         """
+        context = payload.context
         router_id = payload.resource_id
         interface_info = payload.metadata.get('interface_info', {})
 
@@ -104,8 +129,7 @@ class EVPNPlugin(service_base.ServicePluginBase):
         network_id = port['network_id']
         port_id = port['id']
 
-        # TODO(jlibosva):  Implement the actual DB call
-        _fake_db_call('advertise port')
+        self._evpn_db.advertise_port(context, port_id, network_id, router_id)
         LOG.info("EVPN advertise_host enabled for port %s on router %s and "
                  "network %s", port_id, router_id, network_id)
 
@@ -117,7 +141,8 @@ class EVPNPlugin(service_base.ServicePluginBase):
         This ensures the RESTRICT FK on evpn_networks.network_id does not
         block future network deletion.
         """
+        context = payload.context
         subnet_id = payload.metadata['subnet_id']
-        # TODO(jlibosva):  Implement the actual DB call
-        _fake_db_call('remove port')
-        LOG.info("Removing EVPN network entry for subnet %s", subnet_id)
+        LOG.debug("Removing EVPN network entry for subnet %s", subnet_id)
+        self._evpn_db.remove_evpn_network_by_subnet(context, subnet_id)
+        LOG.info("Removed EVPN network entry for subnet %s", subnet_id)

@@ -16,9 +16,12 @@
 from unittest import mock
 
 from neutron_lib.api.definitions import evpn as evpn_apidef
+from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 
+from neutron.db.models import evpn as evpn_models
 from neutron.services.evpn import plugin as evpn_plugin
 from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
@@ -37,8 +40,7 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         super().setUp(plugin=plugin, service_plugins=service_plugins,
                       ext_mgr=ext_mgr)
         self.evpn_plugin = directory.get_plugin(plugin_constants.EVPN)
-        self.mock_db_call = mock.patch.object(
-            evpn_plugin, '_fake_db_call').start()
+        self.ctx = context.get_admin_context()
 
     def test_get_plugin_type(self):
         self.assertEqual(
@@ -57,10 +59,10 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.assertIsNone(router['router'][evpn_apidef.EVPN_VNI])
 
     def test_extend_router_dict_with_allocation(self):
-        mock_alloc = mock.Mock()
-        mock_alloc.evpn_vni = 5000
+        mock_instance = mock.Mock()
+        mock_instance.mapping.vni_allocation.vni = 5000
         router_res = {}
-        router_db = {'evpn_vni_allocation': mock_alloc}
+        router_db = {'evpn_instance': mock_instance}
         evpn_plugin.EVPNPlugin._extend_router_dict(router_res, router_db)
         self.assertEqual(5000, router_res[evpn_apidef.EVPN_VNI])
 
@@ -70,50 +72,91 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         evpn_plugin.EVPNPlugin._extend_router_dict(router_res, router_db)
         self.assertIsNone(router_res[evpn_apidef.EVPN_VNI])
 
-    def test_router_create_calls_db(self):
-        with self.router(as_admin=True):
-            self.mock_db_call.assert_called_once_with('create evpn')
-
-    def test_router_delete_calls_db(self):
+    def test_router_create_no_vni(self):
         with self.router(as_admin=True) as router:
-            self.mock_db_call.reset_mock()
-            self._delete('routers', router['router']['id'])
-            self.mock_db_call.assert_called_once_with('delete evpn')
+            self.assertIsNone(router['router'][evpn_apidef.EVPN_VNI])
+
+    def test_router_create_with_vni(self):
+        with self.router(as_admin=True,
+                         arg_list=('evpn_vni',), evpn_vni=5000) as router:
+            self.assertEqual(5000, router['router'][evpn_apidef.EVPN_VNI])
+
+    def test_router_delete_deallocates_vni(self):
+        with self.router(as_admin=True,
+                         arg_list=('evpn_vni',), evpn_vni=5000) as router:
+            router_id = router['router']['id']
+            self._delete('routers', router_id)
+
+            with db_api.CONTEXT_READER.using(self.ctx):
+                instance = self.ctx.session.query(
+                    evpn_models.EVPNL3Instance
+                ).filter_by(router_id=router_id).one_or_none()
+            self.assertIsNone(instance)
 
     def test_router_interface_create_without_advertise_host(self):
-        with self.router(as_admin=True) as router, \
+        with self.router(as_admin=True,
+                         arg_list=('evpn_vni',), evpn_vni=5000) as router, \
                 self.network() as net, \
                 self.subnet(network=net) as subnet:
-            self.mock_db_call.reset_mock()
             self._router_interface_action(
                 'add', router['router']['id'],
                 subnet['subnet']['id'], None,
                 as_admin=True)
-            self.mock_db_call.assert_not_called()
+
+            # TODO(jlibosva): The API does not expose advertise_host yet,
+            # so we validate the DB directly.
+            with db_api.CONTEXT_READER.using(self.ctx):
+                evpn_net = self.ctx.session.query(
+                    evpn_models.EVPNNetwork
+                ).filter_by(
+                    network_id=net['network']['id']
+                ).one_or_none()
+            self.assertIsNone(evpn_net)
 
     def test_router_interface_create_with_advertise_host(self):
-        with self.router(as_admin=True) as router, \
+        with self.router(as_admin=True,
+                         arg_list=('evpn_vni',), evpn_vni=5000) as router, \
                 self.network() as net, \
                 self.subnet(network=net) as subnet:
-            self.mock_db_call.reset_mock()
             self._router_interface_action(
                 'add', router['router']['id'],
                 subnet['subnet']['id'], None,
                 as_admin=True,
                 advertise_host=True)
-            self.mock_db_call.assert_called_once_with('advertise port')
 
-    def test_router_interface_delete_calls_db(self):
-        with self.router(as_admin=True) as router, \
+            # TODO(jlibosva): The API does not expose advertise_host yet,
+            # so we validate the DB directly.
+            with db_api.CONTEXT_READER.using(self.ctx):
+                evpn_net = self.ctx.session.query(
+                    evpn_models.EVPNNetwork
+                ).filter_by(
+                    network_id=net['network']['id']
+                ).one_or_none()
+            self.assertIsNotNone(evpn_net)
+            self.assertEqual(
+                router['router']['id'], evpn_net.router_id)
+
+    def test_router_interface_delete_cleans_evpn_network(self):
+        with self.router(as_admin=True,
+                         arg_list=('evpn_vni',), evpn_vni=5000) as router, \
                 self.network() as net, \
                 self.subnet(network=net) as subnet:
             self._router_interface_action(
                 'add', router['router']['id'],
                 subnet['subnet']['id'], None,
-                as_admin=True)
-            self.mock_db_call.reset_mock()
+                as_admin=True,
+                advertise_host=True)
             self._router_interface_action(
                 'remove', router['router']['id'],
                 subnet['subnet']['id'], None,
                 as_admin=True)
-            self.mock_db_call.assert_called_once_with('remove port')
+
+            # TODO(jlibosva): The API does not expose advertise_host yet,
+            # so we validate the DB directly.
+            with db_api.CONTEXT_READER.using(self.ctx):
+                evpn_net = self.ctx.session.query(
+                    evpn_models.EVPNNetwork
+                ).filter_by(
+                    network_id=net['network']['id']
+                ).one_or_none()
+            self.assertIsNone(evpn_net)
