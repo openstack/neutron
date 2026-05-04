@@ -1320,12 +1320,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                     if (gw_info.ip_version == constants.IP_VERSION_4 and
                             gw_info.router_ip and
                             utils.is_snat_enabled(db_router)):
-                        networks = self.l3_plugin._ovn_client.\
-                            _get_v4_network_of_all_router_ports(
-                                self.context, db_router['id'])
                         db_nats[db_router['id']].extend(
-                            [gw_info.router_ip + network + 'snat'
-                             for network in networks])
+                            [gw_info.router_ip + '0.0.0.0/0' + 'snat'])
         fips = self._list('floatingips')
         fip_macs = {}
         if ovn_config.is_ovn_distributed_floating_ip():

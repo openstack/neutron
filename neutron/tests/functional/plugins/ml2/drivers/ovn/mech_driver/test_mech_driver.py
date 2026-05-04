@@ -1616,7 +1616,7 @@ class TestNATRuleGatewayPort(_TestRouter):
 
 class TestRouterGWPort(_TestRouter):
 
-    def _test_create_and_delete_router_gw_port(self, nested_snat=False):
+    def _test_create_and_delete_router_gw_port(self, nested_snat=True):
         ext_net = self._make_network(
             self.fmt, 'ext_networktest', True, as_admin=True,
             arg_list=('router:external',
@@ -1674,11 +1674,12 @@ class TestRouterGWPort(_TestRouter):
         self.assertIsNone(_find_ext_gw_lrp(lr))
 
     def test_create_and_delete_router_gw_port(self):
-        self._test_create_and_delete_router_gw_port()
+        ovn_conf.cfg.CONF.set_override(
+            'ovn_router_indirect_snat', False, 'ovn')
+        self._test_create_and_delete_router_gw_port(nested_snat=False)
 
     def test_create_and_delete_router_gw_port_nested_snat(self):
-        ovn_conf.cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
-        self._test_create_and_delete_router_gw_port(nested_snat=True)
+        self._test_create_and_delete_router_gw_port()
 
 
 class TestHAChassisGroupSync(base.TestOVNFunctionalBase):

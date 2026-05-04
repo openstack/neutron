@@ -1,0 +1,14 @@
+---
+upgrade:
+  - |
+    The ML2 OVN driver configuration option ``ovn_router_indirect_snat`` now
+    defaults to True. This allows external gateways to enable SNAT for all
+    nested networks that are indirectly connected to gateways (through other
+    routers). This mimics the `router` service plugin behavior used with
+    ML2 Open vSwitch and some other backends.
+deprecations:
+  - |
+    The ML2 OVN driver configuration option ``ovn_router_indirect_snat``
+    has been deprecated and will be removed in a future release. The fix is
+    included in OVN v24.03.4 and later, for more details see:
+    https://issues.redhat.com/browse/FDP-744
