@@ -197,6 +197,8 @@ class FakeOvsdbSbOvnIdl:
         self.is_col_present = mock.Mock()
         self.is_col_present.return_value = False
         self.db_find = mock.MagicMock()
+        self.db_find_rows = mock.MagicMock()
+        self.db_list_rows = mock.Mock()
         self.db_set = mock.Mock()
         self.lookup = mock.MagicMock()
         self.chassis_list = mock.MagicMock()

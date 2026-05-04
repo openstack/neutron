@@ -283,6 +283,35 @@ class AgentCache:
             self.agents[agent.agent_id] = agent
         return agent
 
+    def populate(self):
+        """Populate the cache with all existing OVN agents.
+
+        Read all Chassis_Private rows from the SB database and create
+        the corresponding agent entries. This replicates the logic of
+        ChassisAgentWriteEvent and ChassisOVNAgentWriteEvent for
+        contexts where the OVSDB monitor events are not running
+        (e.g. the neutron-ovn-db-sync-util tool).
+        """
+        for ch_private in self.driver.sb_ovn.db_list_rows(
+                'Chassis_Private').execute(check_error=True):
+            if not ch_private.chassis:
+                continue
+
+            self.update(ovn_const.OVN_CONTROLLER_AGENT, ch_private,
+                        clear_down=True)
+
+            external_ids = ch_private.external_ids
+            if external_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY):
+                self.update(ovn_const.OVN_NEUTRON_AGENT, ch_private,
+                            clear_down=True)
+            elif external_ids.get(ovn_const.OVN_AGENT_METADATA_ID_KEY):
+                self.update(ovn_const.OVN_METADATA_AGENT, ch_private,
+                            clear_down=True)
+        LOG.debug('Agents populated in the agent cache:')
+        for a in self.agents.values():
+            LOG.debug('- Agent type: %s, hostname: %s, name: %s',
+                      a.agent_type, a.chassis.hostname, a.chassis.name)
+
     def delete(self, agent_id):
         del self.agents[agent_id]
 

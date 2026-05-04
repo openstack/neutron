@@ -207,3 +207,111 @@ class AgentCacheTestCase(base.BaseTestCase):
         agents = self.agent_cache.get_agents(
             filters={'host': ['compute-0', 'dcn1-compute-0']})
         self.assertEqual(2, len(agents))
+
+
+class AgentCachePopulateTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.agent_cache = neutron_agent.AgentCache(driver=mock.ANY)
+        self.addCleanup(self._clean_agent_cache)
+        for agent_class in (neutron_agent.NeutronAgent,
+                            neutron_agent.MetadataAgent,
+                            neutron_agent.OVNNeutronAgent):
+            mock.patch.object(agent_class, 'alive', return_value=True).start()
+
+    def _clean_agent_cache(self):
+        del self.agent_cache
+
+    def _make_chassis_private(self, name, external_ids=None,
+                              gw_chassis=False, with_chassis=True):
+        other_config = {}
+        if gw_chassis:
+            other_config = {'ovn-cms-options': 'enable-chassis-as-gw'}
+        chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'other_config': other_config,
+                   'hostname': name + '-host'})
+        return fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': name,
+                   'chassis': [chassis] if with_chassis else [],
+                   'nb_cfg_timestamp': timeutils.utcnow_ts() * 1000,
+                   'external_ids': external_ids or {}})
+
+    def _mock_sb_idl(self, chassis_private_rows):
+        sb_idl = mock.Mock()
+        sb_idl.db_list_rows.return_value.execute.return_value = (
+            chassis_private_rows)
+        return sb_idl
+
+    def test_populate_controller_agents(self):
+        rows = [self._make_chassis_private('ch0'),
+                self._make_chassis_private('ch1')]
+        self.agent_cache.driver.sb_ovn = self._mock_sb_idl(rows)
+
+        self.agent_cache.populate()
+
+        self.agent_cache.driver.sb_ovn.db_list_rows.assert_called_once_with(
+            'Chassis_Private')
+        agents = self.agent_cache.get_agents(
+            filters={'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
+        self.assertEqual(2, len(agents))
+        self.assertTrue(all(
+            isinstance(a, neutron_agent.ControllerAgent) for a in agents))
+
+    def test_populate_gateway_agents(self):
+        rows = [self._make_chassis_private('ch0', gw_chassis=True),
+                self._make_chassis_private('ch1')]
+        self.agent_cache.driver.sb_ovn = self._mock_sb_idl(rows)
+
+        self.agent_cache.populate()
+
+        agents = self.agent_cache.get_agents(
+            filters={'agent_type': ovn_const.OVN_CONTROLLER_GW_AGENT})
+        self.assertEqual(1, len(agents))
+        agents = self.agent_cache.get_agents(
+            filters={'agent_type': ovn_const.OVN_CONTROLLER_AGENT})
+        self.assertEqual(1, len(agents))
+
+    def test_populate_metadata_agents(self):
+        ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: 'meta-id-0'}
+        rows = [self._make_chassis_private('ch0', external_ids=ext_ids)]
+        self.agent_cache.driver.sb_ovn = self._mock_sb_idl(rows)
+
+        self.agent_cache.populate()
+
+        # One controller + one metadata agent
+        self.assertEqual(2, len(list(self.agent_cache)))
+        agents = self.agent_cache.get_agents(
+            filters={'agent_type': ovn_const.OVN_METADATA_AGENT})
+        self.assertEqual(1, len(agents))
+
+    def test_populate_neutron_agents(self):
+        ext_ids = {ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-id-0'}
+        rows = [self._make_chassis_private('ch0', external_ids=ext_ids)]
+        self.agent_cache.driver.sb_ovn = self._mock_sb_idl(rows)
+
+        self.agent_cache.populate()
+
+        # One controller + one neutron agent
+        self.assertEqual(2, len(list(self.agent_cache)))
+        agents = self.agent_cache.get_agents(
+            filters={'agent_type': ovn_const.OVN_NEUTRON_AGENT})
+        self.assertEqual(1, len(agents))
+
+    def test_populate_skips_chassis_private_without_chassis(self):
+        rows = [self._make_chassis_private('ch0', with_chassis=False),
+                self._make_chassis_private('ch1')]
+        self.agent_cache.driver.sb_ovn = self._mock_sb_idl(rows)
+
+        self.agent_cache.populate()
+
+        self.assertEqual(1, len(list(self.agent_cache)))
+
+    def test_populate_idempotent(self):
+        rows = [self._make_chassis_private('ch0')]
+        self.agent_cache.driver.sb_ovn = self._mock_sb_idl(rows)
+
+        self.agent_cache.populate()
+        self.agent_cache.populate()
+
+        self.assertEqual(1, len(list(self.agent_cache)))
