@@ -843,8 +843,11 @@ def bits_to_kilobits(
 
 
 def disable_extension_by_service_plugin(core_plugin, service_plugin):
-    if ('filter-validation' in core_plugin.supported_extension_aliases and
-            not api_common.is_filter_validation_supported(service_plugin)):
+    if (service_plugin is None or
+            'filter-validation' not in
+            core_plugin.supported_extension_aliases):
+        return
+    if not api_common.is_filter_validation_supported(service_plugin):
         core_plugin.supported_extension_aliases.remove('filter-validation')
         LOG.info('Disable filter validation extension by service plugin '
                  '%s.', service_plugin.__class__.__name__)

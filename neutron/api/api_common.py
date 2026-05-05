@@ -285,6 +285,8 @@ def is_native_sorting_supported(plugin):
 
 
 def is_filter_validation_supported(plugin):
+    if plugin is None:
+        return False
     try:
         return plugin.filter_validation_support
     except AttributeError:
