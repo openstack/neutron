@@ -2087,6 +2087,7 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
             self.plugin, self.mech_driver, ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         self.addCleanup(self.sb_synchronizer.stop)
+        self.addCleanup(self._clean_agent_cache)
         self.ctx = context.get_admin_context()
         self.host1 = uuidutils.generate_uuid()
         self.sb_api.idl.notify_handler.watch_events([
@@ -2097,6 +2098,9 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
 
     def _sync_resources(self):
         self.sb_synchronizer.sync_hostname_and_physical_networks(self.ctx)
+
+    def _clean_agent_cache(self):
+        del self.sb_synchronizer.agent_cache
 
     def create_segment(self, network_id, physical_network, segmentation_id):
         segment_data = {'network_id': network_id,
