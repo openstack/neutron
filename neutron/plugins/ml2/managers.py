@@ -17,6 +17,8 @@ from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import multiprovidernet as mpnet_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as provider
+from neutron_lib.api.definitions import qinq as qinq_apidef
+from neutron_lib.api.definitions import vlantransparent as vlan_apidef
 from neutron_lib.api import validators
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
@@ -446,31 +448,67 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             LOG.info("Initializing mechanism driver '%s'", driver.name)
             driver.obj.initialize()
 
+    def _mech_driver_tri_state_check(self, context, feature_field,
+                                     check_method, error_cls):
+        """Enforce mechanism-driver support for a tri-state capability.
+
+        The driver ``check_method`` return value is interpreted as tri-state:
+        * True: support
+        * False: explicit rejection
+        * None: abstain
+
+        The capability is accepted only if at least one driver returns True
+        and no driver returns False.
+
+        :param context: context parameter to pass to each method call
+        :param feature_field: key in ``context.current`` that enables the check
+        :param check_method: driver method name used for capability validation
+        :param error_cls: exception type raised on unsupported capability
+        :raises: error_cls if no driver reports explicit support or any driver
+            explicitly rejects support.
+        """
+        if not context.current.get(feature_field):
+            return
+
+        if not self.ordered_mech_drivers:
+            # With no mechanism drivers loaded, behave like the legacy check
+            # (the for-loop never ran, so nothing could veto the network).
+            return
+
+        saw_true = False
+        for driver in self.ordered_mech_drivers:
+            result = getattr(driver.obj, check_method)(context)
+            if result is False:
+                raise error_cls()
+            if result is True:
+                saw_true = True
+
+        if not saw_true:
+            raise error_cls()
+
     def _check_vlan_transparency(self, context):
-        """Helper method for checking vlan transparecncy support.
+        """Helper method for checking vlan transparency support.
 
         :param context: context parameter to pass to each method call
         :raises: neutron_lib.exceptions.vlantransparent.
-        VlanTransparencyDriverError if any mechanism driver doesn't
-        support vlan transparency.
+        VlanTransparencyDriverError if mechanism drivers do not collectively
+        support vlan transparency for this network.
         """
-        if context.current.get('vlan_transparent'):
-            for driver in self.ordered_mech_drivers:
-                if not driver.obj.check_vlan_transparency(context):
-                    raise vlan_exc.VlanTransparencyDriverError()
+        self._mech_driver_tri_state_check(
+            context, vlan_apidef.VLANTRANSPARENT, 'check_vlan_transparency',
+            vlan_exc.VlanTransparencyDriverError)
 
     def _check_vlan_qinq(self, context):
         """Helper method for checking vlan qinq support.
 
         :param context: context parameter to pass to each method call
         :raises: neutron_lib.exceptions.qinq.
-        VlanQinqDriverError if any mechanism driver doesn't
-        support vlan transparency.
+        VlanQinqDriverError if mechanism drivers do not collectively
+        support vlan qinq for this network.
         """
-        if context.current.get('qinq'):
-            for driver in self.ordered_mech_drivers:
-                if not driver.obj.check_vlan_qinq(context):
-                    raise qinq_exc.VlanQinqDriverError()
+        self._mech_driver_tri_state_check(
+            context, qinq_apidef.QINQ_FIELD, 'check_vlan_qinq',
+            qinq_exc.VlanQinqDriverError)
 
     def start_driver_rpc_listeners(self):
         servers = []

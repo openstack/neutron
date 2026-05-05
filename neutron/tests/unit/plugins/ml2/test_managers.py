@@ -19,6 +19,8 @@ from unittest import mock
 from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import placement as place_exc
+from neutron_lib.exceptions import vlanqinq as qinq_exc
+from neutron_lib.exceptions import vlantransparent as vlan_exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -207,6 +209,101 @@ class TestMechManager(base.BaseTestCase):
 
     def test_port_precommit(self):
         self._check_resource('port')
+
+
+class TestMechDriverTriStateChecks(base.BaseTestCase):
+    """Unit tests for vlan_transparent / qinq mechanism-driver aggregation."""
+
+    def setUp(self):
+        super().setUp()
+        cfg.CONF.set_override('mechanism_drivers', ['test'], group='ml2')
+        self.manager = managers.MechanismManager()
+
+    def _ordered_exts(self, method_name, return_values):
+        exts = []
+        for ret in return_values:
+            obj = mock.Mock()
+            getattr(obj, method_name).return_value = ret
+            exts.append(mock.Mock(obj=obj))
+        return exts
+
+    def test_vlan_transparency_disabled_noop(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_transparency', [False])
+        ctx = mock.Mock(current={'vlan_transparent': False})
+        self.manager._check_vlan_transparency(ctx)
+
+    def test_vlan_transparency_no_mech_drivers_legacy_noop(self):
+        self.manager.ordered_mech_drivers = []
+        ctx = mock.Mock(current={'vlan_transparent': True})
+        self.manager._check_vlan_transparency(ctx)
+
+    def test_vlan_transparency_all_abstain_raises(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_transparency', [None, None])
+        ctx = mock.Mock(current={'vlan_transparent': True})
+        self.assertRaises(
+            vlan_exc.VlanTransparencyDriverError,
+            self.manager._check_vlan_transparency, ctx)
+
+    def test_vlan_transparency_explicit_false_raises(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_transparency', [True, False])
+        ctx = mock.Mock(current={'vlan_transparent': True})
+        self.assertRaises(
+            vlan_exc.VlanTransparencyDriverError,
+            self.manager._check_vlan_transparency, ctx)
+
+    def test_vlan_transparency_one_true_ok(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_transparency', [True])
+        ctx = mock.Mock(current={'vlan_transparent': True})
+        self.manager._check_vlan_transparency(ctx)
+
+    def test_vlan_transparency_mixed_abstain_and_true_ok(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_transparency', [None, True])
+        ctx = mock.Mock(current={'vlan_transparent': True})
+        self.manager._check_vlan_transparency(ctx)
+
+    def test_qinq_disabled_noop(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_qinq', [False])
+        ctx = mock.Mock(current={'qinq': False})
+        self.manager._check_vlan_qinq(ctx)
+
+    def test_qinq_no_mech_drivers_legacy_noop(self):
+        self.manager.ordered_mech_drivers = []
+        ctx = mock.Mock(current={'qinq': True})
+        self.manager._check_vlan_qinq(ctx)
+
+    def test_qinq_all_abstain_raises(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_qinq', [None])
+        ctx = mock.Mock(current={'qinq': True})
+        self.assertRaises(
+            qinq_exc.VlanQinqDriverError,
+            self.manager._check_vlan_qinq, ctx)
+
+    def test_qinq_explicit_false_raises(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_qinq', [True, False])
+        ctx = mock.Mock(current={'qinq': True})
+        self.assertRaises(
+            qinq_exc.VlanQinqDriverError,
+            self.manager._check_vlan_qinq, ctx)
+
+    def test_qinq_one_true_ok(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_qinq', [True])
+        ctx = mock.Mock(current={'qinq': True})
+        self.manager._check_vlan_qinq(ctx)
+
+    def test_qinq_mixed_abstain_and_true_ok(self):
+        self.manager.ordered_mech_drivers = self._ordered_exts(
+            'check_vlan_qinq', [None, True])
+        ctx = mock.Mock(current={'qinq': True})
+        self.manager._check_vlan_qinq(ctx)
 
 
 class TypeManagerTestCase(base.BaseTestCase):
