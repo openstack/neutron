@@ -41,8 +41,6 @@ BGP_BRIDGE_NIC_TYPES = ('', 'system')
 
 BGP_LRP_TO_CHASSIS = 'neutron-bgp-lrp-to-chassis-router'
 
-RELATED_RESOURCE_TAG = 'neutron-bgp-related-resource'
-
 
 class Enum(enum.Enum):
 
