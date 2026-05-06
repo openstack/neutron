@@ -30,7 +30,7 @@ LOGFILE=$DEST/logs/stack.sh.log
 
 enable_service ovn-northd
 enable_service ovn-controller
-enable_service q-ovn-metadata-agent
+enable_service q-ovn-agent
 
 # Use Neutron
 enable_service q-svc

@@ -38,7 +38,7 @@ disable_service swift
 disable_service ovn
 disable_service ovn-controller
 disable_service ovn-northd
-disable_service q-ovn-metadata-agent
+disable_service q-ovn-agent
 
 # Use openvswitch as the ml2 plugin driver
 Q_AGENT=openvswitch
