@@ -46,6 +46,7 @@ from neutron.conf.agent.database import agents_db
 from neutron.extensions import agent as ext_agent
 from neutron.extensions import availability_zone as az_ext
 from neutron.objects import agent as agent_obj
+from neutron.objects import base as base_obj
 
 
 LOG = logging.getLogger(__name__)
@@ -286,10 +287,14 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         return agent_obj.Agent.get_objects(context, **filters)
 
     @db_api.retry_if_session_inactive()
-    def get_agents(self, context, filters=None, fields=None):
+    def get_agents(self, context, filters=None, fields=None, sorts=None,
+                   limit=None, marker=None, page_reverse=False):
         filters = filters or {}
+        pager = base_obj.Pager(
+            sorts=sorts, limit=limit, page_reverse=page_reverse, marker=marker
+        )
         alive = filters and filters.pop('alive', None)
-        agents = agent_obj.Agent.get_objects(context, **filters)
+        agents = agent_obj.Agent.get_objects(context, _pager=pager, **filters)
         if alive:
             alive = converters.convert_to_boolean(alive[0])
             agents = [agent for agent in agents if agent.is_active == alive]

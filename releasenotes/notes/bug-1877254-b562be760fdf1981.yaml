@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Add limiting and paging features for L3 agents.
+
+    Listing ML2/OVN agents with these features is currently not supported, as
+    only SQL-backed agents support them via the neutron-lib library. This gap
+    is documented in the "Gaps from ML2/OVS" documentation.
+
