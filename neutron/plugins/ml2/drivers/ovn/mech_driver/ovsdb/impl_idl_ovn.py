@@ -78,6 +78,8 @@ def add_keepalives(fn):
     @functools.wraps(fn)
     def _open(*args, **kwargs):
         error, sock = fn(*args, **kwargs)
+        if error:
+            return error, sock
         try:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         except OSError as e:
