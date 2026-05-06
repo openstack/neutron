@@ -20,6 +20,7 @@ from neutron_lib.api.definitions import l3 as l3_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib import context as n_context
@@ -1466,8 +1467,17 @@ class BaseTestOVNL3RouterPluginMixin:
         self._test_create_floatingip_gateway_port_option(
             distributed_fip=True, has_hcg=False)
 
-    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._delete_floatingip')
     def test_delete_floatingip(self, df):
+        def _delete_and_publish(context, fip_id):
+            registry.publish(
+                resources.FLOATING_IP, events.AFTER_DELETE, self,
+                payload=events.DBEventPayload(
+                    context,
+                    states=(self.fake_floating_ip,),
+                    resource_id=fip_id))
+            return self.fake_floating_ip
+        df.side_effect = _delete_and_publish
         nb_ovn = self.l3_inst._nb_ovn
         nb_ovn.get_floatingip.return_value = (
             self.fake_ovn_nat_rule)
@@ -1478,8 +1488,17 @@ class BaseTestOVNL3RouterPluginMixin:
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10')
 
-    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._delete_floatingip')
     def test_delete_floatingip_lb_vip_fip(self, df):
+        def _delete_and_publish(context, fip_id):
+            registry.publish(
+                resources.FLOATING_IP, events.AFTER_DELETE, self,
+                payload=events.DBEventPayload(
+                    context,
+                    states=(self.fake_floating_ip,),
+                    resource_id=fip_id))
+            return self.fake_floating_ip
+        df.side_effect = _delete_and_publish
         config.cfg.CONF.set_override(
             'enable_distributed_floating_ip', True, group='ovn')
         self.get_subnet.return_value = self.member_subnet
@@ -1512,8 +1531,17 @@ class BaseTestOVNL3RouterPluginMixin:
             mock.call('NAT', self.fake_ovn_nat_rule.uuid,
                       ('external_mac', 'aa:aa:aa:aa:aa:aa'))])
 
-    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._delete_floatingip')
     def test_delete_floatingip_lsp_external_id(self, df):
+        def _delete_and_publish(context, fip_id):
+            registry.publish(
+                resources.FLOATING_IP, events.AFTER_DELETE, self,
+                payload=events.DBEventPayload(
+                    context,
+                    states=(self.fake_floating_ip,),
+                    resource_id=fip_id))
+            return self.fake_floating_ip
+        df.side_effect = _delete_and_publish
         self.l3_inst._nb_ovn.get_floatingip.return_value = (
             self.fake_ovn_nat_rule)
 
@@ -1529,8 +1557,17 @@ class BaseTestOVNL3RouterPluginMixin:
             'external_ids', ovn_const.OVN_PORT_FIP_EXT_ID_KEY)]
         self.l3_inst._nb_ovn.db_remove.assert_has_calls(calls)
 
-    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._delete_floatingip')
     def test_delete_floatingip_no_lsp_external_id(self, df):
+        def _delete_and_publish(context, fip_id):
+            registry.publish(
+                resources.FLOATING_IP, events.AFTER_DELETE, self,
+                payload=events.DBEventPayload(
+                    context,
+                    states=(self.fake_floating_ip,),
+                    resource_id=fip_id))
+            return self.fake_floating_ip
+        df.side_effect = _delete_and_publish
         self.l3_inst._nb_ovn.get_floatingip.return_value = (
             self.fake_ovn_nat_rule)
         self.l3_inst._nb_ovn.get_lswitch_port.return_value = None
@@ -2239,6 +2276,15 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             self, expected_status=constants.FLOATINGIP_STATUS_DOWN):
         super().\
             test_floatingip_update_subnet_gateway_disabled(expected_status)
+
+    def test__notify_gateway_port_ip_changed(self):
+        self.skipTest("OVN L3 plugin does not register RPC callbacks")
+
+    def test__notify_gateway_port_ip_not_changed(self):
+        self.skipTest("OVN L3 plugin does not register RPC callbacks")
+
+    def test_create_floatingip_non_admin_context_agent_notification(self):
+        self.skipTest("OVN L3 plugin does not register RPC callbacks")
 
     # Test function _subnet_update of L3 OVN plugin.
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')

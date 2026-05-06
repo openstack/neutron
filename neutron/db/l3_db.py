@@ -2144,10 +2144,113 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         """
         return False
 
+    def _get_router_gw_ports_by_network(self, context, network_id):
+        return port_obj.Port.get_objects(
+            context, network_id=network_id,
+            device_owner=constants.DEVICE_OWNER_ROUTER_GW)
+
+    def _update_router_gateway_ports(self, context, network, subnet):
+        gw_ports = self._get_router_gw_ports_by_network(context,
+                                                        network['id'])
+        router_ids = [p.device_id for p in gw_ports]
+        for id in router_ids:
+            try:
+                self._update_router_gw_port(context, id, network, subnet)
+            except l3_exc.RouterNotFound:
+                LOG.debug("Router %(id)s was concurrently deleted while "
+                          "updating GW port for subnet %(s)s",
+                          {'id': id, 's': subnet})
+
+    def _update_router_gw_port(self, context, router_id, network, subnet):
+        ctx_admin = context.elevated()
+        ext_subnets_dict = {s['id']: s for s in network['subnets']}
+        router = self.get_router(ctx_admin, router_id)
+        external_gateway_info = router['external_gateway_info']
+        # Get all stateful (i.e. non-SLAAC/DHCPv6-stateless) fixed ips
+        fips = [f for f in external_gateway_info['external_fixed_ips']
+                if not ipv6_utils.is_auto_address_subnet(
+                    ext_subnets_dict[f['subnet_id']])]
+        num_fips = len(fips)
+        # Don't add the fixed IP to the port if it already
+        # has a stateful fixed IP of the same IP version
+        if num_fips > 1:
+            return
+        if num_fips == 1 and netaddr.IPAddress(
+                fips[0]['ip_address']).version == subnet['ip_version']:
+            return
+        external_gateway_info['external_fixed_ips'].append(
+            {'subnet_id': subnet['id']})
+        info = {'router': {'external_gateway_info': external_gateway_info}}
+        self.update_router(ctx_admin, router_id, info)
+
+
+class L3NotifierMixin:
+    """Mixin class to add notifier attribute to db_base_plugin_v2.
+
+    Provides the l3_rpc_notifier property and notify_* helper methods
+    without registering any event callbacks. Backends that do not need
+    RPC-driven callbacks (e.g. ML2/OVN) should inherit this mixin
+    instead of L3RpcNotifierMixin.
+    """
+
+    @property
+    def l3_rpc_notifier(self):
+        if not hasattr(self, '_l3_rpc_notifier'):
+            self._l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
+        return self._l3_rpc_notifier
+
+    def notify_router_updated(self, context, router_id,
+                              operation=None):
+        if router_id:
+            self.l3_rpc_notifier.routers_updated(
+                context, [router_id], operation)
+
+    def notify_routers_updated(self, context, router_ids,
+                               operation=None, data=None):
+        if router_ids:
+            self.l3_rpc_notifier.routers_updated(
+                context, router_ids, operation, data)
+
+    def notify_router_deleted(self, context, router_id):
+        self.l3_rpc_notifier.router_deleted(context, router_id)
+
+    def notify_router_interface_action(
+            self, context, router_interface_info, action):
+        self.notify_routers_updated(
+            context, [router_interface_info['id']],
+            '%s_router_interface' % action,
+            {'subnet_id': router_interface_info['subnet_id']})
+
+        mapping = {'add': 'create', 'remove': 'delete'}
+        notifier = n_rpc.get_notifier('network')
+        router_event = 'router.interface.%s' % mapping[action]
+        notifier.info(context, router_event,
+                      {'router_interface': router_interface_info})
+
+    def add_router_interface(self, context, router_id, interface_info=None):
+        router_interface_info = super().add_router_interface(
+            context, router_id, interface_info)
+        self.notify_router_interface_action(
+            context, router_interface_info, 'add')
+        return router_interface_info
+
+    def remove_router_interface(self, context, router_id, interface_info):
+        router_interface_info = super().remove_router_interface(
+            context, router_id, interface_info)
+        self.notify_router_interface_action(
+            context, router_interface_info, 'remove')
+        return router_interface_info
+
 
 @registry.has_registry_receivers
-class L3RpcNotifierMixin:
-    """Mixin class to add rpc notifier attribute to db_base_plugin_v2."""
+class L3RpcNotifierMixin(L3NotifierMixin):
+    """Mixin class to add rpc notifier and RPC event callbacks.
+
+    Extends L3NotifierMixin with event callbacks that react to PORT,
+    SUBNET and SUBNETPOOL_ADDRESS_SCOPE changes by sending RPC
+    notifications to L3 agents. Only needed for backends that use
+    RPC workers (rpc_workers >= 1).
+    """
 
     @staticmethod
     @registry.receives(resources.PORT, [events.AFTER_DELETE])
@@ -2217,27 +2320,6 @@ class L3RpcNotifierMixin:
             l3plugin.notify_routers_updated(context, router_ids)
         else:
             LOG.debug('%s not configured', plugin_constants.L3)
-
-    @property
-    def l3_rpc_notifier(self):
-        if not hasattr(self, '_l3_rpc_notifier'):
-            self._l3_rpc_notifier = l3_rpc_agent_api.L3AgentNotifyAPI()
-        return self._l3_rpc_notifier
-
-    def notify_router_updated(self, context, router_id,
-                              operation=None):
-        if router_id:
-            self.l3_rpc_notifier.routers_updated(
-                context, [router_id], operation)
-
-    def notify_routers_updated(self, context, router_ids,
-                               operation=None, data=None):
-        if router_ids:
-            self.l3_rpc_notifier.routers_updated(
-                context, router_ids, operation, data)
-
-    def notify_router_deleted(self, context, router_id):
-        self.l3_rpc_notifier.router_deleted(context, router_id)
 
 
 class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
@@ -2320,23 +2402,6 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
                 rp.port_type = new_owner
                 rp.port.device_owner = new_owner
 
-    def _get_router_gw_ports_by_network(self, context, network_id):
-        return port_obj.Port.get_objects(
-            context, network_id=network_id,
-            device_owner=constants.DEVICE_OWNER_ROUTER_GW)
-
-    def _update_router_gateway_ports(self, context, network, subnet):
-        gw_ports = self._get_router_gw_ports_by_network(context,
-                                                        network['id'])
-        router_ids = [p.device_id for p in gw_ports]
-        for id in router_ids:
-            try:
-                self._update_router_gw_port(context, id, network, subnet)
-            except l3_exc.RouterNotFound:
-                LOG.debug("Router %(id)s was concurrently deleted while "
-                          "updating GW port for subnet %(s)s",
-                          {'id': id, 's': subnet})
-
     def update_router_gw_ports(self, context, network, subnet):
         s = subnet_obj.Subnet.get_object(context, id=subnet['id'])
         service_types = s.service_types
@@ -2345,25 +2410,3 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
                 all(s not in update_types for s in service_types)):
             return
         self._update_router_gateway_ports(context, network, subnet)
-
-    def _update_router_gw_port(self, context, router_id, network, subnet):
-        ctx_admin = context.elevated()
-        ext_subnets_dict = {s['id']: s for s in network['subnets']}
-        router = self.get_router(ctx_admin, router_id)
-        external_gateway_info = router['external_gateway_info']
-        # Get all stateful (i.e. non-SLAAC/DHCPv6-stateless) fixed ips
-        fips = [f for f in external_gateway_info['external_fixed_ips']
-                if not ipv6_utils.is_auto_address_subnet(
-                    ext_subnets_dict[f['subnet_id']])]
-        num_fips = len(fips)
-        # Don't add the fixed IP to the port if it already
-        # has a stateful fixed IP of the same IP version
-        if num_fips > 1:
-            return
-        if num_fips == 1 and netaddr.IPAddress(
-                fips[0]['ip_address']).version == subnet['ip_version']:
-            return
-        external_gateway_info['external_fixed_ips'].append(
-            {'subnet_id': subnet['id']})
-        info = {'router': {'external_gateway_info': external_gateway_info}}
-        self.update_router(ctx_admin, router_id, info)
