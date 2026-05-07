@@ -314,6 +314,51 @@ class TestDesignateDriver(base.BaseTestCase):
             'test', ['192.168.0.10']
         )
 
+    @mock.patch.object(driver, '_SESSION', new=mock.Mock())
+    @mock.patch.object(driver, 'd_client')
+    @mock.patch('keystoneauth1.token_endpoint.Token')
+    @mock.patch('keystoneauth1.loading.load_auth_from_conf_options')
+    @mock.patch.object(driver, 'get_clients',
+                       side_effect=driver.get_clients)
+    def test_admin_client_passes_edit_managed(
+            self, mock_get_clients, mock_load_auth, mock_token,
+            mock_d_client):
+        mock_get_clients(self.context)
+        self.assertEqual(2, mock_d_client.Client.call_count)
+        user_call, admin_call = mock_d_client.Client.call_args_list
+        self.assertNotIn('edit_managed', user_call.kwargs)
+        self.assertTrue(admin_call.kwargs.get('edit_managed'))
+
+    @mock.patch.object(driver, '_SESSION', new=mock.Mock())
+    @mock.patch.object(driver, 'd_client')
+    @mock.patch('keystoneauth1.token_endpoint.Token')
+    @mock.patch.object(driver, 'get_all_projects_client',
+                       side_effect=driver.get_all_projects_client)
+    def test_all_projects_client_no_edit_managed(
+            self, mock_get_all, mock_token, mock_d_client):
+        mock_get_all(self.context)
+        call = mock_d_client.Client.call_args
+        self.assertNotIn('edit_managed', call.kwargs)
+
+    def test_delete_managed_record_falls_back_to_admin(self):
+        self.client.recordsets.list.return_value = [
+            {'id': 123, 'records': ['192.168.0.10']}
+        ]
+        self.client.recordsets.delete.side_effect = d_exc.BadRequest
+
+        cfg.CONF.set_override(
+            'allow_reverse_dns_lookup', False, group='designate'
+        )
+
+        self.driver.delete_record_set(
+            self.context, 'example.test.', 'test', ['192.168.0.10']
+        )
+
+        self.client.recordsets.delete.assert_called_once_with(
+            'example.test.', 123)
+        self.admin_client.recordsets.delete.assert_called_once_with(
+            'example.test.', 123)
+
     def test_ipv4_ptr_is_misconfigured(self):
         self.assertRaises(
             ValueError,

@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fixed an issue where deleting a floating IP with ``dns_name`` and
+    ``dns_domain`` set would fail with a 500 error when the associated
+    Designate DNS records were managed. The Designate external DNS driver
+    now passes ``edit_managed=True`` to the designateclient, allowing
+    deletion of managed records. For more information see bug
+    `2149807 <https://bugs.launchpad.net/neutron/+bug/2149807>`_.
