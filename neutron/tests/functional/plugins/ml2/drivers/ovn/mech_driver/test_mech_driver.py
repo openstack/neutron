@@ -1611,7 +1611,9 @@ class TestNATRuleGatewayPort(_TestRouter):
 
         rules = self.nb_api.get_all_logical_routers_with_rports()[0]
         fip_rule = rules['dnat_and_snats'][0]
-        self.assertNotEqual([], fip_rule['gateway_port'])
+        # gateway_port is only set when distributed FIPs are enabled
+        # LP#2150866
+        self.assertEqual([], fip_rule['gateway_port'])
 
 
 class TestRouterGWPort(_TestRouter):

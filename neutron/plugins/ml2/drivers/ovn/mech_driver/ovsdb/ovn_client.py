@@ -949,17 +949,18 @@ class OVNClient:
                    'options': options,
                    }
 
-        # If OVN supports gateway_port column for NAT rules set gateway port
-        # uuid to floating IP without gw port reference - LP#2035281.
-        router_db = self._l3_plugin.get_router(admin_context, router_id)
-        gw_port_id = router_db.get('gw_port_id')
-        lrp = self._nb_idl.get_lrouter_port(gw_port_id)
-        # If LRP is not bound to a chassis, it means that router can be
-        # bound instead. In this case we do not want to define
-        # gateway_port LP#2083527.
-        if lrp.options.get(
-                ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH) == 'true':
-            columns['gateway_port'] = lrp.uuid
+        # Set gateway_port on NAT rules when distributed floating IPs are
+        # enabled and the LRP is scheduled on a chassis. History: LP#2035281
+        # added gateway_port support, LP#2083527 added a guard for gateway
+        # routers, and LP#2150866 fixed the guard to check ha_chassis_group.
+        if ovn_conf.is_ovn_distributed_floating_ip():
+            router_db = self._l3_plugin.get_router(admin_context, router_id)
+            gw_port_id = router_db.get('gw_port_id')
+            lrp = self._nb_idl.get_lrouter_port(gw_port_id)
+            # If the gateway LRP is scheduled on a chassis (it has
+            # ha_chassis_group), then assign the gateway_port reference.
+            if lrp and lrp.ha_chassis_group:
+                columns['gateway_port'] = lrp.uuid
 
         if ovn_conf.is_ovn_distributed_floating_ip():
             if self._nb_idl.lsp_get_up(floatingip['port_id']).execute():

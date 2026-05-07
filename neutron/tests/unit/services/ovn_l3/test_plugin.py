@@ -1191,6 +1191,7 @@ class BaseTestOVNL3RouterPluginMixin:
             external_ip='192.168.0.10', external_mac='00:01:02:03:04:05',
             logical_port='port_id',
             external_ids=expected_ext_ids,
+            gateway_port=mock.ANY,
             options={'stateless': 'false'},
         )
 
@@ -1227,6 +1228,7 @@ class BaseTestOVNL3RouterPluginMixin:
             external_ip='192.168.0.10',
             logical_port='port_id',
             external_ids=expected_ext_ids,
+            gateway_port=mock.ANY,
             options={'stateless': 'false'},
         )
 
@@ -1347,6 +1349,7 @@ class BaseTestOVNL3RouterPluginMixin:
             logical_ip='10.0.0.10',
             type='dnat_and_snat',
             external_ids=expected_ext_ids,
+            gateway_port=mock.ANY,
             options={'stateless': 'false'},
         )
 
@@ -1386,6 +1389,7 @@ class BaseTestOVNL3RouterPluginMixin:
             logical_port='port_id',
             type='dnat_and_snat',
             external_ids=expected_ext_ids,
+            gateway_port=mock.ANY,
             options={'stateless': 'false'},
         )
         self.l3_inst._nb_ovn.db_find_rows.assert_called_with(
@@ -1396,18 +1400,18 @@ class BaseTestOVNL3RouterPluginMixin:
             mock.call('NAT', self.fake_ovn_nat_rule.uuid, 'external_mac'),
             mock.call('NAT', self.fake_ovn_nat_rule.uuid, 'logical_port')])
 
-    def _test_create_floatingip_gateway_port_option(self, is_gw_port):
+    def _test_create_floatingip_gateway_port_option(
+            self, distributed_fip, has_hcg=False):
         _nb_ovn = self.l3_inst._nb_ovn
         _nb_ovn.is_col_present.return_value = True
         self._get_floatingip.return_value = {'floating_port_id': 'fip-port-id'}
         _nb_ovn.get_lrouter_nat_rules.return_value = [
             {'external_ip': '192.168.0.10', 'logical_ip': '10.0.0.0/24',
              'type': 'snat', 'uuid': 'uuid1'}]
-        lrp_options = {}
-        if is_gw_port:
-            lrp_options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = 'true'
+        ha_chassis_group = ['fake-hcg-uuid'] if has_hcg else []
         lrp = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'options': lrp_options})
+            attrs={'options': {},
+                   'ha_chassis_group': ha_chassis_group})
         _nb_ovn.get_lrouter_port.return_value = lrp
         self.l3_inst.get_router.return_value = self.fake_router_with_ext_gw
 
@@ -1415,9 +1419,13 @@ class BaseTestOVNL3RouterPluginMixin:
             self.context, states=(self.fake_floating_ip,),
             resource_id=self.fake_floating_ip['id'],
             request_body={'floatingip': self.fake_floating_ip})
-        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
-                                                events.AFTER_CREATE,
-                                                self, payload)
+        with mock.patch(
+                'neutron.conf.plugins.ml2.drivers.ovn.ovn_conf.'
+                'is_ovn_distributed_floating_ip',
+                return_value=distributed_fip):
+            self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                    events.AFTER_CREATE,
+                                                    self, payload)
         _nb_ovn.set_nat_rule_in_lrouter.assert_not_called()
 
         expected_ext_ids = {
@@ -1431,33 +1439,32 @@ class BaseTestOVNL3RouterPluginMixin:
             ovn_const.OVN_FIP_NET_ID:
                 self.fake_floating_ip['floating_network_id']}
 
-        if is_gw_port:
-            _nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-                'neutron-router-id',
-                type='dnat_and_snat',
-                logical_ip='10.0.0.10',
-                external_ip='192.168.0.10',
-                logical_port='port_id',
-                external_ids=expected_ext_ids,
-                gateway_port=lrp.uuid,
-                options={'stateless': 'false'},
-            )
-        else:
-            _nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-                'neutron-router-id',
-                type='dnat_and_snat',
-                logical_ip='10.0.0.10',
-                external_ip='192.168.0.10',
-                logical_port='port_id',
-                external_ids=expected_ext_ids,
-                options={'stateless': 'false'},
-            )
+        expected_kwargs = {
+            'type': 'dnat_and_snat',
+            'logical_ip': '10.0.0.10',
+            'external_ip': '192.168.0.10',
+            'logical_port': 'port_id',
+            'external_ids': expected_ext_ids,
+            'options': {'stateless': 'false'},
+        }
+        if distributed_fip and has_hcg:
+            expected_kwargs['gateway_port'] = lrp.uuid
+        if distributed_fip:
+            expected_kwargs['external_mac'] = 'aa:aa:aa:aa:aa:aa'
+        _nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-router-id', **expected_kwargs)
 
     def test_create_floatingip_with_gateway_port(self):
-        self._test_create_floatingip_gateway_port_option(True)
+        self._test_create_floatingip_gateway_port_option(
+            distributed_fip=True, has_hcg=True)
 
     def test_create_floatingip_without_gateway_port(self):
-        self._test_create_floatingip_gateway_port_option(False)
+        self._test_create_floatingip_gateway_port_option(
+            distributed_fip=False)
+
+    def test_create_floatingip_no_gateway_port_dfip_without_hcg(self):
+        self._test_create_floatingip_gateway_port_option(
+            distributed_fip=True, has_hcg=False)
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
     def test_delete_floatingip(self, df):
@@ -1673,6 +1680,7 @@ class BaseTestOVNL3RouterPluginMixin:
             logical_ip='10.10.10.10', external_ip='192.168.0.10',
             external_mac='00:01:02:03:04:05', logical_port='new-port_id',
             external_ids=expected_ext_ids,
+            gateway_port=mock.ANY,
             options={'stateless': 'false'},
         )
 
