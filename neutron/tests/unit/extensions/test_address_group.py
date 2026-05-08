@@ -48,8 +48,8 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             address_group['address_group'][k] = v
 
         req = self.new_create_request('address-groups', address_group)
-        neutron_context = context.Context('', kwargs.get('project_id',
-                                                         self._project_id))
+        neutron_context = context.Context(
+            '', kwargs.get('project_id', self._project_id), roles=['member'])
         req.environ['neutron.context'] = neutron_context
         res = req.get_response(self.ext_api)
         self._check_http_response(res)
@@ -70,7 +70,7 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         update_req = self.new_update_request(
             'address-groups', data, addr_group_id)
         update_req.environ['neutron.context'] = context.Context(
-            '', project_id or self._project_id)
+            '', project_id or self._project_id, roles=['member'])
 
         update_res = update_req.get_response(self.ext_api)
         if expected:

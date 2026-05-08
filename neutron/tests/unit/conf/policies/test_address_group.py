@@ -33,6 +33,16 @@ class SystemAdminTests(AddressGroupAPITestCase):
         super().setUp()
         self.context = self.system_admin_ctx
 
+    def test_create_address_group(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_address_group', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_address_group', self.alt_target)
+
     def test_get_address_group(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -42,6 +52,46 @@ class SystemAdminTests(AddressGroupAPITestCase):
             base_policy.InvalidScope,
             policy.enforce,
             self.context, "get_address_group", self.alt_target)
+
+    def test_update_address_group(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_address_group', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_address_group', self.alt_target)
+
+    def test_delete_address_group(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_address_group', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_address_group', self.alt_target)
+
+    def test_add_addresses(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'add_addresses', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'add_addresses', self.alt_target)
+
+    def test_remove_addresses(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'remove_addresses', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'remove_addresses', self.alt_target)
 
 
 class SystemMemberTests(SystemAdminTests):
@@ -64,11 +114,46 @@ class AdminTests(AddressGroupAPITestCase):
         super().setUp()
         self.context = self.project_admin_ctx
 
+    def test_create_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_address_group', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_address_group', self.alt_target))
+
     def test_get_address_group(self):
         self.assertTrue(
             policy.enforce(self.context, "get_address_group", self.target))
         self.assertTrue(
             policy.enforce(self.context, "get_address_group", self.alt_target))
+
+    def test_update_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_address_group', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_address_group', self.alt_target))
+
+    def test_delete_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_address_group', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'delete_address_group', self.alt_target))
+
+    def test_add_addresses(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'add_addresses', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'add_addresses', self.alt_target))
+
+    def test_remove_addresses(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_addresses', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'remove_addresses', self.alt_target))
 
 
 class ProjectManagerTests(AdminTests):
@@ -77,6 +162,14 @@ class ProjectManagerTests(AdminTests):
         super().setUp()
         self.context = self.project_manager_ctx
 
+    def test_create_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_address_group', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_group', self.alt_target)
+
     def test_get_address_group(self):
         self.assertTrue(
             policy.enforce(self.context, "get_address_group", self.target))
@@ -84,6 +177,38 @@ class ProjectManagerTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "get_address_group", self.alt_target)
+
+    def test_update_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_address_group', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_group', self.alt_target)
+
+    def test_delete_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_address_group', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_group', self.alt_target)
+
+    def test_add_addresses(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'add_addresses', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_addresses', self.alt_target)
+
+    def test_remove_addresses(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_addresses', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_addresses', self.alt_target)
 
 
 class ProjectMemberTests(AdminTests):
@@ -92,6 +217,14 @@ class ProjectMemberTests(AdminTests):
         super().setUp()
         self.context = self.project_member_ctx
 
+    def test_create_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_address_group', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_group', self.alt_target)
+
     def test_get_address_group(self):
         self.assertTrue(
             policy.enforce(self.context, "get_address_group", self.target))
@@ -100,12 +233,94 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, "get_address_group", self.alt_target)
 
+    def test_update_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_address_group', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_group', self.alt_target)
+
+    def test_delete_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_address_group', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_group', self.alt_target)
+
+    def test_add_addresses(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'add_addresses', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_addresses', self.alt_target)
+
+    def test_remove_addresses(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_addresses', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_addresses', self.alt_target)
+
 
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
         super().setUp()
         self.context = self.project_reader_ctx
+
+    def test_create_address_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_group', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_group', self.alt_target)
+
+    def test_update_address_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_group', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_group', self.alt_target)
+
+    def test_delete_address_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_group', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_group', self.alt_target)
+
+    def test_add_addresses(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_addresses', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_addresses', self.alt_target)
+
+    def test_remove_addresses(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_addresses', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_addresses', self.alt_target)
 
 
 class ServiceRoleTests(AddressGroupAPITestCase):
@@ -114,8 +329,38 @@ class ServiceRoleTests(AddressGroupAPITestCase):
         super().setUp()
         self.context = self.service_ctx
 
+    def test_create_address_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_group', self.target)
+
     def test_get_address_group(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "get_address_group", self.target)
+
+    def test_update_address_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_group', self.target)
+
+    def test_delete_address_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_group', self.target)
+
+    def test_add_addresses(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_addresses', self.target)
+
+    def test_remove_addresses(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_addresses', self.target)
