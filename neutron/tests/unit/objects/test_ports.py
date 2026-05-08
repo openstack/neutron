@@ -71,6 +71,47 @@ class PortBindingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         # The PB register returned is the INACTIVE one.
         self.assertEqual(self.obj_fields[1]['host'], dup_pb[0].host)
 
+    def test_get_duplicated_port_bindings_with_port_id(self):
+        port_id1 = self._create_test_port_id()
+        port_id2 = self._create_test_port_id()
+        pb1 = ports.PortBinding(
+            self.context, port_id=port_id1, status=constants.ACTIVE,
+            host='host1', vnic_type='normal', vif_type='ovs',
+            profile={}, vif_details={})
+        pb2 = ports.PortBinding(
+            self.context, port_id=port_id1, status=constants.INACTIVE,
+            host='host2', vnic_type='normal', vif_type='ovs',
+            profile={}, vif_details={})
+        pb3 = ports.PortBinding(
+            self.context, port_id=port_id2, status=constants.ACTIVE,
+            host='host3', vnic_type='normal', vif_type='ovs',
+            profile={}, vif_details={})
+        pb4 = ports.PortBinding(
+            self.context, port_id=port_id2, status=constants.INACTIVE,
+            host='host4', vnic_type='normal', vif_type='ovs',
+            profile={}, vif_details={})
+        pb1.create()
+        pb2.create()
+        pb3.create()
+        pb4.create()
+        dup_pb = ports.PortBinding.get_duplicated_port_bindings(
+            self.context, port_id=port_id1)
+        self.assertEqual(1, len(dup_pb))
+        self.assertEqual(port_id1, dup_pb[0].port_id)
+        self.assertEqual('host2', dup_pb[0].host)
+        self.assertEqual(constants.INACTIVE, dup_pb[0].status)
+
+    def test_get_duplicated_port_bindings_with_port_id_no_inactive(self):
+        port_id = self._create_test_port_id()
+        self.update_obj_fields(
+            {'port_id': port_id, 'status': constants.ACTIVE},
+            obj_fields=[self.obj_fields[0]])
+        _obj = self._make_object(self.obj_fields[0])
+        _obj.create()
+        dup_pb = ports.PortBinding.get_duplicated_port_bindings(
+            self.context, port_id=port_id)
+        self.assertEqual(0, len(dup_pb))
+
     def test_get_port_binding_by_vnic_type(self):
         self.update_obj_fields({'vnic_type': portbindings.VNIC_NORMAL},
                                obj_fields=[self.obj_fields[0]])

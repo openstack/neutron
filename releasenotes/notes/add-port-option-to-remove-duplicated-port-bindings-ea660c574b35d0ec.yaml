@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    The ``remove-duplicated-port-bindings`` script now supports a new
+    ``--port`` CLI option. When specified, only the INACTIVE bindings for
+    the specific port ID provided will be removed, leaving all other ports
+    unaffected. This provides better control for operators who need to fix
+    individual ports without risking unintended changes to other ports.
