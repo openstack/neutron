@@ -72,6 +72,7 @@
             # neutron-tempest-plugin, which are identical to this file's
             # ovn-irrelevant-files
             voting: false
+            attempts: 1
 
     gate:
       jobs:
