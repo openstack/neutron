@@ -446,6 +446,9 @@ class OVNClient:
             if (utils.is_ovn_metadata_port(port) or
                     utils.is_ovn_lb_hm_port(port)):
                 port_type = ovn_const.LSP_TYPE_LOCALPORT
+                # Set MTU for LOCALPORT type ports (metadata and OVN LB HM
+                # ports) from the network
+                mtu = str(port.get('network', {}).get('mtu'))
 
             if utils.is_port_external(port):
                 port_type = ovn_const.LSP_TYPE_EXTERNAL

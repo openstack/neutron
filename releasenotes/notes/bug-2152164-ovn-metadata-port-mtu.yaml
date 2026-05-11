@@ -1,0 +1,16 @@
+---
+fixes:
+  - |
+    [`bug 2152164 <https://bugs.launchpad.net/neutron/+bug/2152164>`_]
+    OVN metadata port and OVN load balancer health monitor port tap interfaces
+    now have their MTU set to match the network MTU, ensuring consistency with
+    VM interface MTU values. Previously, these interfaces had a default MTU that
+    could differ from the network MTU, potentially causing packet fragmentation
+    issues.
+upgrade:
+  - |
+    The MTU configuration for OVN metadata port and OVN load balancer health
+    monitor port tap interfaces now matches the network MTU. This change
+    affects only newly created ports and the corresponding metadata datapaths.
+    Existing metadata datapaths will not be updated when the network MTU is
+    changed.

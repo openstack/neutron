@@ -51,7 +51,9 @@ OVN_VIF_PORT_TYPES = (
 
 MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
                                                                'ip_addresses',
-                                                               'logical_port'])
+                                                               'logical_port',
+                                                               'mtu',
+                                                               ])
 
 OVN_METADATA_UUID_NAMESPACE = uuid.UUID('d34bf9f6-da32-4871-9af8-15a4626b41ab')
 
@@ -733,8 +735,10 @@ class MetadataAgent:
         ip_addresses = set(
             metadata_port.external_ids[
                 ovn_const.OVN_CIDRS_EXT_ID_KEY].split(' '))
+        mtu = int(metadata_port.external_ids.get(
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY, '0'))
         metadata_port_info = MetadataPortInfo(mac, ip_addresses,
-                                              metadata_port.logical_port)
+                                              metadata_port.logical_port, mtu)
 
         chassis_ports = self.sb_idl.get_ports_on_chassis(
             self._chassis, include_additional_chassis=True)
@@ -768,8 +772,6 @@ class MetadataAgent:
                  None if namespace was not provisioned
         """
         datapath = port_binding.datapath
-        mtu = int(port_binding.external_ids.get(
-            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY) or '0')
         provision_params = self._get_provision_params(datapath)
         if not provision_params:
             return
@@ -800,6 +802,7 @@ class MetadataAgent:
         ip2.link.set_address(metadata_port_info.mac)
 
         # Set VETH ports MTU.
+        mtu = metadata_port_info.mtu
         if mtu:
             ip1.link.set_mtu(mtu)
             ip2.link.set_mtu(mtu)
