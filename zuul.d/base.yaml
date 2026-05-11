@@ -13,6 +13,8 @@
     run: playbooks/run_functional_job.yaml
     post-run: playbooks/post_functional_job.yaml
     irrelevant-files: &irrelevant-files
+      - ^\.gitignore$
+      - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^.*\.conf\.sample$

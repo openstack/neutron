@@ -5,6 +5,8 @@
       - openstack/grenade
       - openstack/neutron
     irrelevant-files: &openvswitch-irrelevant-files
+      - ^\.gitignore$
+      - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^test-requirements.txt$
