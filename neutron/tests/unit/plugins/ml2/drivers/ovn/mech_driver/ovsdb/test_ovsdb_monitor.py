@@ -403,6 +403,39 @@ class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):
                                             self.row, old))
 
 
+class TestLogicalSwitchPortUpdateLogicalRouterPortEvent(base.BaseTestCase):
+
+    def test_no_shared_admin_context(self):
+        driver = mock.MagicMock()
+        with mock.patch.object(directory, 'get_plugin'):
+            event = (
+                ovsdb_monitor.
+                LogicalSwitchPortUpdateLogicalRouterPortEvent(driver))
+        self.assertFalse(hasattr(event, 'admin_context'))
+
+    def test_run_creates_fresh_admin_context(self):
+        driver = mock.MagicMock()
+        driver._plugin.get_ports.return_value = [{'id': 'port-1'}]
+        with mock.patch.object(directory, 'get_plugin') as get_plugin:
+            l3_plugin = mock.MagicMock()
+            get_plugin.return_value = l3_plugin
+            event = (
+                ovsdb_monitor.
+                LogicalSwitchPortUpdateLogicalRouterPortEvent(driver))
+
+        table = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'name': 'Logical_Switch_Port'})
+        row = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'_table': table, 'name': 'port-1'})
+
+        with mock.patch('neutron_lib.context.get_admin_context') as ctx_mock:
+            ctx_mock.return_value = mock.sentinel.fresh_ctx
+            event.run(event.ROW_UPDATE, row, None)
+            ctx_mock.assert_called_once()
+            driver._plugin.get_ports.assert_called_once_with(
+                mock.sentinel.fresh_ctx, filters={'id': ['port-1']})
+
+
 class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 
     def setUp(self):
