@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Fixed a bug in the ML2/OVN OVSDB monitor event handlers where a
+    single Neutron admin context was shared across all invocations
+    of the ``PortBindingUpdateVirtualPortsEvent`` and
+    ``LogicalSwitchPortUpdateLogicalRouterPortEvent`` event handlers.
+    Reusing the same context (and its underlying SQLAlchemy session)
+    could cause ``@transaction_guard`` failures, leading to silent
+    event processing failures and port status update timeouts. Each
+    event handler invocation now creates a fresh admin context.
