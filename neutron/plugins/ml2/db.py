@@ -324,7 +324,7 @@ def is_dhcp_active_on_any_subnet(context, subnet_ids):
         return False
     return bool(context.session.query(models_v2.Subnet.id).
                 enable_eagerloads(False).filter_by(enable_dhcp=True).
-                filter(models_v2.Subnet.id.in_(subnet_ids)).count())
+                filter(models_v2.Subnet.id.in_(subnet_ids)).first())
 
 
 def _prevent_segment_delete_with_port_bound(resource, event, trigger,

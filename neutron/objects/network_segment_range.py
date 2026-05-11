@@ -271,7 +271,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
                 cls.db_model.minimum == minimum,
                 cls.db_model.maximum == maximum,
                 cls.db_model.created_at == created_at,
-            ).count():
+            ).first():
                 return
 
         cls(context, id=uuidutils.generate_uuid(), default=True, shared=True,

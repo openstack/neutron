@@ -503,12 +503,12 @@ class Subnet(base.NeutronDbObject):
         if cls.is_host_set(host):
             # Empty because host isn't mapped to a segment with a subnet?
             s_query = query.filter(cls.db_model.segment_id.isnot(None))
-            if s_query.limit(1).count() != 0:
+            if s_query.first() is not None:
                 # It is a routed network but no subnets found for host
                 raise segment_exc.HostNotConnectedToAnySegment(
                     host=host, network_id=network_id)
 
-        if not query.limit(1).count():
+        if query.first() is None:
             # Network has *no* subnets of any kind. This isn't an error.
             return True
 
@@ -517,7 +517,7 @@ class Subnet(base.NeutronDbObject):
             query, service_type)
 
         query = context.session.query(subnet_entity)
-        if query.limit(1).count():
+        if query.first() is not None:
             # No, must be a deferred IP port because there are matching
             # subnets. Happens on routed networks when host isn't known.
             raise ipam_exceptions.DeferIpam()

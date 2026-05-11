@@ -137,11 +137,11 @@ class SubnetPool(rbac_db.NeutronRbacObject):
                 )
             )
 
-            matching_policies = model_query.query_with_hooks(
+            no_matching_policies = model_query.query_with_hooks(
                 context, rbac_db_models.AddressScopeRBAC
-            ).filter(shared_to_target_project_or_to_all).count()
+            ).filter(shared_to_target_project_or_to_all).first() is None
 
-        if matching_policies == 0:
+        if no_matching_policies:
             raise ext_rbac.RbacPolicyInitError(
                 object_id=policy['object_id'],
                 reason=_("target project doesn't have access to "

@@ -222,7 +222,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
                 self._test_class,
                 '_get_db_obj_rbac_entries') as target_projects_mock:
             filter_mock = target_projects_mock.return_value.filter
-            filter_mock.return_value.count.return_value = 0
+            filter_mock.return_value.first.return_value = None
             payload = events.DBEventPayload(
                 context,
                 states=(policy,),
