@@ -620,7 +620,6 @@ class LogicalSwitchPortUpdateLogicalRouterPortEvent(LogicalSwitchPortEvent):
         super().__init__(events, table, None)
         self.event_name = 'LogicalSwitchPortUpdateLogicalRouterPortEvent'
         self.l3_plugin = directory.get_plugin(constants.L3)
-        self.admin_context = neutron_context.get_admin_context()
 
     def match_fn(self, event, row, old):
         if not super().match_fn(event, row, old):
@@ -642,7 +641,8 @@ class LogicalSwitchPortUpdateLogicalRouterPortEvent(LogicalSwitchPortEvent):
 
         # TODO(ralonsoh): store the router "flavor_id" in the LSP.external_ids
         # or the LRP.external_ids (better the second).
-        router = router_obj.Router.get_object(self.admin_context, id=device_id,
+        admin_context = neutron_context.get_admin_context()
+        router = router_obj.Router.get_object(admin_context, id=device_id,
                                               fields=('flavor_id', ))
         if (utils.is_lsp_router_port(lsp=row) and
                 router and
@@ -651,17 +651,18 @@ class LogicalSwitchPortUpdateLogicalRouterPortEvent(LogicalSwitchPortEvent):
         return False
 
     def run(self, event, row, old):
+        admin_context = neutron_context.get_admin_context()
         # In some cases, it is possible for the logical switch port to be
         # already removed from db by some other concurrent event when this
         # method is called. Therefore, use get_ports to just query for this
         # port instead of directly trying to get it from db causing not
         # found exception.
         ports = self.driver._plugin.get_ports(
-            self.admin_context,
+            admin_context,
             filters={'id': [row.name]})
         if ports:
             self.l3_plugin._ovn_client.update_router_port(
-                self.admin_context,
+                admin_context,
                 ports[0])
         else:
             LOG.debug('Port %(port_id)s not found when '
@@ -684,7 +685,6 @@ class PortBindingUpdateVirtualPortsEvent(LogicalSwitchPortEvent):
         events = (self.ROW_UPDATE, self.ROW_DELETE)
         super().__init__(events, table, None)
         self.event_name = 'PortBindingUpdateVirtualPortsEvent'
-        self.admin_context = neutron_context.get_admin_context()
 
     def match_fn(self, event, row, old):
         if not super().match_fn(event, row, old):
@@ -732,8 +732,9 @@ class PortBindingUpdateVirtualPortsEvent(LogicalSwitchPortEvent):
                 ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
             chassis_uuid = (row.chassis[0].uuid if
                             row.chassis and virtual_parents else None)
+        admin_context = neutron_context.get_admin_context()
         self.driver._ovn_client.update_virtual_port_parent_host(
-            self.admin_context, row.logical_port, chassis_id=chassis_uuid)
+            admin_context, row.logical_port, chassis_id=chassis_uuid)
 
 
 class FIPAddDeleteEvent(row_event.RowEvent):
