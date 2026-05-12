@@ -50,3 +50,20 @@ class BGPServicePluginAPITestCase(ml2_test.Ml2PluginV2TestCase):
             self.fmt, 'net-geneve', network_type='geneve',
             admin_state_up=True, as_admin=True)
         self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+
+    def test_create_second_flat_network_rejected(self):
+        data = {'network': {'name': 'net-flat-1',
+                            'project_id': self._project_id,
+                            pnet.NETWORK_TYPE: 'flat',
+                            pnet.PHYSICAL_NETWORK: 'physnet1'}}
+        req = self.new_create_request('networks', data, as_admin=True)
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+
+        data = {'network': {'name': 'net-flat-2',
+                            'project_id': self._project_id,
+                            pnet.NETWORK_TYPE: 'flat',
+                            pnet.PHYSICAL_NETWORK: 'physnet2'}}
+        req = self.new_create_request('networks', data, as_admin=True)
+        res = req.get_response(self.api)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)

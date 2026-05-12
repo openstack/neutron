@@ -65,11 +65,21 @@ def _get_main_router(nb_idl):
     return nb_idl.lookup('Logical_Router', bgp_config.get_main_router_name())
 
 
-def _get_all_provider_switches(nb_idl):
-    return [
+def _get_provider_switch(nb_idl):
+    switches = [
         s for s in nb_idl.tables['Logical_Switch'].rows.values()
         if hasattr(s, 'external_ids') and s.external_ids.get(
-            ovn_const.OVN_NETTYPE_EXT_ID_KEY) in n_const.TYPE_PHYSICAL]
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY) == n_const.TYPE_FLAT]
+    if len(switches) > 1:
+        raise exceptions.ReconcileError(
+            "Multiple flat provider switches found (%s), "
+            "only a single flat provider network is supported" %
+            ', '.join(s.name for s in switches))
+    if not switches:
+        raise exceptions.ReconcileError(
+            "No flat provider switch found. A flat provider network "
+            "is required for BGP dynamic routing.")
+    return switches[0]
 
 
 def _get_switch_dhcp_options(nb_idl, switch):
@@ -691,18 +701,23 @@ class ReconcileMainRouterPoliciesForChassisCommand(ovs_cmd.BaseCommand):
         self.chassis_lrp = chassis_lrp
 
     def run_idl(self, txn):
+        try:
+            switch = _get_provider_switch(self.api)
+        except exceptions.ReconcileError:
+            LOG.debug("No flat provider switch found, skipping "
+                      "main router policies reconciliation for chassis")
+            return
         router = _get_main_router(self.api)
-        for switch in _get_all_provider_switches(self.api):
-            interconnect_switch_name = (
-                helpers.get_provider_interconnect_switch_name(switch.name))
-            lrp_interconnect_name = helpers.get_lrp_name(
-                router.name, interconnect_switch_name)
-            ReconcileMainRouterPoliciesCommand(
-                self.api,
-                router,
-                lrp_interconnect_name,
-                self.chassis_lrp,
-            ).run_idl(txn)
+        interconnect_switch_name = (
+            helpers.get_provider_interconnect_switch_name(switch.name))
+        lrp_interconnect_name = helpers.get_lrp_name(
+            router.name, interconnect_switch_name)
+        ReconcileMainRouterPoliciesCommand(
+            self.api,
+            router,
+            lrp_interconnect_name,
+            self.chassis_lrp,
+        ).run_idl(txn)
 
 
 class ReconcileChassisCommand(ovs_cmd.BaseCommand):
@@ -823,19 +838,24 @@ class FullSyncBGPTopologyCommand(ovs_cmd.BaseCommand):
         LOG.debug("BGP full sync topology started")
         self.reconcile_central(txn)
         self.reconcile_all_chassis(txn)
-        self.reconcile_neutron_switches(txn)
+        self.reconcile_neutron_switch(txn)
         LOG.debug("BGP full sync topology completed")
 
     def reconcile_all_chassis(self, txn):
         for chassis in self.sb_api.tables['Chassis_Private'].rows.values():
             ReconcileChassisCommand(self.api, chassis).run_idl(txn)
 
-    def reconcile_neutron_switches(self, txn):
-        for switch in _get_all_provider_switches(self.api):
-            ReconcileNeutronSwitchCommand(
-                self.api,
-                switch,
-            ).run_idl(txn)
+    def reconcile_neutron_switch(self, txn):
+        try:
+            switch = _get_provider_switch(self.api)
+        except exceptions.ReconcileError:
+            LOG.debug("No flat provider switch found, skipping "
+                      "neutron switch reconciliation")
+            return
+        ReconcileNeutronSwitchCommand(
+            self.api,
+            switch,
+        ).run_idl(txn)
 
     def reconcile_central(self, txn):
         ReconcileMainRouterCommand(
