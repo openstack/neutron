@@ -49,10 +49,10 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
 
         self._generate_cmd_opts()
         self.ext_process = external_process.ProcessManager(
-            conf=None, uuid=self.router_id, namespace=self.router.namespace,
+            conf=None, uuid=self.router_id, namespace=None,
             service='test_ip_mon', pids_path=self.conf_dir,
             default_cmd_callback=self._callback, run_as_root=True,
-            pid_file=self.pid_file)
+            pid_file=self.pid_file, async_process=True)
 
         # NOTE(ralonsoh): this section must be refactored once eventlet is
         # removed. ``UnixDomainWSGIServer`` is no longer used.
@@ -77,18 +77,19 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         cidr = cidr or self.cidr
         self.cmd_opts = [
             ha_router.STATE_CHANGE_PROC_NAME,
-            '--router_id=%s' % self.router_id,
-            '--namespace=%s' % self.router.namespace,
-            '--conf_dir=%s' % self.conf_dir,
-            '--log-file=%s' % self.log_file,
-            '--monitor_interface=%s' % monitor_interface,
-            '--monitor_cidr=%s' % cidr,
-            '--pid_file=%s' % self.pid_file,
-            '--state_path=%s' % self.conf_dir,
-            '--user=%s' % os.geteuid(),
-            '--group=%s' % os.getegid(),
+            '--router_id', self.router_id,
+            '--namespace', self.router.namespace,
+            '--conf_dir', self.conf_dir,
+            '--log-file', self.log_file,
+            '--monitor_interface', monitor_interface,
+            '--monitor_cidr', cidr,
+            '--pid_file', self.pid_file,
+            '--state_path', self.conf_dir,
+            '--user', os.geteuid(),
+            '--group', os.getegid(),
             '--debug',
         ]
+        self.cmd_opts = [str(item) for item in self.cmd_opts]
 
         if conntrackd:
             self.cmd_opts.append('--enable_conntrackd')

@@ -442,31 +442,50 @@ class HaRouter(router.RouterInfo):
         return external_process.ProcessManager(
             self.agent_conf,
             '%s.monitor' % self.router_id,
-            None,
+            namespace=None,
             service=KEEPALIVED_STATE_CHANGE_MONITOR_SERVICE_NAME,
             default_cmd_callback=self._get_state_change_monitor_callback(),
-            run_as_root=True)
+            run_as_root=True, async_process=True)
 
     def _get_state_change_monitor_callback(self):
         ha_device = self.get_ha_device_name()
         ha_cidr = self._get_primary_vip()
         config_dir = self.keepalived_manager.get_conf_dir()
-        state_change_log = (
-            "%s/neutron-keepalived-state-change.log") % config_dir
+
+        if (
+            self.agent_conf.router_log_files_in_ha_confs or
+            self.agent_conf.log_dir is None
+        ):
+            state_change_log = (
+                f'{config_dir}'
+                f'/neutron-keepalived-state-change.log'
+            )
+        else:
+            if self.agent_conf.per_router_log_files:
+                state_change_log = (
+                    f'{self.agent_conf.log_dir}'
+                    f'/neutron-keepalived-state-change-'
+                    f'{self.router_id}.log'
+                )
+            else:
+                state_change_log = (
+                    f'{self.agent_conf.log_dir}'
+                    f'/neutron-keepalived-state-change.log'
+                )
 
         def callback(pid_file):
             cmd = [
                 STATE_CHANGE_PROC_NAME,
-                '--router_id=%s' % self.router_id,
-                '--namespace=%s' % self.ha_namespace,
-                '--conf_dir=%s' % config_dir,
-                '--log-file=%s' % state_change_log,
-                '--monitor_interface=%s' % ha_device,
-                '--monitor_cidr=%s' % ha_cidr,
-                '--pid_file=%s' % pid_file,
-                '--state_path=%s' % self.agent_conf.state_path,
-                '--user=%s' % os.geteuid(),
-                '--group=%s' % os.getegid()]
+                '--router_id', self.router_id,
+                '--namespace', self.ha_namespace,
+                '--conf_dir', config_dir,
+                '--log-file', state_change_log,
+                '--monitor_interface', ha_device,
+                '--monitor_cidr', ha_cidr,
+                '--pid_file', pid_file,
+                '--state_path', self.agent_conf.state_path,
+                '--user', str(os.geteuid()),
+                '--group', str(os.getegid())]
 
             if self.agent_conf.ha_conntrackd_enabled:
                 cmd.append('--enable_conntrackd')

@@ -63,7 +63,8 @@ class ProcessManager(MonitoredProcess):
                  cmd_addl_env=None, pid_file=None, run_as_root=False,
                  custom_reload_callback=None,
                  default_pre_cmd_callback=None,
-                 default_post_cmd_callback=None):
+                 default_post_cmd_callback=None,
+                 async_process=False):
 
         self.conf = conf
         self.uuid = uuid
@@ -76,6 +77,7 @@ class ProcessManager(MonitoredProcess):
         self.run_as_root = run_as_root or self.namespace is not None
         self.custom_reload_callback = custom_reload_callback
         self.kill_scripts_path = cfg.CONF.AGENT.kill_scripts_path
+        self.async_process = async_process
 
         if service:
             self.service_pid_fname = 'pid.' + service
@@ -116,9 +118,13 @@ class ProcessManager(MonitoredProcess):
 
             cmd = cmd_callback(pid_file)
 
-            ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
-            ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
-                                     run_as_root=self.run_as_root)
+            if self.async_process:
+                self._process, cmd = utils.create_process(
+                    cmd, run_as_root=self.run_as_root)
+            else:
+                ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
+                ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
+                                         run_as_root=self.run_as_root)
 
             post_cmd_callback = (post_cmd_callback or
                                  self.default_post_cmd_callback)

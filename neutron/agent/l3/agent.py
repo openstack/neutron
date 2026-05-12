@@ -278,6 +278,7 @@ class L3NATAgent(ha.AgentMixin,
         self.use_ipv6 = netutils.is_ipv6_enabled()
         self.fullsync = True
         self._exiting = False
+        self.legacy_state_change_check = True
         self.sync_routers_chunk_size = SYNC_ROUTERS_MAX_CHUNK_SIZE
         super().__init__(host=self.conf.host)
 
@@ -853,6 +854,8 @@ class L3NATAgent(ha.AgentMixin,
         except l3_exc.AbortSyncRouters:
             self.fullsync = True
 
+        self._check_legacy_state_change_processes()
+
     def fetch_and_sync_all_routers(self, context, ns_manager):
         prev_router_ids = set(self.router_info)
         curr_router_ids = set()
@@ -938,6 +941,110 @@ class L3NATAgent(ha.AgentMixin,
             self._exiting = True
             for router in self.router_info.values():
                 router.delete()
+
+    # TODO(zigo): Let's remove this in 2028.1, which is enough
+    # time to have all Python legacy processes killed.
+    def _check_legacy_state_change_processes(self):
+        # Check if some routers are still running the legacy Python version of
+        # neutron-keepalived-state-change.
+        if not self.legacy_state_change_check:
+            return
+
+        self.legacy_state_change_check = False
+
+        router_ids = set(self.router_info.keys())
+
+        LOG.info("Scanning for legacy Python keepalived state change "
+                 "processes to clean up.")
+        for router_id in router_ids:
+            LOG.debug("Checking neutron-keepalived-state-change for "
+                      "router %s.", router_id)
+
+            # Get the PID filename for this router.
+            try:
+                ri = self.router_info[router_id]
+                if not isinstance(ri, ha_router.HaRouter):
+                    LOG.info("Found router %s not to be an HaRouter object.",
+                             router_id)
+                    continue
+            except Exception as e:
+                LOG.warning("Error while getting details of the router %s.", e)
+                continue
+
+            try:
+                pm = ri._get_state_change_monitor_process_manager()
+            except Exception as e:
+                LOG.warning("Error while getting process manager: %s.", e)
+                continue
+
+            try:
+                pid_file_name = pm.get_pid_file_name()
+            except Exception as e:
+                LOG.warning("Error while getting pid file_name: %s.", e)
+                continue
+
+            LOG.debug("PID file name for router %s: %s.",
+                      router_id, pid_file_name)
+
+            try:
+                with open(pid_file_name) as f:
+                    pid = f.read().strip()
+            except Exception as e:
+                LOG.warning("Error while reading PID file: %s.", e)
+                continue
+
+            LOG.debug("Found PID of neutron-keepalived-state-change for "
+                      "router %s: %s.", router_id, pid)
+
+            # We cannot use something like:
+            # cmdline = pm.default_cmd_callback(pm.get_pid_file_name())
+            # because that would return what Neutron think was used to
+            # spawn neutron-keepalived-state-change. Instead, we must
+            # read the actual state of things by reading the command
+            # line from /proc.
+
+            cmdline_path = f"/proc/{pid}/cmdline"
+            try:
+                with open(cmdline_path, "rb") as f:
+                    cmdline = f.read().replace(b"\x00", b" ").decode()
+            except FileNotFoundError:
+                LOG.debug("Process %s not found (stale PID).", pid)
+                continue
+            except Exception as e:
+                LOG.warning("Error %s when reading cmdline for pid %s.",
+                            e, pid)
+                continue
+
+            LOG.debug("Old cmdline is: %s.", cmdline)
+
+            # We ommit the "3" in "python3" just in case some day,
+            # bin/python becomes the default for Python 3, which
+            # is the direction at least Debian is taking.
+            if (
+                cmdline.startswith("/usr/bin/python") or
+                cmdline.startswith("/bin/python")
+            ):
+                # If running Python, let's respawn the monitor state
+                # process neutron-keepalived-state-change by using the
+                # HARouter API directly.
+                LOG.info("Found legacy neutron-keepalived-state-change "
+                         "for router %s: disabling process.", router_id)
+                pm.disable(sig='9')
+                LOG.debug("Got it disabled, now re-enabling "
+                          "for router %s: respawning process.", router_id)
+                pm.enable()
+                LOG.debug("Registering process_monitor "
+                          "for router %s: respawning process.", router_id)
+                try:
+                    self.process_monitor.register(
+                        router_id,
+                        ha_router.KEEPALIVED_STATE_CHANGE_MONITOR_SERVICE_NAME,
+                        pm
+                    )
+                except Exception as e:
+                    LOG.warning("Error %s when reading cmdline for pid %s.",
+                                e, pid)
+                    continue
 
 
 class L3NATAgentWithStateReport(L3NATAgent):

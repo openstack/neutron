@@ -301,7 +301,6 @@ neutron = "neutron.plugins.ml2.drivers.ovn.db_migration:migrate_neutron_database
 [project.scripts]
 neutron-db-manage = "neutron.db.migration.cli:main"
 neutron-dhcp-agent = "neutron.cmd.agents.dhcp:main"
-neutron-keepalived-state-change = "neutron.cmd.keepalived_state_change:main"
 neutron-ipset-cleanup = "neutron.cmd.ipset_cleanup:main"
 neutron-l3-agent = "neutron.cmd.agents.l3:main"
 neutron-macvtap-agent = "neutron.cmd.plugins.macvtap_neutron_agent:main"
@@ -327,6 +326,11 @@ neutron-sanitize-port-binding-profile-allocation = "neutron.cmd.sanitize_port_bi
 neutron-sanitize-port-mac-addresses = "neutron.cmd.sanitize_port_mac_addresses:main"
 neutron-remove-duplicated-port-bindings = "neutron.cmd.remove_duplicated_port_bindings:main"
 ml2ovn-trace = "neutron.cmd.ovn.ml2ovn_trace:main"
+
+[tool.setuptools]
+script-files = [
+    "bin/neutron-keepalived-state-change",
+]
 
 [tool.setuptools.packages.find]
 include = ["neutron*"]

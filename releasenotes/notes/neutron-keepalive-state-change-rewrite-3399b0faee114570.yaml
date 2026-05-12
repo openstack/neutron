@@ -1,0 +1,18 @@
+---
+features:
+  - |
+    neutron-keepalive-state-change has been rewriten as a posix shell script
+    since the old Python thread model was using too much memory. The new
+    implementation uses less than 6 MB of RAM instead of ~100 with Python.
+    Also, there are now 2 new logging directives in the l3_agent.ini file.
+    `router_log_files_in_ha_confs`, which is True by default, keeps the old
+    behavior of logging within /var/log/neutron/ha_confs/<router-id>. When
+    it is set to false, then and `per_router_log_files` can be used to use
+    /var/log/neutron/neutron-keepalive-state-change-<router-id>.log instead
+    of a single /var/log/neutron/neutron-keepalive-state-change.log for all
+    routers.
+upgrade:
+  - |
+    The L3 agent will perform a one-time automatic cleanup of legacy
+    Python-based ``keepalived-state-change`` monitor processes at startup,
+    so no manual intervention is required during upgrade.
