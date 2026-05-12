@@ -1,0 +1,15 @@
+---
+other:
+  - |
+    When the ML2/OVN mechanism driver is used, the OVN L3 router plugin
+    no longer inherits ``L3RpcNotifierMixin``. This removes four
+    ``@registry.receives`` callbacks (``PORT AFTER_DELETE``,
+    ``PORT AFTER_UPDATE``, ``SUBNET AFTER_UPDATE``,
+    ``SUBNETPOOL_ADDRESS_SCOPE AFTER_UPDATE``) that were previously
+    registered at plugin instantiation time but served no purpose in the
+    OVN backend. These callbacks executed unnecessary DB queries on every
+    matching event only to reach the no-op ``RPCNotifierHandler``.
+    A new ``L3NotifierMixin`` base class now provides the notifier
+    property and notification helpers without registering any event
+    callbacks, allowing backends that do not need RPC workers to avoid
+    this overhead.

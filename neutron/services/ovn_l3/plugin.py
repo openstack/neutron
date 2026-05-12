@@ -42,12 +42,12 @@ from neutron.common.ovn import utils
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import dns_db
 from neutron.db import extraroute_db
+from neutron.db import l3_db
 from neutron.db import l3_extra_gws_db
 from neutron.db import l3_fip_pools_db
 from neutron.db import l3_fip_port_details
 from neutron.db import l3_fip_qos
 from neutron.db import l3_gateway_ip_qos
-from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.quota import resource_registry
@@ -64,12 +64,12 @@ LOG = log.getLogger(__name__)
 @registry.has_registry_receivers
 class OVNL3RouterPlugin(service_base.ServicePluginBase,
                         extraroute_db.ExtraRoute_dbonly_mixin,
-                        l3_gwmode_db.L3_NAT_db_mixin,
+                        l3_db.L3NotifierMixin,
                         dns_db.DNSDbMixin,
                         l3_fip_port_details.Fip_port_details_db_mixin,
                         router_az_db.RouterAvailabilityZoneMixin,
                         l3_fip_qos.FloatingQoSDbMixin,
-                        l3_gateway_ip_qos.L3_gw_ip_qos_db_mixin,
+                        l3_gateway_ip_qos.L3_gw_ip_qos_dbonly_mixin,
                         l3_fip_pools_db.FloatingIPPoolsMixin,
                         l3_extra_gws_db.ExtraGatewaysDbOnlyMixin,
                         ):
