@@ -13,12 +13,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
+from neutron_lib import constants as n_const
+from neutron_lib import exceptions as n_exc
 from neutron_lib.services import base as service_base
 from oslo_config import cfg
 from oslo_log import log
 
 from neutron.conf.services import bgp as bgp_config
+from neutron.objects import network as network_objects
 from neutron.services.bgp import worker
 
 LOG = log.getLogger(__name__)
@@ -43,3 +49,24 @@ class BGPServicePlugin(service_base.ServicePluginBase):
     @classmethod
     def get_plugin_type(cls):
         return "bgp-service"
+
+    @registry.receives(resources.NETWORK, [events.PRECOMMIT_CREATE])
+    def _validate_provider_network(self, resource, event, trigger, payload):
+        network = payload.latest_state
+        network_type = network.get(pnet.NETWORK_TYPE)
+        if network_type == n_const.TYPE_VLAN:
+            raise n_exc.BadRequest(
+                resource='network',
+                msg='VLAN provider networks are not supported when the '
+                    'BGP service plugin is enabled. '
+                    'Only flat provider networks are supported.')
+        if network_type == n_const.TYPE_FLAT:
+            existing = network_objects.NetworkSegment.get_objects(
+                payload.context, network_type=n_const.TYPE_FLAT)
+            other_flat = [s for s in existing
+                          if s.network_id != payload.resource_id]
+            if other_flat:
+                raise n_exc.BadRequest(
+                    resource='network',
+                    msg='Only a single flat provider network is supported '
+                        'when the BGP service plugin is enabled.')

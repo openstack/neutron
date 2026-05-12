@@ -59,11 +59,21 @@ def _get_main_router(nb_idl):
     return nb_idl.lookup('Logical_Router', bgp_config.get_main_router_name())
 
 
-def _get_all_provider_switches(nb_idl):
-    return [
+def _get_provider_switch(nb_idl):
+    switches = [
         s for s in nb_idl.tables['Logical_Switch'].rows.values()
         if hasattr(s, 'external_ids') and s.external_ids.get(
-            ovn_const.OVN_NETTYPE_EXT_ID_KEY) in n_const.TYPE_PHYSICAL]
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY) == n_const.TYPE_FLAT]
+    if len(switches) > 1:
+        raise exceptions.ReconcileError(
+            "Multiple flat provider switches found (%s), "
+            "only a single flat provider network is supported" %
+            ', '.join(s.name for s in switches))
+    if not switches:
+        raise exceptions.ReconcileError(
+            "No flat provider switch found. A flat provider network "
+            "is required for BGP dynamic routing.")
+    return switches[0]
 
 
 def _get_gw_ips_for_switch(nb_idl, switch):
@@ -592,19 +602,24 @@ class FullSyncBGPTopologyCommand(ovs_cmd.BaseCommand):
         LOG.debug("BGP full sync topology started")
         self.reconcile_central(txn)
         self.reconcile_all_chassis(txn)
-        self.reconcile_neutron_switches(txn)
+        self.reconcile_neutron_switch(txn)
         LOG.debug("BGP full sync topology completed")
 
     def reconcile_all_chassis(self, txn):
         for chassis in self.sb_api.tables['Chassis_Private'].rows.values():
             ReconcileChassisCommand(self.api, chassis).run_idl(txn)
 
-    def reconcile_neutron_switches(self, txn):
-        for switch in _get_all_provider_switches(self.api):
-            ReconcileNeutronSwitchCommand(
-                self.api,
-                switch,
-            ).run_idl(txn)
+    def reconcile_neutron_switch(self, txn):
+        try:
+            switch = _get_provider_switch(self.api)
+        except exceptions.ReconcileError:
+            LOG.debug("No flat provider switch found, skipping "
+                      "neutron switch reconciliation")
+            return
+        ReconcileNeutronSwitchCommand(
+            self.api,
+            switch,
+        ).run_idl(txn)
 
     def reconcile_central(self, txn):
         ReconcileMainRouterCommand(

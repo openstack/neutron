@@ -111,6 +111,59 @@ class _AddBaseCommand:
         row = self._assert_table_row_exists(name)
 
 
+class TestGetProviderSwitch(bgp.BaseBgpNbIdlTestCase):
+    def _create_switch_with_ext_ids(self, external_ids=None):
+        name = _get_unique_name('ls')
+        ls = self.nb_api.ls_add(name).execute(check_error=True)
+        if external_ids:
+            self.nb_api.db_set(
+                'Logical_Switch', name,
+                external_ids=external_ids).execute(check_error=True)
+        return ls.uuid
+
+    def test_returns_single_flat_provider_switch(self):
+        expected_uuid = self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+
+        result = commands._get_provider_switch(self.nb_api)
+
+        self.assertEqual(expected_uuid, result.uuid)
+
+    def test_raises_when_no_flat_provider_switch(self):
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'vlan'})
+
+        self.assertRaises(
+            exceptions.ReconcileError,
+            commands._get_provider_switch, self.nb_api)
+
+    def test_raises_when_no_switches_at_all(self):
+        self.assertRaises(
+            exceptions.ReconcileError,
+            commands._get_provider_switch, self.nb_api)
+
+    def test_raises_when_multiple_flat_provider_switches(self):
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+
+        self.assertRaises(
+            exceptions.ReconcileError,
+            commands._get_provider_switch, self.nb_api)
+
+    def test_ignores_non_flat_switches(self):
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'vlan'})
+        flat_uuid = self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+        self._create_switch_with_ext_ids()
+
+        result = commands._get_provider_switch(self.nb_api)
+
+        self.assertEqual(flat_uuid, result.uuid)
+
+
 class TestGetGwIps(bgp.BaseBgpNbIdlTestCase):
     def _add_dhcp_options_command(self, net_id, cidr, router_ip=None):
         options = {}
