@@ -62,6 +62,9 @@ class BgpOvnNbIdl(nb_impl_idl.OvnNbApiIdlImpl):
     def has_lock(self):
         return self.ovsdb_connection.idl.has_lock
 
+    def stop(self):
+        self.ovsdb_connection.stop()
+
     def register_events(self, events):
         self.ovsdb_connection.idl.notify_handler.watch_events(events)
 

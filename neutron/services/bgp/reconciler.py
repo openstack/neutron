@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import threading
+
 from oslo_log import log
 
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -46,6 +48,11 @@ class BGPTopologyReconciler:
                     self.delete_chassis,
             },
         }
+        self.nb_api = None
+        self.sb_api = None
+        self._started = threading.Event()
+
+    def start(self):
         self.nb_api = ovn.OvnNbIdl(
             ovn_conf.get_ovn_nb_connection(),
             self.nb_events).start(
@@ -54,10 +61,13 @@ class BGPTopologyReconciler:
             ovn_conf.get_ovn_sb_connection(),
             self.sb_events).start(
                 timeout=ovn_conf.get_ovn_ovsdb_timeout())
+        self._started.set()
+        LOG.info("BGP topology reconciler started")
 
     def stop(self):
-        self.nb_api.stop()
-        self.sb_api.stop()
+        if self._started.is_set():
+            self.nb_api.stop()
+            self.sb_api.stop()
 
     @property
     def nb_events(self):
@@ -75,6 +85,10 @@ class BGPTopologyReconciler:
         ]
 
     def full_sync(self):
+        if not self._started.is_set():
+            LOG.info("Waiting for BGP topology reconciler to start")
+            self._started.wait()
+            LOG.info("BGP topology reconciler is ready")
         if not self.nb_api.ovsdb_connection.idl.is_lock_contended:
             LOG.info("Full BGP topology synchronization started")
             # First make sure all chassis are indexed

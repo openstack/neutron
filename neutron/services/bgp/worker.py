@@ -19,11 +19,12 @@ from neutron import worker
 
 class BGPWorker(worker.NeutronBaseWorker):
     def __init__(self):
+        self._reconciler = reconciler.BGPTopologyReconciler()
         super().__init__(worker_process_count=0)
 
     def start(self):
         super().start(desc="bgp worker")
-        self._reconciler = reconciler.BGPTopologyReconciler()
+        self._reconciler.start()
 
     def wait(self):
         self._reconciler.full_sync()
