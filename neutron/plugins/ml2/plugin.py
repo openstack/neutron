@@ -55,6 +55,7 @@ from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import qinq as qinq_apidef
 from neutron_lib.api.definitions import quota_check_limit
+from neutron_lib.api.definitions import quota_check_limit_default
 from neutron_lib.api.definitions import rbac_address_groups as rbac_ag_apidef
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
@@ -139,7 +140,6 @@ from neutron.db import vlantransparent_db
 from neutron.extensions import dhcpagentscheduler as dhcp_ext
 from neutron.extensions import filter_validation
 from neutron.extensions import qinq
-from neutron.extensions import quota_check_limit_default
 from neutron.extensions import security_groups_default_rules as \
         sg_default_rules_ext
 from neutron.extensions import vlantransparent
