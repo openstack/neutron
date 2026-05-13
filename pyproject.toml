@@ -9,7 +9,7 @@ authors = [
     {name = "OpenStack", email = "openstack-discuss@lists.openstack.org"},
 ]
 readme = {file = "README.rst", content-type = "text/x-rst"}
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 dynamic = ["version", "dependencies"]
 requires-python = ">=3.10"
 classifiers = [
@@ -17,7 +17,6 @@ classifiers = [
     "Environment :: OpenStack",
     "Intended Audience :: Information Technology",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: POSIX :: Linux",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -330,10 +329,8 @@ neutron-sanitize-port-mac-addresses = "neutron.cmd.sanitize_port_mac_addresses:m
 neutron-remove-duplicated-port-bindings = "neutron.cmd.remove_duplicated_port_bindings:main"
 ml2ovn-trace = "neutron.cmd.ovn.ml2ovn_trace:main"
 
-[tool.setuptools]
-packages = [
-    "neutron"
-]
+[tool.setuptools.packages.find]
+include = ["neutron*"]
 
 [tool.setuptools.data-files]
 "etc/neutron" = [
