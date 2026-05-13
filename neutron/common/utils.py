@@ -1099,7 +1099,7 @@ def read_file(path: str) -> str:
 
 def ts_to_datetime(timestamp):
     """Converts timestamp (in seconds) to datetime"""
-    return datetime.datetime.fromtimestamp(timestamp, tz=datetime.timezone.utc)
+    return datetime.datetime.fromtimestamp(timestamp, tz=datetime.UTC)
 
 
 def datetime_to_ts(_datetime):
