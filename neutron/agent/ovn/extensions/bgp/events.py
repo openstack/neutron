@@ -231,7 +231,7 @@ class PortBindingLrpMacEvent(BGPAgentEvent):
 
 
 class BGPBridgePortCreatedEvent(BGPAgentEvent):
-    EVENTS = (BGPAgentEvent.ROW_CREATE,)
+    EVENTS = (BGPAgentEvent.ROW_CREATE, BGPAgentEvent.ROW_UPDATE,)
     TABLE = 'Interface'
     ONETIME = True
 
@@ -255,6 +255,12 @@ class BGPBridgePortCreatedEvent(BGPAgentEvent):
             return False
 
         if row.type not in self.port_types:
+            return False
+
+        # On slow machines, vswitchd may not have assigned the ofport yet
+        # when the Interface row is created. Wait for the ofport to be
+        # assigned (via ROW_UPDATE) before matching.
+        if not row.ofport:
             return False
 
         try:
