@@ -18,6 +18,7 @@ from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import nl_dispatcher
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
+from neutron.agent.ovn.extensions.evpn import events as evpn_events
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.agent.ovn.extensions import extension_manager as ovn_ext_mgr
@@ -49,7 +50,7 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
 
     @property
     def name(self):
-        return "EVPN agent extension"
+        return evpn_const.EVPN_EXT_NAME
 
     @property
     def ovs_idl_events(self):
@@ -65,8 +66,11 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
 
     @property
     def sb_idl_tables(self):
-        return []
+        return ['Port_Binding']
 
     @property
     def sb_idl_events(self):
-        return []
+        return [
+            evpn_events.PortBindingLrpEvpnCreateEvent(self._evpn_fsm),
+            evpn_events.PortBindingLrpEvpnDeleteEvent(self._evpn_fsm),
+        ]

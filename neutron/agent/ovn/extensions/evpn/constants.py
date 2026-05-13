@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+EVPN_EXT_NAME = 'EVPN agent extension'
 EVPN_VRF_PREFIX = 'vr'
 EVPN_VRF_NAME_LEN = 14
 EVPN_LINK_KIND_VRF = 'vrf'
