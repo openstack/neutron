@@ -16,6 +16,7 @@
 import threading
 from unittest import mock
 
+from oslo_utils import uuidutils
 import testtools
 
 from neutron.agent.ovn.extensions.bgp import events
@@ -166,6 +167,83 @@ class NewBgpBridgeEventTestCase(BaseBgpEventsTestCase):
                 'Interface', 'patch-patch-port', type='patch',
                 options={'peer': 'bgp-patch-port'}))
         self._check_event_not_triggered()
+
+
+class BGPBridgePortCreatedEventTestCase(BaseBgpEventsTestCase):
+    def setUp(self):
+        super().setUp()
+        self.bgp_ext = mock.Mock()
+        self.agent_api = {constants.AGENT_BGP_EXT_NAME: self.bgp_ext}
+        self.bgp_bridge_name = 'br-bgp'
+
+        self.bridge_mock = mock.Mock()
+        self.bridge_mock.check_requirements_for_flows_met.return_value = True
+        self.bgp_ext.bgp_bridges = {self.bgp_bridge_name: self.bridge_mock}
+
+        self.int_bridge_name = 'br-int-%s' % uuidutils.generate_uuid()[:8]
+        for br in (self.bgp_bridge_name, self.int_bridge_name):
+            self.ovs_api.add_br(br).execute(check_error=True)
+
+    def _register_event(self, *port_types):
+        ev = events.BGPBridgePortCreatedEvent(
+            self.agent_api, self.bgp_bridge_name, *port_types)
+        ev._get_port_bridge = mock.Mock(return_value=self.bgp_bridge_name)
+        self.ovs_api.idl.notify_handler.watch_event(ev)
+        return ev
+
+    def _add_patch_ports(self):
+        suffix = uuidutils.generate_uuid()[:8]
+        port_name = 'bgp-patch-%s' % suffix
+        peer_name = 'int-patch-%s' % suffix
+        with self.ovs_api.transaction(check_error=True) as txn:
+            txn.add(self.ovs_api.add_port(
+                self.bgp_bridge_name, port_name))
+            txn.add(self.ovs_api.add_port(self.int_bridge_name, peer_name))
+            txn.add(self.ovs_api.db_set(
+                'Interface', port_name, type='patch',
+                options={'peer': peer_name}))
+            txn.add(self.ovs_api.db_set(
+                'Interface', peer_name, type='patch',
+                options={'peer': port_name}))
+
+    def _check_flows_applied(self):
+        utils.wait_until_true(
+            lambda: self.bridge_mock.configure_flows.called,
+            timeout=5,
+            exception=Exception("configure_flows was not called"))
+
+    def _check_flows_not_applied(self):
+        with testtools.ExpectedException(Exception):
+            utils.wait_until_true(
+                lambda: self.bridge_mock.configure_flows.called,
+                sleep=0.5,
+                timeout=2,
+                exception=Exception("configure_flows was unexpectedly called"))
+
+    def test_patch_port_created_configures_flows(self):
+        self._register_event('patch')
+        self._add_patch_ports()
+        self._check_flows_applied()
+
+    def test_nic_port_created_configures_flows(self):
+        self._register_event(*constants.BGP_BRIDGE_NIC_TYPES)
+        fake_nic = self.useFixture(net_helpers.VethFixture()).ports[0]
+        self.ovs_api.add_port(
+            self.bgp_bridge_name, fake_nic.name).execute(check_error=True)
+        self._check_flows_applied()
+
+    def test_wrong_port_type_does_not_trigger_event(self):
+        self._register_event('patch')
+        fake_nic = self.useFixture(net_helpers.VethFixture()).ports[0]
+        self.ovs_api.add_port(
+            self.bgp_bridge_name, fake_nic.name).execute(check_error=True)
+        self._check_flows_not_applied()
+
+    def test_wrong_bridge_does_not_trigger_event(self):
+        ev = self._register_event('patch')
+        ev._get_port_bridge = mock.Mock(return_value='other-bridge')
+        self._add_patch_ports()
+        self._check_flows_not_applied()
 
 
 class BgpBridgeMappingsBase(BaseBgpEventsTestCase):
