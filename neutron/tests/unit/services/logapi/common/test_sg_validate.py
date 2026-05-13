@@ -108,7 +108,7 @@ class TestSGLogRequestValidations(base.BaseTestCase):
                     with mock.patch.object(validators,
                                            'validate_log_type_for_port',
                                            return_value=True):
-                        with mock.patch('neutron.db._utils.model_query',
+                        with mock.patch('neutron_lib.db.utils.model_query',
                                         return_value=FakeSGPortBinding()):
                             self.assertRaises(
                                 log_exc.InvalidResourceConstraint,
