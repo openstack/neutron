@@ -79,6 +79,7 @@ from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rule_type_filter
 from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.api.definitions import quota_check_limit
+from neutron_lib.api.definitions import quota_check_limit_default
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups
 from neutron_lib.api.definitions import router_availability_zone as raz_def
@@ -106,7 +107,6 @@ from neutron_lib.api.definitions import vpn
 from neutron_lib.api.definitions import vpn_endpoint_groups
 from neutron_lib import constants
 
-from neutron.extensions import quota_check_limit_default
 from neutron.extensions import quotasv2_detail
 from neutron.extensions import security_groups_default_rules
 
