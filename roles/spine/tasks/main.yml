@@ -125,9 +125,15 @@
     group: frr
     mode: '640'
 
-- name: Enable and start FRR
+# FRR is not started here because the controller-side BGP peer
+# interfaces (br-bgp-*, VXLAN tunnels) are not created until
+# devstack runs local.sh. Starting FRR before all peers exist
+# can cause routing loops ("Dead loop on virtual device") that
+# make the node unreachable via SSH.
+# FRR will be started by local.sh after all interfaces are ready.
+- name: Enable FRR (started later by devstack local.sh)
   become: true
   ansible.builtin.service:
     name: frr
     enabled: true
-    state: restarted
+    state: stopped
