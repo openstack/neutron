@@ -23,7 +23,6 @@ from neutron_lib import constants as lib_const
 from neutron_lib.exceptions import dns as dns_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
-from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -349,8 +348,22 @@ class DNSExtensionDriver(api.ExtensionDriver):
 
 class DNSExtensionDriverML2(DNSExtensionDriver):
 
+    def __init__(self):
+        super().__init__()
+        self._vlan_driver = None
+        self._plugin = None
+
     def initialize(self):
         LOG.info("DNSExtensionDriverML2 initialization complete")
+
+    @property
+    def vlan_driver(self):
+        if not self._vlan_driver:
+            if not self._plugin:
+                self._plugin = directory.get_plugin()
+            self._vlan_driver = self._plugin.type_manager.drivers.get(
+                lib_const.TYPE_VLAN)
+        return self._vlan_driver
 
     def _is_tunnel_tenant_network(self, provider_net):
         if provider_net['network_type'] == lib_const.TYPE_GENEVE:
@@ -369,15 +382,15 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
             return int(tun_min) <= segmentation_id <= int(tun_max)
 
     def _is_vlan_tenant_network(self, provider_net):
-        network_vlan_ranges = plugin_utils.parse_network_vlan_ranges(
-            cfg.CONF.ml2_type_vlan.network_vlan_ranges)
-        vlan_ranges = network_vlan_ranges[provider_net['physical_network']]
+        if not self.vlan_driver:
+            return False
+        network_vlan_ranges = self.vlan_driver.obj.get_network_segment_ranges()
+        vlan_ranges = network_vlan_ranges.get(provider_net['physical_network'])
         if not vlan_ranges:
             return False
         segmentation_id = int(provider_net['segmentation_id'])
-        for vlan_range in vlan_ranges:
-            if vlan_range[0] <= segmentation_id <= vlan_range[1]:
-                return True
+        return any(vlan_range[0] <= segmentation_id <= vlan_range[1]
+                   for vlan_range in vlan_ranges)
 
     def external_dns_not_needed(self, context, network, subnets):
         dns_driver = _get_dns_driver()
