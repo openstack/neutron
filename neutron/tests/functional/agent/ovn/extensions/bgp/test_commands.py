@@ -17,6 +17,8 @@ from oslo_utils import uuidutils
 
 from neutron.agent.ovn.extensions.bgp import commands
 from neutron.services.bgp import constants
+from neutron.tests.common import net_helpers
+from neutron.tests.functional.agent.ovn.extensions import bgp as test_bgp
 from neutron.tests.functional.services import bgp
 
 
@@ -147,3 +149,70 @@ class SetChassisBgpBridgesCommandTestCase(bgp.BaseBgpSbIdlTestCase):
 
         bridges = self._get_chassis_bgp_bridges(chassis.name)
         self.assertFalse(bridges)
+
+
+class GetPatchPortsFromBridgeCommandTestCase(bgp.BaseBgpIDLTestCase):
+    schemas = ['Open_vSwitch']
+
+    def setUp(self):
+        super().setUp()
+        self.bridge_name = test_bgp.unique_bridge_name('br')
+        self.peer_bridge_name = test_bgp.unique_bridge_name('peer')
+        self.ovs_api.add_br(self.bridge_name).execute(check_error=True)
+        self.ovs_api.add_br(self.peer_bridge_name).execute(check_error=True)
+
+    def _add_patch_port(self, port_name, peer_name):
+        with self.ovs_api.transaction(check_error=True) as txn:
+            txn.add(self.ovs_api.add_port(self.bridge_name, port_name))
+            txn.add(self.ovs_api.add_port(self.peer_bridge_name, peer_name))
+            txn.add(self.ovs_api.db_set(
+                'Interface', port_name, type='patch',
+                options={'peer': peer_name}))
+            txn.add(self.ovs_api.db_set(
+                'Interface', peer_name, type='patch',
+                options={'peer': port_name}))
+
+    def _execute_command(self):
+        return commands.GetPatchPortsFromBridgeCommand(
+            self.ovs_api, self.bridge_name).execute(check_error=True)
+
+    def test_returns_patch_ports_on_bridge(self):
+        self._add_patch_port('patch-a', 'peer-a')
+        self._add_patch_port('patch-b', 'peer-b')
+
+        result = self._execute_command()
+
+        names = {iface.name for iface in result}
+        self.assertEqual({'patch-a', 'patch-b'}, names)
+
+    def test_does_not_return_ports_from_other_bridge(self):
+        self._add_patch_port('patch-a', 'peer-a')
+
+        result = self._execute_command()
+
+        names = {iface.name for iface in result}
+        self.assertNotIn('peer-a', names)
+
+    def test_does_not_return_non_patch_ports(self):
+        fake_nic = self.useFixture(net_helpers.VethFixture()).ports[0]
+        self.ovs_api.add_port(
+            self.bridge_name, fake_nic.name).execute(check_error=True)
+        self._add_patch_port('patch-a', 'peer-a')
+
+        result = self._execute_command()
+
+        names = {iface.name for iface in result}
+        self.assertIn('patch-a', names)
+        self.assertNotIn(fake_nic.name, names)
+
+    def test_empty_bridge_returns_empty_list(self):
+        result = self._execute_command()
+        self.assertEqual([], result)
+
+    def test_returned_interfaces_have_ofport(self):
+        self._add_patch_port('patch-a', 'peer-a')
+
+        result = self._execute_command()
+
+        for iface in result:
+            self.assertTrue(iface.ofport)

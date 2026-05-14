@@ -17,6 +17,7 @@ import netaddr
 
 from neutron.agent.ovn.extensions.bgp import bridge
 from neutron.agent.ovsdb import impl_idl
+from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
 from neutron.services.bgp import constants
 from neutron.services.bgp import ovn as bgp_ovn
@@ -194,3 +195,116 @@ class BGPChassisBridgeTestCase(BgpTestCaseWithIdls):
             f"mod_dl_dst:aa:bb:cc:dd:ee:ff,"
             f"output:{self.bgp_bridge.patch_port_ofport}",
             flow_strings)
+
+
+class BGPInterconnectBridgeTestCase(BgpTestCaseWithIdls):
+
+    def setUp(self):
+        super().setUp()
+        self.ovs_api = impl_idl.api_factory()
+        self.test_bridge = self.useFixture(
+            net_helpers.OVSBridgeFixture()).bridge
+        self.peer_bridge = self.useFixture(
+            net_helpers.OVSBridgeFixture()).bridge
+
+        self.ic_bridge = bridge.BGPInterconnectBridge(
+            FakeBgpAgentApi(self.sb_api), self.test_bridge.br_name)
+
+    def _add_patch_port(self, port_external_ids=None):
+        port_name = utils.get_rand_name(max_length=14, prefix='pp')
+        peer_name = utils.get_rand_name(max_length=14, prefix='peer')
+        with self.ovs_api.transaction(check_error=True) as txn:
+            txn.add(self.ovs_api.add_port(
+                self.test_bridge.br_name, port_name, type='patch',
+                options={'peer': peer_name}))
+            txn.add(self.ovs_api.add_port(
+                self.peer_bridge.br_name, peer_name, type='patch',
+                options={'peer': port_name}))
+            if port_external_ids:
+                txn.add(self.ovs_api.db_set(
+                    'Port', port_name,
+                    external_ids=port_external_ids))
+        return port_name
+
+    def _get_iface_row(self, iface_name):
+        return self.ovs_api.lookup('Interface', iface_name)
+
+    def test_initial_state(self):
+        self.assertIsNone(self.ic_bridge.provider_patch_port)
+        self.assertIsNone(self.ic_bridge.bgp_patch_port)
+        self.assertFalse(self.ic_bridge.check_requirements_for_flows_met())
+
+    def test_add_provider_patch_port(self):
+        port_name = self._add_patch_port(
+            port_external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+        iface_row = self._get_iface_row(port_name)
+        self.ic_bridge.add_patch_port(iface_row)
+        self.assertEqual(port_name, self.ic_bridge.provider_patch_port)
+        self.assertIsNone(self.ic_bridge.bgp_patch_port)
+
+    def test_add_bgp_patch_port(self):
+        port_name = self._add_patch_port()
+        iface_row = self._get_iface_row(port_name)
+        self.ic_bridge.add_patch_port(iface_row)
+        self.assertEqual(port_name, self.ic_bridge.bgp_patch_port)
+        self.assertIsNone(self.ic_bridge.provider_patch_port)
+
+    def test_requirements_met_when_both_ports_set(self):
+        prov_name = self._add_patch_port(
+            port_external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+        bgp_name = self._add_patch_port()
+
+        self.ic_bridge.add_patch_port(self._get_iface_row(prov_name))
+        self.assertFalse(self.ic_bridge.check_requirements_for_flows_met())
+
+        self.ic_bridge.add_patch_port(self._get_iface_row(bgp_name))
+        self.assertTrue(self.ic_bridge.check_requirements_for_flows_met())
+
+    def test_provider_patch_ofport(self):
+        port_name = self._add_patch_port(
+            port_external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+        iface_row = self._get_iface_row(port_name)
+        self.ic_bridge.add_patch_port(iface_row)
+        self.assertGreater(self.ic_bridge.provider_patch_ofport, 0)
+
+    def test_bgp_patch_ofport(self):
+        port_name = self._add_patch_port()
+        iface_row = self._get_iface_row(port_name)
+        self.ic_bridge.add_patch_port(iface_row)
+        self.assertGreater(self.ic_bridge.bgp_patch_ofport, 0)
+
+    def test_remove_provider_patch_port(self):
+        port_name = self._add_patch_port(
+            port_external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+        iface_row = self._get_iface_row(port_name)
+        self.ic_bridge.add_patch_port(iface_row)
+
+        self.ic_bridge.remove_patch_port(iface_row)
+        self.assertIsNone(self.ic_bridge.provider_patch_port)
+
+    def test_remove_bgp_patch_port(self):
+        port_name = self._add_patch_port()
+        iface_row = self._get_iface_row(port_name)
+        self.ic_bridge.add_patch_port(iface_row)
+
+        self.ic_bridge.remove_patch_port(iface_row)
+        self.assertIsNone(self.ic_bridge.bgp_patch_port)
+
+    def test_has_patch_port(self):
+        port_name = self._add_patch_port()
+        iface_row = self._get_iface_row(port_name)
+        self.ic_bridge.add_patch_port(iface_row)
+
+        self.assertTrue(self.ic_bridge.has_patch_port(port_name))
+        self.assertFalse(self.ic_bridge.has_patch_port('unknown-port'))
+
+    def test_scan_existing_patch_ports(self):
+        prov_name = self._add_patch_port(
+            port_external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+        bgp_name = self._add_patch_port()
+
+        self.ic_bridge.scan_existing_patch_ports()
+
+        self.assertEqual(prov_name, self.ic_bridge.provider_patch_port)
+        self.assertEqual(bgp_name, self.ic_bridge.bgp_patch_port)
+        self.assertTrue(self.ic_bridge.check_requirements_for_flows_met())

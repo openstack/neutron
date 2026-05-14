@@ -49,6 +49,13 @@ def _get_ovn_bridge_mappings(row):
         for mapping in _get_external_ids_list(row, 'ovn-bridge-mappings')}
 
 
+def _get_interconnect_bridge_name(idl):
+    """Read neutron-bgp-interconnect-bridge from the IDL."""
+    ovs_row = next(iter(idl.tables['Open_vSwitch'].rows.values()))
+    return ovs_row.external_ids.get(
+        constants.AGENT_BGP_INTERCONNECT_BRIDGE, '').strip() or None
+
+
 class BGPAgentEvent(row_event.RowEvent):
     """Base class for BGP agent events."""
 
@@ -269,3 +276,100 @@ class BGPBridgePortCreatedEvent(BGPAgentEvent):
         bgp_bridge = self.bgp_agent.bgp_bridges[port_bridge_name]
         if bgp_bridge.check_requirements_for_flows_met():
             bgp_bridge.configure_flows()
+
+
+class InterconnectPatchPortCreatedEvent(BGPAgentEvent):
+    TABLE = 'Interface'
+    EVENTS = (BGPAgentEvent.ROW_CREATE, BGPAgentEvent.ROW_UPDATE,)
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        if row.type != 'patch':
+            return False
+        if not row.ofport:
+            return False
+        if event == self.ROW_UPDATE and not hasattr(old, 'ofport'):
+            return False
+        ic = self.bgp_agent.interconnect_bridge
+        if ic is None:
+            return False
+        return ic.ovs_bridge.get_bridge_for_iface(row.name) == ic.name
+
+    def run(self, event, row, old):
+        ic = self.bgp_agent.interconnect_bridge
+        if ic is None:
+            return
+        ic.add_patch_port(row)
+        if ic.check_requirements_for_flows_met():
+            ic.configure_flows()
+
+
+class InterconnectPatchPortDeletedEvent(BGPAgentEvent):
+    TABLE = 'Interface'
+    EVENTS = (BGPAgentEvent.ROW_DELETE,)
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        ic = self.bgp_agent.interconnect_bridge
+        return ic is not None and ic.has_patch_port(row.name)
+
+    def run(self, event, row, old):
+        ic = self.bgp_agent.interconnect_bridge
+        if ic is not None:
+            ic.remove_patch_port(row)
+
+
+class InterconnectBridgeOVSEvent(BGPAgentEvent):
+    TABLE = 'Open_vSwitch'
+    EVENTS = (BGPAgentEvent.ROW_CREATE, BGPAgentEvent.ROW_UPDATE,)
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        if event == self.ROW_CREATE:
+            return bool(_get_interconnect_bridge_name(row._idl))
+        if not hasattr(old, 'external_ids'):
+            return False
+        old_val = old.external_ids.get(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, '').strip()
+        new_val = row.external_ids.get(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, '').strip()
+        return old_val != new_val
+
+    def run(self, event, row, old):
+        name = row.external_ids.get(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, '').strip() or None
+        if name and self.agent_api.ovs_idl.br_exists(name).execute():
+            self.bgp_agent.set_interconnect_bridge(name)
+        else:
+            self.bgp_agent.clear_interconnect_bridge()
+
+
+class InterconnectBridgeCreatedEvent(BGPAgentEvent):
+    TABLE = 'Bridge'
+    EVENTS = (BGPAgentEvent.ROW_CREATE,)
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        ic_name = _get_interconnect_bridge_name(row._idl)
+        return ic_name is not None and row.name == ic_name
+
+    def run(self, event, row, old):
+        self.bgp_agent.set_interconnect_bridge(row.name)
+
+
+class InterconnectBridgeDeletedEvent(BGPAgentEvent):
+    TABLE = 'Bridge'
+    EVENTS = (BGPAgentEvent.ROW_DELETE,)
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        ic = self.bgp_agent.interconnect_bridge
+        return ic is not None and row.name == ic.name
+
+    def run(self, event, row, old):
+        self.bgp_agent.clear_interconnect_bridge()
