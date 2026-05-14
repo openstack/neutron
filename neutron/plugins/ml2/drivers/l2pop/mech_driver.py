@@ -56,12 +56,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
                 except ValueError:
                     pass
 
-    def check_vlan_transparency(self, context):
-        """L2population driver vlan transparency support."""
-        return True
-
     def check_vlan_qinq(self, context):
-        """L2population driver doesn't support vlan transparency."""
+        """L2population driver does not support QinQ."""
         return False
 
     def _get_ha_port_agents_fdb(

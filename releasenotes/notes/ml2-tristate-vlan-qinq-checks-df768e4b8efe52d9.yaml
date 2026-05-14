@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    ML2 now evaluates ``vlan_transparent`` and ``qinq`` mechanism driver
+    support using tri-state results: ``True`` (supports), ``False`` (rejects),
+    and ``None`` (abstains). Networks are accepted only when at least one
+    mechanism driver reports support and no driver rejects support.
+    See bug: `2131664 <https://bugs.launchpad.net/neutron/+bug/2131664>`_.

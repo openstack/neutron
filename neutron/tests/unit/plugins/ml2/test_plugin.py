@@ -758,6 +758,15 @@ class TestMl2NetworksWithVlanTransparency(
             self.assertEqual("VlanTransparencyDriverError",
                              error_result['type'])
 
+    def test_create_network_vlan_transparent_all_abstain(self):
+        network_req = self.new_create_request(
+            'networks', self.data, as_admin=True)
+        res = network_req.get_response(self.api)
+        self.assertIn(res.status_int, [400, 500])
+        error_result = self.deserialize(self.fmt, res)['NeutronError']
+        self.assertEqual("VlanTransparencyDriverError",
+                         error_result['type'])
+
     def test_create_network_vlan_transparent(self):
         with mock.patch.object(mech_test.TestMechanismDriver,
                                'check_vlan_transparency',
@@ -768,6 +777,21 @@ class TestMl2NetworksWithVlanTransparency(
             self.assertEqual(201, res.status_int)
             network = self.deserialize(self.fmt, res)['network']
             self.assertIn('vlan_transparent', network)
+
+
+class TestMl2NetworksWithVlanTransparencyLoggerAndTest(
+        TestMl2NetworksWithVlanTransparencyBase):
+    """Logger driver asserts support; test driver abstains (tri-state)."""
+
+    _mechanism_drivers = ['logger', 'test']
+
+    def test_create_network_vlan_transparent_without_patching_test(self):
+        network_req = self.new_create_request(
+            'networks', self.data, as_admin=True)
+        res = network_req.get_response(self.api)
+        self.assertEqual(201, res.status_int)
+        network = self.deserialize(self.fmt, res)['network']
+        self.assertIn('vlan_transparent', network)
 
 
 class TestMl2NetworksWithVlanTransparencyAndMTU(
