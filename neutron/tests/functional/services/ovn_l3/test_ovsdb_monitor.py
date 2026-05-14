@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import external_net
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 
+from neutron.api import wsgi
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
 from neutron.services.bgp import constants as bgp_constants
@@ -34,7 +35,8 @@ class TestLogicalRouterPortEvent(
         super().setUp(**kwargs)
         self.chassis = self.add_fake_chassis('ovs-host1')
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
-        self.l3_plugin._post_fork_initialize(mock.ANY, mock.ANY, mock.ANY)
+        self.l3_plugin._post_fork_initialize(
+            mock.ANY, mock.ANY, wsgi.WorkerService)
         self.ext_api = test_extensions.setup_extensions_middleware(
             test_l3.L3TestExtensionManager())
         kwargs = {'arg_list': (external_net.EXTERNAL,),
@@ -201,7 +203,8 @@ class TestLogicalRouterPortGatewayChassisEvent(
         super().setUp(**kwargs)
         self.chassis = self.add_fake_chassis('ovs-host1')
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
-        self.l3_plugin._post_fork_initialize(mock.ANY, mock.ANY, mock.ANY)
+        self.l3_plugin._post_fork_initialize(
+            mock.ANY, mock.ANY, wsgi.WorkerService)
         self.ext_api = test_extensions.setup_extensions_middleware(
             test_l3.L3TestExtensionManager())
         kwargs = {'arg_list': (external_net.EXTERNAL,),
