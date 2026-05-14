@@ -13,7 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
+
+
+def unique_bridge_name(prefix='br'):
+    return f"{prefix}-{uuidutils.generate_uuid()[:8]}"
 
 
 class WaitForPortBindingCreatedEvent(event.WaitEvent):
