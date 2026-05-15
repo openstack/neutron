@@ -16,7 +16,11 @@
 from oslo_utils import uuidutils
 
 from neutron.agent.ovn.extensions.bgp import commands
+from neutron.agent.ovn.extensions.bgp import exceptions
+from neutron.common.ovn import constants as ovn_const
+from neutron.conf.services import bgp as bgp_config
 from neutron.services.bgp import constants
+from neutron.services.bgp import helpers
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.ovn.extensions import bgp as test_bgp
 from neutron.tests.functional.services import bgp
@@ -216,3 +220,61 @@ class GetPatchPortsFromBridgeCommandTestCase(bgp.BaseBgpIDLTestCase):
 
         for iface in result:
             self.assertTrue(iface.ofport)
+
+
+class GetInterconnectLrpMacCommandTestCase(bgp.BaseBgpNbIdlTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.router_name = bgp_config.get_main_router_name()
+        self.switch_name = _get_unique_name('ls')
+        ic_switch_name = _get_unique_name('bgp-ls-interconnect')
+        self.lrp_name = helpers.get_lrp_name(self.router_name, ic_switch_name)
+        self.lrp_mac = 'aa:bb:cc:dd:ee:ff'
+        self.localnet_lsp_name = helpers.get_lsp_localnet_name(ic_switch_name)
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lr_add(self.router_name))
+            txn.add(self.nb_api.ls_add(self.switch_name))
+            txn.add(self.nb_api.lrp_add(
+                self.router_name, self.lrp_name,
+                mac=self.lrp_mac, networks=[]))
+            txn.add(self.nb_api.lsp_add(
+                self.switch_name, _get_unique_name('rtr-lsp'),
+                type=ovn_const.LSP_TYPE_ROUTER,
+                addresses=['router'],
+                options={'router-port': self.lrp_name}))
+            txn.add(self.nb_api.lsp_add(
+                self.switch_name, self.localnet_lsp_name,
+                type=ovn_const.LSP_TYPE_LOCALNET,
+                addresses=['unknown'],
+                options={'network_name': 'test-net'}))
+
+    def _execute_command(self, lsp_name=None):
+        return commands.GetInterconnectLrpMacCommand(
+            self.nb_api, lsp_name or self.localnet_lsp_name
+        ).execute(check_error=True)
+
+    def test_returns_lrp_mac(self):
+        result = self._execute_command()
+        self.assertEqual(self.lrp_mac, result)
+
+    def test_nonexistent_lsp_raises(self):
+        self.assertRaises(
+            exceptions.InterconnectLrpMacNotFound,
+            self._execute_command, 'no-such-lsp')
+
+    def test_switch_without_router_port_raises(self):
+        ls_name = _get_unique_name('ls')
+        localnet_name = _get_unique_name('localnet')
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self.nb_api.lsp_add(
+                ls_name, localnet_name,
+                type=ovn_const.LSP_TYPE_LOCALNET,
+                addresses=['unknown'],
+                options={'network_name': 'net'}))
+
+        self.assertRaises(
+            exceptions.InterconnectLrpMacNotFound,
+            self._execute_command, localnet_name)
