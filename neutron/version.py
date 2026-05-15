@@ -12,6 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import pbr.version
+import importlib.metadata
 
-version_info = pbr.version.VersionInfo('neutron')
+version_info = importlib.metadata.version('neutron')
