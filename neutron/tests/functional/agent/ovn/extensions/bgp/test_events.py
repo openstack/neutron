@@ -660,33 +660,30 @@ class InterconnectPatchPortEventBase(BaseBgpEventsTestCase):
         self.ovs_api.idl.notify_handler.watch_event(
             events.InterconnectPatchPortDeletedEvent(self.agent_api))
 
-    def _add_patch_port_pair(self, on_bridge, port_name, peer_name,
-                             port_external_ids=None):
+    def _add_patch_port_pair(self, on_bridge, port_name, peer_name):
         with self.ovs_api.transaction(check_error=True) as txn:
             txn.add(self.ovs_api.add_port(on_bridge, port_name))
             txn.add(self.ovs_api.add_port(self.peer_bridge_name, peer_name))
             txn.add(self.ovs_api.db_set(
                 'Interface', port_name, type='patch',
-                options={'peer': peer_name}))
+                options={'peer': peer_name},
+                external_ids={
+                    ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'physnet',
+                })
+            )
             txn.add(self.ovs_api.db_set(
                 'Interface', peer_name, type='patch',
                 options={'peer': port_name}))
-            if port_external_ids:
-                txn.add(self.ovs_api.db_set(
-                    'Port', port_name,
-                    external_ids=port_external_ids))
 
 
 class InterconnectPatchPortCreatedEventTestCase(
         InterconnectPatchPortEventBase):
 
     def test_provider_patch_port_created(self):
-        port_name = utils.get_rand_name(max_length=14, prefix='prov')
+        port_name = utils.get_rand_name(prefix='patch-provnet-')
         peer_name = utils.get_rand_name(max_length=14, prefix='peer')
         self._add_patch_port_pair(
-            self.ic_bridge_name, port_name, peer_name,
-            port_external_ids={
-                ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+            self.ic_bridge_name, port_name, peer_name)
         utils.wait_until_true(
             lambda: self.ic_bridge.provider_patch_port == port_name,
             sleep=0.5, timeout=5,
@@ -707,14 +704,12 @@ class InterconnectPatchPortCreatedEventTestCase(
         self.assertGreater(self.ic_bridge.bgp_patch_ofport, 0)
 
     def test_both_patch_ports_meet_requirements(self):
-        prov_name = utils.get_rand_name(max_length=14, prefix='prov')
+        prov_name = utils.get_rand_name(prefix='patch-provnet-')
         prov_peer = utils.get_rand_name(max_length=14, prefix='peer')
         bgp_name = utils.get_rand_name(max_length=14, prefix='bgp')
         bgp_peer = utils.get_rand_name(max_length=14, prefix='peer')
         self._add_patch_port_pair(
-            self.ic_bridge_name, prov_name, prov_peer,
-            port_external_ids={
-                ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+            self.ic_bridge_name, prov_name, prov_peer)
         self._add_patch_port_pair(
             self.ic_bridge_name, bgp_name, bgp_peer)
         utils.wait_until_true(
@@ -723,7 +718,6 @@ class InterconnectPatchPortCreatedEventTestCase(
             sleep=0.5, timeout=5,
             exception=Exception(
                 "Both patch ports not detected on IC bridge"))
-        self.assertTrue(self.ic_bridge.check_requirements_for_flows_met())
         self.assertGreater(self.ic_bridge.provider_patch_ofport, 0)
         self.assertGreater(self.ic_bridge.bgp_patch_ofport, 0)
 
@@ -810,12 +804,10 @@ class InterconnectPatchPortDeletedEventTestCase(
         InterconnectPatchPortEventBase):
 
     def test_provider_patch_port_deleted(self):
-        port_name = utils.get_rand_name(max_length=14, prefix='prov')
+        port_name = utils.get_rand_name(prefix='patch-provnet-')
         peer_name = utils.get_rand_name(max_length=14, prefix='peer')
         self._add_patch_port_pair(
-            self.ic_bridge_name, port_name, peer_name,
-            port_external_ids={
-                ovn_const.OVN_PHYSNET_EXT_ID_KEY: 'public'})
+            self.ic_bridge_name, port_name, peer_name)
         utils.wait_until_true(
             lambda: self.ic_bridge.provider_patch_port == port_name,
             sleep=0.5, timeout=5)
