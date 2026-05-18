@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    The ``OVNL3RouterPlugin`` now registers OVN OVSDB events
+    (``LogicalRouterPortEvent`` and ``RouterHAChassisGroupEvent``) only in
+    Neutron API workers (``WorkerService`` instances). Previously these events
+    were registered by every worker type that called
+    ``_post_fork_initialize``, which could lead to unexpected event processing
+    in maintenance or other non-API workers.
