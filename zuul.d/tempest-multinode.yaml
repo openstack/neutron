@@ -90,6 +90,7 @@
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_AGENT: openvswitch
         NEUTRON_DEPLOY_MOD_WSGI: true
+        TEMPEST_VENV_UPPER_CONSTRAINTS: '/opt/stack/requirements/upper-constraints.txt'
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
