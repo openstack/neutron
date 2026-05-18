@@ -36,6 +36,7 @@ class TestBGPReconciler(base.TestOVNFunctionalBase):
         bgp_ovn.BgpOvnNbIdl._ovsdb_connection = None
         super().setUp()
         self.reconciler = reconciler.BGPTopologyReconciler()
+        self.reconciler.start()
 
         self.nb_api = self.reconciler.nb_api
         self.sb_api = self.reconciler.sb_api
