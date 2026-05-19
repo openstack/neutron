@@ -21,7 +21,7 @@ AGENT_OPTS = [
     # eventlet in milliseconds and any number higher will produce an OverFlow
     # error. More details here: https://bugs.launchpad.net/neutron/+bug/2028724
     cfg.IntOpt('agent_down_time', default=75,
-               max=((2**32 / 2 - 1) // 1000),
+               max=int((2**32 / 2 - 1) // 1000),
                help=_("Seconds to regard the agent as down; should be at "
                       "least twice report_interval, to be sure the "
                       "agent is down for good.")),
