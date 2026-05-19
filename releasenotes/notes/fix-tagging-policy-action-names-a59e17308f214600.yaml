@@ -1,0 +1,18 @@
+---
+security:
+  - |
+    Fixed a security issue where the tagging controller's single-tag write
+    endpoints (``POST /v2.0/{resource}/{id}/tags`` and
+    ``PUT /v2.0/{resource}/{id}/tags/{tag}``) enforced policy action names
+    using the plural collection key (e.g. ``create_networks:tags``) instead
+    of the singular member name (e.g. ``create_network:tags``). Because the
+    plural names did not match any registered policy rule, they fell through
+    to oslo.policy's default rule, allowing project readers to create and
+    update tags on same-project resources.
+    All tag-write endpoints now consistently use the singular policy action
+    names that match the registered rules.
+fixes:
+  - |
+    Fixed the ``delete_floatingips:tags`` policy rule name to use the correct
+    singular form ``delete_floatingip:tags``, consistent with all other
+    tag-related policy rules.
