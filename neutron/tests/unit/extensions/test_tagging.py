@@ -24,6 +24,7 @@ from neutron_lib import exceptions
 from neutron_lib.utils import net as net_utils
 from oslo_utils import uuidutils
 
+from neutron.conf import policies as conf_policies
 from neutron.extensions import tagging
 from neutron.objects import network as network_obj
 from neutron.objects import network_segment_range as network_segment_range_obj
@@ -86,6 +87,22 @@ class TaggingControllerDbTestCase(testlib_api.WebTestCase):
         tc_supported_resources = set(self.tc.supported_resources.keys())
         ovo_resources = set(tagging.OVO_CLS.keys())
         self.assertEqual(tc_supported_resources, ovo_resources)
+
+    def test__get_policy_action_all_resources_and_actions(self):
+        registered_rules = {rule.name for rule in conf_policies.list_rules()}
+        actions = ('get', 'create', 'update', 'delete')
+        for collection, member in self.tc.supported_resources.items():
+            for action in actions:
+                expected = f'{action}_{member}:tags'
+                result = self.tc._get_policy_action(action, collection)
+                self.assertEqual(
+                    expected, result,
+                    f'_get_policy_action("{action}", "{collection}") '
+                    f'returned "{result}" instead of "{expected}"')
+                self.assertIn(
+                    result, registered_rules,
+                    f'Policy rule "{result}" is not registered in '
+                    f'neutron.conf.policies')
 
     def _check_resource_info(self, obj, obj_type):
         id_key = self.tc.supported_resources[obj_type] + '_id'
