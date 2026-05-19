@@ -193,6 +193,31 @@ This is the QoS rules precedence and result:
    the OVN QoS rule priority for floating IPs <https://review.opendev.org/q/If01a8783ac998b2a1f1249ab6f555dd1a5148ea8>`_.
 
 
+.. warning::
+
+   **Low bandwidth limits and MTU interaction**
+
+   In ML2/OVN, the OVS QoS policer uses the Token Bucket Filter (TBF)
+   algorithm to shape traffic. The TBF bucket size is determined by the
+   ``max_burst_kbps`` value (or ``max_kbps`` if burst is not explicitly set).
+
+   If the bucket size (in bits) is smaller than the MTU size (in bits), the
+   TBF algorithm will drop **all** packets because no single packet can fit
+   in the bucket. For example, with a jumbo frame MTU of 9000 bytes, the
+   minimum bucket size must be at least 9000 × 8 = 72 kbits. A bandwidth
+   limit rule with ``max_burst_kbps`` below 72 kbps will cause all traffic
+   to be dropped rather than shaped.
+
+   When configuring low bandwidth limits, ensure that the ``max_burst_kbps``
+   value is always greater than the MTU of the network (in kbits):
+
+   * Standard MTU (1500 bytes): ``max_burst_kbps`` >= 12 kbps
+   * Jumbo frames (9000 bytes): ``max_burst_kbps`` >= 72 kbps
+
+   See `LP#2153122 <https://bugs.launchpad.net/neutron/+bug/2153122>`_ for
+   more details.
+
+
 L3 services that provide QoS extensions
 ---------------------------------------
 
