@@ -18,6 +18,7 @@ OVN Driver Administration Guide
    routed_provider_networks
    smartnic_dpu
    baremetal
+   bgp
    external_ports
    rpc
    l3_scheduler
