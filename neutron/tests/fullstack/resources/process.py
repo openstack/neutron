@@ -16,6 +16,7 @@ import datetime
 import os
 import re
 import shutil
+import signal
 
 import fixtures
 from neutron_lib import constants
@@ -58,7 +59,7 @@ class ProcessFixture(fixtures.Fixture):
 
     def _setUp(self):
         self.start()
-        self.addCleanup(self.stop)
+        self.addCleanup(self.kill)
 
     def start(self):
         test_name = base.sanitize_log_path(self.test_name)
@@ -135,6 +136,9 @@ class ProcessFixture(fixtures.Fixture):
                       check_exit_code=check_exit_code)
         fullstack_base.wait_until_true(self.process_is_not_running)
         LOG.debug(msg)
+
+    def kill(self):
+        self.stop(kill_signal=signal.SIGKILL)
 
     def restart(self, executor=None):
         def _restart():
