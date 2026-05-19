@@ -226,6 +226,10 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     @property
     def top_bound_segment(self):
+        # Binding levels form a FILO stack: index 0 is the outermost level
+        # (closest to the network fabric, bound first); index -1 is the
+        # innermost level (closest to the VM, bound last). Teardown must
+        # proceed from innermost to outermost, i.e. in reverse bind order.
         if self._binding_levels:
             return self._expand_segment(self._binding_levels[0].segment_id)
 

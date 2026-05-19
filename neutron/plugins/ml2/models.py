@@ -68,8 +68,13 @@ class PortBindingLevel(model_base.BASEV2):
     """Represent each level of a port binding.
 
     Stores information associated with each level of an established
-    port binding. Different levels might correspond to the host and
-    ToR switch, for instance.
+    port binding. During hierarchical port binding, drivers are called in
+    configured order and each successful bind appends a level: level 0 is
+    the outermost (closest to the network fabric, e.g. spine switch) and
+    level N is the innermost (closest to the compute host, e.g. ToR switch
+    or the hypervisor vswitch). This forms a FILO (first-in, last-out)
+    stack — teardown must proceed from the innermost level outward, i.e. in
+    the reverse of the bind order.
     """
 
     __tablename__ = 'ml2_port_binding_levels'

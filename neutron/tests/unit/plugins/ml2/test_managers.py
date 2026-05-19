@@ -210,6 +210,55 @@ class TestMechManager(base.BaseTestCase):
     def test_port_precommit(self):
         self._check_resource('port')
 
+    def _make_driver_mock(self, name):
+        driver = mock.Mock()
+        driver.name = name
+        return driver
+
+    def _set_two_drivers(self):
+        self.driver_a = self._make_driver_mock('driver_a')
+        self.driver_b = self._make_driver_mock('driver_b')
+        self._manager.ordered_mech_drivers = [self.driver_a, self.driver_b]
+
+    def test_delete_port_precommit_reverse_order(self):
+        """delete_port_precommit must notify drivers in reverse order."""
+        self._set_two_drivers()
+        call_order = []
+        self.driver_a.obj.delete_port_precommit.side_effect = (
+            lambda ctx: call_order.append('a'))
+        self.driver_b.obj.delete_port_precommit.side_effect = (
+            lambda ctx: call_order.append('b'))
+
+        self._manager.delete_port_precommit(mock.Mock())
+
+        self.assertEqual(['b', 'a'], call_order)
+
+    def test_delete_port_postcommit_reverse_order(self):
+        """delete_port_postcommit must notify in reverse order."""
+        self._set_two_drivers()
+        call_order = []
+        self.driver_a.obj.delete_port_postcommit.side_effect = (
+            lambda ctx: call_order.append('a'))
+        self.driver_b.obj.delete_port_postcommit.side_effect = (
+            lambda ctx: call_order.append('b'))
+
+        self._manager.delete_port_postcommit(mock.Mock())
+
+        self.assertEqual(['b', 'a'], call_order)
+
+    def test_create_port_postcommit_forward_order(self):
+        """create_port_postcommit must notify drivers in forward order."""
+        self._set_two_drivers()
+        call_order = []
+        self.driver_a.obj.create_port_postcommit.side_effect = (
+            lambda ctx: call_order.append('a'))
+        self.driver_b.obj.create_port_postcommit.side_effect = (
+            lambda ctx: call_order.append('b'))
+
+        self._manager.create_port_postcommit(mock.Mock())
+
+        self.assertEqual(['a', 'b'], call_order)
+
 
 class TestMechDriverTriStateChecks(base.BaseTestCase):
     """Unit tests for vlan_transparent / qinq mechanism-driver aggregation."""
