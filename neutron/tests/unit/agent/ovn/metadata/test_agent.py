@@ -542,11 +542,13 @@ class TestMetadataAgent(base.BaseTestCase):
         net_name = '123'
         metadaport_logical_port = '123-abc-456'
         datapath_ports_ips = ['10.0.0.1', '10.0.0.2']
+        mtu = 1500
         metada_port_info = agent.MetadataPortInfo(
             mac='aa:bb:cc:dd:ee:ff',
             ip_addresses=['10.0.0.1/23',
                           '2001:470:9:1224:5595:dd51:6ba2:e788/64'],
-            logical_port=metadaport_logical_port
+            logical_port=metadaport_logical_port,
+            mtu=mtu
         )
         provision_params = (net_name, datapath_ports_ips, ipv6_enabled,
                             metada_port_info,)
@@ -581,16 +583,25 @@ class TestMetadataAgent(base.BaseTestCase):
                     driver.MetadataDriver,
                     'spawn_monitored_metadata_proxy') as spawn_mdp, \
                 mock.patch.object(
-                    self.agent, '_ensure_datapath_checksum') as mock_checksum:
+                    self.agent, '_ensure_datapath_checksum') as mock_checksum,\
+                mock.patch.object(
+                    self.agent.sb_idl,
+                    'get_metadata_port') as mock_get_metadata_port:
 
             # Simulate that the VETH pair was already present in 'br-fake'.
             # We need to assert that it was deleted first.
             self.agent.ovs_idl.list_br.return_value.execute.return_value = (
                 ['br-int', 'br-fake'])
             mtu = 1500
+            datapath = mock.Mock(uuid='fake_datapath_uuid')
             port_binding = mock.Mock(
-                datapath='fake_datapath',
+                datapath=datapath,
                 external_ids={ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(mtu)})
+
+            metadata_port = mock.Mock(
+                external_ids={ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(mtu)})
+            mock_get_metadata_port.return_value = metadata_port
+
             self.agent.provision_datapath(port_binding)
 
             # Check that the port was deleted from br-fake

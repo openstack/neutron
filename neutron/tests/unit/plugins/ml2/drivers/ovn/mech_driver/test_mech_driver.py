@@ -2134,23 +2134,32 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             self.assertEqual("address_scope_v6", options.address6_scope_id)
 
     def test__get_port_options_with_ovn_lb_hm_port(self):
-        port = {
-            'id': 'ovn-lb-hm-port',
-            'mac_address': '00:00:00:00:00:00',
-            'device_owner': ovn_const.OVN_LB_HM_PORT_DISTRIBUTED,
-            'device_id': 'ovn-lb-hm-foo',
-            'network_id': 'foo',
-            'fixed_ips': [],
-            portbindings.HOST_ID: 'fake-src',
-            portbindings.PROFILE: {
-                ovn_const.MIGRATING_ATTR: 'fake-dest',
-            },
-            portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
-        }
-        options = self.mech_driver._ovn_client._get_port_options(
-            self.context, port)
-        self.assertEqual('fake-src,fake-dest',
-                         options.options['requested-chassis'])
+        with mock.patch.object(
+            self.mech_driver._plugin, 'get_network'
+        ) as mock_get_network:
+            network = {
+                'id': 'foo',
+                'mtu': 1500,
+            }
+            mock_get_network.return_value = network
+
+            port = {
+                'id': 'ovn-lb-hm-port',
+                'mac_address': '00:00:00:00:00:00',
+                'device_owner': ovn_const.OVN_LB_HM_PORT_DISTRIBUTED,
+                'device_id': 'ovn-lb-hm-foo',
+                'network_id': 'foo',
+                'fixed_ips': [],
+                portbindings.HOST_ID: 'fake-src',
+                portbindings.PROFILE: {
+                    ovn_const.MIGRATING_ATTR: 'fake-dest',
+                },
+                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS,
+            }
+            options = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
+            self.assertEqual('fake-src,fake-dest',
+                             options.options['requested-chassis'])
 
     def test__get_port_options_migrating_additional_chassis_present(self):
         port = {
