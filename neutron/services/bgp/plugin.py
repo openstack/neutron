@@ -13,7 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
+from neutron_lib import constants as n_const
+from neutron_lib import exceptions as n_exc
 from neutron_lib.services import base as service_base
 from oslo_config import cfg
 from oslo_log import log
@@ -43,3 +48,14 @@ class BGPServicePlugin(service_base.ServicePluginBase):
     @classmethod
     def get_plugin_type(cls):
         return "bgp-service"
+
+    @registry.receives(resources.NETWORK, [events.PRECOMMIT_CREATE])
+    def _validate_network_not_vlan(self, resource, event, trigger, payload):
+        network = payload.latest_state
+        network_type = network.get(pnet.NETWORK_TYPE)
+        if network_type == n_const.TYPE_VLAN:
+            raise n_exc.BadRequest(
+                resource='network',
+                msg='VLAN provider networks are not supported when the '
+                    'BGP service plugin is enabled. '
+                    'Only flat provider networks are supported.')

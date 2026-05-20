@@ -1,0 +1,6 @@
+---
+other:
+  - |
+   The Neutron API no longer allows creating VLAN network if ovn-bgp service
+   plugin is enabled. The ovn-bgp service plugin requires Spine And Leaf topology
+   which makes it incompatible with the VLAN network segregation.
