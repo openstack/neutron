@@ -170,7 +170,7 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='delete_floatingips:tags',
+        name='delete_floatingip:tags',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Delete the floating IP tags',
         operations=ACTION_DELETE_TAGS,
