@@ -443,7 +443,7 @@ class DVRResourceOperationHandler:
                 models_v2.Port.id == aap_models.AllowedAddressPair.port_id,
                 aap_models.AllowedAddressPair.ip_address == fixed_ip,
                 models_v2.Port.network_id == network_id,
-                models_v2.Port.admin_state_up == True)  # noqa
+                models_v2.Port.admin_state_up.is_(True))
         return query.all()
 
     @registry.receives(resources.FLOATING_IP, [events.AFTER_CREATE,
