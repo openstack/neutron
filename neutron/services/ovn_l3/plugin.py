@@ -189,7 +189,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         # TODO(ralonsoh): once [1] is released and required in Neutron, it
         # won't be needed the ``get_method_class`` method.
         # [1] https://review.opendev.org/c/openstack/neutron-lib/+/988563
-        if utils.get_method_class(trigger) == wsgi.WorkerService:
+        if utils.get_class(trigger) == wsgi.WorkerService:
             self._nb_ovn.idl.notify_handler.watch_events([
                 ovsdb_monitor.LogicalRouterPortEvent(self),
                 ovsdb_monitor.RouterHAChassisGroupEvent(self),

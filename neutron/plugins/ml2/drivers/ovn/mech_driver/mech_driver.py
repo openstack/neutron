@@ -414,7 +414,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def post_fork_initialize(self, resource, event, trigger, payload=None):
         # Initialize API/Maintenance workers with OVN IDL connections
-        worker_class = ovn_utils.get_method_class(trigger)
+        worker_class = ovn_utils.get_class(trigger)
         if not self.should_post_fork_initialize(worker_class):
             return
 
