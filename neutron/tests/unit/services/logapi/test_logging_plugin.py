@@ -94,7 +94,7 @@ class TestLoggingPlugin(base.BaseLogTestCase):
             get_object_mock.assert_called_once_with(self.ctxt,
                                                     id=log_id)
 
-    @mock.patch('neutron.db._utils.model_query')
+    @mock.patch('neutron_lib.db.utils.model_query')
     def test_create_log_full_options(self, query_mock):
         log = {'log': {'resource_type': 'security_group',
                        'enabled': True,

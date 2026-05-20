@@ -14,11 +14,11 @@
 #    under the License.
 
 from neutron_lib.db import api as db_api
+from neutron_lib.db import utils as db_utils
 from neutron_lib.services.logapi import constants as log_const
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
-from neutron.db import _utils as db_utils
 from neutron.db.models import securitygroup as sg_db
 from neutron.objects import ports
 from neutron.objects import securitygroup as sg_object

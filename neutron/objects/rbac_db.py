@@ -19,12 +19,12 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
+from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions
 from sqlalchemy import and_, func
 
 from neutron._i18n import _
 from neutron.common import utils
-from neutron.db import _utils as db_utils
 from neutron.db import rbac_db_mixin
 from neutron.db import rbac_db_models as models
 from neutron.extensions import rbac as ext_rbac

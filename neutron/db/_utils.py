@@ -18,7 +18,6 @@ NOTE: This module shall not be used by external projects. It will be moved
 import contextlib
 
 from neutron_lib.db import api as db_api
-from neutron_lib.db import utils as db_utils
 from oslo_log import log as logging
 from oslo_utils import excutils
 
@@ -76,15 +75,3 @@ def safe_creation(context, create_fn, delete_fn, create_bindings,
                               "Exception: %(exc)s", {'obj': obj['id'],
                                                      'exc': e})
         return obj, value
-
-
-def model_query(context, model):
-    query = context.session.query(model)
-    # define basic filter condition for model query
-    query_filter = None
-    if db_utils.model_query_scope_is_project(context, model):
-        query_filter = (model.project_id == context.project_id)
-
-    if query_filter is not None:
-        query = query.filter(query_filter)
-    return query
