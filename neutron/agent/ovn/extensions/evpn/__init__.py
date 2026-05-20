@@ -18,6 +18,7 @@ from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import nl_dispatcher
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
+from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.agent.ovn.extensions import extension_manager as ovn_ext_mgr
 
@@ -27,11 +28,13 @@ LOG = log.getLogger(__name__)
 class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
     def __init__(self):
         super().__init__()
+        self._evpn_fsm = None
         self.nl_dispatcher = None
 
     def start(self):
         super().start()
-        vrf_handler = netlink_monitor.VrfHandler()
+        self._evpn_fsm = fsm.EvpnFSM()
+        vrf_handler = netlink_monitor.VrfHandler(self._evpn_fsm)
         self.nl_dispatcher = nl_dispatcher.NetlinkDispatcher(
             rtnl.RTMGRP_LINK)
         self.nl_dispatcher.register_handler(

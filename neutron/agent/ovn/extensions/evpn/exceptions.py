@@ -20,3 +20,11 @@ class UnknownMessage(Exception):
 
 class UnknownVrfMessage(Exception):
     pass
+
+
+class FSMIllegalTransition(Exception):
+    pass
+
+
+class FSMMissingTransitionCallback(Exception):
+    pass

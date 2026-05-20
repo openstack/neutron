@@ -18,6 +18,7 @@ from pyroute2.netlink import rtnl
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import nl_dispatcher
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
+from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.common import utils
 from neutron.privileged.agent.linux import ip_lib as privileged
@@ -34,7 +35,7 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
             pass
 
     def test_vrf_handler_lifecycle(self):
-        vrf_handler = netlink_monitor.VrfHandler()
+        vrf_handler = netlink_monitor.VrfHandler(fsm.EvpnFSM())
 
         dispatcher = nl_dispatcher.NetlinkDispatcher(rtnl.RTMGRP_LINK)
         dispatcher.register_handler(

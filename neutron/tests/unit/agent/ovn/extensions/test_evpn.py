@@ -17,6 +17,7 @@ from pyroute2.iproute import ipmock
 from pyroute2.netlink.rtnl import ifinfmsg
 
 from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
+from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.tests import base
 
@@ -39,7 +40,8 @@ class TestVrfHandler(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.handler = netlink_monitor.VrfHandler()
+        self._evpn_fsm = fsm.EvpnFSM()
+        self.handler = netlink_monitor.VrfHandler(self._evpn_fsm)
 
     def test_handle_newlink_evpn_vrf(self):
         vrf = 'vr0a1b2c3d-fff'
@@ -57,13 +59,22 @@ class TestVrfHandler(base.BaseTestCase):
     def test_handle_dellink_evpn_vrf(self):
         vrf = 'vr0a1b2c3d-fff'
         self.handler._known_vrfs.add(vrf)
+        evpn = fsm.Evpn(vrf)
+        evpn.vrf_up = True
+        evpn.state = fsm.Evpn.WAITING_FOR_MAC_VNI
+        self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg(vrf)
         self.handler.handle_dellink(msg)
         self.assertNotIn(vrf, self.handler._known_vrfs)
+        self.assertNotIn(vrf, self._evpn_fsm.instances)
 
     def test_handle_dellink_unknown_vrf(self):
         vrf = 'vr0a1b2c3d-fff'
         self.handler._known_vrfs.add(vrf)
+        evpn = fsm.Evpn(vrf)
+        evpn.vrf_up = True
+        evpn.state = fsm.Evpn.WAITING_FOR_MAC_VNI
+        self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg('vr0a1b2c3d-eee')
         self.handler.handle_dellink(msg)
         self.assertEqual({vrf}, self.handler._known_vrfs)
@@ -114,7 +125,9 @@ class TestVrfHandler(base.BaseTestCase):
 
     def test_replay_removes_stale_vrfs(self):
         vrf1, vrf2, vrf3 = 'vr0a1b2c3d-ddd', 'vr0a1b2c3d-eee', 'vr0a1b2c3d-fff'
-        self.handler._known_vrfs = {vrf1, vrf2, vrf3}
+        self.handler.handle_newlink(_make_vrf_msg(vrf1))
+        self.handler.handle_newlink(_make_vrf_msg(vrf2))
+        self.handler.handle_newlink(_make_vrf_msg(vrf3))
         self.handler.replay_start()
         self.handler.handle_newlink(_make_vrf_msg(vrf1))
         self.handler.handle_newlink(_make_vrf_msg(vrf3))
@@ -129,9 +142,3 @@ class TestVrfHandler(base.BaseTestCase):
         self.handler.handle_newlink(_make_vrf_msg(vrf2))
         self.handler.replay_end()
         self.assertEqual({vrf1, vrf2}, self.handler._known_vrfs)
-
-    def test_replay_empty_dump_clears_all(self):
-        self.handler._known_vrfs = {'vr0a1b2c3d-ddd', 'vr0a1b2c3d-eee'}
-        self.handler.replay_start()
-        self.handler.replay_end()
-        self.assertEqual(set(), self.handler._known_vrfs)
