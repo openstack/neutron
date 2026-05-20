@@ -1043,3 +1043,89 @@ class TestFIPAddDeleteEvent(base.BaseTestCase):
             attrs={'external_ids': {},
                    'external_ip': '1.2.3.4'})
         self.assertFalse(self.event.match_fn(self.event.ROW_DELETE, row))
+
+
+class TestFIPAddExternalMacEvent(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.driver = mock.Mock()
+        self.event = ovsdb_monitor.FIPAddExternalMacEvent(self.driver)
+        self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+
+    def _make_row(self, external_mac=None, logical_port=None,
+                  fip_ext_mac='fa:16:3e:aa:bb:cc'):
+        external_ids = {ovn_const.OVN_FIP_EXT_ID_KEY: 'fip-uuid-123'}
+        if fip_ext_mac is not None:
+            external_ids[ovn_const.OVN_FIP_EXT_MAC_KEY] = fip_ext_mac
+        attrs = {
+            'external_ids': external_ids,
+            'external_ip': '1.2.3.4',
+            'external_mac': [external_mac] if external_mac else [],
+            'logical_port': [logical_port] if logical_port else [],
+        }
+        return self.ovsdb_row(attrs=attrs)
+
+    @mock.patch.object(ovn_conf, 'is_ovn_distributed_floating_ip',
+                       return_value=True)
+    def test_match_fn_dvr_no_external_mac(self, *args):
+        row = self._make_row(logical_port='port-1')
+        self.assertTrue(
+            self.event.match_fn(self.event.ROW_CREATE, row))
+
+    @mock.patch.object(ovn_conf, 'is_ovn_distributed_floating_ip',
+                       return_value=False)
+    def test_match_fn_no_dvr(self, *args):
+        row = self._make_row(logical_port='port-1')
+        self.assertFalse(
+            self.event.match_fn(self.event.ROW_CREATE, row))
+
+    @mock.patch.object(ovn_conf, 'is_ovn_distributed_floating_ip',
+                       return_value=True)
+    def test_match_fn_no_fip_ext_mac_key(self, *args):
+        row = self._make_row(logical_port='port-1', fip_ext_mac=None)
+        self.assertFalse(
+            self.event.match_fn(self.event.ROW_CREATE, row))
+
+    @mock.patch.object(ovn_conf, 'is_ovn_distributed_floating_ip',
+                       return_value=True)
+    def test_match_fn_no_logical_port(self, *args):
+        row = self._make_row()
+        self.assertFalse(
+            self.event.match_fn(self.event.ROW_CREATE, row))
+
+    def test_run_lsp_up_no_external_mac(self):
+        row = self._make_row(logical_port='port-1')
+        lsp = mock.Mock()
+        lsp.up = [True]
+        self.driver.nb_ovn.lookup.return_value = lsp
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.nb_ovn.db_set.assert_called_once_with(
+            'NAT', row.uuid, ('external_mac', 'fa:16:3e:aa:bb:cc'))
+
+    def test_run_lsp_up_external_mac_mismatch(self):
+        row = self._make_row(external_mac='fa:16:3e:00:00:00',
+                             logical_port='port-1')
+        lsp = mock.Mock()
+        lsp.up = [True]
+        self.driver.nb_ovn.lookup.return_value = lsp
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.nb_ovn.db_set.assert_called_once_with(
+            'NAT', row.uuid, ('external_mac', 'fa:16:3e:aa:bb:cc'))
+
+    def test_run_lsp_up_external_mac_matches(self):
+        row = self._make_row(external_mac='fa:16:3e:aa:bb:cc',
+                             logical_port='port-1')
+        lsp = mock.Mock()
+        lsp.up = [True]
+        self.driver.nb_ovn.lookup.return_value = lsp
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.nb_ovn.db_set.assert_not_called()
+
+    def test_run_lsp_down(self):
+        row = self._make_row(logical_port='port-1')
+        lsp = mock.Mock()
+        lsp.up = [False]
+        self.driver.nb_ovn.lookup.return_value = lsp
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.nb_ovn.db_set.assert_not_called()
