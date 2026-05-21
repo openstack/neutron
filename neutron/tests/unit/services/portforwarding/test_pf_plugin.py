@@ -90,9 +90,19 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
 
     @mock.patch.object(port_forwarding.PortForwarding, 'get_object')
     def test_get_floatingip_port_forwarding(self, get_object_mock):
+        get_object_mock.return_value = mock.Mock(floatingip_id='test-fip-id')
         self.pf_plugin.get_floatingip_port_forwarding(
             self.ctxt, 'pf_id', 'test-fip-id', fields=None)
         get_object_mock.assert_called_once_with(self.ctxt, id='pf_id')
+
+    @mock.patch.object(port_forwarding.PortForwarding, 'get_object')
+    def test_negative_get_floatingip_port_forwarding_wrong_parent(
+            self, get_object_mock):
+        get_object_mock.return_value = mock.Mock(floatingip_id='other-fip-id')
+        self.assertRaises(
+            pf_exc.PortForwardingNotFound,
+            self.pf_plugin.get_floatingip_port_forwarding,
+            self.ctxt, 'pf_id', 'test-fip-id', fields=None)
 
     @mock.patch.object(port_forwarding.PortForwarding, 'get_object',
                        return_value=None)
@@ -186,6 +196,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         pf_obj.internal_ip_address = "10.0.0.1"
         pf_obj.internal_port = 22
         pf_obj.external_port = 222
+        pf_obj.floatingip_id = 'fip_id'
         mock_pf_get_object.return_value = pf_obj
         port_dict = {'id': 'ID', 'fixed_ips': [{"subnet_id": "test-subnet-id",
                                                 "ip_address": "10.0.0.1"}]}
@@ -288,6 +299,22 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
                     'floatingip_id': 'fip_id'}},
             'floatingip_id': 'fip_id'}
         mock_pf_get_object.return_value = None
+        self.assertRaises(
+            pf_exc.PortForwardingNotFound,
+            self.pf_plugin.update_floatingip_port_forwarding,
+            self.ctxt, 'pf_id', **pf_input)
+
+    @mock.patch.object(port_forwarding.PortForwarding, 'get_object')
+    def test_negative_update_floatingip_port_forwarding_wrong_parent(
+            self, mock_pf_get_object):
+        pf_input = {
+            'port_forwarding':
+                {'port_forwarding': {
+                    'internal_ip_address': '1.1.1.1',
+                    'floatingip_id': 'fip_id'}},
+            'floatingip_id': 'fip_id'}
+        mock_pf_get_object.return_value = mock.Mock(
+            floatingip_id='other-fip-id')
         self.assertRaises(
             pf_exc.PortForwardingNotFound,
             self.pf_plugin.update_floatingip_port_forwarding,
