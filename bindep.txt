@@ -19,6 +19,7 @@ mariadb-server [platform:rpm platform:redhat platform:debian test]
 mysql-client [platform:dpkg !platform:debian test]
 mysql-server [platform:dpkg !platform:debian test]
 
+frr
 haproxy
 keepalived
 conntrackd [platform:dpkg test conntrackd]
