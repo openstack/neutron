@@ -17,6 +17,7 @@
 Routines for configuring Neutron
 """
 
+import importlib.metadata
 import sys
 
 from keystoneauth1 import loading as ks_loading
@@ -33,7 +34,6 @@ from oslo_service import wsgi
 from neutron._i18n import _
 from neutron.conf import common as common_config
 from neutron import policy
-from neutron import version
 
 
 LOG = logging.getLogger(__name__)
@@ -95,8 +95,9 @@ def register_common_config_options():
 
 
 def init(args, default_config_files=None, **kwargs):
+    version = importlib.metadata.version('neutron')
     cfg.CONF(args=args, project='neutron',
-             version='%%(prog)s %s' % version.version_info.release_string(),
+             version=f'%(prog)s {version}',
              default_config_files=default_config_files,
              **kwargs)
 
@@ -112,6 +113,7 @@ def init(args, default_config_files=None, **kwargs):
 def setup_logging():
     """Sets up the logging options for a log with supplied name."""
     product_name = "neutron"
+    version = importlib.metadata.version('neutron')
     # We use the oslo.log default log levels and add only the extra levels
     # that Neutron needs.
     logging.set_defaults(default_log_levels=logging.get_default_log_levels() +
@@ -119,17 +121,15 @@ def setup_logging():
     logging.setup(cfg.CONF, product_name, fix_eventlet=False)
     LOG.info("Logging enabled!")
     LOG.info("%(prog)s version %(version)s",
-             {'prog': sys.argv[0],
-              'version': version.version_info.release_string()})
+             {'prog': sys.argv[0], 'version': version})
     LOG.debug("command line: %s", " ".join(sys.argv))
 
 
 def setup_gmr():
     """Sets up Guru Meditation Report(GMR) generation."""
     gmr_opts.set_defaults(cfg.CONF)
-    _version_string = version.version_info.release_string()
-    gmr.TextGuruMeditation.setup_autorun(version=_version_string,
-                                         conf=cfg.CONF)
+    version = importlib.metadata.version('neutron')
+    gmr.TextGuruMeditation.setup_autorun(version=version, conf=cfg.CONF)
 
 
 def reset_service():
