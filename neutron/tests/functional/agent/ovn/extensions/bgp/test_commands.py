@@ -13,17 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from oslo_utils import uuidutils
-
 from neutron.agent.ovn.extensions.bgp import commands
 from neutron.services.bgp import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.ovn.extensions import bgp as test_bgp
+from neutron.tests.functional import base as func_base
 from neutron.tests.functional.services import bgp
 
 
-def _get_unique_name(prefix="test"):
-    return f"{prefix}_{uuidutils.generate_uuid()[:8]}"
+_get_unique_name = func_base.get_unique_name
 
 
 class SetChassisBgpBridgesCommandTestCase(bgp.BaseBgpSbIdlTestCase):

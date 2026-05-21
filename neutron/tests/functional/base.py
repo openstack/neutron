@@ -117,6 +117,10 @@ class LogCollector(fixtures.Fixture):
             self._copy_file(src_filename, dst_filename)
 
 
+def get_unique_name(prefix="test"):
+    return f"{prefix}_{uuidutils.generate_uuid()}"
+
+
 def config_decorator(method_to_decorate, config_tuples):
     def wrapper(*args, **kwargs):
         method_to_decorate(*args, **kwargs)

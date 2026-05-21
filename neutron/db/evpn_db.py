@@ -186,9 +186,6 @@ class EVPNDbHelper:
     def get_vni_for_router(self, context, router_id):
         """Get the VNI allocated to a router, or None if not allocated.
 
-        This is a standalone read method that can be called outside of
-        callbacks.
-
         :param context: Neutron request context
         :param router_id: UUID of the router
         :returns: VNI (integer) or None
@@ -199,3 +196,20 @@ class EVPNDbHelper:
         if not instance:
             return None
         return instance.mapping.vni_allocation.vni
+
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
+    def get_vlan_for_router(self, context, router_id):
+        """Get the VLAN ID allocated to a router.
+
+        :param context: Neutron request context
+        :param router_id: UUID of the router
+        :returns: VLAN ID (integer)
+        :raises EVPNVNINotFound: if no EVPN instance exists for the router
+        """
+        instance = context.session.query(
+            evpn_models.EVPNL3Instance
+        ).filter_by(router_id=router_id).first()
+        if not instance:
+            raise evpn_exc.EVPNVNINotFound(router_id=router_id)
+        return instance.mapping.vlan_allocation.vlan_id

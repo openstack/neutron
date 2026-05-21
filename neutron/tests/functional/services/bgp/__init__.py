@@ -30,6 +30,9 @@ from neutron.tests.functional import base as n_base
 from neutron.tests.functional.services.bgp import fixtures as bgp_fixtures
 
 
+get_unique_name = n_base.get_unique_name
+
+
 class OvsTestIdl(connection.OvsdbIdl):
     tables = ['Open_vSwitch', 'Bridge', 'Port', 'Interface']
 

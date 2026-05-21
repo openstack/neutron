@@ -13,8 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-EVPN_LRP_VNI_EXT_ID_KEY = 'vni'
-EVPN_LRP_VLAN_EXT_ID_KEY = 'vlan'
-EVPN_LS_NAME_PREFIX = 'evpn-ls-'
-EVPN_LRP_NAME_PATTERN = 'evpn-lrp-%(lrp_uuid)s-to-%(evpn_ls_name)s'
-EVPN_LSP_NAME_PATTERN = 'evpn-lsp-%(evpn_ls_name)s-to-%(lrp_uuid)s'
+from neutron_lib import constants as n_const
+
+from neutron.agent.ovn.extensions.evpn import constants as evpn_const
+
+
+def evpn_vrf_name(uuid):
+    return (
+        evpn_const.EVPN_VRF_PREFIX + str(uuid))[:n_const.DEVICE_NAME_MAX_LEN]

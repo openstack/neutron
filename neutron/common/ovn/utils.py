@@ -1584,3 +1584,9 @@ def get_mac_and_ips_from_port_binding(port_binding):
     if not netaddr.valid_mac(mac):
         raise ValueError(_("Invalid MAC address: %s"), mac)
     return mac, mac_list[1:]
+
+
+def setkeys(row, column, key_values):
+    """Merge key-value pairs into an OVSDB row's map column via setkey."""
+    for key, value in key_values.items():
+        row.setkey(column, key, value)
