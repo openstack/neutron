@@ -27,11 +27,6 @@ class Plugin(service_base.ServicePluginBase,
 
     supported_extension_aliases = [auto_allocated_topology.ALIAS]
 
-    # TODO(ralonsoh): this class should inherit from
-    # ``neutron_lib.services.base.ServicePluginBase``, then this attribute
-    # should be deleted.
-    __filter_validation_support = True
-
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
