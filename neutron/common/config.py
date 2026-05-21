@@ -96,7 +96,7 @@ def register_common_config_options():
 
 def init(args, default_config_files=None, **kwargs):
     cfg.CONF(args=args, project='neutron',
-             version='%%(prog)s %s' % version.version_info,
+             version='%%(prog)s %s' % version.version_info.release_string(),
              default_config_files=default_config_files,
              **kwargs)
 
@@ -120,14 +120,14 @@ def setup_logging():
     LOG.info("Logging enabled!")
     LOG.info("%(prog)s version %(version)s",
              {'prog': sys.argv[0],
-              'version': version.version_info})
+              'version': version.version_info.release_string()})
     LOG.debug("command line: %s", " ".join(sys.argv))
 
 
 def setup_gmr():
     """Sets up Guru Meditation Report(GMR) generation."""
     gmr_opts.set_defaults(cfg.CONF)
-    _version_string = version.version_info
+    _version_string = version.version_info.release_string()
     gmr.TextGuruMeditation.setup_autorun(version=_version_string,
                                          conf=cfg.CONF)
 
