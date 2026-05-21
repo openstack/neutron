@@ -225,7 +225,7 @@ def get_ovn_idls(driver, trigger):
             max=cfg.get_ovn_ovsdb_retry_max_interval()),
         reraise=True)
     def get_ovn_idl_retry(api_cls):
-        trigger_class = utils.get_method_class(trigger)
+        trigger_class = utils.get_class(trigger)
         LOG.info('Getting %(cls)s for %(trigger)s with retry',
                  {'cls': api_cls.__name__, 'trigger': trigger_class.__name__})
         return api_cls.from_worker(trigger_class, driver)
