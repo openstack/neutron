@@ -251,10 +251,7 @@ For more details, see the
 
     External open source mechanism drivers exist as well as the neutron
     integrated reference implementations. Configuration of those drivers is not
-    part of this document. For example:
-
-    * OpenDaylight
-    * OpenContrail
+    part of this document.
 
   * Proprietary (vendor)
 
