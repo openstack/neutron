@@ -16,6 +16,7 @@
 
 import functools
 
+from neutron_lib.api.definitions import aap_reject_multicast
 from neutron_lib.api.definitions import rbac_address_groups as rbac_ag_apidef
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
 from neutron_lib.api.definitions import security_groups_normalized_cidr
@@ -60,6 +61,7 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension(sg_shared_filtering.ALIAS, aliases)
         LOG.info('Disabled allowed-address-pairs extension.')
         _disable_extension('allowed-address-pairs', aliases)
+        _disable_extension(aap_reject_multicast.ALIAS, aliases)
         LOG.info('Disabled address-group extension.')
         _disable_extension('address-group', aliases)
         _disable_extension(rbac_ag_apidef.ALIAS, aliases)

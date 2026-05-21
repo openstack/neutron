@@ -1,0 +1,19 @@
+---
+upgrade:
+  - |
+    With the fix to `bug 2147115 <https://launchpad.net/bugs/2147115>`_
+    and extension ``aap-reject-multicast`` Allowed Address Pairs containing
+    multicast addresses are no longer allowed. However such AAPs created
+    earlier may remain in the DB (though they were not supported). Their
+    presence could cause problems in updates to AAPs - because what's
+    already there is no longer accepted during an update. The API user
+    can always recover from this situation by clearing AAPs and then
+    re-setting the valid ones. During an upgrade it may make sense to
+    clear multicast AAPs.
+fixes:
+  - |
+    Multicast addresses in Allowed Address Pairs were never properly
+    supported, but the API silently accepted them. With API extension
+    ``aap-reject-multicast`` Neutron is going to reject these Allowed
+    Address Pairs, so API and backend behavior becomes consistent.
+    See bug: `2147115 <https://launchpad.net/bugs/2147115>`_
