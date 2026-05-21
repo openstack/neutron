@@ -283,6 +283,8 @@ def start_periodic_workers():
     periodic_workers = _get_plugins_workers()
     thread_workers = [worker for worker in periodic_workers
                       if worker.worker_process_count < 1]
+    if thread_workers:
+        thread_workers = [AllServicesNeutronWorker(thread_workers)]
     launcher = _start_workers(thread_workers)
     registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
     return launcher
