@@ -14,6 +14,30 @@
       ansible.builtin.set_fact:
         vxlan_local_ip: "{{ nodepool.private_ipv4 | ipv4 | default(nodepool.public_ipv4) }} "
 
+- name: Setup SSH keys so the controller can start FRR on leaf/spine nodes
+  hosts: controller
+  tasks:
+    - name: Generate SSH key for inter-node communication
+      become: true
+      ansible.builtin.shell:
+        cmd: ssh-keygen -t ed25519 -f /root/.ssh/inter_node_key -N '' -q
+        creates: /root/.ssh/inter_node_key
+
+    - name: Read public key
+      become: true
+      ansible.builtin.slurp:
+        src: /root/.ssh/inter_node_key.pub
+      register: inter_node_pubkey
+
+- name: Authorize controller SSH key on leaf/spine nodes
+  hosts: leafs,spine
+  tasks:
+    - name: Add controller public key to authorized_keys
+      ansible.posix.authorized_key:
+        user: zuul
+        key: "{{ hostvars[groups['controller'][0]].inter_node_pubkey.content | b64decode | trim }}"
+        state: present
+
 - name: Create tunnels between the controller and the leafs
   hosts: controller
   tasks:
@@ -73,7 +97,16 @@
 
           sudo iptables -I FORWARD 1 -i br-ex -j ACCEPT
 
-          # When FRR started before the peer interfaces did not exist
+          # Start FRR on spine and leaf nodes now that all interfaces
+          # (including controller-side br-bgp-*, VXLAN tunnels) are ready.
+          # FRR was not started during pre-run to avoid routing loops caused
+          # by incomplete BGP topology.
+          sudo ssh -i /root/.ssh/inter_node_key -o StrictHostKeyChecking=no zuul@{{ hostvars['spine'].ansible_host }} sudo systemctl restart frr
+          {% for leaf in groups['leafs'] %}
+          sudo ssh -i /root/.ssh/inter_node_key -o StrictHostKeyChecking=no zuul@{{ hostvars[leaf].ansible_host }} sudo systemctl restart frr
+          {% endfor %}
+
+          # Restart FRR on controller now that peer interfaces exist
           sudo systemctl restart frr
 
     - name: "Create VXLAN tunnel from {{ item.1 }} to the controller"
