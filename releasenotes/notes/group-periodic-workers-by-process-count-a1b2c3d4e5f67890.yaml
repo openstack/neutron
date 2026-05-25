@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    The ``neutron-periodic-workers`` service now classifies plugin workers by
+    ``worker_process_count`` before starting them. Workers with
+    ``worker_process_count=0`` are grouped in a single
+    ``AllServicesNeutronWorker`` and executed as threads in one child process.
+    Workers with ``worker_process_count>0`` are started in separate child
+    processes. ``MaintenanceWorker`` and ``AllServicesNeutronWorker``
+    instances are skipped by this service and must be started by their own
+    executables.

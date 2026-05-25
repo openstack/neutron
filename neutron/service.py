@@ -286,11 +286,36 @@ def start_rpc_workers():
     return launcher
 
 
+_PERIODIC_WORKER_SKIP_TYPES = (
+    ovn_worker.MaintenanceWorker,
+    AllServicesNeutronWorker,
+)
+
+
+def _prepare_periodic_workers(workers):
+    """Prepare plugin workers for the neutron-periodic-workers service."""
+    groupable_workers = []
+    individual_workers = []
+
+    for worker in workers:
+        if isinstance(worker, _PERIODIC_WORKER_SKIP_TYPES):
+            continue
+        if worker.worker_process_count == 0:
+            groupable_workers.append(worker)
+        elif worker.worker_process_count > 0:
+            individual_workers.append(worker)
+
+    prepared_workers = list(individual_workers)
+    if groupable_workers:
+        prepared_workers.append(
+            AllServicesNeutronWorker(groupable_workers)
+        )
+    return prepared_workers
+
+
 def start_periodic_workers():
     periodic_workers = _get_plugins_workers()
-    thread_workers = [worker for worker in periodic_workers
-                      if worker.worker_process_count < 1]
-    launcher = _start_workers(thread_workers)
+    launcher = _start_workers(_prepare_periodic_workers(periodic_workers))
     registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
     return launcher
 
