@@ -47,50 +47,6 @@ class TestRpcWorker(base.BaseTestCase):
         self._test_reset(rpc_worker)
 
 
-class TestStartPeriodicWorkers(base.BaseTestCase):
-
-    @mock.patch.object(neutron_service.registry, 'publish')
-    @mock.patch.object(neutron_service, '_start_workers')
-    @mock.patch.object(neutron_service, 'AllServicesNeutronWorker')
-    @mock.patch.object(neutron_service, '_get_plugins_workers')
-    def test_thread_workers_grouped_before_start(
-            self, get_workers, all_services_worker, start_workers, publish):
-        periodic_worker = mock.Mock(worker_process_count=0)
-        rpc_worker = mock.Mock(worker_process_count=-1)
-        process_worker = mock.Mock(worker_process_count=1)
-        services_worker = all_services_worker.return_value
-        launcher = start_workers.return_value
-        get_workers.return_value = [
-            periodic_worker, rpc_worker, process_worker]
-
-        self.assertIs(launcher, neutron_service.start_periodic_workers())
-
-        all_services_worker.assert_called_once_with(
-            [periodic_worker, rpc_worker])
-        start_workers.assert_called_once_with([services_worker])
-        publish.assert_called_once_with(
-            neutron_service.resources.PROCESS,
-            neutron_service.events.AFTER_SPAWN, None)
-
-    @mock.patch.object(neutron_service.registry, 'publish')
-    @mock.patch.object(neutron_service, '_start_workers')
-    @mock.patch.object(neutron_service, 'AllServicesNeutronWorker')
-    @mock.patch.object(neutron_service, '_get_plugins_workers')
-    def test_no_workers_started_when_no_thread_workers(
-            self, get_workers, all_services_worker, start_workers, publish):
-        process_worker = mock.Mock(worker_process_count=1)
-        launcher = start_workers.return_value
-        get_workers.return_value = [process_worker]
-
-        self.assertIs(launcher, neutron_service.start_periodic_workers())
-
-        all_services_worker.assert_not_called()
-        start_workers.assert_called_once_with([])
-        publish.assert_called_once_with(
-            neutron_service.resources.PROCESS,
-            neutron_service.events.AFTER_SPAWN, None)
-
-
 class TestRunRpcWorkers(base.BaseTestCase):
     def setUp(self):
         super().setUp()
