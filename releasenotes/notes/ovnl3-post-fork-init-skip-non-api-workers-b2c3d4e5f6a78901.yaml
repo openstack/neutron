@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    The ``OVNL3RouterPlugin._post_fork_initialize`` method now returns early
+    when the worker is not a Neutron API ``WorkerService`` instance. This
+    prevents ``MechanismDriverOVNNotReady`` errors in the
+    ``neutron-periodic-workers`` and other non-API processes, where the OVN
+    IDL connections are not initialized.
