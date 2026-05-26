@@ -187,6 +187,46 @@ class TestExceptionLogger(base.BaseTestCase):
             lambda: False, timeout=1, exception=FalseException)
 
 
+class TestLogWorkerLifecycle(base.BaseTestCase):
+    @mock.patch('neutron.tests.unit.common.test_utils.logging.getLogger')
+    def test_logs_called_and_finished(self, get_logger):
+        logger = mock.Mock()
+        get_logger.return_value = logger
+
+        class Worker:
+            desc = 'test worker'
+
+            @utils.log_worker_lifecycle(lambda self: self.desc)
+            def start(self):
+                return 'ok'
+
+        self.assertEqual('ok', Worker().start())
+        logger.debug.assert_has_calls([
+            mock.call('%s %s called, description: %s',
+                      'Worker', 'start', 'test worker'),
+            mock.call('%s %s finished, description: %s',
+                      'Worker', 'start', 'test worker'),
+        ])
+
+    @mock.patch('neutron.tests.unit.common.test_utils.logging.getLogger')
+    def test_finished_only(self, get_logger):
+        logger = mock.Mock()
+        get_logger.return_value = logger
+
+        class Worker:
+            desc = 'test worker'
+
+            @utils.log_worker_lifecycle(lambda self: self.desc,
+                                        finished_only=True)
+            def reset(self):
+                pass
+
+        Worker().reset()
+        logger.debug.assert_called_once_with(
+            '%s %s finished, description: %s',
+            'Worker', 'reset', 'test worker')
+
+
 class TestDvrServices(base.BaseTestCase):
 
     def _test_is_dvr_serviced(self, device_owner, expected):

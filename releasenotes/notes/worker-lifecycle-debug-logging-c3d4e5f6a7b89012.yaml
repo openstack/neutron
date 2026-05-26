@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    Neutron workers now log DEBUG messages when their lifecycle methods
+    (``start``, ``wait``, ``stop``, and ``reset``) are called and finished.
+    The log entries include the worker class name and worker description,
+    which helps troubleshoot ``neutron-periodic-workers``, RPC workers, and
+    other child processes.

@@ -174,6 +174,36 @@ class exception_logger:
         return call
 
 
+def log_worker_lifecycle(description, finished_only=False):
+    """Log worker lifecycle method calls at DEBUG level.
+
+    :param description: Callable receiving the worker instance and returning
+        the description logged in the message, or the name of an instance
+        attribute holding that value.
+    :param finished_only: If True, only log the method finished message.
+    """
+    def decorator(func):
+        method_name = func.__name__
+
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            log = logging.getLogger(func.__module__)
+            worker_class = self.__class__.__name__
+            if callable(description):
+                desc = description(self)
+            else:
+                desc = getattr(self, description, None)
+            if not finished_only:
+                log.debug('%s %s called, description: %s',
+                          worker_class, method_name, desc)
+            result = func(self, *args, **kwargs)
+            log.debug('%s %s finished, description: %s',
+                      worker_class, method_name, desc)
+            return result
+        return wrapper
+    return decorator
+
+
 def get_other_dvr_serviced_device_owners(host_dvr_for_dhcp=True):
     """Return device_owner names for ports that should be serviced by DVR
 
