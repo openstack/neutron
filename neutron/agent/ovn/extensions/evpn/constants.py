@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -19,9 +19,14 @@ EVPN_VRF_NAME_LEN = 14
 EVPN_LINK_KIND_VRF = 'vrf'
 EVPN_RTM_NEWLINK = 'RTM_NEWLINK'
 EVPN_RTM_DELLINK = 'RTM_DELLINK'
+EVPN_IP_LINK_ADD = 'add'
+EVPN_IP_LINK_DEL = 'del'
+EVPN_IP_LINK_SET = 'set'
 
 EVPN_LB_NAME_PREFIX = 'brevpn-'
 
 EVPN_VXLAN_IFNAME = 'vxlanevpn-'
 
 EVPN_VLAN_IFNAME_PATTERN = 'vl-%(index)d-%(vid)d'
+
+EVPN_BR_MTU = 1500

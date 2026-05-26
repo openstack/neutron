@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -27,4 +27,28 @@ class FSMIllegalTransition(Exception):
 
 
 class FSMMissingTransitionCallback(Exception):
+    pass
+
+
+class SvdNoVxlanParent(Exception):
+    pass
+
+
+class SvdDeviceAlreadyExists(Exception):
+    pass
+
+
+class SvdDevsNotFound(Exception):
+    pass
+
+
+class SvdSviNotFound(Exception):
+    pass
+
+
+class SvdNotFound(Exception):
+    pass
+
+
+class SvdNetlinkError(Exception):
     pass
