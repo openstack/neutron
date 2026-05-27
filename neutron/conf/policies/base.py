@@ -76,6 +76,7 @@ ADMIN_OR_PARENT_OWNER_READER = (
 # related to the "network owner" and network isn't really parent of the subnet
 # or port. Because of that, using parent owner in those cases may be
 # missleading for users so it's better to keep also "network owner" rules.
+NET_OWNER_MANAGER = 'role:manager and ' + RULE_NET_OWNER
 NET_OWNER_MEMBER = 'role:member and ' + RULE_NET_OWNER
 NET_OWNER_READER = 'role:reader and ' + RULE_NET_OWNER
 ADMIN_OR_NET_OWNER_MEMBER = (
