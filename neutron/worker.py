@@ -14,6 +14,8 @@ from neutron_lib import worker
 from oslo_config import cfg
 from oslo_service import loopingcall
 
+from neutron.common import utils as common_utils
+
 
 class NeutronBaseWorker(worker.BaseWorker):
     def __init__(self, worker_process_count=1, set_proctitle=None,
@@ -40,6 +42,7 @@ class PeriodicWorker(NeutronBaseWorker):
         self._interval = interval
         self._initial_delay = initial_delay
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def start(self, **kwargs):
         super().start()
         if self._loop is None:
@@ -48,14 +51,17 @@ class PeriodicWorker(NeutronBaseWorker):
         self._loop.start(interval=self._interval,
                          initial_delay=self._initial_delay)
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def wait(self):
         if self._loop is not None:
             self._loop.wait()
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def stop(self):
         if self._loop is not None:
             self._loop.stop()
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def reset(self):
         self.stop()
         self.wait()

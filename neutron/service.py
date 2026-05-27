@@ -38,6 +38,7 @@ import psutil
 from neutron._i18n import _
 from neutron.common import config
 from neutron.common import profiler
+from neutron.common import utils as common_utils
 from neutron.conf import service
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker as \
     ovn_worker
@@ -64,6 +65,7 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
         self._plugins = plugins
         self._servers = []
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def start(self):
         super().start(desc=self.desc)
         for plugin in self._plugins:
@@ -74,6 +76,7 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
                     continue
                 self._servers.extend(servers)
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def wait(self):
         try:
             self._wait()
@@ -82,24 +85,22 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
             raise
 
     def _wait(self):
-        LOG.debug('calling RpcWorker wait()')
         for server in self._servers:
             if isinstance(server, rpc_server.MessageHandlingServer):
                 LOG.debug('calling wait on %s', server)
                 server.wait()
             else:
                 LOG.debug('NOT calling wait on %s', server)
-        LOG.debug('returning from RpcWorker wait()')
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def stop(self):
-        LOG.debug('calling RpcWorker stop()')
         for server in self._servers:
             if isinstance(server, rpc_server.MessageHandlingServer):
                 LOG.debug('calling stop on %s', server)
                 server.stop()
 
-    @staticmethod
-    def reset():
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
+    def reset(self):
         config.reset_service()
 
 
@@ -190,28 +191,34 @@ def _get_ovn_maintenance_worker():
 
 
 class AllServicesNeutronWorker(neutron_worker.NeutronBaseWorker):
+    desc = 'services worker'
+
     def __init__(self, services, worker_process_count=1):
-        super().__init__(worker_process_count)
+        super().__init__(worker_process_count, desc=self.desc)
         self._services = services
         for srv in self._services:
             self._check_base_worker_service(srv)
         self._launcher = common_service.Launcher(cfg.CONF,
                                                  restart_method='mutate')
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def start(self):
         for srv in self._services:
             # Unset the 'set_proctitle' flag to prevent each service to
             # re-write the process title already defined and set by this class.
             srv.set_proctitle = 'off'
             self._launcher.launch_service(srv)
-        super().start(desc="services worker")
+        super().start(desc=self.desc)
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def stop(self):
         self._launcher.stop()
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def wait(self):
         self._launcher.wait()
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def reset(self):
         self._launcher.restart()
 

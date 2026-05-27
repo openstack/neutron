@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.common import utils as common_utils
 from neutron.services.bgp import reconciler
 from neutron import worker
 
@@ -20,17 +21,22 @@ from neutron import worker
 class BGPWorker(worker.NeutronBaseWorker):
     def __init__(self):
         self._reconciler = reconciler.BGPTopologyReconciler()
-        super().__init__(worker_process_count=0)
+        super().__init__(worker_process_count=0, desc="bgp worker")
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def start(self):
-        super().start(desc="bgp worker")
+        super().start(desc=self.desc)
         self._reconciler.start()
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def wait(self):
         self._reconciler.full_sync()
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def stop(self):
         self._reconciler.stop()
 
+    @common_utils.log_worker_lifecycle(lambda self: self.desc,
+                                       finished_only=True)
     def reset(self):
         pass
