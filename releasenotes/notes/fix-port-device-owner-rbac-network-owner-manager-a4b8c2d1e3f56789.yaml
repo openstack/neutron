@@ -1,0 +1,31 @@
+---
+security:
+  - |
+    Fixed overly permissive default RBAC policies for several port actions
+    that require network ownership. Those policies previously included
+    ``PROJECT_MANAGER``, which allowed any project manager to perform the
+    action even when not owning the network (for example, on shared/RBAC
+    networks). They now rely on ``NET_OWNER_MEMBER`` or
+    ``ADMIN_OR_NET_OWNER_MEMBER`` only. Project managers who own the
+    network remain authorized through the default Keystone role implication
+    chain (``manager`` implies ``member``).
+
+    Affected actions: ``create_port:device_owner``,
+    ``update_port:device_owner``, ``create_port:mac_address``,
+    ``update_port:mac_address``, ``create_port:fixed_ips``,
+    ``create_port:fixed_ips:ip_address``, ``create_port:fixed_ips:subnet_id``,
+    ``update_port:fixed_ips``, ``update_port:fixed_ips:ip_address``,
+    ``update_port:fixed_ips:subnet_id``, ``create_port:port_security_enabled``,
+    ``update_port:port_security_enabled``,
+    ``create_port:allowed_address_pairs``,
+    ``create_port:allowed_address_pairs:mac_address``,
+    ``create_port:allowed_address_pairs:ip_address``,
+    ``update_port:allowed_address_pairs``,
+    ``update_port:allowed_address_pairs:mac_address``, and
+    ``update_port:allowed_address_pairs:ip_address``.
+upgrade:
+  - |
+    Default RBAC policies for the port actions listed above no longer
+    include ``PROJECT_MANAGER``. Deployments with customized policy files
+    should review and update those rules if they rely on the previous
+    behaviour.
