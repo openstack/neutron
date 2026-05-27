@@ -334,6 +334,11 @@ class NetworkDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         network_v1_1 = network_obj.obj_to_primitive(target_version='1.1')
         self.assertNotIn('qinq', network_v1_1['versioned_object.data'])
 
+    def test_v1_3_to_v1_2_drops_pvlan_attribute(self):
+        network_obj = self._make_object(self.obj_fields[0])
+        network_v1_2 = network_obj.obj_to_primitive(target_version='1.2')
+        self.assertNotIn('pvlan', network_v1_2['versioned_object.data'])
+
 
 class SegmentHostMappingIfaceObjectTestCase(
         obj_test_base.BaseObjectIfaceTestCase):

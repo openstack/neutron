@@ -469,6 +469,13 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.assertNotIn('trusted',
                          port_v1_9['versioned_object.data'])
 
+    def test_v1_11_to_v1_10_drops_pvlan(self):
+        port_new = self._create_test_port(pvlan_type='community',
+                                          pvlan_community='test')
+        port_v1_10 = port_new.obj_to_primitive(target_version='1.10')
+        for attr in ['pvlan_type', 'pvlan_community']:
+            self.assertNotIn(attr, port_v1_10['versioned_object.data'])
+
     def test_get_ports_ids_by_security_groups_except_router(self):
         sg_id = self._create_test_security_group_id()
         filter_owner = constants.ROUTER_INTERFACE_OWNERS_SNAT
