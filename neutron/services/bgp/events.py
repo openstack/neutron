@@ -82,7 +82,7 @@ class ProviderSwitchEvent(BGPReconcilerResourceEvent):
         if not super().match_fn(event, row, old):
             return False
         net_type = row.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY)
-        return net_type in n_const.TYPE_PHYSICAL
+        return net_type == n_const.TYPE_FLAT
 
 
 class GatewayIPEvent(BGPReconcilerResourceEvent):
@@ -105,7 +105,7 @@ class GatewayIPEvent(BGPReconcilerResourceEvent):
             return False
 
         net_type = switch.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY)
-        return net_type in n_const.TYPE_PHYSICAL
+        return net_type == n_const.TYPE_FLAT
 
 
 class GatewayIPCreatedEvent(GatewayIPEvent):

@@ -15,10 +15,10 @@
 
 import collections
 
+from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
-
 
 from neutron.agent.linux import ip_lib
 from neutron.common.ovn import constants as ovn_const
@@ -109,6 +109,59 @@ class _AddBaseCommand:
         name = _get_unique_name()
         self.create_row(name, external_ids={'id1': 'value3'})
         row = self._assert_table_row_exists(name)
+
+
+class TestGetProviderSwitch(bgp.BaseBgpNbIdlTestCase):
+    def _create_switch_with_ext_ids(self, external_ids=None):
+        name = _get_unique_name('ls')
+        ls = self.nb_api.ls_add(name).execute(check_error=True)
+        if external_ids:
+            self.nb_api.db_set(
+                'Logical_Switch', name,
+                external_ids=external_ids).execute(check_error=True)
+        return ls.uuid
+
+    def test_returns_single_flat_provider_switch(self):
+        expected_uuid = self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+
+        result = commands._get_provider_switch(self.nb_api)
+
+        self.assertEqual(expected_uuid, result.uuid)
+
+    def test_raises_when_no_flat_provider_switch(self):
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'vlan'})
+
+        self.assertRaises(
+            exceptions.ReconcileError,
+            commands._get_provider_switch, self.nb_api)
+
+    def test_raises_when_no_switches_at_all(self):
+        self.assertRaises(
+            exceptions.ReconcileError,
+            commands._get_provider_switch, self.nb_api)
+
+    def test_raises_when_multiple_flat_provider_switches(self):
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+
+        self.assertRaises(
+            exceptions.ReconcileError,
+            commands._get_provider_switch, self.nb_api)
+
+    def test_ignores_non_flat_switches(self):
+        self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'vlan'})
+        flat_uuid = self._create_switch_with_ext_ids(
+            external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'})
+        self._create_switch_with_ext_ids()
+
+        result = commands._get_provider_switch(self.nb_api)
+
+        self.assertEqual(flat_uuid, result.uuid)
 
 
 class TestGetGwIps(bgp.BaseBgpNbIdlTestCase):
@@ -1001,7 +1054,8 @@ class BgpWithChassisBase(bgp.BaseBgpTestCase):
             ))
             txn.add(self.nb_api.db_set(
                 'Logical_Switch', ls_name,
-                external_ids={ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'},
+                external_ids={
+                    ovn_const.OVN_NETTYPE_EXT_ID_KEY: n_const.TYPE_FLAT},
             ))
 
         commands.ReconcileNeutronSwitchCommand(
@@ -1020,7 +1074,7 @@ class BgpWithChassisBase(bgp.BaseBgpTestCase):
                 check_error=True)
 
     def _assert_main_router_policies(
-            self, interconnect_switch_names, chassis_list):
+            self, interconnect_switch_name, chassis_list):
         policies = self.nb_api.lr_policy_list(
             self.main_router_name).execute(check_error=True)
         bgp_policies = [
@@ -1031,13 +1085,12 @@ class BgpWithChassisBase(bgp.BaseBgpTestCase):
             self._get_chassis_main_lrp_name(ch) for ch in chassis_list]
 
         expected_matches = set()
-        for ic_name in interconnect_switch_names:
-            ic_lrp_name = helpers.get_lrp_name(
-                self.main_router_name, ic_name)
-            for ch_lrp_name in chassis_lrp_names:
-                expected_matches.add(
-                    f'inport=="{ic_lrp_name}" && '
-                    f'is_chassis_resident("cr-{ch_lrp_name}")')
+        ic_lrp_name = helpers.get_lrp_name(
+            self.main_router_name, interconnect_switch_name)
+        for ch_lrp_name in chassis_lrp_names:
+            expected_matches.add(
+                f'inport=="{ic_lrp_name}" && '
+                f'is_chassis_resident("cr-{ch_lrp_name}")')
 
         actual_matches = {p.match for p in bgp_policies}
         self.assertEqual(
@@ -1196,13 +1249,12 @@ class ReconcileChassisCommandTestCase(BgpWithChassisBase):
         commands.ReconcileMainRouterCommand(self.nb_api).execute(
             check_error=True)
         ic1 = self._create_provider_switch('physnet1')
-        ic2 = self._create_provider_switch('physnet2')
 
         chassis = self._create_chassis(bgp_peers=["bgp1"])
         commands.ReconcileChassisCommand(
             self.nb_api, chassis).execute(check_error=True)
 
-        self._assert_main_router_policies([ic1, ic2], [chassis])
+        self._assert_main_router_policies(ic1, [chassis])
 
     def test_reconcile_chassis_no_provider_switches(self):
         commands.ReconcileMainRouterCommand(self.nb_api).execute(
@@ -1525,7 +1577,7 @@ class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
         interconnect_name = helpers.get_provider_interconnect_switch_name(
             n_switch.name)
         self._assert_main_router_policies(
-            [interconnect_name], chassis_list)
+            interconnect_name, chassis_list)
 
     def test_reconcile_neutron_switch_with_gateway_ips(self):
         network_name = 'provider-net'
@@ -1548,7 +1600,7 @@ class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
         self.assertCountEqual(gw_ips, lrp.networks)
         interconnect_name = helpers.get_provider_interconnect_switch_name(
             n_switch.name)
-        self._assert_main_router_policies([interconnect_name], [])
+        self._assert_main_router_policies(interconnect_name, [])
 
     def test_reconcile_neutron_switch_idempotent(self):
         network_name = 'provider-net'
@@ -1572,7 +1624,7 @@ class ReconcileNeutronSwitchCommandTestCase(_BaseNeutronSwitchCommandTestCase):
         self._validate_interconnect_switch_connection(n_switch, gw_ips)
         interconnect_name = helpers.get_provider_interconnect_switch_name(
             n_switch.name)
-        self._assert_main_router_policies([interconnect_name], [])
+        self._assert_main_router_policies(interconnect_name, [])
 
     def test_reconcile_neutron_switch_no_localnet_port_raises(self):
         ls_name = _get_unique_name('neutron')
@@ -1737,7 +1789,7 @@ class ReconcileMainRouterPoliciesCommandTestCase(BgpWithChassisBase):
         ).execute(check_error=True)
 
         self._assert_main_router_policies(
-            [interconnect_switch_name], [chassis])
+            interconnect_switch_name, [chassis])
 
     def test_idempotent(self):
         chassis = self._create_chassis()
@@ -1754,7 +1806,7 @@ class ReconcileMainRouterPoliciesCommandTestCase(BgpWithChassisBase):
             ).execute(check_error=True)
 
         self._assert_main_router_policies(
-            [interconnect_switch_name], [chassis])
+            interconnect_switch_name, [chassis])
 
 
 class ReconcileMainRouterPoliciesForProviderCommandTestCase(
@@ -1792,7 +1844,7 @@ class ReconcileMainRouterPoliciesForProviderCommandTestCase(
         ).execute(check_error=True)
 
         self._assert_main_router_policies(
-            [interconnect_switch.name], [chassis1, chassis2])
+            interconnect_switch.name, [chassis1, chassis2])
 
     def test_no_chassis_creates_nothing(self):
         interconnect_switch = self._create_interconnect_switch()
@@ -1803,7 +1855,7 @@ class ReconcileMainRouterPoliciesForProviderCommandTestCase(
         ).execute(check_error=True)
 
         self._assert_main_router_policies(
-            [interconnect_switch.name], [])
+            interconnect_switch.name, [])
 
         router = self.nb_api.lr_get(self.main_router_name).execute(
             check_error=True)
@@ -1819,11 +1871,11 @@ class ReconcileMainRouterPoliciesForChassisCommandTestCase(
         commands.ReconcileMainRouterCommand(
             self.nb_api).execute(check_error=True)
 
-    def test_creates_policies_for_each_provider_switch(self):
+    def test_creates_policies_for_provider_switch(self):
+        ic_switch1 = self._create_provider_switch('physnet1')
+
         chassis = self._create_chassis()
         chassis_lrp = self._get_chassis_main_lrp(chassis)
-        ic_switch1 = self._create_provider_switch('physnet1')
-        ic_switch2 = self._create_provider_switch('physnet2')
 
         commands.ReconcileMainRouterPoliciesForChassisCommand(
             self.nb_api,
@@ -1831,7 +1883,7 @@ class ReconcileMainRouterPoliciesForChassisCommandTestCase(
         ).execute(check_error=True)
 
         self._assert_main_router_policies(
-            [ic_switch1, ic_switch2], [chassis])
+            ic_switch1, [chassis])
 
     def test_no_provider_switches_creates_nothing(self):
         chassis = self._create_chassis()
@@ -1857,4 +1909,4 @@ class ReconcileMainRouterPoliciesForChassisCommandTestCase(
                 chassis_lrp,
             ).execute(check_error=True)
 
-        self._assert_main_router_policies([ic_switch], [chassis])
+        self._assert_main_router_policies(ic_switch, [chassis])
