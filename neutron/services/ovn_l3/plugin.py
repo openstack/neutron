@@ -183,18 +183,20 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                            cancellable=True)
 
     def _post_fork_initialize(self, resource, event, trigger, payload=None):
+        # TODO(ralonsoh): once [1] is released and required in Neutron, it
+        # won't be needed the ``get_method_class`` method.
+        # [1] https://review.opendev.org/c/openstack/neutron-lib/+/988563
+        if utils.get_method_class(trigger) != wsgi.WorkerService:
+            return
+
         if not self._nb_ovn or not self._sb_ovn:
             raise ovn_l3_exc.MechanismDriverOVNNotReady()
 
         # Register needed events, only for the Neutron API workers.
-        # TODO(ralonsoh): once [1] is released and required in Neutron, it
-        # won't be needed the ``get_method_class`` method.
-        # [1] https://review.opendev.org/c/openstack/neutron-lib/+/988563
-        if utils.get_method_class(trigger) == wsgi.WorkerService:
-            self._nb_ovn.idl.notify_handler.watch_events([
-                ovsdb_monitor.LogicalRouterPortEvent(self),
-                ovsdb_monitor.LogicalRouterPortGatewayChassisEvent(self),
-            ])
+        self._nb_ovn.idl.notify_handler.watch_events([
+            ovsdb_monitor.LogicalRouterPortEvent(self),
+            ovsdb_monitor.LogicalRouterPortGatewayChassisEvent(self),
+        ])
 
     def _add_neutron_router_interface(self, context, router_id,
                                       interface_info):
