@@ -20,8 +20,8 @@ services:
 * DHCP
 
   Native distributed implementation.  Replaces the conventional Neutron DHCP
-  agent.  Note that the native implementation does not yet support DNS
-  features.
+  agent.  DNS is handled separately via OVN's built-in DNS table (see the
+  DNS section below).
 
 * DPDK
 
