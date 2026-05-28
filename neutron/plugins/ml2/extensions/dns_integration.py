@@ -351,35 +351,42 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
     def __init__(self):
         super().__init__()
         self._vlan_driver = None
+        self._tunnel_drivers = {}
         self._plugin = None
 
     def initialize(self):
         LOG.info("DNSExtensionDriverML2 initialization complete")
 
     @property
+    def plugin(self):
+        if not self._plugin:
+            self._plugin = directory.get_plugin()
+        return self._plugin
+
+    @property
     def vlan_driver(self):
         if not self._vlan_driver:
-            if not self._plugin:
-                self._plugin = directory.get_plugin()
-            self._vlan_driver = self._plugin.type_manager.drivers.get(
+            self._vlan_driver = self.plugin.type_manager.drivers.get(
                 lib_const.TYPE_VLAN)
         return self._vlan_driver
 
-    def _is_tunnel_tenant_network(self, provider_net):
-        if provider_net['network_type'] == lib_const.TYPE_GENEVE:
-            tunnel_ranges = cfg.CONF.ml2_type_geneve.vni_ranges
-        elif provider_net['network_type'] == lib_const.TYPE_VXLAN:
-            tunnel_ranges = cfg.CONF.ml2_type_vxlan.vni_ranges
-        else:
-            tunnel_ranges = cfg.CONF.ml2_type_gre.tunnel_id_ranges
+    def get_tunnel_driver(self, network_type):
+        if network_type not in self._tunnel_drivers:
+            self._tunnel_drivers[network_type] = (
+                self.plugin.type_manager.drivers.get(network_type))
+        return self._tunnel_drivers[network_type]
 
+    def _is_tunnel_project_network(self, provider_net):
+        network_type = provider_net['network_type']
+        tunnel_driver = self.get_tunnel_driver(network_type)
+        if not tunnel_driver:
+            return False
+        tunnel_ranges = tunnel_driver.obj.get_network_segment_ranges()
+        if not tunnel_ranges:
+            return False
         segmentation_id = int(provider_net['segmentation_id'])
-        for entry in tunnel_ranges:
-            entry = entry.strip()
-            tun_min, tun_max = entry.split(':')
-            tun_min = tun_min.strip()
-            tun_max = tun_max.strip()
-            return int(tun_min) <= segmentation_id <= int(tun_max)
+        return any(tun_min <= segmentation_id <= tun_max
+                   for tun_min, tun_max in tunnel_ranges)
 
     def _is_vlan_tenant_network(self, provider_net):
         if not self.vlan_driver:
@@ -414,7 +421,7 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
         if provider_net['network_type'] in [
                 lib_const.TYPE_GRE, lib_const.TYPE_VXLAN,
                 lib_const.TYPE_GENEVE]:
-            return self._is_tunnel_tenant_network(provider_net)
+            return self._is_tunnel_project_network(provider_net)
         return True
 
 
