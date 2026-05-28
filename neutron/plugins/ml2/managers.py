@@ -517,7 +517,8 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         return servers
 
     def _call_on_drivers(self, method_name, context,
-                         continue_on_failure=False, raise_db_retriable=False):
+                         continue_on_failure=False, raise_db_retriable=False,
+                         reverse=False):
         """Helper method for calling a method across all mechanism drivers.
 
         :param method_name: name of the method to call
@@ -527,13 +528,19 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         :param raise_db_retriable: whether or not to treat retriable db
         exception by mechanism drivers to propagate up to upper layer so
         that upper layer can handle it or error in ML2 player
+        :param reverse: if True, iterate drivers in reverse order. Used for
+        delete operations so that teardown mirrors the FILO (first-in,
+        last-out) order of binding: the innermost binding level is cleaned
+        up before the outermost.
         :raises: neutron.plugins.ml2.common.MechanismDriverError
         if any mechanism driver call fails. or DB retriable error when
         raise_db_retriable=False. See neutron_lib.db.api.is_retriable for
         what db exception is retriable
         """
         errors = []
-        for driver in self.ordered_mech_drivers:
+        drivers = reversed(self.ordered_mech_drivers) if reverse \
+            else self.ordered_mech_drivers
+        for driver in drivers:
             try:
                 getattr(driver.obj, method_name)(context)
             except Exception as e:
@@ -818,9 +825,12 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         raises an exception, then a MechanismDriverError is propagated
         to the caller, triggering a rollback. There is no guarantee
         that all mechanism drivers are called in this case.
+
+        Drivers are notified in reverse binding order (FILO) so that the
+        innermost binding level is torn down before the outermost.
         """
         self._call_on_drivers("delete_port_precommit", context,
-                              raise_db_retriable=True)
+                              raise_db_retriable=True, reverse=True)
 
     def delete_port_postcommit(self, context):
         """Notify all mechanism drivers after port deletion.
@@ -836,9 +846,12 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
         port resource has already been deleted from the database
         and it doesn't make sense to undo the action by recreating the
         port.
+
+        Drivers are notified in reverse binding order (FILO) so that the
+        innermost binding level is torn down before the outermost.
         """
         self._call_on_drivers("delete_port_postcommit", context,
-                              continue_on_failure=True)
+                              continue_on_failure=True, reverse=True)
 
     def bind_port(self, context):
         """Attempt to bind a port using registered mechanism drivers.
