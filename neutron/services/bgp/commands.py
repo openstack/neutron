@@ -678,6 +678,7 @@ class ConnectChassisRouterToMainRouterCommand(ovs_cmd.BaseCommand):
             peer=lrp_main,
             options={
                 constants.LRP_OPTIONS_DYNAMIC_ROUTING_MAINTAIN_VRF: 'true',
+                constants.LRP_OPTIONS_DR_NO_LEARNING: 'true',
             },
         ).run_idl(txn)
 
