@@ -15,6 +15,7 @@
 
 import collections
 
+import netaddr
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -699,6 +700,9 @@ class ReconcileGatewayIPCommandTestCase(bgp.BaseBgpNbIdlTestCase):
             helpers.get_provider_interconnect_switch_name(f'neutron-{net_id}'))
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertIn(expected_gw_ip, lrp.networks)
+        self.assertEqual(
+            expected_gw_ip,
+            lrp.options.get(ovn_const.LRP_OPTIONS_ARP_PROXY))
 
     def test_reconcile_gateway_ip_idempotent(self):
         net_id = uuidutils.generate_uuid()
@@ -732,6 +736,27 @@ class ReconcileGatewayIPCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         # That placeholder remains after reconciliation, so the set may
         # contain more than just the gateway IP.
         self.assertEqual(sorted(networks_after_first), sorted(lrp.networks))
+        self.assertEqual(
+            expected_gw_ip,
+            lrp.options.get(ovn_const.LRP_OPTIONS_ARP_PROXY))
+
+    def test_reconcile_gateway_ip_skips_arp_proxy_for_ipv6(self):
+        net_id = uuidutils.generate_uuid()
+        cidr = '2001:db8::/64'
+        gateway_ip = '2001:db8::1'
+        self._create_neutron_switch_with_dhcp(net_id, cidr, gateway_ip)
+        self._create_interconnect_switch_and_lrp(net_id)
+
+        dhcp_opt = self._get_dhcp_opt_for_network(net_id, cidr)
+        commands.ReconcileGatewayIPCommand(
+            self.nb_api, dhcp_opt).execute(check_error=True)
+
+        lrp_name = helpers.get_lrp_name(
+            self.main_router_name,
+            helpers.get_provider_interconnect_switch_name(f'neutron-{net_id}'))
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertIn('2001:db8::1/64', lrp.networks)
+        self.assertNotIn(ovn_const.LRP_OPTIONS_ARP_PROXY, lrp.options)
 
     def test_reconcile_gateway_ip_lrp_not_found(self):
         net_id = uuidutils.generate_uuid()
@@ -996,6 +1021,110 @@ class ConnectRouterToSwitchCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
         self.assertEqual('router', lsp.type)
         self.assertEqual(['router'], lsp.addresses)
+        self.assertEqual(lrp_name, lsp.options.get('router-port'))
+
+    def test_lsp_does_not_have_arp_proxy(self):
+        commands.ConnectRouterToSwitchCommand(
+            self.nb_api, self.lr_name, self.ls_name, ['10.0.0.1/24']
+        ).execute(check_error=True)
+
+        lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertNotIn(ovn_const.LRP_OPTIONS_ARP_PROXY, lsp.options)
+
+
+class ConnectMainRouterToInterconnectSwitchCommandTestCase(
+        bgp.BaseBgpNbIdlTestCase):
+    def setUp(self):
+        super().setUp()
+        self.lr_name = _get_unique_name()
+        self.ls_name = _get_unique_name()
+
+        self.nb_api.lr_add(self.lr_name).execute(check_error=True)
+        self.nb_api.ls_add(self.ls_name).execute(check_error=True)
+
+    def test_lsp_has_arp_proxy_with_ipv4(self):
+        lrp_ips = ['192.168.1.1/24']
+
+        commands.ConnectMainRouterToInterconnectSwitchCommand(
+            self.nb_api, self.lr_name, self.ls_name, lrp_ips
+        ).execute(check_error=True)
+
+        lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertEqual(
+            '192.168.1.1/24',
+            lsp.options.get(ovn_const.LRP_OPTIONS_ARP_PROXY))
+
+    def test_lsp_arp_proxy_filters_ipv6(self):
+        lrp_ips = ['192.168.1.1/24', '2001:db8::1/64']
+
+        commands.ConnectMainRouterToInterconnectSwitchCommand(
+            self.nb_api, self.lr_name, self.ls_name, lrp_ips
+        ).execute(check_error=True)
+
+        lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertEqual(
+            '192.168.1.1/24',
+            lsp.options.get(ovn_const.LRP_OPTIONS_ARP_PROXY))
+
+    def test_lsp_no_arp_proxy_when_only_ipv6(self):
+        lrp_ips = ['2001:db8::1/64']
+
+        commands.ConnectMainRouterToInterconnectSwitchCommand(
+            self.nb_api, self.lr_name, self.ls_name, lrp_ips
+        ).execute(check_error=True)
+
+        lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertNotIn(ovn_const.LRP_OPTIONS_ARP_PROXY, lsp.options)
+
+    def test_lsp_no_arp_proxy_when_no_ips(self):
+        commands.ConnectMainRouterToInterconnectSwitchCommand(
+            self.nb_api, self.lr_name, self.ls_name
+        ).execute(check_error=True)
+
+        lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertNotIn(ovn_const.LRP_OPTIONS_ARP_PROXY, lsp.options)
+
+    def test_adds_arp_proxy_to_existing_lsp_without_it(self):
+        lrp_name = helpers.get_lrp_name(self.lr_name, self.ls_name)
+        lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
+
+        self.nb_api.lrp_add(
+            self.lr_name, lrp_name,
+            mac='00:00:00:00:00:01',
+            networks=[],
+        ).execute(check_error=True)
+        self.nb_api.lsp_add(
+            self.ls_name, lsp_name,
+            type='router',
+            addresses=['router'],
+            options={'router-port': lrp_name},
+        ).execute(check_error=True)
+
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertNotIn(ovn_const.LRP_OPTIONS_ARP_PROXY, lsp.options)
+
+        commands.ConnectMainRouterToInterconnectSwitchCommand(
+            self.nb_api, self.lr_name, self.ls_name, ['10.0.0.1/24']
+        ).execute(check_error=True)
+
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertEqual(
+            '10.0.0.1/24',
+            lsp.options.get(ovn_const.LRP_OPTIONS_ARP_PROXY))
+
+    def test_lsp_still_has_router_port_option(self):
+        commands.ConnectMainRouterToInterconnectSwitchCommand(
+            self.nb_api, self.lr_name, self.ls_name, ['10.0.0.1/24']
+        ).execute(check_error=True)
+
+        lrp_name = helpers.get_lrp_name(self.lr_name, self.ls_name)
+        lsp_name = helpers.get_lsp_name(self.ls_name, self.lr_name)
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
         self.assertEqual(lrp_name, lsp.options.get('router-port'))
 
 
@@ -1556,6 +1685,19 @@ class _BaseNeutronSwitchCommandTestCase(BgpWithChassisBase):
 
         # Check gateway IPs are set
         self.assertCountEqual(gw_ips, lrp.networks)
+
+        # Check arp-proxy on the LSP contains only IPv4 IPs
+        lsp_name = helpers.get_lsp_name(interconnect_name,
+                                        self.main_router_name)
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        ipv4_ips = [ip for ip in gw_ips
+                    if netaddr.IPNetwork(ip).version == 4]
+        if ipv4_ips:
+            self.assertEqual(
+                ' '.join(ipv4_ips),
+                lsp.options.get(ovn_const.LRP_OPTIONS_ARP_PROXY))
+        else:
+            self.assertNotIn(ovn_const.LRP_OPTIONS_ARP_PROXY, lsp.options)
 
         return lrp
 

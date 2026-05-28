@@ -427,6 +427,7 @@ LR_OPTIONS_MAC_AGE_LIMIT = 'mac_binding_age_threshold'
 
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
 LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'
+LRP_OPTIONS_ARP_PROXY = 'arp_proxy'
 BRIDGE_REDIRECT_TYPE = "bridged"
 
 # FDB AGE Settings
