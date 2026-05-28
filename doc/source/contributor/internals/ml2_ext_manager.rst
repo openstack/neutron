@@ -25,7 +25,7 @@ ML2 Extension Manager
 =====================
 
 The extension manager for ML2 was introduced in Juno (more details
-can be found in the approved `spec <http://specs.openstack.org/openstack/neutron-specs/specs/juno/neutron-ml2-mechanismdriver-extensions.html>`_). The features allows for extending ML2 resources without
+can be found in the approved `spec <https://specs.openstack.org/openstack/neutron-specs/specs/juno/neutron-ml2-mechanismdriver-extensions.html>`_). The features allows for extending ML2 resources without
 actually having to introduce cross cutting concerns to ML2. The
 mechanism has been applied for a number of use cases, and extensions
 that currently use this frameworks are available under `ml2/extensions <https://github.com/openstack/neutron/tree/master/neutron/plugins/ml2/extensions>`_.

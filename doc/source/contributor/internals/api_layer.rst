@@ -53,11 +53,11 @@ Neutron, which contains several methods that map Neutron resources (such as
 Ports, Networks, Subnets) to URLs, and the controller for each resource.
 
 
-.. _config.py: http://opendev.org/openstack/neutron/src/neutron/common/config.py
+.. _config.py: https://opendev.org/openstack/neutron/src/neutron/common/config.py
 
-.. _api-paste.ini: http://opendev.org/openstack/neutron/src/etc/neutron/api-paste.ini
+.. _api-paste.ini: https://opendev.org/openstack/neutron/src/etc/neutron/api-paste.ini
 
-.. _APIRouter: http://opendev.org/openstack/neutron/src/neutron/api/v2/router.py
+.. _APIRouter: https://opendev.org/openstack/neutron/src/neutron/api/v2/router.py
 
 .. _Paste: http://pythonpaste.org/
 

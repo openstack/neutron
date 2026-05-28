@@ -175,7 +175,7 @@ Security Issues
 
 Here are some answers to how to handle security issues in your repo, taken
 from `this mailing list message
-<http://lists.openstack.org/pipermail/openstack-dev/2015-July/068617.html>`_:
+<https://lists.openstack.org/pipermail/openstack-dev/2015-July/068617.html>`_:
 
 - How should security your issues be managed?
 

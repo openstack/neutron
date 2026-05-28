@@ -124,10 +124,10 @@ The Neutron API consists of the following executables:
 * The API server: is a multiprocess worker; each process is created by the
   ``uWSGI`` server.
 
-* The periodic worker: a mult process worker that spawns several threads to
+* The periodic worker: a multiprocess worker that spawns several threads to
   execute the periodic workers.
 
-* The RPC worker: a multiprocess process worker that attends the requests from
+* The RPC worker: a multiprocess worker that attends the requests from
   the RPC clients, for example the Neutron agents.
 
 * The ML2/OVN maintenance worker: single process worker, needed by the ML2/OVN
@@ -137,7 +137,7 @@ The Neutron API consists of the following executables:
 .. note::
 
   Right now, the API server, the OVN maintenance task and the periodic workers
-  taks are running without eventlet.
+  tasks are running without eventlet.
 
 
 ML2/OVN

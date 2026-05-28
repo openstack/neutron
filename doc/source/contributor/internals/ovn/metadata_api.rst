@@ -342,6 +342,6 @@ Other References
 ----------------
 
 * HAProxy config --
-  https://review.openstack.org/#/c/431691/34/neutron/agent/metadata/driver.py
+  https://review.opendev.org/#/c/431691/34/neutron/agent/metadata/driver.py
 
 * https://engineeringblog.yelp.com/2015/04/true-zero-downtime-haproxy-reloads.html

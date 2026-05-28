@@ -155,7 +155,7 @@ on the hypervisors, or rpc message timeout exceptions in agent logs
 (for example, "broken pipe" errors).
 
 There is also the rpc_state_report_workers option, which determines
-the number fo RPC worker processes dedicated to process state reports
+the number of RPC worker processes dedicated to process state reports
 from the various agents. This may be increased to resolve frequent delay
 in processing agents heartbeats.
 

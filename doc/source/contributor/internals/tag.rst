@@ -99,7 +99,7 @@ Add a single tag on a network ::
 
 Returns `201 Created`. If the tag already exists, no error is raised, it
 just returns the `201 Created` because the `OpenStack Development Mailing List
-<http://lists.openstack.org/pipermail/openstack-dev/2016-February/087638.html>`_
+<https://lists.openstack.org/pipermail/openstack-dev/2016-February/087638.html>`_
 discussion told us that PUT should be no issue updating an existing tag.
 
 Replace set of tags on a network ::

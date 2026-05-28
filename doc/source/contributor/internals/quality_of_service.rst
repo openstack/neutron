@@ -31,7 +31,7 @@ below).
 QoS extends core resources (ports, networks) without using mixins inherited
 from plugins but through an ml2 extension driver.
 
-Details about the DB models, API extension, and use cases can be found here: `qos spec <http://specs.openstack.org/openstack/neutron-specs/specs/liberty/qos-api-extension.html>`_
+Details about the DB models, API extension, and use cases can be found here: `qos spec <https://specs.openstack.org/openstack/neutron-specs/specs/liberty/qos-api-extension.html>`_
 .
 
 Service side design

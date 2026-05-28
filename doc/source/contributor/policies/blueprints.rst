@@ -4,7 +4,7 @@ Blueprints and Specs
 ====================
 
 The Neutron team uses the `neutron-specs
-<http://opendev.org/openstack/neutron-specs>`_ repository for its
+<https://opendev.org/openstack/neutron-specs>`_ repository for its
 specification reviews. Detailed information can be found on the `wiki
 <https://wiki.openstack.org/wiki/Blueprints>`_. Please also find
 additional information in the reviews.rst file.
@@ -16,7 +16,7 @@ assign these into milestones or move them to the backlog for selection into
 a future release.
 
 Please note that we use a `template
-<http://opendev.org/openstack/neutron-specs/src/specs/template.rst>`_
+<https://opendev.org/openstack/neutron-specs/src/specs/template.rst>`_
 for spec submissions. It is not required to fill out all sections in the
 template. Review of the spec may require filling in information left out by
 the submitter.
@@ -24,7 +24,7 @@ the submitter.
 Sub-Projects and Specs
 ----------------------
 
-The `neutron-specs <http://opendev.org/openstack/neutron-specs>`_
+The `neutron-specs <https://opendev.org/openstack/neutron-specs>`_
 repository is only meant for specs from Neutron itself, and the advanced
 services repositories as well. This includes FWaaS and VPNaaS. Other
 sub-projects are encouraged to fold their specs into their own devref code
@@ -78,7 +78,7 @@ The workflow for the life an RFE in Launchpad is as follows:
   Launchpad blueprint to be used for milestone tracking purposes, and for
   identifying the responsible assignee and approver. If the RFE has a spec
   the blueprint will have a pointer to the spec document, which will become
-  available on `specs.o.o. <http://specs.openstack.org/openstack/neutron-specs/>`_
+  available on `specs.o.o. <https://specs.openstack.org/openstack/neutron-specs/>`_
   once it is approved and merged. The blueprint will then be linked to the
   original RFE bug report as a pointer to the discussion that led to the
   approval of the RFE.
@@ -221,7 +221,7 @@ and your role (user, developer, deployer, operator, etc.), you are more than
 welcome to have a preliminary discussion of a potential RFE by reaching out to
 other people involved in the project. This usually happens by posting mails on
 the relevant mailing lists
-(e.g. `openstack-discuss <http://lists.openstack.org>`_ - include [neutron] in
+(e.g. `openstack-discuss <https://lists.openstack.org>`_ - include [neutron] in
 the subject) or on #openstack-neutron IRC channel on OFTC. If current ongoing
 code reviews are related to your feature, posting comments/questions on gerrit
 may also be a way to engage. Some amount of interaction with Neutron developers
@@ -294,7 +294,7 @@ the :doc:`networking guide </admin/index>`. So it might be asked:
   described in the spec?
 
 The answers have been beautifully expressed in an `openstack-dev post
-<http://lists.openstack.org/pipermail/openstack-dev/2015-December/081458.html>`_:
+<https://lists.openstack.org/pipermail/openstack-dev/2015-December/081458.html>`_:
 
 1. RFE: "I want X"
 2. Spec: "I plan to implement X like this"

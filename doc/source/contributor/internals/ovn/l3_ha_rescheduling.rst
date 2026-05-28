@@ -170,6 +170,6 @@ References
 .. _`[0]`: https://opendev.org/openstack/neutron/src/commit/f73f39f2cfcd4eace2bda14c99ead9a8cc8560f4/neutron/common/ovn/constants.py#L171
 .. _`[1]`: https://opendev.org/openstack/neutron/src/commit/f73f39f2cfcd4eace2bda14c99ead9a8cc8560f4/neutron/services/ovn_l3/plugin.py#L318
 .. _`[2]`: https://bugs.launchpad.net/networking-ovn/+bug/1762694
-.. _`[3]`: https://developer.openstack.org/api-ref/network/v2/index.html?expanded=schedule-router-to-an-l3-agent-detail#schedule-router-to-an-l3-agent
+.. _`[3]`: https://docs.openstack.org/api-ref/network/v2/index.html?expanded=schedule-router-to-an-l3-agent-detail#schedule-router-to-an-l3-agent
 .. _`[4]`: https://opendev.org/x/osops-tools-contrib/src/branch/master/neutron/dhcp_agents_balancer.py
-.. _`[5]`: http://www.openvswitch.org/support/dist-docs/ovn-nb.5.txt
+.. _`[5]`: https://www.openvswitch.org/support/dist-docs/ovn-nb.5.txt

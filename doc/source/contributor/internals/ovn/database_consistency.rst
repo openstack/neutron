@@ -192,7 +192,7 @@ code, basically we need to tidy up the code to do two more things.
 This is important regardless of this spec, having all changes to a
 resource done in a single transaction minimizes the risk of having
 half-changes written to the database in case of an eventual problem. This
-`should be done already <https://review.openstack.org/#/c/515673>`_
+`should be done already <https://review.opendev.org/#/c/515673>`_
 but it's important to have it here in case we find more examples like
 that as we code.
 
@@ -355,7 +355,7 @@ Refereces
 =========
 
 * There's a chain of patches with a proof of concept for this approach,
-  they start at: https://review.openstack.org/#/c/517049/
+  they start at: https://review.opendev.org/#/c/517049/
 
 Alternatives
 ============
@@ -377,7 +377,7 @@ by drivers such as `networking-odl
 
 An attempt to implement this approach
 in *ovn driver* can be found `here
-<https://review.openstack.org/#/q/project:openstack/networking-ovn+topic:bug/1605089-journaling>`_.
+<https://review.opendev.org/#/q/project:openstack/networking-ovn+topic:bug/1605089-journaling>`_.
 
 Some things to keep in mind about this approach:
 

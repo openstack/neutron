@@ -65,12 +65,12 @@ development.
   behavior to the `MRO <https://www.python.org/download/releases/2.3/mro/>`_,
   amongst other issues.
 * In lieu of mixins, if you need to add behavior that is relevant for ML2,
-  consider using the `extension manager <http://specs.openstack.org/openstack/neutron-specs/specs/juno/neutron-ml2-mechanismdriver-extensions.html>`_.
+  consider using the `extension manager <https://specs.openstack.org/openstack/neutron-specs/specs/juno/neutron-ml2-mechanismdriver-extensions.html>`_.
 * If you make changes to the DB class methods, like calling methods that can
   be inherited, think about what effect that may have to plugins that have
   controller `backends <https://review.opendev.org/#/c/116924/>`_.
 * If you make changes to the ML2 plugin or components used by the ML2 plugin,
-  think about the `effect <http://lists.openstack.org/pipermail/openstack-dev/2015-October/076134.html>`_
+  think about the `effect <https://lists.openstack.org/pipermail/openstack-dev/2015-October/076134.html>`_
   that may have to other plugins.
 * When adding behavior to the L2 and L3 db base classes, do not assume that
   there is an agent on the other side of the message broker that interacts
@@ -278,7 +278,7 @@ Translation and logging
 Document common pitfalls as well as good practices done when instrumenting
 your code.
 
-* Make yourself familiar with `OpenStack logging guidelines <http://specs.openstack.org/openstack/openstack-specs/specs/log-guidelines.html#definition-of-log-levels>`_
+* Make yourself familiar with `OpenStack logging guidelines <https://specs.openstack.org/openstack/openstack-specs/specs/log-guidelines.html#definition-of-log-levels>`_
   to avoid littering the logs with traces logged at inappropriate levels.
 * The logger should only be passed unicode values. For example, do not pass it
   exceptions or other objects directly (LOG.error(exc), LOG.error(port), etc.).

@@ -169,7 +169,7 @@ To release a sub-project, follow the following steps:
      Before Ocata, when releasing the very first release in a stable series, a
      sub-project owner would need to request a new stable branch creation
      during Gerrit review, but not anymore. `See the following email for more
-     details <http://lists.openstack.org/pipermail/openstack-dev/2016-December/108923.html>`_.
+     details <https://lists.openstack.org/pipermail/openstack-dev/2016-December/108923.html>`_.
 
 * The Neutron release liaison votes with +1 for the openstack/releases patch.
 * The releases will now be on PyPI. A sub-project owner should verify this by
@@ -215,4 +215,4 @@ To make a branch end of life, follow the following steps:
 References
 ~~~~~~~~~~
 
-.. [#jeepyb_release_options] http://lists.openstack.org/pipermail/openstack-dev/2015-December/081724.html
+.. [#jeepyb_release_options] https://lists.openstack.org/pipermail/openstack-dev/2015-December/081724.html

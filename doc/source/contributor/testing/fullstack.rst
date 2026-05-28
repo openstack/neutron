@@ -112,7 +112,7 @@ Fullstack tests can be run locally. That makes it much easier to understand
 exactly how it works, debug issues in the existing tests or write new ones.
 
 Before proceeding, please make sure that the machine runs the latest kernel
-from your distibution repositories (reboot the machine, if needed). Otherwise,
+from your distribution repositories (reboot the machine, if needed). Otherwise,
 you may experience issues with the `openvswitch` built from source during the
 environment preparation.
 

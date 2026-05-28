@@ -126,7 +126,7 @@ in OpenStack was merely a pipe dream. Since then, lots has happened
 in the OpenStack platform, and many deployments have gone into
 production since early 2012.
 
-In order to address the `vlan-aware-vms <http://specs.openstack.org/openstack/neutron-specs/specs/newton/vlan-aware-vms.html>`_
+In order to address the `vlan-aware-vms <https://specs.openstack.org/openstack/neutron-specs/specs/newton/vlan-aware-vms.html>`_
 use case on top of Open vSwitch, the following aspects must be
 taken into account:
 
@@ -148,7 +148,7 @@ taken into account:
 * Performance penalty: no solution is appealing enough if
   it is unable to satisfy the stringent requirement of high
   packet throughput, at least in the long term.
-* Feature compatibility: VLAN `transparency <http://specs.openstack.org/openstack/neutron-specs/specs/kilo/nfv-vlan-trunks.html>`_
+* Feature compatibility: VLAN `transparency <https://specs.openstack.org/openstack/neutron-specs/specs/kilo/nfv-vlan-trunks.html>`_
   is for better or for worse intertwined with vlan awareness.
   The former is about making the platform not interfere with the
   tag associated to the packets sent by the VM, and let the

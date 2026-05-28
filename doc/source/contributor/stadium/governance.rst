@@ -31,8 +31,8 @@ Neutron grew to become a big monolithic codebase, and its core team had a
 tough time making progress on a number of fronts, like adding new
 features, ensuring stability, etc. During the Kilo timeframe, a
 decomposition effort started, where the codebase got disaggregated into
-separate repos, like the `high level services <http://specs.openstack.org/openstack/neutron-specs/specs/kilo/services-split.html>`_,
-and the various third-party solutions for `L2 and L3 services <http://specs.openstack.org/openstack/neutron-specs/specs/kilo/core-vendor-decomposition.html>`_,
+separate repos, like the `high level services <https://specs.openstack.org/openstack/neutron-specs/specs/kilo/services-split.html>`_,
+and the various third-party solutions for `L2 and L3 services <https://specs.openstack.org/openstack/neutron-specs/specs/kilo/core-vendor-decomposition.html>`_,
 and the Stadium was officially born.
 
 These initiatives enabled the various individual teams in charge of the
@@ -40,7 +40,7 @@ smaller projects the opportunity to iterate faster and reduce the time to
 feature. This has been due to the increased autonomy and implicit trust model
 that made the lack of oversight of the PTL and the Neutron drivers/core team
 acceptable for a small number of initiatives. When the proposed `arrangement <https://review.opendev.org/#/c/175952/>`_
-allowed projects to be `automatically <http://opendev.org/openstack/governance/commit/?id=321a020cbcaada01976478ea9f677ebb4df7bd6d>`_
+allowed projects to be `automatically <https://opendev.org/openstack/governance/commit/?id=321a020cbcaada01976478ea9f677ebb4df7bd6d>`_
 enlisted as a Neutron project based simply on description, and desire for
 affiliation, the number of projects included in the Stadium started to grow
 rapidly, which created a number of challenges for the PTL and the drivers
@@ -72,7 +72,7 @@ When is a project considered part of the Stadium?
 -------------------------------------------------
 
 In order to be considered part of the Stadium, a project must show a track
-record of alignment with the Neutron `core project <http://opendev.org/openstack/neutron>`_.
+record of alignment with the Neutron `core project <https://opendev.org/openstack/neutron>`_.
 This means showing proof of adoption of practices as led by the Neutron core
 team. Some of these practices are typically already followed by the most
 mature OpenStack projects:
