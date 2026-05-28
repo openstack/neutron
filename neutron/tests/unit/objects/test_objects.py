@@ -12,7 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
 import os
 import pprint
 
@@ -157,32 +156,7 @@ class TestObjectVersions(test_base.BaseTestCase):
                 hashes_file.write(pprint.pformat(fingerprints))
 
         expected, actual = checker.test_hashes(object_data)
-        try:
-            self.assertEqual(
-                expected, actual,
-                'Some objects have changed; please make sure the '
-                'versions have been bumped, and then update their '
-                'hashes in the object_data map in this test module.')
-        except Exception:
-            # FIXME(stephenfin): This is workaround for a bug fix in
-            # neutron-lib which had the side effect of changing hashes. The
-            # change in hash has no impact at runtime since our behavior and
-            # data remain unchanged. We should drop all of the below and the
-            # try-except above once we bump our neutron-lib minimum to a
-            # version that includes the fix [1].
-            #
-            # [1] https://review.opendev.org/c/openstack/neutron-lib/+/985636
-            old_object_data = copy.copy(object_data)
-            old_object_data.update({
-                'Agent': '1.1-64b670752d57b3c7602cb136e0338507',
-                'DistributedPortBinding': '1.0-39c0d17b281991dcb66716fee5a8bef2',  # noqa: E501
-                'PortBinding': '1.0-3306deeaa6deb01e33af06777d48d578',
-                'PortHints': '1.0-9ebf6e12fa427809476a92c7432352b8',
-            })
-
-            expected, actual = checker.test_hashes(old_object_data)
-            self.assertEqual(
-                expected, actual,
-                'Some objects have changed; please make sure the '
-                'versions have been bumped, and then update their '
-                'hashes in the object_data map in this test module.')
+        self.assertEqual(expected, actual,
+                         'Some objects have changed; please make sure the '
+                         'versions have been bumped, and then update their '
+                         'hashes in the object_data map in this test module.')
