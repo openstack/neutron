@@ -1317,9 +1317,15 @@ class OVNClient:
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
 
+        subnet_ids = [ip['subnet_id'] for ip in port_fixed_ips]
+        subnets = self._plugin.get_subnets(
+            context, filters={'id': subnet_ids})
+        subnets_by_id = {s['id']: s for s in subnets}
+
         for fixed_ip in port_fixed_ips:
-            subnet_id = fixed_ip['subnet_id']
-            subnet = self._plugin.get_subnet(context, subnet_id)
+            subnet = subnets_by_id.get(fixed_ip['subnet_id'])
+            if not subnet:
+                continue
             cidr = netaddr.IPNetwork(subnet['cidr'])
             networks.add("{}/{}".format(fixed_ip['ip_address'],
                                         str(cidr.prefixlen)))
