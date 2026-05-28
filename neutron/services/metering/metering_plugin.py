@@ -44,7 +44,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         super().__init__()
 
         self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()
-        rpc_worker = service.RpcWorker([self], worker_process_count=0)
+        rpc_worker = service.RpcWorker([self], worker_process_count=1)
 
         self.add_worker(rpc_worker)
 

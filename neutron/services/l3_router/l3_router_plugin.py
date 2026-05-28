@@ -138,7 +138,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         self.agent_notifiers.update(
             {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
 
-        rpc_worker = service.RpcWorker([self], worker_process_count=0)
+        rpc_worker = service.RpcWorker([self], worker_process_count=1)
 
         self.add_worker(rpc_worker)
         self.l3_driver_controller = driver_controller.DriverController(self)

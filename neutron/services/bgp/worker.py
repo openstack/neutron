@@ -21,7 +21,7 @@ from neutron import worker
 class BGPWorker(worker.NeutronBaseWorker):
     def __init__(self):
         self._reconciler = reconciler.BGPTopologyReconciler()
-        super().__init__(worker_process_count=0, desc="bgp worker")
+        super().__init__(worker_process_count=1, desc="bgp worker")
 
     @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def start(self):

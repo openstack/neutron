@@ -72,13 +72,72 @@ serve this job:
 
 .. end
 
+Start Neutron periodic workers
+------------------------------
+
+When Neutron API is served by a web server, ML2 plugin periodic tasks are
+started in a dedicated process:
+
+.. code-block:: console
+
+    # /usr/bin/neutron-periodic-workers --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+
+.. end
+
+This process collects plugin workers registered through ``get_workers()`` and
+starts them according to their ``worker_process_count`` value:
+
+* Workers with ``worker_process_count=0`` are grouped inside a single
+  ``AllServicesNeutronWorker`` and executed as threads in one child process.
+  This is appropriate for interval-based ``PeriodicWorker`` tasks such as quota
+  cleanup, L3 garbage collection, and agent health checks. These workers call
+  ``start()`` and return; their ``wait()`` method only blocks while the
+  periodic loop is running, which is safe inside the grouped thread model.
+* Workers with ``worker_process_count>0`` are started in separate child
+  processes, one per worker definition. Plugin workers whose ``wait()`` method
+  blocks indefinitely on a long-running service must use
+  ``worker_process_count=1``, the same model as ``RpcWorker``. Examples include
+  the L3 and metering ``RpcWorker`` instances and the BGP worker.
+
+Plugin authors returning workers from ``get_workers()`` must set
+``worker_process_count=1`` for any worker that blocks on ``wait()`` after
+``start()``. Grouping such workers with ``worker_process_count=0`` would
+prevent other grouped workers from making progress.
+
+The following worker types are not started by this process:
+
+* ``MaintenanceWorker`` from the ML2/OVN mechanism driver. This worker is
+  started by ``neutron-ovn-maintenance-worker``.
+* ``AllServicesNeutronWorker`` instances, if returned directly by a plugin.
+
+Start Neutron OVN maintenance worker
+------------------------------------
+
+When the ML2/OVN mechanism driver is used, the database maintenance task runs
+in a dedicated process:
+
+.. code-block:: console
+
+    # /usr/bin/neutron-ovn-maintenance-worker --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+
+.. end
+
 Neutron Worker Processes
 ------------------------
 
-Neutron will attempt to spawn a number of child processes for handling API
-and RPC requests. The number of API workers is set to the number of CPU
-cores, further limited by available memory, and the number of RPC workers
-is set to half that number.
+In a WSGI deployment, Neutron splits background work across several
+executables in addition to the API server:
+
+* ``neutron-rpc-server``: handles RPC requests from agents.
+* ``neutron-periodic-workers``: handles ML2 plugin periodic and thread
+  workers.
+* ``neutron-ovn-maintenance-worker``: handles the ML2/OVN database
+  maintenance task when that mechanism driver is enabled.
+
+The RPC server will attempt to spawn a number of child processes for handling
+RPC requests. The number of API workers is set to the number of CPU cores,
+further limited by available memory, and the number of RPC workers is set to
+half that number.
 
 It is strongly recommended that all deployers set these values themselves,
 via the api_workers and rpc_workers configuration parameters.
