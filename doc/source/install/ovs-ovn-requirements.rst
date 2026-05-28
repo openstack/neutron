@@ -2,7 +2,7 @@
 Open vSwitch (OVS) and OVN requirements
 =======================================
 
-Neutron uses Open vSwitch with the ML2/openswitch and ML2/ovn mechanism
+Neutron uses Open vSwitch with the ML2/openvswitch and ML2/ovn mechanism
 drivers. The latter also uses OVN. These are binary dependencies of a
 Neutron deployment with some version constraints. In the table below we
 hope to document the known minimum versions of OVS and OVN per Neutron
