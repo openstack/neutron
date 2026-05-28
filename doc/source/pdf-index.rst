@@ -27,5 +27,6 @@
    cli/index
    ovn/index
    reference/rest-api
+   reference/notifications
    feature_classification/index
    contributor/index

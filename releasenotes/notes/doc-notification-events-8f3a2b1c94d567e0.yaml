@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    Added documentation for Neutron notification events and their payloads.
+    The admin guide explains how notifications are configured and when they
+    are emitted. The reference guide lists CRUD event patterns, example
+    payloads for core resources, and special events such as router interface
+    changes, resource tags, agent scheduling, metering, and usage audit.
