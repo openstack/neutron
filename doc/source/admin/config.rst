@@ -45,6 +45,7 @@ Configuration
    config-subnet-onboard
    config-subnet-pools
    config-trunking
+   config-neutron-server-processes
    config-wsgi
 
 .. note::
