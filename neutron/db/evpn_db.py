@@ -13,29 +13,42 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
-from oslo_db import exception as os_db_exc
 from oslo_log import log as logging
 
-from neutron._i18n import _
 from neutron.db.models import evpn as evpn_models
-from neutron.db.models import vxlan_vlan_allocations as alloc_models
 from neutron.db import models_v2
+from neutron.db import vni_vlan_allocator
 from neutron.services.evpn import exceptions as evpn_exc
 
 
 LOG = logging.getLogger(__name__)
 
 _EVPN_PHYSNET = 'ovn-evpn'
+_MIN_VNI = 1
+_MAX_VNI = n_const.MAX_VXLAN_VNI
+_MIN_VLAN = n_const.MIN_VLAN_TAG
+_MAX_VLAN = n_const.MAX_VLAN_TAG
 
 
-class EVPNVNIDbHelper:
-    """Database helper for EVPN VNI allocation operations.
+class EVPNDbHelper:
+    """Database helper for EVPN allocation operations.
 
-    This class provides VNI allocation/deallocation for routers. It is
-    designed to be used via composition rather than inheritance.
+    This class provides VNI/VLAN allocation/deallocation for routers.
+    It delegates to VNIVLANAllocator for the generic allocation logic
+    and owns the EVPN-specific L3 instance lifecycle.
+    Designed to be used via composition rather than inheritance.
     """
 
+    def __init__(self):
+        self._allocator = vni_vlan_allocator.VNIVLANAllocator(
+            vni_exhausted_exc=evpn_exc.EVPNNoVniAvailable,
+            vlan_exhausted_exc=evpn_exc.EVPNNoVlanAvailable,
+            vni_in_use_exc=evpn_exc.EVPNVNIInUse,
+        )
+
+    @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_WRITER
     def allocate_vni_for_router(self, context, router_id, vni):
         """Allocate a VNI for a router.
@@ -55,40 +68,18 @@ class EVPNVNIDbHelper:
     def _allocate_specific_vni(self, context, router_id, vni):
         """Allocate a specific VNI and a VLAN for a router.
 
-        Creates VNI allocation, VLAN allocation, mapping, and
-        EVPN L3 instance in the correct order.
-
         :param context: Neutron request context (with active session)
         :param router_id: UUID of the router
         :param vni: VNI to allocate
         :returns: The allocated VNI (integer)
         :raises EVPNVNIInUse: If VNI is already allocated
         """
-        vni_allocation = alloc_models.VNIAllocation(
-            vni=vni, physnet=_EVPN_PHYSNET)
-        context.session.add(vni_allocation)
-
-        try:
-            context.session.flush()
-        except os_db_exc.DBDuplicateEntry:
-            raise evpn_exc.EVPNVNIInUse(vni=vni)
-
-        # TODO(jlibosva): Auto-allocate VLAN from range (Patch 2).
-        # For now, use the VNI value as a placeholder VLAN ID.
-        vlan_allocation = alloc_models.VLANAllocation(
-            vlan_id=vni, physnet=_EVPN_PHYSNET)
-        context.session.add(vlan_allocation)
-        context.session.flush()
-
-        mapping = alloc_models.VNIVLANMapping(
-            vni_allocation_id=vni_allocation.id,
-            vlan_allocation_id=vlan_allocation.id)
-        context.session.add(mapping)
-        context.session.flush()
+        mapping_id, vni, _vlan_id = self._allocator.allocate_specific_vni(
+            context, vni, _MIN_VLAN, _MAX_VLAN, _EVPN_PHYSNET)
 
         instance = evpn_models.EVPNL3Instance(
             router_id=router_id,
-            mapping_id=mapping.id)
+            mapping_id=mapping_id)
         context.session.add(instance)
 
         LOG.debug("Allocated EVPN VNI %s for router %s", vni, router_id)
@@ -100,18 +91,26 @@ class EVPNVNIDbHelper:
         :param context: Neutron request context (with active session)
         :param router_id: UUID of the router
         :returns: The allocated VNI (integer)
+        :raises EVPNNoVniAvailable: if no VNI remains in the range
         """
-        # TODO(jlibosva): Implement auto-allocation from configured range
-        raise NotImplementedError(
-            _("EVPN VNI auto-allocation not yet implemented. "
-              "Specify an explicit VNI."))
+        mapping_id, vni, _vlan_id = self._allocator.allocate(
+            context, _MIN_VNI, _MAX_VNI, _MIN_VLAN, _MAX_VLAN, _EVPN_PHYSNET)
 
+        instance = evpn_models.EVPNL3Instance(
+            router_id=router_id,
+            mapping_id=mapping_id)
+        context.session.add(instance)
+
+        LOG.debug("Auto-allocated EVPN VNI %s for router %s", vni, router_id)
+        return vni
+
+    @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_WRITER
     def deallocate_vni_for_router(self, context, router_id):
         """Remove VNI/VLAN allocation for a router.
 
-        Deletes the mapping row (CASCADE removes evpn_l3_instances),
-        then deletes both allocation rows (RESTRICT is now clear).
+        Delegates to VNIVLANAllocator.deallocate which deletes the mapping
+        (CASCADE removes evpn_l3_instances) and both allocation rows.
         Safe to call if no VNI was allocated (e.g. router without EVPN).
 
         :param context: Neutron request context (with active session)
@@ -123,22 +122,10 @@ class EVPNVNIDbHelper:
         if not instance:
             return
 
-        mapping = instance.mapping
-        vni_alloc_id = mapping.vni_allocation_id
-        vlan_alloc_id = mapping.vlan_allocation_id
+        mapping_id = instance.mapping_id
+        context.session.delete(instance)
 
-        context.session.query(
-            alloc_models.VNIVLANMapping
-        ).filter_by(id=mapping.id).delete(synchronize_session=False)
-
-        context.session.query(
-            alloc_models.VNIAllocation
-        ).filter_by(id=vni_alloc_id).delete(synchronize_session=False)
-
-        context.session.query(
-            alloc_models.VLANAllocation
-        ).filter_by(id=vlan_alloc_id).delete(synchronize_session=False)
-
+        self._allocator.deallocate(context, mapping_id)
         LOG.debug("Deallocated EVPN VNI for router %s", router_id)
 
     @db_api.retry_if_session_inactive()

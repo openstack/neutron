@@ -48,7 +48,7 @@ class EVPNPlugin(service_base.ServicePluginBase):
 
     def __init__(self):
         super().__init__()
-        self._evpn_db = evpn_db.EVPNVNIDbHelper()
+        self._evpn_db = evpn_db.EVPNDbHelper()
         LOG.info("Starting EVPN service plugin")
 
     def get_plugin_description(self):

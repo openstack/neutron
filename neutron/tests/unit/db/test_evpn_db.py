@@ -145,6 +145,37 @@ class TestEVPNDb(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                 ).one_or_none()
             self.assertIsNone(evpn_net)
 
+    def test_router_create_auto_vni(self):
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=0) as router:
+            vni = router['router'][evpn_apidef.EVPN_VNI]
+            self.assertIsNotNone(vni)
+            self.assertGreater(vni, 0)
+
+    def test_router_create_auto_vni_twice_distinct(self):
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=0) as r1, \
+                self.router(as_admin=True,
+                            arg_list=(evpn_apidef.EVPN_VNI,),
+                            evpn_vni=0) as r2:
+            self.assertNotEqual(r1['router'][evpn_apidef.EVPN_VNI],
+                                r2['router'][evpn_apidef.EVPN_VNI])
+
+    def test_router_create_auto_vni_reuses_freed_slot(self):
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=0) as router:
+            first_vni = router['router'][evpn_apidef.EVPN_VNI]
+            self._delete('routers', router['router']['id'])
+
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=0) as router:
+            self.assertEqual(first_vni,
+                             router['router'][evpn_apidef.EVPN_VNI])
+
     def test_router_interface_remove_cleans_evpn_network(self):
         with self.router(as_admin=True,
                          arg_list=(evpn_apidef.EVPN_VNI,),
