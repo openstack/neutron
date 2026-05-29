@@ -416,7 +416,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             with db_api.CONTEXT_WRITER.using(context):
                 fip_obj = self._get_fip_obj(context, floatingip_id)
                 pf_obj = pf.PortForwarding.get_object(context, id=id)
-                if not pf_obj:
+                if not pf_obj or pf_obj.floatingip_id != floatingip_id:
                     raise pf_exc.PortForwardingNotFound(id=id)
                 original_pf_obj = copy.deepcopy(pf_obj)
                 ori_internal_port_id = pf_obj.internal_port_id
@@ -669,7 +669,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                                        fields=None):
         self._get_fip_obj(context, floatingip_id)
         obj = pf.PortForwarding.get_object(context, id=id)
-        if not obj:
+        if not obj or obj.floatingip_id != floatingip_id:
             raise pf_exc.PortForwardingNotFound(id=id)
         return obj
 
