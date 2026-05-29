@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Agent scheduler periodic workers now use caller-specific descriptions
+    instead of a generic ``AgentSchedulerDbMixin`` label. This makes each
+    worker identifiable in ``neutron-periodic-workers`` logs and avoids
+    duplicate-looking worker entries when multiple agent status checks are
+    registered by the same plugin. For more information, see bug `2154277
+    <https://bugs.launchpad.net/neutron/+bug/2154277>`_.
