@@ -168,4 +168,4 @@ in processing agents heartbeats.
    ML2/OVN uses the ``[uwsgi]start-time = %t`` parameter to create the OVN hash
    ring registers during the initialization process. This value is populated
    by the uWSGi process with the start time. For more information, check
-   `Configuring uWSGI <https://uwsgi-docs.readthedocs.io/en/latest/Configuration.html>_`.
+   `Configuring uWSGI <https://uwsgi-docs.readthedocs.io/en/latest/Configuration.html>`_.

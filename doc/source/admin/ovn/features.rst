@@ -14,7 +14,7 @@ services:
 * Layer-3 (routing)
 
   Native implementation that supports distributed routing.  Replaces the
-  conventional Neutron L3 agent. This includes transparent L3HA :doc::`routing`
+  conventional Neutron L3 agent. This includes transparent L3HA :doc:`routing`
   support, based on BFD monitorization integrated in core OVN.
 
 * DHCP

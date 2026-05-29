@@ -235,7 +235,7 @@ performance and the stability of the system:
 
 * Unclosed files. This warning message is repeated several times in the logs:
 
-  :: code
+  .. code-block:: text
 
     ResourceWarning: unclosed file <_io.FileIO name=55 mode='rb' closefd=True>
     ResourceWarning: Enable tracemalloc to get the object allocation traceback
