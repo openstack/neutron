@@ -120,6 +120,7 @@ class TestOVNClient(TestOVNClientBase):
         }
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
+        self.ovn_client._create_lrouter_port = mock.MagicMock()
         gw_port = fakes.FakePort().create_one_port(
             attrs={
                 'id': router['gw_port_id'],
@@ -128,9 +129,10 @@ class TestOVNClient(TestOVNClientBase):
                     'ip_address': '10.42.0.42'}]
             })
         self.ovn_client._get_router_gw_ports.return_value = [gw_port]
-        self.assertEqual(
-            [self.get_plugin().get_port()],
-            self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
+        result = self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn)
+        self.assertEqual([gw_port], result)
+        plugin.get_port.assert_not_called()
+        self.ovn_client._create_lrouter_port.assert_called_once()
         self.nb_idl.add_static_route.assert_called_once_with(
             'neutron-' + router['id'],
             ip_prefix=const.IPv4_ANY,
@@ -164,6 +166,7 @@ class TestOVNClient(TestOVNClientBase):
         }
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
+        self.ovn_client._create_lrouter_port = mock.MagicMock()
         gw_port1 = fakes.FakePort().create_one_port(
             attrs={
                 'id': router['gw_port_id'],
@@ -180,9 +183,9 @@ class TestOVNClient(TestOVNClientBase):
             })
         self.ovn_client._get_router_gw_ports.return_value = [
             gw_port1, gw_port2]
-        self.assertEqual(
-            [self.get_plugin().get_port(), self.get_plugin().get_port()],
-            self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
+        result = self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn)
+        self.assertEqual([gw_port1, gw_port2], result)
+        plugin.get_port.assert_not_called()
         self.nb_idl.add_static_route.assert_has_calls([
             mock.call('neutron-' + router['id'],
                       ip_prefix=const.IPv4_ANY,
@@ -226,6 +229,7 @@ class TestOVNClient(TestOVNClientBase):
         }
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
+        self.ovn_client._create_lrouter_port = mock.MagicMock()
         gw_port = fakes.FakePort().create_one_port(
             attrs={
                 'id': router['gw_port_id'],
@@ -234,9 +238,9 @@ class TestOVNClient(TestOVNClientBase):
                     'ip_address': '10.42.0.42'}]
             })
         self.ovn_client._get_router_gw_ports.return_value = [gw_port]
-        self.assertEqual(
-            [self.get_plugin().get_port()],
-            self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
+        result = self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn)
+        self.assertEqual([gw_port], result)
+        plugin.get_port.assert_not_called()
         self.nb_idl.add_static_route.assert_not_called()
 
     def test_checkout_ip_list(self):

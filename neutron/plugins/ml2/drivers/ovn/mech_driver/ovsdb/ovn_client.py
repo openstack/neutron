@@ -1355,9 +1355,8 @@ class OVNClient:
         admin_context = context.elevated()
         added_ports = []
         for gw_port in self._get_router_gw_ports(admin_context, router['id']):
-            port = self._plugin.get_port(admin_context, gw_port['id'])
-            self._create_lrouter_port(admin_context, router, port)
-            added_ports.append(port)
+            self._create_lrouter_port(admin_context, router, gw_port)
+            added_ports.append(gw_port)
 
             # 2. Add default route with nexthop as gateway ip
             if (gw_port['id'] != router.get('gw_port_id') and
