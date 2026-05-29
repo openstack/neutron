@@ -57,6 +57,7 @@ extensions = [
 openstackdocs_projects = [
     'neutron',
     'nova',
+    'oslo.messaging',
 ]
 
 # openstackdocstheme options

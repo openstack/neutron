@@ -85,6 +85,14 @@ Eventlet deprecation
 
    eventlet_deprecation/index
 
+Reference
+---------
+
+.. toctree::
+   :maxdepth: 2
+
+   reference/notifications
+
 API Reference
 -------------
 
