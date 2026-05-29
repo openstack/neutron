@@ -141,8 +141,17 @@ DNSMASQ_OPTS = [
                        "a default gateway.")),
 ]
 
+DHCP_AGENT_STATE_OPTS = [
+    # we want this only for the dhcp-agent, so we are not adding that to
+    # AGENT_STATE_OPTS in register_agent_state_opts_helper()
+    cfg.BoolOpt('scheduling_disabled', default=False,
+                help="No (new) networks will be scheduled automatically "
+                     "on this dhcp-agent."),
+]
+
 
 def register_agent_dhcp_opts(cfg=cfg.CONF):
+    cfg.register_opts(DHCP_AGENT_STATE_OPTS, 'AGENT')
     cfg.register_opts(DHCP_AGENT_OPTS)
     cfg.register_opts(DHCP_OPTS)
     cfg.register_opts(DNSMASQ_OPTS)

@@ -266,6 +266,28 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                             if agent['host'] in hostable_dhcp_hosts]
         return reachable_agents
 
+    def _filter_agents_where_scheduling_disabled(self, dhcp_agent_candidates):
+        """Remove agents from list where 'scheduling_disabled' is True."""
+
+        schedulable_agents = []
+        disabled_hosts = []
+
+        # We do not want any networks to get scheduled on agents
+        # where we have scheduling disabled. Filter those out.
+        for candidate in dhcp_agent_candidates:
+            if not candidate.configurations.get(
+                    'scheduling_disabled', False):
+                schedulable_agents.append(candidate)
+            else:
+                disabled_hosts.append(candidate.host)
+
+        if disabled_hosts:
+            LOG.debug('Ignoring agent hosts %s in DhcpFilter, '
+                      'scheduling of those dhcp-agents is disabled',
+                      ', '.join(disabled_hosts))
+
+        return schedulable_agents
+
     def _get_dhcp_agents_hosting_network(self, plugin, context, network):
         """Return dhcp agents hosting the given network or None if a given
            network is already hosted by enough number of agents.
@@ -319,6 +341,10 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             agent for agent in active_dhcp_agents
             if agent.id not in hosted_agent_ids and plugin.is_eligible_agent(
                 context, True, agent)]
+
+        hostable_dhcp_agents = self._filter_agents_where_scheduling_disabled(
+                hostable_dhcp_agents)
+
         hostable_dhcp_agents = self._filter_agents_with_network_access(
             plugin, context, network, hostable_dhcp_agents)
 

@@ -129,6 +129,61 @@ class TestDhcpScheduler(TestDhcpSchedulerBaseTestCase):
                 scheduler.schedule(
                     plugin, self.ctx, network))
 
+    def test_no_schedule_on_unschedulable_agent(self):
+        """When a dhcp-agent is marked with 'scheduling disabled', we
+           do not want it to be selected for automatic scheduling.
+           This tests that those agents are filtered out but regular
+           agents are still being chosen.
+        """
+
+        az = helpers.DEFAULT_AZ
+        network = {'id': self.network_id}
+
+        plugin = mock.Mock()
+        plugin.get_network.return_value = self.network
+        plugin.filter_hosts_with_network_access.side_effect = (
+            lambda context, network_id, hosts: hosts)
+        plugin.get_dhcp_agents_hosting_networks.return_value = []
+
+        agent_nosched = helpers.register_dhcp_agent(
+                'host-a',
+                admin_state_up=True, alive=True,
+                az=az, scheduling_disabled=True)
+
+        agent_okay = helpers.register_dhcp_agent(
+                'host-b',
+                admin_state_up=True, alive=True,
+                az=az)
+
+        # Check if the configuration is applied correctly, but
+        # only to the one agent we want. This is testing if the
+        # modified helper returns correct agents for the tests.
+        no_sched_kwd = 'scheduling_disabled'
+        self.assertNotIn(no_sched_kwd, agent_okay.configurations)
+        self.assertIn(no_sched_kwd, agent_nosched.configurations)
+        self.assertTrue(agent_nosched.configurations.get(no_sched_kwd))
+
+        # The real tests start here:
+
+        # 1. Assert that we are still able to schedule to a regular agent
+        #    when there is a non-schedulable one present.
+        plugin.get_agent_objects.return_value = [agent_nosched, agent_okay]
+        scheduler = dhcp_agent_scheduler.ChanceScheduler()
+
+        # The one regular agent should still be available to host the network.
+        self.assertEqual([agent_okay],
+                         scheduler.schedule(plugin, self.ctx, network)
+                         )
+
+        # 2. Assert that we do not schedule on a 'scheduling_disabled' agent:
+        plugin.get_agent_objects.return_value = [agent_nosched]
+        scheduler = dhcp_agent_scheduler.ChanceScheduler()
+
+        # No agent should be available to host the network.
+        self.assertEqual([],
+                         scheduler.schedule(plugin, self.ctx, network)
+                         )
+
     def test_network_rescheduled_when_db_returns_active_hosts(self):
         self._test_reschedule_vs_network_on_dead_agent(True)
 

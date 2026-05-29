@@ -1091,7 +1091,9 @@ class DhcpAgentWithStateReport(DhcpAgent):
             'configurations': {
                 'dhcp_driver': self.conf.dhcp_driver,
                 'dhcp_lease_duration': self.conf.dhcp_lease_duration,
-                'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats},
+                'log_agent_heartbeats': self.conf.AGENT.log_agent_heartbeats,
+                'scheduling_disabled': self.conf.AGENT.scheduling_disabled,
+            },
             'start_flag': True,
             'agent_type': constants.AGENT_TYPE_DHCP}
         report_interval = self.conf.AGENT.report_interval

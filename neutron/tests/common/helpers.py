@@ -82,7 +82,8 @@ def register_l3_agent(host=HOST, agent_mode=constants.L3_AGENT_MODE_LEGACY,
     return _register_agent(agent)
 
 
-def _get_dhcp_agent_dict(host, networks=0, az=DEFAULT_AZ):
+def _get_dhcp_agent_dict(host, networks=0, az=DEFAULT_AZ,
+                         scheduling_disabled=None):
     agent = {
         'binary': constants.AGENT_PROCESS_DHCP,
         'host': host,
@@ -91,13 +92,16 @@ def _get_dhcp_agent_dict(host, networks=0, az=DEFAULT_AZ):
         'availability_zone': az,
         'configurations': {'dhcp_driver': 'dhcp_driver',
                            'networks': networks}}
+    if scheduling_disabled is not None:
+        agent['configurations']['scheduling_disabled'] = scheduling_disabled
     return agent
 
 
 def register_dhcp_agent(host=HOST, networks=0, admin_state_up=True,
-                        alive=True, az=DEFAULT_AZ):
+                        alive=True, az=DEFAULT_AZ, scheduling_disabled=None):
     agent = _register_agent(
-        _get_dhcp_agent_dict(host, networks, az=az))
+        _get_dhcp_agent_dict(host, networks, az=az,
+                             scheduling_disabled=scheduling_disabled))
 
     if not admin_state_up:
         set_agent_admin_state(agent['id'])
