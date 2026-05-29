@@ -133,3 +133,6 @@ def register_agent_dhcp_opts(cfg=cfg.CONF):
     meta_conf.register_meta_conf_opts(meta_conf.METADATA_RATE_LIMITING_OPTS,
                                       cfg=cfg,
                                       group=meta_conf.RATE_LIMITING_GROUP)
+    meta_conf.register_meta_conf_opts(meta_conf.METADATA_HAPROXY_OPTS,
+                                      cfg=cfg,
+                                      group=meta_conf.HAPROXY_GROUP)

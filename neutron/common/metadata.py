@@ -64,11 +64,11 @@ defaults
     option http-server-close
     option forwardfor
     retries                 3
-    timeout http-request    30s
-    timeout connect         30s
-    timeout client          32s
-    timeout server          32s
-    timeout http-keep-alive 30s
+    timeout http-request    %(timeout_http_request)ss
+    timeout connect         %(timeout_connect)ss
+    timeout client          %(timeout_client)ss
+    timeout server          %(timeout_server)ss
+    timeout http-keep-alive %(timeout_http_keep_alive)ss
 """
 
 RATE_LIMITED_CONFIG_TEMPLATE = """

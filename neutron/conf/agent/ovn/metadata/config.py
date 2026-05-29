@@ -49,7 +49,9 @@ def list_metadata_agent_opts():
          ),
         ('ovs', OVS_OPTS),
         (meta_conf.RATE_LIMITING_GROUP,
-         meta_conf.METADATA_RATE_LIMITING_OPTS)
+         meta_conf.METADATA_RATE_LIMITING_OPTS),
+        (meta_conf.HAPROXY_GROUP,
+         meta_conf.METADATA_HAPROXY_OPTS),
     ]
 
 

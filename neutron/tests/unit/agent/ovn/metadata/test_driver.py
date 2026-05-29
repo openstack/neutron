@@ -61,6 +61,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         ovn_meta_conf.register_meta_conf_opts(
             meta_conf.METADATA_RATE_LIMITING_OPTS, cfg.CONF,
             group=meta_conf.RATE_LIMITING_GROUP)
+        ovn_meta_conf.register_meta_conf_opts(
+            meta_conf.METADATA_HAPROXY_OPTS, cfg.CONF,
+            group=meta_conf.HAPROXY_GROUP)
         ovn_conf.register_opts()
         cfg.CONF.set_override('check_child_processes_interval', 0.1,
                               group='AGENT')
@@ -76,7 +79,17 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
         return self._test_spawn_metadata_proxy(rate_limited=True)
 
-    def _test_spawn_metadata_proxy(self, rate_limited=False):
+    def test_spawn_metadata_proxy_custom_haproxy_timeouts(self):
+        cfg.CONF.set_override('timeout_server', 120,
+                              group=meta_conf.HAPROXY_GROUP)
+        cfg.CONF.set_override('timeout_client', 120,
+                              group=meta_conf.HAPROXY_GROUP)
+        return self._test_spawn_metadata_proxy(
+            haproxy_timeouts={'timeout_server': 120,
+                              'timeout_client': 120})
+
+    def _test_spawn_metadata_proxy(self, rate_limited=False,
+                                   haproxy_timeouts=None):
         datapath_id = _uuid()
         metadata_ns = metadata_agent.NS_PREFIX + datapath_id
         ip_class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
@@ -148,7 +161,15 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'pidfile': self.PIDFILE,
                 'log_level': 'debug',
                 'log_tag': log_tag,
-                'bind_v6_line': bind_v6_line}
+                'bind_v6_line': bind_v6_line,
+                'timeout_connect': 30,
+                'timeout_client': 32,
+                'timeout_server': 32,
+                'timeout_http_request': 30,
+                'timeout_http_keep_alive': 30}
+
+            if haproxy_timeouts:
+                expected_params.update(haproxy_timeouts)
 
             if rate_limited:
                 expected_params.update(self.RATE_LIMIT_CONFIG,
@@ -211,7 +232,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                               metadata_driver.HaproxyConfigurator, mock.ANY,
                               mock.ANY, mock.ANY, mock.ANY, mock.ANY,
                               self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
-                              mock.ANY)
+                              mock.ANY, mock.ANY)
 
     def test_create_config_file_wrong_group(self):
         with mock.patch('grp.getgrnam', side_effect=KeyError),\
@@ -221,4 +242,4 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                               metadata_driver.HaproxyConfigurator, mock.ANY,
                               mock.ANY, mock.ANY, mock.ANY, mock.ANY,
                               self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
-                              mock.ANY)
+                              mock.ANY, mock.ANY)
