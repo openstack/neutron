@@ -20,6 +20,7 @@ OVN_DYNAMIC_ROUTING_PORT_MAPPING = 'dynamic-routing-port-mapping'
 
 LRP_OPTIONS_PORT_NAME = 'dynamic-routing-port-name'
 LRP_OPTIONS_DYNAMIC_ROUTING_MAINTAIN_VRF = 'dynamic-routing-maintain-vrf'
+LRP_OPTIONS_DR_NO_LEARNING = 'dynamic-routing-no-learning'
 LRP_NETWORK_NAME_EXT_ID_KEY = 'neutron-bgp-network-name'
 
 LR_OPTIONS_DYNAMIC_ROUTING = 'dynamic-routing'
