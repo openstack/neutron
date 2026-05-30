@@ -161,11 +161,14 @@ class OVNNeutronAgent(service.Service):
         LOG.info("Loaded chassis name %s (UUID: %s) and ovn bridge %s.",
                  self.chassis, self.chassis_id, self.ovn_bridge)
 
+    def _ensure_instantiated_events(self, events):
+        return [e(self) if isinstance(e, type) else e for e in set(events)]
+
     def _load_ovs_idl(self):
         events = []
         for extension in self.ext_manager:
             events += extension.obj.ovs_idl_events
-        events = [e(self) for e in set(events)]
+        events = self._ensure_instantiated_events(events)
         return ovsdb.MonitorAgentOvsIdl(set(events)).start()
 
     def _load_nb_idl(self):
@@ -180,7 +183,7 @@ class OVNNeutronAgent(service.Service):
             # event, the IDL object is not created to save a DB connection.
             return None
 
-        events = [e(self) for e in set(events)]
+        events = self._ensure_instantiated_events(events)
         tables = set(tables)
         return ovsdb.MonitorAgentOvnNbIdl(tables, events).start()
 
@@ -193,7 +196,7 @@ class OVNNeutronAgent(service.Service):
             events += extension.obj.sb_idl_events
             tables += extension.obj.sb_idl_tables
 
-        events = [e(self) for e in set(events)]
+        events = self._ensure_instantiated_events(events)
         tables = set(tables)
         return ovsdb.MonitorAgentOvnSbIdl(tables, events,
                                           chassis=self.chassis).start()
