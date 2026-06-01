@@ -863,6 +863,76 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
             self.fail('Agent did not go up after sync is done')
         self.assertTrue(check_nb_cfg_timestamp_is_not_null())
 
+    def test_agent_chassis_deleted(self):
+        """Test agent down when Chassis deleted, not Chassis_Private.
+
+        When a Chassis record is deleted while Chassis_Private remains,
+        the ChassisAgentChassisClearedEvent should mark the agent as down.
+        Also verifies that the agent recovers when the Chassis is recreated.
+        Related-Bug: #2148211
+        """
+        def check_agent_up():
+            agent = neutron_agent.AgentCache().get(self.chassis_name)
+            return agent.alive
+
+        def check_agent_down():
+            return not check_agent_up()
+
+        # Set nb_cfg so alive check works.
+        self.nb_api.db_set(
+            'NB_Global', '.', ('nb_cfg', 1337)).execute(check_error=True)
+        self.sb_api.db_set(
+            'Chassis_Private', self.chassis_name, ('nb_cfg', 1337)
+        ).execute(check_error=True)
+
+        self.assertTrue(check_agent_up())
+
+        # Delete the Chassis but keep Chassis_Private (simulates an
+        # admin manually deleting the Chassis or ungraceful shutdown
+        # cleanup that only removes Chassis). Note: we cannot use
+        # sb_api.chassis_del() here because that helper also deletes the
+        # associated Chassis_Private row, which would prevent us from
+        # testing the orphaned Chassis_Private scenario.
+        self.sb_api.db_destroy(
+            'Chassis', self.chassis_name).execute(check_error=True)
+        try:
+            n_utils.wait_until_true(check_agent_down, timeout=5)
+        except n_utils.WaitTimeout:
+            self.fail('Agent did not go down after Chassis deletion')
+
+        # Verify as_dict() still works with a deleted Chassis, i.e. the
+        # agent can be listed via the API without crashing.
+        agent = neutron_agent.AgentCache().get(self.chassis_name)
+        agent_dict = agent.as_dict()
+        self.assertFalse(agent_dict['alive'])
+
+        # Simulate ovn-controller reconnecting: recreate the Chassis and
+        # update the orphaned Chassis_Private to reference it.
+        self._counter += 1
+        chassis = self.sb_api.chassis_add(
+            self.chassis_name, ['geneve'],
+            '172.24.4.%d' % self._counter,
+            other_config={
+                'ovn-cms-options': 'enable-chassis-as-gw',
+                'ovn-bridge-mappings': ''},
+            hostname=self.FAKE_CHASSIS_HOST
+        ).execute(check_error=True)
+        nb_cfg_timestamp = timeutils.utcnow_ts() * 1000
+        with self.sb_api.transaction() as txn:
+            txn.add(self.sb_api.db_set(
+                'Chassis_Private', self.chassis_name,
+                ('chassis', chassis.uuid)))
+            txn.add(self.sb_api.db_set(
+                'Chassis_Private', self.chassis_name,
+                ('nb_cfg', 1337)))
+            txn.add(self.sb_api.db_set(
+                'Chassis_Private', self.chassis_name,
+                ('nb_cfg_timestamp', nb_cfg_timestamp)))
+        try:
+            n_utils.wait_until_true(check_agent_up, timeout=5)
+        except n_utils.WaitTimeout:
+            self.fail('Agent did not recover after Chassis recreation')
+
     def test_agent_removal(self):
         agents = neutron_agent.AgentCache().get_agents()
         agent_id = agents[0].agent_id

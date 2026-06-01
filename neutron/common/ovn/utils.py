@@ -822,8 +822,14 @@ def compute_address_pairs_diff(ovn_port, neutron_port):
 
 def get_ovn_cms_options(chassis):
     """Return the list of CMS options in a Chassis."""
-    return [opt.strip() for opt in chassis.other_config.get(
+    return [opt.strip() for opt in getattr(chassis, 'other_config', {}).get(
         constants.OVN_CMS_OPTIONS, '').split(',')]
+
+
+def get_ovn_bridge_mappings(chassis):
+    """Return the bridge mappings string configured in a Chassis."""
+    return getattr(chassis, 'other_config', {}).get(
+        constants.OVN_BRIDGE_MAPPINGS, '')
 
 
 def get_ovn_bridge_from_chassis_private(chassis_private):
