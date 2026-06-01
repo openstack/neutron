@@ -46,11 +46,12 @@ def _get_config_files(env=None):
     return [os.path.join(dirname, fname) for fname in files]
 
 
-def _init_configuration():
+def _init_configuration(prog=None):
     # the configuration will be read into the cfg.CONF global data structure
     conf_files = _get_config_files()
     config.register_common_config_options()
-    config.init(sys.argv[1:], default_config_files=conf_files)
+    config.init(sys.argv[1:], default_config_files=conf_files,
+                prog=prog)
     config.setup_logging()
     config.set_config_defaults()
     if not cfg.CONF.config_file:
@@ -59,7 +60,7 @@ def _init_configuration():
                    " the '--config-file' option!"))
 
 
-def boot_server(server_func):
+def boot_server(server_func, prog=None):
     # During the call to gmr.TextGuruMeditation.setup_autorun(), Guru
     # Meditation Report tries to start logging.
     # Set a handler here to accommodate this.
@@ -71,7 +72,7 @@ def boot_server(server_func):
     if not logger.handlers:
         logger.addHandler(sys_logging.StreamHandler())
 
-    _init_configuration()
+    _init_configuration(prog=prog)
     config.setup_gmr()
     try:
         return server_func()
