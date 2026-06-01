@@ -287,7 +287,7 @@ class ReconcileNeutronSwitchCommand(_NeutronSwitchBase):
             self.network_name,
         ).run_idl(txn)
 
-        ConnectRouterToSwitchCommand(
+        ConnectMainRouterToInterconnectSwitchCommand(
             self.api,
             self.router_name,
             self.interconnect_switch_name,
@@ -576,6 +576,10 @@ class ConnectRouterToSwitchCommand(ovs_cmd.BaseCommand):
             self.router_name, self.switch_name)
         self.lrp_ips = lrp_ips or []
 
+    @property
+    def lsp_options(self):
+        return {'router-port': self.lrp_name}
+
     def run_idl(self, txn):
         _LrpAddCommand(
             self.api,
@@ -591,8 +595,22 @@ class ConnectRouterToSwitchCommand(ovs_cmd.BaseCommand):
             lsp_name,
             addresses=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER,
             type=ovn_const.LSP_TYPE_ROUTER,
-            options={'router-port': self.lrp_name},
+            options=self.lsp_options,
         ).run_idl(txn)
+
+
+class ConnectMainRouterToInterconnectSwitchCommand(
+        ConnectRouterToSwitchCommand):
+
+    @property
+    def lsp_options(self):
+        ipv4_ips = ' '.join(
+            ip for ip in self.lrp_ips
+            if netaddr.IPNetwork(ip).version == 4)
+        opts = super().lsp_options
+        if ipv4_ips:
+            opts[ovn_const.LRP_OPTIONS_ARP_PROXY] = ipv4_ips
+        return opts
 
 
 class ReconcileGatewayIPCommand(ovs_cmd.BaseCommand):
@@ -625,6 +643,8 @@ class ReconcileGatewayIPCommand(ovs_cmd.BaseCommand):
         # stale data from the IDL cache, causing duplicates. addvalue is
         # idempotent for set columns and avoids this race.
         lrp.addvalue('networks', self.gw_ip)
+        if netaddr.IPNetwork(self.gw_ip).version == 4:
+            lrp.setkey('options', ovn_const.LRP_OPTIONS_ARP_PROXY, self.gw_ip)
 
 
 class ConnectChassisRouterToSwitchCommand(ConnectRouterToSwitchCommand):
