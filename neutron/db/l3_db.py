@@ -217,12 +217,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @db_api.CONTEXT_READER
     def _get_dead_floating_port_candidates(self, context):
-        query = context.session.query(models_v2.Port)
+        query = context.session.query(models_v2.Port.id)
         query = query.filter(
             models_v2.Port.device_id == 'PENDING',
             models_v2.Port.device_owner == DEVICE_OWNER_FLOATINGIP)
 
-        return {p['id'] for p in query.all()}
+        return {port_id[0] for port_id in query.all()}
 
     @db_api.CONTEXT_READER
     def _get_router(self, context, router_id):
