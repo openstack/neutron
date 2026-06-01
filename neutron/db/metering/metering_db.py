@@ -172,6 +172,8 @@ class MeteringDbMixin(metering.MeteringPluginBase):
 
         routers_dict = {}
         for label in labels:
+            rules = self._get_metering_rules_dict(label)
+
             if label.shared:
                 if not routers:
                     routers = l3_obj.Router.get_objects(context)
@@ -186,8 +188,6 @@ class MeteringDbMixin(metering.MeteringPluginBase):
                 router_dict = routers_dict.get(
                     router['id'],
                     self._make_router_dict(router))
-
-                rules = self._get_metering_rules_dict(label)
 
                 data = {'id': label['id'], 'rules': rules,
                         'shared': label['shared'], 'name': label['name']}
