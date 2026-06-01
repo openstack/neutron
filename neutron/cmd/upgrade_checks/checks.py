@@ -17,6 +17,7 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
+from neutron_lib.utils import upgrade_checks
 from oslo_config import cfg
 from oslo_upgradecheck import common_checks
 from oslo_upgradecheck import upgradecheck
@@ -27,7 +28,6 @@ from sqlalchemy import or_
 from sqlalchemy import text
 
 from neutron._i18n import _
-from neutron.cmd.upgrade_checks import base
 from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2 import config as ml2_conf
@@ -197,7 +197,7 @@ def get_ovn_client():
     return _OVN_CLIENT
 
 
-class CoreChecks(base.BaseChecks):
+class CoreChecks(upgrade_checks.BaseChecks):
 
     def __init__(self):
         super().__init__()

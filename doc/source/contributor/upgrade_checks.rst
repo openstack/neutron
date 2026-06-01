@@ -53,7 +53,7 @@ The recommended entry point name is a repository name: For example,
         neutron-fwaas = neutron_fwaas.upgrade.checks:Checks
 
 Entrypoint should be class which inherits from
-``neutron.cmd.upgrade_checks.base.BaseChecks``.
+``neutron_lib.utils.upgrade_checks.BaseChecks``.
 
 An example of a checks class can be found in
 ``neutron.cmd.upgrade_checks.checks.CoreChecks``.
