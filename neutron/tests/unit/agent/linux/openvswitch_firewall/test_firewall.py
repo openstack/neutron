@@ -1032,15 +1032,23 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.assertTrue(self.mock_bridge.br.delete_flows.called)
         self.delete_invalid_conntrack_entries_mock.assert_not_called()
 
-    def test_update_port_filter_applies_added_flows(self):
-        """Check flows are applied right after _set_flows is called."""
+    def test_update_port_filter_applies_added_flows_and_clean_conntrack(self):
+        """Check flows are applied right after _set_flows is called.
+
+        Additionally this test checks also if conntrack entries marked as
+        CT_MARK_INVALID are cleaned once after new flows are set.
+        """
+
         port_dict = {'device': 'port-id',
                      'security_groups': [1]}
         self._prepare_security_group()
         self.firewall.prepare_port_filter(port_dict)
+        self.delete_invalid_conntrack_entries_mock.reset_mock()
         with self.firewall.defer_apply():
             self.firewall.update_port_filter(port_dict)
+            self.delete_invalid_conntrack_entries_mock.assert_not_called()
         self.mock_bridge.apply_flows.assert_called_once()
+        self._assert_invalid_conntrack_entries_deleted(port_dict)
 
     def test_update_port_filter_clean_when_port_not_found(self):
         """Check flows are cleaned if port is not found in the bridge."""
