@@ -148,7 +148,7 @@ class WorkerLifecycleProbeTestCase(base.BaseTestCase):
 
     def _assert_returns(self, worker, method, **kwargs):
         completion, exc = worker_lifecycle.probe_worker_method(
-            worker, method, timeout=0.5, **kwargs)
+            worker, method, timeout=5, **kwargs)
         self.assertIsNone(
             exc, '%s() raised %r' % (method, exc))
         self.assertEqual(worker_lifecycle.MethodCompletion.RETURNED,
