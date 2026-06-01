@@ -564,7 +564,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         # tracking; otherwise SQL Alchemy events won't be triggered.
         # For more info check 'caveats' in doc/source/devref/quota.rst
         try:
-            context.session.delete(query.first())
+            context.session.delete(query.one_or_none())
         except orm_exc.UnmappedInstanceError:
             LOG.debug("Port %s was not found and therefore no delete "
                       "operation was performed", port_id)
