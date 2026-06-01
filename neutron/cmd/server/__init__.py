@@ -19,14 +19,9 @@ oslo_service_backend.init_backend(oslo_service_backend.BackendType.THREADING)
 
 # pylint: disable=wrong-import-position
 from neutron import server  # noqa: E402
-from neutron.server import api  # noqa: E402
 from neutron.server import ovn_maintenance  # noqa: E402
 from neutron.server import periodic  # noqa: E402
 from neutron.server import rpc  # noqa: E402
-
-
-def main_api_uwsgi():
-    return server.boot_server(api.api_server)
 
 
 def main_ovn_maintenance():
