@@ -557,6 +557,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         self._initialize_sg()
         self._update_cookie = None
         self._deferred = False
+        self._ports_pending_invalid_ct_cleanup = []
         self.iptables_helper = iptables.Helper(self.int_br.br)
         self.iptables_helper.load_driver_if_needed()
         self.ipconntrack = ip_conntrack.OvsIpConntrackManager()
@@ -702,11 +703,22 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         return get_physical_network_from_other_config(
             self.int_br.br, port_name)
 
-    def _delete_invalid_conntrack_entries_for_port(self, port, of_port):
-        port['of_port'] = of_port
+    def _delete_invalid_conntrack_entries_for_port(self, ports):
         for ethertype in [lib_const.IPv4, lib_const.IPv6]:
             self.ipconntrack.delete_conntrack_state_by_remote_ips(
-                [port], ethertype, set(), mark=ovsfw_consts.CT_MARK_INVALID)
+                ports, ethertype, set(), mark=ovsfw_consts.CT_MARK_INVALID)
+
+    def _schedule_invalid_conntrack_entries_cleanup(self, port):
+        if self._deferred:
+            self._ports_pending_invalid_ct_cleanup.append(port)
+        else:
+            self._delete_invalid_conntrack_entries_for_port([port])
+
+    def _flush_pending_invalid_conntrack_cleanup(self):
+        self._delete_invalid_conntrack_entries_for_port(
+            self._ports_pending_invalid_ct_cleanup
+        )
+        self._ports_pending_invalid_ct_cleanup = []
 
     def get_ofport(self, port):
         port_id = port['device']
@@ -768,7 +780,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 self._update_flows_for_port(of_port, old_of_port)
             else:
                 self._set_port_filters(of_port)
-            self._delete_invalid_conntrack_entries_for_port(port, of_port)
+            port['of_port'] = of_port
+            self._schedule_invalid_conntrack_entries_cleanup(port)
         except exceptions.OVSFWPortNotFound as not_found_error:
             LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
                      {'port_id': port['device'],
@@ -808,7 +821,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             else:
                 self._set_port_filters(of_port)
 
-            self._delete_invalid_conntrack_entries_for_port(port, of_port)
+            port['of_port'] = of_port
+            self._schedule_invalid_conntrack_entries_cleanup(port)
 
         except exceptions.OVSFWPortNotFound as not_found_error:
             LOG.info("port %(port_id)s does not exist in ovsdb: %(err)s.",
@@ -897,11 +911,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def filter_defer_apply_on(self):
         self._deferred = True
+        self._ports_pending_invalid_ct_cleanup = []
 
     def filter_defer_apply_off(self):
         if self._deferred:
             self._cleanup_stale_sg()
             self.int_br.apply_flows()
+            self._flush_pending_invalid_conntrack_cleanup()
             self._deferred = False
 
     @property
