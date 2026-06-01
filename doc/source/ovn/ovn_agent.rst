@@ -64,7 +64,9 @@ for an OVN agent extension. The extensions are loaded in two steps:
 Each extension should define a set of OVS, OVN Northbound and OVN Southbound
 tables to monitor, and a set of events related to these databases. The OVN
 agent will create the corresponding IDL connections using the conjunction of
-these tables and events.
+these tables and events. OVSDB RowEvents can be passed as a class, in which
+case they will be instantiated with the extension as their only argument, or
+passed already instantiated with user-defined arguments.
 
 
 Event-driven service

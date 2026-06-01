@@ -20,6 +20,7 @@ from neutron_lib.agent import extension
 from neutron_lib import exceptions
 from oslo_log import log as logging
 from oslo_service import service
+from ovsdbapp import event
 
 from neutron._i18n import _
 from neutron.agent import agent_extensions_manager as agent_ext_mgr
@@ -90,6 +91,9 @@ class OVNAgentExtensionManager(agent_ext_mgr.AgentExtensionsManager):
             LOG.info('Extension manager: %s started', ext.obj.name)
 
 
+RowEventOrClassList = list[event.RowEvent | type[event.RowEvent]]
+
+
 class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
     def __init__(self, *args, **kwargs):
@@ -129,7 +133,8 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def ovs_idl_events(self):
+    def ovs_idl_events(self) -> RowEventOrClassList:
+        """Open_vSwtich schema events to watch"""
         pass
 
     @property
@@ -139,7 +144,8 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def nb_idl_events(self):
+    def nb_idl_events(self) -> RowEventOrClassList:
+        """OVN_Northbound schema events to watch"""
         pass
 
     @property
@@ -149,7 +155,8 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def sb_idl_events(self):
+    def sb_idl_events(self) -> RowEventOrClassList:
+        """OVN_Southbound schema events to watch"""
         pass
 
 
