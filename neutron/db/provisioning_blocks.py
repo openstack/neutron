@@ -172,7 +172,7 @@ def _get_standard_attr_id(context, object_id, object_type):
                              "initialization for your type.") % object_type)
     obj = (context.session.query(model.standard_attr_id).
            enable_eagerloads(False).
-           filter_by(id=object_id).first())
+           filter_by(id=object_id).one_or_none())
     if not obj:
         # concurrent delete
         LOG.debug("Could not find standard attr ID for object %s.", object_id)

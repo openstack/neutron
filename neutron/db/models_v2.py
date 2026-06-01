@@ -59,7 +59,7 @@ class HasInUse:
         # `FOR UPDATE` statement.
         num_reg = context.session.query(
             cls).filter_by(**filters).enable_eagerloads(
-                False).with_for_update().first()
+                False).with_for_update().one_or_none()
         if num_reg is None:
             raise exception
 
@@ -72,7 +72,7 @@ class HasInUse:
         # `LOCK IN SHARE MODE` statement.
         num_reg = context.session.query(
             cls).filter_by(**filters).enable_eagerloads(
-                False).with_for_update(read=True).first()
+                False).with_for_update(read=True).one_or_none()
         if num_reg is None:
             raise exception
 
