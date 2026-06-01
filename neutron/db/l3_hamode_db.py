@@ -381,7 +381,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # cannot be executed in the same transaction, it is needed to make
             # this check before leaving this callback.
             network_id = ha_network['network_id']
-            if subnet_obj.Subnet.count(admin_ctx, network_id=network_id) > 0:
+            if subnet_obj.Subnet.objects_exist(
+                    admin_ctx, network_id=network_id):
                 return
             try:
                 self._create_ha_subnet(admin_ctx, network_id, project_id)
