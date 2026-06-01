@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    Updated the OVN features documentation to include all supported API
+    extensions. The previous list was significantly outdated, documenting only
+    35 of the 106 currently supported extensions. The virtual network services
+    section has also been updated to document VPNaaS, FWaaS v2, BGP dynamic
+    routing, Tap Mirror, External Gateway Multihoming, VLAN transparent
+    networks, QinQ, and Private VLAN support.
