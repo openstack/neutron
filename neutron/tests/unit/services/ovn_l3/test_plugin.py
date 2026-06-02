@@ -1172,6 +1172,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
+            nat_uuid=self.fake_floating_ip['id'],
             type='dnat_and_snat',
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
@@ -1205,7 +1206,9 @@ class BaseTestOVNL3RouterPluginMixin:
             ovn_const.OVN_FIP_NET_ID:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
+            'neutron-router-id',
+            nat_uuid=self.fake_floating_ip['id'],
+            type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10', external_mac='00:01:02:03:04:05',
             logical_port='port_id',
             external_ids=expected_ext_ids,
@@ -1242,7 +1245,9 @@ class BaseTestOVNL3RouterPluginMixin:
             ovn_const.OVN_FIP_NET_ID:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
+            'neutron-router-id',
+            nat_uuid=self.fake_floating_ip['id'],
+            type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
             external_ids=expected_ext_ids,
@@ -1275,6 +1280,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
+            nat_uuid=self.fake_floating_ip['id'],
             type='dnat_and_snat',
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
@@ -1309,6 +1315,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
+            nat_uuid=self.fake_floating_ip['id'],
             type='dnat_and_snat',
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
@@ -1363,6 +1370,7 @@ class BaseTestOVNL3RouterPluginMixin:
               ovn_const.OVN_FIP_NET_ID: fip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
+            nat_uuid=self.fake_floating_ip['id'],
             external_ip='192.168.0.10',
             logical_ip='10.0.0.10',
             type='dnat_and_snat',
@@ -1401,6 +1409,7 @@ class BaseTestOVNL3RouterPluginMixin:
 
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
+            nat_uuid=self.fake_floating_ip['id'],
             external_ip='192.168.0.10',
             external_mac='aa:aa:aa:aa:aa:aa',
             logical_ip='10.0.0.10',
@@ -1458,6 +1467,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
 
         expected_kwargs = {
+            'nat_uuid': self.fake_floating_ip['id'],
             'type': 'dnat_and_snat',
             'logical_ip': '10.0.0.10',
             'external_ip': '192.168.0.10',
@@ -1625,6 +1635,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
+            nat_uuid=self.fake_floating_ip_new['id'],
             type='dnat_and_snat',
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
@@ -1685,6 +1696,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
+            nat_uuid=self.fake_floating_ip_new['id'],
             type='dnat_and_snat',
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
@@ -1730,7 +1742,9 @@ class BaseTestOVNL3RouterPluginMixin:
             ovn_const.OVN_FIP_NET_ID:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-new-router-id', type='dnat_and_snat',
+            'neutron-new-router-id',
+            nat_uuid=self.fake_floating_ip_new['id'],
+            type='dnat_and_snat',
             logical_ip='10.10.10.10', external_ip='192.168.0.10',
             external_mac='00:01:02:03:04:05', logical_port='new-port_id',
             external_ids=expected_ext_ids,
@@ -1774,6 +1788,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
+            nat_uuid=self.fake_floating_ip_new['id'],
             type='dnat_and_snat',
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
@@ -1820,6 +1835,7 @@ class BaseTestOVNL3RouterPluginMixin:
                 self.fake_floating_ip['floating_network_id']}
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-new-router-id',
+            nat_uuid=self.fake_floating_ip_new['id'],
             type='dnat_and_snat',
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',

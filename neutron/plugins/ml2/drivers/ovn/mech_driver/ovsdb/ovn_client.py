@@ -908,7 +908,8 @@ class OVNClient:
                           '%(error)s', {'port': port_id, 'error': e})
         db_rev.delete_revision(context, port_id, ovn_const.TYPE_PORTS)
 
-    def _create_or_update_floatingip(self, context, floatingip, txn=None):
+    def _create_or_update_floatingip(self, context, floatingip, txn=None,
+                                     nat_uuid=None):
         router_id = floatingip.get('router_id')
         if not router_id:
             return
@@ -984,8 +985,8 @@ class OVNClient:
                         "NAT entry.", floatingip['port_id'])
             columns.pop('logical_port', None)
             columns.pop('external_mac', None)
-        commands.append(self._nb_idl.add_nat_rule_in_lrouter(gw_lrouter_name,
-                                                             **columns))
+        commands.append(self._nb_idl.add_nat_rule_in_lrouter(
+            gw_lrouter_name, nat_uuid=nat_uuid, **columns))
 
         # Get the logical port (of the private network) and set the field
         # external_ids:fip=<FIP>. This will be used by the ovn octavia driver
@@ -1179,7 +1180,9 @@ class OVNClient:
     def create_floatingip(self, context, floatingip):
         try:
             with self._nb_idl.transaction(check_error=True) as txn:
-                self._create_or_update_floatingip(context, floatingip, txn=txn)
+                self._create_or_update_floatingip(
+                    context, floatingip, txn=txn,
+                    nat_uuid=floatingip['id'])
                 self._qos_driver.create_floatingip(context, txn, floatingip)
         except Exception as e:
             with excutils.save_and_reraise_exception():
@@ -1207,21 +1210,27 @@ class OVNClient:
 
         check_rev_cmd = self._nb_idl.check_revision_number(
             floatingip['id'], floatingip, ovn_const.TYPE_FLOATINGIPS)
+
+        if not qos_update_only and ovn_fip:
+            lrouter = ovn_fip['external_ids'].get(
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY,
+                utils.ovn_name(router_id))
+            # NOTE(ralonsoh): delete the NAT in another txn to allow to
+            # to insert another register with the same UUID.
+            # Deleting a row and re-inserting with the same
+            # persist_uuid in a single transaction is not supported
+            # by OVSDB.
+            self._delete_floatingip(context, ovn_fip, lrouter)
+            fip_status = const.FLOATINGIP_STATUS_DOWN
+
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(check_rev_cmd)
             # If FIP updates the QoS policy only, skip the OVN NAT rules update
-            if not qos_update_only:
-                if ovn_fip:
-                    lrouter = ovn_fip['external_ids'].get(
-                        ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY,
-                        utils.ovn_name(router_id))
-                    self._delete_floatingip(context, ovn_fip, lrouter, txn=txn)
-                    fip_status = const.FLOATINGIP_STATUS_DOWN
-
-                if floatingip.get('port_id'):
-                    self._create_or_update_floatingip(context, floatingip,
-                                                      txn=txn)
-                    fip_status = const.FLOATINGIP_STATUS_ACTIVE
+            if not qos_update_only and floatingip.get('port_id'):
+                self._create_or_update_floatingip(
+                    context, floatingip, txn=txn,
+                    nat_uuid=floatingip['id'])
+                fip_status = const.FLOATINGIP_STATUS_ACTIVE
 
             self._qos_driver.update_floatingip(context, txn, floatingip)
 

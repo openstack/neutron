@@ -409,12 +409,16 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def add_nat_rule_in_lrouter(self, lrouter, **columns):
+    def add_nat_rule_in_lrouter(self, lrouter, nat_uuid=None, **columns):
         """Add NAT rule in logical router
 
 
         :param lrouter:      The unique name of the lrouter
         :type lrouter:       string
+        :param nat_uuid:     Optional UUID for the NAT row. If provided and
+                             persist_uuid is supported, the OVN NAT row will
+                             be created with this UUID.
+        :type nat_uuid:      string or uuid.UUID
         :param columns:      Dictionary of nat columns
                              Supported columns: type, logical_ip, external_ip
         :type columns:       dictionary

@@ -977,9 +977,10 @@ class DelDHCPOptionsCommand(command.BaseCommand):
 
 class AddNATRuleInLRouterCommand(command.BaseCommand):
     # TODO(chandrav): Add unit tests, bug #1638715.
-    def __init__(self, api, lrouter, **columns):
+    def __init__(self, api, lrouter, nat_uuid=None, **columns):
         super().__init__(api)
         self.lrouter = lrouter
+        self.nat_uuid = uuid.UUID(str(nat_uuid)) if nat_uuid else None
         self.columns = columns
 
     def run_idl(self, txn):
@@ -990,7 +991,12 @@ class AddNATRuleInLRouterCommand(command.BaseCommand):
             msg = _("Logical Router %s does not exist") % self.lrouter
             raise RuntimeError(msg)
 
-        row = txn.insert(self.api._tables['NAT'])
+        table = self.api._tables['NAT']
+        if self.nat_uuid and utils.ovs_persist_uuid_supported(txn.idl):
+            row = txn.insert(table, new_uuid=self.nat_uuid,
+                             persist_uuid=True)
+        else:
+            row = txn.insert(table)
         for col, val in self.columns.items():
             setattr(row, col, val)
         lrouter.addvalue('nat', row.uuid)
@@ -1064,17 +1070,21 @@ class CheckRevisionNumberCommand(command.BaseCommand):
         if self.name.startswith(PORT_FORWARDING_PREFIX):
             return self.api.lookup('Load_Balancer', self.name)
 
-        # TODO(lucasagomes): We can't use self.api.lookup() because that
-        # method does not introspect map type columns. We could either:
-        # 1. Enhance it to look into maps or, 2. Add a new ``name`` column
-        # to the NAT table so that we can use lookup() just like we do
-        # for other resources
-        for nat in self.api._tables['NAT'].rows.values():
-            if nat.type != 'dnat_and_snat':
-                continue
-            ext_ids = getattr(nat, 'external_ids', {})
-            if ext_ids.get(ovn_const.OVN_FIP_EXT_ID_KEY) == self.name:
-                return nat
+        nat = self.api.lookup('NAT', self.name, default=None)
+        if nat:
+            return nat
+
+        # TODO(ralonsoh): since I49f9d5932cb4e637ac65ea191790182c263fa23f, the
+        # new NAT registers use the floating IP UUID. For previously created
+        # NAT registers, the following search for
+        # ``external_ids:neutron:fip_id`` is still needed.
+        nat = self.api.db_find_rows(
+            'NAT',
+            ('type', '=', 'dnat_and_snat'),
+            ('external_ids', '=', {ovn_const.OVN_FIP_EXT_ID_KEY: self.name}),
+        ).execute(check_error=True)
+        if nat:
+            return nat[0]
 
         raise idlutils.RowNotFound(
             table='NAT', col='external_ids', match=self.name)

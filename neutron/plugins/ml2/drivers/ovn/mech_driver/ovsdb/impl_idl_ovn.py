@@ -25,6 +25,7 @@ from ovs import stream
 from ovsdbapp.backend import ovs_idl
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp.backend.ovs_idl import rowview
 from ovsdbapp.backend.ovs_idl import transaction as idl_trans
 from ovsdbapp.backend.ovs_idl import vlog
 from ovsdbapp.schema.ovn_northbound import impl_idl as nb_impl_idl
@@ -736,8 +737,9 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         except idlutils.RowNotFound:
             return {}
 
-    def add_nat_rule_in_lrouter(self, lrouter, **columns):
-        return cmd.AddNATRuleInLRouterCommand(self, lrouter, **columns)
+    def add_nat_rule_in_lrouter(self, lrouter, nat_uuid=None, **columns):
+        return cmd.AddNATRuleInLRouterCommand(self, lrouter,
+                                              nat_uuid=nat_uuid, **columns)
 
     def delete_nat_rule_in_lrouter(self, lrouter, type, logical_ip,
                                    external_ip, if_exists=True):
@@ -820,8 +822,18 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return result[0] if result else None
 
     def get_floatingip(self, fip_id):
-        fip = self.db_find('NAT', ('external_ids', '=',
-                                   {ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}))
+        fip = self.lookup('NAT', fip_id, default=None)
+        if fip:
+            # Return a dictionary, same as ``db_find``.
+            return rowview.RowView(fip).asdict()
+
+        # TODO(ralonsoh): since I49f9d5932cb4e637ac65ea191790182c263fa23f, the
+        # new NAT registers use the floating IP UUID. For previously created
+        # NAT registers, the following search for
+        # ``external_ids:neutron:fip_id`` is still needed.
+        fip = self.db_find(
+            'NAT',
+            ('external_ids', '=', {ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}))
         result = fip.execute(check_error=True)
         return result[0] if result else None
 

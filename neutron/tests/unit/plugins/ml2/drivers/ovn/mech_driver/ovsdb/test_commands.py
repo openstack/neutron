@@ -13,8 +13,10 @@
 #
 
 from unittest import mock
+import uuid
 
 from neutron_lib import constants as n_const
+from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -1001,6 +1003,35 @@ class TestAddNATRuleInLRouterCommand(TestBaseCommand):
             self.assertIn(fake_nat_rule_1, fake_lrouter.nat)
             self.assertIn(fake_nat_rule_2, fake_lrouter.nat)
 
+    def test_add_nat_rule_with_persist_uuid(self):
+        fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        fake_lrouter.nat = []
+        nat_uuid = uuidutils.generate_uuid()
+        with mock.patch.object(idlutils, 'row_by_value',
+                               return_value=fake_lrouter), \
+            mock.patch('neutron.common.ovn.utils.'
+                   'ovs_persist_uuid_supported', return_value=True):
+            cmd = commands.AddNATRuleInLRouterCommand(
+                self.ovn_api, fake_lrouter.name, nat_uuid=nat_uuid)
+            cmd.run_idl(self.transaction)
+            self.transaction.insert.assert_called_once_with(
+                self.ovn_api._tables['NAT'],
+                new_uuid=uuid.UUID(nat_uuid), persist_uuid=True)
+
+    def test_add_nat_rule_with_uuid_no_persist_support(self):
+        fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        fake_lrouter.nat = []
+        nat_uuid = uuidutils.generate_uuid()
+        with mock.patch.object(idlutils, 'row_by_value',
+                               return_value=fake_lrouter), \
+            mock.patch('neutron.common.ovn.utils.'
+                   'ovs_persist_uuid_supported', return_value=False):
+            cmd = commands.AddNATRuleInLRouterCommand(
+                self.ovn_api, fake_lrouter.name, nat_uuid=nat_uuid)
+            cmd.run_idl(self.transaction)
+            self.transaction.insert.assert_called_once_with(
+                self.ovn_api._tables['NAT'])
+
     def test_add_nat_rule_no_lrouter_exist(self):
         with mock.patch.object(idlutils, 'row_by_value',
                                side_effect=idlutils.RowNotFound):
@@ -1147,20 +1178,41 @@ class TestCheckRevisionNumberCommand(TestBaseCommand):
     def test_check_revision_number_no_exist_fail(self):
         self._test_check_revision_number(if_exists=False)
 
-    def test_check_revision_number_floating_ip(self):
-        self._test_check_revision_number(
-            name=self.fip['name'], resource=self.fip,
-            resource_type=ovn_const.TYPE_FLOATINGIPS, if_exists=True)
+    def _test_check_revision_number_fip(self, resource, lookup_result=None,
+                                        db_find_rows_result=None,
+                                        if_exists=True,
+                                        revision_conflict=False):
+        self.ovn_api.lookup.return_value = lookup_result
+        mock_cmd = mock.Mock()
+        mock_cmd.execute.return_value = db_find_rows_result or []
+        self.ovn_api.db_find_rows.return_value = mock_cmd
+        cmd = commands.CheckRevisionNumberCommand(
+            self.ovn_api, resource['name'], resource,
+            ovn_const.TYPE_FLOATINGIPS, if_exists=if_exists)
+        if revision_conflict:
+            self.assertRaises(ovn_exc.RevisionConflict, cmd.run_idl,
+                              self.transaction)
+        elif not lookup_result and not db_find_rows_result and not if_exists:
+            self.assertRaises(RuntimeError, cmd.run_idl, self.transaction)
+        else:
+            cmd.run_idl(self.transaction)
+
+    def test_check_revision_number_floating_ip_lookup(self):
+        self._test_check_revision_number_fip(
+            self.fip, lookup_result=self.nat_rule)
+
+    def test_check_revision_number_floating_ip_db_find_rows(self):
+        self._test_check_revision_number_fip(
+            self.fip, db_find_rows_result=[self.nat_rule])
 
     def test_check_revision_number_floating_ip_not_found(self):
-        self._test_check_revision_number(
-            name='fip-not-found', resource=self.fip,
-            resource_type=ovn_const.TYPE_FLOATINGIPS, if_exists=False)
+        self._test_check_revision_number_fip(
+            {'name': 'fip-not-found', 'revision_number': 3},
+            if_exists=False)
 
     def test_check_revision_number_floating_ip_revision_conflict(self):
-        self._test_check_revision_number(
-            name=self.fip['name'], resource=self.fip_old_rev,
-            resource_type=ovn_const.TYPE_FLOATINGIPS, if_exists=False,
+        self._test_check_revision_number_fip(
+            self.fip_old_rev, lookup_result=self.nat_rule,
             revision_conflict=True)
 
     def test_check_revision_number_subnet(self):
