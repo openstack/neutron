@@ -51,22 +51,22 @@ def probe_worker_method(worker, method_name, timeout=1.0, **kwargs):
         raise AttributeError(
             'worker %r has no method %r' % (worker, method_name))
 
-    result = {'completion': None, 'exception': None}
+    completed = threading.Event()
+    result = {'exception': None}
 
     def _target():
-        result['completion'] = MethodCompletion.RETURNED
         try:
             method(**kwargs)
         except Exception as exc:
             result['exception'] = exc
+        finally:
+            completed.set()
 
     thread = threading.Thread(target=_target, daemon=True)
     thread.start()
-    thread.join(timeout)
-    if thread.is_alive():
-        result['completion'] = MethodCompletion.BLOCKED
-        result['exception'] = None
-    return result['completion'], result['exception']
+    if completed.wait(timeout):
+        return MethodCompletion.RETURNED, result['exception']
+    return MethodCompletion.BLOCKED, None
 
 
 # Expected probe results for :class:`neutron.worker.PeriodicWorker`.
