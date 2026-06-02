@@ -1105,11 +1105,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, port['id'], {'port': {'device_id': router.id,
                                            'device_owner': device_owner}})
 
-    def _check_router_interface_not_in_use(self, router_id, subnet):
-        context = n_ctx.get_admin_context()
+    def _check_router_interface_not_in_use(self, context, router_id, subnet):
+        admin_ctx = context.elevated()
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
 
-        fip_objs = l3_obj.FloatingIP.get_objects(context, router_id=router_id)
+        fip_objs = l3_obj.FloatingIP.get_objects(admin_ctx,
+                                                 router_id=router_id)
         pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)
         subnet_port_ids = [
             port.id for port in
@@ -1118,7 +1119,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if pf_plugin:
             fip_ids = [fip_obj.id for fip_obj in fip_objs]
             pf_objs = port_forwarding.PortForwarding.get_objects(
-                context, floatingip_id=fip_ids)
+                admin_ctx, floatingip_id=fip_ids) if fip_ids else []
             for pf_obj in pf_objs:
                 if (pf_obj.internal_ip_address and
                         pf_obj.internal_ip_address in subnet_cidr):
@@ -1148,7 +1149,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 raise e.errors[0].error
             raise l3_exc.RouterInUse(router_id=router_id, reason=e)
 
-        self._check_router_interface_not_in_use(router_id, subnet)
+        self._check_router_interface_not_in_use(context, router_id, subnet)
 
     def _remove_interface_by_port(self, context, router_id,
                                   port_id, subnet_id, owner):
