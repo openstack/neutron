@@ -138,6 +138,8 @@ The following Neutron API extensions are supported with OVN:
 +----------------------------------+---------------------------------+
 | Subnet Allocation                | subnet_allocation               |
 +----------------------------------+---------------------------------+
+| Subnet Onboard                   | subnet_onboard                  |
++----------------------------------+---------------------------------+
 | Subnet service types             | subnet-service-types            |
 +----------------------------------+---------------------------------+
 | Tag support                      | standard-attr-tag               |
