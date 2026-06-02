@@ -48,7 +48,6 @@ from ovsdbapp.backend.ovs_idl import idlutils
 import tenacity
 
 from neutron._i18n import _
-from neutron.common import _constants as n_const
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -456,7 +455,7 @@ class OVNClient:
             addresses = []
             port_security, new_macs = (
                 self._get_allowed_addresses_from_port(port))
-            is_vpn_gw_port = device_owner == n_const.DEVICE_OWNER_VPN_ROUTER_GW
+            is_vpn_gw_port = device_owner == const.DEVICE_OWNER_VPN_ROUTER_GW
             if (port_security or port_type or dhcpv4_options or
                     dhcpv6_options or is_vpn_gw_port):
                 addresses.append(address)
