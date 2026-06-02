@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -20,10 +20,15 @@ from pyroute2.netlink import rtnl
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import nl_constants as nl_const
 from neutron.agent.linux import nl_dispatcher
+from neutron.agent.linux import utils as agent_utils
+from neutron.agent.ovn.extensions import evpn
+from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
+from neutron.agent.ovn.extensions.evpn import svd
 from neutron.common import utils
 from neutron.privileged.agent.linux import ip_lib as privileged
+from neutron.tests.functional.agent.linux import base
 from neutron.tests.functional import base as functional_base
 
 
@@ -41,7 +46,8 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
         return 'vr%s' % uuid.uuid4().hex[:12]
 
     def test_vrf_handler_lifecycle(self):
-        vrf_handler = netlink_monitor.VrfHandler(fsm.EvpnFSM())
+        vrf_handler = netlink_monitor.VrfHandler(
+            fsm.EvpnFSM(svd=None, config=None))
 
         dispatcher = nl_dispatcher.NetlinkDispatcher(rtnl.RTMGRP_LINK)
         dispatcher.register_handler(
@@ -99,3 +105,104 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
             lambda: ip_lib.device_exists(non_evpn_vrf),
             timeout=10, sleep=0.1)
         self.assertEqual(baseline, vrf_handler._known_vrfs)
+
+
+class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
+
+    DSTPORT = 15000
+    LOCAL_IP = '10.10.10.10'
+    SVD_MAC = 'aa:bb:cc:dd:ee:ff'
+    SVI_MAC = '00:11:22:33:44:55'
+
+    @staticmethod
+    def _safe_delete(name):
+        try:
+            ip_lib.IPDevice(name).link.delete()
+        except Exception:
+            pass
+
+    @staticmethod
+    def _set_link_up(name):
+        agent_utils.execute(
+            ['ip', 'link', 'set', name, 'up'],
+            run_as_root=True, privsep_exec=True)
+
+    def setUp(self):
+        super().setUp()
+        self._parent = utils.get_rand_device_name(prefix='evpnp-')
+        privileged.create_interface(self._parent, None, 'dummy')
+        self._set_link_up(self._parent)
+        ip_lib.IPDevice(self._parent).addr.add(self.LOCAL_IP + '/32')
+        self.addCleanup(self._safe_delete, self._parent)
+        self.cfg = evpn.EvpnConfig(local_ip=self.LOCAL_IP,
+                                   dstport=self.DSTPORT,
+                                   vxlan_parent=self._parent,
+                                   mac=self.SVD_MAC,
+                                   br_mtu=evpn_const.EVPN_BR_MTU)
+
+        self._vrf = utils.get_rand_device_name(prefix='evpnvrf-')
+        privileged.create_interface(self._vrf, None, 'vrf', vrf_table=9999)
+        self._set_link_up(self._vrf)
+        self.addCleanup(self._safe_delete, self._vrf)
+
+        self._br = utils.get_rand_device_name(prefix='evpnbr-')
+        self._vx = utils.get_rand_device_name(prefix='evpnvx-')
+        self.svd = svd.EvpnSvd(br_evpn=self._br, vxlan_evpn=self._vx)
+        self.svd.create(local_ip=self.LOCAL_IP, mac=self.SVD_MAC,
+                        vxlan_parent=self._parent, dstport=self.DSTPORT,
+                        br_mtu=evpn_const.EVPN_BR_MTU)
+        self.addCleanup(self._safe_delete, self._vx)
+        self.addCleanup(self._safe_delete, self._br)
+
+        self._evpn_fsm = fsm.EvpnFSM(self.svd, config=self.cfg)
+
+    def _advance_to_advertising(self, vni, vid):
+        self._evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, self._vrf)
+        self._evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            self._vrf, mac=self.SVI_MAC, vni=vni, vid=vid)
+
+    def test_fsm_advertise_creates_svi(self):
+        index = 0
+        vni = 1000
+        vid = 10
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': index, 'vid': vid}
+        self._advance_to_advertising(vni, vid)
+
+        evpn = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertTrue(ip_lib.device_exists(svi_name))
+
+    def test_fsm_port_binding_delete_deletes_svi(self):
+        index = 0
+        vni = 2000
+        vid = 20
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': index, 'vid': vid}
+        self._advance_to_advertising(vni, vid)
+        self.assertTrue(ip_lib.device_exists(svi_name))
+
+        self._evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, self._vrf)
+
+        evpn = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.Evpn.WAITING_FOR_BRIDGE, evpn.state)
+        self.assertFalse(ip_lib.device_exists(svi_name))
+
+    def test_fsm_vrf_delete_deletes_svi(self):
+        index = 0
+        vni = 3000
+        vid = 30
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': index, 'vid': vid}
+        self._advance_to_advertising(vni, vid)
+        self.assertTrue(ip_lib.device_exists(svi_name))
+
+        self._evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, self._vrf)
+
+        evpn = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
+        self.assertFalse(ip_lib.device_exists(svi_name))

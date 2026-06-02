@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -20,48 +20,56 @@ from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.tests import base
 
+BR_MTU = 1500
+
 
 class TestEvpnFSM(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.evpn_fsm = fsm.EvpnFSM()
+        self.mock_svd = mock.Mock()
+        self.mock_config = mock.Mock()
+        self.evpn_fsm = fsm.EvpnFSM(self.mock_svd, self.mock_config)
+        self.mock_config.br_mtu = BR_MTU
 
-    @mock.patch.object(fsm.EvpnFSM, '_advertise')
-    def test_vrf_then_port_binding_create(self, mock_advertise):
+    def test_vrf_then_port_binding_create(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
             fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
         self.evpn_fsm.advance(
             fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
-            vrf, mac='aa:bb:cc:dd:ee:ff', vni=10)
+            vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
         evpn = self.evpn_fsm.instances[vrf]
         self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
         self.assertEqual('aa:bb:cc:dd:ee:ff', evpn.mac)
         self.assertEqual(10, evpn.vni)
+        self.assertEqual(1, evpn.vid)
         self.assertTrue(evpn.vrf_up)
-        mock_advertise.assert_called_once_with(evpn)
+        self.mock_svd.add_vni.assert_called_once_with(
+            10, 1, vrf, 'aa:bb:cc:dd:ee:ff', BR_MTU)
 
-    @mock.patch.object(fsm.EvpnFSM, '_advertise')
-    def test_port_binding_then_vrf_create(self, mock_advertise):
+    def test_port_binding_then_vrf_create(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
             fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
-            vrf, mac='aa:bb:cc:dd:ee:ff', vni=10)
+            vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
         self.evpn_fsm.advance(
             fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
         evpn = self.evpn_fsm.instances[vrf]
         self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
         self.assertEqual('aa:bb:cc:dd:ee:ff', evpn.mac)
         self.assertEqual(10, evpn.vni)
+        self.assertEqual(1, evpn.vid)
         self.assertTrue(evpn.vrf_up)
-        mock_advertise.assert_called_once_with(evpn)
+        self.mock_svd.add_vni.assert_called_once_with(
+            10, 1, vrf, 'aa:bb:cc:dd:ee:ff', BR_MTU)
 
-    def test_vrf_then_port_binding_delete(self):
+    def test_advertise_then_port_binding_delete(self):
         vrf = 'vr0a1b2c3d-fff'
         evpn = fsm.Evpn(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
+        evpn.vid = 1
         evpn.vrf_up = True
         evpn.state = fsm.Evpn.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
@@ -71,12 +79,14 @@ class TestEvpnFSM(base.BaseTestCase):
         self.evpn_fsm.advance(
             fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, vrf)
         self.assertNotIn(vrf, self.evpn_fsm.instances)
+        self.mock_svd.del_vni.assert_called_once_with(10, 1)
 
-    def test_port_binding_then_vrf_delete(self):
+    def test_advertise_then_vrf_delete(self):
         vrf = 'vr0a1b2c3d-fff'
         evpn = fsm.Evpn(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
+        evpn.vid = 1
         evpn.vrf_up = True
         evpn.state = fsm.Evpn.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
@@ -86,6 +96,7 @@ class TestEvpnFSM(base.BaseTestCase):
         self.evpn_fsm.advance(
             fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
         self.assertNotIn(vrf, self.evpn_fsm.instances)
+        self.mock_svd.del_vni.assert_called_once_with(10, 1)
 
     def test_simultaneous_vrf_and_port_binding_create(self):
         """Netlink and SB IDL threads both create for the same VRF."""
@@ -101,7 +112,7 @@ class TestEvpnFSM(base.BaseTestCase):
             barrier.wait()
             self.evpn_fsm.advance(
                 fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
-                vrf, mac='aa:bb:cc:dd:ee:ff', vni=10)
+                vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
 
         threads = [threading.Thread(target=netlink_thread),
                    threading.Thread(target=idl_thread)]
@@ -114,6 +125,7 @@ class TestEvpnFSM(base.BaseTestCase):
         self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
         self.assertEqual('aa:bb:cc:dd:ee:ff', evpn.mac)
         self.assertEqual(10, evpn.vni)
+        self.assertEqual(1, evpn.vid)
         self.assertTrue(evpn.vrf_up)
 
     def test_simultaneous_vrf_and_port_binding_delete(self):
@@ -122,6 +134,7 @@ class TestEvpnFSM(base.BaseTestCase):
         evpn = fsm.Evpn(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
+        evpn.vid = 1
         evpn.vrf_up = True
         evpn.state = fsm.Evpn.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
@@ -147,11 +160,58 @@ class TestEvpnFSM(base.BaseTestCase):
 
         self.assertNotIn(vrf, self.evpn_fsm.instances)
 
+    def test_advertise_then_vrf_delete_then_vrf_create(self):
+        vrf = 'vr0a1b2c3d-fff'
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
+        evpn = self.evpn_fsm.instances[vrf]
+        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
+        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
+        self.mock_svd.del_vni.assert_called_once_with(10, 1)
+
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(2, self.mock_svd.add_vni.call_count)
+
+    def test_advertise_then_port_binding_delete_then_port_binding_create(self):
+        vrf = 'vr0a1b2c3d-fff'
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+        evpn = self.evpn_fsm.instances[vrf]
+        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, vrf)
+        self.assertEqual(fsm.Evpn.WAITING_FOR_BRIDGE, evpn.state)
+        self.assertIsNone(evpn.mac)
+        self.assertIsNone(evpn.vni)
+        self.assertIsNone(evpn.vid)
+        self.mock_svd.del_vni.assert_called_once_with(10, 1)
+
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            vrf, mac='11:22:33:44:55:66', vni=20, vid=2)
+        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual('11:22:33:44:55:66', evpn.mac)
+        self.assertEqual(20, evpn.vni)
+        self.assertEqual(2, evpn.vid)
+        self.assertEqual(2, self.mock_svd.add_vni.call_count)
+
     def test_replay_end_deletes_stale_fsm_instance(self):
         vrf1, vrf2 = 'vr0a1b2c3d-eee', 'vr1a2b3c3d-fff'
         evpn = fsm.Evpn(vrf1)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_MAC_VNI
+        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
         self.evpn_fsm.instances[vrf1] = evpn
         handler = netlink_monitor.VrfHandler(self.evpn_fsm)
         handler._known_vrfs = {vrf1, vrf2}
@@ -165,6 +225,7 @@ class TestEvpnFSM(base.BaseTestCase):
         evpn = fsm.Evpn(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
+        evpn.vid = 1
         evpn.vrf_up = True
         evpn.state = fsm.Evpn.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
@@ -172,14 +233,14 @@ class TestEvpnFSM(base.BaseTestCase):
         handler._known_vrfs = {vrf}
         handler._replay_vrfs = set()
         handler.replay_end()
-        self.assertEqual(fsm.Evpn.WAITING_FOR_VRF_UP, evpn.state)
+        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
         self.assertIn(vrf, self.evpn_fsm.instances)
 
     def test_replay_end_no_stale_vrfs(self):
         vrf = 'vr0a1b2c3d-fff'
         evpn = fsm.Evpn(vrf)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_MAC_VNI
+        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
         self.evpn_fsm.instances[vrf] = evpn
         handler = netlink_monitor.VrfHandler(self.evpn_fsm)
         handler._known_vrfs = {vrf}
