@@ -23,6 +23,7 @@ import select
 import shlex
 import signal
 import subprocess
+import tempfile
 import time
 from unittest import mock
 
@@ -1088,3 +1089,119 @@ class VethPortFixture(PortFixture):
         ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ns_ip_wrapper.add_device_to_namespace(self.port)
         self.port.link.set_up()
+
+
+class FrrFixture(fixtures.Fixture):
+    """Set up FRR inside a network namespace.
+
+    Uses the FRR pathspace feature where the namespace name doubles
+    as the pathspace name, giving each instance its own configuration
+    directory (``/etc/frr/<namespace>/``) and
+    runtime state directory (``/var/run/frr/<namespace>/``).
+    See link:
+    https://docs.frrouting.org/en/latest/setup.html#network-namespaces
+
+    Start/stop is handled via ``frrinit.sh`` and not systemctl.
+
+    :param namespace: namespace name to run FRR in.
+    :type namespace: str
+    """
+
+    FRR_CONF_DIR_BASE = '/etc/frr'
+    FRR_STATE_DIR_BASE = '/var/run/frr'
+    FRRINIT = '/usr/lib/frr/frrinit.sh'
+
+    DAEMONS_CONF = (
+        'zebra=yes\n'
+        'bgpd=yes\n'
+        'ospfd=no\n'
+        'ospf6d=no\n'
+        'ripd=no\n'
+        'ripngd=no\n'
+        'isisd=no\n'
+        'pimd=no\n'
+        'pim6d=no\n'
+        'ldpd=no\n'
+        'nhrpd=no\n'
+        'eigrpd=no\n'
+        'babeld=no\n'
+        'sharpd=no\n'
+        'staticd=no\n'
+        'pbrd=no\n'
+        'bfdd=no\n'
+        'fabricd=no\n'
+        'vrrpd=no\n'
+        'pathd=no\n'
+        '\n'
+        'vtysh_enable=yes\n'
+        'watchfrr_options="--netns"\n'
+    )
+
+    FRR_CONF = (
+        'frr defaults traditional\n'
+        'hostname %(hostname)s\n'
+        'log file %(log_file)s debugging\n'
+        'log timestamp precision 3\n'
+    )
+
+    def __init__(self, namespace):
+        super().__init__()
+        self.namespace = namespace
+        self._conf_dir = os.path.join(self.FRR_CONF_DIR_BASE, namespace)
+        self._state_dir = os.path.join(self.FRR_STATE_DIR_BASE, namespace)
+
+    def _setUp(self):
+        self.addCleanup(self._stop_frr)
+        self.addCleanup(self._remove_config)
+        self._create_config()
+        self._start_frr()
+
+    @staticmethod
+    def _write_file(path, content):
+        with tempfile.NamedTemporaryFile(mode='w') as tmp:
+            tmp.write(content)
+            tmp.flush()
+            utils.execute(['cp', tmp.name, path], run_as_root=True)
+
+    def _create_config(self):
+        utils.execute(
+            ['mkdir', '-p', self._conf_dir], run_as_root=True)
+
+        self._write_file(
+            os.path.join(self._conf_dir, 'daemons'),
+            self.DAEMONS_CONF)
+
+        self._write_file(
+            os.path.join(self._conf_dir, 'vtysh.conf'),
+            'service integrated-vtysh-config\n')
+
+        self._write_file(
+            os.path.join(self._conf_dir, 'frr.conf'),
+            self.FRR_CONF % {
+                'hostname': self.namespace,
+                'log_file': '/var/log/frr/%s/frr.log' % self.namespace})
+
+        utils.execute(
+            ['chown', '-R', 'frr:frr', self._conf_dir],
+            run_as_root=True)
+
+    def _start_frr(self):
+        utils.execute(
+            [self.FRRINIT, 'start', self.namespace],
+            run_as_root=True)
+
+    def _stop_frr(self):
+        try:
+            utils.execute(
+                [self.FRRINIT, 'stop', self.namespace],
+                run_as_root=True)
+        except RuntimeError:
+            LOG.error("Failed to stop FRR in namespace %s", self.namespace)
+
+    def _remove_config(self):
+        for dir in (self._conf_dir, self._state_dir):
+            try:
+                utils.execute(
+                    ['rm', '-rf', dir], run_as_root=True)
+            except RuntimeError:
+                LOG.error("Failed to remove %s", dir)
