@@ -31,7 +31,7 @@ rules = [
         operations=[
             {
                 'method': 'POST',
-                'path': RESOURCE_PATH,
+                'path': COLLECTION_PATH,
             },
         ],
         scope_types=['project'],
