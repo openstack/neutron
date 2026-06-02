@@ -1,0 +1,18 @@
+---
+features:
+  - |
+    A new ``quota_router_route`` quota (default 30) has been added to the
+    Neutron quota engine. This quota controls the maximum number of extra
+    routes allowed per router, and can be adjusted per project via the
+    standard Neutron quota API. This replaces the static global
+    ``max_routes`` configuration option which could not be differentiated
+    per project.
+upgrade:
+  - |
+    The ``max_routes`` configuration option has been removed. The
+    per-router route limit is now enforced by the ``quota_router_route``
+    quota in the ``[QUOTAS]`` section (default: 30). If you had customized
+    ``max_routes`` to a non-default value, set ``quota_router_route`` in
+    the ``[QUOTAS]`` section instead. The ``neutron-status upgrade check``
+    command will warn if ``max_routes`` is still present in the
+    configuration with a non-default value.

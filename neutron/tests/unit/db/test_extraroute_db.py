@@ -23,6 +23,7 @@ from neutron_lib.plugins import directory
 
 from neutron.db import extraroute_db
 from neutron.objects import router as l3_obj
+from neutron.quota import resource_registry
 from neutron.tests.unit import testlib_api
 
 
@@ -35,6 +36,7 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
         super().setUp()
         self._plugin = _Plugin()
         directory.add_plugin(constants.CORE, self._plugin)
+        resource_registry.register_resource_by_name('router_route')
 
     def test_update(self):
         ctx = context.get_admin_context()

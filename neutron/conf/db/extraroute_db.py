@@ -17,8 +17,13 @@ from neutron._i18n import _
 
 
 EXTRA_ROUTE_OPTS = [
-    # TODO(nati): use quota framework when it support quota for attributes
     cfg.IntOpt('max_routes', default=30,
+               deprecated_for_removal=True,
+               deprecated_since='2026.2',
+               deprecated_reason=_(
+                   'This per-router limit is replaced by the '
+                   '"quota_router_route" quota in the '
+                   '[QUOTAS] section.'),
                help=_("Maximum number of routes per router")),
 ]
 

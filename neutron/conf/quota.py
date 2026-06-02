@@ -35,6 +35,7 @@ DEFAULT_QUOTA_PORT = 500
 DEFAULT_QUOTA_SG = 10
 DEFAULT_QUOTA_SG_RULE = 100
 DEFAULT_QUOTA_ROUTER = 10
+DEFAULT_QUOTA_ROUTER_ROUTE = 30
 DEFAULT_QUOTA_FIP = 50
 DEFAULT_QUOTA_RBAC = 10
 
@@ -95,6 +96,10 @@ l3_quota_opts = [
     cfg.IntOpt('quota_floatingip',
                default=DEFAULT_QUOTA_FIP,
                help=_('Number of floating IPs allowed per project. '
+                      'A negative value means unlimited.')),
+    cfg.IntOpt('quota_router_route',
+               default=DEFAULT_QUOTA_ROUTER_ROUTE,
+               help=_('Number of routes allowed per router. '
                       'A negative value means unlimited.')),
 ]
 

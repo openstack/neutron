@@ -18,12 +18,13 @@ from neutron_lib.api.definitions import extraroute as xroute_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib import constants
 from neutron_lib.utils import helpers
-from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
 
 from neutron.db import extraroute_db
+from neutron.extensions import extraroute
 from neutron.extensions import l3
+from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.api.v2 import test_base
 from neutron.tests.unit.extensions import test_l3
 
@@ -35,6 +36,7 @@ _get_path = test_base._get_path
 class ExtraRouteTestExtensionManager:
 
     def get_resources(self):
+        extraroute.Extraroute.get_resources()
         return l3.L3.get_resources()
 
     def get_actions(self):
@@ -295,6 +297,7 @@ class ExtraRouteDBTestCaseBase:
                                                   p['port']['id'])
 
     def test_router_update_with_too_many_routes(self):
+        test_db_base_plugin_v2._set_temporary_quota('router_route', 3)
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
                 with self.port(subnet=s) as p:
@@ -315,7 +318,7 @@ class ExtraRouteDBTestCaseBase:
                     self._update('routers', r['router']['id'],
                                  {'router': {'routes':
                                              routes}},
-                                 expected_code=exc.HTTPBadRequest.code)
+                                 expected_code=exc.HTTPConflict.code)
 
                     # clean-up
                     self._router_interface_action('remove',
@@ -478,6 +481,53 @@ class ExtraRouteDBTestCaseBase:
                     gw_info = body['router']['external_gateway_info']
                     self.assertIsNone(gw_info)
 
+    def test_router_routes_quota_is_per_router(self):
+        test_db_base_plugin_v2._set_temporary_quota('router_route', 3)
+        with self.router() as r1,\
+                self.router() as r2,\
+                self.subnet(cidr='10.0.0.0/24') as s:
+            with self.port(subnet=s) as p1,\
+                    self.port(subnet=s) as p2:
+                p1_ip = p1['port']['fixed_ips'][0]['ip_address']
+                p2_ip = p2['port']['fixed_ips'][0]['ip_address']
+
+                self._router_interface_action('add',
+                                              r1['router']['id'],
+                                              None, p1['port']['id'])
+                self._router_interface_action('add',
+                                              r2['router']['id'],
+                                              None, p2['port']['id'])
+
+                # Fill r1 to the quota limit (3 routes).
+                routes1 = [{'destination': '135.207.0.0/16',
+                            'nexthop': p2_ip},
+                           {'destination': '12.0.0.0/8',
+                            'nexthop': p2_ip},
+                           {'destination': '10.10.0.0/16',
+                            'nexthop': p2_ip}]
+                self._update('routers', r1['router']['id'],
+                             {'router': {'routes': routes1}})
+
+                # Fill r2 to the quota limit too.  The project-wide
+                # total is now 6, which exceeds the quota of 3.  This
+                # must succeed because the quota is enforced per router.
+                routes2 = [{'destination': '141.212.0.0/16',
+                            'nexthop': p1_ip},
+                           {'destination': '192.168.0.0/16',
+                            'nexthop': p1_ip},
+                           {'destination': '172.16.0.0/12',
+                            'nexthop': p1_ip}]
+                self._update('routers', r2['router']['id'],
+                             {'router': {'routes': routes2}})
+
+                # Exceeding the per-router quota must still fail.
+                routes2_over = routes2 + [
+                    {'destination': '100.64.0.0/10',
+                     'nexthop': p1_ip}]
+                self._update('routers', r2['router']['id'],
+                             {'router': {'routes': routes2_over}},
+                             expected_code=exc.HTTPConflict.code)
+
     def test_router_list_with_sort(self):
         with self.router(name='router1') as router1,\
                 self.router(name='router2') as router2,\
@@ -510,7 +560,6 @@ class ExtraRouteDBIntTestCase(test_l3.L3NatDBIntTestCase,
         if not plugin:
             plugin = ('neutron.tests.unit.extensions.test_extraroute.'
                       'TestExtraRouteIntPlugin')
-        cfg.CONF.set_default('max_routes', 3)
         ext_mgr = ExtraRouteTestExtensionManager()
         super(test_l3.L3BaseForIntTests, self).setUp(plugin=plugin,
                                                      ext_mgr=ext_mgr)
@@ -527,7 +576,6 @@ class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
                      'TestExtraRouteL3NatServicePlugin')
         service_plugins = {'l3_plugin_name': l3_plugin}
 
-        cfg.CONF.set_default('max_routes', 3)
         ext_mgr = ExtraRouteTestExtensionManager()
         super(test_l3.L3BaseForSepTests, self).setUp(
             plugin=plugin, ext_mgr=ext_mgr,

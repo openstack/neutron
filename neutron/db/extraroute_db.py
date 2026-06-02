@@ -25,23 +25,32 @@ from neutron_lib.db import resource_extend
 from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net as net_utils
-from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
-from neutron.conf.db import extraroute_db
 from neutron.db import l3_db
 from neutron.objects import router as l3_obj
+from neutron import quota
 
 
 LOG = logging.getLogger(__name__)
-
-extraroute_db.register_db_extraroute_opts()
 
 
 @resource_extend.has_resource_extenders
 class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
     """Mixin class to support extra route configuration on router."""
+
+    @staticmethod
+    def get_router_routes_count(context, filters=None):
+        """Count all router routes for the given project(s).
+
+        For parity with other resources that apply to a single resource
+        (``server_group_members`` in Nova, ``per_volume_gigabytes`` in Cinder),
+        this method, used by the quota engine to count the used routes per
+        router in ``neutron.quota.resource._count_resource``, will return
+        always zero.
+        """
+        return 0
 
     @staticmethod
     @resource_extend.extends([l3_apidef.ROUTERS])
@@ -97,11 +106,6 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
         :param cidrs: (optional) list of CIDRs (strings)
         :param ip_addresses: (optional) list of IP addresses (strings)
         """
-        if len(routes) > cfg.CONF.max_routes:
-            raise xroute_exc.RoutesExhausted(
-                router_id=router_id,
-                quota=cfg.CONF.max_routes)
-
         context = context.elevated()
         filters = {'device_id': [router_id]}
 
@@ -121,6 +125,9 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 
     def _update_extra_routes(self, context, router, routes):
         self._validate_routes(context, router['id'], routes)
+        quota.QUOTAS.limit_check(
+            context, router['project_id'],
+            router_route=len(routes))
         old_routes = self._get_extra_routes_by_router_id(context, router['id'])
         added, removed = helpers.diff_list_of_dict(old_routes, routes)
         LOG.debug('Added routes are %s', added)
