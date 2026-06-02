@@ -279,6 +279,23 @@ class BaseTestOVNL3RouterPluginMixin:
         self.get_subnet = self._start_mock(
             'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_subnet',
             return_value=self.fake_subnet)
+
+        def _get_subnets_from_get_subnet(ctx, filters=None, **kwargs):
+            subnet_ids = (filters or {}).get('id', [])
+            subnets = []
+            for sid in subnet_ids:
+                subnet = self.get_subnet(ctx, sid)
+                if subnet is not None:
+                    # get_subnet mocks often ignore ``sid``; bulk lookup keys
+                    # results by the requested id.
+                    subnet = dict(subnet)
+                    subnet['id'] = sid
+                    subnets.append(subnet)
+            return subnets
+
+        self.get_subnets = self._start_mock(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_subnets',
+            side_effect=_get_subnets_from_get_subnet)
         self.get_subnets_by_network = self._start_mock(
             'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
             'get_subnets_by_network',

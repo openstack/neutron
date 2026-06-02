@@ -395,6 +395,175 @@ class TestOVNClient(TestOVNClientBase):
                 ctx, 'fake-id')
         self.assertEqual([const.IPv4_ANY], cidrs)
 
+    def test__get_nets_and_ipv6_ra_confs_ipv4_only(self):
+        """Single bulk get_subnets call for all fixed IPs."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnets = [
+            {'id': 'sub1', 'cidr': '10.0.0.0/24',
+             'network_id': 'net1', 'ipv6_address_mode': None},
+            {'id': 'sub2', 'cidr': '20.0.0.0/16',
+             'network_id': 'net1', 'ipv6_address_mode': None},
+        ]
+        plugin.get_subnets.return_value = subnets
+        port = {
+            'fixed_ips': [
+                {'subnet_id': 'sub1', 'ip_address': '10.0.0.5'},
+                {'subnet_id': 'sub2', 'ip_address': '20.0.1.5'},
+            ],
+            'device_owner': const.DEVICE_OWNER_ROUTER_INTF,
+        }
+
+        ctx = ncontext.Context()
+        networks, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        self.assertEqual(sorted(networks), ['10.0.0.5/24', '20.0.1.5/16'])
+        self.assertEqual({}, ipv6_ra_configs)
+        plugin.get_subnets.assert_called_once_with(
+            ctx, filters={'id': ['sub1', 'sub2']})
+        plugin.get_network.assert_not_called()
+        plugin.get_subnet.assert_not_called()
+
+    def test__get_nets_and_ipv6_ra_confs_with_ipv6_ra(self):
+        """IPv6 RA config is populated and network is fetched once."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnets = [
+            {'id': 'sub1', 'cidr': '10.0.0.0/24',
+             'network_id': 'net1', 'ipv6_address_mode': None},
+            {'id': 'sub-v6', 'cidr': 'fd00::/64',
+             'network_id': 'net1', 'ipv6_address_mode': 'dhcpv6-stateful'},
+        ]
+        plugin.get_subnets.return_value = subnets
+        network = {'id': 'net1', 'mtu': 1500,
+                   'router:external': False}
+        plugin.get_network.return_value = network
+        port = {
+            'fixed_ips': [
+                {'subnet_id': 'sub1', 'ip_address': '10.0.0.5'},
+                {'subnet_id': 'sub-v6', 'ip_address': 'fd00::5'},
+            ],
+            'device_owner': const.DEVICE_OWNER_ROUTER_INTF,
+        }
+
+        ctx = ncontext.Context()
+        networks, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        self.assertIn('10.0.0.5/24', networks)
+        self.assertIn('fd00::5/64', networks)
+        self.assertEqual('true', ipv6_ra_configs['send_periodic'])
+        self.assertEqual('1500', ipv6_ra_configs['mtu'])
+        self.assertIn('address_mode', ipv6_ra_configs)
+        plugin.get_subnets.assert_called_once()
+        plugin.get_network.assert_called_once_with(ctx, 'net1')
+
+    def test__get_nets_and_ipv6_ra_confs_gw_port_external_net(self):
+        """Gateway port on external network sets send_periodic to false."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnets = [
+            {'id': 'sub-v6', 'cidr': 'fd00::/64',
+             'network_id': 'ext-net', 'ipv6_address_mode': 'slaac'},
+        ]
+        plugin.get_subnets.return_value = subnets
+        network = {'id': 'ext-net', 'mtu': 9000,
+                   'router:external': True}
+        plugin.get_network.return_value = network
+        port = {
+            'fixed_ips': [
+                {'subnet_id': 'sub-v6', 'ip_address': 'fd00::1'},
+            ],
+            'device_owner': const.DEVICE_OWNER_ROUTER_GW,
+        }
+
+        ctx = ncontext.Context()
+        networks, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        self.assertEqual(['fd00::1/64'], networks)
+        self.assertEqual('false', ipv6_ra_configs['send_periodic'])
+        self.assertEqual('9000', ipv6_ra_configs['mtu'])
+
+    def test__get_nets_and_ipv6_ra_confs_only_first_ipv6_subnet(self):
+        """Only the first IPv6 subnet with address_mode populates RA."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnets = [
+            {'id': 'sub-v6a', 'cidr': 'fd00::/64',
+             'network_id': 'net1', 'ipv6_address_mode': 'slaac'},
+            {'id': 'sub-v6b', 'cidr': 'fd01::/64',
+             'network_id': 'net1', 'ipv6_address_mode': 'dhcpv6-stateful'},
+        ]
+        plugin.get_subnets.return_value = subnets
+        network = {'id': 'net1', 'mtu': 1500,
+                   'router:external': False}
+        plugin.get_network.return_value = network
+        port = {
+            'fixed_ips': [
+                {'subnet_id': 'sub-v6a', 'ip_address': 'fd00::5'},
+                {'subnet_id': 'sub-v6b', 'ip_address': 'fd01::5'},
+            ],
+            'device_owner': const.DEVICE_OWNER_ROUTER_INTF,
+        }
+
+        ctx = ncontext.Context()
+        _, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        plugin.get_network.assert_called_once()
+        self.assertEqual('true', ipv6_ra_configs['send_periodic'])
+
+    def test__get_nets_and_ipv6_ra_confs_missing_subnet(self):
+        """Gracefully skip fixed IPs whose subnet was not found."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        plugin.get_subnets.return_value = [
+            {'id': 'sub1', 'cidr': '10.0.0.0/24',
+             'network_id': 'net1', 'ipv6_address_mode': None},
+        ]
+        port = {
+            'fixed_ips': [
+                {'subnet_id': 'sub1', 'ip_address': '10.0.0.5'},
+                {'subnet_id': 'sub-gone', 'ip_address': '10.1.0.5'},
+            ],
+            'device_owner': const.DEVICE_OWNER_ROUTER_INTF,
+        }
+
+        ctx = ncontext.Context()
+        networks, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        self.assertEqual(['10.0.0.5/24'], networks)
+        self.assertEqual({}, ipv6_ra_configs)
+
+    def test__get_nets_and_ipv6_ra_confs_empty_fixed_ips(self):
+        """No fixed IPs returns empty results."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        plugin.get_subnets.return_value = []
+        port = {
+            'fixed_ips': [],
+            'device_owner': const.DEVICE_OWNER_ROUTER_INTF,
+        }
+
+        ctx = ncontext.Context()
+        networks, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        self.assertEqual([], networks)
+        self.assertEqual({}, ipv6_ra_configs)
+        plugin.get_subnets.assert_called_once_with(
+            ctx, filters={'id': []})
+        plugin.get_network.assert_not_called()
+
 
 class TestOVNClientFairMeter(TestOVNClientBase,
                              test_log_driver.TestOVNDriverBase):
