@@ -31,3 +31,19 @@ class SetChassisBgpBridgesCommand(ovs_cmd.BaseCommand):
             sorted(self.bridge_name_list))
 
         self.set_column(chassis, 'external_ids', external_ids)
+
+
+class GetPatchPortsFromBridgeCommand(ovs_cmd.ReadOnlyCommand):
+    def __init__(self, api, bridge_name):
+        super().__init__(api)
+        self.bridge_name = bridge_name
+
+    def run_idl(self, txn):
+        self.result = []
+        bridge = self.api.lookup('Bridge', self.bridge_name)
+        for port in bridge.ports:
+            if port.name == self.bridge_name:
+                continue
+            for iface in port.interfaces:
+                if iface.type == 'patch' and iface.ofport:
+                    self.result.append(iface)
