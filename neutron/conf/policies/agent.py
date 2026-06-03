@@ -177,6 +177,23 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_l3-router',
+        check_str=base.ADMIN,
+        description='Update a router in an L3 agent',
+        operations=[
+            {
+                'method': 'PUT',
+                'path': '/agents/{agent_id}/l3-routers/{router_id}',
+            },
+        ],
+        scope_types=['project'],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_l3-router',
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATION_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
         name='delete_l3-router',
         check_str=base.ADMIN,
         description='Remove a router from an L3 agent',

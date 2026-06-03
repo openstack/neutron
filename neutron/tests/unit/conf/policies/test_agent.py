@@ -86,6 +86,12 @@ class SystemAdminTests(AgentAPITestCase):
             policy.enforce,
             self.context, "get_l3-routers", self.target)
 
+    def test_update_router_in_l3_agent(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "update_l3-router", self.target)
+
     def test_delete_router_from_l3_agent(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -169,6 +175,12 @@ class AdminTests(AgentAPITestCase):
             policy.enforce(self.context,
                            "get_l3-routers", self.target))
 
+    def test_update_router_in_l3_agent(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           "update_l3-router",
+                           self.target))
+
     def test_delete_router_from_l3_agent(self):
         self.assertTrue(
             policy.enforce(self.context,
@@ -245,6 +257,12 @@ class ProjectManagerTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "get_l3-routers", self.target)
+
+    def test_update_router_in_l3_agent(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "update_l3-router", self.target)
 
     def test_delete_router_from_l3_agent(self):
         self.assertRaises(
@@ -337,6 +355,12 @@ class ServiceRoleTests(AgentAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "get_l3-routers", self.target)
+
+    def test_update_router_in_l3_agent(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "update_l3-router", self.target)
 
     def test_delete_router_from_l3_agent(self):
         self.assertRaises(
