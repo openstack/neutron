@@ -88,7 +88,6 @@
         - neutron-fullstack
         - neutron-fullstack-fips
         - neutron-fullstack-with-pyroute2-master
-        - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
         - neutron-ovs-tempest-with-os-ken-master
@@ -123,20 +122,3 @@
         - neutron-tempest-plugin-ovn-with-ovn-metadata-agent
     experimental:
       jobs: *neutron-periodic-jobs
-
-- project-template:
-    name: neutron-skip-level-jobs
-    # During a SLURP release, these jobs are executed in the check queue,
-    # otherwise periodic/experimental. SLURP releases are 2024.1, 2025.1, etc.
-    check:
-      jobs:
-        - neutron-ovs-grenade-multinode-skip-level
-        - neutron-ovn-grenade-multinode-skip-level
-    #periodic:
-    #  jobs:
-    #    - neutron-ovs-grenade-multinode-skip-level
-    #    - neutron-ovn-grenade-multinode-skip-level
-    #experimental:
-    #  jobs:
-    #    - neutron-ovs-grenade-multinode-skip-level
-    #    - neutron-ovn-grenade-multinode-skip-level
