@@ -67,7 +67,7 @@ class BGPTopologyReconciler:
         ]
 
     def full_sync(self):
-        if not self.nb_api.ovsdb_connection.idl.is_lock_contended:
+        if self.nb_api.ovsdb_connection.idl.has_lock:
             LOG.info("Full BGP topology synchronization started")
             # First make sure all chassis are indexed
             commands.FullSyncBGPTopologyCommand(
