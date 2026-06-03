@@ -30,6 +30,7 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import resource
 from neutron.api import wsgi
+from neutron.common.ovn import constants as ovn_const
 from neutron import policy
 
 LOG = logging.getLogger(__name__)
@@ -65,9 +66,24 @@ class RouterSchedulerController(wsgi.Controller):
                        {})
         agent_id = kwargs['agent_id']
         router_id = body['router_id']
-        result = plugin.add_router_to_l3_agent(request.context, agent_id,
-                                               router_id)
+        ha_chassis_priority = body.get('ha_chassis_priority')
+        result = plugin.add_router_to_l3_agent(
+            request.context, agent_id, router_id,
+            ha_chassis_priority=ha_chassis_priority)
         notify(request.context, 'l3_agent.router.add', router_id, agent_id)
+        return result
+
+    def update(self, request, id, body, **kwargs):
+        plugin = self.get_plugin()
+        policy.enforce(request.context,
+                       "update_%s" % L3_ROUTER,
+                       {})
+        agent_id = kwargs['agent_id']
+        ha_chassis_priority = body.get('ha_chassis_priority')
+        result = plugin.update_router_in_l3_agent(
+            request.context, agent_id, id,
+            ha_chassis_priority=ha_chassis_priority)
+        notify(request.context, 'l3_agent.router.update', id, agent_id)
         return result
 
     def delete(self, request, id, **kwargs):
@@ -155,6 +171,11 @@ class RouterHostedByL3Agent(exceptions.Conflict):
                 "by the L3 Agent %(agent_id)s.")
 
 
+class RouterNotHostedByL3Agent(exceptions.Conflict):
+    message = _("The router %(router_id)s is not hosted by the L3 Agent "
+                "%(agent_id)s.")
+
+
 class RouterSchedulingFailed(exceptions.Conflict):
     message = _("Failed scheduling router %(router_id)s to "
                 "the L3 Agent %(agent_id)s.")
@@ -184,6 +205,18 @@ class RouterDoesntSupportScheduling(exceptions.Conflict):
     message = _("Router %(router_id)s does not support agent scheduling.")
 
 
+class InvalidHAChassisPriority(exceptions.BadRequest):
+    message = (_('HA Chassis priority must be between %(low)s and '
+                '%(high)s') %
+               {'low': ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY,
+                'high': ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY})
+
+
+class HAChassisPriorityAlreadyAssigned(exceptions.Conflict):
+    message = _('HA Chassis priority %(ha_chassis_priority)s is already '
+                'assigned')
+
+
 class L3AgentSchedulerPluginBase(metaclass=abc.ABCMeta):
     """REST API to operate the l3 agent scheduler.
 
@@ -191,11 +224,17 @@ class L3AgentSchedulerPluginBase(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def add_router_to_l3_agent(self, context, id, router_id):
+    def add_router_to_l3_agent(self, context, id, router_id,
+                               ha_chassis_priority=None):
         pass
 
     @abc.abstractmethod
     def remove_router_from_l3_agent(self, context, id, router_id):
+        pass
+
+    @abc.abstractmethod
+    def update_router_in_l3_agent(self, context, id, router_id,
+                                  ha_chassis_priority=None):
         pass
 
     @abc.abstractmethod

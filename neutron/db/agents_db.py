@@ -247,10 +247,13 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         return load
 
     def _make_agent_dict(self, agent, fields=None):
-        attr = agent_apidef.RESOURCE_ATTRIBUTE_MAP.get(
-            agent_apidef.COLLECTION_NAME)
+        attr = agent_apidef.RESOURCE_ATTRIBUTE_MAP[
+            agent_apidef.COLLECTION_NAME]
         res = {k: agent[k] for k in attr
-               if k not in ['alive', 'configurations']}
+               if k not in ['alive',
+                            'configurations',
+                            'ha_chassis_priority',
+                            ]}
         res['alive'] = not utils.is_agent_down(
             res['heartbeat_timestamp']
         )
@@ -259,6 +262,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                                   ignore_missing=True)
         res['availability_zone'] = agent['availability_zone']
         res['resources_synced'] = agent['resources_synced']
+        res['ha_chassis_priority'] = None
         return db_utils.resource_fields(res, fields)
 
     @db_api.retry_if_session_inactive()

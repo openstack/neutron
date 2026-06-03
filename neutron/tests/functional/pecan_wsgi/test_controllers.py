@@ -24,6 +24,7 @@ from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import pecan
 from pecan import request
+import webob.exc
 
 from neutron.api import extensions
 from neutron.conf import quota as qconf
@@ -955,7 +956,8 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
         policy._ENFORCER.set_rules(
             oslo_policy.Rules.from_dict(
                 {'get_l3-agents': 'role:admin',
-                 'get_l3-routers': 'role:admin'}),
+                 'get_l3-routers': 'role:admin',
+                 'update_l3-router': 'role:admin'}),
             overwrite=False)
         ctx = context.get_admin_context()
         l3_plugin = directory.get_plugin(plugin_constants.L3)
@@ -977,7 +979,7 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
             headers={'X-Roles': 'admin'})
         self.assertEqual(200, response.status_int)
 
-    def test_add_remove_l3_agent(self):
+    def test_add_update_remove_l3_agent(self):
         headers = {'X-Project-Id': 'projid', 'X-Roles': 'admin'}
         response = self.app.post_json(
             '/v2.0/agents/%s/l3-routers.json' % self.agent.id,
@@ -988,6 +990,17 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
             headers=headers)
         self.assertIn(self.agent.id,
                       [a['id'] for a in response.json['agents']])
+        response = self.app.put_json(
+            '/v2.0/agents/{a}/l3-routers/{n}.json'.format(
+                a=self.agent.id, n=self.router['id']),
+            headers=headers,
+            params={'ha_chassis_priority': 100},
+            expect_errors=True)
+        # L3AgentSchedulerDbMixin.update_router_in_l3_agent raises
+        # NotImplementedError; only OVN implements this method. Neutron
+        # maps NotImplementedError to HTTP 501 (see api_common.py).
+        self.assertEqual(webob.exc.HTTPNotImplemented.code,
+                         response.status_int)
         response = self.app.delete(
             '/v2.0/agents/{a}/l3-routers/{n}.json'.format(
                 a=self.agent.id, n=self.router['id']), headers=headers)
