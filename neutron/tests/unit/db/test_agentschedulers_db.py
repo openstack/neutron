@@ -43,17 +43,20 @@ from neutron.api.rpc.handlers import l3_rpc
 from neutron.api import wsgi
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
+from neutron.db import l3_agentschedulers_db
 from neutron.db.models import agent as agent_model
 from neutron.extensions import l3agentscheduler
 from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
 from neutron import policy
+from neutron.tests import base
 from neutron.tests.common import helpers
 from neutron.tests.common import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_agent
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit import testlib_api
+from neutron import worker as neutron_worker
 
 
 L3_HOSTA = 'hosta'
@@ -1774,3 +1777,54 @@ class OvsL3AgentNotifierTestCase(test_l3.L3NatTestCaseMixin,
 
             mock_cast.assert_called_with(
                 mock.ANY, 'agent_updated', payload={'admin_state_up': False})
+
+
+class AgentStatusCheckWorkerTestCase(base.BaseTestCase):
+
+    def _assert_worker_registered(self, mixin, method_name, desc):
+        with mock.patch.object(mixin, 'add_worker', create=True) as add_worker:
+            getattr(mixin, method_name)()
+            add_worker.assert_called_once()
+            worker = add_worker.call_args[0][0]
+            self.assertIsInstance(worker, neutron_worker.PeriodicWorker)
+            self.assertEqual(desc, worker.desc)
+
+    def test_add_agent_status_check_worker(self):
+        mixin = agentschedulers_db.AgentSchedulerDbMixin()
+        check_func = mock.Mock()
+        desc = 'Periodic worker for "test_check"'
+        with mock.patch.object(mixin, 'add_worker', create=True) as add_worker:
+            mixin.add_agent_status_check_worker(check_func, desc=desc)
+            add_worker.assert_called_once()
+            worker = add_worker.call_args[0][0]
+            self.assertIsInstance(worker, neutron_worker.PeriodicWorker)
+            self.assertEqual(desc, worker.desc)
+            self.assertIs(check_func, worker._check_func)
+
+    def test_add_periodic_dhcp_agent_status_check(self):
+        cfg.CONF.set_override('allow_automatic_dhcp_failover', True)
+        mixin = agentschedulers_db.DhcpAgentSchedulerDbMixin()
+        self._assert_worker_registered(
+            mixin, 'add_periodic_dhcp_agent_status_check',
+            'Periodic worker for "remove_networks_from_down_agents"')
+
+    def test_add_periodic_dhcp_agent_status_check_disabled(self):
+        cfg.CONF.set_override('allow_automatic_dhcp_failover', False)
+        mixin = agentschedulers_db.DhcpAgentSchedulerDbMixin()
+        with mock.patch.object(mixin, 'add_worker', create=True) as add_worker:
+            mixin.add_periodic_dhcp_agent_status_check()
+            add_worker.assert_not_called()
+
+    def test_add_periodic_l3_agent_status_check(self):
+        cfg.CONF.set_override('allow_automatic_l3agent_failover', True)
+        mixin = l3_agentschedulers_db.L3AgentSchedulerDbMixin()
+        self._assert_worker_registered(
+            mixin, 'add_periodic_l3_agent_status_check',
+            'Periodic worker for "reschedule_routers_from_down_agents"')
+
+    def test_add_periodic_l3_agent_status_check_disabled(self):
+        cfg.CONF.set_override('allow_automatic_l3agent_failover', False)
+        mixin = l3_agentschedulers_db.L3AgentSchedulerDbMixin()
+        with mock.patch.object(mixin, 'add_worker', create=True) as add_worker:
+            mixin.add_periodic_l3_agent_status_check()
+            add_worker.assert_not_called()

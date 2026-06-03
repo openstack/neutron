@@ -307,7 +307,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.notifier = notifier_utils.RPCNotifierHandler()
         self._setup_dhcp()
         self._start_rpc_notifiers()
-        self.add_agent_status_check_worker(self.agent_health_check)
+        desc = 'Periodic worker for "agent_health_check"'
+        self.add_agent_status_check_worker(self.agent_health_check, desc=desc)
         self.add_workers(self.mechanism_manager.get_workers())
         self._verify_service_plugins_requirements()
         self._quota_workers()

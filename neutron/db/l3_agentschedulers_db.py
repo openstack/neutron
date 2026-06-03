@@ -57,8 +57,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
                      "automatic router rescheduling is disabled.")
             return
 
+        desc = 'Periodic worker for "reschedule_routers_from_down_agents"'
         self.add_agent_status_check_worker(
-            self.reschedule_routers_from_down_agents)
+            self.reschedule_routers_from_down_agents, desc=desc)
 
     def reschedule_routers_from_down_agents(self):
         """Reschedule routers from down l3 agents if admin state is up."""
