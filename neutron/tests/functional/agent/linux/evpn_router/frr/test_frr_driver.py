@@ -247,7 +247,8 @@ class TestFrrVtyshDriverConfiguration(base.BaseSudoTestCase):
     def setUp(self):
         super().setUp()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
-        self.useFixture(net_helpers.FrrFixture(namespace=self.namespace))
+        self.frr_fixture = self.useFixture(
+            net_helpers.FrrFixture(namespace=self.namespace))
 
         vrf_handler = NamespacedVRFHandler(self.namespace)
         executor = FrrVtyshExecutorNamespaced(self.namespace)
@@ -320,6 +321,18 @@ class TestFrrVtyshDriverConfiguration(base.BaseSudoTestCase):
         self.assertIn('router bgp 65000 vrf vrf-100', running_config)
         self.assertIn('vni 100', running_config)
 
+    def test_running_config_persist_on_reboot(self):
+        config = make_evpn_config(vni=100)
+        self.driver.create_evpn_router(config)
+
+        self.frr_fixture.restart_frr()
+
+        running_config = self._get_running_config()
+        self.assertIn('router bgp 65000', running_config)
+        self.assertIn('bgp router-id 10.0.0.1', running_config)
+        self.assertIn('router bgp 65000 vrf vrf-100', running_config)
+        self.assertIn('vni 100', running_config)
+
     def test_delete_noexisting_router_raises(self):
         config = make_evpn_config(vni=101)
 
@@ -350,7 +363,8 @@ class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
 
         self.ns_a = self.useFixture(
             net_helpers.NamespaceFixture('frr-a-')).name
-        self.useFixture(net_helpers.FrrFixture(namespace=self.ns_a))
+        self.frr_fixture_a = self.useFixture(
+            net_helpers.FrrFixture(namespace=self.ns_a))
 
         self.ns_b = self.useFixture(
             net_helpers.NamespaceFixture('frr-b-')).name
@@ -443,3 +457,41 @@ class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
 
         assert_routes(self.ns_b, table_id=vni_1, absent=route_1)
         assert_routes(self.ns_b, table_id=vni_2, present=route_2)
+
+    def test_routes_persist_after_restart(self):
+        vni = 10
+        advertised_routes = {'11.1.1.1/32', '12.1.1.0/32'}
+        conf_a = make_evpn_config(vni=vni, bgp_router_id=self.vtep_ip_a)
+        conf_b = make_evpn_config(vni=vni, bgp_router_id=self.vtep_ip_b)
+
+        self.driver_a.create_evpn_router(conf_a)
+        self.driver_b.create_evpn_router(conf_b)
+
+        add_blackhole_routes(
+            self.ns_a, advertised_routes, table_id=vni)
+        assert_routes(self.ns_b, table_id=vni, present=advertised_routes)
+
+        self.frr_fixture_a.restart_frr()
+
+        assert_routes(self.ns_b, table_id=vni, present=advertised_routes)
+
+    def test_routes_withdrawn_on_stop_and_restored_on_start(self):
+        vni = 123
+        advertised_routes = {'10.0.1.1/32', '12.2.1.1/32'}
+        conf_a = make_evpn_config(vni=vni, bgp_router_id=self.vtep_ip_a)
+        conf_b = make_evpn_config(vni=vni, bgp_router_id=self.vtep_ip_b)
+
+        self.driver_a.create_evpn_router(conf_a)
+        self.driver_b.create_evpn_router(conf_b)
+
+        add_blackhole_routes(
+            self.ns_a, advertised_routes, table_id=vni)
+        assert_routes(self.ns_b, table_id=vni, present=advertised_routes)
+
+        self.frr_fixture_a.stop_frr()
+
+        assert_routes(self.ns_b, table_id=vni, absent=advertised_routes)
+
+        self.frr_fixture_a.start_frr()
+
+        assert_routes(self.ns_b, table_id=vni, present=advertised_routes)

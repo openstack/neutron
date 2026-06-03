@@ -1151,10 +1151,9 @@ class FrrFixture(fixtures.Fixture):
         self._state_dir = os.path.join(self.FRR_STATE_DIR_BASE, namespace)
 
     def _setUp(self):
-        self.addCleanup(self._stop_frr)
-        self.addCleanup(self._remove_config)
+        self.addCleanup(self._cleanup_frr)
         self._create_config()
-        self._start_frr()
+        self.start_frr()
 
     @staticmethod
     def _write_file(path, content):
@@ -1185,23 +1184,34 @@ class FrrFixture(fixtures.Fixture):
             ['chown', '-R', 'frr:frr', self._conf_dir],
             run_as_root=True)
 
-    def _start_frr(self):
+    def start_frr(self):
         utils.execute(
             [self.FRRINIT, 'start', self.namespace],
             run_as_root=True)
 
-    def _stop_frr(self):
+    def stop_frr(self):
+        utils.execute(
+            [self.FRRINIT, 'stop', self.namespace],
+            run_as_root=True)
+
+    def restart_frr(self):
+        utils.execute(
+            [self.FRRINIT, 'restart', self.namespace],
+            run_as_root=True)
+
+    def _cleanup_frr(self):
+        # NOTE: frrinit.sh returns 0 when stopping an already-stopped
+        # service, so this is safe even if a test stopped FRR earlier.
+        # However, stop must be called before config directories are
+        # removed.
         try:
-            utils.execute(
-                [self.FRRINIT, 'stop', self.namespace],
-                run_as_root=True)
+            self.stop_frr()
         except RuntimeError:
             LOG.error("Failed to stop FRR in namespace %s", self.namespace)
 
-    def _remove_config(self):
-        for dir in (self._conf_dir, self._state_dir):
+        for pathspace_dir in (self._conf_dir, self._state_dir):
             try:
                 utils.execute(
-                    ['rm', '-rf', dir], run_as_root=True)
+                    ['rm', '-rf', pathspace_dir], run_as_root=True)
             except RuntimeError:
-                LOG.error("Failed to remove %s", dir)
+                LOG.error("Failed to remove %s", pathspace_dir)
