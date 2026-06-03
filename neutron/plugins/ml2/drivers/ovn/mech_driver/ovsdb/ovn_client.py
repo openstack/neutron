@@ -871,10 +871,13 @@ class OVNClient:
             if port_object and self.is_dns_required_for_port(port_object):
                 self.add_txns_to_remove_port_dns_records(txn, port_object)
 
-            # Check if the port being deleted is a virtual parent
+            # Check if the port being deleted is a virtual parent.
+            # Use lookup() instead of ls_get().execute() to avoid creating
+            # a nested read transaction; lookup() is a direct in-memory
+            # IDL access.
             if ovn_port.type != ovn_const.LSP_TYPE_VIRTUAL:
-                ls = self._nb_idl.ls_get(ovn_network_name).execute(
-                    check_error=True)
+                ls = self._nb_idl.lookup('Logical_Switch',
+                                         ovn_network_name)
                 cmd = self._nb_idl.unset_lswitch_port_to_virtual_type
                 for lsp in ls.ports:
                     if lsp.type != ovn_const.LSP_TYPE_VIRTUAL:
