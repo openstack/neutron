@@ -72,6 +72,7 @@ OVN_ROUTER_PORT_GW_MTU_OPTION = 'gateway_mtu'
 OVN_OWNED = 'ovn-owned'
 
 OVN_PROVNET_PORT_NAME_PREFIX = 'provnet-'
+OVN_LOCALNET_PORT_EXT_ID_KEY = 'ovn-localnet-port'
 OVN_NAME_PREFIX = 'neutron-'
 OVN_HA_CH_GROUP_EXTPORT_PREFIX = 'neutron-extport-'
 OVN_METADATA_PREFIX = 'ovnmeta-'

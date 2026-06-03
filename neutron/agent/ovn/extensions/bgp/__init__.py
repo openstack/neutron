@@ -57,7 +57,11 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
 
     @property
     def nb_idl_tables(self):
-        return []
+        return [
+            'Logical_Switch',
+            'Logical_Switch_Port',
+            'Logical_Router_Port',
+        ]
 
     @property
     def nb_idl_events(self):
@@ -130,6 +134,12 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
             self.agent_api.sb_idl,
             self.chassis_name,
             bridge_name_list
+        ).execute(check_error=True)
+
+    def get_interconnect_lrp_mac(self, localnet_port_name):
+        return commands.GetInterconnectLrpMacCommand(
+            self.agent_api.nb_idl,
+            localnet_port_name
         ).execute(check_error=True)
 
     def watch_port_created_event(self, bgp_bridge, *port_types):

@@ -15,3 +15,7 @@
 
 class BridgeNicException(Exception):
     pass
+
+
+class InterconnectLrpMacNotFound(Exception):
+    pass
