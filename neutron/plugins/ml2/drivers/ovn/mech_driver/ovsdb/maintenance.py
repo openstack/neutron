@@ -293,7 +293,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     @property
     def has_lock(self):
-        return not self._idl.is_lock_contended
+        return self._idl.has_lock
 
     def nbdb_schema_updated_hook(self):
         if not self.has_lock:
