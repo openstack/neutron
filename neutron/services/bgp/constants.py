@@ -15,6 +15,8 @@
 
 import enum
 
+MAIN_ROUTER_NAME = 'bgp-lr-main'
+
 BGP_ROUTER_REDISTRIBUTE = 'connected-as-host,nat'
 OVN_DYNAMIC_ROUTING_PORT_MAPPING = 'dynamic-routing-port-mapping'
 

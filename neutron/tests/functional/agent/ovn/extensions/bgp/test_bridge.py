@@ -22,7 +22,6 @@ from neutron.agent.ovn.extensions.bgp import commands
 from neutron.agent.ovsdb import impl_idl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
-from neutron.conf.services import bgp as bgp_config
 from neutron.services.bgp import constants
 from neutron.services.bgp import helpers
 from neutron.services.bgp import ovn as bgp_ovn
@@ -248,7 +247,7 @@ class BGPInterconnectBridgeTestCase(BgpTestCaseWithIdls):
         return self.ovs_api.lookup('Interface', iface_name)
 
     def _create_nb_interconnect(self, ic_switch_name, lrp_mac):
-        lr_name = bgp_config.get_main_router_name()
+        lr_name = constants.MAIN_ROUTER_NAME
         lrp_name = helpers.get_lrp_name(lr_name, ic_switch_name)
         localnet_lsp_name = helpers.get_lsp_localnet_name(ic_switch_name)
         ls_name = utils.get_rand_name(max_length=14, prefix='ls')

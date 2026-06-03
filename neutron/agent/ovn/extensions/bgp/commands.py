@@ -18,7 +18,6 @@ import re
 from ovsdbapp.backend.ovs_idl import command as ovs_cmd
 
 from neutron.agent.ovn.extensions.bgp import exceptions
-from neutron.conf.services import bgp as bgp_config
 from neutron.services.bgp import constants
 from neutron.services.bgp import helpers
 
@@ -60,8 +59,8 @@ class GetInterconnectLrpMacCommand(ovs_cmd.ReadOnlyCommand):
                 "naming convention pattern 'bgp-lsp-<ic_switch_name>-localnet'"
             )
         ic_switch_name = match.group('ic_switch_name')
-        main_router_name = bgp_config.get_main_router_name()
-        self.lrp_name = helpers.get_lrp_name(main_router_name, ic_switch_name)
+        self.lrp_name = helpers.get_lrp_name(
+            constants.MAIN_ROUTER_NAME, ic_switch_name)
 
     def run_idl(self, txn):
         lrp = self.api.lookup("Logical_Router_Port", self.lrp_name)
