@@ -146,6 +146,10 @@ class PVLANPlugin(service_base.ServicePluginBase):
                 context, network_id=network_id, pvlan=enable_pvlan
             ).create()
 
+        # Update the desired state for a correct PUT response.
+        if payload and payload.desired_state:
+            payload.desired_state[pvlan_const.PVLAN] = enable_pvlan
+
     def _pvlan_port_driver_update(self, resource, event, trigger,
                                   payload=None, **kwargs):
         """Call the driver after the port is created, updated or deleted."""
@@ -287,6 +291,12 @@ class PVLANPlugin(service_base.ServicePluginBase):
                 pvlan_type=pvlan_type,
                 pvlan_community=pvlan_community,
             ).create()
+
+        # Update the desired state for a correct PUT response.
+        if payload and payload.desired_state:
+            payload.desired_state[pvlan_const.PVLAN_TYPE] = pvlan_type
+            payload.desired_state[pvlan_const.PVLAN_COMMUNITY] = (
+                pvlan_community)
         return True
 
     def _check_port_security(self, network, port_data):
