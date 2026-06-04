@@ -193,9 +193,10 @@ class TestConntrackHelperPlugin(testlib_api.SqlTestCase):
         cth_obj = mock.Mock()
         cth_obj.helper = 'tftp'
         cth_obj.protocol = 'udp'
+        cth_obj.router_id = 'fake-router'
         mock_cth_get_object.return_value = cth_obj
         self.cth_plugin.update_router_conntrack_helper(
-            self.ctxt, 'cth_id', mock.ANY, **cth_input)
+            self.ctxt, 'cth_id', 'fake-router', **cth_input)
         mock_cth_get_object.assert_called_once_with(self.ctxt, id='cth_id')
         self.assertTrue(cth_obj.update_fields)
         self.assertTrue(cth_obj.update)
@@ -216,12 +217,31 @@ class TestConntrackHelperPlugin(testlib_api.SqlTestCase):
         self.assertRaises(
             cth_exc.ConntrackHelperNotFound,
             self.cth_plugin.update_router_conntrack_helper,
-            self.ctxt, 'cth_id', mock.ANY, **cth_input)
+            self.ctxt, 'cth_id', 'fake-router', **cth_input)
+
+    @mock.patch.object(conntrack_helper.ConntrackHelper, 'get_object')
+    def test_negative_update_conntrack_helper_wrong_router(
+            self, mock_cth_get_object):
+        cth_input = {
+            'conntrack_helper': {
+                'conntrack_helper': {
+                    'protocol': 'udp',
+                    'port': 69,
+                    'helper': 'tftp'}
+            }
+        }
+        mock_cth_get_object.return_value = mock.Mock(
+            router_id='correct-router')
+        self.assertRaises(
+            cth_exc.ConntrackHelperNotFound,
+            self.cth_plugin.update_router_conntrack_helper,
+            self.ctxt, 'cth_id', 'other-router', **cth_input)
 
     @mock.patch.object(conntrack_helper.ConntrackHelper, 'get_object')
     def test_get_conntrack_helper(self, get_object_mock):
+        get_object_mock.return_value = mock.Mock(router_id='fake-router')
         self.cth_plugin.get_router_conntrack_helper(
-            self.ctxt, 'cth_id', mock.ANY, fields=None)
+            self.ctxt, 'cth_id', 'fake-router', fields=None)
         get_object_mock.assert_called_once_with(self.ctxt, id='cth_id')
 
     @mock.patch.object(conntrack_helper.ConntrackHelper, 'get_object')
@@ -230,7 +250,16 @@ class TestConntrackHelperPlugin(testlib_api.SqlTestCase):
         self.assertRaises(
             cth_exc.ConntrackHelperNotFound,
             self.cth_plugin.get_router_conntrack_helper,
-            self.ctxt, 'cth_id', mock.ANY, fields=None)
+            self.ctxt, 'cth_id', 'fake-router', fields=None)
+
+    @mock.patch.object(conntrack_helper.ConntrackHelper, 'get_object')
+    def test_negative_get_conntrack_helper_wrong_router(self,
+                                                        get_object_mock):
+        get_object_mock.return_value = mock.Mock(router_id='victim-router')
+        self.assertRaises(
+            cth_exc.ConntrackHelperNotFound,
+            self.cth_plugin.get_router_conntrack_helper,
+            self.ctxt, 'cth_id', 'other-router', fields=None)
 
     @mock.patch.object(conntrack_helper.ConntrackHelper, 'get_objects')
     def test_get_conntrack_helpers(self, get_objects_mock):
@@ -248,7 +277,7 @@ class TestConntrackHelperPlugin(testlib_api.SqlTestCase):
                             helper='tftp')
         get_object_mock.return_value = cth_obj
         self.cth_plugin.delete_router_conntrack_helper(self.ctxt, 'cth_id',
-                                                       mock.ANY)
+                                                       'fake-router')
         cth_obj.delete.assert_called()
         mock_rpc_push.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.DELETED)
@@ -258,4 +287,12 @@ class TestConntrackHelperPlugin(testlib_api.SqlTestCase):
         get_object_mock.return_value = None
         self.assertRaises(cth_exc.ConntrackHelperNotFound,
                           self.cth_plugin.delete_router_conntrack_helper,
-                          self.ctxt, 'cth_id', mock.ANY)
+                          self.ctxt, 'cth_id', 'fake-router')
+
+    @mock.patch.object(conntrack_helper.ConntrackHelper, 'get_object')
+    def test_negative_delete_conntrack_helper_wrong_router(
+            self, get_object_mock):
+        get_object_mock.return_value = mock.Mock(router_id='correct-router')
+        self.assertRaises(cth_exc.ConntrackHelperNotFound,
+                          self.cth_plugin.delete_router_conntrack_helper,
+                          self.ctxt, 'cth_id', 'other-router')

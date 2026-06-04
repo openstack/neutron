@@ -125,3 +125,30 @@ class ConntrackHelperTestCase(ml2_test_base.ML2TestFramework,
         self.assertRaises(cth_exc.ConntrackHelperNotFound,
                           self.cth_plugin.delete_router_conntrack_helper,
                           self.context, INVALID_ID, self.router['id'])
+
+    def test_negative_singleton_operations_wrong_router(self):
+        res = self.cth_plugin.create_router_conntrack_helper(
+            self.context, self.router['id'], self.conntack_helper)
+        other_router = self._create_router(distributed=True)
+        new_conntack_helper = {
+            apidef.RESOURCE_NAME:
+                {apidef.PROTOCOL: 'udp',
+                 apidef.PORT: 6969,
+                 apidef.HELPER: 'tftp'}
+        }
+        self.assertRaises(
+            cth_exc.ConntrackHelperNotFound,
+            self.cth_plugin.get_router_conntrack_helper,
+            self.context, res['id'], other_router['id'])
+        self.assertRaises(
+            cth_exc.ConntrackHelperNotFound,
+            self.cth_plugin.update_router_conntrack_helper,
+            self.context, res['id'], other_router['id'],
+            new_conntack_helper)
+        self.assertRaises(
+            cth_exc.ConntrackHelperNotFound,
+            self.cth_plugin.delete_router_conntrack_helper,
+            self.context, res['id'], other_router['id'])
+        helper = self.cth_plugin.get_router_conntrack_helper(
+            self.context, res['id'], self.router['id'])
+        self.assertEqual(res['id'], helper['id'])

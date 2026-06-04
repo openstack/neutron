@@ -1,0 +1,8 @@
+---
+security:
+  - |
+    Fixed an issue in the router conntrack helper API where a project
+    member authorized on one router could read, update, or delete another
+    project's conntrack helper by supplying an incorrect helper ID under their
+    own router ID in the request URL. Singleton operations now verify that
+    the conntrack helper belongs to the router specified in the URL.
