@@ -231,6 +231,7 @@
     description: |
       Functional testing for a FIPS enabled Centos 9 system
     vars:
+      tox_envlist: dsvm-fullstack-gate-fips
       nslookup_target: 'opendev.org'
       enable_fips: True
       devstack_localrc:
