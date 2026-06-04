@@ -23,10 +23,6 @@ from neutron._i18n import _
 
 
 core_opts = [
-    cfg.HostAddressOpt('bind_host', default='0.0.0.0',
-                       help=_("The host IP to bind to.")),
-    cfg.PortOpt('bind_port', default=9696,
-                help=_("The port to bind to")),
     cfg.StrOpt('api_extensions_path', default="",
                help=_("The path for API extensions. "
                       "Note that this can be a colon-separated list of paths. "
