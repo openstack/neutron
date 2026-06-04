@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    The following options have been removed. These were used by only
+    the ``neutron-server`` service, which was removed.
+
+    - ``[DEFAULT] bind_host``
+    - ``[DEFAULT] bind_port``
