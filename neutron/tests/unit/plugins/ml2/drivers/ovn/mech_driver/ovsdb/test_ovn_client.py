@@ -253,12 +253,14 @@ class TestOVNClient(TestOVNClientBase):
         port_binding = mock.Mock(host=host_id)
         db_port = mock.Mock(id=port_id, port_bindings=[port_binding])
         self.get_pb_bsah.return_value = port_binding
+        self.nb_idl.lookup.return_value = mock.Mock(up=[True])
 
         self.ovn_client.update_lsp_host_info(context, db_port)
 
         self.nb_idl.db_set.assert_called_once_with(
             'Logical_Switch_Port', port_id,
             ('external_ids', {constants.OVN_HOST_ID_EXT_ID_KEY: host_id}))
+        self.nb_idl.lsp_get_up.assert_not_called()
 
     def test_update_lsp_host_info_up_retry(self):
         context = mock.MagicMock()
@@ -269,6 +271,7 @@ class TestOVNClient(TestOVNClientBase):
         db_port_no_host = mock.Mock(
             id=port_id, port_bindings=[port_binding_no_host])
         self.get_pb_bsah.return_value = None
+        self.nb_idl.lookup.return_value = mock.Mock(up=[True])
 
         with mock.patch.object(
                 self.ovn_client,
@@ -290,6 +293,7 @@ class TestOVNClient(TestOVNClientBase):
         db_port_no_host = mock.Mock(
             id=port_id, port_bindings=[mock.Mock(host="")])
         self.get_pb_bsah.return_value = None
+        self.nb_idl.lookup.return_value = mock.Mock(up=[True])
 
         with mock.patch.object(
                 self.ovn_client,
@@ -307,13 +311,14 @@ class TestOVNClient(TestOVNClientBase):
         context = mock.MagicMock()
         port_id = 'fake-port-id'
         db_port = mock.Mock(id=port_id)
-        self.nb_idl.lsp_get_up.return_value.execute.return_value = False
+        self.nb_idl.lookup.return_value = mock.Mock(up=[False])
 
         self.ovn_client.update_lsp_host_info(context, db_port, up=False)
 
         self.nb_idl.db_remove.assert_called_once_with(
             'Logical_Switch_Port', port_id, 'external_ids',
             constants.OVN_HOST_ID_EXT_ID_KEY, if_exists=True)
+        self.nb_idl.lsp_get_up.assert_not_called()
 
     def test_update_lsp_host_info_trunk_subport(self):
         context = mock.MagicMock()
