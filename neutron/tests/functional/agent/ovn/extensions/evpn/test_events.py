@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import unittest
 from unittest import mock
 
 import testtools
@@ -51,7 +50,7 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
             evpn_events.PortBindingLrpEvpnDeleteEvent(
                 self.mock_evpn_ext._evpn_fsm))
 
-    def _create_evpn_lrp(self, vni, mac):
+    def _create_evpn_lrp(self, vni, mac, vlan=100):
         lr_name = f'lr-evpn-{vni}'
         ls_name = f'ls-evpn-{vni}'
         lrp_name = f'lrp-to-evpn-{vni}'
@@ -71,6 +70,7 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
                 lr_name, lrp_name, mac, [],
                 external_ids={
                     svc_const.EVPN_LRP_VNI_EXT_ID_KEY: str(vni),
+                    svc_const.EVPN_LRP_VLAN_EXT_ID_KEY: str(vlan),
                 },
                 options={
                     'dynamic-routing-maintain-vrf': 'true',
@@ -82,7 +82,8 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
         return vrf
 
     def _create_lrp_without_evpn_match(self, vni, mac,
-                                       set_vrf=True, set_vni=True):
+                                       set_vrf=True, set_vni=True,
+                                       set_vlan=True):
         lr_name = f'lr-no-evpn-{vni}'
         ls_name = f'ls-no-evpn-{vni}'
         lrp_name = f'lrp-no-evpn-{vni}'
@@ -95,6 +96,8 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
         external_ids = {}
         if set_vni:
             external_ids[svc_const.EVPN_LRP_VNI_EXT_ID_KEY] = str(vni)
+        if set_vlan:
+            external_ids[svc_const.EVPN_LRP_VLAN_EXT_ID_KEY] = '100'
         with self.nb_api.transaction(check_error=True) as txn:
             txn.add(self.nb_api.db_set(
                 'Logical_Router', lr_name, options=options))
@@ -122,18 +125,18 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
 
 class PortBindingLrpEvpnCreateEventTestCase(BaseEvpnEventsTestCase):
 
-    @unittest.skip('This has a circular dependency with 991528 and '
-                   'will be fixed in that patch')
     def test_create_event_advances_fsm(self):
         vni = 10000
+        vlan = 100
         mac = 'aa:bb:cc:dd:ee:ff'
-        vrf = self._create_evpn_lrp(vni, mac)
+        vrf = self._create_evpn_lrp(vni, mac, vlan=vlan)
         self._wait_for_advance()
         self.assertIn(vrf, self.real_fsm.instances)
         instance = self.real_fsm.instances[vrf]
         self.assertEqual(evpn_fsm.Evpn.WAITING_FOR_ROUTER, instance.state)
         self.assertEqual(mac, instance.mac)
         self.assertEqual(vni, instance.vni)
+        self.assertEqual(vlan, instance.vid)
 
     def test_create_event_not_triggered_without_vrf_option(self):
         self._create_lrp_without_evpn_match(10001, 'aa:bb:cc:dd:ee:ff',
@@ -147,10 +150,16 @@ class PortBindingLrpEvpnCreateEventTestCase(BaseEvpnEventsTestCase):
         with testtools.ExpectedException(AssertionError):
             self._wait_for_advance(timeout=2)
 
+    def test_create_event_not_triggered_missing_vlan(self):
+        self._create_lrp_without_evpn_match(10003, 'aa:bb:cc:dd:ee:ff',
+                                            set_vlan=False)
+        with testtools.ExpectedException(AssertionError):
+            self._wait_for_advance(timeout=2)
+
     def test_create_event_illegal_fsm_transition(self):
         self.mock_evpn_ext._evpn_fsm.advance.side_effect = \
             evpn_exc.FSMIllegalTransition("forced bad state")
-        self._create_evpn_lrp(10003, 'aa:bb:cc:dd:ee:ff')
+        self._create_evpn_lrp(10004, 'aa:bb:cc:dd:ee:ff')
         self._wait_for_advance()
 
 
