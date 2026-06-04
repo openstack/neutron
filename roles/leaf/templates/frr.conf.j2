@@ -1,5 +1,5 @@
 hostname {{ ansible_hostname }}
-log file /var/log/frr/frr.log
+log file /var/log/frr/frr.log debugging
 service integrated-vtysh-config
 line vty
 frr version 7.0
@@ -30,6 +30,7 @@ router bgp 64999
   neighbor downlink password f00barZ
   ! neighbor downlink capability extended-nexthop
   neighbor controller-port interface peer-group downlink
+  neighbor compute1-port interface peer-group downlink
 
   neighbor uplink peer-group
   neighbor uplink remote-as external

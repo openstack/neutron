@@ -8,14 +8,14 @@
          state: present
 
 - name: Figure out VXLAN endpoints
-  hosts: controller,leafs,spine
+  hosts: controller,compute1,leafs,spine
   tasks:
     - name: Set local IP for VXLAN tunnels
       ansible.builtin.set_fact:
         vxlan_local_ip: "{{ nodepool.private_ipv4 | ipv4 | default(nodepool.public_ipv4) }} "
 
-- name: Setup SSH keys so the controller can start FRR on leaf/spine nodes
-  hosts: controller
+- name: Setup SSH keys so compute nodes can start FRR on leaf/spine
+  hosts: compute
   tasks:
     - name: Generate SSH key for inter-node communication
       become: true
@@ -29,22 +29,37 @@
         src: /root/.ssh/inter_node_key.pub
       register: inter_node_pubkey
 
-- name: Authorize controller SSH key on leaf/spine nodes
+- name: Authorize compute SSH keys on leaf/spine nodes
   hosts: leafs,spine
   tasks:
-    - name: Add controller public key to authorized_keys
+    - name: Add compute public keys to authorized_keys
       ansible.posix.authorized_key:
         user: zuul
-        key: "{{ hostvars[groups['controller'][0]].inter_node_pubkey.content | b64decode | trim }}"
+        key: "{{ hostvars[item].inter_node_pubkey.content | b64decode | trim }}"
         state: present
+      loop: "{{ groups['compute'] }}"
 
-- name: Create tunnels between the controller and the leafs
-  hosts: controller
+- name: Create tunnels between compute nodes and the leafs
+  hosts: compute
+  vars:
+    # Devstack runs on the controller first, then on subnodes. The last
+    # compute subnode is the final node to run local.sh, so it is
+    # responsible for starting FRR on the leaf/spine nodes once all
+    # compute-side interfaces exist.
+    last_compute_node: "{{ groups['compute'] | intersect(groups['subnode']) | sort | last | default(groups['compute'] | sort | last) }}"
+    # todo: get this from a variable
+    top_dir: "/opt/stack/devstack"
+    peer_config:
+      controller:
+        vxlan_key_prefix: "1000"
+        vlan_prefix: "100"
+      compute1:
+        vxlan_key_prefix: "1002"
+        vlan_prefix: "300"
+    vxlan_key_prefix: "{{ peer_config[inventory_hostname].vxlan_key_prefix }}"
+    vlan_prefix: "{{ peer_config[inventory_hostname].vlan_prefix }}"
   tasks:
     - name: Create local.sh script to create tunnels
-      vars:
-        # todo: get this from a variable
-        top_dir: "/opt/stack/devstack"
       become: true
       copy:
         dest: "{{ top_dir }}/local.sh"
@@ -64,7 +79,7 @@
             local tunnel_iface=leaf${loop_index}-tunnel
             local veth_in=veth${loop_index}-in
             local veth_bgp=veth${loop_index}-bgp
-            local vlan_tag=100${loop_index}
+            local vlan_tag={{ vlan_prefix }}${loop_index}
             local bgp_bridge=br-bgp-${loop_index}
 
             sudo ip link add $veth_in type veth peer name $veth_bgp
@@ -73,7 +88,7 @@
 
             sudo ovs-vsctl add-port br-infra $tunnel_iface \
                  -- set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
-                    options:key=1000${loop_index} options:local_ip=$local_ip \
+                    options:key={{ vxlan_key_prefix }}${loop_index} options:local_ip=$local_ip \
                  -- set Port $tunnel_iface tag=$vlan_tag
 
             sudo ovs-vsctl add-br $bgp_bridge
@@ -97,32 +112,40 @@
 
           sudo iptables -I FORWARD 1 -i br-ex -j ACCEPT
 
-          # Start FRR on spine and leaf nodes now that all interfaces
-          # (including controller-side br-bgp-*, VXLAN tunnels) are ready.
-          # FRR was not started during pre-run to avoid routing loops caused
-          # by incomplete BGP topology.
+          # Ensure the log dir and file are writable by bgpd (runs as frr).
+          sudo install -d -o frr -g frr -m 755 /var/log/frr
+          sudo touch /var/log/frr/frr.log
+          sudo chown frr:frr /var/log/frr/frr.log
+
+          {% if inventory_hostname == last_compute_node %}
+          # Start FRR on spine and leaf nodes. This block only runs on
+          # the last compute subnode, which is the final node to execute
+          # local.sh, ensuring all compute-side interfaces exist.
+          # FRR was not started during pre-run to avoid routing loops
+          # caused by incomplete BGP topology.
           sudo ssh -i /root/.ssh/inter_node_key -o StrictHostKeyChecking=no zuul@{{ hostvars['spine'].ansible_host }} sudo systemctl restart frr
           {% for leaf in groups['leafs'] %}
           sudo ssh -i /root/.ssh/inter_node_key -o StrictHostKeyChecking=no zuul@{{ hostvars[leaf].ansible_host }} sudo systemctl restart frr
           {% endfor %}
+          {% endif %}
 
-          # Restart FRR on controller now that peer interfaces exist
+          # Restart FRR on this compute node now that peer interfaces exist
           sudo systemctl restart frr
 
-    - name: "Create VXLAN tunnel from {{ item.1 }} to the controller"
+    - name: "Create VXLAN tunnel from {{ item.1 }} to {{ inventory_hostname }}"
       ansible.builtin.shell: |
         set -e
 
-        tunnel_iface=controller-tunnel
-        port_iface=controller-port
+        tunnel_iface={{ inventory_hostname }}-tunnel
+        port_iface={{ inventory_hostname }}-port
         local_ip={{ hostvars[item.1].vxlan_local_ip }}
         remote_ip={{ vxlan_local_ip }}
-        vlan_tag=100{{ item.0 }}
+        vlan_tag={{ vlan_prefix }}{{ item.0 }}
 
         ovs-vsctl --may-exist add-br br-infra -- \
         add-port br-infra $tunnel_iface -- \
         set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
-        options:key=1000{{ item.0 }} options:local_ip=$local_ip -- \
+        options:key={{ vxlan_key_prefix }}{{ item.0 }} options:local_ip=$local_ip -- \
         set Port $tunnel_iface tag=$vlan_tag -- \
         add-port br-infra $port_iface -- \
         set Interface $port_iface type=internal -- \
@@ -131,7 +154,7 @@
         ip link set dev $port_iface up
 
         iptables -I FORWARD 1 -i $port_iface -j ACCEPT
-        ip6tables -I INPUT 1 -i $port_iface -p tcp --dport 179 -j ACCEPT
+        ip6tables -I INPUT 1 -i $port_iface -j ACCEPT
       with_indexed_items: "{{ groups['leafs'] }}"
       delegate_to: "{{ item.1 }}"
       become: true

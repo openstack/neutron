@@ -125,6 +125,26 @@
     group: frr
     mode: '640'
 
+- name: Ensure FRR log directory is owned by frr
+  become: true
+  ansible.builtin.file:
+    path: /var/log/frr
+    owner: frr
+    group: frr
+    mode: '0755'
+    state: directory
+
+- name: Ensure FRR log file is writable by bgpd
+  become: true
+  ansible.builtin.file:
+    path: /var/log/frr/frr.log
+    owner: frr
+    group: frr
+    mode: '0644'
+    state: touch
+    access_time: preserve
+    modification_time: preserve
+
 # FRR is not started here because the controller-side BGP peer
 # interfaces (br-bgp-*, VXLAN tunnels) are not created until
 # devstack runs local.sh. Starting FRR before all peers exist

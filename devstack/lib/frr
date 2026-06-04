@@ -33,6 +33,14 @@ function configure_frr {
         sudo install -o root -g root -m 644 $FRR_ETC_SRC_DIR/frr/* $FRR_CONF_DIR/
     fi
 
+    # Replace per-node placeholders in frr.conf
+    if [[ -n "$FRR_BGP_ROUTER_ID" ]]; then
+        sudo sed -i "s/BGP_ROUTER_ID/$FRR_BGP_ROUTER_ID/g" $FRR_CONF_DIR/frr.conf
+    fi
+    if [[ -n "$FRR_BGP_IPV6_SRC" ]]; then
+        sudo sed -i "s/BGP_IPV6_SRC/$FRR_BGP_IPV6_SRC/g" $FRR_CONF_DIR/frr.conf
+    fi
+
 }
 
 function init_frr {

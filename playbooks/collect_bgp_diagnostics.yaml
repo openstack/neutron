@@ -1,0 +1,59 @@
+- name: Collect BGP and OVN diagnostic data before teardown
+  hosts: compute
+  become: true
+  ignore_unreachable: true
+  tasks:
+    - name: Ensure /var/log/openvswitch directory exists
+      ansible.builtin.file:
+        path: /var/log/openvswitch
+        state: directory
+        mode: '0755'
+      ignore_errors: true
+
+    - name: Dump OVS configuration
+      ansible.builtin.command: ovs-vsctl show
+      register: ovs_vsctl
+      ignore_errors: true
+
+    - name: Save OVS configuration
+      ansible.builtin.copy:
+        content: "{{ ovs_vsctl.stdout | default(ovs_vsctl.stderr | default('command failed')) }}"
+        dest: /var/log/openvswitch/ovs-vsctl-show-dump.txt
+        mode: '0644'
+      when: ovs_vsctl is not skipped
+      ignore_errors: true
+
+    - name: Dump FRR BGP state
+      ansible.builtin.shell: |
+        vtysh -c "show bgp summary" 2>&1
+        vtysh -c "show bfd peers" 2>&1
+      register: frr_state
+      ignore_errors: true
+
+    - name: Save FRR BGP state
+      ansible.builtin.copy:
+        content: "{{ frr_state.stdout | default(frr_state.stderr | default('command failed')) }}"
+        dest: /var/log/frr/bgp_state.txt
+        mode: '0644'
+      when: frr_state is not skipped
+      ignore_errors: true
+
+- name: Collect diagnostics from spine and leafs
+  hosts: spine,leafs
+  become: true
+  ignore_unreachable: true
+  tasks:
+    - name: Dump FRR BGP state
+      ansible.builtin.shell: |
+        vtysh -c "show bgp summary" 2>&1
+        vtysh -c "show bfd peers" 2>&1
+      register: frr_state
+      ignore_errors: true
+
+    - name: Save FRR BGP state
+      ansible.builtin.copy:
+        content: "{{ frr_state.stdout | default(frr_state.stderr | default('command failed')) }}"
+        dest: /var/log/frr/bgp_state.txt
+        mode: '0644'
+      when: frr_state is not skipped
+      ignore_errors: true
