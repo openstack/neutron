@@ -154,19 +154,6 @@
         Q_BUILD_OVS_FROM_GIT: true
 
 - job:
-    name: neutron-fullstack-with-uwsgi-fips
-    parent: neutron-fullstack-with-uwsgi
-    nodeset: devstack-single-node-centos-9-stream
-    description: |
-      Functional testing for a FIPS enabled Centos 9 system
-    vars:
-      nslookup_target: 'opendev.org'
-      enable_fips: True
-      devstack_localrc:
-        ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
-        Q_BUILD_OVS_FROM_GIT: true
-
-- job:
     name: neutron-linuxbridge-tempest-plugin-nftables
     parent: neutron-tempest-plugin-linuxbridge-2024-1
     pre-run: playbooks/install_nftables.yaml
