@@ -18,9 +18,6 @@ from oslo_config import cfg
 from neutron._i18n import _
 
 bgp_opts = [
-    cfg.StrOpt('main_router_name',
-               default='bgp-lr-main',
-               help=_('Name of the main BGP router.')),
     cfg.IntOpt('main_router_vrf_id',
                default=42,
                help=_('VRF ID for the main BGP router.')),
@@ -30,10 +27,6 @@ bgp_opts = [
                       'to learn default routes for the egress traffic out '
                       'from the chassis.')),
 ]
-
-
-def get_main_router_name():
-    return cfg.CONF.bgp.main_router_name
 
 
 def get_main_router_vrf_id():

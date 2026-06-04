@@ -18,7 +18,6 @@ from oslo_utils import uuidutils
 from neutron.agent.ovn.extensions.bgp import commands
 from neutron.agent.ovn.extensions.bgp import exceptions
 from neutron.common.ovn import constants as ovn_const
-from neutron.conf.services import bgp as bgp_config
 from neutron.services.bgp import constants
 from neutron.services.bgp import helpers
 from neutron.tests.common import net_helpers
@@ -226,7 +225,7 @@ class GetInterconnectLrpMacCommandTestCase(bgp.BaseBgpNbIdlTestCase):
 
     def setUp(self):
         super().setUp()
-        self.router_name = bgp_config.get_main_router_name()
+        self.router_name = constants.MAIN_ROUTER_NAME
         self.switch_name = _get_unique_name('ls')
         ic_switch_name = _get_unique_name('bgp-ls-interconnect')
         self.lrp_name = helpers.get_lrp_name(self.router_name, ic_switch_name)

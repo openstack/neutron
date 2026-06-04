@@ -91,15 +91,14 @@ class TestBGPReconciler(base.TestOVNFunctionalBase):
             self._validate_chassis(ch)
 
     def _validate_main_router(self):
-        main_router_name = bgp_config.get_main_router_name()
         main_router = self.nb_api.lr_get(
-            main_router_name).execute(check_error=True)
+            constants.MAIN_ROUTER_NAME).execute(check_error=True)
         all_chassis_names = {
             chassis.name for chassis in self._get_all_chassis_private()}
         for chassis_name in list(all_chassis_names):
             chassis_router_name = helpers.get_chassis_router_name(chassis_name)
             lrp_to_chassis_router_name = helpers.get_lrp_name(
-                main_router_name, chassis_router_name)
+                constants.MAIN_ROUTER_NAME, chassis_router_name)
             lrp = self.nb_api.lrp_get(
                 lrp_to_chassis_router_name).execute(check_error=True)
             self.assertIn(lrp, main_router.ports)

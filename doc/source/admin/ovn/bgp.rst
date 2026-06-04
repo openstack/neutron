@@ -145,9 +145,6 @@ section:
    * - Option
      - Default
      - Description
-   * - ``main_router_name``
-     - ``bgp-lr-main``
-     - Name of the main BGP logical router created in OVN.
    * - ``main_router_vrf_id``
      - ``42``
      - VRF ID attached to the main BGP logical router.
