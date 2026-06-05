@@ -24,7 +24,7 @@ The network IP availability API now support project scope and default roles.
 rules = [
     policy.DocumentedRuleDefault(
         name='get_network_ip_availability',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get network IP availability',
         operations=[

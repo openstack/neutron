@@ -99,7 +99,7 @@ class ServiceRoleTests(NetworkIPAvailabilityAPITestCase):
         self.context = self.service_ctx
 
     def test_get_network_ip_availability(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_network_ip_availability', self.target)
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_network_ip_availability',
+                self.target))
