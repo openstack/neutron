@@ -19,6 +19,7 @@ from neutron_lib.api.definitions import pvlan as apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as lib_constants
 from neutron_lib.db import resource_extend
 from neutron_lib.plugins import constants as plugin_consts
 from neutron_lib.plugins import directory
@@ -26,7 +27,6 @@ from neutron_lib.services import base as service_base
 from neutron_lib.services.pvlan import constants as pvlan_const
 from oslo_log import log as logging
 
-from neutron.common.ovn import utils as ovn_utils
 from neutron.objects import network as net_object
 from neutron.objects import ports as port_object
 from neutron.objects import pvlan as pvlan_objects
@@ -66,7 +66,7 @@ class PVLANPlugin(service_base.ServicePluginBase):
         super().__init__()
         self._driver = None
         self.core_plugin = directory.get_plugin()
-        registry.publish(PVLAN_PLUGIN, events.AFTER_INIT, self)
+        registry.publish(PVLAN_PLUGIN, events.BEFORE_SPAWN, self)
 
         registry.subscribe(self.pvlan_network_update, resources.NETWORK,
                            events.PRECOMMIT_CREATE)
@@ -78,12 +78,21 @@ class PVLANPlugin(service_base.ServicePluginBase):
                            events.PRECOMMIT_UPDATE)
         registry.subscribe(self._pvlan_port_driver_update, resources.PORT,
                            events.AFTER_UPDATE)
+        registry.subscribe(self._pvlan_port_driver_update, resources.PORT,
+                           events.AFTER_DELETE)
         registry.subscribe(
-            self._pvlan_port_update_after_network_update,
+            self._pvlan_network_driver_update,
             resources.NETWORK, events.AFTER_UPDATE)
+        registry.subscribe(
+            self._pvlan_network_driver_delete,
+            resources.NETWORK, events.AFTER_DELETE)
 
     def register_driver(self, driver):
         self._driver = driver
+
+    @property
+    def driver(self):
+        return self._driver
 
     @staticmethod
     @resource_extend.extends([net_def.COLLECTION_NAME])
@@ -139,11 +148,29 @@ class PVLANPlugin(service_base.ServicePluginBase):
 
     def _pvlan_port_driver_update(self, resource, event, trigger,
                                   payload=None, **kwargs):
-        """Call the backend driver after the port exists in OVN."""
-        context = payload.context
+        """Call the driver after the port is created, updated or deleted."""
+        if not self._driver:
+            return
+
         port_id = payload.resource_id
+
+        if event == events.AFTER_DELETE:
+            if not payload.states:
+                return
+            original_port = payload.states[0]
+            prev_pvlan_type = original_port.get(pvlan_const.PVLAN_TYPE)
+            if not prev_pvlan_type:
+                return
+            self._driver.delete_port(
+                port_id,
+                original_port['network_id'],
+                prev_pvlan_type,
+                pvlan_community=original_port.get(pvlan_const.PVLAN_COMMUNITY))
+            return
+
+        context = payload.context
         port = port_object.Port.get_object(context, id=port_id)
-        if not port.pvlan_type:
+        if not port or not port.pvlan_type:
             return
         network = net_object.Network.get_object(context, id=port.network_id)
         self._check_port_security(network, port)
@@ -154,21 +181,30 @@ class PVLANPlugin(service_base.ServicePluginBase):
             prev_pvlan_type = original_port.get(pvlan_const.PVLAN_TYPE)
             prev_pvlan_community = original_port.get(
                 pvlan_const.PVLAN_COMMUNITY)
-        if self._driver:
-            self._driver.update_port(context, port,
-                                     prev_pvlan_type, prev_pvlan_community)
+        self._driver.update_port(context, port,
+                                 prev_pvlan_type, prev_pvlan_community)
 
-    def _pvlan_port_update_after_network_update(self, resource, event,
-                                                trigger, payload=None):
+    def _pvlan_network_driver_update(self, resource, event,
+                                     trigger, payload=None):
         """Handle port update when a network is updated to use PVLAN."""
         context = payload.context
         network_id = payload.resource_id
         network = net_object.Network.get_object(context, id=network_id)
+
         if payload.states:
             original_network = payload.states[0]
             if (network.pvlan or False) == original_network.get(
                     pvlan_const.PVLAN):
                 return
+
+        if not self._driver:
+            LOG.warning("No driver found for network %s", network_id)
+            return
+
+        if network.pvlan:
+            self._driver.create_network_resources(network_id)
+        else:
+            self._driver.delete_network_resources(network_id, context)
         for port in port_object.Port.get_objects(
                 context, network_id=network_id):
             prev_pvlan_type = port.pvlan_type
@@ -180,6 +216,14 @@ class PVLANPlugin(service_base.ServicePluginBase):
                 self._driver.update_port(context, port,
                                          prev_pvlan_type,
                                          prev_pvlan_community)
+
+    def _pvlan_network_driver_delete(self, resource, event, trigger,
+                                     payload=None):
+        """Clean up port groups when a PVLAN network is deleted."""
+        if not self._driver:
+            return
+        network_id = payload.resource_id
+        self._driver.delete_network_resources(network_id, payload.context)
 
     def pvlan_port_update(self, resource, event, trigger, payload=None,
                           port=None, context=None):
@@ -226,7 +270,7 @@ class PVLANPlugin(service_base.ServicePluginBase):
             if prev_pvlan_type == pvlan_const.COMMUNITY_TYPE:
                 pvlan_community = None
         if (pvlan_type == pvlan_const.COMMUNITY_TYPE and
-                prev_pvlan_community):
+                not pvlan_community and prev_pvlan_community):
             pvlan_community = prev_pvlan_community
         if (not pvlan_community and
                 pvlan_type == pvlan_const.COMMUNITY_TYPE):
@@ -246,9 +290,8 @@ class PVLANPlugin(service_base.ServicePluginBase):
         return True
 
     def _check_port_security(self, network, port_data):
-        # OVN Metadata ports always have port_security disabled
-        # and work differently to usual ports.
-        if ovn_utils.is_ovn_metadata_port(port_data.to_dict()):
+        if port_data.device_owner and port_data.device_owner.startswith(
+                lib_constants.DEVICE_OWNER_NETWORK_PREFIX):
             return
         # Default port_security_enabled is True so if no security is set,
         # it means we are enforcing port security.

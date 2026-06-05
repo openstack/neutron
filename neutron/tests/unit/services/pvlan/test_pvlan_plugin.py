@@ -220,10 +220,7 @@ class TestPortPVLAN(TestPVLANPlugin):
         port_data.network_id = network_id
         port_data.pvlan_type = pvlan_type
         port_data.pvlan_community = pvlan_community
-        port_data.to_dict.return_value = {
-            'device_owner': '',
-            'device_id': '',
-        }
+        port_data.device_owner = ''
 
         network_data = mock.Mock()
         network_data.pvlan = network_pvlan
@@ -406,4 +403,26 @@ class TestPortPVLAN(TestPVLANPlugin):
                 payload.context,
                 {'pvlan_type': pvlan_const.ISOLATED_TYPE,
                  'pvlan_community': None},
+                port_id=port_id)
+
+    def test_port_update_community_name_change(self):
+        port_id = uuidutils.generate_uuid()
+        network_id = uuidutils.generate_uuid()
+        payload = self._make_payload(
+            port_id,
+            request_body={
+                pvlan_const.PVLAN_TYPE: pvlan_const.COMMUNITY_TYPE,
+                pvlan_const.PVLAN_COMMUNITY: 'new_comm'})
+
+        mocks, pp_cls = self._mock_port_and_network(
+            port_id, network_id,
+            pvlan_type=pvlan_const.COMMUNITY_TYPE,
+            pvlan_community='old_comm',
+            network_pvlan=True)
+        with mocks['port_obj'], mocks['net_obj'], mocks['portpvlan_cls']:
+            self.plugin._pvlan_port_update(payload=payload)
+            pp_cls.update_objects.assert_called_once_with(
+                payload.context,
+                {'pvlan_type': pvlan_const.COMMUNITY_TYPE,
+                 'pvlan_community': 'new_comm'},
                 port_id=port_id)

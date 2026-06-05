@@ -47,3 +47,9 @@ class PVLANNetworkPortSecurityDisabled(n_exc.NeutronException):
         'Port security is disabled on network %(network_id)s, '
         'cannot enable PVLAN.'
     )
+
+
+class PVLANUnsupportedType(n_exc.NeutronException):
+    message = _(
+        'Unsupported PVLAN type %(pvlan_type)s for port %(port_id)s.'
+    )

@@ -114,6 +114,8 @@ class OVNClient:
 
         # TODO(ralonsoh): handle the OVN client extensions with an ext. manager
         self._qos_driver = qos_extension.OVNClientQosExtension(driver=self)
+        self._pvlan_driver = None
+
         self.placement_extension = (
             placement_extension.OVNClientPlacementExtension(self))
 
@@ -129,6 +131,14 @@ class OVNClient:
             self._l3_plugin_property = directory.get_plugin(
                 plugin_constants.L3)
         return self._l3_plugin_property
+
+    @property
+    def pvlan_driver(self):
+        if self._pvlan_driver is None:
+            pvlan_plugin = directory.get_plugin(plugin_constants.PVLAN)
+            if pvlan_plugin:
+                self._pvlan_driver = pvlan_plugin.driver
+        return self._pvlan_driver
 
     def _transaction(self, commands, txn=None):
         """Create a new transaction or add the commands to an existing one."""
@@ -659,6 +669,9 @@ class OVNClient:
                 self.add_txns_to_sync_port_dns_records(txn, port)
 
             self._qos_driver.create_port(context, txn, port, port_cmd)
+
+            if port.get('pvlan_type') and self.pvlan_driver:
+                self.pvlan_driver.create_port(context, txn, port)
 
         db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
@@ -2245,6 +2258,10 @@ class OVNClient:
                 if segment.get(segment_def.PHYSICAL_NETWORK):
                     self.create_provnet_port(context, network['id'], segment,
                                              txn=txn, network=network)
+
+            if network.get('pvlan') and self.pvlan_driver:
+                self.pvlan_driver.create_network_resources(
+                    network['id'], txn=txn)
         db_rev.bump_revision(context, network, ovn_const.TYPE_NETWORKS)
         self.create_metadata_port(context, network)
         return network
