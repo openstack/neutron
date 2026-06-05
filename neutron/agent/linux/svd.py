@@ -17,8 +17,32 @@ import errno
 
 from pyroute2.netlink import exceptions as netlink_exc
 
-from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
+from neutron._i18n import _
 from neutron.privileged.agent.linux import svd as privileged_svd
+
+
+class SvdNoVxlanParent(Exception):
+    pass
+
+
+class SvdDeviceAlreadyExists(Exception):
+    pass
+
+
+class SvdDevsNotFound(Exception):
+    pass
+
+
+class SvdSviNotFound(Exception):
+    pass
+
+
+class SvdNotFound(Exception):
+    pass
+
+
+class SvdNetlinkError(Exception):
+    pass
 
 
 class Svd:
@@ -27,12 +51,11 @@ class Svd:
     Up to 4094 VNIs share the same SVD via VLAN/VNI mappings added
     with add_vni().
 
-    When a VNI is mapped to a VLAN, a VLAN interface with
-    EVPN_VLAN_IFNAME_PATTERN is created
+    When a VNI is mapped to a VLAN, the caller-provided VLAN interface
+    name is created.
     """
 
-    def __init__(self, br_evpn, vxlan_evpn, index=0):
-        self._index = index
+    def __init__(self, br_evpn, vxlan_evpn):
         self.br_evpn = br_evpn
         self.vxlan_evpn = vxlan_evpn
 
@@ -42,54 +65,60 @@ class Svd:
                 self.br_evpn, self.vxlan_evpn,
                 local_ip, mac, vxlan_parent, dstport)
         except IndexError:
-            raise evpn_exc.SvdNoVxlanParent("Missing VxLAN underlay: %s" %
-                                            (vxlan_parent))
+            raise SvdNoVxlanParent(
+                _("Missing VxLAN underlay: %(parent)s") %
+                {'parent': vxlan_parent})
         except netlink_exc.NetlinkError as e:
             if e.code == errno.EEXIST:
-                raise evpn_exc.SvdDeviceAlreadyExists("SVD %s/%s device(s) "
-                                                      "already exist(s)" %
-                                                      (self.br_evpn,
-                                                       self.vxlan_evpn))
-            raise evpn_exc.SvdNetlinkError(
-                "Failed to add SVD %s/%s: %s" %
-                (self.br_evpn, self.vxlan_evpn, e))
+                raise SvdDeviceAlreadyExists(
+                    _("SVD %(br)s/%(vx)s device(s) already exist(s)") %
+                    {'br': self.br_evpn, 'vx': self.vxlan_evpn})
+            raise SvdNetlinkError(
+                _("Failed to add SVD %(br)s/%(vx)s: %(err)s") %
+                {'br': self.br_evpn, 'vx': self.vxlan_evpn, 'err': e})
 
     def delete(self):
         try:
             privileged_svd.delete_svd(self.br_evpn, self.vxlan_evpn)
         except IndexError:
-            raise evpn_exc.SvdNotFound(
-                "SVD %s/%s not found" %
-                (self.br_evpn, self.vxlan_evpn))
+            raise SvdNotFound(
+                _("SVD %(br)s/%(vx)s not found") %
+                {'br': self.br_evpn, 'vx': self.vxlan_evpn})
         except netlink_exc.NetlinkError as e:
-            raise evpn_exc.SvdNetlinkError(
-                "Failed to delete SVD %s/%s: %s" %
-                (self.br_evpn, self.vxlan_evpn, e))
+            raise SvdNetlinkError(
+                _("Failed to delete SVD %(br)s/%(vx)s: %(err)s") %
+                {'br': self.br_evpn, 'vx': self.vxlan_evpn, 'err': e})
 
-    def add_vni(self, vni, vid, vrf_name, mac):
+    def add_vni(self, svi_name, vni, vid, vrf_name, mac):
         try:
             privileged_svd.add_vni(
                 self.br_evpn, self.vxlan_evpn,
-                vni, vid, vrf_name, mac, self._index)
+                svi_name, vni, vid, vrf_name, mac)
         except IndexError:
-            raise evpn_exc.SvdDevsNotFound(
-                "SVD %s/%s or VRF %s not found" %
-                (self.br_evpn, self.vxlan_evpn, vrf_name))
+            raise SvdDevsNotFound(
+                _("SVD %(br)s/%(vx)s or VRF %(vrf)s not found") %
+                {'br': self.br_evpn, 'vx': self.vxlan_evpn,
+                 'vrf': vrf_name})
         except netlink_exc.NetlinkError as e:
-            raise evpn_exc.SvdNetlinkError(
-                "Failed to add VNI %d to SVD %s/%s: %s" %
-                (vni, self.br_evpn, self.vxlan_evpn, e))
+            raise SvdNetlinkError(
+                _("Failed to add VNI %(vni)d to SVD %(br)s/%(vx)s:"
+                  " %(err)s") %
+                {'vni': vni, 'br': self.br_evpn,
+                 'vx': self.vxlan_evpn, 'err': e})
 
-    def del_vni(self, vni, vid):
+    def del_vni(self, svi_name, vni, vid):
         try:
             privileged_svd.del_vni(
                 self.br_evpn, self.vxlan_evpn,
-                vni, vid, self._index)
+                svi_name, vni, vid)
         except IndexError:
-            raise evpn_exc.SvdSviNotFound(
-                "SVI for VNI %d not found on SVD %s/%s" %
-                (vni, self.br_evpn, self.vxlan_evpn))
+            raise SvdSviNotFound(
+                _("SVI for VNI %(vni)d not found on SVD %(br)s/%(vx)s") %
+                {'vni': vni, 'br': self.br_evpn,
+                 'vx': self.vxlan_evpn})
         except netlink_exc.NetlinkError as e:
-            raise evpn_exc.SvdNetlinkError(
-                "Failed to delete VNI %d from SVD %s/%s: %s" %
-                (vni, self.br_evpn, self.vxlan_evpn, e))
+            raise SvdNetlinkError(
+                _("Failed to delete VNI %(vni)d from SVD %(br)s/%(vx)s:"
+                  " %(err)s") %
+                {'vni': vni, 'br': self.br_evpn,
+                 'vx': self.vxlan_evpn, 'err': e})
