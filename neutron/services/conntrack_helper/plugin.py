@@ -107,9 +107,9 @@ class Plugin(l3_conntrack_helper.ConntrackHelperPluginBase):
         if objs:
             return (objs[0], param)
 
-    def _get_conntrack_helper(self, context, id):
+    def _get_conntrack_helper(self, context, id, router_id):
         cth_obj = cth.ConntrackHelper.get_object(context, id=id)
-        if not cth_obj:
+        if not cth_obj or cth_obj.router_id != router_id:
             raise cth_exc.ConntrackHelperNotFound(id=id)
         return cth_obj
 
@@ -152,7 +152,7 @@ class Plugin(l3_conntrack_helper.ConntrackHelperPluginBase):
         conntrack_helper = conntrack_helper.get(apidef.RESOURCE_NAME)
         try:
             with db_api.CONTEXT_WRITER.using(context):
-                cth_obj = self._get_conntrack_helper(context, id)
+                cth_obj = self._get_conntrack_helper(context, id, router_id)
                 cth_obj.update_fields(conntrack_helper, reset_changes=True)
                 self._check_conntrack_helper_constraints(cth_obj)
                 cth_obj.update()
@@ -170,7 +170,7 @@ class Plugin(l3_conntrack_helper.ConntrackHelperPluginBase):
     @db_base_plugin_common.make_result_with_fields
     @db_base_plugin_common.convert_result_to_dict
     def get_router_conntrack_helper(self, context, id, router_id, fields=None):
-        return self._get_conntrack_helper(context, id)
+        return self._get_conntrack_helper(context, id, router_id)
 
     @db_base_plugin_common.make_result_with_fields
     @db_base_plugin_common.convert_result_to_dict
@@ -184,7 +184,7 @@ class Plugin(l3_conntrack_helper.ConntrackHelperPluginBase):
                                                router_id=router_id, **filters)
 
     def delete_router_conntrack_helper(self, context, id, router_id):
-        cth_obj = self._get_conntrack_helper(context, id)
+        cth_obj = self._get_conntrack_helper(context, id, router_id)
         with db_api.CONTEXT_WRITER.using(context):
             cth_obj.delete()
         self.push_api.push(context, [cth_obj], rpc_events.DELETED)
