@@ -2186,6 +2186,7 @@ class OVNClient:
             external_ids={ovn_const.OVN_PHYSNET_EXT_ID_KEY: physnet},
             type=ovn_const.LSP_TYPE_LOCALNET,
             tag=tag,
+            tag_request=tag,
             options=options)
         self._transaction([cmd], txn=txn)
 
