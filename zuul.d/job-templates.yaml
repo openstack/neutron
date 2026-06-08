@@ -40,7 +40,7 @@
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-cover:  # from openstack-cover-jobs template
-            timeout: 4800
+            timeout: 6000
             pre-run: playbooks/configure_swap.yaml
             vars:
               configure_swap_size: 4096
