@@ -1,7 +1,9 @@
 - nodeset:
-    name: neutron-four-node-noble-bgp
+    name: neutron-five-node-noble-bgp
     nodes:
       - name: controller
+        label: ubuntu-noble
+      - name: compute1
         label: ubuntu-noble
       - name: leaf-1
         label: ubuntu-noble
@@ -13,9 +15,15 @@
       - name: controller
         nodes:
           - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
       - name: subnode
         nodes:
           - spine
+          - compute1
       - name: leafs
         nodes:
           - leaf-1
@@ -23,11 +31,18 @@
       - name: tempest
         nodes:
           - spine
+      # This group name is chosen to sort after "subnode" alphabetically,
+      # so that its group-vars take precedence over the subnode group-vars
+      # from the devstack base job (Ansible resolves same-level group
+      # conflicts by alphabetical order, last wins).
+      - name: zbgp_compute
+        nodes:
+          - compute1
 
 - job:
     name: neutron-ovn-bgp-tempest-multinode
     parent: neutron-tempest-plugin-ovn
-    nodeset: neutron-four-node-noble-bgp
+    nodeset: neutron-five-node-noble-bgp
     timeout: 10800
     post-timeout: 9600
     required-projects:
@@ -41,6 +56,8 @@
         OVS_BRANCH: v3.7.0
         FRR_USE_BFD: True
         ENABLE_FRR: True
+        FRR_BGP_ROUTER_ID: '172.24.4.1'
+        FRR_BGP_IPV6_SRC: '2001:db8::2'
         OVN_AGENT_EXTENSIONS: 'metadata,ovn-bgp'
         NEUTRON_BGP_PEER_BRIDGES: 'br-bgp-0,br-bgp-1'
         Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false
@@ -51,15 +68,39 @@
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
         neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
+      zuul_copy_output:
+        '/var/log/frr': 'logs'
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
+        '/etc/frr': 'logs'
       devstack_local_conf:
         post-config:
           "/$NEUTRON_CORE_PLUGIN_CONF":
             ovn:
               enable_distributed_floating_ip: True
     pre-run: playbooks/configure_bgp_networking.yaml
+    post-run: playbooks/collect_bgp_diagnostics.yaml
     group-vars:
-      subnode:
-        devstack_localrc:
+      # The tempest and zbgp_compute groups sort after subnode, so their
+      # devstack_localrc replaces (not merges with) the subnode group-vars.
+      # We must repeat the base subnode settings needed by stack.sh.
+      tempest:
+        devstack_localrc: &subnode_localrc
+          DATABASE_PASSWORD: secretdatabase
+          RABBIT_PASSWORD: secretrabbit
+          ADMIN_PASSWORD: secretadmin
+          SERVICE_PASSWORD: secretservice
+          GLANCE_HOSTPORT: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}:9292"
+          Q_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          DATABASE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          RABBIT_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          SERVICE_HOST: "{{ hostvars['controller']['nodepool']['private_ipv4'] }}"
+          HOST_IP: "{{ hostvars[inventory_hostname]['nodepool']['private_ipv4'] }}"
+          LOGFILE: /opt/stack/logs/devstacklog.txt
+          LOG_COLOR: false
+          VERBOSE: true
+          VERBOSE_NO_TIMESTAMP: true
           LIBS_FROM_GIT: neutron-tempest-plugin
           OVN_BUILD_FROM_SOURCE: False
           Q_PLUGIN: "noop"
@@ -132,4 +173,61 @@
           (^neutron_tempest_plugin.scenario.test_port_forwardings)|\
           (^neutron_tempest_plugin.scenario.test_multiple_gws)|\
           (^neutron_tempest_plugin.scenario.test_floatingip.DefaultSnatToExternal.test_snat_external_ip)|\
-          (^neutron_tempest_plugin.scenario.*test_default_sec_grp_scenarios)"
+          (^neutron_tempest_plugin.scenario.*test_default_sec_grp_scenarios)|\
+          (^neutron_tempest_plugin.scenario.test_floatingip.FloatingIpMultipleRoutersTest.test_reuse_ip_address_with_other_fip_on_other_router)"
+      zbgp_compute:
+        devstack_localrc:
+          <<: *subnode_localrc
+          # Compute1-specific overrides
+          Q_PLUGIN: ml2
+          OVN_BUILD_FROM_SOURCE: True
+          NOVA_VNC_ENABLED: true
+          ENABLE_CHASSIS_AS_GW: false
+          LIBVIRT_TYPE: qemu
+          OVN_BRANCH: v26.03.0
+          OVS_BRANCH: v3.7.0
+          FRR_USE_BFD: True
+          ENABLE_FRR: True
+          FRR_BGP_ROUTER_ID: '172.24.4.2'
+          FRR_BGP_IPV6_SRC: '2001:db8::3'
+          OVN_AGENT_EXTENSIONS: 'metadata,ovn-bgp'
+          NEUTRON_BGP_PEER_BRIDGES: 'br-bgp-0,br-bgp-1'
+          Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false
+        devstack_plugins:
+          neutron: https://opendev.org/openstack/neutron
+        devstack_services:
+          # Subnode base services
+          n-cpu: true
+          placement-client: true
+          memory_tracker: true
+          file_tracker: true
+          tls-proxy: true
+          dstat: false
+          horizon: false
+          tempest: false
+          # OVN services
+          q-ovn-agent: true
+          ovn-controller: true
+          ovs-vswitchd: true
+          ovsdb-server: true
+          ovn-northd: false
+          br-ex-tcpdump: false
+          br-int-flows: true
+          q-ovn-metadata-agent: false
+          # Cinder services
+          c-api: false
+          c-bak: false
+          c-sch: false
+          c-vol: false
+          cinder: false
+          # Swift services
+          s-account: false
+          s-container-sync: false
+          s-container: false
+          s-object: false
+          s-proxy: false
+        devstack_local_conf:
+          post-config:
+            "/$NEUTRON_CORE_PLUGIN_CONF":
+              ovn:
+                enable_distributed_floating_ip: True

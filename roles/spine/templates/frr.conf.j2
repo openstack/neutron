@@ -1,5 +1,5 @@
 hostname {{ ansible_hostname }}
-log file /var/log/frr/frr.log
+log file /var/log/frr/frr.log debugging
 service integrated-vtysh-config
 line vty
 frr version 7.0
@@ -28,17 +28,24 @@ router bgp 65000
   address-family ipv4 unicast
     redistribute connected
     neighbor downlink route-map ipv4-set-src in
+    neighbor downlink route-map locally-originated-only out
   exit-address-family
 
   address-family ipv6 unicast
     redistribute connected
     neighbor downlink activate
     neighbor downlink prefix-list only-host-prefixes in
+    neighbor downlink route-map locally-originated-only out
   exit-address-family
 
 route-map ipv4-set-src permit 10
  match ip address prefix-list only-host-prefixes
  set src {{ datapath_spine_ipv4 }}
+
+route-map locally-originated-only permit 10
+ match as-path locally-originated
+
+bgp as-path access-list locally-originated permit ^$
 
 ip prefix-list only-host-prefixes permit 0.0.0.0/0 ge 32
 

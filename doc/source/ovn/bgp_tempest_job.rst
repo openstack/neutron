@@ -6,7 +6,7 @@ BGP Multinode Tempest Job
 
 The ``neutron-ovn-bgp-tempest-multinode`` Zuul job is a CI job that validates
 Neutron with Native OVN BGP in a realistic leaf-spine network topology. It
-deploys a four-node environment where VXLAN tunnels simulate the physical links
+deploys a five-node environment where VXLAN tunnels simulate the physical links
 of a leaf-spine fabric, and FRR (Free Range Routing) provides BGP and BFD on
 every network node. The job then runs the Neutron Tempest scenario tests to
 verify that tenant workloads are reachable through dynamically advertised BGP
@@ -17,7 +17,7 @@ The job is defined in ``zuul.d/tempest-multinode-bgp.yaml``.
 Network Topology
 ================
 
-The job provisions four nodes arranged in a leaf-spine topology.
+The job provisions five nodes arranged in a leaf-spine topology.
 Because CI nodes only have IP-level connectivity to each other, the playbook
 ``playbooks/configure_bgp_networking.yaml`` builds the fabric links on top of
 VXLAN tunnels carried over the nodepool underlay.
@@ -35,19 +35,24 @@ VXLAN tunnels carried over the nodepool underlay.
                              |          |
                     +--------+-+      +-+--------+
                     |  Leaf-1  |      |  Leaf-2  |
-                    | (AS 64999)|     |(AS 64999)|
+                    |(AS 64999)|      |(AS 64999)|
                     |  FRR/BGP |      |  FRR/BGP |
-                    +-----+----+      +----+-----+
-                          |                |
-                    VXLAN |                | VXLAN
-                          |                |
-                    +-----+----------------+-----+
-                    |       Controller           |
-                    |  OpenStack control plane   |
-                    |  OVN / Neutron / Nova      |
-                    |  OVN agent (ovn-bgp ext.)  |
-                    |  (br-bgp-0, br-bgp-1)      |
-                    +----------------------------+
+                    +---+--+---+      +---+--+---+
+                        |  |              |  |
+                  VXLAN |  | VXLAN  VXLAN |  | VXLAN
+                        |  |              |  |
+    +-------------------+  |              |  +-------------------+
+    |    Controller     |  |              |  |     Compute1      |
+    |  OpenStack        |  |              |  |  OpenStack        |
+    |  control + compute+--|--------------+  |  compute          |
+    |  OVN agent        |  |                 |  OVN agent        |
+    |  (ovn-bgp ext.)   |  +-----------------+  (ovn-bgp ext.)   |
+    |  (br-bgp-0/1)     |                    |  (br-bgp-0/1)     |
+    +-------------------+                    +-------------------+
+
+Both the controller and compute1 are dual-homed: each connects to **both**
+leaf-1 and leaf-2 through independent VXLAN tunnels (see the wiring table
+below for details).
 
 Every link in the diagram is a VXLAN tunnel terminated on an OVS bridge
 (``br-infra``) at each end. VLAN tags on ``br-infra`` isolate the individual
@@ -79,16 +84,37 @@ Key characteristics:
 * The gateway chassis is **not** assigned to the public bridge
   (``Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false``), since BGP handles
   external reachability instead of the traditional ``br-ex`` path.
+* The OVN BGP agent (``q-ovn-bgp``) manages OpenFlow rules on the BGP
+  bridges. FRR redistributes routes via BGP.
+
+Compute1
+--------
+
+Compute1 runs as a second compute node. No OpenStack control plane services
+run on this node, but Nova instances can be scheduled onto it. Like the
+controller, it runs the **OVN agent** with the ``ovn-bgp`` and ``metadata``
+extensions, and FRR with BFD for BGP route advertisement.
+
+Key characteristics:
+
+* OVN is built from source (same pinned commits as the controller).
+* Two OVS bridges, ``br-bgp-0`` and ``br-bgp-1``, connect to the leaf
+  switches through VXLAN tunnels on ``br-infra``, using the same veth-pair
+  wiring as the controller.
+* Distributed floating IPs are enabled
+  (``enable_distributed_floating_ip: True``).
+* The OVN BGP agent (``q-ovn-bgp``) manages OpenFlow rules on the BGP
+  bridges. FRR redistributes routes via BGP.
 
 Leaf-1 and Leaf-2
 -----------------
 
 The two leaf nodes act as Top-of-Rack (ToR) switches in the simulated
-leaf-spine fabric. Each leaf has two BGP sessions:
+leaf-spine fabric. Each leaf has three BGP sessions:
 
-* **Downlink** (to the controller) -- iBGP within AS 64999. The leaf is
-  configured as a route-reflector client toward the controller and
-  originates a default route.
+* **Downlinks** (to the controller and compute1) -- iBGP within AS 64999.
+  The leaf is configured as a route-reflector client toward both the
+  controller and compute1, and originates a default route on each downlink.
 * **Uplink** (to the spine) -- eBGP peering between AS 64999 (leaf) and
   AS 65000 (spine).
 
@@ -153,6 +179,14 @@ The pre-run playbook creates the following tunnels:
      - 10001
      - 1001
      - Controller (br-bgp-1) <-> Leaf-2 (controller-port)
+   * - Compute1 <-> Leaf-1
+     - 10020
+     - 3000
+     - Compute1 (br-bgp-0) <-> Leaf-1 (compute1-port)
+   * - Compute1 <-> Leaf-2
+     - 10021
+     - 3001
+     - Compute1 (br-bgp-1) <-> Leaf-2 (compute1-port)
    * - Spine <-> Leaf-1
      - 10010
      - 2000
@@ -165,19 +199,20 @@ The pre-run playbook creates the following tunnels:
 BGP Route Flow
 ==============
 
-When the ``ovn-bgp`` extension on the controller detects a new tenant VM or
-floating IP, the following sequence propagates the route to the spine:
+When the ``ovn-bgp`` extension on a compute node (the controller or compute1)
+detects a new tenant VM or floating IP, the following sequence propagates the
+route to the spine:
 
 #. The ``ovn-bgp`` extension adds a ``/32`` (or ``/128``) route to the
-   controller's kernel routing table and programs OpenFlow rules on
+   node's kernel routing table and programs OpenFlow rules on
    ``br-bgp-0`` and ``br-bgp-1``.
-#. FRR on the controller (via zebra) picks up the connected route and
+#. FRR on the node (via zebra) picks up the connected route and
    advertises it over the iBGP sessions to the leaf switches.
 #. Each leaf, acting as a route-reflector, propagates the route over eBGP
    to the spine.
 #. The spine installs the route into its FIB. Traffic from the Tempest runner
    on the spine can now reach the tenant VM by following the advertised path
-   back through the leaf to the controller.
+   back through the leaf to the originating compute node.
 
 Test Scope
 ==========
