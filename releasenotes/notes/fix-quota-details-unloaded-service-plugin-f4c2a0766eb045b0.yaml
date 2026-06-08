@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Fixed a 500 Internal Server Error when querying the quota details API
+    (``GET /v2.0/quotas/{project_id}/details``) while a service plugin
+    package (e.g. ``neutron-fwaas``, ``neutron-vpnaas``,
+    ``networking-sfc``) is installed but its service plugin is not
+    configured in ``service_plugins``. The quota engine now gracefully
+    skips resources whose service plugin is not loaded instead of raising
+    a ``NotImplementedError``.
