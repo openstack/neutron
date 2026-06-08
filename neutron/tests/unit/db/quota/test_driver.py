@@ -308,6 +308,28 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         self.assertEqual(7, detailed_quota[self.resource_2]['reserved'])
         self.assertEqual(3, detailed_quota[self.resource_2]['used'])
 
+    def test_get_detailed_project_quotas_skips_uncount_resource(self):
+        def _raise_not_implemented(context, resource, project_id):
+            raise NotImplementedError(
+                'No plugins that support counting %s found.' % resource)
+
+        resources = {
+            self.resource_1:
+                TestTrackedResource(self.resource_1, test_quota.MehModel),
+            self.resource_2:
+                TestCountableResource(self.resource_2,
+                                      _raise_not_implemented)}
+        self.plugin.update_quota_limit(self.context, self.project_1,
+                                       self.resource_1, 6)
+        self.plugin.update_quota_limit(self.context, self.project_1,
+                                       self.resource_2, 9)
+        detailed_quota = self.plugin.get_detailed_project_quotas(
+            self.context, resources, self.project_1)
+
+        self.assertIn(self.resource_1, detailed_quota)
+        self.assertNotIn(self.resource_2, detailed_quota)
+        self.assertEqual(6, detailed_quota[self.resource_1]['limit'])
+
     def test_quota_limit_check(self):
         resources = self._create_resources()
         self.plugin.update_quota_limit(self.context, self.project_1,
