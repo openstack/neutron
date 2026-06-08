@@ -140,10 +140,11 @@ further limited by available memory, and the number of RPC workers is set to
 half that number.
 
 It is strongly recommended that all deployers set these values themselves,
-via the api_workers and rpc_workers configuration parameters.
+via the uWSGI ``processes`` and Neutron ``rpc_workers`` configuration
+parameters.
 
 For a cloud with a high load to a relatively small number of objects,
-a smaller value for api_workers will provide better performance than
+a smaller value for API workers will provide better performance than
 many (somewhere around 4-8.) For a cloud with a high load to lots of
 different objects, then the more the better. Budget neutron-server
 using about 2GB of RAM in steady-state.

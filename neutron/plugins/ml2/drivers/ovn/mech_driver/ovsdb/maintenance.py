@@ -20,6 +20,7 @@ import threading
 
 import futurist
 from futurist import periodics
+from neutron.common import wsgi_utils
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
@@ -43,7 +44,6 @@ from neutron.objects import network as network_obj
 from neutron.objects import ports as ports_obj
 from neutron.objects import router as router_obj
 from neutron.objects import securitygroup as sg_obj
-from neutron import service
 
 
 CONF = cfg.CONF
@@ -1412,6 +1412,7 @@ class HashRingHealthCheckPeriodics:
         self._group = group
         self._node_uuid = node_uuid
         self.ctx = n_context.get_admin_context()
+        self._api_workers = wsgi_utils.get_api_worker_count()
 
     @periodics.periodic(spacing=ovn_const.HASH_RING_TOUCH_INTERVAL)
     def touch_hash_ring_node(self):
@@ -1426,10 +1427,9 @@ class HashRingHealthCheckPeriodics:
         # Check the number of the nodes in the ring and log a message in
         # case they are out of sync. See LP #2024205 for more information
         # on this issue.
-        api_workers = service._get_api_workers()
         num_nodes = hash_ring_db.count_nodes_from_host(self.ctx, self._group)
 
-        if num_nodes > api_workers:
+        if num_nodes > self._api_workers:
             LOG.critical(
                 'The number of nodes in the Hash Ring (%d) is higher than '
                 'the number of API workers (%d) for host "%s". Something is '
@@ -1438,4 +1438,4 @@ class HashRingHealthCheckPeriodics:
                 'happen when the API workers are killed and restarted. '
                 'Restarting the service should fix the issue, see LP '
                 '#2024205 for more information.',
-                num_nodes, api_workers, cfg.CONF.host)
+                num_nodes, self._api_workers, cfg.CONF.host)

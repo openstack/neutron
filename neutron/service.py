@@ -133,8 +133,9 @@ def _get_rpc_workers(plugin=None):
 
     workers = cfg.CONF.rpc_workers
     if workers is None:
-        # By default, half as many rpc workers as api workers
-        workers = int(_get_api_workers() / 2)
+        # By default, half of the CPU threads, never using more than half of
+        # the system memory.
+        workers = int(_get_worker_count() / 2)
         workers = max(workers, 1)
 
     # If workers > 0 then start_rpc_listeners would be called in a
@@ -331,13 +332,6 @@ def start_ovn_maintenance_worker():
         return
 
     return _start_workers([ovn_maintenance_worker])
-
-
-def _get_api_workers():
-    workers = cfg.CONF.api_workers
-    if workers is None:
-        workers = _get_worker_count()
-    return workers
 
 
 class Service(n_rpc.Service):

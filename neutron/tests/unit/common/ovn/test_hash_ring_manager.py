@@ -22,8 +22,8 @@ from oslo_utils import timeutils
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions
 from neutron.common.ovn import hash_ring_manager
+from neutron.common import wsgi_utils
 from neutron.db import ovn_hash_ring_db as db_hash_ring
-from neutron import service
 from neutron.tests.unit import testlib_api
 
 HASH_RING_TEST_GROUP = 'test_group'
@@ -33,8 +33,11 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
 
     def setUp(self):
         super().setUp()
-        self.hash_ring_manager = hash_ring_manager.HashRingManager(
-            HASH_RING_TEST_GROUP)
+        self.api_processes = 2
+        with mock.patch.object(wsgi_utils, 'get_api_worker_count',
+                               return_value=self.api_processes):
+            self.hash_ring_manager = hash_ring_manager.HashRingManager(
+                HASH_RING_TEST_GROUP)
         self.admin_ctx = context.get_admin_context()
 
     def _verify_hashes(self, hash_dict):
@@ -126,8 +129,7 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         self._verify_hashes(hash_dict_before)
 
     @mock.patch.object(hash_ring_manager.LOG, 'debug')
-    @mock.patch.object(service, '_get_api_workers', return_value=2)
-    def test__wait_startup_before_caching(self, api_workers, mock_log):
+    def test__wait_startup_before_caching(self, mock_log):
         db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-1')
 
         # Assert it will return True until until we equal api_workers
@@ -155,3 +157,9 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
             self.assertFalse(
                 self.hash_ring_manager._wait_startup_before_caching)
             self.assertFalse(get_nodes_mock.called)
+
+    def test__wait_startup_before_caching_no_api_workers(self):
+        self.hash_ring_manager._api_workers = None
+        self.assertRaises(RuntimeError,
+                          getattr, self.hash_ring_manager,
+                          '_wait_startup_before_caching')
