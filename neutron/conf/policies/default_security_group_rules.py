@@ -11,9 +11,8 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = (
     "The default security group rules API supports "
@@ -27,7 +26,7 @@ RESOURCE_PATH = '/default-security-group-rules/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_default_security_group_rule',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Create a templated of the security group rule',
         operations=[
@@ -69,7 +68,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_default_security_group_rule',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Delete a templated of the security group rule',
         operations=[

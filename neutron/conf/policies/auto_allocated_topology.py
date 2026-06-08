@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 RESOURCE_PATH = '/auto-allocated-topology/{project_id}'
@@ -26,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_auto_allocated_topology',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         description="Get a project's auto-allocated topology",
         operations=[
             {
@@ -43,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_auto_allocated_topology',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         description="Delete a project's auto-allocated topology",
         operations=[
             {

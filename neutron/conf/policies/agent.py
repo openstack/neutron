@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 COLLECTION_PATH = '/agents'
@@ -26,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_agent',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Create an agent',
         operations=[
             {
@@ -38,7 +37,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_agent',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Get an agent',
         operations=[
             {
@@ -59,7 +58,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_agent',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Update an agent',
         operations=[
             {
@@ -76,7 +75,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_agent',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Delete an agent',
         operations=[
             {
@@ -93,7 +92,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_dhcp-network',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Add a network to a DHCP agent',
         operations=[
             {
@@ -110,7 +109,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_dhcp-networks',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='List networks on a DHCP agent',
         operations=[
             {
@@ -127,7 +126,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_dhcp-network',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Remove a network from a DHCP agent',
         operations=[
             {
@@ -144,7 +143,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_l3-router',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Add a router to an L3 agent',
         operations=[
             {
@@ -161,7 +160,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_l3-routers',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='List routers on an L3 agent',
         operations=[
             {
@@ -178,7 +177,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_l3-router',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Update a router in an L3 agent',
         operations=[
             {
@@ -195,7 +194,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_l3-router',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Remove a router from an L3 agent',
         operations=[
             {
@@ -212,7 +211,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_dhcp-agents',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='List DHCP agents hosting a network',
         operations=[
             {
@@ -229,7 +228,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_l3-agents',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='List L3 agents hosting a router',
         operations=[
             {

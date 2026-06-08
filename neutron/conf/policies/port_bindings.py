@@ -10,9 +10,8 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib.policy import rules as lib_rules
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 BINDING_PATH = '/ports/{port_id}/bindings/'
@@ -22,7 +21,7 @@ ACTIVATE_BINDING_PATH = '/ports/{port_id}/bindings/{host}'
 rules = [
     policy.DocumentedRuleDefault(
         name='get_port_binding',
-        check_str=base.ADMIN_OR_SERVICE,
+        check_str=lib_rules.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get port binding information',
         operations=[
@@ -34,7 +33,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port_binding',
-        check_str=base.SERVICE,
+        check_str=lib_rules.SERVICE,
         scope_types=['project'],
         description='Create port binding on the host',
         operations=[
@@ -46,7 +45,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_port_binding',
-        check_str=base.SERVICE,
+        check_str=lib_rules.SERVICE,
         scope_types=['project'],
         description='Delete port binding on the host',
         operations=[
@@ -58,7 +57,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='activate',
-        check_str=base.SERVICE,
+        check_str=lib_rules.SERVICE,
         scope_types=['project'],
         description='Activate port binding on the host',
         operations=[

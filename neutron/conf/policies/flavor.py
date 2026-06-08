@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 FLAVOR_COLLECTION_PATH = '/flavors'
@@ -31,7 +30,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_flavor',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Create a flavor',
         operations=[
             {
@@ -73,7 +72,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_flavor',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Update a flavor',
         operations=[
             {
@@ -90,7 +89,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_flavor',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Delete a flavor',
         operations=[
             {
@@ -108,7 +107,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_service_profile',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Create a service profile',
         operations=[
             {
@@ -125,7 +124,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_service_profile',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Get a service profile',
         operations=[
             {
@@ -146,7 +145,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_service_profile',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Update a service profile',
         operations=[
             {
@@ -163,7 +162,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_service_profile',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Delete a service profile',
         operations=[
             {
@@ -181,7 +180,7 @@ rules = [
 
     policy.RuleDefault(
         name='get_flavor_service_profile',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         description=(
             'Get a flavor associated with a given service profiles. '
             'There is no corresponding GET operations in API currently. '
@@ -196,7 +195,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_flavor_service_profile',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Associate a flavor with a service profile',
         operations=[
             {
@@ -213,7 +212,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_flavor_service_profile',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Disassociate a flavor with a service profile',
         operations=[
             {

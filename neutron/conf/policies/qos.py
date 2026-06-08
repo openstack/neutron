@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
 The QoS API now supports project scope and default roles.
@@ -48,7 +47,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_policy',
         check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
+            lib_rules.ADMIN_OR_PROJECT_READER,
             'rule:shared_qos_policy'
         ),
         scope_types=['project'],
@@ -72,7 +71,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_policy:tags',
         check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
+            lib_rules.ADMIN_OR_PROJECT_READER,
             'rule:shared_qos_policy'
         ),
         scope_types=['project'],
@@ -81,7 +80,7 @@ rules = [
         deprecated_rule=policy.DeprecatedRule(
             name='get_policies_tags',
             check_str=neutron_policy.policy_or(
-                base.ADMIN_OR_PROJECT_READER,
+                lib_rules.ADMIN_OR_PROJECT_READER,
                 'rule:shared_qos_policy'
             ),
             deprecated_reason="Name of the rule is changed.",
@@ -89,7 +88,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Create a QoS policy',
         operations=[
@@ -106,19 +105,19 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy:tags',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Create the QoS policy tags',
         operations=ACTION_POST_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='create_policies_tags',
-            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='update_policy',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Update a QoS policy',
         operations=[
@@ -135,19 +134,19 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy:tags',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Update the QoS policy tags',
         operations=ACTION_PUT_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='update_policies_tags',
-            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Delete a QoS policy',
         operations=[
@@ -164,13 +163,13 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy:tags',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Delete the QoS policy tags',
         operations=ACTION_DELETE_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_policies_tags',
-            check_str=base.ADMIN_OR_PROJECT_MANAGER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
@@ -203,7 +202,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS bandwidth limit rule',
         operations=[
@@ -225,7 +224,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Create a QoS bandwidth limit rule',
         operations=[
@@ -242,7 +241,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS bandwidth limit rule',
         operations=[
@@ -260,7 +259,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS bandwidth limit rule',
         operations=[
@@ -279,7 +278,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_packet_rate_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS packet rate limit rule',
         operations=[
@@ -296,7 +295,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_packet_rate_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Create a QoS packet rate limit rule',
         operations=[
@@ -308,7 +307,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_packet_rate_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS packet rate limit rule',
         operations=[
@@ -321,7 +320,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_packet_rate_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS packet rate limit rule',
         operations=[
@@ -335,7 +334,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS DSCP marking rule',
         operations=[
@@ -357,7 +356,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Create a QoS DSCP marking rule',
         operations=[
@@ -374,7 +373,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS DSCP marking rule',
         operations=[
@@ -392,7 +391,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS DSCP marking rule',
         operations=[
@@ -411,7 +410,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS minimum bandwidth rule',
         operations=[
@@ -433,7 +432,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Create a QoS minimum bandwidth rule',
         operations=[
@@ -450,7 +449,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS minimum bandwidth rule',
         operations=[
@@ -468,7 +467,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS minimum bandwidth rule',
         operations=[
@@ -486,7 +485,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_policy_minimum_packet_rate_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS minimum packet rate rule',
         operations=[
@@ -503,7 +502,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_minimum_packet_rate_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Create a QoS minimum packet rate rule',
         operations=[
@@ -515,7 +514,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_minimum_packet_rate_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS minimum packet rate rule',
         operations=[
@@ -528,7 +527,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_minimum_packet_rate_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS minimum packet rate rule',
         operations=[
@@ -541,7 +540,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS bandwidth limit rule through alias',
         operations=[
@@ -558,7 +557,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_alias_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS bandwidth limit rule through alias',
         operations=[
@@ -575,7 +574,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_alias_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS bandwidth limit rule through alias',
         operations=[
@@ -592,7 +591,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS DSCP marking rule through alias',
         operations=[
@@ -609,7 +608,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_alias_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS DSCP marking rule through alias',
         operations=[
@@ -626,7 +625,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_alias_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS DSCP marking rule through alias',
         operations=[
@@ -643,7 +642,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS minimum bandwidth rule through alias',
         operations=[
@@ -660,7 +659,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_alias_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Update a QoS minimum bandwidth rule through alias',
         operations=[
@@ -677,7 +676,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_alias_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MANAGER,
         scope_types=['project'],
         description='Delete a QoS minimum bandwidth rule through alias',
         operations=[

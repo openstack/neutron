@@ -11,6 +11,7 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -80,7 +81,7 @@ rules = [
     # Does an empty string make more sense for create_security_group?
     policy.DocumentedRuleDefault(
         name='create_security_group',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a security group',
         operations=[
@@ -97,20 +98,20 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_security_group:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create the security group tags',
         operations=SG_ACTION_POST_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='create_security_groups_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group',
         check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
+            lib_rules.ADMIN_OR_PROJECT_READER,
             'rule:shared_security_group'
         ),
         scope_types=['project'],
@@ -134,7 +135,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_security_group:tags',
         check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
+            lib_rules.ADMIN_OR_PROJECT_READER,
             'rule:shared_security_group'
         ),
         scope_types=['project'],
@@ -143,7 +144,7 @@ rules = [
         deprecated_rule=policy.DeprecatedRule(
             name='get_security_groups_tags',
             check_str=neutron_policy.policy_or(
-                base.ADMIN_OR_PROJECT_READER,
+                lib_rules.ADMIN_OR_PROJECT_READER,
                 'rule:shared_security_group'
             ),
             deprecated_reason="Name of the rule is changed.",
@@ -151,7 +152,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_security_group',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a security group',
         operations=[
@@ -168,19 +169,19 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_security_group:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update the security group tags',
         operations=SG_ACTION_PUT_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='update_security_groups_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a security group',
         operations=[
@@ -197,13 +198,13 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete the security group tags',
         operations=SG_ACTION_DELETE_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_security_groups_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),

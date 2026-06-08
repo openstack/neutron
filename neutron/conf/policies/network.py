@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
 The network API now supports system scope and default roles.
@@ -63,7 +62,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_network',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a network',
         operations=ACTION_POST,
@@ -75,7 +74,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:shared',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Create a shared network',
         operations=ACTION_POST,
@@ -87,7 +86,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:router:external',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Create an external network',
         operations=ACTION_POST,
@@ -99,7 +98,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:is_default',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Specify ``is_default`` attribute when creating a network',
         operations=ACTION_POST,
@@ -111,7 +110,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:port_security_enabled',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description=(
             'Specify ``port_security_enabled`` '
@@ -126,7 +125,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:segments',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Specify ``segments`` attribute when creating a network',
         operations=ACTION_POST,
@@ -138,7 +137,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:network_type',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``provider:network_type`` '
@@ -153,7 +152,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:physical_network',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``provider:physical_network`` '
@@ -168,7 +167,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:segmentation_id',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``provider:segmentation_id`` when creating a network'
@@ -182,13 +181,13 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create the network tags',
         operations=ACTION_POST_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='create_networks_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
@@ -196,8 +195,8 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_network',
         check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
-            base.SERVICE,
+            lib_rules.ADMIN_OR_PROJECT_READER,
+            lib_rules.SERVICE,
             'rule:shared',
             'rule:external',
             neutron_policy.RULE_ADVSVC
@@ -217,7 +216,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:segments',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get ``segments`` attribute of a network',
         operations=ACTION_GET,
@@ -229,7 +228,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:network_type',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get ``provider:network_type`` attribute of a network',
         operations=ACTION_GET,
@@ -241,7 +240,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:physical_network',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get ``provider:physical_network`` attribute of a network',
         operations=ACTION_GET,
@@ -253,7 +252,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:segmentation_id',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get ``provider:segmentation_id`` attribute of a network',
         operations=ACTION_GET,
@@ -266,7 +265,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_network:tags',
         check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
+            lib_rules.ADMIN_OR_PROJECT_READER,
             'rule:shared',
             'rule:external',
             neutron_policy.RULE_ADVSVC
@@ -276,14 +275,14 @@ rules = [
         operations=ACTION_GET_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='get_networks_tags',
-            check_str=base.ADMIN_OR_PROJECT_READER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_READER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
         name='update_network',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a network',
         operations=ACTION_PUT,
@@ -295,7 +294,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:segments',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update ``segments`` attribute of a network',
         operations=ACTION_PUT,
@@ -307,7 +306,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:shared',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update ``shared`` attribute of a network',
         operations=ACTION_PUT,
@@ -319,7 +318,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:network_type',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update ``provider:network_type`` attribute of a network',
         operations=ACTION_PUT,
@@ -331,7 +330,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:physical_network',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description=(
             'Update ``provider:physical_network`` '
@@ -346,7 +345,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:segmentation_id',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description=(
             'Update ``provider:segmentation_id`` '
@@ -361,7 +360,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:router:external',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update ``router:external`` attribute of a network',
         operations=ACTION_PUT,
@@ -373,7 +372,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:is_default',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update ``is_default`` attribute of a network',
         operations=ACTION_PUT,
@@ -385,7 +384,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:port_security_enabled',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update ``port_security_enabled`` attribute of a network',
         operations=ACTION_PUT,
@@ -397,20 +396,20 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update the network tags',
         operations=ACTION_PUT_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='update_networks_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
         name='delete_network',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a network',
         operations=ACTION_DELETE,
@@ -423,13 +422,13 @@ rules = [
     policy.DocumentedRuleDefault(
         # This should be just "update_network:tags" probably
         name='delete_network:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete the network tags',
         operations=ACTION_DELETE_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_networks_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),

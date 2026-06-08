@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
 The network IP availability API now support project scope and default roles.
@@ -24,7 +23,7 @@ The network IP availability API now support project scope and default roles.
 rules = [
     policy.DocumentedRuleDefault(
         name='get_network_ip_availability',
-        check_str=base.ADMIN_OR_SERVICE,
+        check_str=lib_rules.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get network IP availability',
         operations=[

@@ -10,9 +10,8 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib.policy import rules as lib_rules
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 COLLECTION_PATH = '/routers'
@@ -29,14 +28,14 @@ ACTION_GET: list[policy.Operation] = [
 rules = [
     policy.DocumentedRuleDefault(
         name='create_router:evpn_vni',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Specify ``evpn_vni`` attribute when creating a router',
         operations=ACTION_POST,
     ),
     policy.DocumentedRuleDefault(
         name='get_router:evpn_vni',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get ``evpn_vni`` attribute of a router',
         operations=ACTION_GET,

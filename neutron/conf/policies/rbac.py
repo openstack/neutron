@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
 The RBAC API now supports system scope and default roles.
@@ -29,7 +28,7 @@ RESOURCE_PATH = '/rbac-policies/{id}'
 _create_rbac_target_tenant = policy.DocumentedRuleDefault(
     name='create_rbac_policy:target_tenant',
     check_str=neutron_policy.policy_or(
-        base.ADMIN,
+        lib_rules.ADMIN,
         '(not field:rbac_policy:target_tenant=* and '
         'not field:rbac_policy:target_project=*)'),
     description='Specify ``target_tenant`` when creating an RBAC policy',
@@ -52,7 +51,7 @@ _create_rbac_target_tenant = policy.DocumentedRuleDefault(
 _update_rbac_target_tenant = policy.DocumentedRuleDefault(
     name='update_rbac_policy:target_tenant',
     check_str=neutron_policy.policy_or(
-        base.ADMIN,
+        lib_rules.ADMIN,
         '(not field:rbac_policy:target_tenant=* and '
         'not field:rbac_policy:target_project=*)'),
     description='Update ``target_tenant`` attribute of an RBAC policy',
@@ -87,7 +86,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_rbac_policy',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create an RBAC policy',
         operations=[
@@ -106,7 +105,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_rbac_policy:target_project',
         check_str=neutron_policy.policy_or(
-            base.ADMIN,
+            lib_rules.ADMIN,
             'not field:rbac_policy:target_project=*'),
         description='Specify ``target_project`` when creating an RBAC policy',
         operations=[
@@ -119,7 +118,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_rbac_policy',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update an RBAC policy',
         operations=[
@@ -138,7 +137,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_rbac_policy:target_project',
         check_str=neutron_policy.policy_or(
-            base.ADMIN,
+            lib_rules.ADMIN,
             'not field:rbac_policy:target_project=*'),
         description='Update ``target_project`` attribute of an RBAC policy',
         operations=[
@@ -151,7 +150,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_rbac_policy',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get an RBAC policy',
         operations=[
@@ -172,7 +171,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_rbac_policy',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete an RBAC policy',
         operations=[

@@ -11,6 +11,7 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -75,7 +76,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:segment_id',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``segment_id`` attribute when creating a subnet'
@@ -89,7 +90,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:service_types',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``service_types`` attribute when creating a subnet'
@@ -104,7 +105,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_subnet:tags',
         check_str=neutron_policy.policy_or(
-            base.PROJECT_MEMBER,
+            lib_rules.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER,
         ),
         scope_types=['project'],
@@ -113,7 +114,7 @@ rules = [
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnets_tags',
             check_str=neutron_policy.policy_or(
-                base.PROJECT_MEMBER,
+                lib_rules.PROJECT_MEMBER,
                 base.ADMIN_OR_NET_OWNER_MEMBER,
             ),
             deprecated_reason="Name of the rule is changed.",
@@ -122,11 +123,11 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_subnet',
         check_str=neutron_policy.policy_or(
-            base.PROJECT_READER,
+            lib_rules.PROJECT_READER,
             'rule:shared',
             'rule:external_network',
             base.ADMIN_OR_NET_OWNER_READER,
-            base.SERVICE,
+            lib_rules.SERVICE,
         ),
         scope_types=['project'],
         description='Get a subnet',
@@ -143,7 +144,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_subnet:segment_id',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get ``segment_id`` attribute of a subnet',
         operations=ACTION_GET,
@@ -156,7 +157,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_subnet:tags',
         check_str=neutron_policy.policy_or(
-            base.PROJECT_READER,
+            lib_rules.PROJECT_READER,
             'rule:shared',
             'rule:external_network',
             base.ADMIN_OR_NET_OWNER_READER,
@@ -167,7 +168,7 @@ rules = [
         deprecated_rule=policy.DeprecatedRule(
             name='get_subnets_tags',
             check_str=neutron_policy.policy_or(
-                base.PROJECT_READER,
+                lib_rules.PROJECT_READER,
                 'rule:shared',
                 'rule:external_network',
                 base.ADMIN_OR_NET_OWNER_READER,
@@ -178,7 +179,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_subnet',
         check_str=neutron_policy.policy_or(
-            base.PROJECT_MEMBER,
+            lib_rules.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER),
         scope_types=['project'],
         description='Update a subnet',
@@ -191,7 +192,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:segment_id',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update ``segment_id`` attribute of a subnet',
         operations=ACTION_PUT,
@@ -203,7 +204,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:service_types',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update ``service_types`` attribute of a subnet',
         operations=ACTION_PUT,
@@ -216,7 +217,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_subnet:tags',
         check_str=neutron_policy.policy_or(
-            base.PROJECT_MEMBER,
+            lib_rules.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER,
         ),
         scope_types=['project'],
@@ -225,7 +226,7 @@ rules = [
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnets_tags',
             check_str=neutron_policy.policy_or(
-                base.PROJECT_MEMBER,
+                lib_rules.PROJECT_MEMBER,
                 base.ADMIN_OR_NET_OWNER_MEMBER,
             ),
             deprecated_reason="Name of the rule is changed.",
@@ -234,7 +235,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_subnet',
         check_str=neutron_policy.policy_or(
-            base.PROJECT_MEMBER,
+            lib_rules.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER,
         ),
         scope_types=['project'],
@@ -249,7 +250,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_subnet:tags',
         check_str=neutron_policy.policy_or(
-            base.PROJECT_MEMBER,
+            lib_rules.PROJECT_MEMBER,
             base.ADMIN_OR_NET_OWNER_MEMBER,
         ),
         scope_types=['project'],
@@ -258,7 +259,7 @@ rules = [
         deprecated_rule=policy.DeprecatedRule(
             name='delete_subnets_tags',
             check_str=neutron_policy.policy_or(
-                base.PROJECT_MEMBER,
+                lib_rules.PROJECT_MEMBER,
                 base.ADMIN_OR_NET_OWNER_MEMBER,
             ),
             deprecated_reason="Name of the rule is changed.",
