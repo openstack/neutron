@@ -1,4 +1,0 @@
-[[post-config|/$NEUTRON_CONF]]
-
-[DEFAULT]
-enable_dvr=False

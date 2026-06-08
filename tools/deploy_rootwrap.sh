@@ -63,6 +63,6 @@ if [[ "$OS_SUDO_TESTING" = "1" ]]; then
     sed -i 's/use_syslog=False/use_syslog=True/g' ${dst_conf}
     sed -i 's/syslog_log_level=ERROR/syslog_log_level=DEBUG/g' ${dst_conf}
     sed -i 's/daemon_timeout=600/daemon_timeout=7800/g' ${dst_conf}
-    cp -p ${neutron_path}/neutron/tests/contrib/testing.filters \
+    cp -p ${neutron_path}/tools/rootwrap/testing.filters \
         ${filters_path}/
 fi
