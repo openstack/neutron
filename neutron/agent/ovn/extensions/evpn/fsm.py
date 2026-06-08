@@ -77,10 +77,11 @@ class EvpnFSM:
             (Evpn.DESTROY, "_destroy"),
     }
 
-    def __init__(self, svd, config):
+    def __init__(self, svd, config, frr_driver):
         self.instances = {}  # vrf -> Evpn
         self._svd = svd
         self._cfg = config
+        self._driver = frr_driver
 
     def _set_evpn_bridge(self, evpn, mac, vni, vid):
         evpn.mac = mac
@@ -103,13 +104,13 @@ class EvpnFSM:
     def _advertise(self, evpn):
         self._svd.add_vni(evpn.vni, evpn.vid, evpn.vrf, evpn.mac,
                           self._cfg.br_mtu)
-        LOG.debug("EVPN: VNI %d Create VLAN and update FRR "
-                  "configuration to start advertising and learning", evpn.vni)
+        self._driver.create_router(evpn.vrf, evpn.vni)
+        LOG.debug("EVPN: advertised %s", evpn)
 
     def _unadvertise(self, evpn):
-        LOG.debug("EVPN: VNI %d Remove VLAN and update FRR "
-                  "configuration to stop advertising and learning", evpn.vni)
         self._svd.del_vni(evpn.vni, evpn.vid)
+        self._driver.delete_router(evpn.vrf, evpn.vni)
+        LOG.debug("EVPN: unadvertised %s", evpn)
 
     def _set_evpn_router_and_advertise(self, evpn):
         self._set_evpn_router(evpn)

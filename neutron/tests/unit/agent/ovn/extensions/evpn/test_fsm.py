@@ -29,7 +29,9 @@ class TestEvpnFSM(base.BaseTestCase):
         super().setUp()
         self.mock_svd = mock.Mock()
         self.mock_config = mock.Mock()
-        self.evpn_fsm = fsm.EvpnFSM(self.mock_svd, self.mock_config)
+        self.mock_driver = mock.Mock()
+        self.evpn_fsm = fsm.EvpnFSM(self.mock_svd,
+                                    self.mock_config, self.mock_driver)
         self.mock_config.br_mtu = BR_MTU
 
     def test_vrf_then_port_binding_create(self):
@@ -47,6 +49,7 @@ class TestEvpnFSM(base.BaseTestCase):
         self.assertTrue(evpn.vrf_up)
         self.mock_svd.add_vni.assert_called_once_with(
             10, 1, vrf, 'aa:bb:cc:dd:ee:ff', BR_MTU)
+        self.mock_driver.create_router.assert_called_once_with(vrf, 10)
 
     def test_port_binding_then_vrf_create(self):
         vrf = 'vr0a1b2c3d-fff'
@@ -63,6 +66,7 @@ class TestEvpnFSM(base.BaseTestCase):
         self.assertTrue(evpn.vrf_up)
         self.mock_svd.add_vni.assert_called_once_with(
             10, 1, vrf, 'aa:bb:cc:dd:ee:ff', BR_MTU)
+        self.mock_driver.create_router.assert_called_once_with(vrf, 10)
 
     def test_advertise_then_port_binding_delete(self):
         vrf = 'vr0a1b2c3d-fff'
@@ -80,6 +84,7 @@ class TestEvpnFSM(base.BaseTestCase):
             fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, vrf)
         self.assertNotIn(vrf, self.evpn_fsm.instances)
         self.mock_svd.del_vni.assert_called_once_with(10, 1)
+        self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
 
     def test_advertise_then_vrf_delete(self):
         vrf = 'vr0a1b2c3d-fff'
@@ -97,6 +102,7 @@ class TestEvpnFSM(base.BaseTestCase):
             fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
         self.assertNotIn(vrf, self.evpn_fsm.instances)
         self.mock_svd.del_vni.assert_called_once_with(10, 1)
+        self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
 
     def test_simultaneous_vrf_and_port_binding_create(self):
         """Netlink and SB IDL threads both create for the same VRF."""
@@ -179,6 +185,8 @@ class TestEvpnFSM(base.BaseTestCase):
             fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
         self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
         self.assertEqual(2, self.mock_svd.add_vni.call_count)
+        self.assertEqual(2, self.mock_driver.create_router.call_count)
+        self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
 
     def test_advertise_then_port_binding_delete_then_port_binding_create(self):
         vrf = 'vr0a1b2c3d-fff'
@@ -206,6 +214,9 @@ class TestEvpnFSM(base.BaseTestCase):
         self.assertEqual(20, evpn.vni)
         self.assertEqual(2, evpn.vid)
         self.assertEqual(2, self.mock_svd.add_vni.call_count)
+        self.assertEqual(2, self.mock_driver.create_router.call_count)
+        self.mock_driver.create_router.assert_called_with(vrf, 20)
+        self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
 
     def test_replay_end_deletes_stale_fsm_instance(self):
         vrf1, vrf2 = 'vr0a1b2c3d-eee', 'vr1a2b3c3d-fff'
@@ -235,6 +246,7 @@ class TestEvpnFSM(base.BaseTestCase):
         handler.replay_end()
         self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
         self.assertIn(vrf, self.evpn_fsm.instances)
+        self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
 
     def test_replay_end_no_stale_vrfs(self):
         vrf = 'vr0a1b2c3d-fff'
@@ -248,3 +260,22 @@ class TestEvpnFSM(base.BaseTestCase):
         handler.replay_end()
         self.assertIn(vrf, self.evpn_fsm.instances)
         self.assertEqual({vrf}, handler._known_vrfs)
+
+    def test_driver_not_called_before_advertising(self):
+        vrf = 'vr0a1b2c3d-fff'
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+        evpn = self.evpn_fsm.instances[vrf]
+        self.assertEqual(fsm.Evpn.WAITING_FOR_BRIDGE, evpn.state)
+        self.mock_driver.create_router.assert_not_called()
+        self.mock_driver.delete_router.assert_not_called()
+
+    def test_driver_not_called_port_binding_before_vrf(self):
+        vrf = 'vr0a1b2c3d-fff'
+        self.evpn_fsm.advance(
+            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
+        evpn = self.evpn_fsm.instances[vrf]
+        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
+        self.mock_driver.create_router.assert_not_called()
+        self.mock_driver.delete_router.assert_not_called()

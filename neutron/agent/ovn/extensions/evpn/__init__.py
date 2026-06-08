@@ -26,6 +26,7 @@ from neutron.agent.linux import svd as linux_svd
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import events as evpn_events
 from neutron.agent.ovn.extensions.evpn import fsm
+from neutron.agent.ovn.extensions.evpn import fsm_frr_driver
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.agent.ovn.extensions.evpn import svd
 from neutron.agent.ovn.extensions import extension_manager as ovn_ext_mgr
@@ -81,7 +82,10 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
                             dstport=self.cfg.dstport, br_mtu=self.cfg.br_mtu)
         except linux_svd.SvdDeviceAlreadyExists:
             LOG.warning("SVD already exists, reusing")
-        self._evpn_fsm = fsm.EvpnFSM(self.svd, self.cfg)
+        driver = fsm_frr_driver.FsmFrrVtyshDriver(
+            peer_interface=CONF.ovn_evpn.bgp_local_interface,
+            bgp_router_id=self.cfg.local_ip)
+        self._evpn_fsm = fsm.EvpnFSM(self.svd, self.cfg, driver)
         vrf_handler = netlink_monitor.VrfHandler(self._evpn_fsm)
         self.nl_dispatcher = nl_dispatcher.NetlinkDispatcher(
             rtnl.RTMGRP_LINK)

@@ -24,7 +24,7 @@ from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.agent.ovn.extensions.evpn import svd
-from neutron.conf.agent.ovn.ovn_neutron_agent import config as agent_config
+from neutron.conf.agent.ovn.evpn import config as evpn_conf
 from neutron.privileged.agent.linux import svd as privileged_svd
 from neutron.tests import base
 
@@ -52,7 +52,7 @@ class TestEVPNAgentExtension(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        cfg.CONF.register_opts(agent_config.OVN_EVPN_OPTS, group='ovn_evpn')
+        evpn_conf.register_opts()
         cfg.CONF.set_override('child_vxlan_port', self.DSTPORT,
                               group='ovn_evpn')
         self.ext = evpn_ext.EVPNAgentExtension()
@@ -76,7 +76,7 @@ class TestVrfHandler(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self._evpn_fsm = fsm.EvpnFSM(mock.Mock(), mock.Mock())
+        self._evpn_fsm = fsm.EvpnFSM(mock.Mock(), mock.Mock(), mock.Mock())
         self.handler = netlink_monitor.VrfHandler(self._evpn_fsm)
 
     def test_handle_newlink_evpn_vrf(self):

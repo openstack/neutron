@@ -200,8 +200,8 @@ class FrrVtyshExecutor:
 
 class FrrVtyshDriver(interface.EVPNRouterDriver):
 
-    def __init__(self, vrf_handler: interface.EVPNRouterVrfHandler,
-                 peer_interface: str,
+    def __init__(self, peer_interface: str,
+                 vrf_handler: interface.EVPNRouterVrfHandler,
                  executor: FrrVtyshExecutor | None = None):
         self.vrf_handler = vrf_handler
         self.peer_interface = peer_interface
