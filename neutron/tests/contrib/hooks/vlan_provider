@@ -1,9 +1,0 @@
-[[test-config|$TEMPEST_CONFIG]]
-
-[neutron_plugin_options]
-provider_vlans=foo,
-
-[[post-config|/$NEUTRON_CORE_PLUGIN_CONF]]
-
-[ml2_type_vlan]
-network_vlan_ranges = foo:1:10

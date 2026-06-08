@@ -1,8 +1,0 @@
-[[post-config|$NEUTRON_CONF]]
-
-[quotas]
-# x10 of default quotas (at the time of writing)
-quota_router=100
-quota_floatingip=500
-quota_security_group=100
-quota_security_group_rule=1000
