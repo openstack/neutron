@@ -118,15 +118,17 @@ class TestFrrVtyshExecutor(base.BaseTestCase):
         self.executor.execute_cmds(mock_cmds)
 
         calls = self.execute.call_args_list
-        self.assertEqual(2, len(calls))
+        self.assertEqual(3, len(calls))
         dryrun_cmd = calls[0][0][0]
         apply_cmd = calls[1][0][0]
+        write_mem_cmd = calls[2][0][0]
         self.assertEqual('vtysh', dryrun_cmd[0])
         self.assertIn('--dryrun', dryrun_cmd)
         self.assertIn('-f', dryrun_cmd)
         self.assertEqual('vtysh', apply_cmd[0])
         self.assertIn('-f', apply_cmd)
         self.assertNotIn('--dryrun', apply_cmd)
+        self.assertEqual(['vtysh', '-c', 'write memory'], write_mem_cmd)
 
     def test_execute_cmds_raises_dryrun_error(self):
         mock_cmds = "bad config"

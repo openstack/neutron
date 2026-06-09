@@ -195,6 +195,7 @@ class FrrVtyshExecutor:
                     step='apply',
                     cause=err,
                 ) from err
+        self.execute_cli_cmd('write memory')
 
 
 class FrrVtyshDriver(interface.EVPNRouterDriver):
