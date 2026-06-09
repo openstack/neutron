@@ -315,7 +315,7 @@ rules = [
         scope_types=['project'],
         description=('Specify ``enable_default_route_bfd`` attribute when '
                      'updating a router'),
-        operations=ACTION_POST,
+        operations=ACTION_PUT,
     ),
     policy.DocumentedRuleDefault(
         name='update_router:enable_default_route_ecmp',
@@ -323,7 +323,7 @@ rules = [
         scope_types=['project'],
         description=('Specify ``enable_default_route_ecmp`` attribute when '
                      'updating a router'),
-        operations=ACTION_POST,
+        operations=ACTION_PUT,
     ),
     policy.DocumentedRuleDefault(
         name='update_router:tags',
