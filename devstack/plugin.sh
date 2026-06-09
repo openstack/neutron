@@ -19,6 +19,7 @@ source $LIBDIR/tag_ports_during_bulk_creation
 source $LIBDIR/octavia
 source $LIBDIR/loki
 source $LIBDIR/local_ip
+source $LIBDIR/pvlan
 source $LIBDIR/port_trusted_vif
 source $LIBDIR/frr
 source $LIBDIR/dns_forwarder_ovs_ext
@@ -72,6 +73,9 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled neutron-segments; then
                 configure_segments_extension
+            fi
+            if is_service_enabled neutron-pvlan; then
+                configure_pvlan
             fi
             if is_service_enabled neutron-network-segment-range; then
                 configure_network_segment_range

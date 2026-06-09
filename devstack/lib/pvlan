@@ -1,0 +1,3 @@
+function configure_pvlan {
+    neutron_service_plugin_class_add "pvlan"
+}
