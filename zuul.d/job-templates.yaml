@@ -119,6 +119,7 @@
         - neutron-tempest-plugin-ovn-with-ovn-metadata-agent
         - neutron-ovn-grenade-multinode-ovn-metadata-agent
         - ironic-tempest-ovn-uefi-ipmi-pxe
+        - neutron-ovn-bgp-tempest-multinode
     experimental:
       jobs: *neutron-periodic-jobs
 
