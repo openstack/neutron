@@ -13,8 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
-
+from oslo_utils import uuidutils
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import ip_lib
@@ -26,6 +25,7 @@ from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.agent.ovn.extensions.evpn import svd
+from neutron.agent.ovn.extensions.evpn import utils as evpn_utils
 from neutron.common import utils
 from neutron.privileged.agent.linux import ip_lib as privileged
 from neutron.tests.functional.agent.linux import base
@@ -41,10 +41,6 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
         except Exception:
             pass
 
-    @staticmethod
-    def _evpn_vrf_name():
-        return 'vr%s' % uuid.uuid4().hex[:12]
-
     def test_vrf_handler_lifecycle(self):
         vrf_handler = netlink_monitor.VrfHandler(
             fsm.EvpnFSM(svd=None, config=None))
@@ -59,7 +55,7 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
             on_end=vrf_handler.replay_end)
 
         # Create a VRF before starting the dispatcher so replay discovers it.
-        preexisting_vrf = self._evpn_vrf_name()
+        preexisting_vrf = evpn_utils.evpn_vrf_name(uuidutils.generate_uuid())
         privileged.create_interface(preexisting_vrf, None, 'vrf',
                                     vrf_table=100)
         self.addCleanup(self._safe_delete, preexisting_vrf)
@@ -70,7 +66,7 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
             timeout=10, sleep=0.1)
 
         # Create a VRF after start — live newlink detection.
-        live_vrf = self._evpn_vrf_name()
+        live_vrf = evpn_utils.evpn_vrf_name(uuidutils.generate_uuid())
         privileged.create_interface(live_vrf, None, 'vrf', vrf_table=200)
         self.addCleanup(self._safe_delete, live_vrf)
         utils.wait_until_true(

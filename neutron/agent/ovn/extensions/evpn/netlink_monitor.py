@@ -17,16 +17,18 @@ import re
 
 from oslo_log import log
 
+from neutron_lib import constants as n_const
+
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
 from neutron.agent.ovn.extensions.evpn import fsm
 
 
 LOG = log.getLogger(__name__)
-# EVPN VRF name has EVPN_VRF_NAME_LEN characters:
-#   EVPN_VRF_PREFIX followed by
-#   the first 12 characters of the logical router's UUID
-EVPN_VRF_RE = re.compile(evpn_const.EVPN_VRF_PREFIX + r'[0-9a-f\-]{12}$')
+_EVPN_VRF_UUID_LEN = (
+    n_const.DEVICE_NAME_MAX_LEN - len(evpn_const.EVPN_VRF_PREFIX))
+EVPN_VRF_RE = re.compile(
+    evpn_const.EVPN_VRF_PREFIX + r'[0-9a-f\-]{%d}$' % _EVPN_VRF_UUID_LEN)
 
 
 class VrfHandler:
