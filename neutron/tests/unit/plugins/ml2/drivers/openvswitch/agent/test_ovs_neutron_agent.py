@@ -411,6 +411,59 @@ class TestOvsNeutronAgent:
     def test_port_dead_with_valid_tag(self):
         self._test_port_dead(cur_tag=1)
 
+    def test_port_dead_invalid_ofport_unassigned(self):
+        port = mock.Mock()
+        port.ofport = ovs_lib.UNASSIGNED_OFPORT
+        port.port_name = 'tap1234'
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            self.agent.port_dead(port)
+        int_br.set_db_attribute.assert_not_called()
+        int_br.drop_port.assert_not_called()
+
+    def test_port_dead_invalid_ofport_negative(self):
+        port = mock.Mock()
+        port.ofport = ovs_lib.INVALID_OFPORT
+        port.port_name = 'tap1234'
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            self.agent.port_dead(port)
+        int_br.set_db_attribute.assert_not_called()
+        int_br.drop_port.assert_not_called()
+
+    def test_port_alive_invalid_ofport_unassigned(self):
+        port = mock.Mock()
+        port.ofport = ovs_lib.UNASSIGNED_OFPORT
+        port.port_name = 'tap1234'
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            self.agent.port_alive(port)
+        int_br.db_get_val.assert_not_called()
+        int_br.uninstall_flows.assert_not_called()
+
+    def test_port_alive_invalid_ofport_negative(self):
+        port = mock.Mock()
+        port.ofport = ovs_lib.INVALID_OFPORT
+        port.port_name = 'tap1234'
+        with mock.patch.object(self.agent, 'int_br') as int_br:
+            self.agent.port_alive(port)
+        int_br.db_get_val.assert_not_called()
+        int_br.uninstall_flows.assert_not_called()
+
+    def test_treat_vif_port_invalid_ofport_returns_false(self):
+        for ofport in (ovs_lib.UNASSIGNED_OFPORT, ovs_lib.INVALID_OFPORT, 0):
+            vif_port = mock.Mock()
+            vif_port.ofport = ofport
+            vif_port.vif_id = 'test-port-id'
+            with mock.patch.object(
+                self.agent, 'port_bound'
+            ) as port_bound, mock.patch.object(
+                self.agent, 'port_alive'
+            ) as port_alive:
+                result = self.agent.treat_vif_port(
+                    vif_port, 'port-id', 'net-id', 'vxlan',
+                    None, 100, True, [], 'compute:nova', False)
+            self.assertFalse(result)
+            port_bound.assert_not_called()
+            port_alive.assert_not_called()
+
     def mock_scan_ports(self, vif_port_set=None, registered_ports=None,
                         updated_ports=None, port_tags_dict=None, sync=False):
         if port_tags_dict is None:  # Because empty dicts evaluate as False.
@@ -1152,7 +1205,7 @@ class TestOvsNeutronAgent:
             "iface-id": "407a79e0-e0be-4b7d-92a6-513b2161011b",
             "vif_mac": "fa:16:3e:68:46:7b",
             "port_name": "qr-407a79e0-e0",
-            "ofport": -1,
+            "ofport": 10,
             "bridge_name": "br-int"})
         with mock.patch.object(
                 self.agent.plugin_rpc, 'update_device_down'

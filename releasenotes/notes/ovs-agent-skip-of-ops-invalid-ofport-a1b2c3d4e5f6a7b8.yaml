@@ -1,0 +1,13 @@
+---
+fixes:
+  - |
+    Fixed a race condition in the OVS agent where ``port_alive`` and
+    ``port_dead`` could issue OpenFlow operations with an invalid
+    ``in_port`` value when a VIF port had an unassigned or error ofport
+    (e.g. ``[]`` or ``-1``).  The malformed OpenFlow message caused the
+    os-ken ``send_msg`` call to hang until the 300-second
+    ``of_request_timeout`` expired, which blocked the agent's
+    ``rpc_loop`` and prevented all subsequent port processing for the
+    remainder of the timeout period.  The functions now validate the
+    ofport before performing any OpenFlow operations and log a warning
+    so the port is retried on the next iteration.
