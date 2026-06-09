@@ -28,11 +28,11 @@ from neutron.services.bgp import commands
 from neutron.services.bgp import constants
 from neutron.services.bgp import exceptions
 from neutron.services.bgp import helpers
+from neutron.tests.functional import base as func_base
 from neutron.tests.functional.services import bgp
 
 
-def _get_unique_name(prefix="test"):
-    return f"{prefix}_{uuidutils.generate_uuid()[:8]}"
+_get_unique_name = func_base.get_unique_name
 
 
 def _create_fake_chassis():

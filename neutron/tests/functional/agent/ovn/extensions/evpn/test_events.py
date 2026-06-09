@@ -17,10 +17,10 @@ from unittest import mock
 
 import testtools
 
-from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import events as evpn_events
 from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
 from neutron.agent.ovn.extensions.evpn import fsm as evpn_fsm
+from neutron.agent.ovn.extensions.evpn import utils as evpn_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as common_utils
 from neutron.services.bgp import ovn as bgp_ovn
@@ -56,7 +56,7 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
         lrp_name = f'lrp-to-evpn-{vni}'
         lsp_name = f'lsp-to-evpn-{vni}'
         lr = self.nb_api.lr_add(lr_name).execute(check_error=True)
-        vrf = evpn_const.EVPN_VRF_PREFIX + str(lr.uuid)[:12]
+        vrf = evpn_utils.evpn_vrf_name(lr.uuid)
         with self.nb_api.transaction(check_error=True) as txn:
             txn.add(self.nb_api.db_set(
                 'Logical_Router', lr_name,
@@ -90,7 +90,7 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
         options = {'dynamic-routing': 'true', 'chassis': 'fake-chassis'}
         if set_vrf:
             options[ovn_const.LR_OPTIONS_DR_VRF_NAME] = (
-                evpn_const.EVPN_VRF_PREFIX + str(lr.uuid)[:12])
+                evpn_utils.evpn_vrf_name(lr.uuid))
         external_ids = {}
         if set_vni:
             external_ids[svc_const.EVPN_LRP_VNI_EXT_ID_KEY] = str(vni)
