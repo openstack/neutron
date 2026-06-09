@@ -67,7 +67,9 @@ like a router, network, or a port, it uses one from your total quota.
 With subnets, the resource is the IP address space. Some subnets take
 more of it than others. For example, 203.0.113.0/24 uses 256 addresses
 in one subnet but 198.51.100.224/28 uses only 16. If address space is
-limited, the quota system can encourage efficient use of the space.
+limited, the quota system can encourage efficient use of the space. If
+the quota value is set as zero, it means that no quota will be
+enforced when allocating a subnet from a subnet pool.
 
 With IPv4, the default_quota can be set to the number of absolute
 addresses any given project is allowed to consume from the pool. For
