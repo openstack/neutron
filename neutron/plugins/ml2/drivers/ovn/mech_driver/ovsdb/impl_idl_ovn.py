@@ -245,6 +245,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         if worker_class in (worker.MaintenanceWorker,
                             n_service.RpcWorker):
             idl_ = ovsdb_monitor.BaseOvnIdl.from_server(*args)
+            idl_.set_lock(ovn_const.MAINTENANCE_NB_IDL_LOCK_NAME)
         else:
             idl_ = ovsdb_monitor.OvnNbIdl.from_server(*args, driver=driver)
         conn = connection.Connection(idl_, timeout=cfg.get_ovn_ovsdb_timeout())
