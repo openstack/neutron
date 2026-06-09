@@ -41,11 +41,15 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.mock_nb_idl = mock.patch.object(
             evpn_plugin.EVPNPlugin, '_nb_idl',
             new_callable=mock.PropertyMock).start()
+        self.mock_sb_idl = mock.patch.object(
+            evpn_plugin.EVPNPlugin, '_sb_idl',
+            new_callable=mock.PropertyMock).start()
         super().setUp(plugin=plugin, service_plugins=service_plugins,
                       ext_mgr=ext_mgr)
         self.evpn_plugin = directory.get_plugin(plugin_constants.EVPN)
         self.ctx = context.get_admin_context()
         self.nb_idl = self.mock_nb_idl.return_value
+        self.sb_idl = self.mock_sb_idl.return_value
         self.txn = self.nb_idl.transaction.return_value.__enter__.return_value
 
     def test_get_plugin_type(self):

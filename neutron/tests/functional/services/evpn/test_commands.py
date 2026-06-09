@@ -24,10 +24,11 @@ from neutron.services.bgp import constants as bgp_const
 from neutron.services.evpn import commands as evpn_ovn
 from neutron.services.evpn import constants as evpn_const
 from neutron.tests.functional import base as func_base
-from neutron.tests.functional.services import bgp
+from neutron.tests.functional.services import bgp as bgp_base
 
 
-class CreateEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
+class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
+
     def setUp(self):
         super().setUp()
         self.router_id = uuidutils.generate_uuid()
@@ -36,10 +37,27 @@ class CreateEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         self.vlan = 100
         self.nb_api.lr_add(self.lr_name).execute(check_error=True)
 
-    def _execute(self, router_id=None, vni=None, vlan=None):
+    def _add_gw_chassis(self, name, ip='10.0.0.1'):
+        self.add_fake_chassis(name, ip)
+        self.sb_api.db_set(
+            'Chassis', name,
+            ('other_config', {ovn_const.OVN_CMS_OPTIONS:
+                              ovn_const.CMS_OPT_CHASSIS_AS_GW}),
+        ).execute(check_error=True)
+
+    def _get_gw_chassis(self):
+        return [ch.name for ch in
+                self.sb_api.chassis_list().execute(check_error=True)
+                if ovn_utils.is_gateway_chassis(ch)]
+
+    def _execute(self, router_id=None, vni=None, vlan=None,
+                 gw_chassis=None):
+        if gw_chassis is None:
+            gw_chassis = self._get_gw_chassis()
         evpn_ovn.CreateEVPNRouterCommand(
             self.nb_api, router_id or self.router_id,
             vni or self.vni, vlan or self.vlan,
+            gw_chassis,
         ).execute(check_error=True)
 
     def test_sets_dynamic_routing_options_on_router(self):
@@ -98,6 +116,44 @@ class CreateEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         self.assertEqual(str(self.vni), lrp.external_ids.get(
             evpn_const.EVPN_LRP_VNI_EXT_ID_KEY))
 
+    def test_creates_ha_chassis_group(self):
+        self._add_gw_chassis('chassis-1')
+
+        self._execute()
+
+        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
+        hcg = self.nb_api.ha_chassis_group_get(
+            hcg_name).execute(check_error=True)
+        self.assertEqual(hcg_name, hcg.name)
+        self.assertEqual(self.router_id, hcg.external_ids.get(
+            ovn_const.OVN_ROUTER_ID_EXT_ID_KEY))
+
+    def test_ha_chassis_group_contains_only_gw_chassis(self):
+        self._add_gw_chassis('gw-chassis-1', '10.0.0.1')
+        self._add_gw_chassis('gw-chassis-2', '10.0.0.2')
+        self.add_fake_chassis('compute-chassis', '10.0.0.3')
+
+        self._execute()
+
+        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
+        hcg = self.nb_api.ha_chassis_group_get(
+            hcg_name).execute(check_error=True)
+        ha_chassis_names = {hc.chassis_name for hc in hcg.ha_chassis}
+        self.assertEqual({'gw-chassis-1', 'gw-chassis-2'}, ha_chassis_names)
+
+    def test_ha_chassis_group_assigned_to_lrp(self):
+        self._add_gw_chassis('chassis-1')
+
+        self._execute()
+
+        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
+        hcg = self.nb_api.ha_chassis_group_get(
+            hcg_name).execute(check_error=True)
+        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(1, len(lrp.ha_chassis_group))
+        self.assertEqual(hcg.uuid, lrp.ha_chassis_group[0].uuid)
+
     def test_creates_logical_switch_port(self):
         self._execute()
 
@@ -122,10 +178,13 @@ class CreateEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         ls_name = evpn_ovn._evpn_ls_name(self.vni)
         lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
         lsp_name = evpn_ovn._evpn_lsp_name(self.router_id, self.vni)
+        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
 
         self.nb_api.ls_get(ls_name).execute(check_error=True)
         self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.nb_api.ha_chassis_group_get(
+            hcg_name).execute(check_error=True)
 
         lr = self.nb_api.lr_get(self.lr_name).execute(check_error=True)
         self.assertEqual('true', lr.options.get(
@@ -168,7 +227,7 @@ class CreateEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
                          lsp.addresses)
 
 
-class DeleteEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
+class DeleteEVPNRouterCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
     def setUp(self):
         super().setUp()
         self.router_id = uuidutils.generate_uuid()
@@ -178,7 +237,7 @@ class DeleteEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         self.nb_api.lr_add(self.lr_name).execute(check_error=True)
 
         evpn_ovn.CreateEVPNRouterCommand(
-            self.nb_api, self.router_id, self.vni, self.vlan,
+            self.nb_api, self.router_id, self.vni, self.vlan, [],
         ).execute(check_error=True)
 
     def _execute(self, vni=None):
@@ -222,7 +281,7 @@ class DeleteEVPNRouterCommandTestCase(bgp.BaseBgpNbIdlTestCase):
         self._execute(vni=9999)
 
 
-class AdvertiseHostCommandTestCase(bgp.BaseBgpNbIdlTestCase):
+class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
     def setUp(self):
         super().setUp()
         self.lr_name = func_base.get_unique_name("lr")
