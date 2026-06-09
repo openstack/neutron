@@ -20,8 +20,8 @@ from pyroute2.iproute.ipmock import MockLink
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl.ifinfmsg import ifinfmsg
 
+from neutron.agent.linux import nl_constants as nl_const
 from neutron.agent.linux import nl_dispatcher
-from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.tests import base
 
 
@@ -51,34 +51,34 @@ class TestNetlinkDispatcher(base.BaseTestCase):
     def test_register_handler(self):
         handler1 = mock.Mock()
         handler2 = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler1)
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_DELLINK, handler2)
-        self.assertIn(evpn_const.EVPN_RTM_NEWLINK, self.dispatcher._handlers)
-        self.assertIn(evpn_const.EVPN_RTM_DELLINK, self.dispatcher._handlers)
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler1)
+        self.dispatcher.register_handler(nl_const.RTM_DELLINK, handler2)
+        self.assertIn(nl_const.RTM_NEWLINK, self.dispatcher._handlers)
+        self.assertIn(nl_const.RTM_DELLINK, self.dispatcher._handlers)
         self.assertIs(
-            self.dispatcher._handlers[evpn_const.EVPN_RTM_NEWLINK], handler1)
+            self.dispatcher._handlers[nl_const.RTM_NEWLINK], handler1)
         self.assertIs(
-            self.dispatcher._handlers[evpn_const.EVPN_RTM_DELLINK], handler2)
+            self.dispatcher._handlers[nl_const.RTM_DELLINK], handler2)
 
     def test_dispatch_routes_to_matching_handler(self):
         handler = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler)
-        msg = _make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK)
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
         self.dispatcher._dispatch(msg)
         handler.assert_called_once_with(msg)
 
     def test_dispatch_ignores_unregistered_event(self):
         handler = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler)
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
         msg = _make_nlmsg('eth0', 'RTM_NEWADDR')
         self.dispatcher._dispatch(msg)
         handler.assert_not_called()
 
     def test_replay_dispatches_dump_messages(self):
         handler = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler)
-        msgs = [_make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK),
-                _make_nlmsg('eth1', evpn_const.EVPN_RTM_NEWLINK)]
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msgs = [_make_nlmsg('eth0', nl_const.RTM_NEWLINK),
+                _make_nlmsg('eth1', nl_const.RTM_NEWLINK)]
         self.mock_ipr.dump.return_value = msgs
         self.dispatcher._replay(self.mock_ipr)
         self.assertEqual(2, handler.call_count)
@@ -96,10 +96,10 @@ class TestNetlinkDispatcher(base.BaseTestCase):
     def test_replay_calls_start_before_dispatch_and_end_after(self):
         tracker = mock.Mock()
         self.dispatcher.register_handler(
-            evpn_const.EVPN_RTM_NEWLINK, tracker.dispatch)
+            nl_const.RTM_NEWLINK, tracker.dispatch)
         self.dispatcher.register_replay_callbacks(
             on_start=tracker.start, on_end=tracker.end)
-        msg = _make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
         self.mock_ipr.dump.return_value = [msg]
         self.dispatcher._replay(self.mock_ipr)
         tracker.assert_has_calls(
@@ -108,11 +108,11 @@ class TestNetlinkDispatcher(base.BaseTestCase):
     def test_replay_callbacks_called_once_per_replay(self):
         tracker = mock.Mock()
         self.dispatcher.register_handler(
-            evpn_const.EVPN_RTM_NEWLINK, tracker.dispatch)
+            nl_const.RTM_NEWLINK, tracker.dispatch)
         self.dispatcher.register_replay_callbacks(
             on_start=tracker.start, on_end=tracker.end)
-        msgs = [_make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK),
-                _make_nlmsg('eth1', evpn_const.EVPN_RTM_NEWLINK)]
+        msgs = [_make_nlmsg('eth0', nl_const.RTM_NEWLINK),
+                _make_nlmsg('eth1', nl_const.RTM_NEWLINK)]
         self.mock_ipr.dump.return_value = msgs
         self.dispatcher._replay(self.mock_ipr)
         tracker.start.assert_called_once()
@@ -143,16 +143,16 @@ class TestNetlinkDispatcherLoop(base.BaseTestCase):
 
     def test_loop_dispatches_messages(self):
         handler = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler)
-        msg = _make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK)
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
         self.mock_ipr.get.side_effect = [[msg], RuntimeError]
         self._run_loop()
         handler.assert_called_once_with(msg)
 
     def test_loop_opens_sock_and_replays_on_start(self):
         handler = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler)
-        msg = _make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK)
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
         self.mock_ipr.dump.return_value = [msg]
         self.mock_ipr.get.side_effect = RuntimeError
         self._run_loop()
@@ -162,8 +162,8 @@ class TestNetlinkDispatcherLoop(base.BaseTestCase):
 
     def test_enobufs_triggers_replay(self):
         handler = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler)
-        msg = _make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK)
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
         self.mock_ipr.dump.return_value = [msg]
         self.mock_ipr.get.side_effect = [
             OSError(errno.ENOBUFS, 'No buffer space'),
@@ -186,8 +186,8 @@ class TestNetlinkDispatcherLoop(base.BaseTestCase):
 
     def test_socket_error_retries_reset_on_success(self):
         handler = mock.Mock()
-        self.dispatcher.register_handler(evpn_const.EVPN_RTM_NEWLINK, handler)
-        msg = _make_nlmsg('eth0', evpn_const.EVPN_RTM_NEWLINK)
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
         self.mock_ipr.get.side_effect = [
             OSError(errno.EBADF, 'Bad file descriptor'),
             [msg],

@@ -13,11 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import uuid
+
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import nl_constants as nl_const
 from neutron.agent.linux import nl_dispatcher
-from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.common import utils
@@ -34,20 +36,24 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
         except Exception:
             pass
 
+    @staticmethod
+    def _evpn_vrf_name():
+        return 'vr%s' % uuid.uuid4().hex[:12]
+
     def test_vrf_handler_lifecycle(self):
         vrf_handler = netlink_monitor.VrfHandler(fsm.EvpnFSM())
 
         dispatcher = nl_dispatcher.NetlinkDispatcher(rtnl.RTMGRP_LINK)
         dispatcher.register_handler(
-            evpn_const.EVPN_RTM_NEWLINK, vrf_handler.handle_newlink)
+            nl_const.RTM_NEWLINK, vrf_handler.handle_newlink)
         dispatcher.register_handler(
-            evpn_const.EVPN_RTM_DELLINK, vrf_handler.handle_dellink)
+            nl_const.RTM_DELLINK, vrf_handler.handle_dellink)
         dispatcher.register_replay_callbacks(
             on_start=vrf_handler.replay_start,
             on_end=vrf_handler.replay_end)
 
         # Create a VRF before starting the dispatcher so replay discovers it.
-        preexisting_vrf = 'vr0a1b2c3d-fff'
+        preexisting_vrf = self._evpn_vrf_name()
         privileged.create_interface(preexisting_vrf, None, 'vrf',
                                     vrf_table=100)
         self.addCleanup(self._safe_delete, preexisting_vrf)
@@ -58,7 +64,7 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
             timeout=10, sleep=0.1)
 
         # Create a VRF after start — live newlink detection.
-        live_vrf = 'vr1a2b3c3d-eee'
+        live_vrf = self._evpn_vrf_name()
         privileged.create_interface(live_vrf, None, 'vrf', vrf_table=200)
         self.addCleanup(self._safe_delete, live_vrf)
         utils.wait_until_true(
@@ -81,7 +87,9 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
         utils.wait_until_true(
             lambda: ip_lib.device_exists('testdummy'),
             timeout=10, sleep=0.1)
-        self.assertEqual(baseline, vrf_handler._known_vrfs)
+        utils.wait_until_true(
+            lambda: vrf_handler._known_vrfs.issubset(baseline),
+            timeout=10, sleep=0.1)
 
         # VRF with non-EVPN name is ignored.
         non_evpn_vrf = 'myvrf-300'

@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.privileged.agent.linux import svd as privileged_svd
 from neutron.tests.common.exclusive_resources import ip_address
 from neutron.tests.functional import base
 
@@ -33,3 +34,13 @@ class BaseOVSLinuxTestCase(base.BaseSudoTestCase):
         """
         return str(self.useFixture(
             ip_address.get_test_net_address_fixture(block)).address)
+
+
+class BaseNetlinkTestCase(base.BaseSudoTestCase):
+    def setUp(self):
+        super().setUp()
+        self.register_vxlan_vnifilter()
+
+    def register_vxlan_vnifilter(self):
+        privileged_svd.reset_vxlan_vnifilter_nla()
+        privileged_svd.register_vxlan_vnifilter()

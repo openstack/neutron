@@ -16,6 +16,7 @@
 from oslo_log import log
 from pyroute2.netlink import rtnl
 
+from neutron.agent.linux import nl_constants as nl_const
 from neutron.agent.linux import nl_dispatcher
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import events as evpn_events
@@ -39,9 +40,9 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         self.nl_dispatcher = nl_dispatcher.NetlinkDispatcher(
             rtnl.RTMGRP_LINK)
         self.nl_dispatcher.register_handler(
-            evpn_const.EVPN_RTM_NEWLINK, vrf_handler.handle_newlink)
+            nl_const.RTM_NEWLINK, vrf_handler.handle_newlink)
         self.nl_dispatcher.register_handler(
-            evpn_const.EVPN_RTM_DELLINK, vrf_handler.handle_dellink)
+            nl_const.RTM_DELLINK, vrf_handler.handle_dellink)
         self.nl_dispatcher.register_replay_callbacks(
             on_start=vrf_handler.replay_start,
             on_end=vrf_handler.replay_end)

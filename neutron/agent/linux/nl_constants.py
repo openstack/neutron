@@ -13,18 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+RTM_NEWLINK = 'RTM_NEWLINK'
+RTM_DELLINK = 'RTM_DELLINK'
 
-class UnknownMessage(Exception):
-    pass
-
-
-class UnknownVrfMessage(Exception):
-    pass
-
-
-class FSMIllegalTransition(Exception):
-    pass
-
-
-class FSMMissingTransitionCallback(Exception):
-    pass
+IP_LINK_ADD = 'add'
+IP_LINK_DEL = 'del'
+IP_LINK_SET = 'set'
