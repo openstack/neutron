@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,18 +13,35 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import dataclasses
+
+from neutron_lib.utils import net as net_lib
+from oslo_config import cfg
 from oslo_log import log
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import nl_constants as nl_const
 from neutron.agent.linux import nl_dispatcher
+from neutron.agent.linux import svd as linux_svd
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.agent.ovn.extensions.evpn import events as evpn_events
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
+from neutron.agent.ovn.extensions.evpn import svd
 from neutron.agent.ovn.extensions import extension_manager as ovn_ext_mgr
+from neutron.privileged.agent.linux import svd as privileged_svd
 
 LOG = log.getLogger(__name__)
+CONF = cfg.CONF
+
+
+@dataclasses.dataclass(frozen=True)
+class EvpnConfig:
+    local_ip: str
+    dstport: int
+    vxlan_parent: str
+    mac: str
+    br_mtu: int
 
 
 class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
@@ -33,9 +50,38 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         self._evpn_fsm = None
         self.nl_dispatcher = None
 
+    def _get_evpn_config(self):
+        ext_ids = self.agent_api.ovs_idl.db_get(
+            'Open_vSwitch', '.', 'external_ids').execute()
+        local_ip = ext_ids['ovn-evpn-local-ip']
+        vxlan_port = ext_ids['ovn-evpn-vxlan-ports']
+        vxlan_parent = 'vxlan_sys_%s' % vxlan_port
+        dstport = CONF.ovn_evpn.child_vxlan_port
+        mac = net_lib.get_random_mac(CONF.base_mac.split(':'))
+        self.cfg = EvpnConfig(local_ip=local_ip, dstport=dstport,
+                              vxlan_parent=vxlan_parent, mac=mac,
+                              br_mtu=evpn_const.EVPN_BR_MTU)
+        LOG.debug("EVPN config: local_ip %s vxlan_parent %s "
+                  "child vxlan port %d SVD MAC %s",
+                  self.cfg.local_ip, self.cfg.vxlan_parent,
+                  self.cfg.dstport, self.cfg.mac)
+
     def start(self):
         super().start()
-        self._evpn_fsm = fsm.EvpnFSM()
+        self._get_evpn_config()
+
+        privileged_svd.register_vxlan_vnifilter()
+        br_evpn = '%s%d' % (evpn_const.EVPN_LB_NAME_PREFIX, 0)
+        vxlan_evpn = '%s%d' % (evpn_const.EVPN_VXLAN_IFNAME, 0)
+        self.svd = svd.EvpnSvd(br_evpn=br_evpn, vxlan_evpn=vxlan_evpn)
+        try:
+            self.svd.create(local_ip=self.cfg.local_ip,
+                            mac=self.cfg.mac,
+                            vxlan_parent=self.cfg.vxlan_parent,
+                            dstport=self.cfg.dstport, br_mtu=self.cfg.br_mtu)
+        except linux_svd.SvdDeviceAlreadyExists:
+            LOG.warning("SVD already exists, reusing")
+        self._evpn_fsm = fsm.EvpnFSM(self.svd, self.cfg)
         vrf_handler = netlink_monitor.VrfHandler(self._evpn_fsm)
         self.nl_dispatcher = nl_dispatcher.NetlinkDispatcher(
             rtnl.RTMGRP_LINK)

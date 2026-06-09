@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,12 +13,19 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
+from oslo_config import cfg
 from pyroute2.iproute import ipmock
 from pyroute2.netlink.rtnl import ifinfmsg
 
+from neutron.agent.ovn.extensions import evpn as evpn_ext
 from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
+from neutron.agent.ovn.extensions.evpn import svd
+from neutron.conf.agent.ovn.ovn_neutron_agent import config as agent_config
+from neutron.privileged.agent.linux import svd as privileged_svd
 from neutron.tests import base
 
 
@@ -36,11 +43,40 @@ def _make_vrf_msg(ifname, kind='vrf'):
     return _make_nlmsg(ifname, kind=kind)
 
 
+class TestEVPNAgentExtension(base.BaseTestCase):
+
+    LOCAL_IP = '10.10.10.10'
+    VXLAN_PORT = '4789'
+    DSTPORT = 49152
+    MAC = 'fa:16:3e:aa:bb:cc'
+
+    def setUp(self):
+        super().setUp()
+        cfg.CONF.register_opts(agent_config.OVN_EVPN_OPTS, group='ovn_evpn')
+        cfg.CONF.set_override('child_vxlan_port', self.DSTPORT,
+                              group='ovn_evpn')
+        self.ext = evpn_ext.EVPNAgentExtension()
+        self.ext.agent_api = mock.Mock()
+        self.ext.agent_api.ovs_idl.db_get.return_value.execute.return_value = {
+            'ovn-evpn-local-ip': self.LOCAL_IP,
+            'ovn-evpn-vxlan-ports': self.VXLAN_PORT,
+        }
+        mock.patch.object(privileged_svd,
+                          'register_vxlan_vnifilter').start()
+        self.mock_svd_cls = mock.patch.object(svd, 'EvpnSvd').start()
+        self.mock_nl = mock.patch('neutron.agent.ovn.extensions'
+                                  '.evpn.nl_dispatcher'
+                                  '.NetlinkDispatcher').start()
+        mock.patch.object(evpn_ext.net_lib, 'get_random_mac',
+                          return_value=self.MAC).start()
+        self.addCleanup(mock.patch.stopall)
+
+
 class TestVrfHandler(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self._evpn_fsm = fsm.EvpnFSM()
+        self._evpn_fsm = fsm.EvpnFSM(mock.Mock(), mock.Mock())
         self.handler = netlink_monitor.VrfHandler(self._evpn_fsm)
 
     def test_handle_newlink_evpn_vrf(self):
@@ -61,7 +97,7 @@ class TestVrfHandler(base.BaseTestCase):
         self.handler._known_vrfs.add(vrf)
         evpn = fsm.Evpn(vrf)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_MAC_VNI
+        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
         self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg(vrf)
         self.handler.handle_dellink(msg)
@@ -73,7 +109,7 @@ class TestVrfHandler(base.BaseTestCase):
         self.handler._known_vrfs.add(vrf)
         evpn = fsm.Evpn(vrf)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_MAC_VNI
+        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
         self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg('vr0a1b2c3d-eee')
         self.handler.handle_dellink(msg)

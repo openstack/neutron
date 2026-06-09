@@ -59,11 +59,11 @@ class Svd:
         self.br_evpn = br_evpn
         self.vxlan_evpn = vxlan_evpn
 
-    def create(self, local_ip, mac, vxlan_parent, dstport):
+    def create(self, local_ip, mac, vxlan_parent, dstport, br_mtu):
         try:
             privileged_svd.create_svd(
                 self.br_evpn, self.vxlan_evpn,
-                local_ip, mac, vxlan_parent, dstport)
+                local_ip, mac, vxlan_parent, dstport, br_mtu)
         except IndexError:
             raise SvdNoVxlanParent(
                 _("Missing VxLAN underlay: %(parent)s") %
@@ -89,11 +89,11 @@ class Svd:
                 _("Failed to delete SVD %(br)s/%(vx)s: %(err)s") %
                 {'br': self.br_evpn, 'vx': self.vxlan_evpn, 'err': e})
 
-    def add_vni(self, svi_name, vni, vid, vrf_name, mac):
+    def add_vni(self, svi_name, vni, vid, vrf_name, mac, br_mtu):
         try:
             privileged_svd.add_vni(
                 self.br_evpn, self.vxlan_evpn,
-                svi_name, vni, vid, vrf_name, mac)
+                svi_name, vni, vid, vrf_name, mac, br_mtu)
         except IndexError:
             raise SvdDevsNotFound(
                 _("SVD %(br)s/%(vx)s or VRF %(vrf)s not found") %

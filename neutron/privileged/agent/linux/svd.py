@@ -23,7 +23,6 @@ from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl.ifinfmsg.plugins import vxlan
 
 from neutron.agent.linux import nl_constants as nl_const
-from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron import privileged
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 
@@ -169,7 +168,8 @@ def _set_addrgenmode_none(ipr, idx):
 
 
 @privileged.default.entrypoint
-def create_svd(br_evpn, vxlan_evpn, local_ip, mac, vxlan_parent, dstport):
+def create_svd(br_evpn, vxlan_evpn, local_ip, mac, vxlan_parent, dstport,
+               br_mtu):
     """Create a shared Single VxLAN Device (SVD)
 
     A shared SVD consist of a vlan-aware Linux bridge and a vlan-aware VxLAN
@@ -215,7 +215,7 @@ def create_svd(br_evpn, vxlan_evpn, local_ip, mac, vxlan_parent, dstport):
         # ip link set <br_evpn> mtu 1500 addrgenmode none
         # ip link set <vxlan_evpn> addrgenmode none
         ipr.link(nl_const.IP_LINK_SET, index=br_idx,
-                 mtu=evpn_const.EVPN_BR_MTU)
+                 mtu=br_mtu)
         _set_addrgenmode_none(ipr, br_idx)
         _set_addrgenmode_none(ipr, vxlan_idx)
 
@@ -237,7 +237,7 @@ def delete_svd(br_evpn, vxlan_evpn):
 
 
 @privileged.default.entrypoint
-def add_vni(br_evpn, vxlan_evpn, svi_name, vni, vid, vrf_name, mac):
+def add_vni(br_evpn, vxlan_evpn, svi_name, vni, vid, vrf_name, mac, br_mtu):
     with priv_ip_lib.get_iproute(None) as ipr:
         br_idx = ipr.link_lookup(ifname=br_evpn)[0]
         vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
@@ -269,7 +269,7 @@ def add_vni(br_evpn, vxlan_evpn, svi_name, vni, vid, vrf_name, mac):
         svi_idx = ipr.link_lookup(ifname=svi_name)[0]
         ipr.link(nl_const.IP_LINK_SET, index=svi_idx,
                  master=vrf_idx, address=mac,
-                 mtu=evpn_const.EVPN_BR_MTU, state='up')
+                 mtu=br_mtu, state='up')
         _set_addrgenmode_none(ipr, svi_idx)
 
     LOG.debug("SVD %s/%s: added VLAN %d -> VNI %d, SVI %s",

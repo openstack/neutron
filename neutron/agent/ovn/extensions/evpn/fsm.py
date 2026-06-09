@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -27,8 +27,8 @@ class Evpn:
     """Per EVPN instance tracking FSM state."""
 
     INIT = 'init'
-    WAITING_FOR_VRF_UP = 'waiting_for_vrf_up'
-    WAITING_FOR_MAC_VNI = 'waiting_for_mac_vni'
+    WAITING_FOR_ROUTER = 'waiting_for_router'
+    WAITING_FOR_BRIDGE = 'waiting_for_bridge'
     ADVERTISING = 'advertising'
     DESTROY = 'destroy'
 
@@ -37,6 +37,7 @@ class Evpn:
         self.vrf_up = False
         self.mac = None
         self.vni = None
+        self.vid = None
         self.state = self.INIT
 
 
@@ -59,51 +60,63 @@ class EvpnFSM:
     # (Current state, Event):(New state, transition callback)
     TRANSITIONS = {
         (Evpn.INIT, FSM_EVENT_PORT_BINDING_CREATE):
-            (Evpn.WAITING_FOR_VRF_UP, "_set_mac_vni"),
+            (Evpn.WAITING_FOR_ROUTER, "_set_evpn_bridge"),
         (Evpn.INIT, FSM_EVENT_VRF_CREATE):
-            (Evpn.WAITING_FOR_MAC_VNI, "_set_vrf_up"),
-        (Evpn.WAITING_FOR_VRF_UP, FSM_EVENT_VRF_CREATE):
-            (Evpn.ADVERTISING, "_set_vrf_up_and_advertise"),
-        (Evpn.WAITING_FOR_MAC_VNI, FSM_EVENT_PORT_BINDING_CREATE):
-            (Evpn.ADVERTISING, "_set_mac_vni_and_advertise"),
+            (Evpn.WAITING_FOR_BRIDGE, "_set_evpn_router"),
+        (Evpn.WAITING_FOR_ROUTER, FSM_EVENT_VRF_CREATE):
+            (Evpn.ADVERTISING, "_set_evpn_router_and_advertise"),
+        (Evpn.WAITING_FOR_BRIDGE, FSM_EVENT_PORT_BINDING_CREATE):
+            (Evpn.ADVERTISING, "_set_evpn_bridge_and_advertise"),
         (Evpn.ADVERTISING, FSM_EVENT_PORT_BINDING_DELETE):
-            (Evpn.WAITING_FOR_MAC_VNI, "_unset_mac_vni"),
+            (Evpn.WAITING_FOR_BRIDGE, "_unset_evpn_bridge_and_unadvertise"),
         (Evpn.ADVERTISING, FSM_EVENT_VRF_DELETE):
-            (Evpn.WAITING_FOR_VRF_UP, "_unset_vrf_up"),
-        (Evpn.WAITING_FOR_MAC_VNI, FSM_EVENT_VRF_DELETE):
+            (Evpn.WAITING_FOR_ROUTER, "_unset_evpn_router_and_unadvertise"),
+        (Evpn.WAITING_FOR_BRIDGE, FSM_EVENT_VRF_DELETE):
             (Evpn.DESTROY, "_destroy"),
-        (Evpn.WAITING_FOR_VRF_UP, FSM_EVENT_PORT_BINDING_DELETE):
+        (Evpn.WAITING_FOR_ROUTER, FSM_EVENT_PORT_BINDING_DELETE):
             (Evpn.DESTROY, "_destroy"),
     }
 
-    def __init__(self):
+    def __init__(self, svd, config):
         self.instances = {}  # vrf -> Evpn
+        self._svd = svd
+        self._cfg = config
 
-    def _set_mac_vni(self, evpn, mac, vni):
+    def _set_evpn_bridge(self, evpn, mac, vni, vid):
         evpn.mac = mac
         evpn.vni = vni
+        evpn.vid = vid
 
-    def _unset_mac_vni(self, evpn):
+    def _unset_evpn_bridge_and_unadvertise(self, evpn):
+        self._unadvertise(evpn)
         evpn.mac = None
         evpn.vni = None
+        evpn.vid = None
 
-    def _set_vrf_up(self, evpn):
+    def _set_evpn_router(self, evpn):
         evpn.vrf_up = True
 
-    def _unset_vrf_up(self, evpn):
+    def _unset_evpn_router_and_unadvertise(self, evpn):
+        self._unadvertise(evpn)
         evpn.vrf_up = False
 
     def _advertise(self, evpn):
+        self._svd.add_vni(evpn.vni, evpn.vid, evpn.vrf, evpn.mac,
+                          self._cfg.br_mtu)
         LOG.debug("EVPN: VNI %d Create VLAN and update FRR "
                   "configuration to start advertising and learning", evpn.vni)
-        pass
 
-    def _set_vrf_up_and_advertise(self, evpn):
-        self._set_vrf_up(evpn)
+    def _unadvertise(self, evpn):
+        LOG.debug("EVPN: VNI %d Remove VLAN and update FRR "
+                  "configuration to stop advertising and learning", evpn.vni)
+        self._svd.del_vni(evpn.vni, evpn.vid)
+
+    def _set_evpn_router_and_advertise(self, evpn):
+        self._set_evpn_router(evpn)
         self._advertise(evpn)
 
-    def _set_mac_vni_and_advertise(self, evpn, mac, vni):
-        self._set_mac_vni(evpn, mac, vni)
+    def _set_evpn_bridge_and_advertise(self, evpn, mac, vni, vid):
+        self._set_evpn_bridge(evpn, mac, vni, vid)
         self._advertise(evpn)
 
     def _destroy(self, evpn):

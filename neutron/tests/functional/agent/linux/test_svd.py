@@ -27,6 +27,7 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
     LOCAL_IP = '10.10.10.10'
     MAC = 'aa:bb:cc:dd:ee:ff'
     SVI_MAC = '00:11:22:33:44:55'
+    BR_MTU = 1500
 
     @staticmethod
     def _safe_delete(name):
@@ -68,7 +69,8 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
     def _create_svd(self):
         brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
         brvxlan.create(local_ip=self.LOCAL_IP, mac=self.MAC,
-                       vxlan_parent=self._parent, dstport=self.DSTPORT)
+                       vxlan_parent=self._parent, dstport=self.DSTPORT,
+                       br_mtu=self.BR_MTU)
         self.addCleanup(self._safe_delete, self._vx)
         self.addCleanup(self._safe_delete, self._br)
         return brvxlan
@@ -113,7 +115,8 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         self.assertRaises(linux_svd.SvdNoVxlanParent, brvxlan.create,
                           local_ip=self.LOCAL_IP, mac=self.MAC,
                           vxlan_parent='no-such-dev',
-                          dstport=self.DSTPORT)
+                          dstport=self.DSTPORT,
+                          br_mtu=self.BR_MTU)
         self.assertFalse(ip_lib.device_exists(self._br))
         self.assertFalse(ip_lib.device_exists(self._vx))
 
@@ -123,7 +126,8 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         self.assertRaises(linux_svd.SvdDeviceAlreadyExists, brvxlan.create,
                           local_ip=self.LOCAL_IP, mac=self.MAC,
                           vxlan_parent=self._parent,
-                          dstport=self.DSTPORT)
+                          dstport=self.DSTPORT,
+                          br_mtu=self.BR_MTU)
 
     def test_delete_svd(self):
         svd = self._create_svd()
@@ -143,7 +147,7 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC)
+        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
         self.assertTrue(ip_lib.device_exists(svi_name))
 
         br_vlans = self._bridge_cmd('vlan', 'show', 'dev', self._br)
@@ -161,7 +165,8 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vid = self._vid()
         svi_name = self._svi_name(vid)
         self.assertRaises(linux_svd.SvdDevsNotFound, brvxlan.add_vni,
-                          svi_name, vni, vid, 'no-such-vrf', self.SVI_MAC)
+                          svi_name, vni, vid, 'no-such-vrf', self.SVI_MAC,
+                          self.BR_MTU)
         self.assertFalse(ip_lib.device_exists(svi_name))
         vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
         self.assertNotIn(str(vni), vni_output)
@@ -171,18 +176,19 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC)
+        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
         self.addCleanup(svd.del_vni, svi_name, vni, vid)
         # Add the same VNI a second time to trigger NetlinkError
         self.assertRaises(linux_svd.SvdNetlinkError, svd.add_vni,
-                          svi_name, vni, vid, self._vrf, self.SVI_MAC)
+                          svi_name, vni, vid, self._vrf, self.SVI_MAC,
+                          self.BR_MTU)
 
     def test_del_vni(self):
         svd = self._create_svd()
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC)
+        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
 
         svd.del_vni(svi_name, vni, vid)
 
@@ -206,8 +212,10 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vid2 = self._vid(1)
         svi_name1 = self._svi_name(vid1)
         svi_name2 = self._svi_name(vid2)
-        svd.add_vni(svi_name1, vni1, vid1, self._vrf, self.SVI_MAC)
-        svd.add_vni(svi_name2, vni2, vid2, self._vrf, self.SVI_MAC)
+        svd.add_vni(svi_name1, vni1, vid1, self._vrf,
+                    self.SVI_MAC, self.BR_MTU)
+        svd.add_vni(svi_name2, vni2, vid2, self._vrf,
+                    self.SVI_MAC, self.BR_MTU)
 
         self.assertTrue(ip_lib.device_exists(svi_name1))
         self.assertTrue(ip_lib.device_exists(svi_name2))
@@ -228,7 +236,7 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC)
+        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
 
         link_output = agent_utils.execute(
             ['ip', '-d', 'link', 'show', svi_name],
