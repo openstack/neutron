@@ -168,6 +168,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.enable_local_ips = 'local_ip' in self.ext_manager.names()
         self.enable_openflow_metadata = (
             'metadata_path' in self.ext_manager.names())
+        self.enable_dns_forwarder = 'dns_forwarder' in self.ext_manager.names()
 
         self.register_signal = register_signal
 
@@ -1536,7 +1537,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self.int_br.setup_default_table(
             enable_openflow_dhcp=self.enable_openflow_dhcp,
-            enable_dhcpv6=self.conf.DHCP.enable_ipv6)
+            enable_dhcpv6=self.conf.DHCP.enable_ipv6,
+            enable_dns_forwarder=self.enable_dns_forwarder
+        )
 
     def setup_ancillary_bridges(self, integ_br, tun_br):
         '''Setup ancillary bridges - for example br-ex.'''

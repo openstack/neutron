@@ -156,6 +156,7 @@ qos = "neutron.agent.l2.extensions.qos:QosAgentExtension"
 fdb = "neutron.agent.l2.extensions.fdb_population:FdbPopulationAgentExtension"
 log = "neutron.services.logapi.agent.log_extension:LoggingExtension"
 dhcp = "neutron.agent.l2.extensions.dhcp.extension:DHCPAgentExtension"
+dns_forwarder = "neutron.agent.l2.extensions.dns_forwarder:DNSForwarderAgentExtension"
 local_ip = "neutron.agent.l2.extensions.local_ip:LocalIPAgentExtension"
 metadata_path = "neutron.agent.l2.extensions.metadata.metadata_path:MetadataPathAgentExtension"
 

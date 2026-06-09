@@ -20,13 +20,15 @@
 ** OVS agent https://wiki.openstack.org/wiki/Ovs-flow-logic
 """
 
-import netaddr
+import sys
 
+import netaddr
 from neutron_lib import constants as lib_consts
 from neutron_lib.plugins.ml2 import ovs_constants as constants
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.plugins.ml2.common import constants as comm_consts
@@ -52,7 +54,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
     of_tables = constants.INT_BR_ALL_TABLES
 
     def setup_default_table(self, enable_openflow_dhcp=False,
-                            enable_dhcpv6=False):
+                            enable_dhcpv6=False, enable_dns_forwarder=False):
         (_dp, ofp, ofpp) = self._get_dp()
         self.setup_canary_table()
         self.install_goto(dest_table_id=PACKET_RATE_LIMIT)
@@ -79,6 +81,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                           table_id=constants.LOCAL_EGRESS_TABLE)
         self.install_goto(dest_table_id=PACKET_RATE_LIMIT,
                           table_id=constants.LOCAL_IP_TABLE)
+        # DNS Forwarder defaults
+        if enable_dns_forwarder:
+            self.init_dns_forwarder()
 
     def init_dhcp(self, enable_openflow_dhcp=False, enable_dhcpv6=False):
         if not enable_openflow_dhcp:
@@ -171,6 +176,48 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
             LOG.exception("Failed to communicate with the switch")
             return constants.OVS_DEAD
         return constants.OVS_NORMAL if flows else constants.OVS_RESTARTED
+
+    def init_dns_forwarder(self):
+        """Initialize DNS Forwarder flows."""
+        for ip_port in cfg.CONF.DNS_FORWARDER.client_dns_server_ports:
+            try:
+                ip_part, port_part = ip_port.rsplit(':', 1)
+                ip = ip_part.replace('[', '').replace(']', '')
+                port = int(port_part)
+                netaddr_ip = netaddr.IPAddress(ip)
+            except (ValueError, netaddr.AddrFormatError):
+                LOG.error(
+                    "Invalid client_dns_server_ports config: %s", ip_port
+                )
+                sys.exit(1)
+            (_dp, ofp, ofpp) = self._get_dp()
+            if netaddr_ip.version == lib_consts.IP_VERSION_6:
+                match = ofpp.OFPMatch(
+                    eth_type=ether_types.ETH_TYPE_IPV6,
+                    ip_proto=in_proto.IPPROTO_UDP,
+                    ipv6_dst=ip,
+                    udp_dst=port
+                )
+            else:
+                match = ofpp.OFPMatch(
+                    eth_type=ether_types.ETH_TYPE_IP,
+                    ip_proto=in_proto.IPPROTO_UDP,
+                    ipv4_dst=ip,
+                    udp_dst=port
+                )
+
+            actions = [
+                ofpp.OFPActionOutput(ofp.OFPP_CONTROLLER, 0),
+            ]
+            instructions = [
+                ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+            ]
+            self.install_instructions(
+                table_id=constants.TRANSIENT_TABLE,
+                priority=102,
+                instructions=instructions,
+                match=match
+            )
 
     @staticmethod
     def _local_vlan_match(_ofp, ofpp, port, vlan_vid):

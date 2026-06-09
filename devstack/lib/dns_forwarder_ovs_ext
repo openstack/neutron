@@ -1,0 +1,6 @@
+function configure_ovs_dns_forwarder {
+    plugin_agent_add_l2_agent_extension "dns_forwarder"
+    iniset /$NEUTRON_CORE_PLUGIN_CONF dns_forwarder upstream_dns_server_ports $UPSTREAM_DNS_SERVER_PORTS
+    iniset /$NEUTRON_CORE_PLUGIN_CONF dns_forwarder upstream_dns_query_timeout $UPSTREAM_DNS_QUERY_TIMEOUT
+    iniset /$NEUTRON_CORE_PLUGIN_CONF dns_forwarder client_dns_server_ports $CLIENT_DNS_SERVER_PORTS
+}

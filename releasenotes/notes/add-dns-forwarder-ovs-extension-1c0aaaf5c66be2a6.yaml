@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Add a DNS forwarder OVS extension that enables internal DNS resolution,
+    allowing instances to resolve domain names without relying on external connectivity.
