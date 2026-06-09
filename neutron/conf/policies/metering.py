@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
 The metering API now supports system scope and default roles.
@@ -30,7 +29,7 @@ RULE_RESOURCE_PATH = '/metering/metering-label-rules/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_metering_label',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Create a metering label',
         operations=[
@@ -47,7 +46,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get a metering label',
         operations=[
@@ -68,7 +67,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_metering_label',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Delete a metering label',
         operations=[
@@ -85,7 +84,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_metering_label_rule',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Create a metering label rule',
         operations=[
@@ -102,7 +101,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get a metering label rule',
         operations=[
@@ -123,7 +122,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_metering_label_rule',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Delete a metering label rule',
         operations=[

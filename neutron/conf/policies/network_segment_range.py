@@ -14,10 +14,9 @@
 #
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
 The network segment range API now supports project scope and default roles.
@@ -48,7 +47,7 @@ ACTION_DELETE_TAGS: list[policy.Operation] = [
 rules = [
     policy.DocumentedRuleDefault(
         name='create_network_segment_range',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Create a network segment range',
         operations=[
@@ -65,20 +64,20 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network_segment_range:tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Create the network segment range tags',
         operations=ACTION_POST_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='create_network_segment_ranges_tags',
-            check_str=base.ADMIN,
+            check_str=lib_rules.ADMIN,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
         name='get_network_segment_range',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get a network segment range',
         operations=[
@@ -99,20 +98,20 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network_segment_range:tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get the network segment range tags',
         operations=ACTION_GET_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='get_network_segment_ranges_tags',
-            check_str=base.ADMIN,
+            check_str=lib_rules.ADMIN,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
         name='update_network_segment_range',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update a network segment range',
         operations=[
@@ -129,20 +128,20 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network_segment_range:tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update the network segment range tags',
         operations=ACTION_PUT_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='update_network_segment_ranges_tags',
-            check_str=base.ADMIN,
+            check_str=lib_rules.ADMIN,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
 
     policy.DocumentedRuleDefault(
         name='delete_network_segment_range',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Delete a network segment range',
         operations=[
@@ -159,13 +158,13 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_network_segment_range:tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Delete the network segment range tags',
         operations=ACTION_DELETE_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_network_segment_ranges_tags',
-            check_str=base.ADMIN,
+            check_str=lib_rules.ADMIN,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),

@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
 The quotas API now supports project scope and default roles.
@@ -28,7 +27,7 @@ RESOURCE_PATH = '/quota/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='get_quota',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Get a resource quota',
         operations=[
@@ -49,7 +48,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_quota',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update a resource quota',
         operations=[
@@ -66,7 +65,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_quota',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Delete a resource quota',
         operations=[

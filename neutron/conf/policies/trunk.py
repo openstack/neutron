@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 COLLECTION_PATH = '/trunks'
@@ -45,7 +44,7 @@ DEPRECATED_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_trunk',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a trunk',
         operations=[
@@ -62,19 +61,19 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_trunk:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create the trunk tags',
         operations=ACTION_POST_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='create_trunks_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_trunk',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get a trunk',
         operations=[
@@ -95,19 +94,19 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_trunk:tags',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get the trunk tags',
         operations=ACTION_GET_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='get_trunks_tags',
-            check_str=base.ADMIN_OR_PROJECT_READER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_READER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='update_trunk',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a trunk',
         operations=[
@@ -124,19 +123,19 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_trunk:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update the trunk tags',
         operations=ACTION_PUT_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='update_trunks_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='delete_trunk',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a trunk',
         operations=[
@@ -153,19 +152,19 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_trunk:tags',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a trunk',
         operations=ACTION_DELETE_TAGS,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_trunks_tags',
-            check_str=base.ADMIN_OR_PROJECT_MEMBER,
+            check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
             deprecated_reason="Name of the rule is changed.",
             deprecated_since="2025.1")
     ),
     policy.DocumentedRuleDefault(
         name='get_subports',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='List subports attached to a trunk',
         operations=[
@@ -182,7 +181,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='add_subports',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Add subports to a trunk',
         operations=[
@@ -199,7 +198,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='remove_subports',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete subports from a trunk',
         operations=[

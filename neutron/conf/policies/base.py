@@ -11,64 +11,12 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_policy import policy
-
-# This role is used only for communication between services, it shouldn't be
-# used by human users
-SERVICE = 'rule:service_api'
-
-# For completion of the phase 1
-# https://governance.openstack.org/tc/goals/selected/consistent-and-secure-rbac.html#phase-1
-# there is now ADMIN role
-ADMIN = "rule:admin_only"
-
-# This check string is the primary use case for the project's manager who is
-# more privileged user then typical MEMBER of the project.
-PROJECT_MANAGER = 'role:manager and project_id:%(project_id)s'
-
-# This check string is the primary use case for typical end-users, who are
-# working with resources that belong to a project (e.g., creating ports and
-# routers).
-PROJECT_MEMBER = 'role:member and project_id:%(project_id)s'
-
-# This check string should only be used to protect read-only project-specific
-# resources. It should not be used to protect APIs that make writable changes
-# (e.g., updating a router or deleting a port).
-PROJECT_READER = 'role:reader and project_id:%(project_id)s'
-
-# The following are common composite check strings that are useful for
-# protecting APIs designed to operate with multiple scopes (e.g.,
-# an administrator should be able to delete any router in the deployment, a
-# project member should only be able to delete routers in their project).
-ADMIN_OR_SERVICE = (
-    '(' + ADMIN + ') or (' + SERVICE + ')')
-ADMIN_OR_PROJECT_MANAGER = (
-    '(' + ADMIN + ') or (' + PROJECT_MANAGER + ')')
-ADMIN_OR_PROJECT_MEMBER = (
-    '(' + ADMIN + ') or (' + PROJECT_MEMBER + ')')
-ADMIN_OR_PROJECT_READER = (
-    '(' + ADMIN + ') or (' + PROJECT_READER + ')')
 
 # Additional rules needed in Neutron
 RULE_NET_OWNER = 'rule:network_owner'
-RULE_PARENT_OWNER = 'rule:ext_parent_owner'
 RULE_SG_OWNER = 'rule:sg_owner'
-
-# In some cases we need to check owner of the parent resource, it's like that
-# for example for QoS rules (check owner of QoS policy rule belongs to) or
-# Floating IP port forwarding (check owner of FIP which PF is using). It's like
-# that becasue those resources (QOS rules, FIP PFs) don't have project_id
-# attribute at all and they belongs to the same project as parent resource (QoS
-# policy, FIP).
-PARENT_OWNER_MANAGER = 'role:manager and ' + RULE_PARENT_OWNER
-PARENT_OWNER_MEMBER = 'role:member and ' + RULE_PARENT_OWNER
-PARENT_OWNER_READER = 'role:reader and ' + RULE_PARENT_OWNER
-ADMIN_OR_PARENT_OWNER_MANAGER = (
-    '(' + ADMIN + ') or (' + PARENT_OWNER_MANAGER + ')')
-ADMIN_OR_PARENT_OWNER_MEMBER = (
-    '(' + ADMIN + ') or (' + PARENT_OWNER_MEMBER + ')')
-ADMIN_OR_PARENT_OWNER_READER = (
-    '(' + ADMIN + ') or (' + PARENT_OWNER_READER + ')')
 
 # Those rules related to the network owner are very similar (almost the same)
 # as parent owner defined above. The only reason why they are kept here is that
@@ -80,9 +28,9 @@ NET_OWNER_MANAGER = 'role:manager and ' + RULE_NET_OWNER
 NET_OWNER_MEMBER = 'role:member and ' + RULE_NET_OWNER
 NET_OWNER_READER = 'role:reader and ' + RULE_NET_OWNER
 ADMIN_OR_NET_OWNER_MEMBER = (
-    '(' + ADMIN + ') or (' + NET_OWNER_MEMBER + ')')
+    '(' + lib_rules.ADMIN + ') or (' + NET_OWNER_MEMBER + ')')
 ADMIN_OR_NET_OWNER_READER = (
-    '(' + ADMIN + ') or (' + NET_OWNER_READER + ')')
+    '(' + lib_rules.ADMIN + ') or (' + NET_OWNER_READER + ')')
 
 # Those rules for the SG owner are needed for the policies related to the
 # Security Group rules and are very similar to the parent owner rules defined
@@ -94,9 +42,9 @@ ADMIN_OR_NET_OWNER_READER = (
 SG_OWNER_MEMBER = 'role:member and ' + RULE_SG_OWNER
 SG_OWNER_READER = 'role:reader and ' + RULE_SG_OWNER
 ADMIN_OR_SG_OWNER_MEMBER = (
-    '(' + ADMIN + ') or (' + SG_OWNER_MEMBER + ')')
+    '(' + lib_rules.ADMIN + ') or (' + SG_OWNER_MEMBER + ')')
 ADMIN_OR_SG_OWNER_READER = (
-    '(' + ADMIN + ') or (' + SG_OWNER_READER + ')')
+    '(' + lib_rules.ADMIN + ') or (' + SG_OWNER_READER + ')')
 
 rules = [
     policy.RuleDefault(

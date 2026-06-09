@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 COLLECTION_PATH = '/address-scopes'
@@ -32,7 +31,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_address_scope',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         description='Create an address scope',
         operations=[
             {
@@ -49,7 +48,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_address_scope:shared',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Create a shared address scope',
         operations=[
             {
@@ -67,8 +66,8 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_address_scope',
         check_str=neutron_policy.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER,
+            lib_rules.ADMIN,
+            lib_rules.PROJECT_READER,
             'rule:shared_address_scopes'),
         description='Get an address scope',
         operations=[
@@ -92,7 +91,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_address_scope',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         description='Update an address scope',
         operations=[
             {
@@ -109,7 +108,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_address_scope:shared',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         description='Update ``shared`` attribute of an address scope',
         operations=[
             {
@@ -126,7 +125,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_address_scope',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         description='Delete an address scope',
         operations=[
             {

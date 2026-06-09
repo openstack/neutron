@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 DEPRECATED_REASON = """
@@ -28,7 +27,7 @@ RESOURCE_PATH = '/log/logs/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='get_loggable_resource',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Get loggable resources',
         operations=[
@@ -45,7 +44,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_log',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Create a network log',
         operations=[
@@ -62,7 +61,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_log',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Get a network log',
         operations=[
@@ -83,7 +82,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_log',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Update a network log',
         operations=[
@@ -100,7 +99,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_log',
-        check_str=base.ADMIN_OR_PROJECT_MANAGER,
+        check_str=lib_rules.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Delete a network log',
         operations=[

@@ -12,10 +12,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 DEPRECATED_REASON = """
@@ -30,7 +29,7 @@ RESOURCE_PATH = ('/routers/{router_id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_router_conntrack_helper',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Create a router conntrack helper',
         operations=[
@@ -47,7 +46,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_router_conntrack_helper',
-        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a router conntrack helper',
         operations=[
@@ -68,7 +67,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router_conntrack_helper',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Update a router conntrack helper',
         operations=[
@@ -85,7 +84,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_router_conntrack_helper',
-        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
+        check_str=lib_rules.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Delete a router conntrack helper',
         operations=[

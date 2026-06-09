@@ -11,10 +11,9 @@
 #  under the License.
 
 from neutron_lib import policy as neutron_policy
+from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 DEPRECATED_REASON = (
     "The segment API now supports project scope and default roles.")
@@ -44,7 +43,7 @@ ACTION_DELETE_TAGS: list[policy.Operation] = [
 rules = [
     policy.DocumentedRuleDefault(
         name='create_segment',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Create a segment',
         operations=[
@@ -61,14 +60,14 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_segments_tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Create the segment tags',
         operations=ACTION_POST_TAGS,
     ),
     policy.DocumentedRuleDefault(
         name='get_segment',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get a segment',
         operations=[
@@ -89,14 +88,14 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_segments_tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Get the segment tags',
         operations=ACTION_GET_TAGS,
     ),
     policy.DocumentedRuleDefault(
         name='update_segment',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update a segment',
         operations=[
@@ -113,14 +112,14 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_segments_tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update the segment tags',
         operations=ACTION_PUT_TAGS,
     ),
     policy.DocumentedRuleDefault(
         name='delete_segment',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Delete a segment',
         operations=[
@@ -137,7 +136,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_segments_tags',
-        check_str=base.ADMIN,
+        check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Delete the segment tags',
         operations=ACTION_DELETE_TAGS,
