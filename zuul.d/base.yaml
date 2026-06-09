@@ -51,6 +51,7 @@
       Q_BUILD_OVS_FROM_GIT: True
       MEMORY_TRACKER: True
       INSTALL_OVN: True
+      ENABLE_FRR: True
       devstack_services:
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
