@@ -23,3 +23,18 @@ class EVPNVNIInUse(exceptions.Conflict):
 
 class EVPNVNINotFound(exceptions.NotFound):
     message = _("EVPN VNI not found for router %(router_id)s.")
+
+
+class EVPNNoVniAvailable(exceptions.Conflict):
+    message = _("No EVPN VNI available in range [%(min_vni)s, %(max_vni)s].")
+
+    def __init__(self, min_val, max_val):
+        super().__init__(min_vni=min_val, max_vni=max_val)
+
+
+class EVPNNoVlanAvailable(exceptions.Conflict):
+    message = _("No EVPN VLAN ID available in range "
+                "[%(min_vlan)s, %(max_vlan)s].")
+
+    def __init__(self, min_val, max_val):
+        super().__init__(min_vlan=min_val, max_vlan=max_val)
