@@ -1,0 +1,12 @@
+---
+fixes:
+  - |
+    Fixed the OVN maintenance worker and the BGP topology reconciler
+    to use ``idl.has_lock`` instead of ``not idl.is_lock_contended``
+    when checking OVSDB lock ownership. The two IDL flags are not
+    complementary: both are ``False`` when the lock has been requested
+    but the server has not yet replied, causing the old check to
+    incorrectly report the lock as held. This could lead to maintenance
+    tasks or BGP topology synchronization being processed by a worker
+    that does not actually own the lock, especially during startup or
+    OVSDB reconnection.
