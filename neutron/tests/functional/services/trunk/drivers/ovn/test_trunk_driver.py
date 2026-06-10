@@ -96,14 +96,14 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
         ovn_trunk_info = []
         for row in self.nb_api.tables[
                 'Logical_Switch_Port'].rows.values():
-            if row.parent_name and row.tag:
+            if row.parent_name and row.tag_request:
                 device_owner = row.external_ids[
                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY]
                 revision_number = row.external_ids[
                     ovn_const.OVN_REV_NUM_EXT_ID_KEY]
                 ovn_trunk_info.append({'port_id': row.name,
                                        'parent_port_id': row.parent_name,
-                                       'tag': row.tag,
+                                       'tag': row.tag_request,
                                        'device_owner': device_owner,
                                        'revision_number': revision_number,
                                        })
