@@ -1109,7 +1109,10 @@ class FrrFixture(fixtures.Fixture):
 
     FRR_CONF_DIR_BASE = '/etc/frr'
     FRR_STATE_DIR_BASE = '/var/run/frr'
-    FRRINIT = '/usr/lib/frr/frrinit.sh'
+    FRRINIT_PATHS = ['/usr/lib/frr/frrinit.sh',
+                     '/usr/libexec/frr/frrinit.sh']
+    FRRINIT = next((p for p in FRRINIT_PATHS if os.path.isfile(p)),
+                   FRRINIT_PATHS[0])
 
     DAEMONS_CONF = (
         'zebra=yes\n'
