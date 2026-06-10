@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import random as _random
+
 from oslo_utils import uuidutils
 import sqlalchemy as sa
 
@@ -42,6 +44,10 @@ class RangeAllocator:
     that each retry opens a fresh transaction with a new UUID.
 
     SQL statements are built once at construction time.
+
+    Subclasses may override _gap_source() to change the allocation strategy,
+    and _make_params() to supply any additional bind parameters required by
+    their _gap_source() implementation.
     """
 
     def __init__(self, table, value_col_name, scope_col_name,
@@ -65,7 +71,7 @@ class RangeAllocator:
         self._scope_p = sa.bindparam('scope_val', type_=scope_param_type)
         self._id_p = sa.bindparam('allocation_id', type_=sa.String(36))
 
-        source = self._gap_subquery()
+        source = self._gap_source()
         self._stmt = (
             table.insert()
             .from_select(
@@ -75,8 +81,14 @@ class RangeAllocator:
             )
         )
 
-    def _gap_subquery(self):
-        """Subquery returning the minimum unoccupied value in the range."""
+    def _gap_source(self):
+        """Subquery returning the next_val to allocate.
+
+        Returns a subquery with a single next_val column containing the
+        integer to claim, or NULL if none is available.  The default
+        implementation claims the smallest unoccupied value in the range.
+        Subclasses override this to change the allocation strategy.
+        """
         range_start = sa.select(self._min_val.label('candidate'))
 
         after_existing = sa.select(
@@ -101,23 +113,32 @@ class RangeAllocator:
             )
         ).subquery()
 
+    @staticmethod
+    def _make_params(min_val, max_val, scope_val, allocation_id):
+        """Return the bind parameter dict for execute().
+
+        Subclasses that introduce additional bind parameters in _gap_source()
+        should override this to include them.
+        """
+        return {
+            'min_val': min_val,
+            'max_val': max_val,
+            'scope_val': scope_val,
+            'allocation_id': allocation_id,
+        }
+
     def allocate(self, context, min_val, max_val, scope_val):
         """Claim the next available value in [min_val, max_val] for scope_val.
 
         Returns (allocation_id, allocated_value) where allocation_id is a
         Python-generated UUID suitable for use as a foreign key.
 
-        Raises self._exception_class(min_val, max_val) if the range is
-        exhausted.  Lets DBDuplicateEntry propagate for retry handling by
+        Raises self._exception_class(min_val, max_val) if no value is
+        available.  Lets DBDuplicateEntry propagate for retry handling by
         the caller.
         """
         allocation_id = uuidutils.generate_uuid()
-        params = {
-            'min_val': min_val,
-            'max_val': max_val,
-            'scope_val': scope_val,
-            'allocation_id': allocation_id,
-        }
+        params = self._make_params(min_val, max_val, scope_val, allocation_id)
 
         context.session.execute(self._stmt, params)
 
@@ -130,3 +151,98 @@ class RangeAllocator:
             raise self._exception_class(min_val, max_val)
 
         return allocation_id, getattr(row, self._value_col_name)
+
+
+class RandomRangeAllocator(RangeAllocator):
+    """RangeAllocator that claims a randomly chosen unoccupied value.
+
+    Scans taken values, computes gaps, and maps a Python-generated random
+    proportion to a position in the free set.  Guaranteed to find a free
+    value if one exists.  O(K) in taken values.
+
+    rand_val is provided as a Python-generated float rather than using
+    SQL random() to avoid CTE re-evaluation issues on non-materialized
+    CTEs, which could produce different values in the SELECT column and
+    WHERE clause and return incorrect results.
+    """
+
+    def _gap_source(self):
+        """Subquery returning a randomly selected unoccupied value."""
+        rand_val = sa.bindparam('rand_val', type_=sa.Float)
+
+        taken = sa.select(
+            self._value_col.label('val'),
+            sa.func.coalesce(
+                sa.func.lag(self._value_col).over(order_by=self._value_col),
+                self._min_val - 1,
+            ).label('prev_val'),
+        ).where(
+            sa.and_(
+                self._scope_col == self._scope_p,
+                self._value_col >= self._min_val,
+                self._value_col <= self._max_val,
+            )
+        ).cte('taken')
+
+        inner_gaps = sa.select(
+            (taken.c.prev_val + 1).label('gap_start'),
+            (taken.c.val - taken.c.prev_val - 1).label('gap_size'),
+        ).where(taken.c.val - taken.c.prev_val > 1)
+
+        max_allocated = (
+            sa.select(sa.func.max(self._value_col).label('val'))
+            .where(
+                sa.and_(
+                    self._scope_col == self._scope_p,
+                    self._value_col >= self._min_val,
+                    self._value_col <= self._max_val,
+                )
+            )
+            .cte('max_allocated')
+        )
+        trailing_gap = (
+            sa.select(
+                sa.func.coalesce(
+                    max_allocated.c.val + 1, self._min_val).label('gap_start'),
+                (self._max_val - sa.func.coalesce(
+                    max_allocated.c.val, self._min_val - 1)).label('gap_size'),
+            )
+            .select_from(max_allocated)
+        )
+
+        gaps = sa.union_all(inner_gaps, trailing_gap).cte('gaps')
+
+        free_count = sa.select(
+            sa.func.sum(gaps.c.gap_size).label('n')
+        ).cte('free_count')
+
+        n = free_count.c.n
+        target = sa.select(
+            sa.cast(sa.func.floor(rand_val * n), sa.Integer).label('idx')
+        ).where(n > 0).cte('target')
+
+        cumul = sa.select(
+            gaps.c.gap_start,
+            gaps.c.gap_size,
+            (sa.func.sum(gaps.c.gap_size).over(order_by=gaps.c.gap_start) -
+             gaps.c.gap_size).label('cum_before'),
+        ).cte('cumul')
+
+        idx = sa.select(target.c.idx).scalar_subquery()
+        return (
+            sa.select(
+                (cumul.c.gap_start + idx -
+                 cumul.c.cum_before).label('next_val')
+            )
+            .where(idx.between(cumul.c.cum_before,
+                               cumul.c.cum_before + cumul.c.gap_size - 1))
+            .limit(1)
+            .subquery()
+        )
+
+    @staticmethod
+    def _make_params(min_val, max_val, scope_val, allocation_id):
+        params = super()._make_params(
+            min_val, max_val, scope_val, allocation_id)
+        params['rand_val'] = _random.random()  # noqa: S311
+        return params

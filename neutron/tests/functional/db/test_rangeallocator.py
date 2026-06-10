@@ -31,7 +31,7 @@ _PHYSNET = 'test-physnet'
 _OTHER_PHYSNET = 'other-physnet'
 
 
-class TestRangeAllocator(testlib_api.SqlTestCase):
+class TestRangeAllocatorBase(testlib_api.SqlTestCase):
     """Tests for RangeAllocator against a real SQL engine.
 
     Runs against SQLite by default (RETURNING path).
@@ -78,6 +78,8 @@ class TestRangeAllocator(testlib_api.SqlTestCase):
             ).fetchall()
         return [r.vni for r in rows]
 
+
+class TestRangeAllocator(TestRangeAllocatorBase):
     def test_allocate_from_empty_gets_min(self):
         alloc_id, vni = self._allocate(min_vni=10, max_vni=100)
         self.assertEqual(10, vni)
@@ -180,12 +182,13 @@ class TestRangeAllocator(testlib_api.SqlTestCase):
         self.assertIsNotNone(alloc_id)
 
 
-class TestRangeAllocatorMySQL(testlib_api.MySQLTestCaseMixin,
-                              TestRangeAllocator):
-    """Re-runs the full suite against MySQL (LAST_INSERT_ID path).
-
-    Skipped automatically if MySQL is unavailable.
-    """
+class TestAllocatorMySQL(testlib_api.MySQLTestCaseMixin):
+    def setUp(self):
+        super().setUp()
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            dialect = self.ctx.session.get_bind().dialect.name
+        self.assertIn(dialect, ('mysql', 'mariadb'),
+                      "expected MySQL/MariaDB but got: %s" % dialect)
 
     def test_engine_is_mysql(self):
         # @@version_comment is a MySQL/MariaDB system variable that does
@@ -195,6 +198,13 @@ class TestRangeAllocatorMySQL(testlib_api.MySQLTestCaseMixin,
             row = self.ctx.session.execute(
                 sa.text('SELECT @@version_comment')).fetchone()
         self.assertIsNotNone(row)
+
+
+class TestRangeAllocatorMySQL(TestAllocatorMySQL, TestRangeAllocator):
+    """Re-runs the full suite against MySQL (LAST_INSERT_ID path).
+
+    Skipped automatically if MySQL is unavailable.
+    """
 
     def test_allocate_concurrent_no_duplicates(self):
         """Two threads allocating simultaneously must get distinct VNIs.
@@ -224,3 +234,69 @@ class TestRangeAllocatorMySQL(testlib_api.MySQLTestCaseMixin,
         self.assertEqual(2, len(results))
         self.assertEqual(2, len(set(results)), "concurrent allocations must "
                          "produce distinct VNIs, got %s" % results)
+
+
+class TestRandomRangeAllocator(TestRangeAllocatorBase):
+    """Tests for RangeAllocator with strategy=RANDOM.
+
+    Runs against SQLite by default.
+    TestRandomRangeAllocatorMySQL runs the same suite against MySQL.
+    """
+
+    def test_random_result_within_range(self):
+        _, vni = self._allocate(min_vni=5, max_vni=10)
+        self.assertGreaterEqual(vni, 5)
+        self.assertLessEqual(vni, 10)
+
+    def test_random_multiple_allocations_distinct(self):
+        _, vni1 = self._allocate(min_vni=1, max_vni=5)
+        _, vni2 = self._allocate(min_vni=1, max_vni=5)
+        _, vni3 = self._allocate(min_vni=1, max_vni=5)
+        self.assertEqual(3, len({vni1, vni2, vni3}))
+
+    def test_random_finds_last_available(self):
+        """Gap scan must find the sole remaining value in one query."""
+        for vni in [1, 2, 4, 5]:
+            self._insert(vni)
+        _, vni = self._allocate(min_vni=1, max_vni=5)
+        self.assertEqual(3, vni)
+
+    def test_random_range_exhausted_raises(self):
+        for vni in [1, 2, 3]:
+            self._insert(vni)
+        self.assertRaises(
+            evpn_exc.EVPNNoVniAvailable,
+            self._allocate, min_vni=1, max_vni=3)
+
+    def test_random_scope_isolated(self):
+        for vni in range(1, 5):
+            self._insert(vni, physnet=_PHYSNET)
+        _, vni = self._allocate(min_vni=1, max_vni=5, physnet=_OTHER_PHYSNET)
+        self.assertGreaterEqual(vni, 1)
+        self.assertLessEqual(vni, 5)
+
+    def test_random_allocation_id_usable_as_fk(self):
+        alloc_id, vni = self._allocate()
+        self.assertIsNotNone(alloc_id)
+        with db_api.CONTEXT_READER.using(self.ctx):
+            row = self.ctx.session.execute(
+                sa.select(self.table).where(self.table.c.id == alloc_id)
+            ).fetchone()
+        self.assertIsNotNone(row)
+        self.assertEqual(vni, row.vni)
+
+    def test_random_all_values_allocatable(self):
+        """Gap scan guarantees every value reachable regardless of density."""
+        allocated = set()
+        for _ in range(20):
+            _, vni = self._allocate(min_vni=1, max_vni=20)
+            allocated.add(vni)
+        self.assertEqual(set(range(1, 21)), allocated)
+
+
+class TestRandomRangeAllocatorMySQL(TestAllocatorMySQL,
+                                    TestRandomRangeAllocator):
+    """Re-runs random strategy suite against MySQL.
+
+    Skipped automatically if MySQL is unavailable.
+    """
