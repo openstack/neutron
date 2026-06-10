@@ -1871,9 +1871,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 iface_id = self.int_br.portid_from_external_ids(
                     port['external_ids'])
                 if iface_id:
-                    if port['ofport'] == ovs_lib.UNASSIGNED_OFPORT:
-                        LOG.debug("Port %s not ready yet on the bridge",
-                                  iface_id)
+                    if port['ofport'] in (ovs_lib.UNASSIGNED_OFPORT,
+                                          ovs_lib.INVALID_OFPORT):
+                        LOG.debug("Port %s not ready yet on the bridge "
+                                  "(ofport=%s)",
+                                  iface_id, port['ofport'])
                         ports_not_ready_yet.add(port['name'])
                         return
                     # check if port belongs to ancillary bridge
