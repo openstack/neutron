@@ -55,12 +55,20 @@ class EVPNPlugin(service_base.ServicePluginBase):
         LOG.info("Starting EVPN service plugin")
 
     @property
-    def _nb_idl(self):
+    def _mech_driver(self):
         if self._ovn_mech_driver is None:
             plugin = directory.get_plugin()
             self._ovn_mech_driver = (
                 plugin.mechanism_manager.mech_drivers['ovn'].obj)
-        return self._ovn_mech_driver.nb_ovn
+        return self._ovn_mech_driver
+
+    @property
+    def _nb_idl(self):
+        return self._mech_driver.nb_ovn
+
+    @property
+    def _sb_idl(self):
+        return self._mech_driver.sb_ovn
 
     def get_plugin_description(self):
         return "EVPN service plugin"
@@ -118,9 +126,10 @@ class EVPNPlugin(service_base.ServicePluginBase):
 
         router_id = payload.resource_id
         vlan = self._evpn_db.get_vlan_for_router(payload.context, router_id)
+        gw_chassis = self._sb_idl.get_gateway_chassis_from_cms_options()
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(evpn_ovn.CreateEVPNRouterCommand(
-                self._nb_idl, router_id, vni, vlan))
+                self._nb_idl, router_id, vni, vlan, gw_chassis))
 
         LOG.info("Set EVPN dynamic-routing options for router %s VNI %s",
                  router_id, vni)

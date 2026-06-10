@@ -47,6 +47,10 @@ def _evpn_lsp_name(router_id, vni):
     }
 
 
+def _evpn_hcg_name(router_id):
+    return '%s%s' % (evpn_const.EVPN_HCG_NAME_PREFIX, router_id)
+
+
 class CreateEVPNRouterCommand(command.BaseCommand):
     """Create the full EVPN OVN topology for a router.
 
@@ -57,12 +61,13 @@ class CreateEVPNRouterCommand(command.BaseCommand):
     # We support only one SVD at this time.
     SVD_INDEX = 0
 
-    def __init__(self, api, router_id, vni, vlan):
+    def __init__(self, api, router_id, vni, vlan, gw_chassis):
         super().__init__(api)
         self.lrouter_name = ovn_utils.ovn_name(router_id)
         self.vni = vni
         self.vlan = vlan
         self.router_id = router_id
+        self.gw_chassis = gw_chassis
 
     def run_idl(self, txn):
         self._set_router_options()
@@ -112,6 +117,10 @@ class CreateEVPNRouterCommand(command.BaseCommand):
             evpn_const.EVPN_LRP_VNI_EXT_ID_KEY: str(self.vni),
             evpn_const.EVPN_LRP_VLAN_EXT_ID_KEY: str(self.vlan),
         }
+
+        hcg_name = _evpn_hcg_name(self.router_id)
+        hcg = self._create_ha_chassis_group(txn, hcg_name)
+
         try:
             lrp = self.api.lookup('Logical_Router_Port', lrp_name)
         except idlutils.RowNotFound:
@@ -119,12 +128,31 @@ class CreateEVPNRouterCommand(command.BaseCommand):
                 self.api, self.lrouter_name, lrp_name, mac,
                 networks=[],
                 options=options,
-                external_ids=external_ids).run_idl(txn)
+                external_ids=external_ids,
+                ha_chassis_group=hcg.uuid).run_idl(txn)
             return
 
         for column_name, column_data in (
                 ('options', options), ('external_ids', external_ids)):
             ovn_utils.setkeys(lrp, column_name, column_data)
+        lrp.ha_chassis_group = hcg.uuid
+
+    def _create_ha_chassis_group(self, txn, hcg_name):
+        hcg_external_ids = {
+            ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: self.router_id,
+        }
+        hcg_cmd = ovn_nb_commands.HAChassisGroupAddCommand(
+            self.api, hcg_name, may_exist=True,
+            external_ids=hcg_external_ids)
+        hcg_cmd.run_idl(txn)
+        hcg = self.api.lookup('HA_Chassis_Group', hcg_name)
+
+        chassis_priority = ovn_utils.get_chassis_priority(self.gw_chassis)
+        for chassis_name, priority in chassis_priority.items():
+            ovn_nb_commands.HAChassisGroupAddChassisCommand(
+                self.api, hcg.uuid, chassis_name, priority).run_idl(txn)
+
+        return hcg
 
     def _create_lsp(self, txn, ls_name, lsp_name, lrp_name):
         options = {'router-port': lrp_name}
