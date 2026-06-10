@@ -54,6 +54,8 @@ class TestPVLANPlugin(testlib_api.SqlTestCase):
         payload.context.session = mock.Mock()
         payload.resource_id = resource_id
         payload.request_body = request_body or {}
+        payload.desired_state = None
+        payload.states = [{}]
         if network_id:
             payload.metadata = {'network_id': network_id}
         return payload
@@ -426,3 +428,25 @@ class TestPortPVLAN(TestPVLANPlugin):
                 {'pvlan_type': pvlan_const.COMMUNITY_TYPE,
                  'pvlan_community': 'new_comm'},
                 port_id=port_id)
+
+    def test_port_update_desired_state_reflects_new_pvlan(self):
+        port_id = uuidutils.generate_uuid()
+        network_id = uuidutils.generate_uuid()
+        payload = self._make_payload(
+            port_id,
+            request_body={
+                pvlan_const.PVLAN_TYPE: pvlan_const.ISOLATED_TYPE})
+        payload.desired_state = {
+            pvlan_const.PVLAN_TYPE: pvlan_const.PROMISCUOUS_TYPE,
+            pvlan_const.PVLAN_COMMUNITY: None}
+
+        mocks, _ = self._mock_port_and_network(
+            port_id, network_id,
+            pvlan_type=pvlan_const.PROMISCUOUS_TYPE,
+            network_pvlan=True)
+        with mocks['port_obj'], mocks['net_obj'], mocks['portpvlan_cls']:
+            self.plugin._pvlan_port_update(payload=payload)
+            self.assertEqual(pvlan_const.ISOLATED_TYPE,
+                             payload.desired_state[pvlan_const.PVLAN_TYPE])
+            self.assertIsNone(
+                payload.desired_state[pvlan_const.PVLAN_COMMUNITY])
