@@ -40,8 +40,7 @@ class TestFrrCommandBuilder(base.BaseTestCase):
     def test_add_bgp_router_cmds(self):
         config = _build_test_evpn_router_config(100)
         peer_iface = 'eth1'
-        result = self.builder.add_bgp_router_cmds(
-            config, peer_iface)
+        result = self.builder.add_bgp_router_cmds(config, peer_iface)
 
         self.assertIn(
             'router bgp %d' % config.asn, result)
@@ -168,7 +167,8 @@ class TestFrrVtyshDriver(base.BaseTestCase):
         super().setUp()
         self.vrf_handler = mock.Mock(spec=interface.EVPNRouterVrfHandler)
         self.driver = frr_driver.FrrVtyshDriver(
-            self.vrf_handler, 'peer_iface')
+            peer_interface='peer_iface',
+            vrf_handler=self.vrf_handler)
         self.cmd_builder = mock.Mock(
             spec=frr_driver.FrrCommandBuilder)
         self.executor = mock.Mock(

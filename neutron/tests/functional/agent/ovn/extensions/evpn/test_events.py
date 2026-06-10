@@ -41,7 +41,8 @@ class BaseEvpnEventsTestCase(bgp_base.BaseBgpIDLTestCase):
         finally:
             bgp_ovn.OvnSbIdl.tables = bgp_ovn.OVN_SB_TABLES
         self.mock_evpn_ext = mock.Mock()
-        self.real_fsm = evpn_fsm.EvpnFSM(mock.Mock(), mock.Mock())
+        self.real_fsm = evpn_fsm.EvpnFSM(mock.Mock(), mock.Mock(),
+                                         mock.Mock())
         self.mock_evpn_ext._evpn_fsm = mock.Mock(wraps=self.real_fsm)
         self.sb_api.idl.notify_handler.watch_event(
             evpn_events.PortBindingLrpEvpnCreateEvent(

@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 from oslo_utils import uuidutils
 from pyroute2.netlink import rtnl
 
@@ -43,7 +45,7 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
 
     def test_vrf_handler_lifecycle(self):
         vrf_handler = netlink_monitor.VrfHandler(
-            fsm.EvpnFSM(svd=None, config=None))
+            fsm.EvpnFSM(svd=None, config=None, frr_driver=None))
 
         dispatcher = nl_dispatcher.NetlinkDispatcher(rtnl.RTMGRP_LINK)
         dispatcher.register_handler(
@@ -150,7 +152,8 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self.addCleanup(self._safe_delete, self._vx)
         self.addCleanup(self._safe_delete, self._br)
 
-        self._evpn_fsm = fsm.EvpnFSM(self.svd, config=self.cfg)
+        self._evpn_fsm = fsm.EvpnFSM(self.svd, config=self.cfg,
+                                     frr_driver=mock.Mock())
 
     def _advance_to_advertising(self, vni, vid):
         self._evpn_fsm.advance(
