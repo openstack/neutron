@@ -97,7 +97,12 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
                 # pass it regardless to keep the quota driver API intact
                 plugins = directory.get_plugins()
                 plugin = plugins.get(key, plugins[constants.CORE])
-                used = resource.count(context, plugin, project_id)
+                try:
+                    used = resource.count(context, plugin, project_id)
+                except NotImplementedError:
+                    LOG.info('Skipping quota resource %s: no plugin loaded '
+                             'that supports counting it.', key)
+                    continue
 
             project_quota_ext[key] = {
                 'limit': resource.default,
@@ -108,7 +113,8 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         quota_objs = quota_obj.Quota.get_objects(context,
                                                  project_id=project_id)
         for item in quota_objs:
-            project_quota_ext[item['resource']]['limit'] = item['limit']
+            if item['resource'] in project_quota_ext:
+                project_quota_ext[item['resource']]['limit'] = item['limit']
         return project_quota_ext
 
     @staticmethod
