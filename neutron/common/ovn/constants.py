@@ -291,6 +291,7 @@ TYPES_PRIORITY_ORDER = (
 DB_CONSISTENCY_CHECK_INTERVAL = 300  # 5 minutes
 MAINTENANCE_TASK_RETRY_LIMIT = 100  # times
 MAINTENANCE_ONE_RUN_TASK_SPACING = 5  # seconds
+MAINTENANCE_NB_IDL_LOCK_NAME = "ovn_db_inconsistencies_periodics"
 
 # The addresses field to set in the logical switch port which has a
 # peer router port (connecting to the logical router).
