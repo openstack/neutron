@@ -80,20 +80,20 @@ class TestVrfHandler(base.BaseTestCase):
         self.handler = netlink_monitor.VrfHandler(self._evpn_fsm)
 
     def test_handle_newlink_evpn_vrf(self):
-        vrf = 'vr0a1b2c3d-fff'
+        vrf = 'vr0a1b2c3d-ffff'
         msg = _make_vrf_msg(vrf)
         self.handler.handle_newlink(msg)
         self.assertIn(vrf, self.handler._known_vrfs)
 
     def test_handle_newlink_deduplicates(self):
-        vrf = 'vr0a1b2c3d-fff'
+        vrf = 'vr0a1b2c3d-ffff'
         msg = _make_vrf_msg(vrf)
         self.handler.handle_newlink(msg)
         self.handler.handle_newlink(msg)
         self.assertEqual({vrf}, self.handler._known_vrfs)
 
     def test_handle_dellink_evpn_vrf(self):
-        vrf = 'vr0a1b2c3d-fff'
+        vrf = 'vr0a1b2c3d-ffff'
         self.handler._known_vrfs.add(vrf)
         evpn = fsm.Evpn(vrf)
         evpn.vrf_up = True
@@ -105,18 +105,18 @@ class TestVrfHandler(base.BaseTestCase):
         self.assertNotIn(vrf, self._evpn_fsm.instances)
 
     def test_handle_dellink_unknown_vrf(self):
-        vrf = 'vr0a1b2c3d-fff'
+        vrf = 'vr0a1b2c3d-ffff'
         self.handler._known_vrfs.add(vrf)
         evpn = fsm.Evpn(vrf)
         evpn.vrf_up = True
         evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
         self._evpn_fsm.instances[vrf] = evpn
-        msg = _make_vrf_msg('vr0a1b2c3d-eee')
+        msg = _make_vrf_msg('vr0a1b2c3d-eeee')
         self.handler.handle_dellink(msg)
         self.assertEqual({vrf}, self.handler._known_vrfs)
 
     def test_ignores_non_vrf_kind(self):
-        msg = _make_vrf_msg('vr0a1b2c3d-fff', kind='bridge')
+        msg = _make_vrf_msg('vr0a1b2c3d-ffff', kind='bridge')
         self.handler.handle_newlink(msg)
         self.assertEqual(set(), self.handler._known_vrfs)
 
@@ -131,7 +131,7 @@ class TestVrfHandler(base.BaseTestCase):
         self.assertEqual(set(), self.handler._known_vrfs)
 
     def test_ignores_no_linkinfo(self):
-        no_linkinfo_msg = _make_nlmsg('vr0a1b2c3d-fff')
+        no_linkinfo_msg = _make_nlmsg('vr0a1b2c3d-ffff')
         self.handler.handle_newlink(no_linkinfo_msg)
         self.assertEqual(set(), self.handler._known_vrfs)
 
@@ -151,7 +151,9 @@ class TestVrfHandler(base.BaseTestCase):
                           self.handler._parse_evpn_vrf, msg)
 
     def test_multiple_vrfs(self):
-        vrf1, vrf2, vrf3 = 'vr0a1b2c3d-ddd', 'vr0a1b2c3d-eee', 'vr0a1b2c3d-fff'
+        vrf1 = 'vr0a1b2c3d-dddd'
+        vrf2 = 'vr0a1b2c3d-eeee'
+        vrf3 = 'vr0a1b2c3d-ffff'
         self.handler.handle_newlink(_make_vrf_msg(vrf1))
         self.handler.handle_newlink(_make_vrf_msg(vrf2))
         self.handler.handle_newlink(_make_vrf_msg(vrf3))
@@ -160,7 +162,9 @@ class TestVrfHandler(base.BaseTestCase):
         self.assertEqual({vrf1, vrf3}, self.handler._known_vrfs)
 
     def test_replay_removes_stale_vrfs(self):
-        vrf1, vrf2, vrf3 = 'vr0a1b2c3d-ddd', 'vr0a1b2c3d-eee', 'vr0a1b2c3d-fff'
+        vrf1 = 'vr0a1b2c3d-dddd'
+        vrf2 = 'vr0a1b2c3d-eeee'
+        vrf3 = 'vr0a1b2c3d-ffff'
         self.handler.handle_newlink(_make_vrf_msg(vrf1))
         self.handler.handle_newlink(_make_vrf_msg(vrf2))
         self.handler.handle_newlink(_make_vrf_msg(vrf3))
@@ -171,7 +175,7 @@ class TestVrfHandler(base.BaseTestCase):
         self.assertEqual({vrf1, vrf3}, self.handler._known_vrfs)
 
     def test_replay_adds_new_vrfs(self):
-        vrf1, vrf2 = 'vr0a1b2c3d-ddd', 'vr0a1b2c3d-eee'
+        vrf1, vrf2 = 'vr0a1b2c3d-dddd', 'vr0a1b2c3d-eeee'
         self.handler._known_vrfs = {vrf1}
         self.handler.replay_start()
         self.handler.handle_newlink(_make_vrf_msg(vrf1))

@@ -15,7 +15,7 @@
 
 EVPN_EXT_NAME = 'EVPN agent extension'
 EVPN_VRF_PREFIX = 'vr'
-EVPN_VRF_NAME_LEN = 14
+
 EVPN_LINK_KIND_VRF = 'vrf'
 
 EVPN_LB_NAME_PREFIX = 'brevpn-'
