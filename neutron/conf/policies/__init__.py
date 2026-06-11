@@ -37,6 +37,7 @@ from neutron.conf.policies import network_ip_availability
 from neutron.conf.policies import network_segment_range
 from neutron.conf.policies import port
 from neutron.conf.policies import port_bindings
+from neutron.conf.policies import pvlan
 from neutron.conf.policies import qos
 from neutron.conf.policies import quotas
 from neutron.conf.policies import rbac
@@ -74,6 +75,7 @@ def list_rules():
         network_segment_range.list_rules(),
         port_bindings.list_rules(),
         port.list_rules(),
+        pvlan.list_rules(),
         qos.list_rules(),
         quotas.list_rules(),
         rbac.list_rules(),
