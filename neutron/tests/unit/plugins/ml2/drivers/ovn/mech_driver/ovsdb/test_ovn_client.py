@@ -569,6 +569,112 @@ class TestOVNClient(TestOVNClientBase):
             ctx, filters={'id': []})
         plugin.get_network.assert_not_called()
 
+    def _make_fake_lsp(self, name, lsp_type='', options=None):
+        lsp = mock.Mock()
+        lsp.name = name
+        lsp.type = lsp_type
+        lsp.options = options or {}
+        return lsp
+
+    def _setup_delete_port_mocks(self, ovn_port, ls):
+        def _lookup(table, name, **kwargs):
+            if table == 'Logical_Switch_Port':
+                return ovn_port
+            if table == 'Logical_Switch':
+                return ls
+            raise ValueError("Unexpected lookup: %s %s" % (table, name))
+
+        self.nb_idl.lookup.side_effect = _lookup
+        self.ovn_client._qos_driver = mock.Mock()
+
+    def test__delete_port_unsets_virtual_children(self):
+        """Deleting a non-virtual port unsets it from virtual children."""
+        port_id = 'parent-port'
+        ovn_network_name = 'neutron-net1'
+
+        ovn_port = self._make_fake_lsp(port_id)
+        ovn_port.external_ids = {
+            constants.OVN_NETWORK_NAME_EXT_ID_KEY: ovn_network_name}
+
+        virtual_lsp = self._make_fake_lsp(
+            'virtual-port', constants.LSP_TYPE_VIRTUAL,
+            {constants.LSP_OPTIONS_VIRTUAL_PARENTS_KEY:
+             'parent-port,other-port'})
+        normal_lsp = self._make_fake_lsp('normal-port')
+        ls = mock.Mock()
+        ls.ports = [normal_lsp, virtual_lsp]
+
+        self._setup_delete_port_mocks(ovn_port, ls)
+
+        ctx = ncontext.Context()
+        self.ovn_client._delete_port(ctx, port_id)
+
+        self.nb_idl.unset_lswitch_port_to_virtual_type.assert_called_once_with(
+            'virtual-port', port_id, if_exists=True)
+        self.nb_idl.ls_get.assert_not_called()
+
+    def test__delete_port_no_virtual_children(self):
+        """No virtual ports on the LS means no unset call."""
+        port_id = 'normal-port'
+        ovn_network_name = 'neutron-net1'
+
+        ovn_port = self._make_fake_lsp(port_id)
+        ovn_port.external_ids = {
+            constants.OVN_NETWORK_NAME_EXT_ID_KEY: ovn_network_name}
+
+        other_lsp = self._make_fake_lsp('other-port')
+        ls = mock.Mock()
+        ls.ports = [other_lsp]
+
+        self._setup_delete_port_mocks(ovn_port, ls)
+
+        ctx = ncontext.Context()
+        self.ovn_client._delete_port(ctx, port_id)
+
+        self.nb_idl.unset_lswitch_port_to_virtual_type.assert_not_called()
+
+    def test__delete_port_virtual_port_skips_parent_check(self):
+        """Deleting a virtual port skips the parent check entirely."""
+        port_id = 'virtual-port'
+        ovn_network_name = 'neutron-net1'
+
+        ovn_port = self._make_fake_lsp(
+            port_id, constants.LSP_TYPE_VIRTUAL)
+        ovn_port.external_ids = {
+            constants.OVN_NETWORK_NAME_EXT_ID_KEY: ovn_network_name}
+
+        self._setup_delete_port_mocks(ovn_port, ls=None)
+
+        ctx = ncontext.Context()
+        self.ovn_client._delete_port(ctx, port_id)
+
+        calls = [c for c in self.nb_idl.lookup.call_args_list
+                 if c[0][0] == 'Logical_Switch']
+        self.assertEqual([], calls)
+        self.nb_idl.unset_lswitch_port_to_virtual_type.assert_not_called()
+
+    def test__delete_port_virtual_child_different_parent(self):
+        """Virtual port referencing a different parent is not affected."""
+        port_id = 'my-port'
+        ovn_network_name = 'neutron-net1'
+
+        ovn_port = self._make_fake_lsp(port_id)
+        ovn_port.external_ids = {
+            constants.OVN_NETWORK_NAME_EXT_ID_KEY: ovn_network_name}
+
+        virtual_lsp = self._make_fake_lsp(
+            'virtual-port', constants.LSP_TYPE_VIRTUAL,
+            {constants.LSP_OPTIONS_VIRTUAL_PARENTS_KEY: 'other-parent'})
+        ls = mock.Mock()
+        ls.ports = [virtual_lsp]
+
+        self._setup_delete_port_mocks(ovn_port, ls)
+
+        ctx = ncontext.Context()
+        self.ovn_client._delete_port(ctx, port_id)
+
+        self.nb_idl.unset_lswitch_port_to_virtual_type.assert_not_called()
+
 
 class TestOVNClientFairMeter(TestOVNClientBase,
                              test_log_driver.TestOVNDriverBase):

@@ -5471,8 +5471,7 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
                    'type': ovn_const.LSP_TYPE_VIRTUAL,
                    'options': {ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY:
                                parent['id']}})
-        self.nb_idl.ls_get.return_value.execute.return_value = (
-            mock.Mock(ports=[fake_row]))
+        self.nb_idl.lookup.return_value = mock.Mock(ports=[fake_row])
 
         self.mech_driver._ovn_client.delete_port(self.context, parent['id'])
         self.nb_idl.unset_lswitch_port_to_virtual_type.assert_called_once_with(
