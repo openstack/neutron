@@ -54,3 +54,17 @@ tcpdump: CommandFilter, tcpdump, root
 #needed to create transient systemd services for fullstack tests
 systemd_run: CommandFilter, systemd-run, root
 systemctl: CommandFilter, systemctl, root
+
+# FRR functional tests (FrrFixture)
+frr_mkdir: RegExpFilter, /bin/mkdir, root, mkdir, -p, /etc/frr/[a-z]+-[0-9a-f-]+
+frr_cp: RegExpFilter, /bin/cp, root, cp, /tmp/.+, /etc/frr/[a-z]+-[0-9a-f-]+/.+
+frr_chown: RegExpFilter, /bin/chown, root, chown, -R, frr:frr, /etc/frr/[a-z]+-[0-9a-f-]+
+frr_rm_conf: RegExpFilter, /bin/rm, root, rm, -rf, /etc/frr/[a-z]+-[0-9a-f-]+
+frr_rm_state: RegExpFilter, /bin/rm, root, rm, -rf, /var/run/frr/[a-z]+-[0-9a-f-]+
+frr_init_start_bash: RegExpFilter, bash, root, bash, -c, /usr/lib(exec)?/frr/frrinit\.sh start [a-z]+-[0-9a-f-]+ > /dev/null 2>&1
+frr_init_restart_bash: RegExpFilter, bash, root, bash, -c, /usr/lib(exec)?/frr/frrinit\.sh restart [a-z]+-[0-9a-f-]+ > /dev/null 2>&1
+frr_init_stop: RegExpFilter, /usr/lib/frr/frrinit.sh, root, /usr/lib/frr/frrinit.sh, stop, [a-z]+-[0-9a-f-]+
+frr_init_stop_libexec: RegExpFilter, /usr/libexec/frr/frrinit.sh, root, /usr/libexec/frr/frrinit.sh, stop, [a-z]+-[0-9a-f-]+
+vtysh_cmd: RegExpFilter, vtysh, root, vtysh, -N, [a-z]+-[0-9a-f-]+, -c, .*
+vtysh_dryrun: RegExpFilter, vtysh, root, vtysh, -N, [a-z]+-[0-9a-f-]+, --dryrun, -f, .*
+vtysh_apply: RegExpFilter, vtysh, root, vtysh, -N, [a-z]+-[0-9a-f-]+, -f, .*

@@ -1187,10 +1187,22 @@ class FrrFixture(fixtures.Fixture):
             ['chown', '-R', 'frr:frr', self._conf_dir],
             run_as_root=True)
 
-    def start_frr(self):
+    def _excute_with_std_discard(self, frr_action):
+        """Redirect stdout/stderr to /dev/null.
+
+        frrinit.sh spawns background daemons (e.g. watchfrr)
+        that inherit the script's stdout/stderr pipes,
+        causing execute() to hang waiting for pipe close.
+        """
         utils.execute(
-            [self.FRRINIT, 'start', self.namespace],
+            ['bash', '-c',
+             '%s %s %s > /dev/null 2>&1'
+             % (self.FRRINIT, frr_action,
+                self.namespace)],
             run_as_root=True)
+
+    def start_frr(self):
+        self._excute_with_std_discard('start')
 
     def stop_frr(self):
         utils.execute(
@@ -1198,9 +1210,7 @@ class FrrFixture(fixtures.Fixture):
             run_as_root=True)
 
     def restart_frr(self):
-        utils.execute(
-            [self.FRRINIT, 'restart', self.namespace],
-            run_as_root=True)
+        self._excute_with_std_discard('restart')
 
     def _cleanup_frr(self):
         # NOTE: frrinit.sh returns 0 when stopping an already-stopped
