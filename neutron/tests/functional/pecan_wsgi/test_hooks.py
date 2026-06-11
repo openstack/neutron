@@ -31,22 +31,6 @@ from neutron import policy
 from neutron.tests.functional.pecan_wsgi import test_functional
 
 
-class TestOwnershipHook(test_functional.PecanFunctionalTest):
-
-    def test_network_ownership_check(self):
-        net_response = self.app.post_json(
-            '/v2.0/networks.json',
-            params={'network': {'name': 'meh'}},
-            headers={'X-Project-Id': 'projid'})
-        network_id = jsonutils.loads(net_response.body)['network']['id']
-        port_response = self.app.post_json(
-            '/v2.0/ports.json',
-            params={'port': {'network_id': network_id,
-                             'admin_state_up': True}},
-            headers={'X-Project-Id': 'projid'})
-        self.assertEqual(201, port_response.status_int)
-
-
 class TestQueryParametersHook(test_functional.PecanFunctionalTest):
 
     def test_if_match_on_update(self):

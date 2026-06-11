@@ -3409,7 +3409,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             req = self.new_create_request('subnets', data,
                                           self.fmt, context=ctx)
             res = req.get_response(self.api)
-            self._check_http_response(res, webob.exc.HTTPNotFound.code)
+            self._check_http_response(res, webob.exc.HTTPForbidden.code)
 
     def test_create_two_subnets(self):
         gateway_ips = ['10.0.0.1', '10.0.1.1']
@@ -3868,7 +3868,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.2.0/24',
-                                webob.exc.HTTPNotFound.code,
+                                webob.exc.HTTPForbidden.code,
                                 ip_version=constants.IP_VERSION_4,
                                 project_id='bad_project_id',
                                 gateway_ip='10.0.2.1',

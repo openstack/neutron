@@ -71,8 +71,10 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port',
         check_str=neutron_policy.policy_or(
-            lib_rules.ADMIN_OR_PROJECT_MEMBER,
-            lib_rules.SERVICE),
+            lib_rules.ADMIN_OR_SERVICE,
+            base.NET_OWNER_MEMBER,
+            'rule:shared',
+        ),
         scope_types=['project'],
         description='Create a port',
         operations=ACTION_POST,

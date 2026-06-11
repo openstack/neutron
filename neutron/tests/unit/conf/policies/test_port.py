@@ -881,11 +881,7 @@ class ProjectManagerTests(AdminTests):
         self.context = self.project_manager_ctx
 
     def test_create_port(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'create_port', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_port', self.alt_target)
+        self._assert_network_owner_policy('create_port')
 
     def test_create_port_with_device_id(self):
         self.assertTrue(

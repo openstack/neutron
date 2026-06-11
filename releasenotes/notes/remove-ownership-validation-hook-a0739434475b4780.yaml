@@ -1,0 +1,10 @@
+---
+upgrade:
+  - |
+    The ``OwnershipValidationHook`` Pecan hook has been removed. Network
+    access validation for port creation is now handled entirely by the
+    policy engine. The ``create_port`` policy rule has been updated to
+    require network ownership or a shared network, replacing the
+    previous hook-based check. Operators who have customized the
+    ``create_port`` rule in ``policy.yaml`` should review their
+    overrides to ensure they include appropriate network access checks.

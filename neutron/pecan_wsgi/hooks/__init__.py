@@ -16,7 +16,6 @@
 from neutron.pecan_wsgi.hooks import body_validation
 from neutron.pecan_wsgi.hooks import context
 from neutron.pecan_wsgi.hooks import notifier
-from neutron.pecan_wsgi.hooks import ownership_validation
 from neutron.pecan_wsgi.hooks import policy_enforcement
 from neutron.pecan_wsgi.hooks import query_parameters
 from neutron.pecan_wsgi.hooks import quota_enforcement
@@ -27,7 +26,6 @@ from neutron.pecan_wsgi.hooks import userfilters
 ExceptionTranslationHook = translation.ExceptionTranslationHook
 ContextHook = context.ContextHook
 BodyValidationHook = body_validation.BodyValidationHook
-OwnershipValidationHook = ownership_validation.OwnershipValidationHook
 PolicyHook = policy_enforcement.PolicyHook
 QuotaEnforcementHook = quota_enforcement.QuotaEnforcementHook
 NotifierHook = notifier.NotifierHook
