@@ -1416,19 +1416,24 @@ class OVNClient:
         return added_ports
 
     def _check_external_ips_changed(self, context, ovn_snats,
-                                    ovn_static_routes, router):
+                                    ovn_static_routes, router,
+                                    ovn_gw_lrps):
         admin_context = context.elevated()
         ovn_gw_subnets = [
             getattr(route, 'external_ids', {}).get(
                 ovn_const.OVN_SUBNET_EXT_ID_KEY) for route in
             ovn_static_routes]
 
+        lrp_by_name = {lrp.name: lrp for lrp in ovn_gw_lrps}
+
         for gw_port in self._get_router_gw_ports(admin_context, router['id']):
             gw_infos = self._get_gw_info(admin_context, gw_port)
             if not gw_infos:
-                # The router is attached to a external network without a subnet
-                lrp = self._nb_idl.get_lrouter_port(
-                    utils.ovn_lrouter_port_name(gw_port['id']))
+                # The router is attached to an external network without
+                # a subnet; use the already-fetched LRP to check if the
+                # network name has changed.
+                lrp_name = utils.ovn_lrouter_port_name(gw_port['id'])
+                lrp = lrp_by_name.get(lrp_name)
                 if not lrp:
                     continue
                 lrp_ext_ids = getattr(lrp, 'external_ids', {})
@@ -1619,7 +1624,8 @@ class OVNClient:
                     ]
                     if (len(gateway_new) != len(ovn_router_ext_gw_lrps) or
                         self._check_external_ips_changed(
-                            context, ovn_snats, gateway_old, new_router)):
+                            context, ovn_snats, gateway_old, new_router,
+                            ovn_router_ext_gw_lrps)):
                         txn.add(self._nb_idl.delete_lrouter_ext_gw(
                             router_name))
                         if router_object:

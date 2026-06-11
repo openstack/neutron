@@ -400,6 +400,154 @@ class TestOVNClient(TestOVNClientBase):
                 ctx, 'fake-id')
         self.assertEqual([const.IPv4_ANY], cidrs)
 
+    def _make_ovn_lrp(self, port_id, network_name, subnet_ids='',
+                      networks=None):
+        lrp = mock.Mock()
+        lrp.name = 'lrp-' + port_id
+        lrp.networks = networks or []
+        lrp.external_ids = {
+            constants.OVN_NETWORK_NAME_EXT_ID_KEY: network_name,
+            constants.OVN_ROUTER_IS_EXT_GW: 'True',
+            constants.OVN_SUBNET_EXT_IDS_KEY: subnet_ids,
+        }
+        return lrp
+
+    def test__check_external_ips_changed_no_change(self):
+        """No change detected when new ports match OVN state."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnet = {'id': 'sub1', 'gateway_ip': '10.0.0.1',
+                  'ip_version': const.IP_VERSION_4}
+        plugin.get_subnets_by_network.return_value = [subnet]
+        gw_port = fakes.FakePort().create_one_port(
+            attrs={'id': 'gw-port-1', 'network_id': 'ext-net',
+                   'fixed_ips': [{'subnet_id': 'sub1',
+                                  'ip_address': '10.0.0.5'}]})
+        self.ovn_client._get_router_gw_ports = mock.Mock(
+            return_value=[gw_port])
+
+        ovn_snat = mock.Mock(external_ip='10.0.0.5')
+        ovn_route = mock.Mock(
+            external_ids={constants.OVN_SUBNET_EXT_ID_KEY: 'sub1'},
+            bfd=[])
+        ovn_lrp = self._make_ovn_lrp('gw-port-1', 'neutron-ext-net',
+                                     subnet_ids='sub1')
+        router = {'id': 'rtr1'}
+        ctx = mock.MagicMock()
+
+        result = self.ovn_client._check_external_ips_changed(
+            ctx, [ovn_snat], [ovn_route], router, [ovn_lrp])
+        self.assertFalse(result)
+        self.nb_idl.get_lrouter_port.assert_not_called()
+
+    def test__check_external_ips_changed_subnet_changed(self):
+        """Detected when new port has a subnet not in OVN routes."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnet = {'id': 'sub-new', 'gateway_ip': '10.0.0.1',
+                  'ip_version': const.IP_VERSION_4}
+        plugin.get_subnets_by_network.return_value = [subnet]
+        gw_port = fakes.FakePort().create_one_port(
+            attrs={'id': 'gw-port-1', 'network_id': 'ext-net',
+                   'fixed_ips': [{'subnet_id': 'sub-new',
+                                  'ip_address': '10.0.0.5'}]})
+        self.ovn_client._get_router_gw_ports = mock.Mock(
+            return_value=[gw_port])
+
+        ovn_route = mock.Mock(
+            external_ids={constants.OVN_SUBNET_EXT_ID_KEY: 'sub-old'},
+            bfd=[])
+        ovn_lrp = self._make_ovn_lrp('gw-port-1', 'neutron-ext-net')
+        router = {'id': 'rtr1'}
+        ctx = mock.MagicMock()
+
+        result = self.ovn_client._check_external_ips_changed(
+            ctx, [], [ovn_route], router, [ovn_lrp])
+        self.assertTrue(result)
+
+    def test__check_external_ips_changed_snat_ip_changed(self):
+        """Detected when SNAT external_ip differs from new router IP."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnet = {'id': 'sub1', 'gateway_ip': '10.0.0.1',
+                  'ip_version': const.IP_VERSION_4}
+        plugin.get_subnets_by_network.return_value = [subnet]
+        gw_port = fakes.FakePort().create_one_port(
+            attrs={'id': 'gw-port-1', 'network_id': 'ext-net',
+                   'fixed_ips': [{'subnet_id': 'sub1',
+                                  'ip_address': '10.0.0.99'}]})
+        self.ovn_client._get_router_gw_ports = mock.Mock(
+            return_value=[gw_port])
+
+        ovn_snat = mock.Mock(external_ip='10.0.0.5')
+        ovn_route = mock.Mock(
+            external_ids={constants.OVN_SUBNET_EXT_ID_KEY: 'sub1'},
+            bfd=[])
+        ovn_lrp = self._make_ovn_lrp('gw-port-1', 'neutron-ext-net')
+        router = {'id': 'rtr1'}
+        ctx = mock.MagicMock()
+
+        result = self.ovn_client._check_external_ips_changed(
+            ctx, [ovn_snat], [ovn_route], router, [ovn_lrp])
+        self.assertTrue(result)
+
+    def test__check_external_ips_changed_no_subnet_network_changed(self):
+        """No-subnet edge case uses passed-in LRP, not OVN re-fetch."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        plugin.get_subnets_by_network.return_value = []
+        gw_port = fakes.FakePort().create_one_port(
+            attrs={'id': 'gw-port-1', 'network_id': 'new-ext-net',
+                   'fixed_ips': []})
+        self.ovn_client._get_router_gw_ports = mock.Mock(
+            return_value=[gw_port])
+
+        ovn_lrp = self._make_ovn_lrp(
+            'gw-port-1', 'neutron-old-ext-net')
+        router = {'id': 'rtr1'}
+        ctx = mock.MagicMock()
+
+        result = self.ovn_client._check_external_ips_changed(
+            ctx, [], [], router, [ovn_lrp])
+        self.assertTrue(result)
+        self.nb_idl.get_lrouter_port.assert_not_called()
+
+    def test__check_external_ips_changed_no_subnet_network_same(self):
+        """No-subnet edge case returns False when network matches."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        plugin.get_subnets_by_network.return_value = []
+        gw_port = fakes.FakePort().create_one_port(
+            attrs={'id': 'gw-port-1', 'network_id': 'ext-net',
+                   'fixed_ips': []})
+        self.ovn_client._get_router_gw_ports = mock.Mock(
+            return_value=[gw_port])
+
+        ovn_lrp = self._make_ovn_lrp('gw-port-1', 'neutron-ext-net')
+        router = {'id': 'rtr1'}
+        ctx = mock.MagicMock()
+
+        result = self.ovn_client._check_external_ips_changed(
+            ctx, [], [], router, [ovn_lrp])
+        self.assertFalse(result)
+        self.nb_idl.get_lrouter_port.assert_not_called()
+
+    def test__check_external_ips_changed_bfd_mismatch(self):
+        """BFD state change detected."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        plugin.get_subnets_by_network.return_value = []
+        self.ovn_client._get_router_gw_ports = mock.Mock(return_value=[])
+
+        ovn_route = mock.Mock(
+            external_ids={}, bfd=[])
+        router = {'id': 'rtr1', 'enable_default_route_bfd': True}
+        ctx = mock.MagicMock()
+
+        result = self.ovn_client._check_external_ips_changed(
+            ctx, [], [ovn_route], router, [])
+        self.assertTrue(result)
+
     def test__get_nets_and_ipv6_ra_confs_ipv4_only(self):
         """Single bulk get_subnets call for all fixed IPs."""
         plugin = mock.MagicMock()
