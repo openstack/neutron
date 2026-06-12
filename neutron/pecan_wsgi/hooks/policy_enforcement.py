@@ -176,8 +176,18 @@ class PolicyHook(hooks.PecanHook):
         # in the plural case, we just check so violating items are hidden
         policy_method = policy.enforce if is_single else policy.check
         try:
-            resp = [self._get_filtered_item(state.request, controller,
-                                            resource, collection, item)
+            # Retrieve once only the fields to be stripped from the items, that
+            # are all the same type, instead of calculating this list every
+            # time.
+            if to_process:
+                fields_to_strip = self._exclude_attributes_by_policy(
+                    neutron_context, controller, resource, collection,
+                    to_process[0])
+            else:
+                fields_to_strip = []
+
+            resp = [self._filter_attributes(state.request, item,
+                                            fields_to_strip)
                     for item in to_process
                     if (state.request.method != 'GET' or
                         policy_method(neutron_context, action, item,
@@ -202,13 +212,6 @@ class PolicyHook(hooks.PecanHook):
         if is_single:
             resp = resp[0]
         state.response.json = {key: resp}
-
-    def _get_filtered_item(self, request, controller, resource, collection,
-                           data):
-        neutron_context = request.context.get('neutron_context')
-        to_exclude = self._exclude_attributes_by_policy(
-            neutron_context, controller, resource, collection, data)
-        return self._filter_attributes(request, data, to_exclude)
 
     def _filter_attributes(self, request, data, fields_to_strip):
         # This routine will remove the fields that were requested to the
