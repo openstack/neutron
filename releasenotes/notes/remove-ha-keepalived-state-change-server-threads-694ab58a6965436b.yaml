@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The ``ha_keepalived_state_change_server_threads`` configuration option
+    has been removed. This option was no longer used since the keepalived
+    state change server was refactored.

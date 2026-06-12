@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.utils import host
 from oslo_config import cfg
 
 from neutron._i18n import _
@@ -34,14 +33,6 @@ OPTS = [
     cfg.IntOpt('ha_vrrp_advert_int',
                default=2,
                help=_('The advertisement interval in seconds')),
-    cfg.IntOpt('ha_keepalived_state_change_server_threads',
-               default=(1 + host.cpu_count()) // 2,
-               sample_default='(1 + <num_of_cpus>) / 2',
-               min=1,
-               help=_('Number of concurrent threads for '
-                      'keepalived server connection requests. '
-                      'More threads create a higher CPU load '
-                      'on the agent node.')),
     cfg.IntOpt('ha_vrrp_health_check_interval',
                default=0,
                help=_('The VRRP health check interval in seconds. Values > 0 '
