@@ -44,8 +44,7 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
             pass
 
     def test_vrf_handler_lifecycle(self):
-        vrf_handler = netlink_monitor.VrfHandler(
-            fsm.EvpnFSM(svd=None, config=None, frr_driver=None))
+        vrf_handler = netlink_monitor.VrfHandler(fsm.EvpnFSM())
 
         dispatcher = nl_dispatcher.NetlinkDispatcher(rtnl.RTMGRP_LINK)
         dispatcher.register_handler(
@@ -152,8 +151,8 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self.addCleanup(self._safe_delete, self._vx)
         self.addCleanup(self._safe_delete, self._br)
 
-        self._evpn_fsm = fsm.EvpnFSM(self.svd, config=self.cfg,
-                                     frr_driver=mock.Mock())
+        self._evpn_fsm = fsm.EvpnFSM()
+        self._evpn_fsm.setup(self.svd, self.cfg, mock.Mock())
 
     def _advance_to_advertising(self, vni, vid):
         self._evpn_fsm.advance(

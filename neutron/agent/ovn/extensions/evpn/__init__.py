@@ -48,7 +48,7 @@ class EvpnConfig:
 class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
     def __init__(self):
         super().__init__()
-        self._evpn_fsm = None
+        self._evpn_fsm = fsm.EvpnFSM()
         self.nl_dispatcher = None
 
     def _get_evpn_config(self):
@@ -68,7 +68,6 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
                   self.cfg.dstport, self.cfg.mac)
 
     def start(self):
-        super().start()
         self._get_evpn_config()
 
         privileged_svd.register_vxlan_vnifilter()
@@ -85,7 +84,7 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         driver = fsm_frr_driver.FsmFrrVtyshDriver(
             peer_interface=CONF.ovn_evpn.bgp_local_interface,
             bgp_router_id=self.cfg.local_ip)
-        self._evpn_fsm = fsm.EvpnFSM(self.svd, self.cfg, driver)
+        self._evpn_fsm.setup(self.svd, self.cfg, driver)
         vrf_handler = netlink_monitor.VrfHandler(self._evpn_fsm)
         self.nl_dispatcher = nl_dispatcher.NetlinkDispatcher(
             rtnl.RTMGRP_LINK)
@@ -98,6 +97,7 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
             on_end=vrf_handler.replay_end)
         self.nl_dispatcher.start()
         LOG.info("NetlinkDispatcher started as part of EVPN extension")
+        super().start()
 
     @property
     def name(self):
@@ -117,11 +117,13 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
 
     @property
     def sb_idl_tables(self):
-        return ['Port_Binding']
+        return ['Port_Binding', 'Chassis']
 
     @property
     def sb_idl_events(self):
         return [
-            evpn_events.PortBindingLrpEvpnCreateEvent(self._evpn_fsm),
-            evpn_events.PortBindingLrpEvpnDeleteEvent(self._evpn_fsm),
+            evpn_events.PortBindingLrpEvpnCreateEvent(self._evpn_fsm,
+                                                      self.agent_api.chassis),
+            evpn_events.PortBindingLrpEvpnDeleteEvent(self._evpn_fsm,
+                                                      self.agent_api.chassis),
         ]

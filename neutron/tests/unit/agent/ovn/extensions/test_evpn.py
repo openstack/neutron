@@ -76,7 +76,8 @@ class TestVrfHandler(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self._evpn_fsm = fsm.EvpnFSM(mock.Mock(), mock.Mock(), mock.Mock())
+        self._evpn_fsm = fsm.EvpnFSM()
+        self._evpn_fsm.setup(mock.Mock(), mock.Mock(), mock.Mock())
         self.handler = netlink_monitor.VrfHandler(self._evpn_fsm)
 
     def test_handle_newlink_evpn_vrf(self):

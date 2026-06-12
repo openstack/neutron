@@ -30,8 +30,8 @@ class TestEvpnFSM(base.BaseTestCase):
         self.mock_svd = mock.Mock()
         self.mock_config = mock.Mock()
         self.mock_driver = mock.Mock()
-        self.evpn_fsm = fsm.EvpnFSM(self.mock_svd,
-                                    self.mock_config, self.mock_driver)
+        self.evpn_fsm = fsm.EvpnFSM()
+        self.evpn_fsm.setup(self.mock_svd, self.mock_config, self.mock_driver)
         self.mock_config.br_mtu = BR_MTU
 
     def test_vrf_then_port_binding_create(self):
