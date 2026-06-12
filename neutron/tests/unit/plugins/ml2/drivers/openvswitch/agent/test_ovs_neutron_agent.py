@@ -286,7 +286,14 @@ class TestOvsNeutronAgent:
             self.assertNotIn(tag, available_vlan)
 
     def _test_restore_local_vlan_maps(self, tag, segmentation_id='1',
-            tun_ofports=None):
+            tun_ofports=None, no_tun_br=False):
+        if no_tun_br:
+            self.agent.enable_tunneling = False
+            self.agent.tun_br = None
+        else:
+            # _make_agent() leaves enable_tunneling False (tunnel_types=[]);
+            # enable it so the gated get_flood_to_tun_ofports() runs.
+            self.agent.enable_tunneling = True
         tun_ofports = tun_ofports or set()
         port = mock.Mock()
         port.port_name = 'fake_port'
@@ -318,19 +325,25 @@ class TestOvsNeutronAgent:
                       'other_config': local_vlan_map,
                       'tag': tag}]
 
-        with mock.patch.object(self.agent.int_br,
-                               'get_ports_attributes',
-                               side_effect=[get_interfaces,
-                                   get_ports]) as gpa,\
-                mock.patch.object(self.agent.tun_br,
-                                  'get_flood_to_tun_ofports') as gftto:
-            gftto.return_value = tun_ofports
+        if no_tun_br:
+            # enable_tunneling=False: no br-tun to mock.
+            tun_ctx = contextlib.nullcontext()
+            expected_tun_ofports = set()
+        else:
+            tun_ctx = mock.patch.object(self.agent.tun_br,
+                                        'get_flood_to_tun_ofports',
+                                        return_value=tun_ofports)
+            expected_tun_ofports = tun_ofports
+        with tun_ctx, mock.patch.object(self.agent.int_br,
+                                        'get_ports_attributes',
+                                        side_effect=[get_interfaces,
+                                            get_ports]) as gpa:
             self.agent._restore_local_vlan_map()
             expected_hints = {}
             if tag:
                 key = f"{net_uuid}/{segmentation_id}"
                 expected_hints[key] = {'vlan': tag,
-                                       'tun_ofports': tun_ofports}
+                                       'tun_ofports': expected_tun_ofports}
             self.assertEqual(expected_hints, self.agent._local_vlan_hints)
             # make sure invalid and unassigned ports were skipped
             gpa.assert_has_calls([
@@ -352,6 +365,11 @@ class TestOvsNeutronAgent:
 
     def test_restore_local_vlan_map_tun_ofports(self):
         self._test_restore_local_vlan_maps(2, tun_ofports={2, 3})
+
+    def test_restore_local_vlan_map_no_tun_br(self):
+        # Non-tunneling deployment (enable_tunneling=False): tun_br is None,
+        # so the flood-port restore must be skipped instead of crashing.
+        self._test_restore_local_vlan_maps(2, no_tun_br=True)
 
     def test_check_agent_configurations_for_dvr_raises(self):
         self.agent.enable_distributed_routing = True
