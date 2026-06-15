@@ -2165,6 +2165,7 @@ class OVNClient:
     def create_provnet_port(self, context, network_id, segment, txn=None,
                             network=None):
         tag = segment.get(segment_def.SEGMENTATION_ID, [])
+        tag = [] if tag is None else tag
         physnet = segment.get(segment_def.PHYSICAL_NETWORK)
         fdb_enabled = ('true' if ovn_conf.is_learn_fdb_enabled()
                        else 'false')
