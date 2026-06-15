@@ -242,7 +242,7 @@ class RandomRangeAllocator(RangeAllocator):
 
     @staticmethod
     def _make_params(min_val, max_val, scope_val, allocation_id):
-        params = super()._make_params(
+        params = RangeAllocator._make_params(
             min_val, max_val, scope_val, allocation_id)
         params['rand_val'] = _random.random()  # noqa: S311
         return params

@@ -44,13 +44,6 @@ class TestRangeAllocatorBase(testlib_api.SqlTestCase):
         self.ctx = context.Context(
             user_id=None, project_id=None, is_admin=True, overwrite=False)
         self.table = alloc_models.VNIAllocation.__table__
-        self.allocator = rangeallocator.RangeAllocator(
-            table=self.table,
-            value_col_name='vni',
-            scope_col_name='physnet',
-            scope_param_type=sa.String,
-            exception_class=evpn_exc.EVPNNoVniAvailable,
-        )
 
     def _allocate(self, min_vni=1, max_vni=100, physnet=_PHYSNET):
         with db_api.CONTEXT_WRITER.using(self.ctx):
@@ -80,6 +73,16 @@ class TestRangeAllocatorBase(testlib_api.SqlTestCase):
 
 
 class TestRangeAllocator(TestRangeAllocatorBase):
+    def setUp(self):
+        super().setUp()
+        self.allocator = rangeallocator.RangeAllocator(
+            table=self.table,
+            value_col_name='vni',
+            scope_col_name='physnet',
+            scope_param_type=sa.String,
+            exception_class=evpn_exc.EVPNNoVniAvailable,
+        )
+
     def test_allocate_from_empty_gets_min(self):
         alloc_id, vni = self._allocate(min_vni=10, max_vni=100)
         self.assertEqual(10, vni)
@@ -242,6 +245,16 @@ class TestRandomRangeAllocator(TestRangeAllocatorBase):
     Runs against SQLite by default.
     TestRandomRangeAllocatorMySQL runs the same suite against MySQL.
     """
+
+    def setUp(self):
+        super().setUp()
+        self.allocator = rangeallocator.RandomRangeAllocator(
+            table=self.table,
+            value_col_name='vni',
+            scope_col_name='physnet',
+            scope_param_type=sa.String,
+            exception_class=evpn_exc.EVPNNoVniAvailable,
+        )
 
     def test_random_result_within_range(self):
         _, vni = self._allocate(min_vni=5, max_vni=10)
