@@ -65,6 +65,6 @@ frr_init_start_bash: RegExpFilter, bash, root, bash, -c, /usr/lib(exec)?/frr/frr
 frr_init_restart_bash: RegExpFilter, bash, root, bash, -c, /usr/lib(exec)?/frr/frrinit\.sh restart [a-z]+-[0-9a-f-]+ > /dev/null 2>&1
 frr_init_stop: RegExpFilter, /usr/lib/frr/frrinit.sh, root, /usr/lib/frr/frrinit.sh, stop, [a-z]+-[0-9a-f-]+
 frr_init_stop_libexec: RegExpFilter, /usr/libexec/frr/frrinit.sh, root, /usr/libexec/frr/frrinit.sh, stop, [a-z]+-[0-9a-f-]+
-vtysh_cmd: RegExpFilter, vtysh, root, vtysh, -N, [a-z]+-[0-9a-f-]+, -c, .*
-vtysh_dryrun: RegExpFilter, vtysh, root, vtysh, -N, [a-z]+-[0-9a-f-]+, --dryrun, -f, .*
-vtysh_apply: RegExpFilter, vtysh, root, vtysh, -N, [a-z]+-[0-9a-f-]+, -f, .*
+vtysh_cmd: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, -N, [a-z]+-[0-9a-f-]+, -c, .*
+vtysh_dryrun: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, -N, [a-z]+-[0-9a-f-]+, --dryrun, -f, .*
+vtysh_apply: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, -N, [a-z]+-[0-9a-f-]+, -f, .*

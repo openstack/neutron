@@ -18,6 +18,7 @@ import typing
 
 import jinja2
 from neutron_lib import exceptions
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
@@ -153,7 +154,7 @@ class FrrVtyshExecutor:
 
     @property
     def _vtysh_base_cmd(self) -> list[str]:
-        return ['vtysh']
+        return ['vtysh', '--vty_socket', cfg.CONF.ovn_evpn.frr_vty_socket]
 
     def _execute_vtysh(self, vtysh_args: list[str]) -> str:
         """Execute any vtysh command args and return stdout."""

@@ -57,9 +57,9 @@ conntrackd: CommandFilter, conntrackd, root
 conntrackd_env: EnvFilter, env, root, PROCESS_TAG=, conntrackd
 
 # FRR
-vtysh_cmd: RegExpFilter, vtysh, root, vtysh, -c, .*
-vtysh_dryrun: RegExpFilter, vtysh, root, vtysh, --dryrun, -f, .*
-vtysh_apply: RegExpFilter, vtysh, root, vtysh, -f, .*
+vtysh_cmd: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, -c, .*
+vtysh_dryrun: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, --dryrun, -f, .*
+vtysh_apply: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, -f, .*
 
 # OPEN VSWITCH
 ovs-ofctl: CommandFilter, ovs-ofctl, root
