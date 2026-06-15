@@ -162,7 +162,7 @@ class EVPNPlugin(service_base.ServicePluginBase):
 
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(evpn_ovn.DeleteEVPNRouterCommand(
-                self._nb_idl, vni))
+                self._nb_idl, payload.resource_id, vni))
 
         LOG.info("Deleted EVPN OVN topology for router %s VNI %s",
                  payload.resource_id, vni)

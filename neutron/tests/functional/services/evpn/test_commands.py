@@ -20,6 +20,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from neutron.agent.ovn.extensions.evpn import constants as evpn_agent_const
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands
 from neutron.services.bgp import constants as bgp_const
 from neutron.services.evpn import commands as evpn_ovn
 from neutron.services.evpn import constants as evpn_const
@@ -240,15 +241,28 @@ class DeleteEVPNRouterCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
             self.nb_api, self.router_id, self.vni, self.vlan, [],
         ).execute(check_error=True)
 
-    def _execute(self, vni=None):
+    def _unset_hcg_in_lr(self, router_name):
+        # This is needed before calling ``DeleteEVPNRouterCommand``
+        # if the router is not deleted before.
+        lr = self.nb_api.lookup('Logical_Router', router_name)
+        with self.nb_api.transaction(check_error=True) as txn:
+            for lrp in lr.ports:
+                txn.add(commands.UpdateLRouterPortCommand(
+                    self.nb_api, lrp.name, if_exists=True,
+                    ha_chassis_group=[]))
+
+    def _execute(self, router_id=None, vni=None):
         evpn_ovn.DeleteEVPNRouterCommand(
-            self.nb_api, vni or self.vni,
+            self.nb_api,
+            router_id or self.router_id,
+            vni or self.vni,
         ).execute(check_error=True)
 
     def test_deletes_dummy_logical_switch(self):
         ls_name = evpn_ovn._evpn_ls_name(self.vni)
         self.nb_api.ls_get(ls_name).execute(check_error=True)
 
+        self.nb_api.lr_del(self.lr_name).execute(check_error=True)
         self._execute()
 
         self.assertRaises(
@@ -259,6 +273,7 @@ class DeleteEVPNRouterCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
         lsp_name = evpn_ovn._evpn_lsp_name(self.router_id, self.vni)
         self.nb_api.lsp_get(lsp_name).execute(check_error=True)
 
+        self.nb_api.lr_del(self.lr_name).execute(check_error=True)
         self._execute()
 
         self.assertRaises(
@@ -268,16 +283,19 @@ class DeleteEVPNRouterCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
     def test_does_not_delete_router_or_lrp(self):
         lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
 
+        self._unset_hcg_in_lr(self.lr_name)
         self._execute()
 
         self.nb_api.lr_get(self.lr_name).execute(check_error=True)
         self.nb_api.lrp_get(lrp_name).execute(check_error=True)
 
     def test_idempotent(self):
+        self._unset_hcg_in_lr(self.lr_name)
         self._execute()
         self._execute()
 
     def test_nonexistent_vni(self):
+        self._unset_hcg_in_lr(self.lr_name)
         self._execute(vni=9999)
 
 
