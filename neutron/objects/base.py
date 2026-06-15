@@ -515,10 +515,11 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
         This method enables to modify the fields and its
         content before data is inserted into DB.
 
-         It uses the fields_need_translation dict with structure:
-        {
-            'field_name_in_object': 'field_name_in_db'
-        }
+        It uses the fields_need_translation dict with structure::
+
+            {
+                'field_name_in_object': 'field_name_in_db'
+            }
 
         :param fields: dict of fields from NeutronDbObject
         :return: modified dict of fields
@@ -544,10 +545,11 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
     def modify_fields_from_db(cls, db_obj):
         """Modify the fields after data were fetched from DB.
 
-        It uses the fields_need_translation dict with structure:
-        {
-            'field_name_in_object': 'field_name_in_db'
-        }
+        It uses the fields_need_translation dict with structure::
+
+            {
+                'field_name_in_object': 'field_name_in_db'
+            }
 
         :param db_obj: model fetched from database
         :return: modified dict of DB values
