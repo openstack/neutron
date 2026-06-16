@@ -1482,15 +1482,15 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             if ethertype == 'IPv4':
                 cmd.extend(['-f', 'ipv4'])
                 if direction == 'ingress':
-                    cmd.extend(['-d', '10.0.0.1'])
+                    cmd.extend(['-d', '10.0.0.1/32'])
                 else:
-                    cmd.extend(['-s', '10.0.0.1'])
+                    cmd.extend(['-s', '10.0.0.1/32'])
             else:
                 cmd.extend(['-f', 'ipv6'])
                 if direction == 'ingress':
-                    cmd.extend(['-d', 'fe80::1'])
+                    cmd.extend(['-d', 'fe80::1/128'])
                 else:
-                    cmd.extend(['-s', 'fe80::1'])
+                    cmd.extend(['-s', 'fe80::1/128'])
 
             cmd.extend(['-w', ct_zone])
             calls = [
@@ -1574,7 +1574,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             while not self.firewall.ipconntrack._queue.empty():
                 self.firewall.ipconntrack._process_queue()
             calls = self._get_expected_conntrack_calls(
-                [('ipv4', '10.0.0.1'), ('ipv6', 'fe80::1')], ct_zone)
+                [('ipv4', '10.0.0.1/32'), ('ipv6', 'fe80::1/128')], ct_zone)
             self.utils_exec.assert_has_calls(calls)
 
     def test_remove_conntrack_entries_for_sg_member_changed_ipv4(self):
@@ -1637,8 +1637,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
 
             # check conntrack deletion from '10.0.0.1' to '10.0.0.2' or
             # from 'fe80::1' to 'fe80::2'
-            ips = {"ipv4": ['10.0.0.1', '10.0.0.2'],
-                   "ipv6": ['fe80::1', 'fe80::2']}
+            ips = {"ipv4": ['10.0.0.1/32', '10.0.0.2'],
+                   "ipv6": ['fe80::1/128', 'fe80::2']}
             calls = []
             # process conntrack updates in the queue
             while not self.firewall.ipconntrack._queue.empty():
@@ -1931,7 +1931,7 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         while not self.firewall.ipconntrack._queue.empty():
             self.firewall.ipconntrack._process_queue()
         calls = self._get_expected_conntrack_calls(
-            [('ipv4', '10.0.0.1'), ('ipv6', 'fe80::1')], ct_zone)
+            [('ipv4', '10.0.0.1/32'), ('ipv6', 'fe80::1/128')], ct_zone)
         self.utils_exec.assert_has_calls(calls)
 
     def test_remove_unknown_port(self):

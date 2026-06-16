@@ -142,12 +142,20 @@ class IpConntrackManager:
                           {'dev': device_info['device'],
                            'zm': self._device_zone_map})
                 continue
-            ips = device_info.get('fixed_ips', [])
+            ips = (
+                device_info.get('fixed_ips', []) +
+                [
+                    address_pair['ip_address']
+                    for address_pair in device_info.get(
+                        'allowed_address_pairs', []
+                    )
+                ]
+            )
             for ip in ips:
                 net = netaddr.IPNetwork(ip)
                 if str(net.version) not in ethertype:
                     continue
-                ip_cmd = [str(net.ip), '-w', zone_id]
+                ip_cmd = [str(net), '-w', zone_id]
                 if remote_ip and str(
                         netaddr.IPNetwork(remote_ip).version) in ethertype:
                     if rule.get('direction') == 'ingress':
