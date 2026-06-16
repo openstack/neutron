@@ -108,7 +108,6 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
     def initialize(self, *args):
         """Initialize agent extension."""
-        pass
 
     def consume_api(self, agent_api):
         """Configure the Agent API.
@@ -135,7 +134,6 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def ovs_idl_events(self) -> RowEventOrClassList:
         """Open_vSwtich schema events to watch"""
-        pass
 
     @property
     @abc.abstractmethod
@@ -146,7 +144,6 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def nb_idl_events(self) -> RowEventOrClassList:
         """OVN_Northbound schema events to watch"""
-        pass
 
     @property
     @abc.abstractmethod
@@ -157,7 +154,6 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def sb_idl_events(self) -> RowEventOrClassList:
         """OVN_Southbound schema events to watch"""
-        pass
 
 
 class OVNAgentExtensionAPI:

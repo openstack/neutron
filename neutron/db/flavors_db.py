@@ -73,7 +73,6 @@ class FlavorsDbMixin:
         # objects function we can use to quickly query all tables
         # that have a foreign key ref to flavors. Or we could replace
         # the call to this with callback events.
-        pass
 
     def _ensure_service_profile_not_in_use(self, context, sp_id):
         """Ensures no current bindings to flavors exist."""

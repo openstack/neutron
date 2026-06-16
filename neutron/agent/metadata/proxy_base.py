@@ -109,7 +109,6 @@ class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
         :param skip_cache: When to skip getting entry from cache
 
         """
-        pass
 
     @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):

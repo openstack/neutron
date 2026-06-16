@@ -62,11 +62,9 @@ class LoggingDriver(metaclass=abc.ABCMeta):
 
     def defer_apply_on(self):
         """Defer application of logging rule."""
-        pass
 
     def defer_apply_off(self):
         """Turn off deferral of rules and apply the logging rules now."""
-        pass
 
     @contextlib.contextmanager
     def defer_apply(self):

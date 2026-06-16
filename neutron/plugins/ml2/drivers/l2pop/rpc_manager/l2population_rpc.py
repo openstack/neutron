@@ -146,7 +146,6 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
         :param lvm: a local VLAN map of network.
         :param ofport: a port to add.
         '''
-        pass
 
     @abc.abstractmethod
     def del_fdb_flow(self, br, port_info, remote_ip, lvm, ofport):
@@ -168,7 +167,6 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
             more explanation.
         :param ofport: a port to delete.
         '''
-        pass
 
     @abc.abstractmethod
     def setup_tunnel_port(self, br, remote_ip, network_type):
@@ -185,7 +183,6 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
         :param network_type: a type of a network.
         :returns: an ofport value. value 0 means the port is unavailable.
         '''
-        pass
 
     @abc.abstractmethod
     def cleanup_tunnel_port(self, br, tun_ofport, tunnel_type):
@@ -201,7 +198,6 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
         :param tun_ofport: a port value to cleanup.
         :param tunnel_type: a type of a tunnel.
         '''
-        pass
 
     @abc.abstractmethod
     def setup_entry_for_arp_reply(self, br, action, local_vid, mac_address,
@@ -219,7 +215,6 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
         :param mac_address: MAC string value.
         :param ip_address: IP string value.
         '''
-        pass
 
     def get_agent_ports(self, fdb_entries):
         """Generator to yield port info.

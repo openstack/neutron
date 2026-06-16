@@ -44,9 +44,7 @@ class EVPNRouterDriver(abc.ABC):
     @abc.abstractmethod
     def create_evpn_router(self, config: EVPNRouterConfig) -> None:
         """Creates the EVPN VRF in the routing fabric."""
-        pass
 
     @abc.abstractmethod
     def delete_evpn_router(self, config: EVPNRouterConfig) -> None:
         """Deletes the EVPN VRF from the routing fabric."""
-        pass

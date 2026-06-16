@@ -75,7 +75,6 @@ class AgentPluginBase(metaclass=abc.ABCMeta):
         admin can remove it. Agents must be disabled before
         being removed.
         """
-        pass
 
     @abc.abstractmethod
     def update_agent(self, context, agent):
@@ -85,7 +84,6 @@ class AgentPluginBase(metaclass=abc.ABCMeta):
         as plugins, services. An error code should be reported in this case.
         @raise exceptions.BadRequest:
         """
-        pass
 
     @abc.abstractmethod
     def get_agents(self, context, filters=None, fields=None):

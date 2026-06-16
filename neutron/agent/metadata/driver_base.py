@@ -205,7 +205,6 @@ class MetadataDriverBase(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def haproxy_configurator():
         """Returns the HaproxyConfigurator for the class."""
-        pass
 
     @classmethod
     def _get_metadata_proxy_user_group(cls, conf):

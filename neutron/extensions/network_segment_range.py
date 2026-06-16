@@ -89,7 +89,6 @@ class NetworkSegmentRangePluginBase(service_base.ServicePluginBase,
             object in
             :file:`neutron_lib/api/definitions/network_segment_range.py`.
         """
-        pass
 
     @abc.abstractmethod
     def delete_network_segment_range(self, context, id):
@@ -98,7 +97,6 @@ class NetworkSegmentRangePluginBase(service_base.ServicePluginBase,
         :param context: neutron api request context
         :param id: UUID representing the network segment range to delete.
         """
-        pass
 
     @abc.abstractmethod
     def update_network_segment_range(self, context, id, network_segment_range):
@@ -112,7 +110,6 @@ class NetworkSegmentRangePluginBase(service_base.ServicePluginBase,
             object in
             :file:`neutron_lib/api/definitions/network_segment_range.py`.
         """
-        pass
 
     @abc.abstractmethod
     def get_network_segment_ranges(self, context, filters=None, fields=None,
@@ -146,7 +143,6 @@ class NetworkSegmentRangePluginBase(service_base.ServicePluginBase,
                        next results after the marker resource.
         :param page_reverse: True if sort direction is reversed.
         """
-        pass
 
     @abc.abstractmethod
     def get_network_segment_range(self, context, id, fields=None):
@@ -161,4 +157,3 @@ class NetworkSegmentRangePluginBase(service_base.ServicePluginBase,
                        network_segment_range.py`.
                        Only these fields will be returned.
         """
-        pass

@@ -59,7 +59,6 @@ class ResourceCallBackBase:
 
     def handle_event(self, resource, event, trigger, payload):
         """Handle resource callback event"""
-        pass
 
 
 class LoggingServiceDriverManager:
