@@ -85,16 +85,6 @@ class InvalidInstanceStateException(exceptions.NeutronException):
         super().__init__(**kwargs)
 
 
-class InvalidAuthenticationTypeException(exceptions.NeutronException):
-    message = _('Invalid authentication type: %(auth_type)s, '
-                'valid types are: %(valid_auth_types)s')
-
-    def __init__(self, **kwargs):
-        if 'valid_auth_types' not in kwargs:
-            kwargs['valid_auth_types'] = ', '.join(VALID_AUTH_TYPES)
-        super().__init__(**kwargs)
-
-
 class KeepalivedVipAddress:
     """A virtual address entry of a keepalived configuration."""
 
@@ -187,8 +177,8 @@ class KeepalivedInstance:
                  priority=HA_DEFAULT_PRIORITY,
                  advert_int=None, mcast_src_ip=None, nopreempt=False,
                  garp_primary_delay=GARP_PRIMARY_DELAY,
-                 vrrp_health_check_interval=0,
-                 ha_conf_dir=None):
+                 vrrp_health_check_interval=0, ha_conf_dir=None,
+                 vrrp_auth_type=None, vrrp_auth_password=None):
         self.name = 'VR_%s' % vrouter_id
 
         if state not in VALID_STATES:
@@ -202,10 +192,11 @@ class KeepalivedInstance:
         self.advert_int = advert_int
         self.mcast_src_ip = mcast_src_ip
         self.garp_primary_delay = garp_primary_delay
+        self.vrrp_auth_type = vrrp_auth_type
+        self.vrrp_auth_password = vrrp_auth_password
         self.track_interfaces = []
         self.vips = []
         self.virtual_routes = KeepalivedInstanceRoutes()
-        self.authentication = None
         self.track_script = None
         self.primary_vip_range = get_free_range(
             parent_range=constants.PRIVATE_CIDR_RANGE,
@@ -216,12 +207,6 @@ class KeepalivedInstance:
         if vrrp_health_check_interval > 0:
             self.track_script = KeepalivedTrackScript(
                 vrrp_health_check_interval, ha_conf_dir, self.vrouter_id)
-
-    def set_authentication(self, auth_type, password):
-        if auth_type not in VALID_AUTH_TYPES:
-            raise InvalidAuthenticationTypeException(auth_type=auth_type)
-
-        self.authentication = (auth_type, password)
 
     def add_vip(self, ip_cidr, interface_name, scope):
         track = interface_name in self.track_interfaces
@@ -322,11 +307,10 @@ class KeepalivedInstance:
         if self.advert_int:
             config.append('    advert_int %s' % self.advert_int)
 
-        if self.authentication:
-            auth_type, password = self.authentication
+        if self.vrrp_auth_password:
             authentication = ['    authentication {',
-                              '        auth_type %s' % auth_type,
-                              '        auth_pass %s' % password,
+                              '        auth_type %s' % self.vrrp_auth_type,
+                              '        auth_pass %s' % self.vrrp_auth_password,
                               '    }']
             config.extend(authentication)
 

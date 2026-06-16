@@ -214,14 +214,10 @@ class HaRouter(router.RouterInfo):
             vrrp_health_check_interval=(
                 self.agent_conf.ha_vrrp_health_check_interval),
             ha_conf_dir=self.keepalived_manager.get_conf_dir(),
+            vrrp_auth_type=self.agent_conf.ha_vrrp_auth_type,
+            vrrp_auth_password=self.agent_conf.ha_vrrp_auth_password
         )
         instance.track_interfaces.append(interface_name)
-
-        if self.agent_conf.ha_vrrp_auth_password:
-            # TODO(safchain): use oslo.config types when it will be available
-            # in order to check the validity of ha_vrrp_auth_type
-            instance.set_authentication(self.agent_conf.ha_vrrp_auth_type,
-                                        self.agent_conf.ha_vrrp_auth_password)
 
         config.add_instance(instance)
 
