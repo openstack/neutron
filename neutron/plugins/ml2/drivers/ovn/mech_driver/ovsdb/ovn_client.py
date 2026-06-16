@@ -1272,7 +1272,10 @@ class OVNClient:
                 with excutils.save_and_reraise_exception():
                     LOG.error('Unable to delete floating ip in gateway '
                               'router. Error: %s', e)
-        db_rev.delete_revision(context, fip_id, ovn_const.TYPE_FLOATINGIPS)
+            db_rev.delete_revision(context, fip_id, ovn_const.TYPE_FLOATINGIPS)
+        else:
+            LOG.warning('Unable to delete floating ip in gateway router. '
+                        'Floating ip %s not found.', fip_id)
 
     def disassociate_floatingip(self, context, floatingip, router_id):
         lrouter = utils.ovn_name(router_id)

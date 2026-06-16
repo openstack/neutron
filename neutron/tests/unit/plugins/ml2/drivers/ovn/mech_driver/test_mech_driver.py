@@ -2840,6 +2840,17 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test__update_dnat_entry_if_needed_down_no_dvr(self):
         self._test__update_dnat_entry_if_needed(up=False, dvr=False)
 
+    @mock.patch.object(ovn_revision_numbers_db, 'delete_revision')
+    @mock.patch.object(ovn_client.OVNClient, '_delete_floatingip')
+    def test_delete_floatingip_not_exist_in_ovn(self, mock_del_fip,
+                                                mock_del_rev):
+        fip_id = uuidutils.generate_uuid()
+        self.nb_ovn.get_floatingip.return_value = None
+        self.mech_driver._ovn_client.delete_floatingip(self.context, fip_id)
+        # No matching nat entry found in ovn so revision row must be retained
+        mock_del_rev.assert_not_called()
+        mock_del_fip.assert_not_called()
+
     @mock.patch('neutron.objects.router.Router.get_object')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_router_ports')
