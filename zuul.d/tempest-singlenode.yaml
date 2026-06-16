@@ -107,12 +107,6 @@
         br-ex-tcpdump: true
         br-int-flows: true
 
-# TODO(ralonsoh): remove this duplicated definition when "devstack",
-# "tempest" and "nova" adopt the new name.
-- job:
-    name: neutron-tempest-dvr
-    parent: neutron-ovs-tempest-dvr
-
 - job:
     name: neutron-ovs-tempest-iptables_hybrid
     parent: neutron-ovs-tempest-base
@@ -160,12 +154,6 @@
               agent_availability_zone: nova
               image_is_advanced: true
               available_type_drivers: flat,geneve,vlan,gre,local,vxlan
-
-# TODO(ralonsoh): remove this duplicated definition when "nova" adopts the
-# new name.
-- job:
-    name: neutron-tempest-iptables_hybrid
-    parent: neutron-ovs-tempest-iptables_hybrid
 
 - job:
     name: neutron-ovn-tempest-mariadb-full
