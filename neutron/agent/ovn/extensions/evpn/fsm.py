@@ -77,8 +77,13 @@ class EvpnFSM:
             (Evpn.DESTROY, "_destroy"),
     }
 
-    def __init__(self, svd, config, frr_driver):
+    def __init__(self):
         self.instances = {}  # vrf -> Evpn
+        self._svd = None
+        self._cfg = None
+        self._driver = None
+
+    def setup(self, svd, config, frr_driver):
         self._svd = svd
         self._cfg = config
         self._driver = frr_driver

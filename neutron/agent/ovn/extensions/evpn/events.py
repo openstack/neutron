@@ -26,8 +26,9 @@ LOG = log.getLogger(__name__)
 
 class EVPNAgentEvent(row_event.RowEvent):
 
-    def __init__(self, fsm):
+    def __init__(self, fsm, chassis):
         self.fsm = fsm
+        self.chassis = chassis
         super().__init__(self.EVENTS, self.TABLE, None)
 
 
@@ -35,16 +36,25 @@ class EVPNPortBindingEvent(EVPNAgentEvent):
     TABLE = 'Port_Binding'
 
     def match_fn(self, event, row, old):
-        return (ovn_const.LR_OPTIONS_DR_VRF_NAME in row.options and
+        try:
+            chassis_name = row.chassis[0].name
+        except IndexError:
+            return False
+        return (chassis_name == self.chassis and
+                ovn_const.LR_OPTIONS_DR_VRF_NAME in row.options and
                 svc_const.EVPN_LRP_VNI_EXT_ID_KEY in row.external_ids and
                 svc_const.EVPN_LRP_VLAN_EXT_ID_KEY in row.external_ids)
 
 
 class PortBindingLrpEvpnCreateEvent(EVPNPortBindingEvent):
     TABLE = 'Port_Binding'
-    EVENTS = (EVPNAgentEvent.ROW_CREATE,)
+    EVENTS = (EVPNAgentEvent.ROW_CREATE, EVPNAgentEvent.ROW_UPDATE)
 
     def match_fn(self, event, row, old):
+        if event == self.ROW_UPDATE:
+            # Only process updates where chassis actually changed.
+            if not hasattr(old, 'chassis'):
+                return False
         if not super().match_fn(event, row, old):
             return False
         try:
