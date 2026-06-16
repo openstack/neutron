@@ -19,10 +19,11 @@ from oslo_log import log
 from oslo_utils import timeutils
 from tooz import hashring
 
+from neutron._i18n import _
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions
+from neutron.common import wsgi_utils
 from neutron.db import ovn_hash_ring_db as db_hash_ring
-from neutron import service
 from neutron_lib import context
 
 LOG = log.getLogger(__name__)
@@ -40,6 +41,7 @@ class HashRingManager:
         self._prev_num_nodes = -1
         self.admin_ctx = context.get_admin_context()
         self._offline_node_count = 0
+        self._api_workers = wsgi_utils.get_api_worker_count()
 
     @property
     def _wait_startup_before_caching(self):
@@ -55,21 +57,27 @@ class HashRingManager:
         if not self._check_hashring_startup:
             return False
 
-        api_workers = service._get_api_workers()
+        if self._api_workers is None:
+            msg = _('The Neutron API workers count is zero')
+            LOG.error(msg)
+            raise RuntimeError(msg)
+
         nodes = db_hash_ring.get_active_nodes(
             self.admin_ctx,
             constants.HASH_RING_CACHE_TIMEOUT, self._group, from_host=True)
 
         num_nodes = len(nodes)
-        if num_nodes >= api_workers:
-            LOG.debug("Allow caching, nodes %s>=%s", num_nodes, api_workers)
+        if num_nodes >= self._api_workers:
+            LOG.debug("Allow caching, nodes %s>=%s", num_nodes,
+                      self._api_workers)
             self._check_hashring_startup = False
             return False
 
         # NOTE(lucasagomes): We only log when the number of connected
         # nodes are different to prevent this message from being spammed
         if self._prev_num_nodes != num_nodes:
-            LOG.debug("Disallow caching, nodes %s<%s", num_nodes, api_workers)
+            LOG.debug("Disallow caching, nodes %s<%s", num_nodes,
+                      self._api_workers)
             self._prev_num_nodes = num_nodes
 
         return True

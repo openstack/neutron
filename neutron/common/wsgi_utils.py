@@ -57,3 +57,13 @@ def get_api_worker_id() -> int | None:
         return uwsgi.worker_id()
     except (ImportError, ModuleNotFoundError):
         return None
+
+
+def get_api_worker_count() -> int | None:
+    """Return the configured worker number provided to uWSGI"""
+    try:
+        # pylint: disable=import-outside-toplevel
+        import uwsgi
+        return uwsgi.numproc
+    except (ImportError, ModuleNotFoundError):
+        return None

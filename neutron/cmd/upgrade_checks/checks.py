@@ -239,16 +239,16 @@ class CoreChecks(upgrade_checks.BaseChecks):
     @staticmethod
     def worker_count_check(checker):
 
-        if cfg.CONF.api_workers and conf_service.get_rpc_workers():
+        if conf_service.get_rpc_workers():
             return upgradecheck.Result(
-                upgradecheck.Code.SUCCESS, _("Number of workers already "
+                upgradecheck.Code.SUCCESS, _("Number of RPC workers already "
                                              "defined in config"))
         return upgradecheck.Result(
             upgradecheck.Code.WARNING,
-            _("The default number of workers "
+            _("The default number of RPC workers "
               "has changed. Please see release notes for the new values, "
               "but it is strongly encouraged for deployers to manually "
-              "set the values for api_workers and rpc_workers."))
+              "set the values for rpc_workers."))
 
     @staticmethod
     def network_mtu_check(checker):

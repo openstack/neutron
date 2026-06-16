@@ -37,6 +37,7 @@ from neutron.agent.linux import utils
 from neutron.api import extensions as exts
 from neutron.api import wsgi
 from neutron.common import utils as n_utils
+from neutron.common import wsgi_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2 import config as ml2_config
@@ -225,7 +226,8 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
         ovn_conf.cfg.CONF.set_override('dns_servers',
                                        ['10.10.10.10'],
                                        group='ovn')
-        ovn_conf.cfg.CONF.set_override('api_workers', 1)
+        mock.patch.object(wsgi_utils, 'get_api_worker_count',
+                          return_value=1).start()
 
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         self.ovsdb_server_mgr = None

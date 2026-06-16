@@ -1,0 +1,19 @@
+---
+fixes:
+  - |
+    The OVN hash ring manager and the hash ring health check periodics now
+    read the API worker count directly from the uWSGI runtime via
+    ``uwsgi.numproc`` instead of the ``[DEFAULT] api_workers`` configuration
+    option.  This ensures the count always matches the actual number of
+    workers spawned by uWSGI, avoiding mismatches when the configuration
+    value is unset or differs from the uWSGI process count.
+    For more information see bug `2024205 <https://launchpad.net/bugs/2024205>`_.
+deprecations:
+  - |
+    The ``[DEFAULT] api_workers`` configuration option has been removed.
+    The number of API worker processes is now determined solely by the
+    uWSGI ``processes`` setting.  The default number of RPC workers, when
+    ``[DEFAULT] rpc_workers`` is not set, is now half the number of CPU
+    threads (capped by available memory) instead of half of
+    ``api_workers``.  Deployers should ensure the desired worker count is
+    configured directly in the uWSGI configuration file.

@@ -35,7 +35,7 @@ The following table summarizes the Neutron server-side processes:
      - ``neutron-rpc-server`` (spawns ``rpc worker`` and
        ``rpc reports worker`` child processes)
      - When agents require RPC
-     - ``api_workers``, ``rpc_workers``, ``rpc_state_report_workers``
+     - uWSGI ``processes``; Neutron ``rpc_workers`` and ``rpc_state_report_workers``
    * - Periodic
      - ``neutron-periodic-workers`` (runs plugin periodic tasks as threads)
      - With any ML2 mechanism driver and WSGI API
