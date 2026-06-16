@@ -518,8 +518,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     self.available_local_vlans.remove(local_vlan)
                     # Restore the br-tun flood output ports
                     # See LP #1978088
-                    tun_ofports = self.tun_br.get_flood_to_tun_ofports(
-                        local_vlan)
+                    tun_ofports = set()
+                    if self.enable_tunneling:
+                        tun_ofports = self.tun_br.get_flood_to_tun_ofports(
+                            local_vlan)
                     self._local_vlan_hints[key] = {
                         'vlan': local_vlan,
                         'tun_ofports': tun_ofports}
