@@ -185,13 +185,3 @@
       - openstack/neutron-lib
       - name: github.com/sqlalchemy/alembic
         override-checkout: main
-
-# NOTE(ralonsoh): to be removed in 2026.2, once the OVN Metadata agent
-# replacement finishes. See LP#2112313.
-- job:
-    name: neutron-tempest-plugin-ovn-with-ovn-metadata-agent
-    parent: neutron-tempest-plugin-ovn
-    vars:
-      devstack_services:
-        q-ovn-metadata-agent: true
-        q-ovn-agent: false

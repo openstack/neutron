@@ -116,8 +116,6 @@
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
-        - neutron-tempest-plugin-ovn-with-ovn-metadata-agent
-        - neutron-ovn-grenade-multinode-ovn-metadata-agent
         - ironic-tempest-ovn-uefi-ipmi-pxe
         - neutron-ovn-bgp-tempest-multinode
     experimental:
