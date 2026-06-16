@@ -172,7 +172,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
                     errors = True
                     placement_error_str = \
                         're-parenting a provider is not currently allowed'
-                    if (placement_error_str in str(e)):
+                    if placement_error_str in str(e):
                         msg = (
                             'placement client call failed'
                             ' (this may be due to bug'

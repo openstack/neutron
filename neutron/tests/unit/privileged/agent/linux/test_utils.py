@@ -20,7 +20,7 @@ from neutron.privileged.agent.linux import utils as priv_utils
 from neutron.tests import base
 
 
-NETSTAT_NETNS_OUTPUT = ("""
+NETSTAT_NETNS_OUTPUT = """
 Active Internet connections (only servers)
 Proto Recv-Q Send-Q Local Address           Foreign Address         State\
        PID/Program name
@@ -37,21 +37,21 @@ Proto RefCnt Flags       Type       State         I-Node   PID/Program name\
      Path
 unix  2      [ ACC ]     STREAM     LISTENING     82039530 1353/python\
           /tmp/rootwrap-VKSm8a/rootwrap.sock
-""")
+"""
 
-NETSTAT_NO_NAMESPACE = ("""
+NETSTAT_NO_NAMESPACE = """
 Cannot open network namespace "qrouter-e6f206b2-4e8d-4597-a7e1-c3a20337e9c6":\
  No such file or directory
-""")
+"""
 
-NETSTAT_NO_LISTEN_PROCS = ("""
+NETSTAT_NO_LISTEN_PROCS = """
 Active Internet connections (only servers)
 Proto Recv-Q Send-Q Local Address           Foreign Address         State\
        PID/Program name
 Active UNIX domain sockets (only servers)
 Proto RefCnt Flags       Type       State         I-Node   PID/Program name\
      Path
-""")
+"""
 
 
 class FindListenPidsNamespaceTestCase(base.BaseTestCase):

@@ -346,7 +346,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                           router_info=None):
         router_info = router_info or self.generate_router_info(
             enable_ha, ip_version, dual_stack=dual_stack,
-            v6_ext_gw_with_sub=(v6_ext_gw_with_sub))
+            v6_ext_gw_with_sub=v6_ext_gw_with_sub)
         return_copy = copy.deepcopy(router_info)
         router = self.manage_router(self.agent, router_info)
 
@@ -562,7 +562,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     def _assert_metadata_chains(self, router):
         def metadata_port_filter(rule):
-            return (str(self.agent.conf.metadata_port) in rule.rule)
+            return str(self.agent.conf.metadata_port) in rule.rule
 
         self.assertTrue(self._get_rule(router.iptables_manager,
                                        'nat',

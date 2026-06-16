@@ -1015,7 +1015,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     self.pre_sg_members, sg_id, ethertype)
                 cur_ips = self._get_sg_members(
                     self.sg_members, sg_id, ethertype)
-                ips = (pre_ips - cur_ips)
+                ips = pre_ips - cur_ips
                 if devices and ips:
                     self.ipconntrack.delete_conntrack_state_by_remote_ips(
                         devices, ethertype, ips)

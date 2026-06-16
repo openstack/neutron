@@ -147,7 +147,7 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
             return False
         v6_fixed_ips = [
             fixed_ip for fixed_ip in port_dict['fixed_ips']
-            if (netaddr.IPNetwork(fixed_ip['ip_address']).version == V6)]
+            if netaddr.IPNetwork(fixed_ip['ip_address']).version == V6]
         # If the router's external gateway port user LLA address, The
         # external network needn't IPv6 subnet.
         if v6_fixed_ips:

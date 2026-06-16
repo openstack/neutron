@@ -73,7 +73,7 @@ class Reservation(base.NeutronDbObject):
     def delete_expired(cls, context, expiring_time, project_id):
         resv_query = context.session.query(models.Reservation)
         if project_id:
-            project_expr = (models.Reservation.project_id == project_id)
+            project_expr = models.Reservation.project_id == project_id
         else:
             project_expr = sql.true()
         # TODO(manjeets) Fetch and delete objects using
@@ -95,9 +95,9 @@ class Reservation(base.NeutronDbObject):
                 sql.func.sum(models.ResourceDelta.amount),
                 sqltypes.Integer)).join(models.Reservation)
         if expired:
-            exp_expr = (models.Reservation.expiration < now)
+            exp_expr = models.Reservation.expiration < now
         else:
-            exp_expr = (models.Reservation.expiration >= now)
+            exp_expr = models.Reservation.expiration >= now
         resv_query = resv_query.filter(sa.and_(
             models.Reservation.project_id == project_id,
             models.ResourceDelta.resource.in_(resources),

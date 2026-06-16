@@ -132,6 +132,6 @@ def apply_metadata_nat_rules(router, proxy):
     if netutils.is_ipv6_enabled():
         for c, r in metadata_nat_rules(
                 proxy.metadata_port,
-                metadata_address=(constants.METADATA_V6_CIDR)):
+                metadata_address=constants.METADATA_V6_CIDR):
             router.iptables_manager.ipv6['nat'].add_rule(c, r)
     router.iptables_manager.apply()

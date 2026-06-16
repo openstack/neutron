@@ -155,7 +155,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         # NOTE(sean-k-mooney): this function converts the ovs vhost user
         # driver mode into the qemu vhost user mode. If OVS is the server,
         # qemu is the client and vice-versa.
-        if (ovs_const.OVS_DPDK_VHOST_USER_CLIENT in iface_types):
+        if ovs_const.OVS_DPDK_VHOST_USER_CLIENT in iface_types:
             return portbindings.VHOST_USER_MODE_SERVER
         return portbindings.VHOST_USER_MODE_CLIENT
 

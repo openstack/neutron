@@ -41,7 +41,7 @@ class QosCoreResourceExtension(base.CoreResourceExtension):
 
         Using is_accessible expresses these conditions.
         """
-        if not (policy_object.QosPolicy.is_accessible(context, old_policy)):
+        if not policy_object.QosPolicy.is_accessible(context, old_policy):
             raise qos_exc.PolicyRemoveAuthorizationError(
                 policy_id=old_policy.id)
 

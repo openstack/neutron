@@ -2112,7 +2112,7 @@ class TestDeviceManager(base.BaseTestCase):
 
         self.ensure_device_is_ready_p = mock.patch(
             'neutron.agent.linux.ip_lib.ensure_device_is_ready')
-        self.ensure_device_is_ready = (self.ensure_device_is_ready_p.start())
+        self.ensure_device_is_ready = self.ensure_device_is_ready_p.start()
 
         self.dvr_cls_p = mock.patch('neutron.agent.linux.interface.NullDriver')
         self.iproute_cls_p = mock.patch('neutron.agent.linux.'

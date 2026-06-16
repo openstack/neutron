@@ -54,6 +54,7 @@ class PortHardwareOffloadTypeExtensionTestCase(
         if hardware_offload_type in constants.VALID_HWOL_TYPES:
             port_args['hardware_offload_type'] = hardware_offload_type
         with self.port(**port_args) as port:
+            print('port:', port)
             for k, v in keys:
                 self.assertEqual(v, port['port'][k])
 

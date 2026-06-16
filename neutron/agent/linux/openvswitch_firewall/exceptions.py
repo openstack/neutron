@@ -29,4 +29,4 @@ class OVSFWTagNotFound(exceptions.NeutronException):
 
 
 class OVSFWPortNotHandled(exceptions.NeutronException):
-    message = ("Port %(port_id)s is not handled by the firewall.")
+    message = "Port %(port_id)s is not handled by the firewall."

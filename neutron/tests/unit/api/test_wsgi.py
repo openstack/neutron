@@ -227,7 +227,7 @@ class RequestTest(base.BaseTestCase):
         self.assertEqual("application/json", result)
 
         request = wsgi.Request.blank('/tests/123')
-        request.headers["Accept"] = ("application/json; q=0.3")
+        request.headers["Accept"] = "application/json; q=0.3"
         result = request.best_match_content_type()
 
         self.assertEqual("application/json", result)

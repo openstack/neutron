@@ -2679,7 +2679,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             network_db = self._get_network(context, network_id)
             network_db.mtu = self._get_network_mtu(
                 network_db,
-                validate=(event != events.PRECOMMIT_DELETE))
+                validate=event != events.PRECOMMIT_DELETE)
             network_db.save(session=context.session)
 
         try:
@@ -2886,7 +2886,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port_db.port_bindings, host)
             if not original_binding:
                 raise exc.PortBindingNotFound(port_id=port_id, host=host)
-            is_active_binding = (original_binding.status == const.ACTIVE)
+            is_active_binding = original_binding.status == const.ACTIVE
             network = self.get_network(context, port_db['network_id'])
             port_dict = self._make_port_dict(port_db)
             mech_context = driver_context.PortContext(self, context, port_dict,

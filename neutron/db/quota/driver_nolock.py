@@ -66,7 +66,7 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
             unlimited_resources = {
                 resource for (resource, limit) in limits.items()
                 if limit <= quota_api.UNLIMITED_QUOTA}
-            requested_resources = (set(deltas.keys()) - unlimited_resources)
+            requested_resources = set(deltas.keys()) - unlimited_resources
 
             # Count the number of (1) used and (2) reserved resources for this
             # project_id. If any resource limit is exceeded, raise exception.

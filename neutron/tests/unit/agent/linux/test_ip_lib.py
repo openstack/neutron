@@ -43,57 +43,57 @@ NETNS_SAMPLE = [
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
     'cccccccc-cccc-cccc-cccc-cccccccccccc']
 
-GATEWAY_SAMPLE1 = ("""
+GATEWAY_SAMPLE1 = """
 default via 10.35.19.254  metric 100
 10.35.16.0/22  proto kernel  scope link  src 10.35.17.97
-""")
+"""
 
-GATEWAY_SAMPLE2 = ("""
+GATEWAY_SAMPLE2 = """
 default via 10.35.19.254  metric 100
-""")
+"""
 
-GATEWAY_SAMPLE3 = ("""
+GATEWAY_SAMPLE3 = """
 10.35.16.0/22  proto kernel  scope link  src 10.35.17.97
-""")
+"""
 
-GATEWAY_SAMPLE4 = ("""
+GATEWAY_SAMPLE4 = """
 default via 10.35.19.254
-""")
+"""
 
-GATEWAY_SAMPLE5 = ("""
+GATEWAY_SAMPLE5 = """
 default via 192.168.99.1 proto static
-""")
+"""
 
-GATEWAY_SAMPLE6 = ("""
+GATEWAY_SAMPLE6 = """
 default via 192.168.99.1 proto static metric 100
-""")
+"""
 
-GATEWAY_SAMPLE7 = ("""
+GATEWAY_SAMPLE7 = """
 default dev qg-31cd36 metric 1
-""")
+"""
 
-IPv6_GATEWAY_SAMPLE1 = ("""
+IPv6_GATEWAY_SAMPLE1 = """
 default via 2001:470:9:1224:4508:b885:5fb:740b metric 100
 2001:db8::/64 proto kernel scope link src 2001:470:9:1224:dfcc:aaff:feb9:76ce
-""")
+"""
 
-IPv6_GATEWAY_SAMPLE2 = ("""
+IPv6_GATEWAY_SAMPLE2 = """
 default via 2001:470:9:1224:4508:b885:5fb:740b metric 100
-""")
+"""
 
-IPv6_GATEWAY_SAMPLE3 = ("""
+IPv6_GATEWAY_SAMPLE3 = """
 2001:db8::/64 proto kernel scope link src 2001:470:9:1224:dfcc:aaff:feb9:76ce
-""")
+"""
 
-IPv6_GATEWAY_SAMPLE4 = ("""
+IPv6_GATEWAY_SAMPLE4 = """
 default via fe80::dfcc:aaff:feb9:76ce
-""")
+"""
 
-IPv6_GATEWAY_SAMPLE5 = ("""
+IPv6_GATEWAY_SAMPLE5 = """
 default via 2001:470:9:1224:4508:b885:5fb:740b metric 1024
-""")
+"""
 
-DEVICE_ROUTE_SAMPLE = ("10.0.0.0/24  scope link  src 10.0.0.2")
+DEVICE_ROUTE_SAMPLE = "10.0.0.0/24  scope link  src 10.0.0.2"
 
 SUBNET_SAMPLE1 = ("10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1\n"
                   "10.0.0.0/24 dev tap1d7888a7-10  scope link  src 10.0.0.2")

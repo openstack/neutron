@@ -100,7 +100,7 @@ class IpsetManager:
             else:
                 add_ips = self._get_new_set_ips(set_name, member_ips)
                 del_ips = self._get_deleted_set_ips(set_name, member_ips)
-                if (len(add_ips) + len(del_ips) < IPSET_ADD_BULK_THRESHOLD):
+                if len(add_ips) + len(del_ips) < IPSET_ADD_BULK_THRESHOLD:
                     self._add_members_to_set(set_name, add_ips)
                     self._del_members_from_set(set_name, del_ips)
                 else:

@@ -1136,7 +1136,7 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
     def test_add_blank_rule(self):
         iptables_args = {}
         iptables_args.update(IPTABLES_ARG)
-        filter_rules = ('-A %(bn)s-test-filter\n' % iptables_args)
+        filter_rules = '-A %(bn)s-test-filter\n' % iptables_args
         iptables_args['filter_rules'] = filter_rules
         filter_dump_mod = FILTER_RESTORE_DUMP % iptables_args
 
@@ -1217,7 +1217,7 @@ class IptablesManagerStateFulTestCaseIPv6(IptablesManagerStateFulTestCase):
 class IptablesManagerStateFulTestCaseCustomBinaryName(
         IptablesManagerBaseTestCase):
     use_ipv6 = False
-    bn = ("xbcdef" * 5)
+    bn = "xbcdef" * 5
 
     def setUp(self):
         super().setUp()
@@ -1354,7 +1354,7 @@ class IptablesManagerStateLessTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
-        self.iptables = (iptables_manager.IptablesManager(state_less=True))
+        self.iptables = iptables_manager.IptablesManager(state_less=True)
 
     def test_nat_found(self):
         self.assertIn('nat', self.iptables.ipv4)
@@ -1380,7 +1380,7 @@ class IptablesManagerNoNatTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
-        self.iptables = (iptables_manager.IptablesManager(nat=False))
+        self.iptables = iptables_manager.IptablesManager(nat=False)
 
     def test_nat_found(self):
         self.assertIn('nat', self.iptables.ipv4)
