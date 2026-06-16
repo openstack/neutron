@@ -2306,7 +2306,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # Update the list of current ports storing only those which
             # have been actually processed.
             skipped_devices = set(skipped_devices)
-            port_info['current'] = (port_info['current'] - skipped_devices)
+            port_info['current'] = port_info['current'] - skipped_devices
 
         # TODO(salv-orlando): Optimize avoiding applying filters
         # unnecessarily, (eg: when there are no IP address changes)
@@ -2635,7 +2635,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # AlwaysPoll used by windows implementations
         # REVISIT (rossella_s) This needs to be reworked to hide implementation
         # details regarding polling in BasePollingManager subclasses
-        if sync or not (hasattr(polling_manager, 'get_events')):
+        if sync or not hasattr(polling_manager, 'get_events'):
             if sync:
                 LOG.info("Agent out of sync with plugin!")
                 consecutive_resyncs = consecutive_resyncs + 1

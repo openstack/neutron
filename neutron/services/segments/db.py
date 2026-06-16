@@ -134,7 +134,7 @@ class SegmentDbMixin:
                 # NOTE(xiaohhui): The new index is the last index + 1, this
                 # may cause discontinuous segment_index. But segment_index
                 # can functionally work as the order index for segments.
-                segment_index = (segments[-1].get('segment_index') + 1)
+                segment_index = segments[-1].get('segment_index') + 1
             args['segment_index'] = segment_index
 
             new_segment = network.NetworkSegment(context, **args)

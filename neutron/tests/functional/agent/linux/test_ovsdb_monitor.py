@@ -39,7 +39,7 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
     def setUp(self):
         super().setUp()
 
-        rootwrap_not_configured = (cfg.CONF.AGENT.root_helper == base.SUDO_CMD)
+        rootwrap_not_configured = cfg.CONF.AGENT.root_helper == base.SUDO_CMD
         if rootwrap_not_configured:
             # The monitor tests require a nested invocation that has
             # to be emulated by double sudo if rootwrap is not

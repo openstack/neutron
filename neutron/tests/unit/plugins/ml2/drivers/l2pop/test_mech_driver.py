@@ -119,7 +119,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         cast_patch = mock.patch(cast)
         self.mock_cast = cast_patch.start()
 
-        uptime = ('neutron.plugins.ml2.drivers.l2pop.db.get_agent_uptime')
+        uptime = 'neutron.plugins.ml2.drivers.l2pop.db.get_agent_uptime'
         uptime_patch = mock.patch(uptime, return_value=190)
         uptime_patch.start()
         # Extend network HA extension.

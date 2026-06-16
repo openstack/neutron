@@ -36,7 +36,7 @@ def is_eui64_address(ip_address):
     ip = netaddr.IPAddress(ip_address)
     # '0xfffe' addition is used to build EUI-64 from MAC (RFC4291)
     # Look for it in the middle of the EUI-64 part of address
-    return ip.version == 6 and not ((ip & 0xffff000000) ^ 0xfffe000000)
+    return ip.version == 6 and not (ip & 0xffff000000) ^ 0xfffe000000
 
 
 def is_ipv6_pd_enabled(subnet):

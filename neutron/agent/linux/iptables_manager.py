@@ -225,7 +225,7 @@ class IptablesTable:
 
     def _wrap_target_chain(self, s, wrap):
         if s.startswith('$'):
-            s = (f'{self.wrap_name}-{get_chain_name(s[1:], wrap)}')
+            s = f'{self.wrap_name}-{get_chain_name(s[1:], wrap)}'
 
         return s
 

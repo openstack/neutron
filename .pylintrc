@@ -83,7 +83,6 @@ disable=
  invalid-name,
  missing-docstring,
  singleton-comparison,
- superfluous-parens,
  ungrouped-imports,
  wrong-import-order,
  consider-using-f-string,

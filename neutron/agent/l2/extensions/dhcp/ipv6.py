@@ -231,7 +231,7 @@ class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
         # Client FQDN: host-<ip-v6-address>
         fqdn_bin = struct.pack('!%ds' % len(fqdn), bytes(str(fqdn).encode()))
         fqdn_str_len = struct.pack('!b', len(fqdn_bin))
-        dns_data = (dns_tag + fqdn_str_len + fqdn_bin)
+        dns_data = dns_tag + fqdn_str_len + fqdn_bin
         option_list.append(
             dhcp6.option(code=DHCPV6_OPTION_FQDN,
                          data=dns_data, length=len(dns_data)))

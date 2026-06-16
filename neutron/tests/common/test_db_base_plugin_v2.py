@@ -5510,7 +5510,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 gateway_ip='10.0.1.1',
                                 cidr='10.0.1.11/24') as v2:
                 subnets = (v1, v2)
-                query_params = ('cidr=10.0.0.11/24&cidr=10.0.1.11/24')
+                query_params = 'cidr=10.0.0.11/24&cidr=10.0.1.11/24'
                 self._test_list_resources('subnet', subnets,
                                           query_params=query_params)
 
@@ -7414,7 +7414,7 @@ class TestNetworks(testlib_api.SqlTestCase):
 
         network['network']['shared'] = False
 
-        if (expected_exception):
+        if expected_exception:
             with testlib_api.ExpectedException(expected_exception):
                 plugin.update_network(ctx, net_id, network)
         else:

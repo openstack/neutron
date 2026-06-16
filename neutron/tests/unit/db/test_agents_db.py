@@ -89,7 +89,7 @@ class TestAgentsDbBase(testlib_api.SqlTestCase):
         for agent in agents[down_agents_count:(
                 down_but_version_considered + down_agents_count)]:
             agent['heartbeat_timestamp'] -= datetime.timedelta(
-                seconds=(cfg.CONF.agent_down_time + 1))
+                seconds=cfg.CONF.agent_down_time + 1)
 
         for agent in agents:
             agent.create()

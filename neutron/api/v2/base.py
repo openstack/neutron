@@ -210,7 +210,7 @@ class Controller:
         if not fields_to_strip:
             return data
         return dict(item for item in data.items()
-                    if (item[0] not in fields_to_strip))
+                    if item[0] not in fields_to_strip)
 
     def _do_field_list(self, original_fields):
         fields_to_add = None

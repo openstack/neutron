@@ -80,7 +80,7 @@ class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def _create_routers(self, scheduled_router_count,
                         expected_scheduled_router_count):
         routers = []
-        if (scheduled_router_count + expected_scheduled_router_count):
+        if scheduled_router_count + expected_scheduled_router_count:
             for i in range(scheduled_router_count +
                            expected_scheduled_router_count):
                 router = self._create_router('schd_rtr' + str(i))

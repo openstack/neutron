@@ -1245,7 +1245,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                     vif_details = copy.deepcopy(self.vif_details[vif_type])
                     vif_details[portbindings.VHOST_USER_SOCKET] = (
                         vhost_user_socket)
-                elif (vnic_type == portbindings.VNIC_VIRTIO_FORWARDER):
+                elif vnic_type == portbindings.VNIC_VIRTIO_FORWARDER:
                     vhost_user_socket = ovn_utils.ovn_vhu_sockpath(
                         ovn_conf.get_ovn_vhost_sock_dir(), port['id'])
                     vif_type = portbindings.VIF_TYPE_AGILIO_OVS

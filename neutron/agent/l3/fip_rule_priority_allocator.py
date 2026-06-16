@@ -27,7 +27,7 @@ class FipPriority:
 
     def __eq__(self, other):
         if isinstance(other, FipPriority):
-            return (self.index == other.index)
+            return self.index == other.index
         return False
 
     def __int__(self):

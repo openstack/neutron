@@ -57,7 +57,7 @@ class L3NConntrackHelperTestCase(test_l3.L3BaseForIntTests,
                        'neutron.tests.unit.extensions.'
                        'test_l3_conntrack_helper.'
                        'TestL3ConntrackHelperServicePlugin')
-        plugin = ('neutron.tests.unit.extensions.test_l3.TestL3NatIntPlugin')
+        plugin = 'neutron.tests.unit.extensions.test_l3.TestL3NatIntPlugin'
         ext_mgr = ExtendL3ConntrackHelperExtensionManager()
         super().setUp(
               ext_mgr=ext_mgr, service_plugins=svc_plugins, plugin=plugin)

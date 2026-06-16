@@ -401,7 +401,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                         'OpenStack uses the EUI-64 address format, '
                         'which requires the prefix to be /64')
                 raise exc.InvalidInput(
-                    error_message=(msg % subnet['cidr']))
+                    error_message=msg % subnet['cidr'])
 
     def _validate_ipv6_combination(self, ra_mode, address_mode):
         if ra_mode != address_mode:
@@ -811,7 +811,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _validate_subnet_for_pd(self, subnet):
         """Validates that subnet parameters are correct for IPv6 PD"""
-        if (subnet.get('ip_version') != constants.IP_VERSION_6):
+        if subnet.get('ip_version') != constants.IP_VERSION_6:
             reason = _("Prefix Delegation can only be used with IPv6 "
                        "subnets.")
             raise exc.BadRequest(resource='subnets', msg=reason)

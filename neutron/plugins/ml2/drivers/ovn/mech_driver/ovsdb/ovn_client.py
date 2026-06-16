@@ -2701,7 +2701,7 @@ class OVNClient:
         if 'options' in new_options and 'options' in original_options:
             orig_dns_server = original_options['options'].get('dns_server')
             new_dns_server = new_options['options'].get('dns_server')
-            dns_server_changed = (orig_dns_server != new_dns_server)
+            dns_server_changed = orig_dns_server != new_dns_server
         else:
             dns_server_changed = False
 

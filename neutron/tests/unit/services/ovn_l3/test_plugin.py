@@ -2373,7 +2373,7 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
 
     def setUp(self):
         plugin = 'neutron.tests.unit.extensions.test_l3.TestOVNL3Plugin'
-        l3_plugin = ('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin')
+        l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
         service_plugins = {'l3_plugin_name': l3_plugin}
         config.register_opts()
         cfg.CONF.set_default('max_routes', 3)

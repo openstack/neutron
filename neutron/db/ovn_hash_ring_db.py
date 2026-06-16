@@ -76,7 +76,7 @@ def get_node(context, group_name, node_uuid):
 
 @db_api.retry_if_session_inactive()
 def remove_nodes_from_host(context, group_name, created_at=None):
-    with (db_api.CONTEXT_WRITER.using(context)):
+    with db_api.CONTEXT_WRITER.using(context):
         query = context.session.query(ovn_models.OVNHashRing).filter(
             ovn_models.OVNHashRing.hostname == CONF.host,
             ovn_models.OVNHashRing.group_name == group_name)

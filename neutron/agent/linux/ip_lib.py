@@ -329,7 +329,7 @@ class IPWrapper(SubProcessBase):
         if dstport:
             kwargs['vxlan_port'] = dstport
         privileged.create_interface(name, self.namespace, "vxlan", **kwargs)
-        return (IPDevice(name, namespace=self.namespace))
+        return IPDevice(name, namespace=self.namespace)
 
 
 class IPDevice(SubProcessBase):

@@ -187,7 +187,7 @@ def check_builtins_gettext(logical_line, tokens, filename, lines, noqa):
 def check_no_imports_from_tests(logical_line, filename, noqa):
     """N343 - Production code must not import from neutron.tests.*
     """
-    msg = ("N343: Production code must not import from neutron.tests.*")
+    msg = "N343: Production code must not import from neutron.tests.*"
 
     if noqa:
         return
