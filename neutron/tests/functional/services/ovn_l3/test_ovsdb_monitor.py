@@ -161,6 +161,38 @@ class TestLogicalRouterPortEvent(
             self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
                               mock_update_router_called, timeout=2)
 
+    def test_delete_private_network_with_evpn_lrp(self):
+        """Removing a Neutron LRP when an EVPN LRP exists on the router.
+
+        EVPN LRPs lack ``neutron:network_name`` in their external_ids.
+        The ``match_fn`` must tolerate that when iterating sibling LRPs
+        during a ROW_DELETE event.
+        """
+        def is_called():
+            try:
+                mock_unlink.assert_called_once_with(self.net_ext_id)
+                return True
+            except AssertionError:
+                return False
+
+        evpn_ext_ids = {'vni': '100', 'vlan': '200'}
+        self.nb_api.lrp_add(
+            ovn_utils.ovn_name(self.router_id), 'evpn-lrp-test',
+            mac='02:00:00:00:00:01', networks=[],
+            external_ids=evpn_ext_ids).execute(check_error=True)
+
+        with mock.patch.object(
+                self.l3_plugin._ovn_client,
+                'link_network_ha_chassis_group'), \
+                mock.patch.object(
+                    self.l3_plugin._ovn_client,
+                    'unlink_network_ha_chassis_group') as mock_unlink:
+            self._router_interface_action(
+                'add', self.router_id, self.subnet_id, None)
+            self._router_interface_action(
+                'remove', self.router_id, self.subnet_id, None)
+            n_utils.wait_until_true(is_called, timeout=10)
+
     def test_remove_lrp_not_in_the_neutron_db(self):
         def mock_unlink_called():
             try:

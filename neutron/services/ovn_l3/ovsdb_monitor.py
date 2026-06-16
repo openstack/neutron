@@ -59,8 +59,13 @@ class LogicalRouterPortEvent(row_event.RowEvent):
                 return False
 
             for lrp in (lrp for lrp in lr.ports if lrp.name != row.name):
-                if (ls_name == lrp.external_ids[
-                        ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]):
+                try:
+                    net_name = lrp.external_ids[
+                        ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
+                except KeyError:
+                    # not a Neutron managed LRP port
+                    continue
+                if ls_name == net_name:
                     return False
             return True
 
