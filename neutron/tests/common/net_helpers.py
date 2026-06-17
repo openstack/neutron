@@ -1109,6 +1109,7 @@ class FrrFixture(fixtures.Fixture):
 
     FRR_CONF_DIR_BASE = '/etc/frr'
     FRR_STATE_DIR_BASE = '/var/run/frr'
+    FRR_LOG_DIR_BASE = '/var/log/frr'
     FRRINIT_PATHS = ['/usr/lib/frr/frrinit.sh',
                      '/usr/libexec/frr/frrinit.sh']
     FRRINIT = next((p for p in FRRINIT_PATHS if os.path.isfile(p)),
@@ -1152,6 +1153,7 @@ class FrrFixture(fixtures.Fixture):
         self.namespace = namespace
         self._conf_dir = os.path.join(self.FRR_CONF_DIR_BASE, namespace)
         self._state_dir = os.path.join(self.FRR_STATE_DIR_BASE, namespace)
+        self._log_dir = os.path.join(self.FRR_LOG_DIR_BASE, namespace)
 
     def _setUp(self):
         self.addCleanup(self._cleanup_frr)
@@ -1166,8 +1168,11 @@ class FrrFixture(fixtures.Fixture):
             utils.execute(['cp', tmp.name, path], run_as_root=True)
 
     def _create_config(self):
-        utils.execute(
-            ['mkdir', '-p', self._conf_dir], run_as_root=True)
+        for pathspace_dir in (self._conf_dir, self._log_dir):
+            utils.execute(
+                ['mkdir', '-p', pathspace_dir], run_as_root=True)
+            utils.execute(
+                ['chown', '-R', 'frr:frr', pathspace_dir], run_as_root=True)
 
         self._write_file(
             os.path.join(self._conf_dir, 'daemons'),
@@ -1181,11 +1186,7 @@ class FrrFixture(fixtures.Fixture):
             os.path.join(self._conf_dir, 'frr.conf'),
             self.FRR_CONF % {
                 'hostname': self.namespace,
-                'log_file': '/var/log/frr/%s/frr.log' % self.namespace})
-
-        utils.execute(
-            ['chown', '-R', 'frr:frr', self._conf_dir],
-            run_as_root=True)
+                'log_file': '%s/frr.log' % self._log_dir})
 
     def _excute_with_std_discard(self, frr_action):
         """Redirect stdout/stderr to /dev/null.
