@@ -17,8 +17,10 @@ import collections
 import copy
 import datetime
 import os
+from pathlib import Path
 import signal
 import sys
+from tempfile import NamedTemporaryFile
 from tempfile import TemporaryDirectory
 from unittest import mock
 import uuid
@@ -29,8 +31,10 @@ from neutron_lib import constants as const
 from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_messaging
+from oslo_serialization import jsonutils
 from oslo_utils import netutils
 from oslo_utils import timeutils
+from pyroute2 import netns
 import testtools
 
 from neutron.agent.dhcp import agent as dhcp_agent
@@ -291,6 +295,9 @@ class TestDhcpAgent(base.BaseTestCase):
         self.mock_ip_wrapper_p = mock.patch("neutron.agent.linux.ip_lib."
                                             "IPWrapper")
         self.mock_ip_wrapper = self.mock_ip_wrapper_p.start()
+        self.mock_create_status_file_p = mock.patch(
+            'neutron.agent.dhcp.agent._create_status_file')
+        self.mock_create_status_file_p.start()
 
     def test_init_resync_throttle_conf(self):
         try:
@@ -446,7 +453,10 @@ class TestDhcpAgent(base.BaseTestCase):
             agent.call_driver('get_metadata_bind_interface', network))
 
     def _test_sync_state_helper(self, known_net_ids, active_net_ids):
-        active_networks = set(mock.Mock(id=netid) for netid in active_net_ids)
+        active_networks = set(
+            mock.Mock(id=netid, namespace=netid)
+            for netid in active_net_ids
+        )
 
         with mock.patch(DHCP_PLUGIN) as plug:
             mock_plugin = mock.Mock()
@@ -2869,3 +2879,233 @@ class TestDHCPResourceUpdate(base.BaseTestCase):
         # In this case, both "port" events have matching IPs. "__lt__" method
         # uses the timestamp: date2 < date1
         self.assertLess(update2, update1)
+
+
+class TestAgentStatus(base.BaseTestCase):
+
+    def test_find_missing_netns_with_missing_and_present(self):
+        with TemporaryDirectory() as tmpdir:
+            active_net_ids = ["present-network-id",
+                              "present-in-neutron-db-but-not-on-agent"]
+            active_networks = set(
+                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
+                          admin_state_up=True,
+                          subnets=[mock.Mock(enable_dhcp=True)])
+                for netid in active_net_ids
+            )
+
+            # Create a netns file for the present network only
+            netns_dir = Path(tmpdir)
+            present_netns_file = netns_dir / 'qdhcp-present-network-id'
+            present_netns_file.touch()
+
+            # Mock the NETNS_RUN_DIR to use our temp directory
+            with mock.patch.object(netns, 'NETNS_RUN_DIR', tmpdir):
+                missing_netns = dhcp_agent._find_missing_netns(
+                    active_networks
+                )
+
+            self.assertEqual(1, len(missing_netns))
+            self.assertEqual(
+                "qdhcp-present-in-neutron-db-but-not-on-agent",
+                missing_netns.pop(),
+            )
+
+            # Test successfully synced network (all namespaces present)
+            active_net_ids = ["synced-network-id"]
+            all_synced_networks = set(
+                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
+                          admin_state_up=True,
+                          subnets=[mock.Mock(enable_dhcp=True)])
+                for netid in active_net_ids
+            )
+
+            synced_netns_file = netns_dir / 'qdhcp-synced-network-id'
+            synced_netns_file.touch()
+
+            with mock.patch.object(netns, 'NETNS_RUN_DIR', tmpdir):
+                missing_netns = dhcp_agent._find_missing_netns(
+                    all_synced_networks)
+
+            self.assertEqual(0, len(missing_netns))
+            self.assertEqual(set(), missing_netns)
+
+    def test_write_status_failure(self):
+        with TemporaryDirectory() as tmpdir:
+            status_file_path = Path(tmpdir) / 'dhcp-agent-status.txt'
+            error_message = "Test error: network sync failed"
+            test_error = Exception(error_message)
+
+            with mock.patch.object(dhcp_agent, 'AGENT_STATUS_FILE',
+                                   status_file_path):
+                dhcp_agent._write_status_failure(test_error)
+
+                # Verify the file was created
+                self.assertTrue(status_file_path.exists())
+
+                # Read and verify the status file content
+                with open(status_file_path, 'rb') as f:
+                    status = jsonutils.load(f)
+
+                self.assertFalse(status["ready"])
+                self.assertEqual(error_message, status["message"])
+                self.assertIn("time", status)
+                self.assertIsInstance(status["time"], (int, float))
+
+    def test_write_status_synced(self):
+        with TemporaryDirectory() as tmpdir:
+            status_file_path = Path(tmpdir) / 'dhcp-agent-status.json'
+            netns_dir = Path(tmpdir)
+
+            # Create networks with corresponding namespace files (all synced)
+            active_net_ids = ["network-1", "network-2"]
+            active_networks = set(
+                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
+                          admin_state_up=True,
+                          subnets=[mock.Mock(enable_dhcp=True)])
+                for netid in active_net_ids
+            )
+
+            # Create netns files for all networks
+            (netns_dir / 'qdhcp-network-1').touch()
+            (netns_dir / 'qdhcp-network-2').touch()
+
+            with mock.patch.object(dhcp_agent, 'AGENT_STATUS_FILE',
+                                   status_file_path):
+                with mock.patch.object(netns, 'NETNS_RUN_DIR', tmpdir):
+                    dhcp_agent._write_sync_status(active_networks)
+
+                # Verify the file was created
+                self.assertTrue(status_file_path.exists())
+
+                # Read and verify the status file content
+                with open(status_file_path, 'rb') as f:
+                    status = jsonutils.load(f)
+
+            self.assertTrue(status["ready"])
+            self.assertEqual("All networks synced", status["message"])
+            self.assertIn("time", status)
+            self.assertIsInstance(status["time"], (int, float))
+
+    def test_write_status_unsynced(self):
+        with TemporaryDirectory() as tmpdir:
+            status_file_path = Path(tmpdir) / 'dhcp-agent-status.txt'
+            netns_dir = Path(tmpdir)
+
+            # Create networks but only create netns file for one
+            active_net_ids = [
+                "synced-network",
+                "missing-network-1",
+                "missing-network-2"
+            ]
+            active_networks = set(
+                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
+                          admin_state_up=True,
+                          subnets=[mock.Mock(enable_dhcp=True)])
+                for netid in active_net_ids
+            )
+
+            # Create netns file only for the synced network
+            (netns_dir / 'qdhcp-synced-network').touch()
+
+            with mock.patch.object(dhcp_agent, 'AGENT_STATUS_FILE',
+                                   status_file_path):
+                with mock.patch.object(netns, 'NETNS_RUN_DIR', tmpdir):
+                    dhcp_agent._write_sync_status(active_networks)
+
+            # Verify the file was created
+            self.assertTrue(status_file_path.exists())
+
+            # Read and verify the status file content
+            with open(status_file_path, 'rb') as f:
+                status = jsonutils.load(f)
+
+            self.assertFalse(status["ready"])
+            message = status["message"]
+            self.assertIn("Missing 2 of 3 networks", message)
+            self.assertIn("qdhcp-missing-network-1", message)
+            self.assertIn("qdhcp-missing-network-2", message)
+            self.assertIn("time", status)
+            self.assertIsInstance(status["time"], (int, float))
+
+
+class TestAgentStatusIntegration(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestAgentStatusIntegration, self).setUp()
+
+        entry.register_options(cfg.CONF)
+        cfg.CONF.set_override('interface_driver',
+                              'neutron.agent.linux.interface.NullDriver')
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
+        self.driver_cls_p = mock.patch(
+            'neutron.agent.dhcp.agent.importutils.import_class')
+        self.driver = mock.Mock(name='driver')
+        self.driver.existing_dhcp_networks.return_value = []
+        self.driver_cls = self.driver_cls_p.start()
+        self.driver_cls.return_value = self.driver
+        mock.patch("os.makedirs").start()
+        mock.patch(
+            "neutron.agent.metadata.driver.HaproxyConfigurator").start()
+        mock.patch("neutron.agent.linux.ip_lib.IPWrapper").start()
+
+    def test_sync_status(self):
+        active_net_ids = ["a"]
+        active_networks = set(
+            mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
+                      admin_state_up=True,
+                      subnets=[mock.Mock(enable_dhcp=True)])
+            for netid in active_net_ids
+        )
+
+        with TemporaryDirectory() as net_ns:
+            with NamedTemporaryFile(mode='w') as status_file:
+                netns_dir = Path(net_ns)
+                for net_id in active_net_ids:
+                    (netns_dir / f"qdhcp-{net_id}").touch()
+
+                dhcp_agent.AGENT_STATUS_FILE = status_file.name
+
+                with mock.patch(DHCP_PLUGIN) as plug:
+                    mock_plugin = mock.Mock()
+                    mock_plugin.get_active_networks_info.return_value = (
+                        active_networks
+                    )
+                    plug.return_value = mock_plugin
+                    dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+                    attrs_to_mock = dict(
+                        (a, mock.DEFAULT)
+                        for a in ['disable_dhcp_helper', 'cache',
+                                  'safe_configure_dhcp_for_network']
+                    )
+                    with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
+                        mocks['cache'].get_network_ids.return_value = []
+                        mocks['cache'].get_port_ids.return_value = range(4)
+                        with mock.patch.object(netns, 'NETNS_RUN_DIR', net_ns):
+                            dhcp.sync_state()
+
+                with open(status_file.name, 'rb') as f:
+                    status = jsonutils.load(f)
+                    self.assertTrue(status["ready"])
+                    self.assertEqual(status["message"],
+                                     "All networks synced")
+
+    def test_sync_status_failure(self):
+        with (NamedTemporaryFile(mode='w') as status_file):
+            with mock.patch.object(dhcp_agent, 'AGENT_STATUS_FILE',
+                                   status_file.name):
+
+                with mock.patch(DHCP_PLUGIN) as plug:
+                    mock_plugin = mock.Mock()
+                    error_msg = "test error"
+                    mock_plugin.get_active_networks_info.side_effect = \
+                        Exception(error_msg)
+                    plug.return_value = mock_plugin
+
+                    dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+                    dhcp.sync_state()
+
+                with open(status_file.name, 'rb') as f:
+                    status = jsonutils.load(f)
+                    self.assertFalse(status["ready"])
+                    self.assertEqual(status["message"], "test error")
