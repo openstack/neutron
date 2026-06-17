@@ -429,6 +429,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         if worker_class == wsgi.WorkerService:
             self._setup_hash_ring()
 
+        if worker_class == worker.MaintenanceWorker:
+            worker_class.lock_name = ovn_const.MAINTENANCE_NB_IDL_LOCK_NAME
+
         # Initialize singleton agent cache and keep a copy.
         self._agent_cache = n_agent.AgentCache(self)
         self.nb_ovn, self.sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
