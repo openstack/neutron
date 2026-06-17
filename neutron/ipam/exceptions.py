@@ -39,11 +39,6 @@ class InvalidIpForSubnet(exceptions.BadRequest):
     message = _("IP address %(ip)s does not belong to subnet %(subnet_id)s")
 
 
-class InvalidAddressRequest(exceptions.BadRequest):
-    message = _("The address allocation request could not be satisfied "
-                "because: %(reason)s")
-
-
 class InvalidSubnetRequest(exceptions.BadRequest):
     message = _("The subnet request could not be satisfied because: "
                 "%(reason)s")
@@ -70,10 +65,6 @@ class IpAddressGenerationFailureAllSubnets(IpAddressGenerationFailure):
 class IpAddressGenerationFailureNoMatchingSubnet(IpAddressGenerationFailure):
     message = _("No valid service subnet for the given device owner, "
                 "network %(network_id)s, service type %(service_type)s.")
-
-
-class IPAllocationFailed(exceptions.NeutronException):
-    message = _("IP allocation failed. Try again later.")
 
 
 class IpamValueInvalid(exceptions.Conflict):
