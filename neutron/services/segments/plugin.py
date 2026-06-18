@@ -398,9 +398,12 @@ class NovaSegmentNotifier:
 
         try:
             self.p_client.delete_resource_provider(event.segment_id)
+        except placement_exc.PlacementResourceProviderNotFound:
+            LOG.debug('Segment %s resource provider not found',
+                      event.segment_id)
         except placement_exc.PlacementClientError as exc:
-            LOG.info('Segment %s resource provider not found; error: %s',
-                     event.segment_id, str(exc))
+            LOG.info('Client error retrieving segment %s resource provider; '
+                     'error: %s', event.segment_id, str(exc))
 
     @staticmethod
     def _payload_segment_ids(payload, key):
