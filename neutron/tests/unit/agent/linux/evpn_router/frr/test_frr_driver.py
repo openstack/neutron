@@ -15,11 +15,14 @@
 
 from unittest import mock
 
+from neutron_lib import exceptions
+from oslo_config import cfg
+
 from neutron.agent.linux.evpn_router.frr import exceptions as frr_exceptions
 from neutron.agent.linux.evpn_router.frr import frr_driver
 from neutron.agent.linux.evpn_router import interface
+from neutron.conf.agent.ovn.evpn import config as evpn_conf
 from neutron.tests import base
-from neutron_lib import exceptions
 
 
 def _build_test_evpn_router_config(vni):
@@ -84,8 +87,11 @@ class TestFrrCommandBuilder(base.BaseTestCase):
 
 class TestFrrVtyshExecutor(base.BaseTestCase):
 
+    VTY_SOCKET = '/run/frr'
+
     def setUp(self):
         super().setUp()
+        evpn_conf.register_opts()
         self.execute = mock.patch.object(
             frr_driver.linux_utils, 'execute').start()
         self.executor = frr_driver.FrrVtyshExecutor()
@@ -98,7 +104,7 @@ class TestFrrVtyshExecutor(base.BaseTestCase):
 
         self.assertEqual("BGP summary output", out)
         self.execute.assert_called_once_with(
-            ['vtysh', '-c', mock_cmd],
+            ['vtysh', '--vty_socket', self.VTY_SOCKET, '-c', mock_cmd],
             run_as_root=True,
         )
 
@@ -127,7 +133,9 @@ class TestFrrVtyshExecutor(base.BaseTestCase):
         self.assertEqual('vtysh', apply_cmd[0])
         self.assertIn('-f', apply_cmd)
         self.assertNotIn('--dryrun', apply_cmd)
-        self.assertEqual(['vtysh', '-c', 'write memory'], write_mem_cmd)
+        self.assertEqual(
+            ['vtysh', '--vty_socket', self.VTY_SOCKET,
+             '-c', 'write memory'], write_mem_cmd)
 
     def test_execute_cmds_raises_dryrun_error(self):
         mock_cmds = "bad config"
@@ -158,6 +166,18 @@ class TestFrrVtyshExecutor(base.BaseTestCase):
             frr_exceptions.FrrApplyError,
             self.executor.execute_cmds,
             mock_cmds,
+        )
+
+    def test_execute_cli_cmd_custom_vty_socket(self):
+        custom_path = '/custom/frr/socket'
+        cfg.CONF.set_override('frr_vty_socket', custom_path, group='ovn_evpn')
+        self.execute.return_value = "output"
+
+        self.executor.execute_cli_cmd('show version')
+
+        self.execute.assert_called_once_with(
+            ['vtysh', '--vty_socket', custom_path, '-c', 'show version'],
+            run_as_root=True,
         )
 
 

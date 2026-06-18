@@ -24,6 +24,7 @@ from neutron.agent.linux.evpn_router import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils as common_utils
+from neutron.conf.agent.ovn.evpn import config as evpn_conf
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 from neutron_lib import exceptions
@@ -43,7 +44,7 @@ class FrrVtyshExecutorNamespaced(frr_driver.FrrVtyshExecutor):
 
     @property
     def _vtysh_base_cmd(self) -> list[str]:
-        return ['vtysh', '-N', self._namespace]
+        return super()._vtysh_base_cmd + ['-N', self._namespace]
 
 
 def _is_centos9_frr85():
@@ -268,6 +269,7 @@ class TestFrrVtyshDriverConfiguration(base.BaseSudoTestCase):
 
     def setUp(self):
         super().setUp()
+        evpn_conf.register_opts()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         self.frr_fixture = self.useFixture(
             net_helpers.FrrFixture(namespace=self.namespace))
@@ -379,6 +381,7 @@ class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
 
     def setUp(self):
         super().setUp()
+        evpn_conf.register_opts()
 
         self.vtep_ip_a = '10.0.0.1'
         self.vtep_ip_b = '10.0.0.2'

@@ -30,6 +30,11 @@ EVPN_OPTS = [
         'child_vxlan_port',
         default=49152,
         help=_('UDP port for the child VxLAN device used by EVPN')),
+    cfg.StrOpt(
+        'frr_vty_socket',
+        default='/run/frr',
+        help=_('Path to the vtysh socket directory. This is passed '
+               'as --vty_socket to the vtysh command.')),
 ]
 
 
