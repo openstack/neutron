@@ -19,6 +19,8 @@ from unittest import mock
 
 import netaddr
 from neutron_lib.api.definitions import allowedaddresspairs as addr_apidef
+from neutron_lib.api.definitions import \
+    security_groups_default_statefulness as sg_ds_def
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.plugins import directory
@@ -3454,7 +3456,10 @@ class TestSecurityGroupExtensionControl(base.BaseTestCase):
     def test_disable_security_group_extension_by_config(self):
         set_enable_security_groups(False)
         exp_aliases = ['dummy1', 'dummy2']
-        ext_aliases = ['dummy1', 'security-group', 'dummy2']
+        ext_aliases = [
+            'dummy1', 'security-group', 'dummy2',
+            sg_ds_def.ALIAS,
+        ]
         sg_rpc.disable_security_group_extension_by_config(ext_aliases)
         self.assertEqual(ext_aliases, exp_aliases)
 

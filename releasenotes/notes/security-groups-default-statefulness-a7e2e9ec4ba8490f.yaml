@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Added a new ``security-groups-default-statefulness`` API extension that
+    allows configuring the default value of the ``stateful`` attribute for
+    new security groups, on a per-project or system-wide basis. By default,
+    only the administrator user can can create, update and delete the default
+    statefulness settings through the new
+    ``security_groups_default_statefulness`` resource; non-admin users can
+    show and list the registers. This is useful for deployments where
+    stateless security groups are preferred by default (e.g. DPDK
+    deployments).
