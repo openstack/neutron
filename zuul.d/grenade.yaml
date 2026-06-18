@@ -108,12 +108,6 @@
               agent:
                 debug_iptables_rules: True
 
-# TODO(ralonsoh): remove this duplicated definition when "devstack" and
-# "tempest" adopt the new name.
-- job:
-    name: neutron-grenade-multinode
-    parent: neutron-ovs-grenade-multinode
-
 - job:
     name: neutron-ovs-grenade-dvr-multinode
     parent: grenade-multinode
