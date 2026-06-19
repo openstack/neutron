@@ -59,6 +59,7 @@ from neutron.db import l3_hamode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
+from neutron.objects import floatingip as fip_obj
 from neutron.objects import network as network_obj
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base
@@ -4821,6 +4822,54 @@ class L3NatDBFloatingIpTestCaseWithDNS(L3BaseForSepTests, L3NatTestCaseMixin):
             self.DNS_DOMAIN, '')
         self.mock_admin_client.recordsets.delete.assert_called_with(
             in_addr_zone_name, in_addr_name)
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_disassociate_port_deletes_dns_db_row(self, mock_args):
+        """Verify FloatingIPDNS row is deleted on FIP disassociation."""
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns(
+                net_dns_domain=self.DNS_DOMAIN,
+                port_dns_name=self.DNS_NAME, assoc_port=True) as flip:
+            fake_recordset = {'id': '',
+                              'records': [flip['floating_ip_address']]}
+            self.mock_client.recordsets.list.return_value = [fake_recordset]
+
+            admin_ctx = context.get_admin_context()
+            dns_data = fip_obj.FloatingIPDNS.get_object(
+                admin_ctx, floatingip_id=flip['id'])
+            self.assertIsNotNone(dns_data)
+
+            data = {'floatingip': {'port_id': None}}
+            req = self.new_update_request('floatingips', data, flip['id'])
+            res = req.get_response(self._api_for_resource('floatingip'))
+            self.assertEqual(200, res.status_code)
+
+            dns_data = fip_obj.FloatingIPDNS.get_object(
+                admin_ctx, floatingip_id=flip['id'])
+            self.assertIsNone(dns_data)
+
+    @mock.patch(MOCK_PATH, **mock_config)
+    def test_floatingip_port_delete_deletes_dns_db_row(self, mock_args):
+        """Verify FloatingIPDNS row is deleted when port is deleted"""
+        cfg.CONF.set_override('dns_domain', self.DNS_DOMAIN)
+        with self._create_floatingip_with_dns(
+                net_dns_domain=self.DNS_DOMAIN,
+                port_dns_name=self.DNS_NAME, assoc_port=True) as flip:
+            fake_recordset = {'id': '',
+                              'records': [flip['floating_ip_address']]}
+            self.mock_client.recordsets.list.return_value = [fake_recordset]
+
+            admin_ctx = context.get_admin_context()
+            dns_data = fip_obj.FloatingIPDNS.get_object(
+                admin_ctx, floatingip_id=flip['id'])
+            self.assertIsNotNone(dns_data)
+
+            port_id = flip['port_id']
+            self._delete('ports', port_id)
+
+            dns_data = fip_obj.FloatingIPDNS.get_object(
+                admin_ctx, floatingip_id=flip['id'])
+            self.assertIsNone(dns_data)
 
     @mock.patch(MOCK_PATH, **mock_config)
     def test_floatingip_delete(self, mock_args):
