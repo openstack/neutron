@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Fixed a race condition in the ML2/OVN mechanism driver where a
+    nova instance rebuild could time out waiting for the
+    ``network-vif-plugged`` event. During a rebuild nova unplugs and quickly
+    replugs the VIF on the same chassis, so the ``Logical_Switch_Port`` may
+    never transition from DOWN to UP and ``LogicalSwitchPortUpdateUpEvent`` is
+    not fired. The ``PortBindingChassisUpdateEvent`` now also matches a port
+    being (re)bound to a chassis while the LSP stays up, emitting the required
+    port status update (and therefore the vif-plugged event).
