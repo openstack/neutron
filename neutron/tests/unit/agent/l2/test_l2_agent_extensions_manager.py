@@ -51,3 +51,9 @@ class TestL2AgentExtensionsManager(base.BaseTestCase):
         self.manager.delete_port(context, data)
         ext = self._get_extension()
         ext.delete_port.assert_called_once_with(context, data)
+
+    def test_handle_switch_restart(self):
+        self.manager.initialize(object(), 'fake_driver_type')
+        self.manager.handle_switch_restart()
+        ext = self._get_extension()
+        ext.handle_switch_restart.assert_called_once()

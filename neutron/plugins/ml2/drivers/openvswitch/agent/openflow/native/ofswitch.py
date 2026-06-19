@@ -143,7 +143,7 @@ class OpenFlowSwitchMixin:
             raise RuntimeError(m)
         finally:
             timer.cancel()
-            worker_thread.join()
+            worker_thread.join(timeout=timeout_sec)
 
         LOG.debug("ofctl request %(request)s result %(result)s",
                   {"request": msg, "result": result})

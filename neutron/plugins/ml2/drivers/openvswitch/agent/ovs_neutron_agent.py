@@ -2768,6 +2768,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             self.dvr_agent.reset_dvr_flows(
                 self.int_br, self.tun_br, self.phys_brs,
                 self.patch_int_ofport, self.patch_tun_ofport)
+        self.ext_manager.handle_switch_restart()
         # notify that OVS has restarted
         registry.publish(
             callback_resources.AGENT,

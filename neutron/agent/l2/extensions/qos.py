@@ -295,3 +295,6 @@ class QosAgentExtension(l2_extension.L2AgentExtension):
     def _process_reset_port(self, port):
         self.policy_map.clean_by_port(port)
         self.qos_driver.delete(port)
+
+    def handle_switch_restart(self):
+        self.qos_driver.handle_switch_restart()
