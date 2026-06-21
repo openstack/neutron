@@ -1059,8 +1059,8 @@ class NetworkCache:
 
     def put_port(self, port):
         network = self.get_network_by_id(port.network_id)
-        for index in range(len(network.ports)):
-            if network.ports[index].id == port.id:
+        for index, n_port in enumerate(network.ports):
+            if n_port.id == port.id:
                 network.ports[index] = port
                 break
         else:
@@ -1071,8 +1071,8 @@ class NetworkCache:
     def remove_port(self, port):
         network = self.get_network_by_port_id(port.id)
 
-        for index in range(len(network.ports)):
-            if network.ports[index] == port:
+        for index, n_port in enumerate(network.ports):
+            if n_port == port:
                 del network.ports[index]
                 del self.port_lookup[port.id]
                 break

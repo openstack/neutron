@@ -76,7 +76,6 @@ disable=
  unused-private-member,
 # "C" Coding convention violations
  consider-iterating-dictionary,
- consider-using-enumerate,
  invalid-name,
  missing-docstring,
  ungrouped-imports,

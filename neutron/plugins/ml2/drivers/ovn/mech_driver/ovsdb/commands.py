@@ -473,8 +473,8 @@ class ScheduleUnhostedGatewaysCommand(command.BaseCommand):
                 chassis_with_azs=self.chassis_with_azs))
         if existing_chassis != filtered_existing_chassis:
             first_diff = None
-            for i in range(len(filtered_existing_chassis)):
-                if existing_chassis[i] != filtered_existing_chassis[i]:
+            for i, e_chassis in enumerate(filtered_existing_chassis):
+                if existing_chassis[i] != e_chassis:
                     first_diff = i
                     break
             if first_diff is not None:

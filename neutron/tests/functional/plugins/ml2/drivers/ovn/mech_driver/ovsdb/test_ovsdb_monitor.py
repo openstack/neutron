@@ -586,8 +586,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # 3) Create two ports with the allowed address pairs set.
         hosts = ('ovs-host1', second_chassis_name)
         ports = []
-        for idx in range(len(hosts)):
-            ports.append(self.create_port(host=hosts[idx]))
+        for idx, host in enumerate(hosts):
+            ports.append(self.create_port(host=host))
             data = {'port': {'allowed_address_pairs': allowed_address_pairs}}
             req = self.new_update_request('ports', data, ports[idx]['id'])
             req.get_response(self.api)
@@ -610,9 +610,9 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
         # 6) For both ports, bind vip on parent and check parent hostname in
         # DBs
-        for idx in range(len(ports)):
+        for idx, port in enumerate(ports):
             # Set port binding to the first port, and update the chassis
-            self._set_port_binding_virtual_parent(vip['id'], ports[idx]['id'])
+            self._set_port_binding_virtual_parent(vip['id'], port['id'])
             self._check_port_and_port_binding_revision_number(vip['id'])
 
             # Check if the parent hostname has been updated in OVN and DB
