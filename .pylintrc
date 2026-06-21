@@ -45,7 +45,6 @@ suggestion-mode=yes
 # with a local disable)
 disable=
 # "F" Fatal errors that prevent further processing
- import-error,
 # "I" Informational noise
 # "E" Error for important programming issues (likely bugs)
  access-member-before-definition,
@@ -67,7 +66,6 @@ disable=
  redefined-outer-name,
  signature-differs,
  super-init-not-called,
- unpacking-non-sequence,
  unused-argument,
  unused-import,
  unused-variable,
@@ -99,7 +97,6 @@ disable=
  too-many-instance-attributes,
  too-many-lines,
  too-many-locals,
- too-many-nested-blocks,
  too-many-positional-arguments,
  too-many-public-methods,
  too-many-return-statements,

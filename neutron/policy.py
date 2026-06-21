@@ -216,35 +216,39 @@ def _build_match_rule(action, target, pluralized):
 
     resource, enforce_attr_based_check = get_resource_and_action(
         action, pluralized)
-    if enforce_attr_based_check:
-        # assigning to variable with short name for improving readability
-        res_map = attributes.RESOURCES
-        if resource in res_map:
-            for attribute_name in res_map[resource]:
-                if _is_attribute_explicitly_set(attribute_name,
-                                                res_map[resource],
-                                                target, action):
-                    attribute = res_map[resource][attribute_name]
-                    if 'enforce_policy' in attribute:
-                        attr_rule = policy.RuleCheck(
-                            'rule', f'{action}:{attribute_name}')
-                        # Build match entries for sub-attributes
-                        if _should_validate_sub_attributes(
-                                attribute, target[attribute_name]):
-                            attr_rule = policy.AndCheck(
-                                [attr_rule, _build_subattr_match_rule(
-                                    attribute_name, attribute,
-                                    action, target)])
+    if not enforce_attr_based_check:
+        return match_rule
+    # assigning to variable with short name for improving readability
+    res_map = attributes.RESOURCES
+    if resource not in res_map:
+        return match_rule
+    for attribute_name in res_map[resource]:
+        if not _is_attribute_explicitly_set(attribute_name,
+                                            res_map[resource],
+                                            target, action):
+            continue
+        attribute = res_map[resource][attribute_name]
+        if 'enforce_policy' not in attribute:
+            continue
+        attr_rule = policy.RuleCheck(
+            'rule', f'{action}:{attribute_name}')
+        # Build match entries for sub-attributes
+        if _should_validate_sub_attributes(
+                attribute, target[attribute_name]):
+            attr_rule = policy.AndCheck(
+                [attr_rule, _build_subattr_match_rule(
+                    attribute_name, attribute,
+                    action, target)])
 
-                        attribute_value = target[attribute_name]
-                        if isinstance(attribute_value, list):
-                            subattr_rule = _build_list_of_subattrs_rule(
-                                attribute_name, attribute_value, action)
-                            if subattr_rule:
-                                attr_rule = policy.AndCheck(
-                                    [attr_rule, subattr_rule])
+        attribute_value = target[attribute_name]
+        if isinstance(attribute_value, list):
+            subattr_rule = _build_list_of_subattrs_rule(
+                attribute_name, attribute_value, action)
+            if subattr_rule:
+                attr_rule = policy.AndCheck(
+                    [attr_rule, subattr_rule])
 
-                        match_rule = policy.AndCheck([match_rule, attr_rule])
+        match_rule = policy.AndCheck([match_rule, attr_rule])
     return match_rule
 
 
