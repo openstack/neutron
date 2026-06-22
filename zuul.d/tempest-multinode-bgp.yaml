@@ -40,7 +40,8 @@
           - compute1
 
 - job:
-    name: neutron-ovn-bgp-tempest-multinode
+    name: neutron-ovn-bgp-tempest-multinode-base
+    abstract: true
     parent: neutron-tempest-plugin-ovn
     nodeset: neutron-five-node-resolute-bgp
     timeout: 10800
@@ -51,16 +52,12 @@
       devstack_localrc:
         ENABLE_TLS: True
         PUBLIC_SUBNET_ENABLE_DHCP: True
-        LIBVIRT_TYPE: kvm
-        FRR_USE_BFD: True
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: v26.03.2
+        OVS_BRANCH: v3.7.1
         ENABLE_FRR: True
-        FRR_BGP_ROUTER_ID: '172.24.4.1'
-        FRR_BGP_IPV6_SRC: '2001:db8::2'
-        OVN_AGENT_EXTENSIONS: 'metadata,ovn-bgp'
-        NEUTRON_BGP_PEER_BRIDGES: 'br-bgp-0,br-bgp-1'
         Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false
       devstack_services:
-        q-ovn-bgp: true
         tls-proxy: true
         tempest: false
       devstack_plugins:
@@ -207,17 +204,13 @@
       zbgp_compute:
         devstack_localrc:
           <<: *subnode_localrc
-          # Compute1-specific overrides
           Q_PLUGIN: ml2
           NOVA_VNC_ENABLED: true
           ENABLE_CHASSIS_AS_GW: false
           LIBVIRT_TYPE: kvm
-          FRR_USE_BFD: True
+          OVN_BRANCH: v26.03.2
+          OVS_BRANCH: v3.7.1
           ENABLE_FRR: True
-          FRR_BGP_ROUTER_ID: '172.24.4.2'
-          FRR_BGP_IPV6_SRC: '2001:db8::3'
-          OVN_AGENT_EXTENSIONS: 'metadata,ovn-bgp'
-          NEUTRON_BGP_PEER_BRIDGES: 'br-bgp-0,br-bgp-1'
           Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false
         devstack_plugins:
           neutron: https://opendev.org/openstack/neutron
@@ -257,3 +250,73 @@
             "/$NEUTRON_CORE_PLUGIN_CONF":
               ovn:
                 enable_distributed_floating_ip: True
+
+- job:
+    name: neutron-ovn-bgp-tempest-multinode
+    parent: neutron-ovn-bgp-tempest-multinode-base
+    vars:
+      devstack_localrc:
+        FRR_USE_BFD: True
+        FRR_BGP_ROUTER_ID: '172.24.4.1'
+        FRR_BGP_IPV6_SRC: '2001:db8::2'
+        OVN_AGENT_EXTENSIONS: 'metadata,ovn-bgp'
+        NEUTRON_BGP_PEER_BRIDGES: 'br-bgp-0,br-bgp-1'
+      devstack_services:
+        q-ovn-bgp: true
+    group-vars:
+      zbgp_compute:
+        devstack_localrc:
+          FRR_USE_BFD: True
+          FRR_BGP_ROUTER_ID: '172.24.4.2'
+          FRR_BGP_IPV6_SRC: '2001:db8::3'
+          OVN_AGENT_EXTENSIONS: 'metadata,ovn-bgp'
+          NEUTRON_BGP_PEER_BRIDGES: 'br-bgp-0,br-bgp-1'
+
+- job:
+    name: neutron-ovn-evpn-tempest-multinode
+    parent: neutron-ovn-bgp-tempest-multinode-base
+    nodeset: neutron-five-node-resolute-bgp
+    vars:
+      enable_evpn: true
+      # OVN discovers remote VTEPs from FDB entries and defaults
+      # to DEFAULT_VXLAN_PORT (4789) when no port is specified.
+      # The EVPN tunnel must match this port for bindings to be
+      # created. Infrastructure tunnels use evpn_vxlan_port + 1.
+      # Per-VNI spine dataplane is provisioned dynamically by
+      # tempest (EVPNVNIProvisioner).
+      evpn_vxlan_port: 4789
+      evpn_loopback_ip: '99.98.2.1'
+      devstack_localrc:
+        FRR_USE_EVPN: True
+        OVN_AGENT_EXTENSIONS: 'metadata,ovn-evpn'
+        OVN_EVPN_BGP_AS: 64999
+        OVN_EVPN_BGP_LOCAL_INTERFACE: br-bgp-0
+        OVN_EVPN_LOCAL_IP: "{{ evpn_loopback_ip }}"
+        OVN_EVPN_VXLAN_PORT: "{{ evpn_vxlan_port }}"
+      devstack_services:
+        q-ovn-evpn: true
+    group-vars:
+      tempest:
+        tempest_concurrency: 1
+        tempest_test_regex: "\
+          (^neutron_tempest_plugin.scenario.test_evpn)|\
+          (^neutron_tempest_plugin.api.test_evpn)"
+        tempest_exclude_regex: ""
+        # Spine VTEP/datapath IP (lo). Activates EVPNVNIProvisioner
+        # so scenario tests allocate VNIs and create per-VNI VRF/VXLAN.
+        devstack_local_conf:
+          test-config:
+            $TEMPEST_CONFIG:
+              neutron_plugin_options:
+                evpn_vtep_ip: 172.31.1.1
+                evpn_datapath_ip: 172.31.1.1
+                evpn_vxlan_port: 4789
+      zbgp_compute:
+        evpn_loopback_ip: '99.98.2.2'
+        devstack_localrc:
+          FRR_USE_EVPN: True
+          OVN_AGENT_EXTENSIONS: 'metadata,ovn-evpn'
+          OVN_EVPN_BGP_AS: 64999
+          OVN_EVPN_BGP_LOCAL_INTERFACE: br-bgp-0
+          OVN_EVPN_LOCAL_IP: "{{ evpn_loopback_ip }}"
+          OVN_EVPN_VXLAN_PORT: "{{ evpn_vxlan_port }}"

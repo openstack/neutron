@@ -27,6 +27,11 @@
       ansible.builtin.shell: |
         vtysh -c "show bgp summary" 2>&1
         vtysh -c "show bfd peers" 2>&1
+        {% if enable_evpn | default(false) %}
+        vtysh -c "show bgp l2vpn evpn" 2>&1
+        vtysh -c "show bgp l2vpn evpn summary" 2>&1
+        vtysh -c "show evpn vni" 2>&1
+        {% endif %}
       register: frr_state
       ignore_errors: true
 
@@ -38,6 +43,25 @@
       when: frr_state is not skipped
       ignore_errors: true
 
+    - name: Collect EVPN-specific diagnostics
+      when: enable_evpn | default(false)
+      block:
+        - name: Dump EVPN-related interfaces
+          ansible.builtin.shell: |
+            ip link show type vxlan 2>&1
+            ip link show type bridge 2>&1
+            ip link show type vrf 2>&1
+          register: evpn_interfaces
+          ignore_errors: true
+
+        - name: Save EVPN-related interfaces
+          ansible.builtin.copy:
+            content: "{{ evpn_interfaces.stdout | default(evpn_interfaces.stderr | default('command failed')) }}"
+            dest: /var/log/openvswitch/evpn_interfaces.txt
+            mode: '0644'
+          when: evpn_interfaces is not skipped
+          ignore_errors: true
+
 - name: Collect diagnostics from spine and leafs
   hosts: spine,leafs
   become: true
@@ -47,6 +71,10 @@
       ansible.builtin.shell: |
         vtysh -c "show bgp summary" 2>&1
         vtysh -c "show bfd peers" 2>&1
+        {% if enable_evpn | default(false) %}
+        vtysh -c "show bgp l2vpn evpn" 2>&1
+        vtysh -c "show bgp l2vpn evpn summary" 2>&1
+        {% endif %}
       register: frr_state
       ignore_errors: true
 

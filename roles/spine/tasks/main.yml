@@ -167,6 +167,39 @@
   when: ansible_default_ipv4.prefix | int == 32
   changed_when: true
 
+- name: Prepare spine host for EVPN
+  become: true
+  when: enable_evpn | default(false)
+  block:
+    - name: Load VRF kernel module
+      ansible.builtin.shell: |
+        modprobe vrf
+
+    - name: Persist VRF module load on boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/vrf.conf
+        content: |
+          vrf
+        mode: "0644"
+
+    - name: Allow incoming EVPN VXLAN traffic
+      ansible.builtin.shell: |
+        iptables -I INPUT 1 -p udp --dport {{ evpn_vxlan_port }} -j ACCEPT
+
+    # Per-VNI traffic flows through VRF-enslaved interfaces
+    # (br-N). Without l3mdev_accept, return TCP/UDP packets
+    # arriving on VRF interfaces cannot be matched to sockets
+    # opened in the main namespace (e.g. tempest SSH).
+    - name: Allow main-namespace sockets to use VRF interfaces
+      ansible.posix.sysctl:
+        name: "{{ item }}"
+        value: "1"
+        sysctl_set: true
+        state: present
+      loop:
+        - net.ipv4.tcp_l3mdev_accept
+        - net.ipv4.udp_l3mdev_accept
+
 # FRR is not started here because the controller-side BGP peer
 # interfaces (br-bgp-*, VXLAN tunnels) are not created until
 # devstack runs local.sh. Starting FRR before all peers exist

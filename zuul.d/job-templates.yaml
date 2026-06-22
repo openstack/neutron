@@ -118,6 +118,7 @@
         - neutron-ovn-tempest-ovs-release-with-oslo-master
         - ironic-tempest-ovn-uefi-ipmi-pxe
         - neutron-ovn-bgp-tempest-multinode
+        - neutron-ovn-evpn-tempest-multinode
     experimental:
       jobs: *neutron-periodic-jobs
 

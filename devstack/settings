@@ -20,3 +20,4 @@ FRR_SYSTEMD_SERVICE="frr.service"
 FRR_CONF_FILE=$FRR_CONF_DIR/frr.conf
 FRR_DAEMON_CONF_FILE=$FRR_CONF_DIR/daemons
 FRR_USE_BFD=$(trueorfalse False FRR_USE_BFD)
+FRR_USE_EVPN=$(trueorfalse False FRR_USE_EVPN)

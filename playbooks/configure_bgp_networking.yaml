@@ -58,6 +58,10 @@
         vlan_prefix: "300"
     vxlan_key_prefix: "{{ peer_config[inventory_hostname].vxlan_key_prefix }}"
     vlan_prefix: "{{ peer_config[inventory_hostname].vlan_prefix }}"
+    # Infrastructure tunnels use a different port than the EVPN overlay
+    # to avoid conflicts with OVN's DEFAULT_VXLAN_PORT used for remote
+    # VTEP discovery.
+    infra_vxlan_port: "{{ evpn_vxlan_port | default(4789) | int + 1 }}"
   tasks:
     - name: Create local.sh script to create tunnels
       become: true
@@ -86,9 +90,12 @@
             sudo ip link set dev $veth_in up
             sudo ip link set dev $veth_bgp up
 
+            # Use a different port for infrastructure tunnels to keep
+            # the EVPN VXLAN port free for the overlay.
             sudo ovs-vsctl add-port br-infra $tunnel_iface \
                  -- set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
                     options:key={{ vxlan_key_prefix }}${loop_index} options:local_ip=$local_ip \
+                    options:dst_port={{ infra_vxlan_port }} \
                  -- set Port $tunnel_iface tag=$vlan_tag
 
             sudo ovs-vsctl add-br $bgp_bridge
@@ -111,6 +118,55 @@
           {% endfor %}
 
           sudo iptables -I FORWARD 1 -i br-ex -j ACCEPT
+
+          {% if enable_evpn | default(false) %}
+          # EVPN: add loopback IP for VTEP identification.
+          # evpn_loopback_ip is set per-node in the Zuul job definition.
+          sudo ip addr add {{ evpn_loopback_ip }}/32 dev lo
+
+          # EVPN: allow incoming VXLAN traffic on br-bgp interfaces.
+          sudo iptables -I INPUT 1 -i br-bgp-0 -j ACCEPT
+          sudo iptables -I INPUT 1 -i br-bgp-1 -j ACCEPT
+
+          # EVPN: provision-time base BGP so every compute advertises its
+          # VTEP /32 before any LRP is bound. The OVN EVPN agent only adds
+          # VRF/EVPN blocks on LRP bind; without this, leaf peers stay Idle.
+          # Matches neutron.agent.linux.evpn_router.frr.templates BGP_*.
+          {% set evpn_asn = evpn_bgp_as | default(64999) %}
+          {% set evpn_peer = evpn_bgp_local_interface | default('br-bgp-0') %}
+          sudo tee /etc/frr/frr.conf > /dev/null <<'EVPN_FRR_EOF'
+          frr defaults traditional
+          hostname {{ inventory_hostname }}
+          log file /var/log/frr/frr.log informational
+          log timestamp precision 3
+          service integrated-vtysh-config
+          !
+          router bgp {{ evpn_asn }}
+           bgp router-id {{ evpn_loopback_ip }}
+           no bgp ebgp-requires-policy
+           neighbor {{ evpn_peer }} interface remote-as internal
+           no neighbor {{ evpn_peer }} capability link-local
+           !
+           address-family ipv4 unicast
+            neighbor {{ evpn_peer }} activate
+            redistribute connected
+           exit-address-family
+           !
+           address-family ipv6 unicast
+            neighbor {{ evpn_peer }} activate
+            redistribute connected
+           exit-address-family
+           !
+           address-family l2vpn evpn
+            neighbor {{ evpn_peer }} activate
+            advertise-all-vni
+            advertise-svi-ip
+           exit-address-family
+          exit
+          !
+          EVPN_FRR_EOF
+          sudo chmod 644 /etc/frr/frr.conf
+          {% endif %}
 
           # Ensure the log dir and file are writable by bgpd (runs as frr).
           sudo install -d -o frr -g frr -m 755 /var/log/frr
@@ -145,7 +201,8 @@
         ovs-vsctl --may-exist add-br br-infra -- \
         add-port br-infra $tunnel_iface -- \
         set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
-        options:key={{ vxlan_key_prefix }}{{ item.0 }} options:local_ip=$local_ip -- \
+        options:key={{ vxlan_key_prefix }}{{ item.0 }} options:local_ip=$local_ip \
+        options:dst_port={{ infra_vxlan_port }} -- \
         set Port $tunnel_iface tag=$vlan_tag -- \
         add-port br-infra $port_iface -- \
         set Interface $port_iface type=internal -- \
@@ -162,6 +219,8 @@
 - name: Create tunnels between the spine and the leafs
   hosts: spine
   become: true
+  vars:
+    infra_vxlan_port: "{{ evpn_vxlan_port | default(4789) | int + 1 }}"
   tasks:
     - name: "Create VXLAN tunnels from the spine to {{ item.1 }}"
       ansible.builtin.shell: |
@@ -176,7 +235,8 @@
         ovs-vsctl --may-exist add-br br-infra -- \
         add-port br-infra $tunnel_iface -- \
         set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
-        options:key=1001{{ item.0 }} options:local_ip=$local_ip -- \
+        options:key=1001{{ item.0 }} options:local_ip=$local_ip \
+        options:dst_port={{ infra_vxlan_port }} -- \
         set Port $tunnel_iface tag=$vlan_tag -- \
         add-port br-infra $port_iface -- \
         set Interface $port_iface type=internal -- \
@@ -201,7 +261,8 @@
         ovs-vsctl --may-exist add-br br-infra -- \
         add-port br-infra $tunnel_iface -- \
         set Interface $tunnel_iface type=vxlan options:remote_ip=$remote_ip \
-        options:key=1001{{ item.0 }} options:local_ip=$local_ip -- \
+        options:key=1001{{ item.0 }} options:local_ip=$local_ip \
+        options:dst_port={{ infra_vxlan_port }} -- \
         set Port $tunnel_iface tag=$vlan_tag -- \
         add-port br-infra $port_iface -- \
         set Interface $port_iface type=internal -- \

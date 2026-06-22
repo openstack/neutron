@@ -37,6 +37,15 @@ router bgp 65000
     neighbor downlink prefix-list only-host-prefixes in
     neighbor downlink route-map locally-originated-only out
   exit-address-family
+{% if enable_evpn | default(false) %}
+
+  address-family l2vpn evpn
+    neighbor downlink activate
+    neighbor downlink route-reflector-client
+    advertise-all-vni
+  exit-address-family
+{% endif %}
+exit
 
 route-map downlink-in deny 5
  match ip address prefix-list leaf-underlay-ips
