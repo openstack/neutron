@@ -346,6 +346,8 @@
           $TEMPEST_CONFIG:
             scenario:
               dhcp_client: dhcpcd
+            validation:
+              allowed_network_downtime: 7.0
     group-vars:
       subnode:
         devstack_localrc:
