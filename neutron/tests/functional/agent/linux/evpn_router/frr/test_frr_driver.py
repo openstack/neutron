@@ -13,9 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import platform
-import unittest
-
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux.evpn_router.frr import exceptions as frr_exceptions
@@ -27,7 +24,6 @@ from neutron.common import utils as common_utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 from neutron_lib import exceptions
-from oslo_serialization import jsonutils
 
 
 class FrrVtyshExecutorNamespaced(frr_driver.FrrVtyshExecutor):
@@ -44,24 +40,6 @@ class FrrVtyshExecutorNamespaced(frr_driver.FrrVtyshExecutor):
     @property
     def _vtysh_base_cmd(self) -> list[str]:
         return ['vtysh', '-N', self._namespace]
-
-
-def _is_centos9_frr85():
-    """Return True on CentOS 9 with FRR 8.5 (LP#2156642)."""
-    try:
-        info = platform.freedesktop_os_release()
-    except OSError:
-        return False
-    if info.get('ID') != 'centos' or not info.get(
-            'VERSION_ID', '').startswith('9'):
-        return False
-    try:
-        executor = FrrVtyshExecutorNamespaced("")
-        output = executor.execute_cli_cmd('show version json')
-        frr_version = jsonutils.loads(output).get('version', '')
-        return frr_version.startswith('8.5')
-    except Exception:
-        return False
 
 
 class NamespacedVRFHandler(interface.EVPNRouterVrfHandler):
@@ -451,8 +429,6 @@ class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
         assert_routes(self.ns_b, table_id=vni, present=advertised_routes_v6,
                       ip_version=6)
 
-    @unittest.skipIf(_is_centos9_frr85(),
-                     'CentOS 9 with FRR 8.5 VRF deletion bug LP#2156642')
     def test_multiple_routers_then_delete_one(self):
         vni_1 = 10
         vni_2 = 20
