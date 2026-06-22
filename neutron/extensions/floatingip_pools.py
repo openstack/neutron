@@ -48,4 +48,3 @@ class FloatingIPPoolPluginBase(metaclass=abc.ABCMeta):
                              sorts=None, limit=None, marker=None,
                              page_reverse=False):
         """List all floating ip pools."""
-        pass

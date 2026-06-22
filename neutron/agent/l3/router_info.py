@@ -103,7 +103,6 @@ class BaseRouterInfo(metaclass=abc.ABCMeta):
 
         :param agent: Passes the agent in order to send RPC messages.
         """
-        pass
 
     def get_ex_gw_port(self):
         return self.router.get('gw_port')

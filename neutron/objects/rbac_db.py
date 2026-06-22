@@ -163,7 +163,6 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                                     payload=None):
         """Callback to handle RBAC_POLICY, BEFORE_CREATE callback.
         """
-        pass
 
     @classmethod
     def validate_rbac_policy_update(cls, resource, event, trigger,

@@ -239,12 +239,10 @@ class L3Scheduler(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def _choose_router_agent(self, plugin, context, candidates):
         """Choose an agent from candidates based on a specific policy."""
-        pass
 
     @abc.abstractmethod
     def _choose_router_agents_for_ha(self, plugin, context, candidates):
         """Choose agents from candidates based on a specific policy."""
-        pass
 
     def _get_num_of_agents_for_ha(self, candidates_count):
         return (min(self.max_ha_agents, candidates_count) if self.max_ha_agents

@@ -244,8 +244,6 @@ class DNSForwarderAgentExtension(l2_agent_extension.L2AgentExtension):
 
     def handle_port(self, context, data):
         """DNSForwarder do nothing when port is updated/created"""
-        pass
 
     def delete_port(self, context, data):
         """DNSForwarder do nothing when port is deleted"""
-        pass

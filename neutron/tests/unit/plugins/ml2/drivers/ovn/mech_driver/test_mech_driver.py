@@ -3832,7 +3832,6 @@ class TestOVNMechanismDriverNetworksV2(test_plugin.TestMl2NetworksV2,
         to allow OVS Agents and thus OVN Mechanism Driver to allow
         updation of Segmentation IDs. Till then the test  needs to be skipped
         """
-        pass
 
     def test__update_segmentation_id_ports(self):
         """Skip the Update Segmentation ID tests
@@ -3842,7 +3841,6 @@ class TestOVNMechanismDriverNetworksV2(test_plugin.TestMl2NetworksV2,
         to allow OVS Agents and thus OVN Mechanism Driver to allow
         updation of Segmentation IDs. Till then the test  needs to be skipped
         """
-        pass
 
 
 class TestOVNMechanismDriverSubnetsV2(test_plugin.TestMl2SubnetsV2,

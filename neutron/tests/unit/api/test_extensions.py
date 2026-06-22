@@ -754,7 +754,6 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
             Extensions will not be loaded when this plugin is used.
             """
-            pass
 
         plugin_info = {lib_const.CORE: ExtensionUnawarePlugin()}
         ext_mgr = extensions.PluginAwareExtensionManager('', plugin_info)
@@ -807,7 +806,6 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
 
             This will work with any plugin implementing NeutronPluginBase
             """
-            pass
         stub_plugin = ext_stubs.StubPlugin(supported_extensions=["e1"])
         plugin_info = {lib_const.CORE: stub_plugin}
 

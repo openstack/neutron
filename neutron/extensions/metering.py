@@ -54,7 +54,6 @@ class MeteringPluginBase(service_base.ServicePluginBase,
     @abc.abstractmethod
     def create_metering_label(self, context, metering_label):
         """Create a metering label."""
-        pass
 
     def update_metering_label(self, context, id, metering_label):
         """Update a metering label."""
@@ -63,24 +62,20 @@ class MeteringPluginBase(service_base.ServicePluginBase,
     @abc.abstractmethod
     def delete_metering_label(self, context, label_id):
         """Delete a metering label."""
-        pass
 
     @abc.abstractmethod
     def get_metering_label(self, context, label_id, fields=None):
         """Get a metering label."""
-        pass
 
     @abc.abstractmethod
     def get_metering_labels(self, context, filters=None, fields=None,
                             sorts=None, limit=None, marker=None,
                             page_reverse=False):
         """List all metering labels."""
-        pass
 
     @abc.abstractmethod
     def create_metering_label_rule(self, context, metering_label_rule):
         """Create a metering label rule."""
-        pass
 
     def update_metering_label_rule(self, context, id, metering_label_rule):
         """Update a metering label rule."""
@@ -89,16 +84,13 @@ class MeteringPluginBase(service_base.ServicePluginBase,
     @abc.abstractmethod
     def get_metering_label_rule(self, context, rule_id, fields=None):
         """Get a metering label rule."""
-        pass
 
     @abc.abstractmethod
     def delete_metering_label_rule(self, context, rule_id):
         """Delete a metering label rule."""
-        pass
 
     @abc.abstractmethod
     def get_metering_label_rules(self, context, filters=None, fields=None,
                                  sorts=None, limit=None, marker=None,
                                  page_reverse=False):
         """List all metering label rules."""
-        pass

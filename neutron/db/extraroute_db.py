@@ -247,4 +247,3 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 
 class ExtraRoute_db_mixin(ExtraRoute_dbonly_mixin, l3_db.L3_NAT_db_mixin):
     """Mixin class to support extra route configuration on router with rpc."""
-    pass

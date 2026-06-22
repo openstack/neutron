@@ -119,16 +119,13 @@ class FirewallDriver(metaclass=abc.ABCMeta):
 
     def filter_defer_apply_on(self):
         """Defer application of filtering rule."""
-        pass
 
     def filter_defer_apply_off(self):
         """Turn off deferral of rules and apply the rules now."""
-        pass
 
     @property
     def ports(self):
         """Returns filtered ports."""
-        pass
 
     @contextlib.contextmanager
     def defer_apply(self):
@@ -158,7 +155,6 @@ class FirewallDriver(metaclass=abc.ABCMeta):
 
     def process_trusted_ports(self, port_ids):
         """Process ports that are trusted and shouldn't be filtered."""
-        pass
 
     def remove_trusted_ports(self, port_ids):
         pass

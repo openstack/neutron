@@ -358,7 +358,6 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
         For example: return ('flat', ...). You can also refer to the
         configuration the given agent exposes.
         """
-        pass
 
     @abc.abstractmethod
     def get_mappings(self, agent):
@@ -366,7 +365,6 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
 
         For example: agent['configurations'].get('bridge_mappings', {}).
         """
-        pass
 
     def physnet_in_mappings(self, physnet, mappings):
         """Is the physical network part of the given mappings?"""

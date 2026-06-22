@@ -454,4 +454,3 @@ class Service(n_rpc.Service):
     def report_state(self):
         """Update the state of this service."""
         # Todo(gongysh) report state to neutron server
-        pass

@@ -40,7 +40,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        in :file:`neutron/api/v2/attributes.py`.  All keys will
                        be populated.
         """
-        pass
 
     @abc.abstractmethod
     def update_subnet(self, context, id, subnet):
@@ -54,7 +53,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        :obj:`RESOURCE_ATTRIBUTE_MAP` object in
                        :file:`neutron/api/v2/attributes.py`.
         """
-        pass
 
     @abc.abstractmethod
     def get_subnet(self, context, id, fields=None):
@@ -68,7 +66,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        :file:`neutron/api/v2/attributes.py`. Only these fields
                        will be returned.
         """
-        pass
 
     @abc.abstractmethod
     def get_subnets(self, context, filters=None, fields=None,
@@ -94,7 +91,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        :file:`neutron/api/v2/attributes.py`. Only these fields
                        will be returned.
         """
-        pass
 
     def get_subnets_count(self, context, filters=None):
         """Return the number of subnets.
@@ -125,7 +121,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
         :param context: neutron api request context
         :param id: UUID representing the subnet to delete.
         """
-        pass
 
     def create_subnetpool(self, context, subnetpool):
         """Create a subnet pool.
@@ -180,7 +175,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                         be populated.
 
         """
-        pass
 
     @abc.abstractmethod
     def update_network(self, context, id, network):
@@ -194,7 +188,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                         :obj:`RESOURCE_ATTRIBUTE_MAP` object in
                         :file:`neutron/api/v2/attributes.py`.
         """
-        pass
 
     @abc.abstractmethod
     def get_network(self, context, id, fields=None):
@@ -208,7 +201,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        :file:`neutron/api/v2/attributes.py`. Only these fields
                        will be returned.
         """
-        pass
 
     @abc.abstractmethod
     def get_networks(self, context, filters=None, fields=None,
@@ -234,7 +226,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        :file:`neutron/api/v2/attributes.py`. Only these fields
                        will be returned.
         """
-        pass
 
     def get_networks_count(self, context, filters=None):
         """Return the number of networks.
@@ -265,7 +256,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
         :param context: neutron api request context
         :param id: UUID representing the network to delete.
         """
-        pass
 
     @abc.abstractmethod
     def create_port(self, context, port):
@@ -280,7 +270,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                      :file:`neutron/api/v2/attributes.py`.  All keys will be
                      populated.
         """
-        pass
 
     @abc.abstractmethod
     def update_port(self, context, id, port):
@@ -293,7 +282,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                      'allow_put' as listed in the :obj:`RESOURCE_ATTRIBUTE_MAP`
                      object in :file:`neutron/api/v2/attributes.py`.
         """
-        pass
 
     @abc.abstractmethod
     def get_port(self, context, id, fields=None):
@@ -307,7 +295,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        :file:`neutron/api/v2/attributes.py`. Only these fields
                        will be returned.
         """
-        pass
 
     @abc.abstractmethod
     def get_ports(self, context, filters=None, fields=None,
@@ -331,7 +318,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
                        :file:`neutron/api/v2/attributes.py`. Only these fields
                        will be returned.
         """
-        pass
 
     def get_ports_count(self, context, filters=None):
         """Return the number of ports.
@@ -361,7 +347,6 @@ class NeutronPluginBaseV2(base_services.WorkerBase, metaclass=abc.ABCMeta):
         :param context: neutron api request context
         :param id: UUID representing the port to delete.
         """
-        pass
 
     def start_rpc_listeners(self):
         """Start the RPC listeners.

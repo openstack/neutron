@@ -64,21 +64,18 @@ class Manager(periodic_task.PeriodicTasks, metaclass=ManagerMeta):
         Child classes should override this method.
 
         """
-        pass
 
     def after_start(self):
         """Handler post initialization stuff.
 
         Child classes can override this method.
         """
-        pass
 
     def stop(self):
         """Handle stop.
 
         Child classes can override this method.
         """
-        pass
 
 
 def validate_pre_plugin_load():
