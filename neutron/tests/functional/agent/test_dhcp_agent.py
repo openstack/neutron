@@ -16,6 +16,7 @@
 import copy
 import functools
 import os.path
+import shutil
 import time
 import unittest
 from unittest import mock
@@ -47,6 +48,21 @@ from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
 
 LOG = logging.getLogger(__name__)
+
+
+def _dhclient_available():
+    """Check if dhclient is available on the system."""
+    return shutil.which('dhclient') is not None
+
+
+def skip_if_dhclient_not_available(f):
+    """Skip test if dhclient is not available on the system."""
+    @functools.wraps(f)
+    def wrapper(self, *args, **kwargs):
+        if not _dhclient_available():
+            self.skipTest("dhclient is not available")
+        return f(self, *args, **kwargs)
+    return wrapper
 
 
 class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
@@ -327,6 +343,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         dev = ip_lib.IPDevice(iface_name, network.namespace)
         self.assertEqual(789, dev.link.mtu)
 
+    @skip_if_dhclient_not_available
     def test_good_address_allocation(self):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)
@@ -334,6 +351,7 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         self._plug_port_for_dhcp_request(network, port)
         self.assert_good_allocation_for_port(network, port)
 
+    @skip_if_dhclient_not_available
     def test_bad_address_allocation(self):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)

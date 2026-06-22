@@ -679,14 +679,11 @@
         NOVNC_FROM_PACKAGE: false
 
 - job:
-    name: neutron-ovn-tempest-ovs-master-centos-9-stream
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and CentOS 9-Stream
+    name: neutron-ovn-tempest-ovs-master-centos-stream
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and CentOS Stream latest
     parent: neutron-ovn-tempest-ovs-master
-    nodeset: devstack-single-node-centos-9-stream
+    nodeset: devstack-single-node-centos-10-stream
     vars:
-      devstack_localrc:
-        # NOTE(ykarel) remove python3 override with 10-stream switch
-        PYTHON3_VERSION: 3.12
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'
         '{{ devstack_base_dir }}/data/ovn': 'logs'
@@ -696,9 +693,9 @@
 - job:
     name: neutron-ovs-tempest-fips
     parent: neutron-ovs-tempest-base
-    nodeset: devstack-single-node-centos-9-stream
+    nodeset: devstack-single-node-centos-10-stream
     description: |
-      Scenario testing for a FIPS enabled Centos 9 system
+      Scenario testing for a FIPS enabled Centos 10 system
     pre-run: playbooks/enable-fips.yaml
     vars:
       nslookup_target: 'opendev.org'
@@ -706,9 +703,6 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
-      devstack_localrc:
-        # NOTE(ykarel) remove python3 override with 10-stream switch
-        PYTHON3_VERSION: 3.12
       devstack_local_conf:
         test-config:
           "$TEMPEST_CONFIG":
@@ -718,16 +712,13 @@
 - job:
     name: neutron-ovn-tempest-ovs-release-fips
     parent: neutron-ovn-tempest-ovs-release
-    nodeset: devstack-single-node-centos-9-stream
+    nodeset: devstack-single-node-centos-10-stream
     description: |
-      Scenario testing for a FIPS enabled Centos 9 system
+      Scenario testing for a FIPS enabled Centos 10 system
     pre-run: playbooks/enable-fips.yaml
     vars:
       nslookup_target: 'opendev.org'
       configure_swap_size: 4096
-      devstack_localrc:
-        # NOTE(ykarel) remove python3 override with 10-stream switch
-        PYTHON3_VERSION: 3.12
       devstack_local_conf:
         test-config:
           "$TEMPEST_CONFIG":
