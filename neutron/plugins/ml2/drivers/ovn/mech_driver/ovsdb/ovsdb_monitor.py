@@ -19,6 +19,7 @@ from neutron_lib import constants as n_const
 from neutron_lib import context as neutron_context
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log
@@ -222,6 +223,54 @@ class ChassisEvent(row_event.RowEvent):
         self.handle_ha_chassis_group_changes(event, row, old)
 
 
+class WaitForChassisNbCfgEvent(utils.TimedOnetimeEvent):
+    """Wait for a destination chassis to reach a specific nb_cfg threshold.
+
+    During live migration, after ovn-controller sets additional_chassis
+    on the Port_Binding (meaning it detected the TAP device), we wait for
+    the destination Chassis_Private.nb_cfg to reach at least the current
+    NB_Global.nb_cfg. This ensures ovn-controller has completed a full
+    processing cycle and the OpenFlow rules for the migrating port are
+    fully written before we signal the port as UP to Nova.
+
+    This event must be GLOBAL so it is dispatched regardless of the hash
+    ring winner for the Chassis_Private row. Without GLOBAL, a different
+    worker could win the hash ring for the Chassis_Private update, and
+    this event (registered on the worker that processed the Port_Binding
+    update) would never fire. Since this event is ONETIME and dynamically
+    registered on a single handler, only one worker will ever execute it.
+
+    The hardcoded timeout=120 (secs) is supposed to be enough to wait for
+    the destination chassis to install the OF rules related to this new TAP
+    device.
+    """
+    GLOBAL = True
+    TIMEOUT = 120
+
+    def __init__(self, driver, chassis_name, port_id, expected_nb_cfg):
+        super().__init__(
+            events=(self.ROW_UPDATE, self.ROW_CREATE),
+            table='Chassis_Private',
+            conditions=(('name', '=', chassis_name),),
+            timeout=self.TIMEOUT,
+        )
+        self._driver = driver
+        self._port_id = port_id
+        self._expected_nb_cfg = expected_nb_cfg
+
+    def match_fn(self, event, row, old):
+        if not hasattr(old, 'nb_cfg'):
+            return False
+        return row.nb_cfg >= self._expected_nb_cfg
+
+    def run(self, event, row, old):
+        super().run(event, row, old)
+        LOG.debug('Chassis %s reached nb_cfg %d (expected %d) for port %s '
+                  'during live migration, setting port status UP',
+                  row.name, row.nb_cfg, self._expected_nb_cfg, self._port_id)
+        self._driver.set_port_status_up(self._port_id)
+
+
 class PortBindingChassisUpdateEvent(row_event.RowEvent):
     """Event for matching a port moving chassis
 
@@ -245,16 +294,9 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
             events, table, None)
         self.event_name = self.__class__.__name__
 
-    def match_fn(self, event, row, old=None):
-        # NOTE(twilson) ROW_UPDATE events always pass old, but chassis will
-        # only be set if chassis has changed
-        old_chassis = getattr(old, 'chassis', None)
+    @staticmethod
+    def is_live_migration(row, old):
         old_additional_chassis = getattr(old, 'additional_chassis', None)
-
-        # No chassis assigned or not chassis change.
-        no_chassis_change = (not (row.chassis and old_chassis) or
-                             row.chassis == old_chassis)
-
         # This checks if the port is being live migrated. When a TAP device
         # is created in the destination host (there is another copy still
         # present in the source host), the destination host ovn-controller
@@ -267,10 +309,21 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         no_live_migration = (not row.additional_chassis or
                              old_additional_chassis is None or
                              row.additional_chassis == old_additional_chassis)
+        return not no_live_migration
+
+    def match_fn(self, event, row, old=None):
+        # NOTE(twilson) ROW_UPDATE events always pass old, but chassis will
+        # only be set if chassis has changed
+        old_chassis = getattr(old, 'chassis', None)
+        old_additional_chassis = getattr(old, 'additional_chassis', None)
+
+        # No chassis assigned or not chassis change.
+        no_chassis_change = (not (row.chassis and old_chassis) or
+                             row.chassis == old_chassis)
 
         # When the chassis/additional_chassis not set or not changed,
         # we send no event
-        if no_chassis_change and no_live_migration:
+        if no_chassis_change and not self.is_live_migration(row, old):
             return False
 
         if row.type == ovn_const.OVN_CHASSIS_REDIRECT:
@@ -295,7 +348,40 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         return utils.is_lsp_enabled(lsp) and utils.is_lsp_up(lsp)
 
     def run(self, event, row, old=None):
-        self.driver.set_port_status_up(row.logical_port)
+        try:
+            add_chassis = row.additional_chassis[0].uuid
+            dest_dp_type = utils.get_datapath_type(self.driver.sb_ovn,
+                                                   _uuid=add_chassis)
+        except IndexError:
+            dest_dp_type = ''
+        if (not self.is_live_migration(row, old) or
+                not ovn_conf.is_ovs_create_tap() or
+                not dest_dp_type == ovs_constants.OVS_DATAPATH_SYSTEM):
+            self.driver.set_port_status_up(row.logical_port)
+            return
+
+        # NOTE(ralonsoh): this code branch is only reached if:
+        # * The port is being migrated.
+        # * The config knob "ovs_create_tap" is enabled.
+        # * The datapath type is "system" (not DPDK).
+        chassis_name = row.additional_chassis[0].name
+
+        # Bump NB_Global.nb_cfg to force a new generation. Without this,
+        # the current nb_cfg value N may have already been consumed by
+        # ovn-controller before the TAP device existed, so waiting for
+        # Chassis_Private.nb_cfg >= N would be trivially satisfied without
+        # guaranteeing that the port's OpenFlow rules were written.
+        nb_cfg = self.driver.nb_ovn.nb_global.nb_cfg + 1
+        wait_event = WaitForChassisNbCfgEvent(
+            self.driver, chassis_name, row.logical_port, nb_cfg)
+        wait_event.watch(self.driver.sb_ovn.idl.notify_handler)
+
+        # NOTE(ralonsoh): always bump NB_Global.nb_cfg after installing the
+        # ``WaitForChassisNbCfgEvent`` event.
+        self.driver.nb_ovn.bump_nb_cfg().execute(check_error=True)
+        LOG.debug('Live migration detected for port %s: bumped nb_cfg to %d, '
+                  'waiting for chassis %s to reach it before signaling '
+                  'port UP', row.logical_port, nb_cfg, chassis_name)
 
 
 class ChassisAgentEvent(row_event.RowEvent):

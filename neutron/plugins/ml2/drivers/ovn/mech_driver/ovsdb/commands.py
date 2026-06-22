@@ -137,6 +137,28 @@ class CheckLivenessCommand(command.BaseCommand):
         self.result = self.api.nb_global.nb_cfg
 
 
+class BumpNbCfgCommand(command.BaseCommand):
+    """Increment NB_Global.nb_cfg to force a new configuration generation.
+
+    Unlike CheckLivenessCommand, this does not update the liveness
+    timestamp. It is used during live migration to create a fresh nb_cfg
+    generation that can be waited on to confirm ovn-controller has
+    completed a full processing cycle after the TAP device appeared.
+
+    A real write to external_ids is required because python-ovs will not
+    commit a transaction that only contains an increment operation with
+    no other row modifications.
+    """
+
+    def run_idl(self, txn):
+        nb_global = self.api.nb_global
+        nb_global.setkey('external_ids',
+                         ovn_const.OVN_NB_CFG_BUMP_EXT_ID_KEY,
+                         str(timeutils.utcnow(with_timezone=True)))
+        nb_global.increment('nb_cfg')
+        self.result = nb_global.nb_cfg
+
+
 class AddNetworkCommand(command.AddCommand):
     table_name = 'Logical_Switch'
 
