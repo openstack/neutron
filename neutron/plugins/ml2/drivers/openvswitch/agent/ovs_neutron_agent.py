@@ -2523,20 +2523,22 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                                       self.local_ip,
                                                       tunnel_type,
                                                       self.conf.host)
-                if not self.l2_pop:
-                    tunnels = details['tunnels']
-                    for tunnel in tunnels:
-                        if self.local_ip != tunnel['ip_address']:
-                            remote_ip = tunnel['ip_address']
-                            tun_name = self.get_tunnel_name(
-                                tunnel_type, self.local_ip, remote_ip)
-                            if tun_name is None:
-                                continue
-                            self._setup_tunnel_port(self.tun_br,
-                                                    tun_name,
-                                                    tunnel['ip_address'],
-                                                    tunnel_type)
-                    self._setup_tunnel_flood_flow(self.tun_br, tunnel_type)
+                if self.l2_pop:
+                    continue
+                tunnels = details['tunnels']
+                for tunnel in tunnels:
+                    if self.local_ip == tunnel['ip_address']:
+                        continue
+                    remote_ip = tunnel['ip_address']
+                    tun_name = self.get_tunnel_name(
+                        tunnel_type, self.local_ip, remote_ip)
+                    if tun_name is None:
+                        continue
+                    self._setup_tunnel_port(self.tun_br,
+                                            tun_name,
+                                            tunnel['ip_address'],
+                                            tunnel_type)
+                self._setup_tunnel_flood_flow(self.tun_br, tunnel_type)
         except Exception as e:
             LOG.debug("Unable to sync tunnel IP %(local_ip)s: %(e)s",
                       {'local_ip': self.local_ip, 'e': e})
