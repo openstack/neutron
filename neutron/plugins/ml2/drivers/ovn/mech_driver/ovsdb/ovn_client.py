@@ -103,6 +103,12 @@ GW_INFO = collections.namedtuple('GW_INFO', ['network_id', 'subnet_id',
 
 class OVNClient:
 
+    _LRP_MANAGED_OPTIONS = (
+        ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH,
+        ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION,
+        ovn_const.LRP_OPTIONS_REDIRECT_TYPE,
+    )
+
     def __init__(self, nb_idl, sb_idl):
         self._nb_idl = nb_idl
         self._sb_idl = sb_idl
@@ -1799,7 +1805,17 @@ class OVNClient:
         return reside_redir_ch
 
     def _gen_router_port_options(self, context, port):
-        options = {}
+        lrp_name = utils.ovn_lrouter_port_name(port['id'])
+        try:
+            options = dict(self._nb_idl.db_get(
+                'Logical_Router_Port', lrp_name,
+                'options').execute(check_error=True))
+        except idlutils.RowNotFound:
+            options = {}
+
+        for key in self._LRP_MANAGED_OPTIONS:
+            options.pop(key, None)
+
         admin_context = context.elevated()
         ls_name = utils.ovn_name(port['network_id'])
         ls = self._nb_idl.ls_get(ls_name).execute(check_error=True)

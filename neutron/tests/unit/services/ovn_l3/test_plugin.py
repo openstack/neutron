@@ -502,7 +502,8 @@ class BaseTestOVNL3RouterPluginMixin:
             if_exists=False, name='lrp-router-port-id',
             ipv6_ra_configs={},
             networks=['10.0.0.100/24'],
-            options={},
+            options={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                    utils.ovn_name(router_id)},
             external_ids={
                 ovn_const.OVN_SUBNET_EXT_IDS_KEY: 'subnet-id',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
