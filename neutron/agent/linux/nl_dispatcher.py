@@ -1,4 +1,4 @@
-# Copyright 2026 Red Hat, Inc.
+# Copyright 2026 Red Hat, LLC
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,12 +15,15 @@
 
 import contextlib
 import errno
+import logging
 import os
 import threading
 import time
 
 from oslo_log import log
 from pyroute2 import iproute
+from pyroute2.netlink import exceptions as netlink_exceptions
+import tenacity
 
 LOG = log.getLogger(__name__)
 
@@ -77,6 +80,12 @@ class NetlinkDispatcher:
         finally:
             ipr.close()
 
+    @tenacity.retry(
+        retry=tenacity.retry_if_exception_type(
+            netlink_exceptions.NetlinkDumpInterrupted),
+        wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+        stop=tenacity.stop_after_delay(8),
+        reraise=True)
     def _replay(self, ipr):
         """Dump current state and replay it through all handlers."""
         for cb in self._replay_start_callbacks:
@@ -121,4 +130,5 @@ class NetlinkDispatcher:
                                 break
             except Exception:
                 LOG.exception("NetlinkDispatcher crashed")
+                logging.shutdown()
                 os._exit(1)

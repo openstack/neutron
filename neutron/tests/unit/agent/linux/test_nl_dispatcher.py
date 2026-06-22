@@ -17,6 +17,7 @@ import errno
 from unittest import mock
 
 from pyroute2.iproute.ipmock import MockLink
+from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
 from pyroute2.netlink.rtnl.ifinfmsg import ifinfmsg
 
@@ -104,6 +105,34 @@ class TestNetlinkDispatcher(base.BaseTestCase):
         self.dispatcher._replay(self.mock_ipr)
         tracker.assert_has_calls(
             [mock.call.start(), mock.call.dispatch(msg), mock.call.end()])
+
+    def test_replay_retries_on_netlink_dump_interrupted(self):
+        handler = mock.Mock()
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
+        self.mock_ipr.dump.side_effect = [
+            netlink_exceptions.NetlinkDumpInterrupted(),
+            [msg],
+        ]
+        self.dispatcher._replay(self.mock_ipr)
+        handler.assert_called_once_with(msg)
+        self.assertEqual(2, self.mock_ipr.dump.call_count)
+
+    def test_replay_reruns_callbacks_on_retry(self):
+        tracker = mock.Mock()
+        self.dispatcher.register_handler(
+            nl_const.RTM_NEWLINK, tracker.dispatch)
+        self.dispatcher.register_replay_callbacks(
+            on_start=tracker.start, on_end=tracker.end)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
+        self.mock_ipr.dump.side_effect = [
+            netlink_exceptions.NetlinkDumpInterrupted(),
+            [msg],
+        ]
+        self.dispatcher._replay(self.mock_ipr)
+        self.assertEqual(2, tracker.start.call_count)
+        tracker.end.assert_called_once()
+        tracker.dispatch.assert_called_once_with(msg)
 
     def test_replay_callbacks_called_once_per_replay(self):
         tracker = mock.Mock()
@@ -193,6 +222,18 @@ class TestNetlinkDispatcherLoop(base.BaseTestCase):
             [msg],
             RuntimeError,
         ]
+        self._run_loop()
+        handler.assert_called_once_with(msg)
+
+    def test_netlink_dump_interrupted_retried_in_loop(self):
+        handler = mock.Mock()
+        self.dispatcher.register_handler(nl_const.RTM_NEWLINK, handler)
+        msg = _make_nlmsg('eth0', nl_const.RTM_NEWLINK)
+        self.mock_ipr.dump.side_effect = [
+            netlink_exceptions.NetlinkDumpInterrupted(),
+            [msg],
+        ]
+        self.mock_ipr.get.side_effect = RuntimeError
         self._run_loop()
         handler.assert_called_once_with(msg)
 
