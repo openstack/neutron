@@ -226,10 +226,18 @@ ovn_opts = [
                        'do not match a router will only be forwarded to '
                        'non-router ports. Supported by OVN >= 23.06.')),
     cfg.BoolOpt('ovn_router_indirect_snat',
-                default=False,
+                default=True,
                 help=_('Whether to configure SNAT for all nested subnets '
                        'connected to the router through any other routers, '
-                       'similar to the default ML2/OVS behavior.')),
+                       'similar to the default ML2/OVS behavior.'),
+                deprecated_for_removal=True,
+                deprecated_since='2026.2',
+                deprecated_reason=('This flag was added for backwards '
+                                   'compatibility with OVN versions that did '
+                                   'not contain support for the feature, '
+                                   'removing as nested SNAT is now fully '
+                                   'supported.'),
+                ),
     cfg.StrOpt('live_migration_activation_strategy',
                default="rarp",
                choices=[("rarp",

@@ -743,7 +743,7 @@ class BaseTestOVNL3RouterPluginMixin:
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client'
                 '.OVNClient._get_router_ports')
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
-    def test_add_router_interface_with_gateway_set(self, ari, grps):
+    def _test_add_router_interface_with_gateway_set(self, snat, ari, grps):
         router_id = 'router-id'
         ari.return_value = self.fake_router_interface_info
         self.get_router.return_value = self.fake_router_with_ext_gw
@@ -759,12 +759,24 @@ class BaseTestOVNL3RouterPluginMixin:
             assert_called_once_with(
                 'router-port-id', 'lrp-router-port-id', is_gw_port=False,
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
-        self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', logical_ip='10.0.0.0/24',
-            external_ip='192.168.1.1', type='snat')
+        add_lrouter = self.l3_inst._nb_ovn.add_nat_rule_in_lrouter
+        if snat:
+            add_lrouter.assert_not_called()
+        else:
+            add_lrouter.assert_called_once_with(
+                'neutron-router-id', logical_ip='10.0.0.0/24',
+                external_ip='192.168.1.1', type='snat')
         self.bump_rev_p.assert_called_with(
             mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
+
+    def test_add_router_interface_with_gateway_set_snat(self):
+        # ovn_router_indirect_snat default is True
+        self._test_add_router_interface_with_gateway_set(True)
+
+    def test_add_router_interface_with_gateway_set_no_snat(self):
+        config.cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
+        self._test_add_router_interface_with_gateway_set(False)
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client'
                 '.OVNClient._get_router_ports')
@@ -794,7 +806,7 @@ class BaseTestOVNL3RouterPluginMixin:
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client'
                 '.OVNClient._get_router_ports')
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
-    def test_add_router_interface_vlan_network(self, ari, grps, gn):
+    def _test_add_router_interface_vlan_network(self, snat, ari, grps, gn):
         router_id = 'router-id'
         ari.return_value = self.fake_router_interface_info
         self.get_router.return_value = self.fake_router_with_ext_gw
@@ -827,15 +839,27 @@ class BaseTestOVNL3RouterPluginMixin:
             assert_called_once_with(
                 'router-port-id', 'lrp-router-port-id', is_gw_port=False,
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
-        self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', logical_ip='10.0.0.0/24',
-            external_ip='192.168.1.1', type='snat')
+        add_lrouter = self.l3_inst._nb_ovn.add_nat_rule_in_lrouter
+        if snat:
+            add_lrouter.assert_not_called()
+        else:
+            add_lrouter.assert_called_once_with(
+                'neutron-router-id', logical_ip='10.0.0.0/24',
+                external_ip='192.168.1.1', type='snat')
 
         self.bump_rev_p.assert_called_with(
             mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
 
-    def test_remove_router_interface_with_gateway_set(self):
+    def test_add_router_interface_vlan_network_snat(self):
+        # ovn_router_indirect_snat default is True
+        self._test_add_router_interface_vlan_network(True)
+
+    def test_add_router_interface_vlan_network_no_snat(self):
+        config.cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
+        self._test_add_router_interface_vlan_network(False)
+
+    def _test_remove_router_interface_with_gateway_set(self, snat):
         router_id = 'router-id'
         self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
             external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id})
@@ -849,11 +873,22 @@ class BaseTestOVNL3RouterPluginMixin:
         nb_ovn = self.l3_inst._nb_ovn
         nb_ovn.lrp_del.assert_called_once_with(
             'lrp-router-port-id', 'neutron-router-id', if_exists=True)
-        nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', logical_ip='10.0.0.0/24',
-            external_ip='192.168.1.1', type='snat')
+        if snat:
+            nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
+        else:
+            nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
+                'neutron-router-id', logical_ip='10.0.0.0/24',
+                external_ip='192.168.1.1', type='snat')
         self.del_rev_p.assert_called_with(
             self.context, 'router-port-id', ovn_const.TYPE_ROUTER_PORTS)
+
+    def test_remove_router_interface_with_gateway_set_snat(self):
+        # ovn_router_indirect_snat default is True
+        self._test_remove_router_interface_with_gateway_set(True)
+
+    def test_remove_router_interface_with_gateway_set_no_snat(self):
+        config.cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
+        self._test_remove_router_interface_with_gateway_set(False)
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client'
                 '.OVNClient._get_router_ports')
@@ -889,7 +924,7 @@ class BaseTestOVNL3RouterPluginMixin:
             nexthop='192.168.1.254')
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id', type='snat',
-            logical_ip='10.0.0.0/24', external_ip='192.168.1.1')
+            logical_ip='0.0.0.0/0', external_ip='192.168.1.1')
         self.bump_rev_p.assert_called_with(
             mock.ANY, self.fake_ext_gw_port,
             ovn_const.TYPE_ROUTER_PORTS)
@@ -967,7 +1002,7 @@ class BaseTestOVNL3RouterPluginMixin:
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
                           ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', type='snat', logical_ip='10.0.0.0/24',
+            'neutron-router-id', type='snat', logical_ip='0.0.0.0/0',
             external_ip='192.168.1.1')
 
         self.bump_rev_p.assert_called_with(
@@ -1022,7 +1057,7 @@ class BaseTestOVNL3RouterPluginMixin:
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
                           ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', type='snat', logical_ip='10.0.0.0/24',
+            'neutron-router-id', type='snat', logical_ip='0.0.0.0/0',
             external_ip='192.168.1.1')
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
@@ -1111,7 +1146,7 @@ class BaseTestOVNL3RouterPluginMixin:
         self.l3_inst._nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
         self.l3_inst._nb_ovn.add_static_route.assert_not_called()
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', type='snat', logical_ip='10.0.0.0/24',
+            'neutron-router-id', type='snat', logical_ip='0.0.0.0/0',
             external_ip='192.168.1.1')
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
@@ -1147,7 +1182,7 @@ class BaseTestOVNL3RouterPluginMixin:
         nb_ovn = self.l3_inst._nb_ovn
         nb_ovn.delete_static_routes.assert_not_called()
         nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', type='snat', logical_ip='10.0.0.0/24',
+            'neutron-router-id', type='snat', logical_ip='0.0.0.0/0',
             external_ip='192.168.1.1')
         nb_ovn.add_static_route.assert_not_called()
         nb_ovn.add_nat_rule_in_lrouter.assert_not_called()
@@ -2302,7 +2337,8 @@ class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_router_ports')
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
-    def test_add_router_interface_need_to_frag(self, ari, grps, gns, gn):
+    def _test_add_router_interface_need_to_frag(self, snat, ari, grps,
+            gns, gn):
         router_id = 'router-id'
         interface_info = {'port_id': 'router-port-id',
                           'network_id': 'priv-net'}
@@ -2346,13 +2382,25 @@ class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
             assert_called_once_with(
                 'router-port-id', 'lrp-router-port-id', is_gw_port=True,
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
-        self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', logical_ip='10.0.0.0/24',
-            external_ip='192.168.1.1', type='snat')
+        add_lrouter = self.l3_inst._nb_ovn.add_nat_rule_in_lrouter
+        if snat:
+            add_lrouter.assert_not_called()
+        else:
+            add_lrouter.assert_called_once_with(
+                'neutron-router-id', logical_ip='10.0.0.0/24',
+                external_ip='192.168.1.1', type='snat')
 
         self.bump_rev_p.assert_called_with(
             mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
+
+    def test_add_router_interface_need_to_frag_snat(self):
+        # ovn_router_indirect_snat default is True
+        self._test_add_router_interface_need_to_frag(True)
+
+    def test_add_router_interface_need_to_frag_no_snat(self):
+        config.cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
+        self._test_add_router_interface_need_to_frag(False)
 
 
 class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,

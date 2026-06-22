@@ -47,7 +47,7 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
             'enable_snat': True,
             l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
-        # ovn_router_indirect_snat default is False
+        cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
         self.assertTrue(ovn_client._has_separate_snat_per_subnet(fake_router))
 
     def test_snat_off_nested_off(self):
@@ -56,7 +56,7 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
             'enable_snat': False,
             l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
-        # ovn_router_indirect_snat default is False
+        cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
         self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
 
     def test_snat_on_nested_on(self):
@@ -65,7 +65,7 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
             'enable_snat': True,
             l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
-        cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
+        # ovn_router_indirect_snat default is True
         self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
 
     def test_snat_off_nested_on(self):
@@ -74,7 +74,7 @@ class Test_has_separate_snat_per_subnet(base.BaseTestCase):
             'enable_snat': False,
             l3.EXTERNAL_GW_INFO: mock.Mock(),  # irrelevant value
         }
-        cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
+        # ovn_router_indirect_snat default is True
         self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
 
 
@@ -381,6 +381,7 @@ class TestOVNClient(TestOVNClientBase):
 
     def test__get_snat_cidrs_for_external_router_nested_snat_off(self):
         ctx = ncontext.Context()
+        cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
         per_subnet_cidrs = ['10.0.0.0/24', '20.0.0.0/24']
         with mock.patch.object(
                 self.ovn_client, '_get_v4_network_of_all_router_ports',
@@ -391,7 +392,7 @@ class TestOVNClient(TestOVNClientBase):
 
     def test__get_snat_cidrs_for_external_router_nested_snat_on(self):
         ctx = ncontext.Context()
-        cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
+        # ovn_router_indirect_snat default is True
         per_subnet_cidrs = ['10.0.0.0/24', '20.0.0.0/24']
         with mock.patch.object(
                 self.ovn_client, '_get_v4_network_of_all_router_ports',

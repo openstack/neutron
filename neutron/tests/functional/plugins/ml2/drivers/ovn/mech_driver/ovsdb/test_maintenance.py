@@ -1037,7 +1037,7 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert the router snat rule is still there
         snat_rule = self._find_nat_rule(
             router['id'], '100.0.0.2', nat_type='snat')
-        self.assertEqual(subnet1['cidr'], snat_rule['logical_ip'])
+        self.assertEqual('0.0.0.0/0', snat_rule['logical_ip'])
 
     def test_port_forwarding(self):
         def fip_attrs(args):
