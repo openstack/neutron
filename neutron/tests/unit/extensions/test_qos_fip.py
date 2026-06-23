@@ -18,7 +18,6 @@ from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
 from neutron_lib import context
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
-from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.conf.db import extraroute_db
@@ -350,8 +349,6 @@ class FloatingIPQoSDBIntTestCase(test_l3.L3BaseForIntTests,
                                       'QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
-        cfg.CONF.set_default('max_routes', 3)
-
         ext_mgr = FloatingIPQoSTestExtensionManager()
         super(test_l3.L3BaseForIntTests, self).setUp(
             plugin=plugin,
@@ -377,8 +374,6 @@ class FloatingIPQoSDBSepTestCase(test_l3.L3BaseForSepTests,
                                       'QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
-        cfg.CONF.set_default('max_routes', 3)
-
         ext_mgr = FloatingIPQoSTestExtensionManager()
         super(test_l3.L3BaseForSepTests, self).setUp(
             plugin=plugin,
