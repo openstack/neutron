@@ -1636,7 +1636,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache.get_port_by_id.return_value = fake_port2
 
         with mock.patch.object(
-                self.dhcp, 'update_isolated_metadata_proxy') as ump:
+                self.dhcp, 'update_isolated_metadata_proxy') as ump, \
+            mock.patch.object(
+                self.dhcp, 'disable_isolated_metadata_proxy') as dmp:
             self.dhcp.port_delete_end(None, payload)
             self.dhcp._process_resource_update()
             self.cache.assert_has_calls(
@@ -1647,6 +1649,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.call_driver.assert_has_calls(
                 [mock.call.call_driver('reload_allocations', fake_network)])
             self.assertTrue(ump.called)
+            dmp.assert_not_called()
 
     def test_port_delete_network_already_deleted(self):
         port = dhcp.DictModel(copy.deepcopy(fake_port1))
@@ -1655,12 +1658,14 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         port['device_id'] = device_id
         self.cache.get_network_by_id.return_value = None
         self.cache.get_port_by_id.return_value = port
-        self.dhcp.port_delete_end(None, {'port_id': port.id,
-                                         'network_id': fake_network.id,
-                                         'priority': FAKE_PRIORITY})
-        self.dhcp._process_resource_update()
-        self.call_driver.assert_called_once_with(
-            'disable', None, network_id=fake_network.id)
+        with mock.patch.object(
+                self.dhcp, 'disable_isolated_metadata_proxy') as dmp:
+            self.dhcp.port_delete_end(None, {'port_id': port.id,
+                                             'network_id': fake_network.id,
+                                             'priority': FAKE_PRIORITY})
+            self.dhcp._process_resource_update()
+            self.call_driver.assert_not_called()
+            dmp.assert_not_called()
 
     def test_port_delete_end(self):
         payload = dict(port_id=fake_port2.id, network_id=fake_network.id,
@@ -1669,7 +1674,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.cache.get_port_by_id.return_value = fake_port2
 
         with mock.patch.object(
-                self.dhcp, 'update_isolated_metadata_proxy') as ump:
+                self.dhcp, 'update_isolated_metadata_proxy') as ump, \
+            mock.patch.object(
+                self.dhcp, 'disable_isolated_metadata_proxy') as dmp:
             self.dhcp.port_delete_end(None, payload)
             self.dhcp._process_resource_update()
             self.cache.assert_has_calls(
@@ -1680,6 +1687,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.call_driver.assert_has_calls(
                 [mock.call.call_driver('reload_allocations', fake_network)])
             self.assertTrue(ump.called)
+            dmp.assert_not_called()
 
     def test_port_delete_end_unknown_port(self):
         payload = dict(port_id='unknown', network_id='unknown',
@@ -1701,13 +1709,16 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         port['device_id'] = device_id
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = port
-        self.dhcp.port_delete_end(None, {'port_id': port.id,
-                                         'network_id': fake_network.id,
-                                         'priority': FAKE_PRIORITY})
-        self.dhcp._process_resource_update()
-        self.call_driver.assert_has_calls(
-            [mock.call.call_driver(
-                'disable', fake_network, network_id=fake_network.id)])
+        with mock.patch.object(
+                self.dhcp, 'disable_isolated_metadata_proxy') as dmp:
+            self.dhcp.port_delete_end(None, {'port_id': port.id,
+                                             'network_id': fake_network.id,
+                                             'priority': FAKE_PRIORITY})
+            self.dhcp._process_resource_update()
+            self.call_driver.assert_has_calls(
+                [mock.call.call_driver(
+                    'disable', fake_network, network_id=fake_network.id)])
+            dmp.assert_called_once_with(fake_network)
 
 
 class TestDhcpPluginApiProxy(base.BaseTestCase):
