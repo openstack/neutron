@@ -962,15 +962,15 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                     external_ids=external_ids,
                     options={'foo': 'bar'}))
 
-            for port_id in self.lport_dhcpv4_disabled:
+            for port_id, opts in self.lport_dhcpv4_disabled.items():
                 txn.add(self.nb_api.set_lswitch_port(
                     port_id, if_exists=True,
-                    dhcpv4_options=[self.lport_dhcpv4_disabled[port_id]]))
+                    dhcpv4_options=[opts]))
 
-            for port_id in self.lport_dhcpv6_disabled:
+            for port_id, opts in self.lport_dhcpv6_disabled.items():
                 txn.add(self.nb_api.set_lswitch_port(
                     port_id, if_exists=True,
-                    dhcpv6_options=[self.lport_dhcpv6_disabled[port_id]]))
+                    dhcpv6_options=[opts]))
 
             # Delete the first DNS record and clear the second row records
             i = 0

@@ -53,8 +53,8 @@ class ServiceTypeManager:
                 if svc_type in self.config))
         return list(
             chain.from_iterable(
-                self.config[p].get_service_providers(filters, fields)
-                for p in self.config)
+                plugin.get_service_providers(filters, fields)
+                for plugin in self.config.values())
         )
 
     def get_default_service_provider(self, context, service_type):

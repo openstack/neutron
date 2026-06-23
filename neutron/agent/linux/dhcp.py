@@ -714,9 +714,9 @@ class Dnsmasq(DhcpLocalProcess):
             else:
                 merged.append(fip)
 
-        for subnet_id in by_subnet:
+        for subnet_id, ips in by_subnet.items():
             addr6_list = ','.join([self._format_address_for_dnsmasq(ip)
-                                   for ip in by_subnet[subnet_id]])
+                                   for ip in ips])
             merged.append(NewFip(subnet_id=subnet_id,
                                  ip_address=addr6_list))
 

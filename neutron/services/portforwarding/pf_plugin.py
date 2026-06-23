@@ -676,7 +676,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     def _validate_filter_for_port_forwarding(self, request_filter):
         if not request_filter:
             return
-        for filter_member_key in request_filter.keys():
+        for filter_member_key in request_filter:
             if filter_member_key in pf.FIELDS_NOT_SUPPORT_FILTER:
                 raise pf_exc.PortForwardingNotSupportFilterField(
                     filter=filter_member_key)

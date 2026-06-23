@@ -1435,8 +1435,8 @@ class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                 len(hostname_with_physnets),
                 ovn_driver.update_segment_host_mapping.call_count)
             update_segment_host_mapping_calls = [mock.call(
-                host, hostname_with_physnets[host])
-                for host in hostname_with_physnets]
+                host, physnets)
+                for host, physnets in hostname_with_physnets.items()]
             ovn_driver.update_segment_host_mapping.assert_has_calls(
                 update_segment_host_mapping_calls, any_order=True)
 

@@ -149,8 +149,8 @@ def _build_subattr_match_rule(attr_name, attr, action, target):
     # typing for API attributes
     # Expect a dict as type descriptor
     validate = attr['validate']
-    key = [k for k in validate.keys() if (k.startswith('type:dict') or
-                                          k.startswith('type:list_of_dict'))]
+    key = [k for k in validate if (k.startswith('type:dict') or
+                                   k.startswith('type:list_of_dict'))]
     if not key:
         LOG.warning("Unable to find data type descriptor for attribute %s",
                     attr_name)

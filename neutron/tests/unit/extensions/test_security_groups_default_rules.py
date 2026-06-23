@@ -199,8 +199,8 @@ class TestDefaultSecurityGroupRules(
     def test_create_default_security_group_rule_with_unmasked_prefix(self):
         addr = {'10.1.2.3': {'mask': '32', 'ethertype': 'IPv4'},
                 'fe80::2677:3ff:fe7d:4c': {'mask': '128', 'ethertype': 'IPv6'}}
-        for remote_ip_prefix in addr:
-            ethertype = addr[remote_ip_prefix]['ethertype']
+        for remote_ip_prefix, addr_info in addr.items():
+            ethertype = addr_info['ethertype']
             rule = self._build_default_security_group_rule(
                 'ingress',
                 const.PROTO_NAME_TCP,
@@ -213,7 +213,7 @@ class TestDefaultSecurityGroupRules(
             res_sg = self.deserialize(self.fmt, res)
             prefix = res_sg['default_security_group_rule']['remote_ip_prefix']
             self.assertEqual('{}/{}'.format(
-                remote_ip_prefix, addr[remote_ip_prefix]['mask']), prefix)
+                remote_ip_prefix, addr_info['mask']), prefix)
 
     def test_create_default_security_group_rule_tcp_protocol_as_number(self):
         protocol = const.PROTO_NUM_TCP  # TCP

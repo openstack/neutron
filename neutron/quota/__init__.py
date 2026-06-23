@@ -81,7 +81,7 @@ class QuotaEngine:
 
         requested_resources = set(deltas.keys())
         all_resources = resource_registry.get_all_resources()
-        managed_resources = {res for res in all_resources.keys()
+        managed_resources = {res for res in all_resources
                              if res in requested_resources}
         # Make sure we accounted for all of them...
         unknown_resources = requested_resources - managed_resources

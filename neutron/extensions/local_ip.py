@@ -47,12 +47,11 @@ class Local_ip(api_extensions.APIExtensionDescriptor):
                                            attr_map=params)
         resources = [ext]
 
-        for collection_name in local_ip_apidef.SUB_RESOURCE_ATTRIBUTE_MAP:
+        for collection_name, collection in (
+                local_ip_apidef.SUB_RESOURCE_ATTRIBUTE_MAP.items()):
             resource_name = local_ip_apidef.LOCAL_IP_ASSOCIATION
-            parent = local_ip_apidef.SUB_RESOURCE_ATTRIBUTE_MAP[
-                collection_name].get('parent')
-            params = local_ip_apidef.SUB_RESOURCE_ATTRIBUTE_MAP[
-                collection_name].get('parameters')
+            parent = collection.get('parent')
+            params = collection.get('parameters')
 
             controller = base.create_resource(collection_name, resource_name,
                                               plugin, params,

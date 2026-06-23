@@ -533,9 +533,8 @@ class ExtGwModeSepTestCase(ExtGwModeIntTestCase):
     def setUp(self, plugin=None):
         # Store l3 resource attribute map as it will be updated
         self._l3_attribute_map_bk = {}
-        for item in l3_apidef.RESOURCE_ATTRIBUTE_MAP:
-            self._l3_attribute_map_bk[item] = (
-                l3_apidef.RESOURCE_ATTRIBUTE_MAP[item].copy())
+        for item, attrs in l3_apidef.RESOURCE_ATTRIBUTE_MAP.items():
+            self._l3_attribute_map_bk[item] = attrs.copy()
         plugin = plugin or (
             'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin')
         # the L3 service plugin

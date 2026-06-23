@@ -75,13 +75,11 @@ disable=
  unspecified-encoding,
  unused-private-member,
 # "C" Coding convention violations
- consider-iterating-dictionary,
  invalid-name,
  missing-docstring,
  ungrouped-imports,
  wrong-import-order,
  consider-using-f-string,
- consider-using-dict-items,
 # "R" Refactor recommendations
  duplicate-code,
  inconsistent-return-statements,

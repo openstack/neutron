@@ -55,12 +55,11 @@ class Qos(api_extensions.APIExtensionDescriptor):
                         allow_bulk=True)
 
         plugin = directory.get_plugin(constants.QOS)
-        for collection_name in apidef.SUB_RESOURCE_ATTRIBUTE_MAP:
+        for collection_name, collection in (
+                apidef.SUB_RESOURCE_ATTRIBUTE_MAP.items()):
             resource_name = collection_name[:-1]
-            parent = apidef.SUB_RESOURCE_ATTRIBUTE_MAP[
-                collection_name].get('parent')
-            params = apidef.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
-                'parameters')
+            parent = collection.get('parent')
+            params = collection.get('parameters')
 
             controller = base.create_resource(collection_name, resource_name,
                                               plugin, params,

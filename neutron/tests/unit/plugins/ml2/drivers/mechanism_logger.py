@@ -48,7 +48,7 @@ class LoggerMechanismDriver(api.MechanismDriver):
         added_keys = set(curr_item.keys()) - set(og_item.keys())
         output = f"{method_name}:\n"
 
-        for k in curr_item.keys():
+        for k in curr_item:
             if k in og_item and og_item[k] != curr_item[k]:
                 output += "key[{}], {} -> {}\n".format(
                         k, og_item[k], curr_item[k])

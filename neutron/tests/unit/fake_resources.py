@@ -294,7 +294,7 @@ class FakeResource(dict):
             setattr(self, name, method)
 
     def __repr__(self):
-        reprkeys = sorted(k for k in self.__dict__.keys() if k[0] != '_' and
+        reprkeys = sorted(k for k in self.__dict__ if k[0] != '_' and
                           k != 'manager')
         info = ", ".join(f"{k}={getattr(self, k)}" for k in reprkeys)
         return f"<{self.__class__.__name__} {info}>"

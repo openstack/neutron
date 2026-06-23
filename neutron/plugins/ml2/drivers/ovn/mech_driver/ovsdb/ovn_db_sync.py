@@ -516,17 +516,17 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     fip_dict[protocol] = fip_dict_proto
                 if fip_id not in db_mapped_pfs:
                     db_mapped_pfs[fip_id] = fip_dict
-        for fip_id in db_mapped_pfs:
+        for fip_id, db_pfs_fip_id in db_mapped_pfs.items():
             ovn_pfs_fip_id = ovn_pfs.get(fip_id, {})
             # check for cases when ovn has lbs for protocols that are not in
             # neutron db
-            if len(db_mapped_pfs[fip_id]) != len(ovn_pfs_fip_id):
+            if len(db_pfs_fip_id) != len(ovn_pfs_fip_id):
                 to_add_or_update.add(fip_id)
                 continue
             # check that vips in each protocol are an exact match
-            for protocol in db_mapped_pfs[fip_id]:
+            for protocol in db_pfs_fip_id:
                 ovn_fip_dict_proto = ovn_pfs_fip_id.get(protocol)
-                if db_mapped_pfs[fip_id][protocol] != ovn_fip_dict_proto:
+                if db_pfs_fip_id[protocol] != ovn_fip_dict_proto:
                     to_add_or_update.add(fip_id)
 
         # remove pf entries that exist in ovn lb but have no fip in
@@ -1127,7 +1127,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                         self.core_plugin.delete_port(ctx, port['id'])
                     db_ports.pop(port['id'], None)
                 port = metadata_ports[0]
-                if port['id'] in db_ports.keys():
+                if port['id'] in db_ports:
                     LOG.warning('Metadata port %s for network %s found in '
                                 'Neutron but not in OVN NB DB',
                                 port['id'], net['id'])

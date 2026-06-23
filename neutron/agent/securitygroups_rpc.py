@@ -131,7 +131,7 @@ class SecurityGroupAgentRpc:
         device_names = [
             dev['device'] for dev in all_devices.values()]
         for device_id in device_ids:
-            if (device_id not in all_devices.keys() and
+            if (device_id not in all_devices and
                     device_id not in device_names):
                 trusted_devices.append(device_id)
         return trusted_devices

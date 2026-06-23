@@ -227,7 +227,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                                    snat_bound_fip=True, enable_gw=False)
 
     def _check_routes(self, expected_routes, actual_routes):
-        actual_routes = [{key: route[key] for key in expected_routes[0].keys()}
+        actual_routes = [{key: route[key] for key in expected_routes[0]}
                          for route in actual_routes]
         self.assertEqual(expected_routes, actual_routes)
 

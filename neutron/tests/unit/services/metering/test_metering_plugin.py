@@ -66,7 +66,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
     resource_prefix_map = {
         k.replace('_', '-'): "/metering"
-        for k in metering_apidef.RESOURCE_ATTRIBUTE_MAP.keys()
+        for k in metering_apidef.RESOURCE_ATTRIBUTE_MAP
     }
 
     def setUp(self):
@@ -561,7 +561,7 @@ class TestMeteringPluginL3AgentScheduler(
 
     resource_prefix_map = {
         k.replace('_', '-'): "/metering"
-        for k in metering_apidef.RESOURCE_ATTRIBUTE_MAP.keys()
+        for k in metering_apidef.RESOURCE_ATTRIBUTE_MAP
     }
 
     def setUp(self, plugin_str=None, service_plugins=None, scheduler=None):

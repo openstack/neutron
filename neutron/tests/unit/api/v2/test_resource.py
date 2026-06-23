@@ -320,10 +320,10 @@ class ResourceTestCase(base.BaseTestCase):
         resource = webtest.TestApp(
             wsgi_resource.Resource(controller,
                                    action_status=action_status))
-        for action in action_status:
+        for action, status in action_status.items():
             environ = {'wsgiorg.routing_args': (None, {'action': action})}
             res = resource.get('', extra_environ=environ)
-            self.assertEqual(action_status[action], res.status_int)
+            self.assertEqual(status, res.status_int)
 
     def _test_error_log_level(self, expected_webob_exc, expect_log_info=False,
                               use_fault_map=True, exc_raised=None):

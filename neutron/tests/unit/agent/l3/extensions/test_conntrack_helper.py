@@ -275,7 +275,7 @@ class ConntrackHelperMappingTestCase(base.BaseTestCase):
         self.assertEqual(
             new_conntrack_helper1,
             managed_cths[self.conntrack_helper1.id])
-        for router_id in self.mapping._router_conntrack_helper_mapping.keys():
+        for router_id in self.mapping._router_conntrack_helper_mapping:
             self.assertIn(router_id, [self.router1, self.router2])
         self.assertEqual(
             len([self.router1, self.router2]),

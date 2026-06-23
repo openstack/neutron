@@ -51,8 +51,8 @@ class SubnetOnboardTestsBase:
         pool_data = {'project_id': project_id, 'shared': shared, 'name': name,
                      'address_scope_id': address_scope_id,
                      'prefixes': prefixes, 'is_default': is_default_pool}
-        for key in kwargs:
-            pool_data[key] = kwargs[key]
+        for key, value in kwargs.items():
+            pool_data[key] = value
 
         with db_api.CONTEXT_WRITER.using(self.context):
             yield self.driver.create_subnetpool(self.context,

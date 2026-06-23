@@ -339,7 +339,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         for router in routers:
             labels = router[constants.METERING_LABEL_KEY]
             for label in labels:
-                if label['id'] in self.metering_labels.keys():
+                if label['id'] in self.metering_labels:
                     del self.metering_labels[label['id']]
 
         return self._invoke_driver(context, routers,

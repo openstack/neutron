@@ -52,7 +52,7 @@ def get_rpc_method(resource_type, rpc_method_key):
         raise NotImplementedError()
 
     for rpc_method in RPC_RESOURCES_METHOD_MAP[resource_type]:
-        if rpc_method_key in rpc_method.keys():
+        if rpc_method_key in rpc_method:
             return list(rpc_method.values())[0]
 
     raise NotImplementedError()

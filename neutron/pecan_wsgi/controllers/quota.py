@@ -85,7 +85,7 @@ class QuotaController(utils.NeutronPecanController):
 
         # Ensure limits for all registered resources are returned
         attr_dict = attributes.RESOURCES[self.collection]
-        for quota_resource in resource_registry.get_all_resources().keys():
+        for quota_resource in resource_registry.get_all_resources():
             attr_dict[quota_resource] = {
                 'allow_post': False,
                 'allow_put': True,

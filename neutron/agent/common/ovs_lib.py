@@ -215,7 +215,7 @@ class BaseOVS:
     @property
     def capabilities(self):
         _cfg = self.config
-        return {k: _cfg.get(k, OVS_DEFAULT_CAPS[k]) for k in OVS_DEFAULT_CAPS}
+        return {k: _cfg.get(k, v) for k, v in OVS_DEFAULT_CAPS.items()}
 
     @property
     def is_hw_offload_enabled(self):
@@ -959,7 +959,7 @@ class OVSBridge(BaseOVS):
             qos_constants.RULE_TYPE_BANDWIDTH_LIMIT)
         if not qos_queues:
             return
-        if QOS_DEFAULT_QUEUE in qos_queues.keys():
+        if QOS_DEFAULT_QUEUE in qos_queues:
             queue_uuid = qos_queues.pop(QOS_DEFAULT_QUEUE)
             if qos_queues:
                 self._update_qos(
@@ -1087,7 +1087,7 @@ class OVSBridge(BaseOVS):
             qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
         if not qos_queues:
             return
-        if queue_num in qos_queues.keys():
+        if queue_num in qos_queues:
             qos_queues.pop(queue_num)
             if qos_queues:
                 self._update_qos(

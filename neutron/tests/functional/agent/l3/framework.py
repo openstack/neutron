@@ -771,7 +771,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             router.ns_name,
             ip_version=constants.IP_VERSION_4, )
 
-        actual_routes = [{key: route[key] for key in expected_route.keys()}
+        actual_routes = [{key: route[key] for key in expected_route}
                          for route in updated_route]
         self.assertIn(expected_route, actual_routes)
 
@@ -779,7 +779,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         updated_route = ip_lib.list_ip_routes(
             router.ns_name,
             ip_version=constants.IP_VERSION_4)
-        routes_actual = [{key: route[key] for key in expected_route.keys()}
+        routes_actual = [{key: route[key] for key in expected_route}
                          for route in updated_route]
         for entry in routes_actual:
             if entry['via']:
