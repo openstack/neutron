@@ -1754,8 +1754,8 @@ class DeviceManager:
         return dhcp_port
 
     def _update_dhcp_port(self, network, port):
-        for index in range(len(network.ports)):
-            if network.ports[index].id == port.id:
+        for index, n_port in enumerate(network.ports):
+            if n_port.id == port.id:
                 network.ports[index] = port
                 break
         else:

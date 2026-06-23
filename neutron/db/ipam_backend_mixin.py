@@ -341,9 +341,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         # Use integer cursors as an efficient way for implementing
         # comparison and avoiding comparing the same pair twice
-        for l_cursor in range(len(ip_sets)):
-            for r_cursor in range(l_cursor + 1, len(ip_sets)):
-                if ip_sets[l_cursor] & ip_sets[r_cursor]:
+        for l_cursor, l_ip_set in enumerate(ip_sets):
+            for r_cursor, r_ip_set in enumerate(ip_sets[l_cursor + 1:],
+                                                l_cursor + 1):
+                if l_ip_set & r_ip_set:
                     l_range = ip_ranges[l_cursor]
                     r_range = ip_ranges[r_cursor]
                     # TODO(mtomaska): Remove the explicit IPRange object to
