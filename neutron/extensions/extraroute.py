@@ -16,6 +16,13 @@
 from neutron_lib.api.definitions import extraroute as apidef
 from neutron_lib.api import extensions
 
+from neutron.quota import resource_registry
+
 
 class Extraroute(extensions.APIExtensionDescriptor):
     api_definition = apidef
+
+    @classmethod
+    def get_resources(cls):
+        resource_registry.register_resource_by_name('router_route')
+        return []
