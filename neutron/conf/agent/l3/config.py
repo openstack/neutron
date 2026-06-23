@@ -99,6 +99,18 @@ OPTS = [
                        'the state change monitor. NOTE: Setting to True '
                        'could affect the data plane when stopping or '
                        'restarting the L3 agent.')),
+    cfg.BoolOpt('per_router_log_files', default=False,
+                help=_('Use one log file per router. If set to True and '
+                       'router_log_files_in_ha_confs is False, the router ID '
+                       'will be included in the log filename. If '
+                       'router_log_files_in_ha_confs is True, each router '
+                       'already has its own directory, so logs are naturally '
+                       'separated.')),
+    cfg.BoolOpt('router_log_files_in_ha_confs', default=True,
+                help=_('If set to False, and if log_dir from neutron.conf is '
+                       'set, neutron-keepalive-state-change will use that '
+                       'path to write its logs, instead of loggin in '
+                       '/var/log/neutron/ha_confs/<router-id>.')),
 ]
 
 

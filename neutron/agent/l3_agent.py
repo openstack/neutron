@@ -19,6 +19,7 @@ import sys
 from neutron_lib.agent import topics
 from neutron_lib import constants
 from oslo_config import cfg
+from oslo_log import log as logging
 from oslo_service import service
 
 from neutron.common import config as common_config
@@ -28,6 +29,8 @@ from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron import service as neutron_service
+
+LOG = logging.getLogger(__name__)
 
 
 def register_opts(conf):

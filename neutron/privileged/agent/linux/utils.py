@@ -15,6 +15,7 @@
 import os
 from os import path
 import re
+import signal
 import subprocess
 
 from neutron_lib.utils import helpers
@@ -46,6 +47,11 @@ def _find_listen_pids_namespace(namespace):
         if m:
             pids.add(m.group('pid'))
     return list(pids)
+
+
+@privileged.default.entrypoint
+def kill_process(pid, sig=signal.SIGTERM):
+    os.kill(pid, sig)
 
 
 @privileged.default.entrypoint

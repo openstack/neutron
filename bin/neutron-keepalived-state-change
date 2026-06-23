@@ -1,0 +1,305 @@
+#!/bin/sh
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+# Note from zigo: this script was in Python, and took 100MB of RAM, which
+# may be a way too much if running with a lot of virtual routers.
+#
+# We've switched it to /bin/sh, so in Debian/Ubuntu, this is dash by default,
+# which is 3 or 4MB of RAM, compared to about 12MB with bash as of writing.
+# Bash is also a way slower to spawn. All together, with a subshell and the
+# "ip" command running, the grand total is less than 6MB for each instance
+# of this script.
+#
+# Therefore, please do not introduce any bashism in this script, which
+# basically means: no arrays, plus a more limited/strict syntax. Bashism can
+# be checked for with checkbashisms from the devscripts package.
+
+set -e
+
+write_log () {
+    local level message
+    level=${1}
+    message=${2}
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S.%3N' | tr -d '\n')
+
+    if [ "${DEBUG}" = "yes" ] || [ "${level}" = "INFO" ] || [ "${level}" = "ERROR" ]; then
+        if [ -n "${ROUTER_ID}" ]; then
+            msg="${timestamp} ${level} $$ ${ROUTER_ID}: ${message}"
+        else
+            msg="${timestamp} ${level} $$ ${message}"
+        fi
+        if [ -n "${LOG_FILE}" ]; then
+            printf "%s\n" "${msg}" >> "${LOG_FILE}"
+        else
+            printf "%s\n" "${msg}"
+        fi
+    fi
+}
+
+
+write_state_file () {
+    echo -n ${1} >"${CONF_DIR}/state"
+    write_log DEBUG "Wrote state ${1} to ${CONF_DIR}/state"
+}
+
+
+notify_agent () {
+    local state socket
+    state=${1}
+    socket="${STATE_PATH}/keepalived-state-change"
+
+    curl --connect-timeout 5 \
+        -X POST \
+        -H "X-Neutron-Router-Id: ${ROUTER_ID}" \
+        -H "X-Neutron-State: ${state}" \
+        -H "Connection: close" \
+        --unix-socket "${socket}" \
+        "http://127.0.0.1/"
+    write_log DEBUG "Notified agent of state ${state}"
+}
+
+cleanup() {
+    kill -TERM "$IP_MONITOR_PID" "$MONITOR_LOOP_PID" 2>/dev/null
+    sleep 1
+    kill -KILL "$IP_MONITOR_PID" "$MONITOR_LOOP_PID" 2>/dev/null
+    rm -f ${CONF_DIR}/ip-monitor
+}
+
+conntrackd_cmd () {
+    local option cmd
+    option=${1}
+
+    cmd="conntrackd -C ${CONF_DIR}/conntrackd.conf ${option}"
+
+    write_log DEBUG "Executing \"${cmd}\" on router ${ROUTER_ID}."
+
+    # Run in namespace, as root, don't fail on error (like Python's check_exit_code=False)
+    ip netns exec "${NAMESPACE}" ${cmd} 2>&1 || true
+}
+
+sync_conntrack () {
+    local state
+    state=${1}
+
+    if [ "${state}" = "primary" ]; then
+        # commit external cache to kernel
+        conntrackd_cmd -c
+        # flush internal & external caches
+        conntrackd_cmd -f
+        # resync internal cache to kernel
+        conntrackd_cmd -R
+        # send bulk update to backups
+        conntrackd_cmd -B
+        write_log DEBUG "Synced connection tracking state on primary for router ${ROUTER_ID}"
+    elif [ "${state}" = "backup" ]; then
+        # shorten timers, remove zombie entries
+        conntrackd_cmd -t
+        # request resync with primary
+        conntrackd_cmd -n
+        write_log DEBUG "Synced connection tracking state on backup for router ${ROUTER_ID}"
+    else
+        write_log ERROR "Unknown state \"${state}\"."
+    fi
+}
+
+monitor_ip_address () {
+    local is_init
+    is_init="True"
+
+    # Example output from "ip -o monitor address" when adding an IP to an interface:
+    # 678: qr-a1aa54e5-12    inet 10.4.39.1/24 scope global qr-a1aa54e5-12\       valid_lft forever preferred_lft forever
+    # Here's the output when removing the IP:
+    # Deleted 678: qr-a1aa54e5-12    inet 10.4.39.1/24 scope global qr-a1aa54e5-12\       valid_lft forever preferred_lft forever
+
+    # If there's a left over, the script would exit,
+    # so we MUST make sure the file isn't there.
+    if [ -e ${CONF_DIR}/ip-monitor ]; then
+        rm -f ${CONF_DIR}/ip-monitor
+    fi
+    mkfifo ${CONF_DIR}/ip-monitor
+
+    ip netns exec "${NAMESPACE}" ip -o monitor address > "${CONF_DIR}/ip-monitor" &
+    IP_MONITOR_PID=$!
+
+    while read event; do
+        if [ "${is_init}" = "True" ]; then
+            is_init="False"
+
+            if [ "${ENABLE_CONNTRACKD}" = "yes" ] ; then
+                sync_conntrack "${initial_state}"
+            fi
+
+            # NOTE: the initial state notification is done after the SIGTERM trap is
+            # set and the PID written in the file, in order to be able to finish this
+            # script whenever is needed.
+            notify_agent "${initial_state}"
+        fi
+
+        if [ -z "${event}" ]; then
+            # Empty event
+            continue
+        fi
+
+        event_word1=$(echo "$event" | awk '{print $1}')
+        if [ "${event_word1}" = "Deleted" ]; then
+            event_cidr=$(echo "${event}" | awk '{print $5}')
+            event_interface=$(echo "${event}" | awk '{print $3}')
+            state="backup"
+        else
+            event_cidr=$(echo "${event}" | awk '{print $4}')
+            event_interface=$(echo "${event}" | awk '{print $2}')
+            state="primary"
+        fi
+        event_interface=$(echo "${event_interface}" | cut -d'@' -f1)
+
+        if [ "${MONITOR_CIDR}" = "${event_cidr}" ] && [ "${MONITOR_INTERFACE}" = "${event_interface}" ]; then
+            write_log INFO "Detected state change to: ${state}"
+            write_state_file "${state}"
+            if [ "${ENABLE_CONNTRACKD}" = "yes" ] ; then
+                sync_conntrack "${state}"
+            fi
+            notify_agent "${state}"
+        fi
+    done < "${CONF_DIR}/ip-monitor" &
+    MONITOR_LOOP_PID=$!
+
+    trap cleanup INT TERM EXIT
+    wait "${IP_MONITOR_PID}"
+}
+
+
+handle_initial_state () {
+    if ip netns exec "${NAMESPACE}" ip -br address show dev "${MONITOR_INTERFACE}" | awk '{$1=$2=""; sub(/^  */, ""); print}' | tr ' ' '\n' | grep -Fxq -- "${MONITOR_CIDR}"; then
+        initial_state="primary"
+    else
+        write_log DEBUG "Device ${MONITOR_INTERFACE} not present in the namespace ${NAMESPACE} or ${MONITOR_CIDR} not set in device"
+        initial_state="backup"
+    fi
+
+    write_log INFO "Initial status of router is ${initial_state}"
+    write_state_file ${initial_state}
+    if [ "${ENABLE_CONNTRACKD}" = "yes" ] ; then
+        sync_conntrack ${initial_state}
+    fi
+}
+
+
+ENABLE_CONNTRACKD=no
+DEBUG=no
+for i in $@ ; do
+    case "${1}" in
+        "--router_id")
+            ROUTER_ID="${2}"
+            shift
+            shift
+        ;;
+        "--namespace")
+            NAMESPACE="${2}"
+            shift
+            shift
+        ;;
+        "--conf_dir")
+            CONF_DIR="${2}"
+            shift
+            shift
+        ;;
+        "--log-file")
+            LOG_FILE="$2"
+            shift
+            shift
+        ;;
+        "--monitor_interface")
+            MONITOR_INTERFACE="$2"
+            shift
+            shift
+        ;;
+        "--monitor_cidr")
+            MONITOR_CIDR="${2}"
+            shift
+            shift
+        ;;
+        "--pid_file")
+            PID_FILE="${2}"
+            shift
+            shift
+        ;;
+        "--state_path")
+            STATE_PATH="${2}"
+            shift
+            shift
+        ;;
+        "--user")
+            USER="${2}"
+            shift
+            shift
+        ;;
+        "--group")
+            GROUP="${2}"
+            shift
+            shift
+        ;;
+        "--enable_conntrackd")
+            ENABLE_CONNTRACKD=yes
+            shift
+        ;;
+        "--debug")
+            DEBUG=yes
+            shift
+        ;;
+        *)
+        ;;
+    esac
+done
+
+if [ -z "${LOG_FILE}" ]; then
+    LOG_FILE="/var/log/neutron/neutron-keepalived-state-change.log"
+fi
+
+if [ -z "${ROUTER_ID}" ]; then
+    write_log ERROR "Missing --router_id parameter: exiting."
+    exit 1
+fi
+
+if [ -z "${NAMESPACE}" ];then
+    write_log ERROR "No namespace: exiting."
+    exit 1
+fi
+
+if [ -z "${MONITOR_INTERFACE}" ];then
+    write_log ERROR "No monitor interface: exiting."
+    exit 1
+fi
+
+if [ -z "${MONITOR_CIDR}" ];then
+    write_log ERROR "No monitor CIDR: exiting."
+    exit 1
+fi
+
+if ! [ -d "${CONF_DIR}" ];then
+    write_log ERROR "No configuration directory to write in."
+    exit 1
+fi
+
+if [ -z "${PID_FILE}" ];then
+    write_log ERROR "No PID file: exiting."
+    exit 1
+fi
+
+# Write our PID file:
+PARENT_PID=$(ps -o pgid= $$ | tr -d ' ')
+echo -n $$ >${PID_FILE}
+write_log DEBUG "Writing child PID $$ for SIGTERM"
+
+initial_state="backup"
+handle_initial_state
+monitor_ip_address
