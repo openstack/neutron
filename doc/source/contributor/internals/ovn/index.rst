@@ -18,3 +18,4 @@ OVN Design Notes
    l3_ha_rescheduling
    port_forwarding
    ovn_network_logging
+   pvlan

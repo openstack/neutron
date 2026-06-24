@@ -33,6 +33,7 @@ Configuration
    config-ovs-offload
    config-ovsfwdriver
    config-logging
+   config-pvlan
    config-qos
    config-qos-min-bw
    config-qos-min-pps
