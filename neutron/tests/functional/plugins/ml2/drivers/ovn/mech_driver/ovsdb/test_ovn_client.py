@@ -567,3 +567,29 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                 mock_link:
             ovn_client.update_router_ha_chassis_group(self.context, router_id)
             mock_link.assert_not_called()
+
+    def test_update_lrouter_port_preserves_foreign_options(self):
+        ovn_client = self.mech_driver._ovn_client
+        with self.network() as net:
+            with self.subnet(net) as subnet:
+                with self.router() as router:
+                    router_id = router['router']['id']
+                    intf = self._router_interface_action(
+                        'add', router_id, subnet['subnet']['id'], None)
+                    port_id = intf['port_id']
+                    lrp_name = ovn_utils.ovn_lrouter_port_name(port_id)
+
+                    # Simulate a service plugin setting a foreign option
+                    self.nb_api.db_set(
+                        'Logical_Router_Port', lrp_name,
+                        ('options', {'foreign-key': 'foreign-val'})
+                    ).execute(check_error=True)
+
+                    # Trigger an LRP update
+                    port = self.plugin.get_port(self.context, port_id)
+                    ovn_client.update_router_port(self.context, port)
+
+                    lrp = self.nb_api.lrp_get(
+                        lrp_name).execute(check_error=True)
+                    self.assertEqual('foreign-val',
+                                     lrp.options.get('foreign-key'))
