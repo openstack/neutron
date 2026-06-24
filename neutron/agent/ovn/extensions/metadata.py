@@ -110,6 +110,8 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
         ovn_meta.register_meta_conf_opts(meta_conf.METADATA_PROXY_HANDLER_OPTS)
         ovn_meta.register_meta_conf_opts(meta_conf.METADATA_RATE_LIMITING_OPTS,
                                          group=meta_conf.RATE_LIMITING_GROUP)
+        ovn_meta.register_meta_conf_opts(meta_conf.METADATA_HAPROXY_OPTS,
+                                         group=meta_conf.HAPROXY_GROUP)
 
     def initialize(self, *args):
         self._register_config_options()

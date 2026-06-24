@@ -24,6 +24,7 @@ GROUP_MODE = 'group'
 ALL_MODE = 'all'
 SOCKET_MODES = (DEDUCE_MODE, USER_MODE, GROUP_MODE, ALL_MODE)
 RATE_LIMITING_GROUP = 'metadata_rate_limiting'
+HAPROXY_GROUP = 'metadata_haproxy'
 
 SHARED_OPTS = [
     cfg.StrOpt('metadata_proxy_socket',
@@ -140,6 +141,37 @@ METADATA_RATE_LIMITING_OPTS = [
                default=10,
                help=_("Max number of queries to accept during the burst "
                       "window.")),
+]
+
+
+METADATA_HAPROXY_OPTS = [
+    cfg.IntOpt('timeout_connect',
+               default=30,
+               min=1,
+               help=_('Maximum time in seconds to wait for a connection '
+                      'to the metadata proxy backend (Unix socket).')),
+    cfg.IntOpt('timeout_client',
+               default=32,
+               min=1,
+               help=_('Maximum inactivity time in seconds on the client '
+                      '(instance) side of the metadata proxy.')),
+    cfg.IntOpt('timeout_server',
+               default=32,
+               min=1,
+               help=_('Maximum inactivity time in seconds on the server '
+                      '(Nova metadata) side of the metadata proxy. Increase '
+                      'this if metadata responses take too long, for example '
+                      'when using dynamic vendordata.')),
+    cfg.IntOpt('timeout_http_request',
+               default=30,
+               min=1,
+               help=_('Maximum time in seconds to wait for a complete '
+                      'HTTP request from the client.')),
+    cfg.IntOpt('timeout_http_keep_alive',
+               default=30,
+               min=1,
+               help=_('Maximum time in seconds to wait for a new HTTP '
+                      'request on a keep-alive connection.')),
 ]
 
 

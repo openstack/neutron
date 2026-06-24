@@ -112,6 +112,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         meta_conf.register_meta_conf_opts(
             meta_conf.METADATA_RATE_LIMITING_OPTS, cfg.CONF,
             group=meta_conf.RATE_LIMITING_GROUP)
+        meta_conf.register_meta_conf_opts(
+            meta_conf.METADATA_HAPROXY_OPTS, cfg.CONF,
+            group=meta_conf.HAPROXY_GROUP)
         self.mock_conf_obsolete = mock.patch.object(
             driver_base.HaproxyConfiguratorBase,
             'is_config_file_obsolete').start()
@@ -164,7 +167,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             f.assert_not_called()
 
     def _test_spawn_metadata_proxy(self, dad_failed=False, rate_limited=False,
-                                   is_config_file_obsolete=False):
+                                   is_config_file_obsolete=False,
+                                   haproxy_timeouts=None):
         router_id = _uuid()
         router_ns = 'qrouter-%s' % router_id
         service_name = 'haproxy'
@@ -249,7 +253,15 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'pidfile': self.PIDFILE,
                 'log_level': 'debug',
                 'log_tag': log_tag,
-                'bind_v6_line': bind_v6_line}
+                'bind_v6_line': bind_v6_line,
+                'timeout_connect': 30,
+                'timeout_client': 32,
+                'timeout_server': 32,
+                'timeout_http_request': 30,
+                'timeout_http_keep_alive': 30}
+
+            if haproxy_timeouts:
+                expected_params.update(haproxy_timeouts)
 
             if dad_failed:
                 mock_del.assert_called_once_with(self.METADATA_DEFAULT_IPV6,
@@ -318,6 +330,15 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     def test_spawn_metadata_proxy_no_matching_configurations(self):
         self._test_spawn_metadata_proxy(is_config_file_obsolete=True)
 
+    def test_spawn_metadata_proxy_custom_haproxy_timeouts(self):
+        cfg.CONF.set_override('timeout_server', 120,
+                              group=meta_conf.HAPROXY_GROUP)
+        cfg.CONF.set_override('timeout_client', 120,
+                              group=meta_conf.HAPROXY_GROUP)
+        self._test_spawn_metadata_proxy(
+            haproxy_timeouts={'timeout_server': 120,
+                              'timeout_client': 120})
+
     @mock.patch.object(driver_base.LOG, 'error')
     def test_spawn_metadata_proxy_handles_process_exception(self, error_log):
         process_instance = mock.Mock(active=False)
@@ -344,7 +365,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                               metadata_driver.HaproxyConfigurator, _uuid(),
                               mock.ANY, mock.ANY, mock.ANY, mock.ANY,
                               self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
-                              mock.ANY)
+                              mock.ANY, mock.ANY)
 
     def test_create_config_file_wrong_group(self):
         with mock.patch('grp.getgrnam', side_effect=KeyError),\
@@ -354,7 +375,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                               metadata_driver.HaproxyConfigurator, _uuid(),
                               mock.ANY, mock.ANY, mock.ANY, mock.ANY,
                               self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
-                              mock.ANY)
+                              mock.ANY, mock.ANY)
 
     def test_destroy_monitored_metadata_proxy(self):
         mproxy_process = mock.Mock(active=False)

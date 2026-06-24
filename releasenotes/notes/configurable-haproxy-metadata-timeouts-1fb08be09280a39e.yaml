@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Added a new ``[metadata_haproxy]`` configuration group with options to
+    control HAProxy timeout values for the metadata proxy. The following
+    options are now configurable: ``timeout_connect`` (default 30s),
+    ``timeout_client`` (default 32s), ``timeout_server`` (default 32s),
+    ``timeout_http_request`` (default 30s), and ``timeout_http_keep_alive``
+    (default 30s). Previously these values were hardcoded. Operators with
+    slow metadata backends (e.g. dynamic vendordata) may need to increase
+    ``timeout_server`` to prevent premature connection termination.

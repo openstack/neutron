@@ -41,6 +41,9 @@ def register_opts(conf):
     meta_conf.register_meta_conf_opts(meta_conf.METADATA_RATE_LIMITING_OPTS,
                                       cfg=conf,
                                       group=meta_conf.RATE_LIMITING_GROUP)
+    meta_conf.register_meta_conf_opts(meta_conf.METADATA_HAPROXY_OPTS,
+                                      cfg=conf,
+                                      group=meta_conf.HAPROXY_GROUP)
     config.register_interface_driver_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
     config.register_interface_opts(conf)

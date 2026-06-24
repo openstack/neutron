@@ -52,7 +52,7 @@ class HaproxyConfiguratorBase(metaclass=abc.ABCMeta):
 
     def __init__(self, network_id, router_id, unix_socket_path, host, port,
                  user, group, state_path, pid_file, rate_limiting_config,
-                 host_v6=None, bind_interface=None):
+                 haproxy_config, host_v6=None, bind_interface=None):
         self.network_id = network_id
         self.router_id = router_id
         if network_id is None and router_id is None:
@@ -68,6 +68,7 @@ class HaproxyConfiguratorBase(metaclass=abc.ABCMeta):
         self.unix_socket_path = unix_socket_path
         self.pidfile = pid_file
         self.rate_limiting_config = rate_limiting_config
+        self.haproxy_config = haproxy_config
         self.log_level = (
             'debug' if logging.is_debug_enabled(cfg.CONF) else 'info')
         # log-tag will cause entries to have the string pre-pended, so use
@@ -127,6 +128,10 @@ class HaproxyConfiguratorBase(metaclass=abc.ABCMeta):
             'log_tag': self.log_tag,
             'bind_v6_line': '',
         }
+        for key in ('timeout_connect', 'timeout_client',
+                    'timeout_server', 'timeout_http_request',
+                    'timeout_http_keep_alive'):
+            cfg_info[key] = self.haproxy_config[key]
         if self.host_v6 and self.bind_interface:
             cfg_info['bind_v6_line'] = (
                 'bind {}:{} interface {}'.format(
@@ -232,6 +237,7 @@ class MetadataDriverBase(metaclass=abc.ABCMeta):
                             conf.state_path,
                             pid_file,
                             conf.metadata_rate_limiting,
+                            conf.metadata_haproxy,
                             bind_address_v6,
                             bind_interface)
 

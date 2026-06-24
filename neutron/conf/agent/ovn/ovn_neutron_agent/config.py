@@ -49,6 +49,7 @@ def list_ovn_neutron_agent_opts():
          ),
         (meta_conf.RATE_LIMITING_GROUP, meta_conf.METADATA_RATE_LIMITING_OPTS),
         ('ovn_evpn', evpn_conf.EVPN_OPTS),
+        (meta_conf.HAPROXY_GROUP, meta_conf.METADATA_HAPROXY_OPTS),
     ]
 
 
