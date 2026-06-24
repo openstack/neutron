@@ -255,7 +255,7 @@ ovn_opts = [
                        'actions. This strategy is faster in some '
                        'environments, like for example DPDK deployments.')),
     cfg.BoolOpt('ovs_create_tap',
-                default=False,
+                default=True,
                 help=_('If enabled, os-vif will create the TAP devices for '
                        'ports. This controls the ``ovs_create_tap`` parameter '
                        'in the vif-details dictionary.'),

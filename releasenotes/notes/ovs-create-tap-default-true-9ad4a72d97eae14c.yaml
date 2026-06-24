@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    The configuration option ``[ovn]ovs_create_tap`` now defaults to ``True``.
+    When enabled, os-vif will create TAP devices for ports, which improves live
+    migration in ML2/OVS and ML2/OVN environments. This option was introduced
+    in 2026.1 as ``False`` by default. It will be deprecated in 2027.1,
+    assuming the ``True`` value permanently.
