@@ -167,6 +167,14 @@ def _set_addrgenmode_none(ipr, idx):
 # End Workarounds for features missing in pyroute2 0.8.x.
 
 
+def _cleanup_partial_svd(ipr, br_evpn, vxlan_evpn):
+    """Remove partially created SVD devices after a failed create."""
+    for ifname in (vxlan_evpn, br_evpn):
+        idx = ipr.link_lookup(ifname=ifname)
+        if idx:
+            ipr.link(nl_const.IP_LINK_DEL, index=idx[0])
+
+
 @privileged.default.entrypoint
 def create_svd(br_evpn, vxlan_evpn, local_ip, mac, vxlan_parent, dstport,
                br_mtu):
@@ -177,47 +185,51 @@ def create_svd(br_evpn, vxlan_evpn, local_ip, mac, vxlan_parent, dstport,
     with priv_ip_lib.get_iproute(None) as ipr:
         vxlan_parent_idx = ipr.link_lookup(ifname=vxlan_parent)[0]
 
-        # Equivalent to:
-        # ip link add <vxlan_evpn> vxlan \
-        #   dev <vxlan_parent> dstport <dstport> local <local_ip> \
-        #   no learning external vnifilter
-        ipr.link(nl_const.IP_LINK_ADD, ifname=vxlan_evpn, kind='vxlan',
-                 vxlan_link=vxlan_parent_idx,
-                 vxlan_port=dstport,
-                 vxlan_local=local_ip,
-                 vxlan_learning=0,
-                 vxlan_collect_metadata=1,
-                 vxlan_vnifilter=1)
-        vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
+        try:
+            # Equivalent to:
+            # ip link add <vxlan_evpn> vxlan \
+            #   dev <vxlan_parent> dstport <dstport> local <local_ip> \
+            #   no learning external vnifilter
+            ipr.link(nl_const.IP_LINK_ADD, ifname=vxlan_evpn, kind='vxlan',
+                     vxlan_link=vxlan_parent_idx,
+                     vxlan_port=dstport,
+                     vxlan_local=local_ip,
+                     vxlan_learning=0,
+                     vxlan_collect_metadata=1,
+                     vxlan_vnifilter=1)
+            vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
 
-        # Equivalent to:
-        # ip link add <br_evpn> type bridge vlan_filtering 1 \
-        #   vlan_default_pvid 0
-        # ip link set <br_evpn> address <mac>
-        # ip link set <br_evpn> up
-        ipr.link(nl_const.IP_LINK_ADD, ifname=br_evpn, kind='bridge',
-                 br_vlan_filtering=1, br_vlan_default_pvid=0)
-        br_idx = ipr.link_lookup(ifname=br_evpn)[0]
-        ipr.link(nl_const.IP_LINK_SET, index=br_idx, address=mac,
-                 state='up')
+            # Equivalent to:
+            # ip link add <br_evpn> type bridge vlan_filtering 1 \
+            #   vlan_default_pvid 0
+            # ip link set <br_evpn> address <mac>
+            # ip link set <br_evpn> up
+            ipr.link(nl_const.IP_LINK_ADD, ifname=br_evpn, kind='bridge',
+                     br_vlan_filtering=1, br_vlan_default_pvid=0)
+            br_idx = ipr.link_lookup(ifname=br_evpn)[0]
+            ipr.link(nl_const.IP_LINK_SET, index=br_idx, address=mac,
+                     state='up')
 
-        # Equivalent to:
-        # ip link set <vxlan_evpn> address <mac> master <br_evpn>
-        # ip link set <vxlan_evpn> up
-        # bridge link set dev <vxlan_evpn> vlan_tunnel on neigh_suppress on \
-        #   learning off
-        ipr.link(nl_const.IP_LINK_SET, index=vxlan_idx, address=mac,
-                 master=br_idx, state='up')
-        ipr.brport(nl_const.IP_LINK_SET, index=vxlan_idx,
-                   vlan_tunnel=1, neigh_suppress=1, learning=0)
+            # Equivalent to:
+            # ip link set <vxlan_evpn> address <mac> master <br_evpn>
+            # ip link set <vxlan_evpn> up
+            # bridge link set dev <vxlan_evpn> vlan_tunnel on neigh_suppress
+            #   on learning off
+            ipr.link(nl_const.IP_LINK_SET, index=vxlan_idx, address=mac,
+                     master=br_idx, state='up')
+            ipr.brport(nl_const.IP_LINK_SET, index=vxlan_idx,
+                       vlan_tunnel=1, neigh_suppress=1, learning=0)
 
-        # Equivalent to:
-        # ip link set <br_evpn> mtu 1500 addrgenmode none
-        # ip link set <vxlan_evpn> addrgenmode none
-        ipr.link(nl_const.IP_LINK_SET, index=br_idx,
-                 mtu=br_mtu)
-        _set_addrgenmode_none(ipr, br_idx)
-        _set_addrgenmode_none(ipr, vxlan_idx)
+            # Equivalent to:
+            # ip link set <br_evpn> mtu 1500 addrgenmode none
+            # ip link set <vxlan_evpn> addrgenmode none
+            ipr.link(nl_const.IP_LINK_SET, index=br_idx,
+                     mtu=br_mtu)
+            _set_addrgenmode_none(ipr, br_idx)
+            _set_addrgenmode_none(ipr, vxlan_idx)
+        except Exception:
+            _cleanup_partial_svd(ipr, br_evpn, vxlan_evpn)
+            raise
 
     LOG.debug("Created SVD: bridge %s, vxlan %s (parent %s, "
               "local_ip %s, dstport %d)",

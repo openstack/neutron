@@ -29,6 +29,10 @@ class SvdDeviceAlreadyExists(Exception):
     pass
 
 
+class SvdPortInUse(Exception):
+    pass
+
+
 class SvdDevsNotFound(Exception):
     pass
 
@@ -73,6 +77,10 @@ class Svd:
                 raise SvdDeviceAlreadyExists(
                     _("SVD %(br)s/%(vx)s device(s) already exist(s)") %
                     {'br': self.br_evpn, 'vx': self.vxlan_evpn})
+            if e.code == errno.EADDRINUSE:
+                raise SvdPortInUse(
+                    _("UDP port %(port)d already in use") %
+                    {'port': dstport})
             raise SvdNetlinkError(
                 _("Failed to add SVD %(br)s/%(vx)s: %(err)s") %
                 {'br': self.br_evpn, 'vx': self.vxlan_evpn, 'err': e})
