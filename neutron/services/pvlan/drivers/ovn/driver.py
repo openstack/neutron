@@ -167,13 +167,17 @@ class PVLANDriver:
         txn.add(self.nb_ovn.pg_add(
             name=pg_name, acls=[],
             external_ids={"neutron:network_id": network_id}))
+        # inport covers same-chassis and router ports (addresses="router"),
+        # ip4/ip6.src covers cross-chassis where inport doesn't resolve.
         txn.add(self.nb_ovn.pg_acl_add(
             port_group=pg_name, priority=PROMISCUOUS_PRIORITY,
             action=ovn_const.ACL_ACTION_ALLOW_STATELESS,
             log=False, name=[], severity=[], meter=[],
             direction="to-lport",
-            match="outport == @%s && inport == @%s" % (pg_name,
-                                                       promiscuous_pg),
+            match=("outport == @%(dst)s && (inport == @%(src)s || "
+                   "ip4.src == $%(src)s_ip4 || "
+                   "ip6.src == $%(src)s_ip6)"
+                   % {"dst": pg_name, "src": promiscuous_pg}),
             may_exist=True,
             **{"neutron:network_id": network_id}))
 
@@ -251,23 +255,25 @@ class PVLANDriver:
         txn.add(self.nb_ovn.pg_add(
             name=pg_name, acls=[],
             external_ids={"neutron:network_id": network_id}))
-        for match in [
-            "outport == @%s && inport == @%s" % (pg_name, pg_name),
-            "outport == @%s && inport == @%s" % (pg_name, promiscuous_pg),
-        ]:
+        for src_pg in (pg_name, promiscuous_pg):
             txn.add(self.nb_ovn.pg_acl_add(
                 port_group=pg_name, priority=COMMUNITY_PRIORITY,
                 action=ovn_const.ACL_ACTION_ALLOW_STATELESS,
-                external_ids={"neutron:network_id": network_id},
                 log=False, name=[], severity=[], meter=[],
-                direction="to-lport", match=match, may_exist=True))
+                direction="to-lport",
+                match=("outport == @%(dst)s && (inport == @%(src)s || "
+                       "ip4.src == $%(src)s_ip4 || "
+                       "ip6.src == $%(src)s_ip6)"
+                       % {"dst": pg_name, "src": src_pg}),
+                may_exist=True,
+                **{"neutron:network_id": network_id}))
         txn.add(self.nb_ovn.pg_acl_add(
             port_group=promiscuous_pg, priority=PROMISCUOUS_PRIORITY,
             action=ovn_const.ACL_ACTION_ALLOW_STATELESS,
-            external_ids={"neutron:network_id": network_id},
             log=False, name=[], severity=[], meter=[],
             direction="from-lport",
-            match="inport == @%s" % pg_name, may_exist=True))
+            match="inport == @%s" % pg_name, may_exist=True,
+            **{"neutron:network_id": network_id}))
 
     def create_port(self, context, txn, port):
         """Add newly created port to PVLAN port group within the same txn.
