@@ -113,6 +113,7 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.txn.add.assert_called_once()
             cmd = self.txn.add.call_args[0][0]
             self.assertIsInstance(cmd, evpn_ovn.DeleteEVPNRouterCommand)
+            self.assertEqual(router_id, cmd.router_id)
             self.assertEqual(5000, cmd.vni)
 
     def test_router_delete_without_vni(self):

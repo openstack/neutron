@@ -194,15 +194,20 @@ class AdvertiseHostCommand(command.BaseCommand):
 class DeleteEVPNRouterCommand(command.BaseCommand):
     """Delete the EVPN OVN topology for a router.
 
-    Deletes the dummy logical switch (cascades to its LSP).
-    The LR and its LRP are deleted by the OvnDriver.
+    Deletes the dummy logical switch (cascades to its LSP) and the
+    HA Chassis Group. The LR and its LRP are deleted by the OvnDriver.
     """
 
-    def __init__(self, api, vni):
+    def __init__(self, api, router_id, vni):
         super().__init__(api)
+        self.router_id = router_id
         self.vni = vni
 
     def run_idl(self, txn):
         ls_name = _evpn_ls_name(self.vni)
         ovn_nb_commands.LsDelCommand(
             self.api, ls_name, if_exists=True).run_idl(txn)
+
+        hcg_name = _evpn_hcg_name(self.router_id)
+        ovn_nb_commands.HAChassisGroupDelCommand(
+            self.api, hcg_name, if_exists=True).run_idl(txn)
