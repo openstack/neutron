@@ -4780,7 +4780,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                 'v6_snet_id_1': {'options': {}},
                 'v6_snet_id_3': {'options': {
                     ovn_const.DHCPV6_STATELESS_OPT: 'true'}}}
-            return [fake_rows[row] for row in fake_rows if row in subnets]
+            return [v for k, v in fake_rows.items() if k in subnets]
 
         self.mech_driver.nb_ovn.get_subnets_dhcp_options.side_effect = fake
 

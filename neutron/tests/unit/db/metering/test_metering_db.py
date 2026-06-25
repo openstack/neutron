@@ -127,7 +127,7 @@ class MeteringPluginDbTestCase(
 
     resource_prefix_map = {
         k.replace('_', '-'): "/metering"
-        for k in metering_apidef.RESOURCE_ATTRIBUTE_MAP.keys()
+        for k in metering_apidef.RESOURCE_ATTRIBUTE_MAP
     }
 
     def setUp(self, plugin=None):

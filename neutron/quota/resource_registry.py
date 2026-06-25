@@ -116,10 +116,10 @@ class tracked_resources:
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             registry = ResourceRegistry.get_instance()
-            for resource_name in self._tracked_resources:
+            for resource_name, t_resource in self._tracked_resources.items():
                 registry.set_tracked_resource(
                     resource_name,
-                    self._tracked_resources[resource_name],
+                    t_resource,
                     self._override)
             return f(*args, **kwargs)
 

@@ -128,7 +128,7 @@ class QosAgentDriver(metaclass=abc.ABCMeta):
 
     def _rule_type_has_ingress_direction(self, rule_type):
         supported_rule = self.SUPPORTED_RULES[rule_type]
-        if qos_consts.DIRECTION not in supported_rule.keys():
+        if qos_consts.DIRECTION not in supported_rule:
             return False
         return (constants.INGRESS_DIRECTION in
                 supported_rule[qos_consts.DIRECTION]['type:values'])

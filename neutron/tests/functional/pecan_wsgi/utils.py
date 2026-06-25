@@ -125,12 +125,11 @@ class FakeExtension(api_extensions.ExtensionDescriptor):
                 collection_name, controller, attr_map=params)
             resources.append(resource)
 
-        for collection_name in self.SUB_RESOURCE_ATTRIBUTE_MAP:
+        for collection_name, coll_data in (
+                self.SUB_RESOURCE_ATTRIBUTE_MAP.items()):
             resource_name = collection_name[:-1]
-            parent = self.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
-                'parent')
-            params = self.SUB_RESOURCE_ATTRIBUTE_MAP[collection_name].get(
-                'parameters')
+            parent = coll_data.get('parent')
+            params = coll_data.get('parameters')
 
             controller = base.create_resource(collection_name, resource_name,
                                               fake_plugin, params,

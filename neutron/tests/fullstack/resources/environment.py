@@ -268,7 +268,7 @@ class Host(fixtures.Fixture):
                 str(self.env_desc.network_range[-2]))).address)
 
     def get_bridge(self):
-        if "ovs" in self.agents.keys():
+        if "ovs" in self.agents:
             return self.ovs_agent.br_int
 
     def disconnect(self):

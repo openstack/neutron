@@ -80,8 +80,8 @@ class PortForwarding(base.NeutronDbObject):
     def _new_instance(self, **kwargs):
         fields_parameters = {f: getattr(self, f)
                              for f in self.fields if hasattr(self, f)}
-        sanitized_kwargs = {k: kwargs[k]
-                            for k in kwargs if k in self.fields}
+        sanitized_kwargs = {k: v
+                            for k, v in kwargs.items() if k in self.fields}
         fields_parameters.update(sanitized_kwargs)
         return PortForwarding(**fields_parameters)
 

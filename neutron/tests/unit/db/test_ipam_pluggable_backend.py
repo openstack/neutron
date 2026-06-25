@@ -190,7 +190,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam']._ipam_deallocate_ips(mock.ANY, mocks['driver'],
                                            mock.ANY, ips)
 
-        get_calls = [mock.call(data[ip][1]) for ip in data]
+        get_calls = [mock.call(ip_data[1]) for ip_data in data.values()]
         mocks['driver'].get_subnet.assert_has_calls(get_calls, any_order=True)
 
         ip_calls = [mock.call(ip) for ip in data]
@@ -299,7 +299,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
 
         mocks['ipam']._ipam_allocate_ips(
             mock.ANY, mocks['driver'], mocks['port'], ips)
-        get_calls = [mock.call([data[ip][1]]) for ip in data]
+        get_calls = [mock.call([ip_data[1]]) for ip_data in data.values()]
         mocks['driver'].get_allocator.assert_has_calls(
             get_calls, any_order=True)
 

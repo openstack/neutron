@@ -1416,7 +1416,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             net_id: driver_context.NetworkContext(
                 self, context, nets_by_netid[net_id],
                 segments=segments_by_netid[net_id])
-            for net_id in nets_by_netid.keys()
+            for net_id in nets_by_netid
         }
         return netctxs_by_netid
 

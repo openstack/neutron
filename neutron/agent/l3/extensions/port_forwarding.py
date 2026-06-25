@@ -416,7 +416,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         if ha_port:
             ri.enable_keepalived()
         self._sending_port_forwarding_fip_status(ri, fip_status)
-        for fip_id in fip_status.keys():
+        for fip_id in fip_status:
             self.mapping.clear_by_fip(fip_id, ri.router_id)
 
     def _get_router_info(self, router_id):

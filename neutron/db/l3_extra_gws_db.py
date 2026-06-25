@@ -88,8 +88,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         }
         router = payload.latest_state
         router_db = payload.metadata['router_db']
-        for attr in attr_defaults.keys():
-            value = router.get(attr, attr_defaults[attr])
+        for attr, default_val in attr_defaults.items():
+            value = router.get(attr, default_val)
             if value is not None:
                 self.set_extra_attr_value(router_db, attr, value)
 
@@ -366,9 +366,9 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         compat_gw_port_info = part_matches.pop(router_db['gw_port_id'], None)
 
         # Actually remove extra gateways first.
-        for extra_gw_port_id in part_matches.keys():
+        for extra_gw_port_id, gw_info in part_matches.items():
             self._delete_extra_gw_port(context, router_id, extra_gw_port_id)
-            removed_gateways.append(part_matches[extra_gw_port_id])
+            removed_gateways.append(gw_info)
 
         # If the matched gateway port ID includes the compatibility one, handle
         # its removal in a compatible way.
@@ -550,8 +550,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
             format_gateway_info(rp.port)
             for rp in router_db.attached_ports
             if (rp.port.device_owner == constants.DEVICE_OWNER_ROUTER_GW and
-                rp.port.id not in found_gw_port_ids.keys() and
-                rp.port.id not in part_matches.keys() and
+                rp.port.id not in found_gw_port_ids and
+                rp.port.id not in part_matches and
                 rp.port.id != router_db.gw_port_id)
         ]
         self._remove_external_gateways(context, router_id, ports_to_remove, {})

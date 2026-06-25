@@ -89,7 +89,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
             hypervisors = {
                 device: agent['host']
                 for device
-                in configurations['resource_provider_bandwidths'].keys()
+                in configurations['resource_provider_bandwidths']
             }
 
         log_msg = (

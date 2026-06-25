@@ -410,7 +410,7 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     def test_delete_expired_default_network_segment_ranges(self):
         start_time = n_utils.datetime_to_ts(timeutils.utcnow())
         num_ranges = 5
-        for network_type in network_segment_range.models_map.keys():
+        for network_type in network_segment_range.models_map:
             for idx in range(num_ranges):
                 try:
                     obj = self._create_network_segment_range(
@@ -427,7 +427,7 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def test_new_default(self):
         start_time = n_utils.datetime_to_ts(timeutils.utcnow())
-        for network_type in network_segment_range.models_map.keys():
+        for network_type in network_segment_range.models_map:
             physical_network = ('foo' if network_type == constants.TYPE_VLAN
                                 else None)
             ranges = network_segment_range.NetworkSegmentRange.get_objects(

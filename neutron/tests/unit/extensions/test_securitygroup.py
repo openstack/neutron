@@ -658,10 +658,10 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         description = 'my webservers'
         addr = {'10.1.2.3': {'mask': '32', 'ethertype': 'IPv4'},
                 'fe80::2677:3ff:fe7d:4c': {'mask': '128', 'ethertype': 'IPv6'}}
-        for ip in addr:
+        for ip, ip_info in addr.items():
             with self.security_group(name, description) as sg:
                 sg_id = sg['security_group']['id']
-                ethertype = addr[ip]['ethertype']
+                ethertype = ip_info['ethertype']
                 remote_ip_prefix = ip
                 rule = self._build_security_group_rule(
                     sg_id,
@@ -675,7 +675,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
                 res_sg = self.deserialize(self.fmt, res)
                 prefix = res_sg['security_group_rule']['remote_ip_prefix']
-                self.assertEqual('{}/{}'.format(ip, addr[ip]['mask']), prefix)
+                self.assertEqual('{}/{}'.format(ip, ip_info['mask']), prefix)
 
     def test_create_security_group_rule_tcp_protocol_as_number(self):
         name = 'webservers'

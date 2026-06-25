@@ -653,7 +653,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             # then try to schedule on all gateways with physnets connected,
             # and filter required physnet.
             available_chassis = {
-                c for c in all_gw_chassis or chassis_with_physnets.keys()
+                c for c in all_gw_chassis or chassis_with_physnets
                 if not utils.is_gateway_chassis_invalid(
                     c, all_gw_chassis, physnet, chassis_with_physnets,
                     az_hints, chassis_with_azs)}

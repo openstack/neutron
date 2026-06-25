@@ -99,7 +99,7 @@ def convert_to_kilobits(value, base):
         bits_value = utils.bytes_to_bits(value)
         return utils.bits_to_kilobits(bits_value, base)
     unit = value[-1:]
-    if unit not in UNITS.keys():
+    if unit not in UNITS:
         raise InvalidUnit(unit=unit)
     val = int(value[:-1])
     if input_in_bits:

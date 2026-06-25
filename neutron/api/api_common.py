@@ -371,7 +371,7 @@ class PaginationEmulatedHelper(PaginationHelper):
 class PaginationNativeHelper(PaginationEmulatedHelper):
 
     def update_args(self, args):
-        if self.primary_key not in dict(args.get('sorts', [])).keys():
+        if self.primary_key not in dict(args.get('sorts', [])):
             args.setdefault('sorts', []).append((self.primary_key, True))
         args.update({'limit': self.limit, 'marker': self.marker,
                      'page_reverse': self.page_reverse})
@@ -408,7 +408,7 @@ class SortingEmulatedHelper(SortingHelper):
     def update_fields(self, original_fields, fields_to_add):
         if not original_fields:
             return
-        for key in dict(self.sort_dict).keys():
+        for key in dict(self.sort_dict):
             if key not in original_fields:
                 original_fields.append(key)
                 fields_to_add.append(key)

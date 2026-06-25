@@ -176,7 +176,7 @@ class MetadataProxyHandlerBaseSocketServer(
             resp_headers['content-encoding'] = 'gzip'
         elif (
             resp_content_magic not in CONTENT_ENCODERS.values() and
-            resp_body_encoding in CONTENT_ENCODERS.keys()
+            resp_body_encoding in CONTENT_ENCODERS
         ):
             # content-encoding is set but content is not actually encoded,
             # this is normal for how `requests` behaves, it decodes gzip
@@ -195,7 +195,7 @@ class MetadataProxyHandlerBaseSocketServer(
         # The content of the response is decoded depending on the
         # "Context-Enconding" header, if present. The operation is limited to
         # ("gzip", "deflate"), as is in the ``webob.response.Response`` class.
-        if _res.content_encoding in CONTENT_ENCODERS.keys():
+        if _res.content_encoding in CONTENT_ENCODERS:
             _res.decode_content()
 
         # NOTE(ralonsoh): there should be a better way to format the HTTP

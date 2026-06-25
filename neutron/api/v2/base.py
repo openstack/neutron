@@ -164,7 +164,7 @@ class Controller:
         to see them.
         """
         attributes_to_exclude = []
-        for attr_name in data.keys():
+        for attr_name in data:
             # NOTE(haleyb): If no attribute data was found and this
             # attribute name is 'project_id', we must also check if there
             # is data for 'tenant_id'. This can happen for some of the

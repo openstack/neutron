@@ -104,8 +104,10 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
                 'removed': [],
                 'modified': []
             }
-            for event_type in filtered_events:
-                for dev in events[event_type]:
+            for event_type, event_devs in events.items():
+                if event_type not in filtered_events:
+                    continue
+                for dev in event_devs:
                     iface_id = agent.int_br.portid_from_external_ids(
                         dev.get('external_ids', []))
                     is_for_this_test = (

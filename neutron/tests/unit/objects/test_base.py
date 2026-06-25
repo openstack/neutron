@@ -581,7 +581,7 @@ def get_value(generator, version):
 def remove_timestamps_from_fields(obj_fields, cls_fields):
     obj_fields_result = obj_fields.copy()
     for ts_field in TIMESTAMP_FIELDS:
-        if ts_field in cls_fields.keys() and cls_fields[ts_field].nullable:
+        if ts_field in cls_fields and cls_fields[ts_field].nullable:
             obj_fields_result.pop(ts_field)
     return obj_fields_result
 

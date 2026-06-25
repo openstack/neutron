@@ -1042,7 +1042,7 @@ class OVNClient:
         ls = self._nb_idl.lookup(
             'Logical_Switch', utils.ovn_name(port['network_id']))
         for lb in ls.load_balancer:
-            for ext_id in lb.external_ids.keys():
+            for ext_id in lb.external_ids:
                 if ext_id.startswith(ovn_const.LB_EXT_IDS_POOL_PREFIX):
                     members = lb.external_ids[ext_id]
                     if not members:
@@ -1083,7 +1083,7 @@ class OVNClient:
                 continue
 
             # Find out IP addresses and subnets of configured members.
-            for ext_id in lb.external_ids.keys():
+            for ext_id in lb.external_ids:
                 if not ext_id.startswith(ovn_const.LB_EXT_IDS_POOL_PREFIX):
                     continue
                 members = lb.external_ids[ext_id]

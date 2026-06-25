@@ -532,8 +532,8 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
 
             for mp in rta_multipath:
                 mp['gateway'] = linux_utils.get_attr(mp, 'RTA_GATEWAY')
-                for key in to_check:
-                    if to_check[key] != mp[key]:
+                for key, expected in to_check.items():
+                    if expected != mp[key]:
                         break
                 else:
                     break

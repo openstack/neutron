@@ -1563,8 +1563,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         ovs_bridges.remove(integ_br)
         if self.enable_tunneling:
             ovs_bridges.remove(tun_br)
-        br_names = [self.phys_brs[physical_network].br_name for
-                    physical_network in self.phys_brs]
+        br_names = [brs.br_name for brs in self.phys_brs.values()]
         ovs_bridges.difference_update(br_names)
         # Filter list of bridges to those that have external
         # bridge-id's configured

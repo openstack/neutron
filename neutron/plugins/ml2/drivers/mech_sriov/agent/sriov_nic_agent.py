@@ -567,7 +567,7 @@ class SriovNicAgentConfigParser:
         """
         dev_net_set = set(itertools.chain.from_iterable(
             self.device_mappings.values()))
-        for dev_name in self.exclude_devices.keys():
+        for dev_name in self.exclude_devices:
             if dev_name not in dev_net_set:
                 raise ValueError(_(
                     "Invalid exclude_devices: "
