@@ -31,6 +31,7 @@ from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
 from openstack import connection
+from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
@@ -47,6 +48,17 @@ from neutron.quota import resource_registry
 
 
 LOG = logging.getLogger(__name__)
+
+_CUSTOM_NETWORK_CONFIGURATOR = None
+
+
+def get_custom_network_configurator():
+    global _CUSTOM_NETWORK_CONFIGURATOR
+    if _CUSTOM_NETWORK_CONFIGURATOR is None:
+        with lockutils.lock("CustomNetworkConfiguratorSingleton"):
+            if _CUSTOM_NETWORK_CONFIGURATOR is None:
+                _CUSTOM_NETWORK_CONFIGURATOR = CustomNetworkConfigurator()
+    return _CUSTOM_NETWORK_CONFIGURATOR
 
 
 class DomainLookupFailed(Exception):
@@ -96,13 +108,14 @@ class CustomNetworkConfigurator:
         self._domain_id_cache = {}
         self._domain_name_cache = {}
         self._dns_config: dict[str, dict[str, CustomNetworkSettings]] = {}
-        self._config_file = cfg.CONF.customdns.config_file
+        self._config_file: str | None = cfg.CONF.customdns.config_file
         self._load_config()
 
     def _load_config(self):
         """load or reload custom dns config from file."""
 
         if not self._config_file:
+            # option is empty or not set
             return
 
         LOG.debug("loading customdns config from '%s'", self._config_file)
@@ -527,7 +540,13 @@ class DhcpRpcCallback(object):
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
         version='1.10')
 
-    _domain_lookup = CustomNetworkConfigurator()
+    def __init__(self):
+        super().__init__()
+        if cfg.CONF.customdns.enabled:
+            # load config as early as possible to notice issues
+            self._config_lookup = get_custom_network_configurator()
+        else:
+            self._config_lookup = None
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -699,8 +718,8 @@ class DhcpRpcCallback(object):
                 'segment_index': segment.segment_index,
                 'hosts': segment.hosts} for segment in network.segments]
 
-        if cfg.CONF.customdns.enabled:
-            self._domain_lookup.add_dnssettings_to_net(network_dict)
+        if self._config_lookup:
+            self._config_lookup.add_dnssettings_to_net(network_dict)
 
         return network_dict
 
