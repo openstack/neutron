@@ -16,6 +16,7 @@
 from neutron_lib.api.definitions import evpn as evpn_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
@@ -112,7 +113,8 @@ class EVPNPlugin(service_base.ServicePluginBase):
             payload.context, router_id, requested_vni)
         LOG.info("Allocated EVPN VNI %s for router %s", vni, router_id)
 
-    @registry.receives(resources.ROUTER, [events.AFTER_CREATE])
+    @registry.receives(resources.ROUTER, [events.AFTER_CREATE],
+                       priority=priority_group.PRIORITY_ROUTER_DRIVER)
     def _process_ovn_router_create(self, resource, event, trigger, payload):
         """Create EVPN OVN topology after router creation.
 
@@ -148,7 +150,8 @@ class EVPNPlugin(service_base.ServicePluginBase):
         self._evpn_db.deallocate_vni_for_router(context, router_id)
         LOG.info("Deallocated EVPN VNI for router %s", router_id)
 
-    @registry.receives(resources.ROUTER, [events.AFTER_DELETE])
+    @registry.receives(resources.ROUTER, [events.AFTER_DELETE],
+                       priority=priority_group.PRIORITY_ROUTER_DRIVER)
     def _process_ovn_router_delete(self, resource, event, trigger, payload):
         """Delete EVPN OVN topology after router deletion.
 
@@ -193,7 +196,8 @@ class EVPNPlugin(service_base.ServicePluginBase):
         LOG.info("EVPN advertise_host enabled for port %s on router %s and "
                  "network %s", port_id, router_id, network_id)
 
-    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE])
+    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE],
+                       priority=priority_group.PRIORITY_ROUTER_DRIVER)
     def _process_ovn_router_interface_create(self, resource, event, trigger,
                                              payload):
         """Set advertise-host on the OVN logical router port.
