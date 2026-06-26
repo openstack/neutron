@@ -158,6 +158,24 @@ class OvsdbClientTransactCommand(OvsdbClientCommand):
     COMMAND = 'transact'
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(RuntimeError),
+    wait=tenacity.wait_random(min=0.5, max=2),
+    stop=tenacity.stop_after_attempt(3),
+    reraise=True)
+def _run_with_retry(f, _idl, txn_var_name, txn_index, args, kwargs):
+    with _idl.transaction(check_error=True, nested=False) as new_txn:
+        # NOTE(ralonsoh): the method using this decorator can be called inside
+        # an IDL transaction context, but this new transaction won't be nested
+        # inside the other one but executed independently.
+        if txn_index:
+            args = (args[:txn_index] + (new_txn,) +
+                    args[txn_index + 1:])
+        else:
+            kwargs[txn_var_name] = new_txn
+        return f(*args, **kwargs)
+
+
 def ovn_context(txn_var_name='txn', idl_var_name='idl'):
     """Provide an OVN IDL transaction context
 
@@ -168,6 +186,11 @@ def ovn_context(txn_var_name='txn', idl_var_name='idl'):
     has been called outside a transaction. In this case, the decorator creates
     a transaction from the provided IDL and assigns it to the 'txn_var_name'
     variable.
+
+    When managing its own transaction (no external txn provided), the decorator
+    retries on OVSDB constraint violations. This handles race conditions where
+    concurrent workers attempt to create the same resource (e.g.,
+    HA_Chassis_Group) simultaneously.
     """
     def decorator(f):
         signature = inspect.signature(f)
@@ -207,13 +230,8 @@ def ovn_context(txn_var_name='txn', idl_var_name='idl'):
                 raise RuntimeError(msg)
 
             if not _txn:
-                with _idl.transaction(check_error=True) as new_txn:
-                    if txn_index:
-                        args = (args[:txn_index] + (new_txn,) +
-                                args[txn_index + 1:])
-                    else:
-                        kwargs[txn_var_name] = new_txn
-                    return f(*args, **kwargs)
+                return _run_with_retry(
+                    f, _idl, txn_var_name, txn_index, args, kwargs)
             return f(*args, **kwargs)
         return wrapped
     return decorator
