@@ -1809,7 +1809,7 @@ class OVNClient:
         try:
             options = dict(self._nb_idl.db_get(
                 'Logical_Router_Port', lrp_name,
-                'options').execute(check_error=True))
+                'options').execute(check_error=True, log_errors=False))
         except idlutils.RowNotFound:
             options = {}
 
