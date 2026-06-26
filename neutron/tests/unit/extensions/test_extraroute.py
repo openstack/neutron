@@ -300,20 +300,22 @@ class ExtraRouteDBTestCaseBase:
         test_db_base_plugin_v2._set_temporary_quota('router_route', 3)
         with self.router() as r:
             with self.subnet(cidr='10.0.1.0/24') as s:
-                with self.port(subnet=s) as p:
+                with self.port(subnet=s) as p1,\
+                        self.port(subnet=s) as p2:
+                    nexthop = p2['port']['fixed_ips'][0]['ip_address']
                     self._router_interface_action('add',
                                                   r['router']['id'],
                                                   None,
-                                                  p['port']['id'])
+                                                  p1['port']['id'])
 
                     routes = [{'destination': '135.207.0.0/16',
-                               'nexthop': '10.0.1.3'},
+                               'nexthop': nexthop},
                               {'destination': '12.0.0.0/8',
-                               'nexthop': '10.0.1.4'},
+                               'nexthop': nexthop},
                               {'destination': '141.212.0.0/16',
-                               'nexthop': '10.0.1.5'},
+                               'nexthop': nexthop},
                               {'destination': '192.168.0.0/16',
-                               'nexthop': '10.0.1.6'}]
+                               'nexthop': nexthop}]
 
                     self._update('routers', r['router']['id'],
                                  {'router': {'routes':
@@ -324,7 +326,7 @@ class ExtraRouteDBTestCaseBase:
                     self._router_interface_action('remove',
                                                   r['router']['id'],
                                                   None,
-                                                  p['port']['id'])
+                                                  p1['port']['id'])
 
     def test_router_update_with_dup_address(self):
         with self.router() as r:
