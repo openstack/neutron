@@ -60,16 +60,6 @@ DNSSETTINGS_OPTS = [
     cfg.BoolOpt('enabled',
                 default=False,
                 help=_("Enable domain specific DNS settings.")),
-    # TODO(mutax): remove deprecated options after migration to config file
-    cfg.ListOpt('upstream_dns_servers', default=[],
-                help=_("Custom upstream DNS server IPs"
-                       " (deprecated, use config_file)")),
-    cfg.ListOpt('domain_name_prefixes', default=[],
-                help=_("OS Domain Name Prefixes to match against"
-                       " (deprecated, use config_file)")),
-    cfg.ListOpt('project_ids', default=[],
-                help=_("IDs of projects to match for testing only"
-                       " (deprecated, use config_file)")),
     cfg.StrOpt('config_file', default=None,
                help=_("Path to yaml config file for OpenStack domain "
                       "or project specific DNS settings.")
