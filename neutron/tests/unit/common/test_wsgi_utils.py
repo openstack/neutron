@@ -92,6 +92,23 @@ class TestGetApiWorkerCount(base.BaseTestCase):
                              mod_wsgi=mod_wsgi_mod):
             self.assertEqual(4, wsgi_utils.get_api_worker_count())
 
+    def test_get_api_worker_count_asgi_env(self):
+        with mock.patch.dict('sys.modules', uwsgi=None, mod_wsgi=None), \
+                mock.patch.dict(os.environ, {'ASGI_WORKERS': '3'}):
+            self.assertEqual(3, wsgi_utils.get_api_worker_count())
+
+    def test_get_api_worker_count_uwsgi_over_asgi(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.numproc = 4
+        with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod), \
+                mock.patch.dict(os.environ, {'ASGI_WORKERS': '3'}):
+            self.assertEqual(4, wsgi_utils.get_api_worker_count())
+
+    def test_get_api_worker_count_no_server_no_env(self):
+        with mock.patch.dict('sys.modules', uwsgi=None, mod_wsgi=None), \
+                mock.patch.dict(os.environ, {}, clear=True):
+            self.assertIsNone(wsgi_utils.get_api_worker_count())
+
 
 class TestGetStartTime(base.BaseTestCase):
 

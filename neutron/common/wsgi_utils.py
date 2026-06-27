@@ -91,6 +91,7 @@ def get_api_worker_count() -> int | None:
 
     uWSGI:    ``uwsgi.numproc``.
     mod_wsgi: ``mod_wsgi.maximum_processes``.
+    ASGI:     ``ASGI_WORKERS`` environment variable.
     """
     try:
         # pylint: disable=import-outside-toplevel
@@ -105,6 +106,11 @@ def get_api_worker_count() -> int | None:
         return mod_wsgi.maximum_processes
     except (ImportError, ModuleNotFoundError):
         pass
+
+    # ASGI servers (Hypercorn, uvicorn) export worker count via env var
+    asgi_workers = os.environ.get('ASGI_WORKERS')
+    if asgi_workers:
+        return int(asgi_workers)
 
     LOG.error('Unable to retrieve the API worker count: neither the '
               '``uwsgi`` nor the ``mod_wsgi`` module could be loaded')
