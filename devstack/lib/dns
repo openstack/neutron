@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function configure_dns_extension {
     neutron_ml2_extension_driver_add "dns_domain_keywords"
 }
