@@ -162,7 +162,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                  for key, default in (service_plugins or {}).items()]
             )
 
-        cfg.CONF.set_override('base_mac', "12:34:56:78:00:00")
+        cfg.CONF.set_override('base_mac', "12:34:56:00:00:00")
         cfg.CONF.set_override('max_dns_nameservers', 2)
         cfg.CONF.set_override('max_subnet_host_routes', 2)
         resource_registry.ResourceRegistry._instance = None
