@@ -1,0 +1,21 @@
+---
+features:
+  - |
+
+    Private VLAN (PVLAN) is a service plugin that provides a new port security
+    model for traffic isolation.  Ports can be either ``promiscuous``,
+    ``isolated`` or part of a ``community``:
+
+    - Promiscuous ports can communicate with any other port.
+    - Isolated ports can communicate only with promiscuous ports.
+    - Community ports have a community name assigned and they can communicate
+      only with members within their community and with promiscuous ports.
+
+    These ports need to be part of a network that has the newly added ``pvlan``
+    property. Ports are promiscuous by default, and special ports like metadata
+    ports also fall under the promiscuous category.
+
+    Projects can have some networks managed with security groups and others
+    with PVLAN without conflict. When both mechanisms apply to the same port,
+    PVLAN takes precedence over security group rules. The feature does not
+    support networks or ports with port security disabled.
