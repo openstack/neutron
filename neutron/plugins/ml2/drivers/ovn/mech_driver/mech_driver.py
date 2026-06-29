@@ -1265,7 +1265,8 @@ class OVNMechanismDriver(api.MechanismDriver):
 
                 ovn_bridge = ovn_utils.get_ovn_bridge_from_chassis_private(
                     agent.chassis_private)
-                dp_type = ovn_utils.get_datapath_type(bind_host, self.sb_ovn)
+                dp_type = ovn_utils.get_datapath_type(
+                    self.sb_ovn, hostname=bind_host)
                 vif_details.update({
                     portbindings.VIF_DETAILS_BRIDGE_NAME: ovn_bridge,
                     portbindings.OVS_DATAPATH_TYPE: dp_type,

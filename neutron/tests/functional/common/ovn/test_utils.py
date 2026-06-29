@@ -428,6 +428,47 @@ class TestOvnContext(base.TestOVNFunctionalBase):
                           None, None)
 
 
+class TestGetDatapathType(base.TestOVNFunctionalBase):
+
+    def test_get_datapath_type_by_hostname(self):
+        hostname = 'host-%s' % uuidutils.generate_uuid()[:8]
+        other_config = {'datapath-type': 'netdev'}
+        self.add_fake_chassis(hostname, azs=[], other_config=other_config)
+        dp_type = utils.get_datapath_type(self.sb_api, hostname=hostname)
+        self.assertEqual('netdev', dp_type)
+
+    def test_get_datapath_type_by_hostname_no_match(self):
+        dp_type = utils.get_datapath_type(self.sb_api, hostname='nohost')
+        self.assertEqual('', dp_type)
+
+    def test_get_datapath_type_by_hostname_no_datapath_type(self):
+        hostname = 'host-%s' % uuidutils.generate_uuid()[:8]
+        self.add_fake_chassis(hostname, azs=[])
+        dp_type = utils.get_datapath_type(self.sb_api, hostname=hostname)
+        self.assertEqual('', dp_type)
+
+    def test_get_datapath_type_by_uuid(self):
+        hostname = 'host-%s' % uuidutils.generate_uuid()[:8]
+        other_config = {'datapath-type': 'netdev'}
+        name = self.add_fake_chassis(hostname, azs=[],
+                                     other_config=other_config)
+        chassis = self.sb_api.lookup('Chassis', name)
+        dp_type = utils.get_datapath_type(self.sb_api, _uuid=chassis.uuid)
+        self.assertEqual('netdev', dp_type)
+
+    def test_get_datapath_type_by_uuid_no_match(self):
+        dp_type = utils.get_datapath_type(
+            self.sb_api, _uuid=uuidutils.generate_uuid())
+        self.assertEqual('', dp_type)
+
+    def test_get_datapath_type_by_uuid_no_datapath_type(self):
+        hostname = 'host-%s' % uuidutils.generate_uuid()[:8]
+        name = self.add_fake_chassis(hostname, azs=[])
+        chassis = self.sb_api.lookup('Chassis', name)
+        dp_type = utils.get_datapath_type(self.sb_api, _uuid=chassis.uuid)
+        self.assertEqual('', dp_type)
+
+
 class TestGetLogicalRouterPortHAChassis(base.TestOVNFunctionalBase):
     def _create_network_and_port(self):
         kwargs = {external_net.EXTERNAL: True, 'as_admin': True}
