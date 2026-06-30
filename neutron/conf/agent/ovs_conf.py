@@ -23,6 +23,7 @@ DEFAULT_OVSDB_TIMEOUT = 10
 OPTS = [
     cfg.IntOpt('ovsdb_timeout',
                default=DEFAULT_OVSDB_TIMEOUT,
+               min=1,
                help=_('Timeout in seconds for OVSDB commands. '
                       'If the timeout expires, OVSDB commands will fail with '
                       'ALARMCLOCK error.')),

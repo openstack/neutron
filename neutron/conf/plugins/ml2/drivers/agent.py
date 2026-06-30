@@ -19,10 +19,14 @@ from oslo_config import cfg
 from neutron._i18n import _
 
 agent_opts = [
-    cfg.IntOpt('polling_interval', default=2,
+    cfg.IntOpt('polling_interval',
+               default=2,
+               min=1,
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
-    cfg.IntOpt('quitting_rpc_timeout', default=10,
+    cfg.IntOpt('quitting_rpc_timeout',
+               default=10,
+               min=0,
                help=_("Set new timeout in seconds for new RPC calls after "
                       "agent receives SIGTERM. If value is set to 0, RPC "
                       "timeout will not be changed")),

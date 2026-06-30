@@ -85,10 +85,12 @@ ovn_opts = [
                       ' verify certificates presented to it by SSL peers')),
     cfg.IntOpt('ovsdb_connection_timeout',
                default=180,
+               min=1,
                help=_('Timeout, in seconds, for the OVSDB '
                       'connection transaction')),
     cfg.IntOpt('ovsdb_retry_max_interval',
                default=180,
+               min=1,
                help=_('Max interval, in seconds ,between '
                       'each retry to get the OVN NB and SB IDLs')),
     cfg.IntOpt('ovsdb_probe_interval',
@@ -141,6 +143,7 @@ ovn_opts = [
                       "are created by all the vswitch daemons")),
     cfg.IntOpt('dhcp_default_lease_time',
                default=(12 * 60 * 60),
+               min=1,
                help=_('Default lease time (in seconds) to use with '
                       'OVN\'s native DHCP service.')),
     cfg.StrOpt("ovsdb_log_level",

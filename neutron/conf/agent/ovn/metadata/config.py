@@ -30,6 +30,7 @@ OVS_OPTS = [
                       'Use unix:FILE for unix domain socket connections.')),
     cfg.IntOpt('ovsdb_connection_timeout',
                default=180,
+               min=1,
                help=_('Timeout in seconds for the OVSDB '
                       'connection transaction'))
 ]

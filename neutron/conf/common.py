@@ -80,7 +80,9 @@ core_opts = [
                     "There is no reference implementation for the feature for "
                     "any of in-tree drivers."),
                 ),
-    cfg.IntOpt('dhcp_lease_duration', default=86400,
+    cfg.IntOpt('dhcp_lease_duration',
+               default=86400,
+               min=-1,
                help=_("DHCP lease duration (in seconds). Use -1 to tell "
                       "dnsmasq to use infinite lease times.")),
     cfg.StrOpt('dns_domain',
@@ -107,7 +109,9 @@ core_opts = [
     cfg.BoolOpt('notify_nova_on_port_data_changes', default=True,
                 help=_("Send notification to Nova when port data (fixed_ips/"
                        "floatingip) changes so Nova can update its cache.")),
-    cfg.IntOpt('send_events_interval', default=2,
+    cfg.IntOpt('send_events_interval',
+               default=2,
+               min=1,
                help=_('Number of seconds between sending events to Nova if '
                       'there are any events to send.')),
     cfg.StrOpt('setproctitle',
