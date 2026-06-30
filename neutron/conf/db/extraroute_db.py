@@ -17,7 +17,9 @@ from neutron._i18n import _
 
 
 EXTRA_ROUTE_OPTS = [
-    cfg.IntOpt('max_routes', default=30,
+    cfg.IntOpt('max_routes',
+               default=30,
+               min=1,
                deprecated_for_removal=True,
                deprecated_since='2026.2',
                deprecated_reason=_(

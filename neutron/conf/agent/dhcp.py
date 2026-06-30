@@ -70,7 +70,9 @@ DHCP_AGENT_OPTS = [
                        "not be injected in VMs, as they will be able to reach "
                        "169.254.169.254 through a router. This option "
                        "requires enable_isolated_metadata = True.")),
-    cfg.IntOpt('num_sync_threads', default=4,
+    cfg.IntOpt('num_sync_threads',
+               default=4,
+               min=1,
                help=_('Number of threads to use during sync process. '
                       'Should not exceed connection pool size configured on '
                       'server.')),
@@ -111,6 +113,7 @@ DNSMASQ_OPTS = [
     cfg.IntOpt(
         'dnsmasq_lease_max',
         default=(2 ** 24),
+        min=1,
         help=_('Limit number of leases to prevent a denial-of-service.')),
     cfg.BoolOpt('dhcp_broadcast_reply', default=False,
                 help=_("Use broadcast in DHCP replies.")),

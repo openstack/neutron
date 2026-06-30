@@ -47,9 +47,11 @@ RA_OPTS = [
                       'files')),
     cfg.IntOpt('min_rtr_adv_interval',
                default=30,
+               min=3,
                help=_('MinRtrAdvInterval setting for radvd.conf')),
     cfg.IntOpt('max_rtr_adv_interval',
                default=100,
+               min=4,
                help=_('MaxRtrAdvInterval setting for radvd.conf')),
 ]
 
@@ -121,7 +123,9 @@ PROCESS_MONITOR_OPTS = [
     cfg.StrOpt('check_child_processes_action', default='respawn',
                choices=['respawn', 'exit'],
                help=_('Action to be executed when a child process dies')),
-    cfg.IntOpt('check_child_processes_interval', default=60,
+    cfg.IntOpt('check_child_processes_interval',
+               default=60,
+               min=0,
                help=_('Interval between checks of child process liveness, '
                       'in seconds, use 0 to disable')),
     cfg.StrOpt('kill_scripts_path', default='/etc/neutron/kill_scripts/',
@@ -144,10 +148,14 @@ AVAILABILITY_ZONE_OPTS = [
 
 
 DHCP_PROTOCOL_OPTS = [
-    cfg.IntOpt('dhcp_renewal_time', default=0,
+    cfg.IntOpt('dhcp_renewal_time',
+               default=0,
+               min=0,
                help=_("DHCP renewal time T1 (in seconds). If set to 0, it "
                       "will default to half of the lease time.")),
-    cfg.IntOpt('dhcp_rebinding_time', default=0,
+    cfg.IntOpt('dhcp_rebinding_time',
+               default=0,
+               min=0,
                help=_("DHCP rebinding time T2 (in seconds). If set to 0, it "
                       "will default to 7/8 of the lease time.")),
 ]

@@ -23,6 +23,7 @@ PROFILER_OPTS = [
                        'Profiling data are logged at DEBUG level.')),
     cfg.IntOpt('code_profiling_calls_to_log',
                default=50,
+               min=1,
                help=_('Number of calls from the cProfile report to log')),
 ]
 
