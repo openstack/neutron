@@ -268,6 +268,7 @@ ACL_EXPECTED_COLUMNS_NBDB = (
 
 # Resource types
 TYPE_NETWORKS = 'networks'
+TYPE_SEGMENTS = 'segments'
 TYPE_PORTS = 'ports'
 TYPE_SECURITY_GROUP_RULES = 'security_group_rules'
 TYPE_ROUTERS = 'routers'
@@ -279,6 +280,7 @@ TYPE_ADDRESS_GROUPS = 'address_groups'
 
 TYPES_PRIORITY_ORDER = (
     TYPE_NETWORKS,
+    TYPE_SEGMENTS,
     TYPE_SECURITY_GROUPS,
     TYPE_SUBNETS,
     TYPE_ROUTERS,

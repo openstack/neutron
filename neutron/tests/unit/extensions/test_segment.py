@@ -81,11 +81,14 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     VLAN_MIN = 200
     VLAN_MAX = 209
 
-    def setUp(self, plugin=None):
+    def setUp(self, plugin=None, service_plugins=None):
         config.register_common_config_options()
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
-        service_plugins = {'segments_plugin_name': SERVICE_PLUGIN_KLASS}
+        if service_plugins:
+            service_plugins['segments_plugin_name'] = SERVICE_PLUGIN_KLASS
+        else:
+            service_plugins = {'segments_plugin_name': SERVICE_PLUGIN_KLASS}
         cfg.CONF.set_override('service_plugins', [SERVICE_PLUGIN_KLASS])
         driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override(

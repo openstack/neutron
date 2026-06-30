@@ -33,6 +33,7 @@ from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_address_group
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup
+from neutron.tests.unit.extensions import test_segment
 
 EXTENSIONS_PATH = ':'.join(neutron.extensions.__path__)
 PLUGIN_CLASS = (
@@ -93,6 +94,27 @@ class TestRevisionNumber(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertEqual(123, row.revision_number)
             self.assertIn('No revision row found for',
                           mock_log.call_args[0][0])
+
+    def test_bump_revision_with_dependent_resource(self):
+        segment = {'id': 'fake-seg-id'}
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            # Create initial revision for the network (parent)
+            self._create_initial_revision(
+                self.net['id'], ovn_const.TYPE_NETWORKS)
+            self.net['revision_number'] = 42
+            # bump_revision uses the network's std_attr_id
+            # but targets the dependent segment
+            ovn_rn_db.bump_revision(
+                self.ctx, self.net, ovn_const.TYPE_NETWORKS,
+                dependent_resource=segment,
+                dependent_resource_type=ovn_const.TYPE_SEGMENTS)
+            # The segment's revision row should be created
+            # and updated
+            row = ovn_rn_db.get_revision_row(
+                self.ctx, segment['id'])
+            self.assertEqual(42, row.revision_number)
+            self.assertEqual(
+                ovn_const.TYPE_SEGMENTS, row.resource_type)
 
     def test_delete_revision(self):
         with db_api.CONTEXT_WRITER.using(self.ctx):
@@ -163,13 +185,16 @@ class TestExtensionManager(extensions.PluginAwareExtensionManager):
         sg_resources = sg_ext_mgr.get_resources(self)
         sg_resources_collection_names = [
             res.collection for res in sg_resources]
+        seg_ext_mgr = test_segment.SegmentTestExtensionManager
+        seg_resources = seg_ext_mgr.get_resources(self)
         resources = [r for r in resources
                      if r.collection not in sg_resources_collection_names]
-        return resources + sg_resources
+        return resources + sg_resources + seg_resources
 
 
 class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
                                     test_address_group.AddressGroupTestCase,
+                                    test_segment.SegmentTestCase,
                                     test_l3.L3NatTestCaseMixin):
 
     def setUp(self):
@@ -181,7 +206,8 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
         l3_plugin = test_l3.TestL3NatServicePlugin()
         sec_plugin = test_securitygroup.SecurityGroupTestPlugin()
         ext_mgr = TestExtensionManager(
-            EXTENSIONS_PATH, {'router': l3_plugin, 'sec': sec_plugin}
+            EXTENSIONS_PATH, {'router': l3_plugin, 'sec': sec_plugin,
+                              'segments': test_segment.SERVICE_PLUGIN_KLASS}
         )
         app = config.load_paste_app('extensions_test_app')
         self.ext_api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
@@ -269,6 +295,10 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
         ag = self.deserialize(
             self.fmt, self._create_address_group(
                 **{'name': 'ag1'}))['address_group']
+        segment = self._make_segment(self.fmt, network_id=self.net['id'],
+                                     physical_network='physnet',
+                                     network_type=n_const.TYPE_VLAN,
+                                     segmentation_id=200)['segment']
 
         self._create_initial_revision(router['id'], ovn_const.TYPE_ROUTERS)
         self._create_initial_revision(subnet['id'], ovn_const.TYPE_SUBNETS)
@@ -280,6 +310,7 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
                                       ovn_const.TYPE_SECURITY_GROUP_RULES)
         self._create_initial_revision(self.net['id'], ovn_const.TYPE_NETWORKS)
         self._create_initial_revision(ag['id'], ovn_const.TYPE_ADDRESS_GROUPS)
+        self._create_initial_revision(segment['id'], ovn_const.TYPE_SEGMENTS)
 
         if delete:
             self._delete('security-group-rules', sg_rule['id'])
@@ -288,6 +319,7 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
             self._delete('security-groups', sg['id'])
             self._delete('routers', router['id'])
             self._delete('subnets', subnet['id'])
+            self._delete('segments', segment['id'], as_admin=True)
             self._delete('networks', self.net['id'])
             self._delete('address-groups', ag['id'])
 

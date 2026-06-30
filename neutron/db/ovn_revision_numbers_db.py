@@ -180,22 +180,34 @@ def get_revision_row(context, resource_uuid, resource_type=None):
 
 
 @db_api.retry_if_session_inactive()
-def bump_revision(context, resource, resource_type):
+def bump_revision(context, resource, resource_type, dependent_resource=None,
+                  dependent_resource_type=None):
     revision_number = ovn_utils.get_revision_number(resource, resource_type)
+
+    # Determine target resource for revision tracking
+    if dependent_resource is not None and dependent_resource_type is not None:
+        target_resource = dependent_resource
+        target_resource_type = dependent_resource_type
+    else:
+        target_resource = resource
+        target_resource_type = resource_type
+
     with db_api.CONTEXT_WRITER.using(context):
         std_attr_id = _get_standard_attr_id(context, resource['id'],
                                             resource_type)
-        _ensure_revision_row_exist(context, resource, resource_type,
-                                   std_attr_id)
+
+        _ensure_revision_row_exist(context, target_resource,
+                                   target_resource_type, std_attr_id)
         row = context.session.merge(ovn_models.OVNRevisionNumbers(
-            standard_attr_id=std_attr_id, resource_uuid=resource['id'],
-            resource_type=resource_type))
+            standard_attr_id=std_attr_id, resource_uuid=target_resource['id'],
+            resource_type=target_resource_type))
         if revision_number < row.revision_number:
             LOG.debug(
                 'Skip bumping the revision number for %(res_uuid)s (type: '
                 '%(res_type)s) to %(rev_num)d. A higher version is already '
                 'registered in the database (%(new_rev)d)',
-                {'res_type': resource_type, 'res_uuid': resource['id'],
+                {'res_type': target_resource_type,
+                 'res_uuid': target_resource['id'],
                  'rev_num': revision_number, 'new_rev': row.revision_number})
             return
         if revision_number == row.revision_number:  # do nothing
@@ -204,7 +216,8 @@ def bump_revision(context, resource, resource_type):
         context.session.merge(row)
     LOG.info('Successfully bumped revision number for resource '
              '%(res_uuid)s (type: %(res_type)s) to %(rev_num)d',
-             {'res_uuid': resource['id'], 'res_type': resource_type,
+             {'res_uuid': target_resource['id'],
+              'res_type': target_resource_type,
               'rev_num': revision_number})
 
 
