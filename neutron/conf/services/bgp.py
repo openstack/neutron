@@ -20,9 +20,11 @@ from neutron._i18n import _
 bgp_opts = [
     cfg.IntOpt('main_router_vrf_id',
                default=42,
+               min=0,
                help=_('VRF ID for the main BGP router.')),
     cfg.IntOpt('chassis_router_vrf_id',
                default=10,
+               min=0,
                help=_('VRF ID for the chassis BGP router. This VRF ID is used '
                       'to learn default routes for the egress traffic out '
                       'from the chassis.')),
