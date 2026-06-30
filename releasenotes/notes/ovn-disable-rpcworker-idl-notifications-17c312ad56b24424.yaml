@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    RPC workers now use ``BaseOvnIdl`` and ``BaseOvnSbIdl`` instead of
+    the monitoring IDL classes (``OvnNbIdl``, ``OvnSbIdl``) when
+    connecting to the OVN northbound and southbound databases. This
+    prevents RPC workers from processing OVN database notification
+    events that are only relevant to the API workers, reducing
+    unnecessary overhead and avoiding potential event handling errors.
+    For more information, see bug `2158611 <https://launchpad.net/bugs/2158611>`_.
