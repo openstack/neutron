@@ -41,6 +41,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as cfg
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands as cmd
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
+from neutron import service as n_service
 from neutron.services.portforwarding import constants as pf_const
 
 
@@ -243,7 +244,8 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     @classmethod
     def from_worker(cls, worker_class, driver=None):
         args = (cls.connection_string, cls.schema_helper)
-        if worker_class == worker.MaintenanceWorker:
+        if worker_class in (worker.MaintenanceWorker,
+                            n_service.RpcWorker):
             idl_ = ovsdb_monitor.BaseOvnIdl.from_server(*args)
             try:
                 idl_.set_lock(worker_class.lock_name)
@@ -987,7 +989,8 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     @classmethod
     def from_worker(cls, worker_class, driver=None):
         args = (cls.connection_string, cls.schema_helper)
-        if worker_class == worker.MaintenanceWorker:
+        if worker_class in (worker.MaintenanceWorker,
+                            n_service.RpcWorker):
             idl_ = ovsdb_monitor.BaseOvnSbIdl.from_server(*args)
         else:
             idl_ = ovsdb_monitor.OvnSbIdl.from_server(*args, driver=driver)
