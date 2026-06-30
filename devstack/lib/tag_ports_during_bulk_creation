@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function configure_tag_ports_during_bulk_creation_extension {
     neutron_ml2_extension_driver_add "tag_ports_during_bulk_creation"
 }

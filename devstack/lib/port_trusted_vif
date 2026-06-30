@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function configure_port_trusted_ml2_extension {
     neutron_ml2_extension_driver_add "port_trusted"
 }

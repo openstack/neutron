@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # For more information on loki, see:
 # https://docs.openstack.org/neutron/latest//contributor/testing/db_transient_failure_injection.html
 

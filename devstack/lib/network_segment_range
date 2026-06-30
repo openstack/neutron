@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function configure_network_segment_range {
     neutron_service_plugin_class_add "network_segment_range"
 }

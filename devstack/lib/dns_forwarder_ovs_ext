@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function configure_ovs_dns_forwarder {
     plugin_agent_add_l2_agent_extension "dns_forwarder"
     iniset /$NEUTRON_CORE_PLUGIN_CONF dns_forwarder upstream_dns_server_ports $UPSTREAM_DNS_SERVER_PORTS

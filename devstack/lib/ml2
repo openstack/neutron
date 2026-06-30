@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function configure_ml2_extension_drivers {
     if is_neutron_legacy_enabled; then
         # NOTE(yamamoto): This overwrites what Devstack's neutron module set,
