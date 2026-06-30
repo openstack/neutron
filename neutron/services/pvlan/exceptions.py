@@ -18,38 +18,38 @@ from neutron_lib import exceptions as n_exc
 from neutron._i18n import _
 
 
-class PVLANNotEnabledOnNetwork(n_exc.NeutronException):
+class PVLANNotEnabledOnNetwork(n_exc.BadRequest):
     message = _('PVLAN is not enabled on network %(network_id)s.')
 
 
-class PVLANCannotSetCommunityName(n_exc.NeutronException):
+class PVLANCannotSetCommunityName(n_exc.BadRequest):
     message = _(
         'PVLAN community name cannot be set if port type is not '
         '"community" for this port: %(port_id)s.'
     )
 
 
-class PVLANCommunityNameRequired(n_exc.NeutronException):
+class PVLANCommunityNameRequired(n_exc.BadRequest):
     message = _(
         'Community name is required for ports with PVLAN type '
         '"community": %(port_id)s.'
     )
 
 
-class PVLANPortSecurityDisabled(n_exc.NeutronException):
+class PVLANPortSecurityDisabled(n_exc.BadRequest):
     message = _(
         'Port security is disabled for port %(port_id)s, cannot set PVLAN.'
     )
 
 
-class PVLANNetworkPortSecurityDisabled(n_exc.NeutronException):
+class PVLANNetworkPortSecurityDisabled(n_exc.BadRequest):
     message = _(
         'Port security is disabled on network %(network_id)s, '
         'cannot enable PVLAN.'
     )
 
 
-class PVLANUnsupportedType(n_exc.NeutronException):
+class PVLANUnsupportedType(n_exc.BadRequest):
     message = _(
         'Unsupported PVLAN type %(pvlan_type)s for port %(port_id)s.'
     )
