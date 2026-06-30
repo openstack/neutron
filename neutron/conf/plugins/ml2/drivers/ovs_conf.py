@@ -269,12 +269,14 @@ metadata_opts = [
                       "will be used as the IP range to generate the "
                       "VM's metadata IP.")),
     cfg.IntOpt('provider_vlan_id', default=1,
+               min=1, max=4094,
                help=_("The metadata tap device local vlan ID. This is only "
                       "available on the metadata bridge device.")),
     cfg.StrOpt('provider_base_mac', default="fa:16:ee:00:00:00",
                help=_("The base MAC address Neutron Openvswitch agent "
                       "will use for metadata traffic.")),
     cfg.IntOpt('host_proxy_listen_port', default=80,
+               min=1, max=2**16 - 1,
                help=_("Host haproxy listen port for metadata path. This "
                       "is transparent for metadata traffic, VMs still try to "
                       "access 169.254.169.254:80 for metadata. But in "

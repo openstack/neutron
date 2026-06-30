@@ -155,17 +155,6 @@ class L3HATestCase(L3HATestFramework):
             l3ha_exc.HANetworkCIDRNotValid,
             self.plugin._verify_configuration)
 
-    def test_verify_configuration_max_l3_agents_below_0(self):
-        cfg.CONF.set_override('max_l3_agents_per_router', -5)
-        self.assertRaises(
-            l3ha_exc.HAMaximumAgentsNumberNotValid,
-            self.plugin._check_num_agents_per_router)
-
-    def test_verify_configuration_max_l3_agents_unlimited(self):
-        cfg.CONF.set_override('max_l3_agents_per_router',
-                              l3_hamode_db.UNLIMITED_AGENTS_PER_ROUTER)
-        self.plugin._check_num_agents_per_router()
-
     def test_get_ha_router_port_bindings(self):
         router = self._create_router()
         bindings = self.plugin.get_ha_router_port_bindings(

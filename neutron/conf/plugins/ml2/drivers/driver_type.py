@@ -45,6 +45,7 @@ geneve_opts = [
                        "Note OVN does not use the actual values.")),
     cfg.IntOpt('max_header_size',
                default=p_const.GENEVE_ENCAP_MIN_OVERHEAD,
+               min=0,
                help=_("The maximum allowed Geneve encapsulation header size "
                       "(in bytes). "
                       "Geneve header is extensible, this value is used to "
