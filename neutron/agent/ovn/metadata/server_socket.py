@@ -85,5 +85,10 @@ class UnixDomainMetadataProxy(proxy_base.UnixDomainMetadataProxyBase):
         MetadataProxyHandler._chassis = self.chassis
         MetadataProxyHandler._sb_idl = self.sb_idl
 
+    def close(self):
+        if self._server:
+            self._server.server_close()
+            self._server = None
+
     def wait(self):
         self._server.serve_forever()
