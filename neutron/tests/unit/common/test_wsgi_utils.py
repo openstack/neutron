@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
+import tempfile
 import types
 from unittest import mock
 
@@ -28,19 +30,6 @@ class TestGetApiWorkerCount(base.BaseTestCase):
     def test_get_api_worker_count_without_uwsgi(self):
         with mock.patch.dict('sys.modules', uwsgi=None):
             self.assertIsNone(wsgi_utils.get_api_worker_count())
-
-
-class TestGetApiWorkerId(base.BaseTestCase):
-
-    def test_get_api_worker_id_with_uwsgi(self):
-        uwsgi_mod = types.ModuleType('uwsgi')
-        uwsgi_mod.worker_id = mock.Mock(return_value=3)
-        with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
-            self.assertEqual(3, wsgi_utils.get_api_worker_id())
-
-    def test_get_api_worker_id_without_uwsgi(self):
-        with mock.patch.dict('sys.modules', uwsgi=None):
-            self.assertIsNone(wsgi_utils.get_api_worker_id())
 
 
 class TestGetStartTime(base.BaseTestCase):
@@ -64,3 +53,64 @@ class TestGetStartTime(base.BaseTestCase):
         uwsgi_mod.opt = {}
         with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
             self.assertIsNone(wsgi_utils.get_start_time())
+
+
+class TestElectFirstWsgiWorker(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        wsgi_utils._first_worker_result = None
+        self.addCleanup(self._reset_first_worker_result)
+
+    @staticmethod
+    def _reset_first_worker_result():
+        wsgi_utils._first_worker_result = None
+
+    def test_first_caller_wins(self):
+        flag_path = os.path.join(tempfile.gettempdir(),
+                                 'neutron_first_worker101')
+        self.addCleanup(self._remove_flag, flag_path)
+        with mock.patch('os.getppid', return_value=101):
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+            self.assertTrue(os.path.exists(flag_path))
+
+    def test_second_caller_loses(self):
+        flag_path = os.path.join(tempfile.gettempdir(),
+                                 'neutron_first_worker102')
+        self.addCleanup(self._remove_flag, flag_path)
+        with mock.patch('os.getppid', return_value=102):
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+
+        wsgi_utils._first_worker_result = None
+        with mock.patch('os.getppid', return_value=102):
+            self.assertFalse(wsgi_utils._elect_first_wsgi_worker())
+
+    def test_result_is_cached(self):
+        flag_path = os.path.join(tempfile.gettempdir(),
+                                 'neutron_first_worker103')
+        self.addCleanup(self._remove_flag, flag_path)
+        with mock.patch('os.getppid', return_value=103):
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+
+    def test_different_ppid_resets_election(self):
+        flag_path_1 = os.path.join(tempfile.gettempdir(),
+                                   'neutron_first_worker104')
+        flag_path_2 = os.path.join(tempfile.gettempdir(),
+                                   'neutron_first_worker105')
+        self.addCleanup(self._remove_flag, flag_path_1)
+        self.addCleanup(self._remove_flag, flag_path_2)
+
+        with mock.patch('os.getppid', return_value=104):
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+
+        wsgi_utils._first_worker_result = None
+        with mock.patch('os.getppid', return_value=105):
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+
+    @staticmethod
+    def _remove_flag(path):
+        try:
+            os.unlink(path)
+        except FileNotFoundError:
+            pass
