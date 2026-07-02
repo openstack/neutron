@@ -195,16 +195,6 @@ class OVNMechanismDriver(api.MechanismDriver):
             return self._start_time
 
         self._start_time = wsgi_utils.get_start_time()
-        if not self._start_time:
-            LOG.warning('uWSGI must provide a start time using the '
-                        'configuration parameter "start-time %t" in the '
-                        'configuration file')
-            # NOTE(ralonsoh): this is happening if the uWSGI configuration file
-            # does not have the "start-time %t" parameter or when using the
-            # Neutron API eventlet server, still in use in the grenade
-            # skip-level jobs. This should be removed in the F release.
-            self._start_time = wsgi_utils.get_start_time(current_time=True)
-
         return self._start_time
 
     @property
