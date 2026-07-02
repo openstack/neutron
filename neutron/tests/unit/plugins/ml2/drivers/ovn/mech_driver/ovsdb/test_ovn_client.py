@@ -718,6 +718,62 @@ class TestOVNClient(TestOVNClientBase):
             ctx, filters={'id': []})
         plugin.get_network.assert_not_called()
 
+    def test__get_nets_and_ipv6_ra_confs_metadata_route_info(self):
+        """route_info advertises metadata IPv6 address when enabled."""
+        cfg.CONF.set_override('ovn_metadata_enabled', True, group='ovn')
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnets = [
+            {'id': 'sub-v6', 'cidr': 'fd00::/64',
+             'network_id': 'net1', 'ipv6_address_mode': 'slaac'},
+        ]
+        plugin.get_subnets.return_value = subnets
+        network = {'id': 'net1', 'mtu': 1500,
+                   'router:external': False}
+        plugin.get_network.return_value = network
+        port = {
+            'fixed_ips': [
+                {'subnet_id': 'sub-v6', 'ip_address': 'fd00::5'},
+            ],
+            'device_owner': const.DEVICE_OWNER_ROUTER_INTF,
+        }
+
+        ctx = ncontext.Context()
+        _, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        self.assertIn('route_info', ipv6_ra_configs)
+        self.assertEqual('MEDIUM-%s' % const.METADATA_V6_CIDR,
+                         ipv6_ra_configs['route_info'])
+
+    def test__get_nets_and_ipv6_ra_confs_no_route_info_metadata_disabled(self):
+        """route_info is absent when metadata is disabled."""
+        cfg.CONF.set_override('ovn_metadata_enabled', False, group='ovn')
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        subnets = [
+            {'id': 'sub-v6', 'cidr': 'fd00::/64',
+             'network_id': 'net1', 'ipv6_address_mode': 'slaac'},
+        ]
+        plugin.get_subnets.return_value = subnets
+        network = {'id': 'net1', 'mtu': 1500,
+                   'router:external': False}
+        plugin.get_network.return_value = network
+        port = {
+            'fixed_ips': [
+                {'subnet_id': 'sub-v6', 'ip_address': 'fd00::5'},
+            ],
+            'device_owner': const.DEVICE_OWNER_ROUTER_INTF,
+        }
+
+        ctx = ncontext.Context()
+        _, ipv6_ra_configs = (
+            self.ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                ctx, port))
+
+        self.assertNotIn('route_info', ipv6_ra_configs)
+
     def _make_fake_lsp(self, name, lsp_type='', options=None):
         lsp = mock.Mock()
         lsp.name = name
