@@ -1754,6 +1754,74 @@ class TestDnsmasq(TestBase):
                           ],
                          network=network)
 
+    def test_spawn_cfg_ntp_servers_not_configured(self):
+        """ensure we still start up when no ntp servers are set in our
+        configuration and that no dhcp option is added.
+        """
+
+        network = FakeDualNetwork()
+
+        self._test_spawn(['--conf-file=',
+                          '--domain=openstacklocal',
+                          ],
+                         network=network)
+
+    def test_spawn_cfg_ntp_servers_default_from_config(self):
+        self.conf.set_override('dnsmasq_ntp_servers',
+                               ['192.0.2.3', '192.0.2.4'])
+        network = FakeDualNetwork()
+
+        self._test_spawn(['--conf-file=',
+                          '--dhcp-option=42,192.0.2.3,192.0.2.4',
+                          '--domain=openstacklocal',
+                          ],
+                         network=network)
+
+    def test_spawn_cfg_ntp_servers_override_config(self):
+        self.conf.set_override('dnsmasq_ntp_servers',
+                               ['192.0.2.3', '192.0.2.4'])
+        network = FakeDualNetwork()
+        network.ntp_servers = ['192.0.2.1', '192.0.2.2']
+
+        self._test_spawn(['--conf-file=',
+                          '--dhcp-option=42,192.0.2.1,192.0.2.2',
+                          '--domain=openstacklocal',
+                          ],
+                         network=network)
+
+    def test_spawn_cfg_ntp_servers_ignore_ipv6_config(self):
+        """ensure we skip IPv6 addresses for dhcp option 42
+        from our default settings,
+        it only supports IPv4 addresses:
+        https://datatracker.ietf.org/doc/html/rfc2132#section-8.3
+        """
+        self.conf.set_override('dnsmasq_ntp_servers',
+                               ['192.0.2.3', '::1'])
+        network = FakeDualNetwork()
+
+        self._test_spawn(['--conf-file=',
+                          '--dhcp-option=42,192.0.2.3',
+                          '--domain=openstacklocal',
+                          ],
+                         network=network)
+
+    def test_spawn_cfg_ntp_servers_ignore_ipv6_rpc(self):
+        """ensure we skip IPv6 addresses for dhcp option 42
+        received via network config from the rpc server,
+        it only supports IPv4 addresses:
+        https://datatracker.ietf.org/doc/html/rfc2132#section-8.3
+        """
+        self.conf.set_override('dnsmasq_ntp_servers',
+                               ['192.0.2.3', '::1'])
+        network = FakeDualNetwork()
+        network.ntp_servers = ['192.0.2.1', '::1']
+
+        self._test_spawn(['--conf-file=',
+                          '--dhcp-option=42,192.0.2.1',
+                          '--domain=openstacklocal',
+                          ],
+                         network=network)
+
     @mock.patch.object(sanity_checks,
                        'dnsmasq_umbrella_supported', return_value=True)
     def test_spawn_cfg_enable_dnsmasq_log(self, _mock):

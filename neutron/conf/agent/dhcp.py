@@ -112,6 +112,10 @@ DNSMASQ_OPTS = [
                 default=[],
                 help=_('Comma-separated list of the DNS servers which will be '
                        'used as forwarders.')),
+    cfg.ListOpt('dnsmasq_ntp_servers',
+                default=[],
+                help=_('Comma-separated list of NTP server IPs which will be '
+                       'distributed via DHCP option 42.')),
     cfg.StrOpt('dnsmasq_base_log_dir',
                help=_("Base log dir for dnsmasq logging. "
                       "The log contains DHCP and DNS log information and "

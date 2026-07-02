@@ -88,7 +88,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
             mock_pathlib.assert_called_once()
 
             empty_dict = {}
-            cnc.add_dnssettings_to_net(empty_dict)
+            cnc.add_custom_settings_to_net(empty_dict)
             self.assertFalse(bool(empty_dict))
 
     def test_ensure_config_not_read_if_not_enabled(self):
@@ -149,7 +149,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
             mock_pathlib.return_value = b"matches:\n"
             cnc = CustomNetworkConfigurator()
             mock_pathlib.assert_called_once()
-            self.assertEqual({}, cnc._dns_config)
+            self.assertEqual({}, cnc._net_config)
 
     def test_ensure_config_enabled_requires_valid_configfile(self):
         """Ensure that if the feature is enabled, we require a valid
@@ -206,7 +206,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
                 mock_pathlib:
             mock_pathlib.return_value = no_config
             cnc = CustomNetworkConfigurator()
-            self.assertEqual({}, cnc._dns_config)
+            self.assertEqual({}, cnc._net_config)
 
     def test_yaml_config_loader(self):
         """Test if the yaml config is converted to the expected internal
@@ -225,6 +225,9 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
                        upstream_dns_servers:
                         - 192.0.2.10
                         - 192.0.2.20
+                       ntp_servers:
+                        - 192.0.2.100
+                        - 192.0.2.101
                     -  domain_name_prefixes:
                         - ext-abcd
                         - ext-
@@ -232,6 +235,12 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
                        upstream_dns_servers:
                         - 192.0.2.30
                         - 192.0.2.40
+                       ntp_servers:
+                        - 192.0.2.102
+                        - 192.0.2.103
+                    -  domain_name_prefixes:
+                        - no-opts
+                       ednslogging: True
                 """
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
@@ -239,22 +248,34 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
         # CustomNetworkSettings will convert the list of IPs to a set
         # so we can compare them with ease below.
         config_1 = CustomNetworkSettings(
-                False, {'192.0.2.10', '192.0.2.20'})
+                dns_ednslogging_enabled=False,
+                dns_custom_upstreams={'192.0.2.10', '192.0.2.20'},
+                ntp_servers={'192.0.2.100', '192.0.2.101'},
+        )
         config_2 = CustomNetworkSettings(
-                True, {'192.0.2.30', '192.0.2.40'})
+                dns_ednslogging_enabled=True,
+                dns_custom_upstreams={'192.0.2.30', '192.0.2.40'},
+                ntp_servers={'192.0.2.102', '192.0.2.103'}
+        )
+        config_3 = CustomNetworkSettings(
+                dns_ednslogging_enabled=True,
+                dns_custom_upstreams=None,
+                ntp_servers=None
+        )
 
         example_config_expected = {
             'domains': {'ext-': config_2,
                         'ext-abc': config_1,
                         'ext-abcd': config_2,
-                        'ext-def': config_1
+                        'ext-def': config_1,
+                        'no-opts': config_3
                         },
             'projects': {'0631d17744fe4a04b16494ae9056ae17': config_1,
                          '5dc81c6355ff478188f8fda11a971c41': config_1
                          }
         }
 
-        self.assertEqual(example_config_expected, cnc._dns_config)
+        self.assertEqual(example_config_expected, cnc._net_config)
 
     @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
     def test_no_match_no_change(self, mock_keystone):
@@ -284,7 +305,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
 
-        cnc.add_dnssettings_to_net(mock_network)
+        cnc.add_custom_settings_to_net(mock_network)
 
         mock_keystone.get_project.assert_called_with('p-666')
         mock_keystone.get_domain.assert_called_with('d-42')
@@ -316,7 +337,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
 
-        cnc.add_dnssettings_to_net(mock_network)
+        cnc.add_custom_settings_to_net(mock_network)
 
         mock_keystone.get_project.assert_called_with('p-666')
         mock_keystone.get_domain.assert_called_with('d-42')
@@ -355,7 +376,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
 
-        cnc.add_dnssettings_to_net(mock_network)
+        cnc.add_custom_settings_to_net(mock_network)
         self.assertFalse(mock_network.get('dns_ednslogging_enabled'))
         sentinel = object()
         upstreams = mock_network.get('dns_custom_upstreams', sentinel)
@@ -363,6 +384,44 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
         self.assertIsNotNone(upstreams)
         self.assertIn(dns1, upstreams)
         self.assertIn(dns2, upstreams)
+        self.assertEqual(len(upstreams), 2)
+
+    @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
+    def test_ntpserver_settings(self, mock_keystone):
+        """ensure the configured NTP server IPs are present in the network
+           dict returned
+        """
+
+        # we manipulate the network, so we need fresh mock objects
+        mock_network = {'id': 'net-123', 'project_id': 'p-666'}
+        mock_project = MockedDBObj(id='p-666', domain_id='d-42')
+        mock_domain = MockedDBObj(id='d-42', name='mydomain')
+
+        mock_keystone.get_project.return_value = mock_project
+        mock_keystone.get_domain.return_value = mock_domain
+
+        ntp1 = "2001:db8::456"
+        ntp2 = "192.0.2.123"
+
+        example_config = b"""
+                       matches:
+                           -  domain_name_prefixes:
+                               - mydomain
+                              ntp_servers:
+                               - %s
+                               - %s
+                              ednslogging: False
+                       """ % (ntp1.encode(), ntp2.encode())
+
+        cnc = self._get_cnc_from_yaml_config(configdata=example_config)
+
+        cnc.add_custom_settings_to_net(mock_network)
+        sentinel = object()
+        upstreams = mock_network.get('ntp_servers', sentinel)
+        self.assertNotEqual(sentinel, upstreams)
+        self.assertIsNotNone(upstreams)
+        self.assertIn(ntp1, upstreams)
+        self.assertIn(ntp2, upstreams)
         self.assertEqual(len(upstreams), 2)
 
     @mock.patch.object(CustomNetworkConfigurator, "_keystone_connection")
@@ -403,7 +462,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
 
-        cnc.add_dnssettings_to_net(mock_network)
+        cnc.add_custom_settings_to_net(mock_network)
 
         self.assertFalse(mock_network.get('dns_ednslogging_enabled'))
 
@@ -438,7 +497,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
 
-        cnc.add_dnssettings_to_net(mock_network)
+        cnc.add_custom_settings_to_net(mock_network)
         upstreams = mock_network.get('dns_custom_upstreams')
         self.assertIsNone(upstreams)
 
@@ -469,7 +528,7 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
 
-        cnc.add_dnssettings_to_net(mock_network)
+        cnc.add_custom_settings_to_net(mock_network)
         upstreams = mock_network.get('dns_custom_upstreams')
         self.assertIsNone(upstreams)
 
@@ -494,8 +553,8 @@ class TestDhcpRpcCustomNetworkConfigurator(base.BaseTestCase):
 
         cnc = self._get_cnc_from_yaml_config(configdata=example_config)
 
-        cnc.add_dnssettings_to_net(mock_network_nologging)
-        cnc.add_dnssettings_to_net(mock_network_logging)
+        cnc.add_custom_settings_to_net(mock_network_nologging)
+        cnc.add_custom_settings_to_net(mock_network_logging)
 
         # assert we get the correct settings when no nameservers are set
         # but logging is configured accordingly

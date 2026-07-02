@@ -73,6 +73,7 @@ class CustomNetworkConfigError(Exception):
 class CustomNetworkSettings:
     dns_ednslogging_enabled: bool
     dns_custom_upstreams: set[str] | None = None
+    ntp_servers: set[str] | None = None
 
     def __post_init__(self):
 
@@ -80,22 +81,28 @@ class CustomNetworkSettings:
             raise TypeError(_("dns_ednslogging_enabled must be a bool: %s")
                             % self.dns_ednslogging_enabled)
 
-        if self.dns_custom_upstreams:
-            try:
-                self.dns_custom_upstreams = self._validate_ip_addresses(
-                    self.dns_custom_upstreams)
-            except ValueError as e:
-                LOG.error("Invalid DNS server list: %s", e)
-                raise
+        try:
+            self.dns_custom_upstreams = self._validate_ip_addresses(
+                self.dns_custom_upstreams)
+        except ValueError as e:
+            LOG.error("Invalid DNS server list: %s", e)
+            raise
+
+        try:
+            self.ntp_servers = self._validate_ip_addresses(
+                    self.ntp_servers)
+        except ValueError as e:
+            LOG.error("Invalid NTP server list: %s", e)
+            raise
 
     @staticmethod
-    def _validate_ip_addresses(addresses: set[str] | None) -> set[str]:
+    def _validate_ip_addresses(addresses: set[str] | None) -> set[str] | None:
         """ensure that all elements are valid IP addresses and make it a
         set of strings containing the normalized IP addresses.
         """
 
         if not addresses:
-            return set()
+            return None
 
         validated: set[str] = set()
         for item in addresses:
@@ -115,18 +122,19 @@ class CustomNetworkConfigurator:
         self._KEYSTONE = None
         self._domain_id_cache = {}
         self._domain_name_cache = {}
-        self._dns_config: dict[str, dict[str, CustomNetworkSettings]] = {}
+        self._net_config: dict[str, dict[str, CustomNetworkSettings]] = {}
         self._config_file: str | None = cfg.CONF.customdns.config_file
         self._load_config()
 
     def _load_config(self):
-        """load or reload custom dns config from file."""
+        """load or reload custom network configurations from file."""
 
         if not self._config_file:
             raise CustomNetworkConfigError(_("no config_file set but custom "
                                              "network config requested"))
 
-        LOG.debug("loading customdns config from '%s'", self._config_file)
+        LOG.debug("loading custom network settings from '%s'",
+                  self._config_file)
 
         try:
             cfgfile = pathlib.Path(self._config_file)
@@ -140,25 +148,28 @@ class CustomNetworkConfigurator:
                    % self._config_file)
             raise CustomNetworkConfigError(msg)
 
-        # make an empty config file fail hard
+        # Fail when the file is completely empty, this is most likely
+        # a misconfiguration...
         try:
             matches = config['matches']
         except KeyError:
-            msg = (_("Missing 'matches:' in custom DNS config file '%s'") %
+            msg = (_("Missing 'matches:' in custom network settings "
+                     "configuration file '%s'") %
                    self._config_file)
             raise CustomNetworkConfigError(msg)
 
-        # but accept an intentionally empty list
+        # ... but accept an intentionally empty list
         if not matches:
             return
 
-        dns_config = {'projects': {}, 'domains': {}}
+        net_config = {'projects': {}, 'domains': {}}
 
         mandatory_keys = {'ednslogging', }
         valid_keys = mandatory_keys | {
                       'project_ids',
                       'domain_name_prefixes',
                       'upstream_dns_servers',
+                      'ntp_servers',
                     }
 
         for item in matches:
@@ -185,56 +196,57 @@ class CustomNetworkConfigurator:
             project_ids = item.get('project_ids', [])
             domain_prefixes = item.get('domain_name_prefixes', [])
             upstreams = item.get('upstream_dns_servers', [])
+            ntp_servers = item.get('ntp_servers', [])
             ednslogging = item['ednslogging']
 
             try:
                 netconfig = CustomNetworkSettings(
                     dns_ednslogging_enabled=ednslogging,
                     dns_custom_upstreams=set(upstreams),
+                    ntp_servers=set(ntp_servers),
                 )
             except (TypeError, ValueError) as e:
                 msg = _("Error parsing custom DNS config: %s") % e
                 raise CustomNetworkConfigError(msg)
 
             for project_id in project_ids:
-                if project_id in dns_config['projects']:
+                if project_id in net_config['projects']:
                     msg = _("project %s already configured!") % project_id
                     raise CustomNetworkConfigError(msg)
 
-                dns_config['projects'][project_id] = netconfig
+                net_config['projects'][project_id] = netconfig
 
             for domain_prefix in domain_prefixes:
-                if domain_prefix in dns_config['domains']:
+                if domain_prefix in net_config['domains']:
                     msg = (_("domain-prefix '%s' already configured!")
                            % domain_prefix)
                     raise CustomNetworkConfigError(msg)
 
-                dns_config['domains'][domain_prefix] = netconfig
+                net_config['domains'][domain_prefix] = netconfig
 
-        self._dns_config = dns_config
+        self._net_config = net_config
 
-    def add_dnssettings_to_net(self, network_dict):
-        """Add custom dns settings specified via external config file
+    def add_custom_settings_to_net(self, network_dict):
+        """Add the custom settings specified in the external config file
         to the network, if the network matches any of the criteria set in the
         config file.
         """
 
-        if not self._dns_config:
+        if not self._net_config:
             return
 
         # first check if we have a match in the project ids,
         # this is the cheapest lookup
-
         project_id = network_dict['project_id']
 
-        custom_config = self._dns_config['projects'].get(project_id)
+        custom_config = self._net_config['projects'].get(project_id)
         if custom_config:
             LOG.debug("setting custom settings for net %s, "
                       "project %s matches: %s",
                       network_dict['id'], project_id, custom_config
                       )
         else:
-            # try to match openstack domain name prefixes.
+            # now try to match openstack domain name prefixes.
             custom_config = self._find_domain_settings(network_dict)
 
         if not custom_config:
@@ -247,12 +259,16 @@ class CustomNetworkConfigurator:
             network_dict['dns_custom_upstreams'] = (
                 custom_config.dns_custom_upstreams)
 
+        if custom_config.ntp_servers:
+            network_dict['ntp_servers'] = (
+                custom_config.ntp_servers)
+
     def _find_domain_settings(self, network_dict: dict) -> (
             CustomNetworkSettings | None):
-        """lookup domain-specific DNS settings if they exist.
+        """lookup domain-specific Network settings (e.g., DNS) if they exist.
         """
 
-        if not self._dns_config:
+        if not self._net_config:
             return None
 
         # try to retrieve the OpenStack domain name via the project id,
@@ -270,8 +286,9 @@ class CustomNetworkConfigurator:
             # TODO(mutax): I do want to get the stack trace logged, but I
             #   also want to get a nice warning to the log independent of the
             #   source of the error - but now we log the same error twice.
-            LOG.exception('Failed to retrieve domain to set custom dns for'
-                          ' project %s of network %s - %s: %s',
+            LOG.exception('Failed to get OpenStack domain of project %s '
+                          'while checking for custom settings for network %s -'
+                          '%s: %s',
                           project_id, network_dict['id'], type(e), e
                           )
 
@@ -289,12 +306,12 @@ class CustomNetworkConfigurator:
         # i.e. abc- can provide settings for all domains starting with abc,
         # while at the same time abc-123 can be used to match a specific one
 
-        for domain_prefix in sorted(self._dns_config['domains'].keys(),
+        for domain_prefix in sorted(self._net_config['domains'].keys(),
                                     key=len,
                                     reverse=True):
 
             if domain_name.startswith(domain_prefix):
-                custom_config = self._dns_config['domains'][domain_prefix]
+                custom_config = self._net_config['domains'][domain_prefix]
 
                 LOG.debug("setting custom settings for net %s, "
                           "domain %s matches prefix %s: %s",
@@ -596,7 +613,7 @@ class DhcpRpcCallback(object):
                 'hosts': segment.hosts} for segment in network.segments]
 
         if self._config_lookup:
-            self._config_lookup.add_dnssettings_to_net(network_dict)
+            self._config_lookup.add_custom_settings_to_net(network_dict)
 
         return network_dict
 
