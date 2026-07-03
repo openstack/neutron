@@ -862,10 +862,9 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         config_fdb_age_threshold = ovn_conf.get_fdb_age_threshold()
         # Get provider networks
-        nets = self._ovn_client._plugin.get_networks(context)
+        nets = self._ovn_client._plugin.get_networks(
+            context, {pnet.NETWORK_TYPE: n_const.TYPE_PHYSICAL})
         for net in nets:
-            if not utils.is_provider_network(net):
-                continue
             ls_name = utils.ovn_name(net['id'])
             ls = self._nb_idl.get_lswitch(ls_name)
             ls_fdb_age_threshold = ls.other_config.get(
