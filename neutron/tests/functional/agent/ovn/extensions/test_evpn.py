@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import socket
 from unittest import mock
 
 from oslo_utils import uuidutils
@@ -132,7 +133,6 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         ip_lib.IPDevice(self._parent).addr.add(self.LOCAL_IP + '/32')
         self.addCleanup(self._safe_delete, self._parent)
         self.cfg = evpn.EvpnConfig(local_ip=self.LOCAL_IP,
-                                   dstport=self.DSTPORT,
                                    vxlan_parent=self._parent,
                                    mac=self.SVD_MAC,
                                    br_mtu=evpn_const.EVPN_BR_MTU)
@@ -204,3 +204,16 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         evpn = self._evpn_fsm.instances[self._vrf]
         self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
         self.assertFalse(ip_lib.device_exists(svi_name))
+
+
+class TestGetFreeUdpPort(functional_base.BaseLoggingTestCase):
+
+    def test_returns_valid_port(self):
+        port = evpn.EVPNAgentExtension._get_free_udp_port()
+        self.assertGreater(port, 0)
+        self.assertLessEqual(port, 65535)
+
+    def test_returned_port_is_bindable(self):
+        port = evpn.EVPNAgentExtension._get_free_udp_port()
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.bind(('', port))

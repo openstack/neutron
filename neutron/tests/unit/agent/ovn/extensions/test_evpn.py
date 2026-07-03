@@ -15,10 +15,10 @@
 
 from unittest import mock
 
-from oslo_config import cfg
 from pyroute2.iproute import ipmock
 from pyroute2.netlink.rtnl import ifinfmsg
 
+from neutron.agent.linux import svd as linux_svd
 from neutron.agent.ovn.extensions import evpn as evpn_ext
 from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
 from neutron.agent.ovn.extensions.evpn import fsm
@@ -53,8 +53,6 @@ class TestEVPNAgentExtension(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         evpn_conf.register_opts()
-        cfg.CONF.set_override('child_vxlan_port', self.DSTPORT,
-                              group='ovn_evpn')
         self.ext = evpn_ext.EVPNAgentExtension()
         self.ext.agent_api = mock.Mock()
         self.ext.agent_api.ovs_idl.db_get.return_value.execute.return_value = {
@@ -69,7 +67,69 @@ class TestEVPNAgentExtension(base.BaseTestCase):
                                   '.NetlinkDispatcher').start()
         mock.patch.object(evpn_ext.net_lib, 'get_random_mac',
                           return_value=self.MAC).start()
+        mock.patch.object(evpn_ext.EVPNAgentExtension,
+                          '_get_free_udp_port',
+                          return_value=self.DSTPORT).start()
         self.addCleanup(mock.patch.stopall)
+
+
+class TestCreateSvdWithFreePort(base.BaseTestCase):
+
+    LOCAL_IP = '10.10.10.10'
+    VXLAN_PORT = '4789'
+    MAC = 'fa:16:3e:aa:bb:cc'
+
+    def setUp(self):
+        super().setUp()
+        evpn_conf.register_opts()
+        self.ext = evpn_ext.EVPNAgentExtension()
+        self.ext.agent_api = mock.Mock()
+        self.ext.agent_api.ovs_idl.db_get.return_value.execute.return_value = {
+            'ovn-evpn-local-ip': self.LOCAL_IP,
+            'ovn-evpn-vxlan-ports': self.VXLAN_PORT,
+        }
+        mock.patch.object(evpn_ext.net_lib, 'get_random_mac',
+                          return_value=self.MAC).start()
+        self.ext._get_evpn_config()
+        self.ext.svd = mock.Mock()
+        self.addCleanup(mock.patch.stopall)
+
+    def test_creates_svd_on_first_try(self):
+        mock.patch.object(
+            evpn_ext.EVPNAgentExtension, '_get_free_udp_port',
+            return_value=49152).start()
+        self.ext._create_svd_with_free_port()
+        self.ext.svd.create.assert_called_once()
+
+    def test_retries_on_port_in_use(self):
+        mock.patch.object(
+            evpn_ext.EVPNAgentExtension, '_get_free_udp_port',
+            side_effect=[49152, 49153, 49154]).start()
+        self.ext.svd.create.side_effect = [
+            linux_svd.SvdPortInUse("port 49152 in use"),
+            linux_svd.SvdPortInUse("port 49153 in use"),
+            None,
+        ]
+        self.ext._create_svd_with_free_port()
+        self.assertEqual(3, self.ext.svd.create.call_count)
+
+    def test_reuses_existing_svd(self):
+        mock.patch.object(
+            evpn_ext.EVPNAgentExtension, '_get_free_udp_port',
+            return_value=49152).start()
+        self.ext.svd.create.side_effect = linux_svd.SvdDeviceAlreadyExists(
+            "already exists")
+        self.ext._create_svd_with_free_port()
+        self.ext.svd.create.assert_called_once()
+
+    def test_raises_after_max_attempts(self):
+        mock.patch.object(
+            evpn_ext.EVPNAgentExtension, '_get_free_udp_port',
+            side_effect=list(range(49152, 49162))).start()
+        self.ext.svd.create.side_effect = linux_svd.SvdPortInUse("in use")
+        self.assertRaises(
+            RuntimeError, self.ext._create_svd_with_free_port)
+        self.assertEqual(10, self.ext.svd.create.call_count)
 
 
 class TestVrfHandler(base.BaseTestCase):

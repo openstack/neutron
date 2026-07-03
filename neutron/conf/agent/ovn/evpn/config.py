@@ -26,10 +26,6 @@ EVPN_OPTS = [
         'bgp_local_interface',
         help=_('The local interface name (e.g. eth2) on which to establish '
                'BGP peer session')),
-    cfg.IntOpt(
-        'child_vxlan_port',
-        default=49152,
-        help=_('UDP port for the child VxLAN device used by EVPN')),
     cfg.StrOpt(
         'frr_vty_socket',
         default='/run/frr',
