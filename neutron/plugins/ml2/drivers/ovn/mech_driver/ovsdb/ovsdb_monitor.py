@@ -45,28 +45,6 @@ CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
 
-class BaseEvent(row_event.RowEvent, metaclass=abc.ABCMeta):
-    table: str
-    events = tuple()
-
-    def __init__(self):
-        self.event_name = self.__class__.__name__
-        super().__init__(self.events, self.table, None)
-
-    @abc.abstractmethod
-    def match_fn(self, event, row, old=None):
-        """Define match criteria other than table/event"""
-
-    def matches(self, event, row, old=None):
-        if row._table.name != self.table or event not in self.events:
-            return False
-        if not self.match_fn(event, row, old):
-            return False
-        LOG.debug("%s : Matched %s, %s, %s %s", self.event_name, self.table,
-                  event, self.conditions, self.old_conditions)
-        return True
-
-
 class ChassisEvent(row_event.RowEvent):
     """Chassis create update delete event."""
     table: str = 'Chassis'
@@ -320,7 +298,7 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         self.driver.set_port_status_up(row.logical_port)
 
 
-class ChassisAgentEvent(BaseEvent):
+class ChassisAgentEvent(row_event.RowEvent):
     GLOBAL = True
     table = 'Chassis_Private'
 
@@ -329,7 +307,7 @@ class ChassisAgentEvent(BaseEvent):
     # don't want to insert/update/delete something a bajillion times.
     def __init__(self, driver):
         self.driver = driver
-        super().__init__()
+        super().__init__(self.events, self.table, None)
 
 
 class ChassisAgentDownEvent(ChassisAgentEvent):
@@ -340,7 +318,7 @@ class ChassisAgentDownEvent(ChassisAgentEvent):
     deleted but Chassis_Private remained, e.g. ungraceful shutdown in
     containerized deployments).
     """
-    events = (BaseEvent.ROW_DELETE, BaseEvent.ROW_UPDATE)
+    events = (row_event.RowEvent.ROW_DELETE, row_event.RowEvent.ROW_UPDATE)
 
     def run(self, event, row, old):
         for agent in n_agent.AgentCache().agents_by_chassis_private(row):
@@ -364,7 +342,7 @@ class ChassisAgentDownEvent(ChassisAgentEvent):
 
 
 class ChassisAgentDeleteEvent(ChassisAgentEvent):
-    events = (BaseEvent.ROW_UPDATE,)
+    events = (row_event.RowEvent.ROW_UPDATE,)
     table = 'SB_Global'
 
     def match_fn(self, event, row, old=None):
@@ -379,7 +357,7 @@ class ChassisAgentDeleteEvent(ChassisAgentEvent):
 
 
 class ChassisAgentWriteEvent(ChassisAgentEvent):
-    events = (BaseEvent.ROW_CREATE, BaseEvent.ROW_UPDATE)
+    events = (row_event.RowEvent.ROW_CREATE, row_event.RowEvent.ROW_UPDATE)
 
     def match_fn(self, event, row, old=None):
         # On updates to Chassis_Private because the Chassis has been deleted,
@@ -405,7 +383,7 @@ class ChassisAgentWriteEvent(ChassisAgentEvent):
 class ChassisAgentTypeChangeEvent(ChassisEvent):
     """Chassis Agent class change event"""
     GLOBAL = True
-    events = (BaseEvent.ROW_UPDATE,)
+    events = (row_event.RowEvent.ROW_UPDATE, )
 
     def match_fn(self, event, row, old=None):
         try:
@@ -434,7 +412,7 @@ class ChassisAgentTypeChangeEvent(ChassisEvent):
 
 
 class ChassisOVNAgentWriteEvent(ChassisAgentEvent):
-    events = (BaseEvent.ROW_CREATE, BaseEvent.ROW_UPDATE)
+    events = (row_event.RowEvent.ROW_CREATE, row_event.RowEvent.ROW_UPDATE)
 
     @staticmethod
     def _agent_sb_cfg(row):
