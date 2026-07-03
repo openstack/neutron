@@ -540,9 +540,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
     @log_maintenance_task(
-        start_message=(
-            'Check missing prefix router_name',
-            'in external_ids of LRPs.'))
+        start_message='Check missing prefix router_name in external_ids '
+                      'of LRPs.')
     def update_lrouter_ports_ext_ids_name_prefix(self):
         """Update OVN logical router ports if missing external ids
         "neutron-" prefix for router name.
