@@ -636,7 +636,7 @@ class OVNClient:
                 kwargs['ha_chassis_group'], _ = (
                     utils.sync_ha_chassis_group_network(
                         context, self._nb_idl, self._sb_idl, port['id'],
-                        port['network_id'], txn))
+                        port['network_id'], None))
 
             # NOTE(mjozefcz): Do not set addresses if the port is not
             # bound, has no device_owner and it is OVN LB VIP port.
@@ -769,7 +769,7 @@ class OVNClient:
                     columns_dict['ha_chassis_group'], _ = (
                         utils.sync_ha_chassis_group_network(
                             context, self._nb_idl, self._sb_idl, port['id'],
-                            port['network_id'], txn))
+                            port['network_id'], None))
                 else:
                     # Clear the ha_chassis_group field
                     columns_dict['ha_chassis_group'] = []
