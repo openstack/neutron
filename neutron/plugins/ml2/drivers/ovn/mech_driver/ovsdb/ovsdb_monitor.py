@@ -22,6 +22,7 @@ from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import strutils
 from oslo_utils import timeutils
 from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
@@ -865,6 +866,20 @@ class HAChassisGroupRouterEvent(row_event.RowEvent):
     def run(self, event, row, old):
         router_id = row.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY]
         router_name = utils.ovn_name(router_id)
+
+        # If any gateway LRP uses ha_chassis_group (physnet/VLAN/flat),
+        # do NOT set LR.options.chassis. OVN handles HA natively via
+        # the chassisredirect port. Setting both is rejected by northd
+        # as "Bad configuration" (LP#2158987).
+        lr = self.driver.nb_ovn.lookup('Logical_Router', router_name,
+                                       default=None)
+        if lr:
+            for lrp in getattr(lr, 'ports', []):
+                ext_gw = lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW)
+                if (strutils.bool_from_string(ext_gw) and
+                        getattr(lrp, 'ha_chassis_group', [])):
+                    return
+
         if not row.ha_chassis:
             # No GW chassis are present in the environment.
             self.driver.nb_ovn.db_remove(
