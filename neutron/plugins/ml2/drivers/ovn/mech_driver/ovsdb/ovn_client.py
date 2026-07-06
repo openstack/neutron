@@ -309,6 +309,17 @@ class OVNClient:
             # NOTE(ralonsoh): OVN subports don't have host ID information.
             return
 
+        if db_port.device_owner in (const.DEVICE_OWNER_ROUTER_INTF,
+                                    const.DEVICE_OWNER_DVR_INTERFACE,
+                                    const.DEVICE_OWNER_ROUTER_HA_INTF,
+                                    const.DEVICE_OWNER_HA_REPLICATED_INT,
+                                    ):
+            # NOTE(ralonsoh): router ports in OVN are never bound to a host.
+            # In ML2/OVN, only ``DEVICE_OWNER_ROUTER_INTF`` applies to
+            # non-gateway LRPs; the others could come from ML2/OVS migrated
+            # environments. See LP#2159632.
+            return
+
         lsp = self._nb_idl.lookup('Logical_Switch_Port', db_port.id,
                                   default=None)
         if not lsp:
