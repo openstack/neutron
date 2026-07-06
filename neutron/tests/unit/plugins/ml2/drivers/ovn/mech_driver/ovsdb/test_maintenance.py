@@ -846,7 +846,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.fake_ovn_client._nb_idl.db_set.assert_called_once_with(
             'Logical_Switch', 'neutron-foo',
             ('other_config',
-             {constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: 'true'}))
+             {constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: str(True)}))
 
     def test_check_network_broadcast_arps_to_all_routers_already_set(self):
         cfg.CONF.set_override('broadcast_arps_to_all_routers', 'false',
@@ -854,7 +854,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         networks = [{'id': 'foo', external_net.EXTERNAL: True}]
         self.fake_ovn_client._plugin.get_networks.return_value = networks
         fake_ls = mock.Mock(other_config={
-            constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: 'false'})
+            constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: str(False)})
         self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
 
         self.assertRaises(
