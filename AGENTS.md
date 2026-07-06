@@ -50,6 +50,11 @@ and controlled (partially) by the Neutron team:
 - [pyroute2](https://github.com/svinota/pyroute2)
 
 
+## Agent links
+
+- Neutron code review: [.agents/neutron-code-review.md](.agents/neutron-code-review.md)
+
+
 ## Guardrails
 
 - **Tools:** Do not install missing tools with a package manager or `pip`
