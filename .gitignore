@@ -68,3 +68,13 @@ ChangeLog
 releasenotes/build
 RELEASENOTES.rst
 releasenotes/notes/reno.cache
+
+# Agentic tools and files
+.tmp/
+.pi/
+.cursor/
+.cursorrules
+.claude/
+.vscode/
+.codex/
+CLAUDE.md
