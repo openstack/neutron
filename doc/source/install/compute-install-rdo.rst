@@ -120,7 +120,7 @@ Finalize installation
 
    .. end
 
-#. Start the Linux bridge agent and configure it to start when the
+#. Start the Open vSwitch agent and configure it to start when the
    system boots:
 
    .. code-block:: console

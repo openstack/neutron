@@ -293,8 +293,7 @@ For L3 agent:
 Agent backends
 ~~~~~~~~~~~~~~
 
-At the moment, QoS is supported by Open vSwitch, SR-IOV and Linux bridge
-ml2 drivers.
+At the moment, QoS is supported by Open vSwitch and SR-IOV ml2 drivers.
 
 Each agent backend defines a QoS driver that implements the QosAgentDriver
 interface:
@@ -367,41 +366,6 @@ numbers. So in case the limit is set to something less than 1000 kbps, it's set
 to 1 Mbps only. If the limit is set to something that does not divide to 1000
 kbps chunks, then the effective limit is rounded to the nearest integer Mbps
 value.
-
-Linux bridge
-~~~~~~~~~~~~
-
-The Linux bridge implementation relies on the new tc_lib functions.
-
-For egress bandwidth limit rule:
-
-* set_filters_bw_limit
-* update_filters_bw_limit
-* delete_filters_bw_limit
-
-The egress bandwidth limit is configured on the tap port by setting traffic
-policing on tc ingress queueing discipline (qdisc). Details about ingress
-qdisc can be found on `lartc how-to <http://lartc.org/howto/lartc.adv-qdisc.ingress.html>`__.
-The reason why ingress qdisc is used to configure egress bandwidth limit is
-that tc is working on traffic which is visible from "inside bridge"
-perspective. So traffic incoming to bridge via tap interface is in fact
-outgoing from Neutron's port.
-This implementation is the same as what Open vSwitch is doing when
-ingress_policing_rate and ingress_policing_burst are set for port.
-
-For ingress bandwidth limit rule:
-
-* set_tbf_bw_limit
-* update_tbf_bw_limit
-* delete_tbf_bw_limit
-
-The ingress bandwidth limit is configured on the tap port by setting a simple
-`tc-tbf <http://linux.die.net/man/8/tc-tbf>`_ queueing discipline (qdisc) on
-the port. It requires a value of HZ parameter configured in kernel on the host.
-This value is necessary to calculate the minimal burst value which is set in
-tc. Details about how it is calculated can be found in
-`here <http://unix.stackexchange.com/a/100797>`_.
-This solution is similar to Open vSwitch implementation.
 
 QoS driver design
 -----------------
