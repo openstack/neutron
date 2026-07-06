@@ -2654,6 +2654,46 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
             self.segments_plugin.nova_updater._send_notifications([event])
             self.assertTrue(log.called)
 
+    def test_delete_nova_inventory_rp_not_found(self):
+        nova_updater = self.segments_plugin.nova_updater
+        segment_id = uuidutils.generate_uuid()
+        self.mock_p_client.list_aggregates.side_effect = (
+            placement_exc.PlacementAggregateNotFound(
+                resource_provider=segment_id))
+        self.mock_p_client.delete_resource_provider.side_effect = (
+            placement_exc.PlacementResourceProviderNotFound(
+                resource_provider=segment_id))
+        event = seg_plugin.Event(
+            nova_updater._delete_nova_inventory, segment_id)
+        with mock.patch.object(seg_plugin.LOG, 'debug') as log_debug, \
+                mock.patch.object(seg_plugin.LOG, 'info') as log_info:
+            nova_updater._delete_nova_inventory(event)
+            log_debug.assert_called_once()
+            self.assertIn(segment_id, str(log_debug.call_args))
+            log_info.assert_called_once()
+            self.assertIn('resource provider aggregate not found',
+                          str(log_info.call_args))
+        self.mock_n_client.aggregates.get_details.assert_not_called()
+        self.mock_n_client.aggregates.delete.assert_not_called()
+
+    def test_delete_nova_inventory_placement_client_error(self):
+        nova_updater = self.segments_plugin.nova_updater
+        segment_id = uuidutils.generate_uuid()
+        self.mock_p_client.list_aggregates.side_effect = (
+            placement_exc.PlacementAggregateNotFound(
+                resource_provider=segment_id))
+        self.mock_p_client.delete_resource_provider.side_effect = (
+            placement_exc.PlacementClientError(msg='test error'))
+        event = seg_plugin.Event(
+            nova_updater._delete_nova_inventory, segment_id)
+        with mock.patch.object(seg_plugin.LOG, 'info') as log_info:
+            nova_updater._delete_nova_inventory(event)
+            self.assertEqual(2, log_info.call_count)
+            self.assertIn('Client error',
+                          str(log_info.call_args_list[1]))
+        self.mock_n_client.aggregates.get_details.assert_not_called()
+        self.mock_n_client.aggregates.delete.assert_not_called()
+
     def _test_create_network_and_segment(self, phys_net):
         with self.network() as net:
             network = net['network']
