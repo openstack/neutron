@@ -18,6 +18,7 @@ from unittest import mock
 from neutron_lib.api.definitions import l3
 from neutron_lib import constants as const
 from neutron_lib import context as ncontext
+from neutron_lib import exceptions as n_exc
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.services.trunk import constants as trunk_const
 from oslo_config import cfg
@@ -823,6 +824,104 @@ class TestOVNClient(TestOVNClientBase):
         self.ovn_client._delete_port(ctx, port_id)
 
         self.nb_idl.unset_lswitch_port_to_virtual_type.assert_not_called()
+
+    @mock.patch('neutron.db.ovn_revision_numbers_db.bump_revision')
+    def test_update_virtual_port_parent_host_with_chassis(self,
+                                                          mock_bump_rev):
+        """Updating a virtual port parent host resolves hostname from SB."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        fake_port = {'id': 'vip-port', 'revision_number': 5}
+        plugin.get_port.return_value = fake_port
+
+        mock_db_get = mock.Mock()
+        mock_db_get.execute.return_value = 'compute-0'
+        self.sb_idl.db_get.return_value = mock_db_get
+
+        check_rev_cmd = mock.Mock()
+        check_rev_cmd.result = constants.TXN_COMMITTED
+        self.nb_idl.check_revision_number.return_value = check_rev_cmd
+
+        ctx = ncontext.Context()
+        self.ovn_client.update_virtual_port_parent_host(
+            ctx, 'vip-port', chassis_id='chassis-uuid')
+
+        self.sb_idl.db_get.assert_called_once_with(
+            'Chassis', 'chassis-uuid', 'hostname')
+        plugin.update_virtual_port_parent_host.assert_called_once_with(
+            ctx, 'vip-port', 'compute-0')
+        plugin.get_port.assert_called_once_with(ctx, 'vip-port')
+        self.nb_idl.db_set.assert_called_once_with(
+            'Logical_Switch_Port', 'vip-port',
+            ('external_ids',
+             {constants.OVN_PARENT_HOSTNAME_EXT_ID_KEY: 'compute-0'}))
+        mock_bump_rev.assert_called_once_with(
+            ctx, fake_port, constants.TYPE_PORTS)
+
+    @mock.patch('neutron.db.ovn_revision_numbers_db.bump_revision')
+    def test_update_virtual_port_parent_host_with_hostname(self,
+                                                           mock_bump_rev):
+        """Updating a virtual port parent host with explicit hostname."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        fake_port = {'id': 'vip-port', 'revision_number': 5}
+        plugin.get_port.return_value = fake_port
+
+        check_rev_cmd = mock.Mock()
+        check_rev_cmd.result = constants.TXN_COMMITTED
+        self.nb_idl.check_revision_number.return_value = check_rev_cmd
+
+        ctx = ncontext.Context()
+        self.ovn_client.update_virtual_port_parent_host(
+            ctx, 'vip-port', hostname='compute-1')
+
+        self.sb_idl.db_get.assert_not_called()
+        plugin.update_virtual_port_parent_host.assert_called_once_with(
+            ctx, 'vip-port', 'compute-1')
+        plugin.get_port.assert_called_once_with(ctx, 'vip-port')
+        mock_bump_rev.assert_called_once_with(
+            ctx, fake_port, constants.TYPE_PORTS)
+
+    @mock.patch('neutron.db.ovn_revision_numbers_db.bump_revision')
+    def test_update_virtual_port_parent_host_no_chassis_no_hostname(
+            self, mock_bump_rev):
+        """Clearing virtual port parent host when no chassis/hostname."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        fake_port = {'id': 'vip-port', 'revision_number': 5}
+        plugin.get_port.return_value = fake_port
+
+        check_rev_cmd = mock.Mock()
+        check_rev_cmd.result = constants.TXN_COMMITTED
+        self.nb_idl.check_revision_number.return_value = check_rev_cmd
+
+        ctx = ncontext.Context()
+        self.ovn_client.update_virtual_port_parent_host(ctx, 'vip-port')
+
+        plugin.update_virtual_port_parent_host.assert_called_once_with(
+            ctx, 'vip-port', '')
+        self.nb_idl.db_set.assert_called_once_with(
+            'Logical_Switch_Port', 'vip-port',
+            ('external_ids',
+             {constants.OVN_PARENT_HOSTNAME_EXT_ID_KEY: ''}))
+        mock_bump_rev.assert_called_once_with(
+            ctx, fake_port, constants.TYPE_PORTS)
+
+    def test_update_virtual_port_parent_host_port_not_found(self):
+        """PortNotFound is handled gracefully when port is already deleted."""
+        plugin = mock.MagicMock()
+        self.get_plugin.return_value = plugin
+        plugin.get_port.side_effect = n_exc.PortNotFound(port_id='vip-port')
+
+        ctx = ncontext.Context()
+        self.ovn_client.update_virtual_port_parent_host(
+            ctx, 'vip-port', hostname='compute-0')
+
+        plugin.update_virtual_port_parent_host.assert_called_once_with(
+            ctx, 'vip-port', 'compute-0')
+        plugin.get_port.assert_called_once_with(ctx, 'vip-port')
+        self.nb_idl.check_revision_number.assert_not_called()
+        self.nb_idl.db_set.assert_not_called()
 
 
 class TestOVNClientFairMeter(TestOVNClientBase,
