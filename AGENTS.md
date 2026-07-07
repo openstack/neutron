@@ -53,6 +53,7 @@ and controlled (partially) by the Neutron team:
 ## Agent links
 
 - Neutron code review: [.agents/neutron-code-review.md](.agents/neutron-code-review.md)
+- Launchpad bug triage: [.agents/neutron-lp-bug-triage.md](.agents/neutron-lp-bug-triage.md)
 
 
 ## Guardrails
