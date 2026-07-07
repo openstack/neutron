@@ -14,6 +14,86 @@ more resources than the quota allows, an error occurs:
 Per-project quota configuration is also supported by the quota
 extension API. See :ref:`cfg_quotas_per_project` for details.
 
+Supported quota resources
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following table lists all resources subject to quota enforcement in
+Neutron, along with their configuration option name and default limit:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 25 10 40
+
+   * - Resource
+     - Configuration option
+     - Default
+     - Description
+   * - firewall_group
+     - ``quota_firewall_group``
+     - 10
+     - Number of firewall groups allowed per project (``neutron-fwaas``).
+   * - firewall_policy
+     - ``quota_firewall_policy``
+     - 10
+     - Number of firewall policies allowed per project (``neutron-fwaas``).
+   * - firewall_rule
+     - ``quota_firewall_rule``
+     - 100
+     - Number of firewall rules allowed per project (``neutron-fwaas``).
+   * - floating_ips
+     - ``quota_floatingip``
+     - 50
+     - Number of floating IPs allowed per project.
+   * - networks
+     - ``quota_network``
+     - 100
+     - Number of networks allowed per project.
+   * - ports
+     - ``quota_port``
+     - 500
+     - Number of ports allowed per project.
+   * - rbac_policies
+     - ``quota_rbac_policy``
+     - 10
+     - Number of RBAC policy entries allowed per project.
+   * - router_routes
+     - ``quota_router_route``
+     - 30
+     - Number of router routes (extra routes) allowed **per router**.
+   * - routers
+     - ``quota_router``
+     - 10
+     - Number of routers allowed per project.
+   * - security_group_rules
+     - ``quota_security_group_rule``
+     - 100
+     - Number of security group rules allowed per project (across
+       all security groups).
+   * - security_groups
+     - ``quota_security_group``
+     - 10
+     - Number of security groups allowed per project.
+   * - subnet_pools
+     - ``default_quota``
+     - -1 (unlimited)
+     - Number of subnet pools allowed per project. Uses the global
+       ``default_quota`` since no specific option exists.
+   * - subnets
+     - ``quota_subnet``
+     - 100
+     - Number of subnets allowed per project.
+   * - trunks
+     - ``default_quota``
+     - -1 (unlimited)
+     - Number of trunk ports allowed per project. Uses the global
+       ``default_quota`` since no specific option exists.
+
+All quota options are set in the ``[quotas]`` section of
+``/etc/neutron/neutron.conf``. A negative value means unlimited (no quota
+enforcement for that resource). The ``default_quota`` option provides a
+fallback limit for any resource that does not have its own dedicated
+configuration option.
+
 Basic quota configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -116,9 +196,11 @@ the default set of quotas are enforced for all projects, so no
 
    .. code-block:: ini
 
-      quota_driver = neutron.db.quota.driver.DbQuotaDriver
+      quota_driver = neutron.db.quota.driver_nolock.DbQuotaNoLockDriver
 
    When you set this option, the output for Networking commands shows ``quotas``.
+   The ``driver_nolock.DbQuotaNoLockDriver`` is the default quota driver,
+   defined in the configuration option ``quota_driver``.
 
 #. List Networking extensions.
 
@@ -150,17 +232,14 @@ the default set of quotas are enforced for all projects, so no
    .. code-block:: console
 
       $ openstack extension show quotas
-      +-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-      | Field       | Value                                                                                                                                                                                     |
-      +-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-      | alias       | quotas                                                                                                                                                                                    |
-      | description | Expose functions for quotas management per project                                                                                                                                        |
-      | id          | quotas                                                                                                                                                                                    |
-      | links       | []                                                                                                                                                                                        |
-      | location    | Munch({'cloud': '', 'region_name': 'RegionOne', 'zone': None, 'project': Munch({'id': 'afc55714081b4ef29f99ec128cb1fa30', 'name': 'demo', 'domain_id': 'default', 'domain_name': None})}) |
-      | name        | Quota management support                                                                                                                                                                  |
-      | updated     | 2012-07-29T10:00:00-00:00                                                                                                                                                                 |
-      +-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+      +-------------+----------------------------------------------------+
+      | Field       | Value                                              |
+      +-------------+----------------------------------------------------+
+      | alias       | quotas                                             |
+      | description | Expose functions for quotas management per project |
+      | name        | Quota management support                           |
+      | updated_at  | 2012-07-29T10:00:00-00:00                          |
+      +-------------+----------------------------------------------------+
 
    .. note::
 
@@ -185,51 +264,69 @@ the default set of quotas are enforced for all projects, so no
       | bff5c9455ee24231b5bc713c1b96d422 |          100 |      100 |   500 |            10 |      10 |              10 |                  100 |     100 |           -1 |
       +----------------------------------+--------------+----------+-------+---------------+---------+-----------------+----------------------+---------+--------------+
 
-#. Show per-project quota values.
+   .. note::
+
+      This command will show the quotas for the projects with customized
+      quotas. if a project has no customized quotas, the command won't show
+      the project.
+
+#. Show per-project quota values and usage.
 
    The :command:`openstack quota show` command reports the current
    set of quota limits for the specified project.
    Non-administrative users can run this command without the
    ``<project>`` argument. If per-project quota limits are
    not enabled for the project, the command shows the default
-   set of quotas.
+   set of quotas. Using the ``--network`` argument, the command will
+   show only the network quotas.
 
    .. code-block:: console
 
-      $ openstack quota show 6f88036c45344d9999a1f971e4882723
-      +----------------+-------+
-      | Resource       | Limit |
-      +----------------+-------+
-      | networks       |   100 |
-      | ports          |   500 |
-      | rbac_policies  |    10 |
-      | routers        |    20 |
-      | subnets        |   100 |
-      | subnet_pools   |    -1 |
-      | floating-ips   |    50 |
-      | secgroup-rules |   100 |
-      | secgroups      |    10 |
-      +----------------+-------+
+      $ openstack quota show --network 6f88036c45344d9999a1f971e4882723
+      +----------------------+-------+
+      | Resource             | Limit |
+      +----------------------+-------+
+      | firewall_rule        |   100 |
+      | firewall_group       |    10 |
+      | firewall_policy      |    10 |
+      | floating_ips         |    50 |
+      | networks             |   100 |
+      | ports                |   500 |
+      | rbac_policies        |    10 |
+      | routers              |     5 |
+      | router_routes        |    30 |
+      | subnets              |   100 |
+      | subnet_pools         |    -1 |
+      | security_group_rules |   100 |
+      | security_groups      |    10 |
+      | trunk                |    -1 |
+      +----------------------+-------+
 
-   The following command shows the command output for a
-   non-administrative user.
+   With the ``--usage`` argument, the command will show the usage of the
+   quotas. Some resources, like ``router_routes``, are counted per parent
+   resource (router). The usage field for these resources will be always zero.
 
    .. code-block:: console
 
-      $ openstack quota show
-      +----------------+-------+
-      | Resource       | Limit |
-      +----------------+-------+
-      | networks       |   100 |
-      | ports          |   500 |
-      | rbac_policies  |    10 |
-      | routers        |    20 |
-      | subnets        |   100 |
-      | subnet_pools   |    -1 |
-      | floating-ips   |    50 |
-      | secgroup-rules |   100 |
-      | secgroups      |    10 |
-      +----------------+-------+
+      $ openstack quota show --network --usage
+      +----------------------+-------+--------+----------+
+      | Resource             | Limit | In Use | Reserved |
+      +----------------------+-------+--------+----------+
+      | firewall_rule        |   100 |      0 |        0 |
+      | firewall_group       |    10 |      0 |        0 |
+      | firewall_policy      |    10 |      0 |        0 |
+      | floating_ips         |    50 |      0 |        0 |
+      | networks             |   100 |      1 |        0 |
+      | ports                |   500 |      2 |        0 |
+      | rbac_policies        |     4 |      1 |        0 |
+      | routers              |    10 |      1 |        0 |
+      | router_routes        |    30 |      0 |        0 |
+      | subnets              |   100 |      1 |        0 |
+      | subnet_pools         |    -1 |      0 |        0 |
+      | security_group_rules |   100 |      6 |        0 |
+      | security_groups      |    10 |      2 |        0 |
+      | trunk                |    -1 |      0 |        0 |
+      +----------------------+-------+--------+----------+
 
 #. Update quota values for a specified project.
 
@@ -270,19 +367,24 @@ the default set of quotas are enforced for all projects, so no
    .. code-block:: console
 
       $ openstack quota show --network 6f88036c45344d9999a1f971e4882723
-      +----------------+-------+
-      | Resource       | Limit |
-      +----------------+-------+
-      | networks       |   100 |
-      | ports          |   500 |
-      | rbac_policies  |    10 |
-      | routers        |    20 |
-      | subnets        |   100 |
-      | subnet_pools   |    -1 |
-      | floating-ips   |    50 |
-      | secgroup-rules |   100 |
-      | secgroups      |    10 |
-      +----------------+-------+
+      +----------------------+-------+
+      | Resource             | Limit |
+      +----------------------+-------+
+      | firewall_rule        |   100 |
+      | firewall_group       |    10 |
+      | firewall_policy      |    10 |
+      | floating_ips         |    50 |
+      | networks             |   100 |
+      | ports                |   500 |
+      | rbac_policies        |    10 |
+      | routers              |    10 |
+      | router_routes        |    30 |
+      | subnets              |   100 |
+      | subnet_pools         |    -1 |
+      | security_group_rules |   100 |
+      | security_groups      |    10 |
+      | trunk                |    -1 |
+      +----------------------+-------+
 
 .. note::
 
