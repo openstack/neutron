@@ -8,5 +8,6 @@ WebTest>=2.0.27 # MIT
 oslotest>=3.2.0 # Apache-2.0
 stestr>=1.0.0 # Apache-2.0
 ddt>=1.2.1 # MIT
+python-neutronclient>=7.8.0 # Apache-2.0
 # Needed to run DB commands in virtualenvs
 PyMySQL>=0.7.6 # MIT License
