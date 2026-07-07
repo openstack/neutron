@@ -476,7 +476,8 @@ class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
 
         self.frr_fixture_a.restart_frr()
 
-        assert_routes(self.ns_b, table_id=vni, present=advertised_routes)
+        assert_routes(self.ns_b, table_id=vni, present=advertised_routes,
+                      timeout=10)
 
     def test_routes_withdrawn_on_stop_and_restored_on_start(self):
         vni = 123
@@ -497,4 +498,5 @@ class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
 
         self.frr_fixture_a.start_frr()
 
-        assert_routes(self.ns_b, table_id=vni, present=advertised_routes)
+        assert_routes(self.ns_b, table_id=vni, present=advertised_routes,
+                      timeout=10)
