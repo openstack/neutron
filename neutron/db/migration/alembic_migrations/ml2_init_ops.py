@@ -113,20 +113,6 @@ def upgrade():
     )
 
     op.create_table(
-        'cisco_ml2_nexusport_bindings',
-        sa.Column('binding_id', sa.Integer(), nullable=False),
-        sa.Column('port_id', sa.String(length=255), nullable=True),
-        sa.Column('vlan_id', sa.Integer(), autoincrement=False,
-                  nullable=False),
-        sa.Column('switch_ip', sa.String(length=255), nullable=True),
-        sa.Column('instance_id', sa.String(length=255), nullable=True),
-        sa.Column('vni', sa.Integer(), nullable=True),
-        sa.Column('is_provider_vlan', sa.Boolean(), nullable=False,
-                  server_default=sa.sql.false()),
-        sa.PrimaryKeyConstraint('binding_id'),
-    )
-
-    op.create_table(
         'arista_provisioned_nets',
         sa.Column('tenant_id', sa.String(length=255), nullable=True,
                   index=True),
@@ -153,31 +139,3 @@ def upgrade():
                   index=True),
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.PrimaryKeyConstraint('id'))
-
-    op.create_table(
-        'ml2_nexus_vxlan_allocations',
-        sa.Column('vxlan_vni', sa.Integer(), nullable=False,
-                  autoincrement=False),
-        sa.Column('allocated', sa.Boolean(), nullable=False,
-                  server_default=sa.sql.false()),
-        sa.PrimaryKeyConstraint('vxlan_vni')
-    )
-
-    op.create_table(
-        'ml2_nexus_vxlan_mcast_groups',
-        sa.Column('id', sa.String(length=36), nullable=False),
-        sa.Column('mcast_group', sa.String(length=64), nullable=False),
-        sa.Column('associated_vni', sa.Integer(), nullable=False),
-        sa.PrimaryKeyConstraint('id'),
-        sa.ForeignKeyConstraint(['associated_vni'],
-                                ['ml2_nexus_vxlan_allocations.vxlan_vni'],
-                                ondelete='CASCADE')
-    )
-
-    op.create_table(
-        'cisco_ml2_nexus_nve',
-        sa.Column('vni', sa.Integer(), nullable=False),
-        sa.Column('switch_ip', sa.String(length=255), nullable=True),
-        sa.Column('device_id', sa.String(length=255), nullable=True),
-        sa.Column('mcast_group', sa.String(length=255), nullable=True),
-        sa.PrimaryKeyConstraint('vni', 'switch_ip', 'device_id'))
