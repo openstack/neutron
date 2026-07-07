@@ -30,7 +30,7 @@ Create Date: 2015-11-25 18:45:03.831359
 # revision identifiers, used by Alembic.
 
 revision = 'c6c112992c9'
-down_revision = '2b4c2465d44b'
+down_revision = '8a6d8bdae39'
 depends_on = ('15e43b934f81',)
 
 qos_rbacs = sa.Table(
