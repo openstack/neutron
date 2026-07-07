@@ -41,14 +41,6 @@ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
     'bgp_speaker_dragent_bindings',
 ]
 
-# BigSwitch models are in openstack/networking-bigswitch
-REPO_BIGSWITCH_TABLES = [
-    'consistencyhashes',
-    'routerrules',
-    'nexthops',
-]
-
 TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
-          REPO_NEUTRON_DYNAMIC_ROUTING_TABLES +
-          REPO_BIGSWITCH_TABLES)
+          REPO_NEUTRON_DYNAMIC_ROUTING_TABLES)
