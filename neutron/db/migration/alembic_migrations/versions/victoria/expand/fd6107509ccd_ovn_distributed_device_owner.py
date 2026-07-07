@@ -20,7 +20,7 @@ import sqlalchemy as sa
 """ovn_distributed_device_owner
 
 Revision ID: fd6107509ccd
-Revises: 5c85685d616d
+Revises: dfe425060830
 Create Date: 2020-06-01 11:16:58.312355
 
 """
