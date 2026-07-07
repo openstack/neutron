@@ -856,7 +856,12 @@ class OVNClient:
         # Updates neutron database with hostname for virtual port
         self._plugin.update_virtual_port_parent_host(context, port_id,
                                                      hostname)
-        db_port = self._plugin.get_port(context, port_id)
+        try:
+            db_port = self._plugin.get_port(context, port_id)
+        except n_exc.PortNotFound:
+            LOG.debug('Port %s not found, skipping virtual port parent '
+                      'host update in OVN NB', port_id)
+            return
         check_rev_cmd = self._nb_idl.check_revision_number(
             port_id, db_port, ovn_const.TYPE_PORTS)
         # Updates OVN NB database with the parent hostname for LSP virtual port
