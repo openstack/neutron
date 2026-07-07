@@ -61,6 +61,7 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
     def sb_idl_tables(self):
         return [
             'Port_Binding',
+            'Chassis',
         ]
 
     @property
@@ -72,6 +73,21 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
     @property
     def chassis_name(self):
         return ovsdb.get_own_chassis_name(self.agent_api.ovs_idl)
+
+    @property
+    def chassis_id(self):
+        chassis = self.agent_api.sb_idl.db_find_rows(
+            'Chassis',
+            name=self.chassis_name
+        ).execute(check_error=True)
+        if len(chassis) > 1:
+            LOG.warning("Expected 1 chassis for chassis %s, got %s",
+                        self.chassis_name, len(chassis))
+            return None
+        if chassis:
+            return chassis[0].uuid
+        LOG.warning("Chassis %s does not exist", self.chassis_name)
+        return None
 
     @property
     def hostdev_ips(self):
