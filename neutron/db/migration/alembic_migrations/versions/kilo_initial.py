@@ -19,7 +19,6 @@ from neutron.db.migration.alembic_migrations import core_init_ops
 from neutron.db.migration.alembic_migrations import dvr_init_opts
 from neutron.db.migration.alembic_migrations import firewall_init_ops
 from neutron.db.migration.alembic_migrations import l3_init_ops
-from neutron.db.migration.alembic_migrations import lb_init_ops
 from neutron.db.migration.alembic_migrations import loadbalancer_init_ops
 from neutron.db.migration.alembic_migrations import metering_init_ops
 from neutron.db.migration.alembic_migrations import ml2_init_ops
@@ -47,7 +46,6 @@ def upgrade():
     secgroup_init_ops.upgrade()
     portsec_init_ops.upgrade()
     other_extensions_init_ops.upgrade()
-    lb_init_ops.upgrade()
     ml2_init_ops.upgrade()
     dvr_init_opts.upgrade()
     firewall_init_ops.upgrade()
