@@ -34,27 +34,13 @@ revision = '054e34dbe6b4'
 down_revision = '89c58a70ceba'
 
 # Ordered tables to delete first the tables with foreign keys references.
+# Tables from cisco_init_ops.py have been removed (no longer created).
+# Only Cisco ML2 tables from ml2_init_ops.py remain.
 REPO_CISCO_TABLES = [
-    'cisco_ml2_apic_contracts',
-    'cisco_ml2_apic_names',
-    'cisco_ml2_apic_host_links',
-    'cisco_ml2_n1kv_policy_profiles',
-    'cisco_ml2_n1kv_port_bindings',
-    'cisco_ml2_n1kv_network_bindings',
-    'cisco_ml2_n1kv_vxlan_allocations',
-    'cisco_ml2_n1kv_vlan_allocations',
-    'cisco_ml2_n1kv_profile_bindings',
     'cisco_ml2_nexusport_bindings',
     'cisco_ml2_nexus_nve',
     'ml2_nexus_vxlan_mcast_groups',
-    'ml2_ucsm_port_profiles',
-    'cisco_port_mappings',
-    'cisco_router_mappings',
-    'cisco_hosting_devices',
-    'cisco_ml2_n1kv_network_profiles',
     'ml2_nexus_vxlan_allocations',
-    'cisco_network_profiles',
-    'cisco_policy_profiles',
 ]
 
 REPO_VMWARE_TABLES = [
@@ -110,7 +96,6 @@ TABLES_TO_DROP = itertools.chain(
     REPO_VMWARE_TABLES,
     REPO_BROCADE_TABLES,
     REPO_NUAGE_TABLES,
-    ['cisco_csr_identifier_map']
 )
 
 
