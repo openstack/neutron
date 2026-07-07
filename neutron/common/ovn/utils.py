@@ -16,6 +16,7 @@ import functools
 import inspect
 import os
 import random
+import threading
 import typing
 
 import netaddr
@@ -37,6 +38,7 @@ from oslo_log import log
 from oslo_serialization import jsonutils
 from oslo_utils import netutils
 from oslo_utils import strutils
+from ovsdbapp.backend.ovs_idl import event as row_event
 from ovsdbapp import constants as ovsdbapp_const
 from pecan import util as pecan_util
 import tenacity
@@ -1608,3 +1610,39 @@ def setkeys(row, column, key_values):
     """Merge key-value pairs into an OVSDB row's map column via setkey."""
     for key, value in key_values.items():
         row.setkey(column, key, value)
+
+
+class TimedOnetimeEvent(row_event.RowEvent):
+    """A one-time event that auto-unwatches after a timeout.
+
+    This event fires at most once. If it does not match within the specified
+    timeout, it is automatically removed from the event handler.
+    """
+    ONETIME = True
+
+    def __init__(self, events, table, conditions, old_conditions=None,
+                 timeout=None):
+        super().__init__(events, table, conditions, old_conditions)
+        self._timeout = timeout
+        self._timer = None
+        self._handler = None
+
+    def watch(self, handler):
+        """Register this event with a handler and start the expiry timer."""
+        self._handler = handler
+        handler.watch_event(self)
+        if self._timeout is not None:
+            self._timer = threading.Timer(self._timeout, self._expire)
+            self._timer.daemon = True
+            self._timer.start()
+
+    def _expire(self):
+        """Called when the timeout elapses without the event firing."""
+        if self._handler:
+            LOG.debug("Timed event %r expired after %s seconds without "
+                      "firing, unwatching.", self, self._timeout)
+            self._handler.unwatch_event(self)
+
+    def run(self, event, row, old):
+        if self._timer:
+            self._timer.cancel()

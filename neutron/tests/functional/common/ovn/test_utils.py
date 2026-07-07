@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import threading
+
 import ddt
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
@@ -20,9 +22,11 @@ from oslo_log import log as logging
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
+import testtools
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.common import utils as n_utils
 from neutron.tests.functional import base
 
 
@@ -495,3 +499,153 @@ class TestGetLogicalRouterPortHAChassis(base.TestOVNFunctionalBase):
         ha_chassis = utils.get_logical_router_port_ha_chassis(
             self.nb_api, lrp, priorities=prio)
         self._check_chassis(ha_chassis, ch_list, priorities=prio)
+
+
+class ChassisPrivateNbCfgEvent(utils.TimedOnetimeEvent):
+    """Fires when a Chassis_Private row gets its nb_cfg updated."""
+
+    def __init__(self, chassis_name, expected_nb_cfg, timeout=None):
+        super().__init__(
+            events=(self.ROW_UPDATE,),
+            table='Chassis_Private',
+            conditions=(('name', '=', chassis_name),),
+            timeout=timeout,
+        )
+        self.expected_nb_cfg = expected_nb_cfg
+        self.triggered = threading.Event()
+
+    def match_fn(self, event, row, old):
+        if not hasattr(old, 'nb_cfg'):
+            return False
+        return row.nb_cfg >= self.expected_nb_cfg
+
+    def run(self, event, row, old):
+        super().run(event, row, old)
+        self.triggered.set()
+
+
+class TestTimedOnetimeEvent(base.TestOVNFunctionalBase):
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+        self.handler = self.sb_api.idl.notify_handler
+
+    def _create_chassis(self, count):
+        chassis_names = []
+        for i in range(count):
+            name = self.add_fake_chassis(
+                f'host-{uuidutils.generate_uuid()[:8]}',
+                azs=[])
+            chassis_names.append(name)
+        return chassis_names
+
+    def _get_nb_cfg(self):
+        return self.nb_api.db_get(
+            'NB_Global', '.', 'nb_cfg').execute(check_error=True)
+
+    def _bump_nb_cfg(self, target_value):
+        self.nb_api.db_set(
+            'NB_Global', '.', ('nb_cfg', target_value)
+        ).execute(check_error=True)
+
+    def _set_chassis_private_nb_cfg(self, chassis_name, nb_cfg):
+        self.sb_api.db_set(
+            'Chassis_Private', chassis_name, ('nb_cfg', nb_cfg)
+        ).execute(check_error=True)
+
+    def test_chassis_private_nb_cfg_updated(self):
+        chassis_names = self._create_chassis(3)
+        target_nb_cfg = self._get_nb_cfg() + 100
+        events = []
+        for name in chassis_names:
+            ev = ChassisPrivateNbCfgEvent(name, target_nb_cfg, timeout=10)
+            ev.watch(self.handler)
+            events.append(ev)
+
+        self._bump_nb_cfg(target_nb_cfg)
+        for name in chassis_names:
+            self._set_chassis_private_nb_cfg(name, target_nb_cfg)
+
+        for ev in events:
+            self.assertTrue(
+                ev.triggered.wait(timeout=5),
+                "Event for chassis did not fire")
+            self.assertNotIn(ev, list(self.handler._watched_events))
+
+    def test_non_existing_chassis_expires(self):
+        ev = ChassisPrivateNbCfgEvent(
+            'non-existing-chassis', 9999, timeout=1)
+        ev.watch(self.handler)
+
+        self.assertIn(ev, list(self.handler._watched_events))
+
+        n_utils.wait_until_true(
+            lambda: ev not in list(self.handler._watched_events),
+            sleep=0.3,
+            timeout=5,
+            exception=Exception(
+                "Event was not unwatched after timeout expired"))
+        self.assertFalse(ev.triggered.is_set())
+
+    def test_timer_cancelled_when_event_fires(self):
+        chassis_names = self._create_chassis(1)
+        target_nb_cfg = self._get_nb_cfg() + 100
+        self._bump_nb_cfg(target_nb_cfg)
+
+        ev = ChassisPrivateNbCfgEvent(
+            chassis_names[0], target_nb_cfg, timeout=30)
+        ev.watch(self.handler)
+
+        self._set_chassis_private_nb_cfg(chassis_names[0], target_nb_cfg)
+        self.assertTrue(ev.triggered.wait(timeout=5))
+        ev._timer.join(timeout=5)
+        self.assertFalse(ev._timer.is_alive())
+
+    def test_event_fires_only_once(self):
+        chassis_names = self._create_chassis(1)
+
+        target_nb_cfg = self._get_nb_cfg() + 100
+        self._bump_nb_cfg(target_nb_cfg)
+
+        ev = ChassisPrivateNbCfgEvent(chassis_names[0], target_nb_cfg,
+                                      timeout=10)
+        ev.watch(self.handler)
+
+        self._set_chassis_private_nb_cfg(chassis_names[0], target_nb_cfg)
+        self.assertTrue(ev.triggered.wait(timeout=5))
+
+        # Further updates should not re-trigger the event
+        self._set_chassis_private_nb_cfg(chassis_names[0], target_nb_cfg + 1)
+        self._set_chassis_private_nb_cfg(chassis_names[0], target_nb_cfg + 2)
+
+        with testtools.ExpectedException(Exception):
+            n_utils.wait_until_true(
+                lambda: ev in list(self.handler._watched_events),
+                sleep=0.3,
+                timeout=2,
+                exception=Exception("good - event not re-watched"))
+        self.assertNotIn(ev, list(self.handler._watched_events))
+
+    def test_manual_unwatch_event(self):
+        chassis_names = self._create_chassis(1)
+
+        target_nb_cfg = self._get_nb_cfg() + 100
+        ev = ChassisPrivateNbCfgEvent(
+            chassis_names[0], target_nb_cfg, timeout=30)
+        ev.watch(self.handler)
+
+        self.assertIn(ev, list(self.handler._watched_events))
+        self.handler.unwatch_event(ev)
+        self.assertNotIn(ev, list(self.handler._watched_events))
+
+        # Trigger the condition - event should NOT fire since we unwatched
+        self._bump_nb_cfg(target_nb_cfg)
+        self._set_chassis_private_nb_cfg(chassis_names[0], target_nb_cfg)
+
+        with testtools.ExpectedException(Exception):
+            n_utils.wait_until_true(
+                lambda: ev.triggered.is_set(),
+                sleep=0.3,
+                timeout=2,
+                exception=Exception("good - event did not fire"))
+        self.assertFalse(ev.triggered.is_set())
+        ev._timer.cancel()
