@@ -260,6 +260,20 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
             self.assertEqual(1, deltas['bookings'])
             self.assertEqual(3, len(deltas))
 
+    def test_get_reservations_for_resources_different_expirations(self):
+        with mock.patch('neutron.db.quota.api.utcnow') as mock_utcnow:
+            mock_utcnow.return_value = datetime.datetime(2015, 5, 20, 0, 0)
+            exp_date_1 = datetime.datetime(2016, 3, 31, 14, 30)
+            exp_date_2 = datetime.datetime(2016, 4, 15, 10, 0)
+            self._create_reservation(
+                {'goals': 2, 'assists': 1}, expiration=exp_date_1)
+            self._create_reservation(
+                {'goals': 3, 'assists': 4}, expiration=exp_date_2)
+            deltas = quota_api.get_reservations_for_resources(
+                self.context, self.project_id, ['goals', 'assists'])
+            self.assertEqual(5, deltas['goals'])
+            self.assertEqual(5, deltas['assists'])
+
     def test_get_expired_reservations_for_resources(self):
         with mock.patch('neutron.db.quota.api.utcnow') as mock_utcnow:
             mock_utcnow.return_value = datetime.datetime(
