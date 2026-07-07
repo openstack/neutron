@@ -83,6 +83,13 @@ class MetadataProxyServer(socketserver.UnixStreamServer):
         if self._pool is not None:
             self._pool.shutdown()
 
+    def __del__(self):
+        try:
+            if hasattr(self, 'socket') and self.socket.fileno() != -1:
+                self.socket.close()
+        except Exception:  # noqa: S110
+            pass
+
 
 class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
     NETWORK_ID_HEADER: str

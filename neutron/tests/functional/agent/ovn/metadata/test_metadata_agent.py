@@ -89,6 +89,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             '_get_ovn_bridge',
             return_value=self.OVN_BRIDGE).start()
         self.agent = self._start_metadata_agent()
+        self.addCleanup(self.agent._proxy.close)
 
     def _start_metadata_agent(self):
         conf = self.useFixture(fixture_config.Config()).conf
