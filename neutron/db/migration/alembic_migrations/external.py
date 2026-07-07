@@ -41,41 +41,6 @@ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
     'bgp_speaker_dragent_bindings',
 ]
 
-# VMware-NSX models moved to openstack/vmware-nsx
-REPO_VMWARE_TABLES = [
-    'tz_network_bindings',
-    'neutron_nsx_network_mappings',
-    'neutron_nsx_security_group_mappings',
-    'neutron_nsx_port_mappings',
-    'neutron_nsx_router_mappings',
-    'multi_provider_networks',
-    'networkconnections',
-    'networkgatewaydevicereferences',
-    'networkgatewaydevices',
-    'networkgateways',
-    'maclearningstates',
-    'qosqueues',
-    'portqueuemappings',
-    'networkqueuemappings',
-    'lsn_port',
-    'lsn',
-    'nsxv_router_bindings',
-    'nsxv_edge_vnic_bindings',
-    'nsxv_edge_dhcp_static_bindings',
-    'nsxv_internal_networks',
-    'nsxv_internal_edges',
-    'nsxv_security_group_section_mappings',
-    'nsxv_rule_mappings',
-    'nsxv_port_vnic_mappings',
-    'nsxv_router_ext_attributes',
-    'nsxv_tz_network_bindings',
-    'nsxv_port_index_mappings',
-    'nsxv_firewall_rule_bindings',
-    'nsxv_spoofguard_policy_network_mappings',
-    'nsxv_vdr_dhcp_bindings',
-    'vcns_router_bindings',
-]
-
 # Brocade models are in openstack/networking-brocade
 REPO_BROCADE_TABLES = [
     'brocadenetworks',
@@ -102,7 +67,6 @@ REPO_NUAGE_TABLES = [
 TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
           REPO_NEUTRON_DYNAMIC_ROUTING_TABLES +
-          REPO_VMWARE_TABLES +
           REPO_BROCADE_TABLES +
           REPO_BIGSWITCH_TABLES +
           REPO_NUAGE_TABLES)
