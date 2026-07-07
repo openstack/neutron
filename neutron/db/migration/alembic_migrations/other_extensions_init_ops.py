@@ -52,13 +52,6 @@ def upgrade():
         sa.PrimaryKeyConstraint('port_id', 'mac_address', 'ip_address'))
 
     op.create_table(
-        'portbindingports',
-        sa.Column('port_id', sa.String(length=36), nullable=False),
-        sa.Column('host', sa.String(length=255), nullable=False),
-        sa.ForeignKeyConstraint(['port_id'], ['ports.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('port_id'))
-
-    op.create_table(
         'extradhcpopts',
         sa.Column('id', sa.String(length=36), nullable=False),
         sa.Column('port_id', sa.String(length=36), nullable=False),
