@@ -26,6 +26,7 @@ from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
+from oslo_utils import strutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
@@ -668,6 +669,72 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self.del_fake_chassis(lr.options['chassis'])
         self.assertTrue(row_event.wait())
         _check_high_prio_chassis(num_chassis - 1)
+
+    def test_ha_chassis_group_router_event_physnet(self):
+        """Regression test for LP#2158987.
+
+        When a router's external network has a physnet, the gateway LRP
+        uses ha_chassis_group directly and OVN handles HA natively.
+        HAChassisGroupRouterEvent must NOT set LR.options.chassis in
+        this case, as northd rejects the combination as
+        "Bad configuration".
+        """
+        physnet = 'physnet_lp2158987'
+        num_chassis = 3
+        chassis_list = []
+        for idx in range(num_chassis):
+            chassis_list.append(
+                self.add_fake_chassis(
+                    'host-physnet-%s' % str(idx), azs=[],
+                    physical_nets=[physnet],
+                    enable_chassis_as_gw=True))
+
+        net_args = {external_net.EXTERNAL: True,
+                    provider_net.NETWORK_TYPE: 'flat',
+                    provider_net.PHYSICAL_NETWORK: physnet}
+        net = self._make_network(self.fmt, 'ext-flat', True, as_admin=True,
+                                 arg_list=tuple(net_args.keys()), **net_args)
+        res = self._create_subnet(self.fmt, net['network']['id'],
+                                  '120.1.0.0/24')
+        subnet = self.deserialize(self.fmt, res)
+        external_gateway_info = {
+            'enable_snat': True, 'network_id': net['network']['id'],
+            'external_fixed_ips': [{'ip_address': '120.1.0.2',
+                                    'subnet_id': subnet['subnet']['id']}]}
+        router = self.l3_plugin.create_router(
+            self.context,
+            {'router': {'name': uuidutils.generate_uuid(),
+                        'admin_state_up': True,
+                        'project_id': self._project_id,
+                        'external_gateway_info': external_gateway_info}})
+        ovn_r_name = ovn_utils.ovn_name(router['id'])
+
+        lr = self.nb_api.lookup('Logical_Router', ovn_r_name)
+        self.assertNotIn('chassis', lr.options)
+        gw_lrps = [lrp for lrp in lr.ports if strutils.bool_from_string(
+            lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW))]
+        self.assertEqual(1, len(gw_lrps))
+        self.assertTrue(gw_lrps[0].ha_chassis_group)
+
+        hcg = self.nb_api.lookup('HA_Chassis_Group', ovn_r_name)
+        self.assertGreater(len(hcg.ha_chassis), 0)
+
+        row_event_lr = test_events.WaitForLogicalRouterUpdate()
+        self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event_lr)
+        self.del_fake_chassis(chassis_list[0])
+        # Give the event time to (incorrectly) fire; it should not update LR.
+        row_event_lr.wait()
+
+        lr = self.nb_api.lookup('Logical_Router', ovn_r_name)
+        self.assertNotIn(
+            'chassis', lr.options,
+            'LP#2158987: HAChassisGroupRouterEvent must not set '
+            'LR.options.chassis on a physnet router that uses '
+            'LRP.ha_chassis_group')
+
+        gw_lrps = [lrp for lrp in lr.ports if strutils.bool_from_string(
+            lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW))]
+        self.assertTrue(gw_lrps[0].ha_chassis_group)
 
 
 class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
