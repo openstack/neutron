@@ -1772,10 +1772,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                             return
                     else:
                         # raise as extension doesn't support L3 anyways.
-                        raise exc.DeviceIDNotOwnedByTenant(
+                        raise exc.DeviceIDNotOwnedByProject(
                             device_id=device_id)
                 if project_id != router['project_id']:
-                    raise exc.DeviceIDNotOwnedByTenant(device_id=device_id)
+                    raise exc.DeviceIDNotOwnedByProject(device_id=device_id)
 
     @db_api.retry_if_session_inactive()
     def add_prefixes(self, context, subnetpool_id, body):
