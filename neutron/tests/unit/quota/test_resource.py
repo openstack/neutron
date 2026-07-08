@@ -137,8 +137,8 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         res = self._create_resource()
         self._add_data()
         # explicitly set dirty flag to False
-        quota_api.set_all_quota_usage_dirty(
-            self.context, self.resource, dirty=False)
+        quota_api.set_resources_quota_usage_dirty(
+            self.context, self.resource, self.project_id, dirty=False)
         # Expect correct count to be returned anyway since the first call to
         # count() always resyncs with the db
         self.assertEqual(2, res.count(self.context, None, self.project_id))
@@ -155,8 +155,8 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         res = self._create_resource()
         self._add_data()
         # explicitly set dirty flag to False
-        quota_api.set_all_quota_usage_dirty(
-            self.context, self.resource, dirty=False)
+        quota_api.set_resources_quota_usage_dirty(
+            self.context, self.resource, self.project_id, dirty=False)
         # Expect correct count_used to be returned
         # anyway since the first call to
         # count_used() always resyncs with the db
