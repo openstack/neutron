@@ -41,16 +41,6 @@ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
     'bgp_speaker_dragent_bindings',
 ]
 
-# Models moved to openstack/networking-cisco
-# Tables from cisco_init_ops.py have been removed (no longer created).
-# Only Cisco ML2 tables from ml2_init_ops.py remain.
-REPO_CISCO_TABLES = [
-    'cisco_ml2_nexusport_bindings',
-    'cisco_ml2_nexus_nve',
-    'ml2_nexus_vxlan_allocations',
-    'ml2_nexus_vxlan_mcast_groups',
-]
-
 # VMware-NSX models moved to openstack/vmware-nsx
 REPO_VMWARE_TABLES = [
     'tz_network_bindings',
@@ -112,7 +102,6 @@ REPO_NUAGE_TABLES = [
 TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
           REPO_NEUTRON_DYNAMIC_ROUTING_TABLES +
-          REPO_CISCO_TABLES +
           REPO_VMWARE_TABLES +
           REPO_BROCADE_TABLES +
           REPO_BIGSWITCH_TABLES +
