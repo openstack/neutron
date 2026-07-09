@@ -58,7 +58,6 @@ from neutron.objects import subnet as subnet_obj
 
 VR_ID_RANGE = set(range(1, 255))
 MAX_ALLOCATION_TRIES = 10
-UNLIMITED_AGENTS_PER_ROUTER = 0
 
 LOG = logging.getLogger(__name__)
 
@@ -82,14 +81,6 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             raise l3ha_exc.HANetworkCIDRNotValid(cidr=self.ha_cidr)
         if ('/' not in self.ha_cidr or net.network != net.ip):
             raise l3ha_exc.HANetworkCIDRNotValid(cidr=self.ha_cidr)
-
-        self._check_num_agents_per_router()
-
-    def _check_num_agents_per_router(self):
-        max_agents = cfg.CONF.max_l3_agents_per_router
-
-        if max_agents != UNLIMITED_AGENTS_PER_ROUTER and max_agents < 1:
-            raise l3ha_exc.HAMaximumAgentsNumberNotValid(max_agents=max_agents)
 
     def __new__(cls, *args, **kwargs):
         inst = super().__new__(cls, *args, **kwargs)

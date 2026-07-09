@@ -21,6 +21,7 @@ from neutron._i18n import _
 EVPN_OPTS = [
     cfg.IntOpt(
         'bgp_as',
+        min=1, max=2**32 - 1,
         help=_('BGP Autonomous System number for EVPN')),
     cfg.StrOpt(
         'bgp_local_interface',

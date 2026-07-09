@@ -23,6 +23,7 @@ L3_HA_OPTS = [
                 help=_('Enable HA mode for virtual routers.')),
     cfg.IntOpt('max_l3_agents_per_router',
                default=3,
+               min=0,
                help=_("Maximum number of L3 agents which a HA router will be "
                       "scheduled on. If it is set to 0 then the router will "
                       "be scheduled on every agent.")),
