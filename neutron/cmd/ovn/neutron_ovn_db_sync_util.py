@@ -13,6 +13,7 @@
 #    under the License.
 
 import copy
+import inspect
 
 from neutron_lib.ovn import constants as ovn_const
 from neutron_lib.ovn import db_sync as db_sync_base
@@ -113,7 +114,9 @@ def setup_conf():
 def _load_drivers(entry_point, driver_name=None):
 
     def load_driver(ext):
-        if not issubclass(ext.plugin, db_sync_base.BaseOvnDbSynchronizer):
+        if (inspect.isclass(ext.plugin) and
+                not issubclass(ext.plugin,
+                               db_sync_base.BaseOvnDbSynchronizer)):
             LOG.error("Extension '%s' is not an instance of "
                       "%s and will not be loaded",
                       ext.name, db_sync_base.BaseOvnDbSynchronizer)
