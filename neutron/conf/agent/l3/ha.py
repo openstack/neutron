@@ -32,9 +32,11 @@ OPTS = [
                secret=True),
     cfg.IntOpt('ha_vrrp_advert_int',
                default=2,
+               min=1,
                help=_('The advertisement interval in seconds')),
     cfg.IntOpt('ha_vrrp_health_check_interval',
                default=0,
+               min=0,
                help=_('The VRRP health check interval in seconds. Values > 0 '
                       'enable VRRP health checks. Setting it to 0 disables '
                       'VRRP health checks. Recommended value is 5. '
@@ -51,18 +53,23 @@ OPTS = [
                        "tracking states between HA routers.")),
     cfg.IntOpt('ha_conntrackd_hashsize',
                default=32768,
+               min=1,
                help=_('Number of buckets in the cache hashtable')),
     cfg.IntOpt('ha_conntrackd_hashlimit',
                default=131072,
+               min=1,
                help=_('Maximum number of conntracks')),
     cfg.IntOpt('ha_conntrackd_unix_backlog',
                default=20,
+               min=1,
                help=_('Unix socket backlog')),
     cfg.IntOpt('ha_conntrackd_socketbuffersize',
                default=262142,
+               min=1,
                help=_('Socket buffer size for events')),
     cfg.IntOpt('ha_conntrackd_socketbuffersize_max_grown',
                default=655355,
+               min=1,
                help=_('Maximum size of socket buffer')),
     cfg.StrOpt('ha_conntrackd_ipv4_mcast_addr',
                default='225.0.0.50',
@@ -70,14 +77,17 @@ OPTS = [
                       'destination in the synchronization messages')),
     cfg.IntOpt('ha_conntrackd_group',
                default=3780,
+               min=0,
                help=_('The multicast base port number. The generated virtual '
                       'router ID added to this value.')),
     cfg.IntOpt('ha_conntrackd_sndsocketbuffer',
                default=24985600,
+               min=1,
                help=_('Buffer used to enqueue the packets that are going '
                       'to be transmitted')),
     cfg.IntOpt('ha_conntrackd_rcvsocketbuffer',
                default=24985600,
+               min=1,
                help=_('Buffer used to enqueue the packets that the socket '
                       'is pending to handle')),
 ]
