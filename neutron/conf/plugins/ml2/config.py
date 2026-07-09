@@ -45,7 +45,9 @@ ml2_opts = [
                        "entrypoints to be loaded from the "
                        "neutron.ml2.extension_drivers namespace. "
                        "For example: extension_drivers = port_security,qos")),
-    cfg.IntOpt('path_mtu', default=0,
+    cfg.IntOpt('path_mtu',
+               default=0,
+               min=0,
                help=_('Maximum size of an IP packet (MTU) that can traverse '
                       'the underlying physical network infrastructure without '
                       'fragmentation when using an overlay/tunnel protocol. '

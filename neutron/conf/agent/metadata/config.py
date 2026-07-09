@@ -97,6 +97,7 @@ UNIX_DOMAIN_METADATA_PROXY_OPTS = [
                       "otherwise.")),
     cfg.IntOpt('metadata_workers',
                sample_default='<num_of_cpus> / 2',
+               min=0,
                help=_('Number of separate worker threads for metadata '
                       'server (defaults to 0 when used with ML2/OVN and half '
                       'of the number of CPUs with other backend drivers)')),
@@ -127,18 +128,22 @@ METADATA_RATE_LIMITING_OPTS = [
                        'time.')),
     cfg.IntOpt('base_window_duration',
                default=10,
+               min=1,
                help=_("Duration (seconds) of the base window on the "
                       "metadata API.")),
     cfg.IntOpt('base_query_rate_limit',
                default=10,
+               min=1,
                help=_("Max number of queries to accept during the base "
                       "window.")),
     cfg.IntOpt('burst_window_duration',
                default=10,
+               min=1,
                help=_("Duration (seconds) of the burst window on the "
                       "metadata API.")),
     cfg.IntOpt('burst_query_rate_limit',
                default=10,
+               min=1,
                help=_("Max number of queries to accept during the burst "
                       "window.")),
 ]
