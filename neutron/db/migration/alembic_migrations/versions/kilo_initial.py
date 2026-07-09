@@ -15,7 +15,6 @@
 
 from neutron.db import migration
 from neutron.db.migration.alembic_migrations import agent_init_ops
-from neutron.db.migration.alembic_migrations import brocade_init_ops
 from neutron.db.migration.alembic_migrations import core_init_ops
 from neutron.db.migration.alembic_migrations import dvr_init_opts
 from neutron.db.migration.alembic_migrations import firewall_init_ops
@@ -60,7 +59,6 @@ def upgrade():
     loadbalancer_init_ops.upgrade()
     vpn_init_ops.upgrade()
     metering_init_ops.upgrade()
-    brocade_init_ops.upgrade()
     nec_init_ops.upgrade()
     other_plugins_init_ops.upgrade()
     nuage_init_opts.upgrade()

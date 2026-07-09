@@ -34,13 +34,6 @@ revision = '054e34dbe6b4'
 down_revision = '89c58a70ceba'
 
 # Ordered tables to delete first the tables with foreign keys references.
-REPO_BROCADE_TABLES = [
-    'brocadeports',
-    'brocadenetworks',
-    'ml2_brocadeports',
-    'ml2_brocadenetworks',
-]
-
 REPO_NUAGE_TABLES = [
     'nuage_net_partition_router_mapping',
     'nuage_provider_net_bindings',
@@ -49,7 +42,6 @@ REPO_NUAGE_TABLES = [
 ]
 
 TABLES_TO_DROP = itertools.chain(
-    REPO_BROCADE_TABLES,
     REPO_NUAGE_TABLES,
 )
 
