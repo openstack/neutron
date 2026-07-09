@@ -15,8 +15,7 @@
 # to separate repositories. We skip the migration checks for these tables.
 
 VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
-                 'ipsec_site_connections', 'cisco_csr_identifier_map',
-                 'ikepolicies']
+                 'ipsec_site_connections', 'ikepolicies']
 
 # Neutron-lbaas is retired, but we need to keep this for the models until
 # we decide to remove the tables.
@@ -43,25 +42,13 @@ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
 ]
 
 # Models moved to openstack/networking-cisco
+# Tables from cisco_init_ops.py have been removed (no longer created).
+# Only Cisco ML2 tables from ml2_init_ops.py remain.
 REPO_CISCO_TABLES = [
-    'cisco_ml2_apic_contracts',
-    'cisco_ml2_apic_names',
-    'cisco_ml2_apic_host_links',
-    'cisco_ml2_n1kv_policy_profiles',
-    'cisco_ml2_n1kv_network_profiles',
-    'cisco_ml2_n1kv_port_bindings',
-    'cisco_ml2_n1kv_network_bindings',
-    'cisco_ml2_n1kv_vxlan_allocations',
-    'cisco_ml2_n1kv_vlan_allocations',
-    'cisco_ml2_n1kv_profile_bindings',
     'cisco_ml2_nexusport_bindings',
     'cisco_ml2_nexus_nve',
     'ml2_nexus_vxlan_allocations',
     'ml2_nexus_vxlan_mcast_groups',
-    'ml2_ucsm_port_profiles',
-    'cisco_hosting_devices',
-    'cisco_port_mappings',
-    'cisco_router_mappings',
 ]
 
 # VMware-NSX models moved to openstack/vmware-nsx
