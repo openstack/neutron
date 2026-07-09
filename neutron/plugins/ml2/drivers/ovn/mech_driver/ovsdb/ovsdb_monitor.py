@@ -69,14 +69,15 @@ class BaseEvent(row_event.RowEvent, metaclass=abc.ABCMeta):
 
 class ChassisEvent(row_event.RowEvent):
     """Chassis create update delete event."""
+    table: str = 'Chassis'
+    events: tuple[str, ...] = (row_event.RowEvent.ROW_CREATE,
+                               row_event.RowEvent.ROW_UPDATE,
+                               row_event.RowEvent.ROW_DELETE)
 
     def __init__(self, driver):
         self.driver = driver
         self.l3_plugin = directory.get_plugin(constants.L3)
-        table = 'Chassis'
-        events = (self.ROW_CREATE, self.ROW_UPDATE, self.ROW_DELETE)
-        super().__init__(events, table, None)
-        self.event_name = 'ChassisEvent'
+        super().__init__(self.events, self.table, None)
 
     def _get_ha_chassis_groups_within_azs(self, az_hints):
         """Find all HA Chassis groups that are within the given AZs.
