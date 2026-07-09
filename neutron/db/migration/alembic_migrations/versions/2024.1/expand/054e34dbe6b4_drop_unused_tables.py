@@ -34,40 +34,6 @@ revision = '054e34dbe6b4'
 down_revision = '89c58a70ceba'
 
 # Ordered tables to delete first the tables with foreign keys references.
-REPO_VMWARE_TABLES = [
-    'tz_network_bindings',
-    'neutron_nsx_network_mappings',
-    'neutron_nsx_security_group_mappings',
-    'neutron_nsx_port_mappings',
-    'neutron_nsx_router_mappings',
-    'multi_provider_networks',
-    'networkconnections',
-    'networkgatewaydevicereferences',
-    'networkgatewaydevices',
-    'networkgateways',
-    'maclearningstates',
-    'portqueuemappings',
-    'networkqueuemappings',
-    'qosqueues',
-    'lsn_port',
-    'lsn',
-    'nsxv_router_bindings',
-    'nsxv_edge_vnic_bindings',
-    'nsxv_edge_dhcp_static_bindings',
-    'nsxv_internal_networks',
-    'nsxv_internal_edges',
-    'nsxv_security_group_section_mappings',
-    'nsxv_rule_mappings',
-    'nsxv_port_vnic_mappings',
-    'nsxv_router_ext_attributes',
-    'nsxv_tz_network_bindings',
-    'nsxv_port_index_mappings',
-    'nsxv_firewall_rule_bindings',
-    'nsxv_spoofguard_policy_network_mappings',
-    'nsxv_vdr_dhcp_bindings',
-    'vcns_router_bindings',
-]
-
 REPO_BROCADE_TABLES = [
     'brocadeports',
     'brocadenetworks',
@@ -83,7 +49,6 @@ REPO_NUAGE_TABLES = [
 ]
 
 TABLES_TO_DROP = itertools.chain(
-    REPO_VMWARE_TABLES,
     REPO_BROCADE_TABLES,
     REPO_NUAGE_TABLES,
 )
