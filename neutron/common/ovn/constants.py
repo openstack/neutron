@@ -424,6 +424,7 @@ LSP_OPTIONS_QOS_MAX_RATE = 'qos_max_rate'
 LSP_OPTIONS_QOS_BURST = 'qos_burst'
 LSP_OPTIONS_QOS_MIN_RATE = 'qos_min_rate'
 LSP_OPTIONS_LOCALNET_LEARN_FDB = 'localnet_learn_fdb'
+LSP_OPTIONS_ARP_PROXY = 'arp_proxy'
 
 LR_OPTIONS_MAC_AGE_LIMIT = 'mac_binding_age_threshold'
 LR_OPTIONS_DR_VRF_NAME = 'dynamic-routing-vrf-name'
@@ -434,7 +435,6 @@ LS_OTHER_CFG_DR_VXLAN_IFNAME = 'dynamic-routing-vxlan-ifname'
 
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
 LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'
-LRP_OPTIONS_ARP_PROXY = 'arp_proxy'
 BRIDGE_REDIRECT_TYPE = "bridged"
 
 # FDB AGE Settings
