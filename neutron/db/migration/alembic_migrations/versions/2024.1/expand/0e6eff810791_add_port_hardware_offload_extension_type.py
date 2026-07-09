@@ -28,7 +28,7 @@ Create Date: 2023-05-09 23:52:40.677006
 
 # revision identifiers, used by Alembic.
 revision = '0e6eff810791'
-down_revision = '054e34dbe6b4'
+down_revision = '89c58a70ceba'
 
 # milestone identifier, used by neutron-db-manage
 neutron_milestone = [migration.RELEASE_2024_1]
