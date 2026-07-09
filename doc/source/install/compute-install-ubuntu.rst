@@ -118,7 +118,7 @@ Finalize installation
 
    .. end
 
-#. Restart the Linux bridge agent:
+#. Restart the Open vSwitch agent:
 
    .. code-block:: console
 

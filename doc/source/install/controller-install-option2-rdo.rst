@@ -145,7 +145,7 @@ Configure the server component
 Configure the Modular Layer 2 (ML2) plug-in
 -------------------------------------------
 
-The ML2 plug-in uses the Linux bridge mechanism to build layer-2 (bridging
+The ML2 plug-in uses the Open vSwitch mechanism to build layer-2 (bridging
 and switching) virtual networking infrastructure for instances.
 
 * Edit the ``/etc/neutron/plugins/ml2/ml2_conf.ini`` file and complete the
@@ -173,7 +173,7 @@ and switching) virtual networking infrastructure for instances.
 
     .. end
 
-  * In the ``[ml2]`` section, enable the Linux bridge and layer-2 population
+  * In the ``[ml2]`` section, enable the Open vSwitch and layer-2 population
     mechanisms:
 
     .. path /etc/neutron/plugins/ml2/ml2_conf.ini
@@ -189,10 +189,6 @@ and switching) virtual networking infrastructure for instances.
 
        After you configure the ML2 plug-in, removing values in the
        ``type_drivers`` option can lead to database inconsistency.
-
-    .. note::
-
-       The Linux bridge agent only supports VXLAN overlay networks.
 
   * In the ``[ml2]`` section, enable the port security extension driver:
 
@@ -232,7 +228,7 @@ and switching) virtual networking infrastructure for instances.
 Configure the Open vSwitch agent
 --------------------------------
 
-The Linux bridge agent builds layer-2 (bridging and switching) virtual
+The Open vSwitch agent builds layer-2 (bridging and switching) virtual
 networking infrastructure for instances and handles security groups.
 
 * Edit the ``/etc/neutron/plugins/ml2/openvswitch_agent.ini`` file and

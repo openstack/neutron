@@ -24,17 +24,17 @@ Architecture
 ~~~~~~~~~~~~
 
 .. image:: figures/deploy-ovs-ha-vrrp-overview.png
-   :alt: High-availability using VRRP with Linux bridge - overview
+   :alt: High-availability using VRRP with Open vSwitch - overview
 
 The following figure shows components and connectivity for one self-service
 network and one untagged (flat) network. The primary router resides on network
 node 1. In this particular case, the instance resides on the same compute
 node as the DHCP agent for the network. If the DHCP agent resides on another
-compute node, the latter only contains a DHCP namespace and Linux bridge
+compute node, the latter only contains a DHCP namespace and OVS bridge
 with a port on the overlay physical network interface.
 
 .. image:: figures/deploy-ovs-ha-vrrp-compconn1.png
-   :alt: High-availability using VRRP with Linux bridge - components and connectivity - one network
+   :alt: High-availability using VRRP with Open vSwitch - components and connectivity - one network
 
 Example configuration
 ~~~~~~~~~~~~~~~~~~~~~

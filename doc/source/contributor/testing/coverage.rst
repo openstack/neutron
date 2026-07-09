@@ -41,11 +41,9 @@ fullstack or scenario tests as appropriate.
 
 The table references tests that explicitly target a feature, and not a job
 that is configured to run against a specific backend (Thereby testing it
-implicitly). So, for example, while the Linux bridge agent has a job that runs
-the API and scenario tests with the Linux bridge agent configured, it does not
-have functional tests that target the agent explicitly. The 'gate' column
-is about running API/scenario tests with Neutron configured in a certain way,
-such as what L2 agent to use or what type of routers to create.
+implicitly). The 'gate' column is about running API/scenario tests with
+Neutron configured in a certain way, such as what L2 agent to use or what
+type of routers to create.
 
 * V            - Merged
 * Blank        - Not applicable
@@ -70,8 +68,6 @@ such as what L2 agent to use or what type of routers to create.
 | OVS agent          | V    | V          |     | V         |          | V    |
 +--------------------+------+------------+-----+-----------+----------+------+
 | OVN                | V    | V          |     |           |          | V    |
-+--------------------+------+------------+-----+-----------+----------+------+
-| Linux Bridge agent | V    | X          |     | V         |          | V    |
 +--------------------+------+------------+-----+-----------+----------+------+
 | Metering           | V    | X          | V   | X         |          |      |
 +--------------------+------+------------+-----+-----------+----------+------+

@@ -75,7 +75,7 @@ Once nova-compute2 has performed pre-live-migration actions, nova-compute1 can
 start the live-migration. This results in the creation of the VM and its
 corresponding tap interface on node 2.
 
-In the case Open vSwitch normal plug, linux bridge or MacVTap is being used,
+In the case Open vSwitch normal plug or MacVTap is being used,
 Neutron-l2-agent2 will detect this new tap device and configure it accordingly.
 However, port's status won't change, since this port is not bound to
 nova-compute2.
@@ -197,8 +197,8 @@ Flow Diagram
 ------------
 
 
-OVS Normal plug, Linux bridge, MacVTap, SR-IOV
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+OVS Normal plug, MacVTap, SR-IOV
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. image:: images/live-mig.png
 

@@ -39,7 +39,7 @@ Messaging queue
   Accepts and routes RPC requests between agents to complete API operations.
   Message queue is used in the ML2 plug-in for RPC between the neutron
   server and neutron agents that run on each hypervisor, in the ML2
-  mechanism drivers for Open vSwitch and Linux bridge.
+  mechanism drivers for Open vSwitch and OVN.
 
 Concepts
 ~~~~~~~~
@@ -345,8 +345,6 @@ Agents
 
 Layer 2 (Ethernet and Switching)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* Linux Bridge
 
 * OVS
 

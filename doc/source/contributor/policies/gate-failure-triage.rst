@@ -185,7 +185,7 @@ This can be done in two ways:
         --- a/neutron/tests/fullstack/test_connectivity.py
         +++ b/neutron/tests/fullstack/test_connectivity.py
         @@ -189,6 +189,8 @@ class
-        TestLinuxBridgeConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
+        TestOVSConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
                 ]
 
              def test_connectivity(self):

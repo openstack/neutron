@@ -144,7 +144,7 @@ taken into account:
   operations;
 * Design reusability: ideally, a proposed design can easily apply
   to the various technology backends that the Neutron L2 agent
-  supports: Open vSwitch and Linux Bridge.
+  supports.
 * Performance penalty: no solution is appealing enough if
   it is unable to satisfy the stringent requirement of high
   packet throughput, at least in the long term.
@@ -187,7 +187,7 @@ are:
     no major upgrade is necessary and thus no potential dataplane
     disruption is involved.
   * Design reusability: VLAN interfaces can easily be employed
-    for both Open vSwitch and Linux Bridge.
+    for Open vSwitch.
   * Performance penalty: using VLAN interfaces means that the
     kernel must be involved. For Open vSwitch, being able to use
     a fast path like DPDK would be an unresolved issue (`Kernel NIC interfaces <http://dpdk.org/doc/guides/prog_guide/kernel_nic_interface.html>`_
@@ -215,9 +215,8 @@ are:
     data path; b) a dataplane migration is forced during a release
     upgrade and thus it may cause (potentially unrecoverable) dataplane
     disruption.
-  * Design reusability: a solution for Linux Bridge will still
-    be required to avoid widening the gap between Open vSwitch
-    (e.g. OVS has DVR but LB does not).
+  * Design reusability: not applicable since the Linux Bridge
+    mechanism driver has been removed.
   * Performance penalty: using Open Flow will allow to leverage
     the user space and fast processing given by DPDK, but at
     a considerable engineering cost nonetheless. Security rules
@@ -247,10 +246,8 @@ are:
     from one to the other (and vice versa), no migration is
     required. This is done at a cost of some loss of flexibility
     and maintenance complexity.
-  * Design reusability: a solution to support vlan trunking for
-    the Linux Bridge mech driver will still be required to avoid
-    widening the gap with Open vSwitch (e.g. OVS has DVR but
-    LB does not).
+  * Design reusability: not applicable since the Linux Bridge
+    mechanism driver has been removed.
   * Performance penalty: from a performance standpoint, the adoption
     of a trunk bridge relieves the agent from employing kernel
     interfaces, thus unlocking the full potential of fast packet
@@ -269,10 +266,7 @@ To summarize:
 * VLAN interfaces (A) are compelling because will lead to a relatively
   contained engineering cost at the expense of performance. The Open
   vSwitch community will need to be involved in order to deliver vlan
-  transparency. Irrespective of whether this strategy is chosen for
-  Open vSwitch or not, this is still the only viable approach for Linux
-  Bridge and thus pursued to address Linux Bridge support for VLAN
-  trunking. To some extent, this option can also be considered a fallback
+  transparency. This option can also be considered a fallback
   strategy for OVS deployments that are unable to adopt DPDK.
 
 * Open Flow (B) is compelling because it will allow Neutron to unlock
@@ -289,8 +283,7 @@ To summarize:
 * Trunk Bridges (C) tries to bring the best of option A and B together
   as far as OVS development and performance are concerned, but it
   comes at the expense of maintenance complexity and loss of flexibility.
-  A Linux Bridge solution would still be required and, QinQ support will
-  still be needed to address vlan transparency.
+  QinQ support will still be needed to address vlan transparency.
 
 All things considered, as far as OVS is concerned, option (C) is the most
 promising in the medium term. Management of trunks and ports within trunks
@@ -299,9 +292,7 @@ restrict the ability to update ports (i.e. convert) once they are bound to
 a particular bridge (integration vs trunk). Security rules via iptables
 rules is obviously not supported, and never will be.
 
-Option (A) for OVS could be pursued in conjunction with Linux Bridge support,
-if the effort is seen particularly low hanging fruit.
-However, a working solution based on this option positions the OVS agent as
+However, a working solution based on option (A) positions the OVS agent as
 a sub-optminal platform for performance sensitive applications in comparison
 to other accelerated or SDN-controller based solutions. Since further data
 plane performance improvement is hindered by the extra use of kernel resources,
