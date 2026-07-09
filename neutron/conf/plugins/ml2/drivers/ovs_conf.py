@@ -162,13 +162,19 @@ ovs_opts = [
               help=_("Address to listen on for OpenFlow connections.")),
     cfg.PortOpt('of_listen_port', default=6633,
                 help=_("Port to listen on for OpenFlow connections.")),
-    cfg.IntOpt('of_connect_timeout', default=300,
+    cfg.IntOpt('of_connect_timeout',
+               default=300,
+               min=1,
                help=_("Timeout in seconds to wait for "
                       "the local switch connecting the controller.")),
-    cfg.IntOpt('of_request_timeout', default=300,
+    cfg.IntOpt('of_request_timeout',
+               default=300,
+               min=1,
                help=_("Timeout in seconds to wait for a single "
                       "OpenFlow request.")),
-    cfg.IntOpt('of_inactivity_probe', default=10,
+    cfg.IntOpt('of_inactivity_probe',
+               default=10,
+               min=0,
                help=_("The inactivity_probe interval in seconds for the local "
                       "switch connection to the controller. "
                       "A value of 0 disables inactivity probes.")),
@@ -269,14 +275,16 @@ metadata_opts = [
                       "will be used as the IP range to generate the "
                       "VM's metadata IP.")),
     cfg.IntOpt('provider_vlan_id', default=1,
-               min=1, max=4094,
+               min=1,
+               max=4094,
                help=_("The metadata tap device local vlan ID. This is only "
                       "available on the metadata bridge device.")),
     cfg.StrOpt('provider_base_mac', default="fa:16:ee:00:00:00",
                help=_("The base MAC address Neutron Openvswitch agent "
                       "will use for metadata traffic.")),
     cfg.IntOpt('host_proxy_listen_port', default=80,
-               min=1, max=2**16 - 1,
+               min=1,
+               max=2**16 - 1,
                help=_("Host haproxy listen port for metadata path. This "
                       "is transparent for metadata traffic, VMs still try to "
                       "access 169.254.169.254:80 for metadata. But in "
@@ -297,7 +305,9 @@ dns_forwarder_opts = [
                help=_("Comma-separated list of the Upstream DNS server "
                       "in IP:port format which will be used as resolvers. "
                       "Example: '1.1.1.1:53, [2606:4700:4700::1111]:53'")),
-    cfg.IntOpt('upstream_dns_query_timeout', default=5,
+    cfg.IntOpt('upstream_dns_query_timeout',
+               default=5,
+               min=1,
                help=_("Query timeout in seconds for each "
                       "upstream DNS servers")),
     cfg.ListOpt('client_dns_server_ports',

@@ -56,8 +56,8 @@ class TestMeteringOperations(base.BaseTestCase):
         self.noop_driver = ('neutron.services.metering.drivers.noop.'
                             'noop_driver.NoopMeteringDriver')
         cfg.CONF.set_override('driver', 'noop')
-        cfg.CONF.set_override('measure_interval', 0)
-        cfg.CONF.set_override('report_interval', 0)
+        cfg.CONF.set_override('measure_interval', 1)
+        cfg.CONF.set_override('report_interval', 1)
         cfg.CONF.set_override('granular_traffic_data', False)
 
         self.setup_notification_driver()

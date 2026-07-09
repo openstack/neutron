@@ -22,6 +22,7 @@ from neutron._i18n import _
 SERVICE_OPTS = [
     cfg.IntOpt('periodic_interval',
                default=40,
+               min=1,
                help=_('Seconds between running periodic tasks.')),
     cfg.IntOpt('rpc_workers',
                min=0,
@@ -37,6 +38,7 @@ SERVICE_OPTS = [
                       'for state reports queue is launched.')),
     cfg.IntOpt('periodic_fuzzy_delay',
                default=5,
+               min=0,
                help=_('Range of seconds to randomly delay when starting the '
                       'periodic task scheduler to reduce stampeding. '
                       '(Disable by setting to 0)')),
@@ -45,6 +47,7 @@ SERVICE_OPTS = [
 RPC_EXTRA_OPTS = [
     cfg.IntOpt('rpc_response_max_timeout',
                default=600,
+               min=1,
                help=_('Maximum seconds to wait for a response from an RPC '
                       'call.')),
 ]
