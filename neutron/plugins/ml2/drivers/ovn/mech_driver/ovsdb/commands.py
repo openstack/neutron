@@ -428,19 +428,17 @@ class UpdateLRouterCommand(command.BaseCommand):
         self.if_exists = if_exists
 
     def run_idl(self, txn):
-        try:
-            lrouter = idlutils.row_by_value(self.api.idl, 'Logical_Router',
-                                            'name', self.name, None)
-        except idlutils.RowNotFound:
+        lrouter = idlutils.row_by_value(self.api.idl, 'Logical_Router',
+                                        'name', self.name, default=None)
+        if not lrouter:
             if self.if_exists:
                 return
             msg = _("Logical Router %s does not exist") % self.name
             raise RuntimeError(msg)
 
-        if lrouter:
-            for col, val in self.columns.items():
-                setattr(lrouter, col, val)
-            return
+        for col, val in self.columns.items():
+            setattr(lrouter, col, val)
+        return
 
 
 class ScheduleUnhostedGatewaysCommand(command.BaseCommand):

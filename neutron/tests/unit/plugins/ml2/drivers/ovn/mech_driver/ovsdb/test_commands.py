@@ -440,13 +440,14 @@ class TestDelLSwitchPortCommand(TestBaseCommand):
 class TestUpdateLRouterCommand(TestBaseCommand):
 
     def _test_lrouter_update_no_exist(self, if_exists=True):
-        with mock.patch.object(idlutils, 'row_by_value',
-                               side_effect=idlutils.RowNotFound):
+        with mock.patch.object(idlutils, 'row_by_value') as fake_row_by_value:
             cmd = commands.UpdateLRouterCommand(
                 self.ovn_api, 'fake-lrouter', if_exists=if_exists)
             if if_exists:
+                fake_row_by_value.return_value = None
                 cmd.run_idl(self.transaction)
             else:
+                fake_row_by_value.side_effect = idlutils.RowNotFound
                 self.assertRaises(RuntimeError, cmd.run_idl, self.transaction)
 
     def test_lrouter_no_exist_ignore(self):
