@@ -28,7 +28,7 @@ Create Date: 2015-08-20 12:43:09.110427
 
 # revision identifiers, used by Alembic.
 revision = '2e5352a0ad4d'
-down_revision = '5498d17be016'
+down_revision = '4ffceebfada'
 
 
 TABLE_NAME = 'flavorserviceprofilebindings'
