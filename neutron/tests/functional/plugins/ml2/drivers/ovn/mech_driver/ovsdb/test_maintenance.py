@@ -873,12 +873,22 @@ class TestMaintenance(_TestMaintenanceHelper):
             'false', ls['other_config'][ovn_const.MCAST_FLOOD_UNREGISTERED])
 
     def test_check_for_aging_settings(self):
-        net = self._create_network('net', provider='datacentre')
-        ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+        net_flat = self._create_network('net_flat', provider='datacentre')
+        net_vlan = self._create_network('net_vlan',
+                                        provider='physnet1', net_type='vlan')
+        net_geneve = self._create_network('net_geneve')
 
-        self.assertEqual(
-            str(ovn_const.FDB_AGE_THRESHOLD_DEFAULT),
-            ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
+        for net in (net_flat, net_vlan):
+            ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+            self.assertEqual(
+                str(ovn_const.FDB_AGE_THRESHOLD_DEFAULT),
+                ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
+
+        ls_geneve = self.nb_api.get_lswitch(
+            utils.ovn_name(net_geneve['id']))
+        self.assertIsNone(
+            ls_geneve.other_config.get(
+                ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
 
         self.assertEqual(
             '0', self.nb_api.nb_global.options.get("fdb_removal_limit", '0'))
@@ -888,14 +898,22 @@ class TestMaintenance(_TestMaintenanceHelper):
         cfg.CONF.set_override('fdb_removal_limit', 100, group='ovn_nb_global')
 
         # Call the maintenance task and check that the value has been
-        # updated in the Logical Switch
+        # updated only in the provider Logical Switches
         self.assertRaises(periodics.NeverAgain,
                           self.maint.check_fdb_aging_settings)
 
-        ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+        for net in (net_flat, net_vlan):
+            ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+            self.assertEqual(
+                '5',
+                ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
 
-        self.assertEqual(
-            '5', ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
+        ls_geneve = self.nb_api.get_lswitch(
+            utils.ovn_name(net_geneve['id']))
+        self.assertIsNone(
+            ls_geneve.other_config.get(
+                ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
+
         self.assertEqual(
             '100', self.nb_api.nb_global.options.get("fdb_removal_limit"))
 
