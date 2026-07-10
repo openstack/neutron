@@ -37,6 +37,7 @@ Basic Information
 .. toctree::
     :maxdepth: 2
 
+    repo-overview
     contributing
 
 Neutron Policies
