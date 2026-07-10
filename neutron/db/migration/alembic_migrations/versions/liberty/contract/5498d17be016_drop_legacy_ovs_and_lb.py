@@ -29,9 +29,5 @@ down_revision = '4ffceebfada'
 
 
 def upgrade():
-    op.drop_table('ovs_network_bindings')
-    op.drop_table('ovs_vlan_allocations')
     op.drop_table('network_bindings')
-    op.drop_table('ovs_tunnel_allocations')
     op.drop_table('network_states')
-    op.drop_table('ovs_tunnel_endpoints')
