@@ -1390,6 +1390,10 @@ class OVNClient:
                     ipv6_ra_configs['send_periodic'] = 'false'
                 ipv6_ra_configs['mtu'] = str(net['mtu'])
 
+        if ipv6_ra_configs and ovn_conf.is_ovn_metadata_enabled():
+            ipv6_ra_configs['route_info'] = (
+                'MEDIUM-%s' % const.METADATA_V6_CIDR)
+
         return list(networks), ipv6_ra_configs
 
     def _add_router_ext_gw(self, context, router, txn):
