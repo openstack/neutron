@@ -17,6 +17,7 @@ import socket
 from unittest import mock
 
 from oslo_utils import uuidutils
+from pyroute2 import iproute
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import ip_lib
@@ -44,6 +45,20 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
         except Exception:
             pass
 
+    def _stop_dispatcher(self, dispatcher):
+        dispatcher.RETRY_BACKOFF = 0
+        with mock.patch.object(nl_dispatcher.os, '_exit',
+                               side_effect=SystemExit):
+            with mock.patch.object(iproute, 'IPRoute',
+                                   side_effect=RuntimeError):
+                ipr = dispatcher._ipr()
+                if ipr:
+                    ipr.close()
+                try:
+                    dispatcher._thread.join(timeout=5)
+                except SystemExit:
+                    pass
+
     def test_vrf_handler_lifecycle(self):
         vrf_handler = netlink_monitor.VrfHandler(fsm.EvpnFSM())
 
@@ -63,6 +78,7 @@ class TestVrfHandlerLifecycle(functional_base.BaseSudoTestCase):
         self.addCleanup(self._safe_delete, preexisting_vrf)
 
         dispatcher.start()
+        self.addCleanup(self._stop_dispatcher, dispatcher)
         utils.wait_until_true(
             lambda: preexisting_vrf in vrf_handler._known_vrfs,
             timeout=10, sleep=0.1)
