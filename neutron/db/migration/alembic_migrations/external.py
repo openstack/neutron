@@ -19,13 +19,6 @@ VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
 
 FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
 
-# Arista ML2 driver Models moved to openstack/networking-arista
-REPO_ARISTA_TABLES = [
-    'arista_provisioned_nets',
-    'arista_provisioned_vms',
-    'arista_provisioned_tenants',
-]
-
 # BGP models in openstack/neutron-dynamic-routing
 REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
     'bgp_speakers',
@@ -36,5 +29,4 @@ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
 ]
 
 TABLES = (FWAAS_TABLES + VPNAAS_TABLES +
-          REPO_ARISTA_TABLES +
           REPO_NEUTRON_DYNAMIC_ROUTING_TABLES)
