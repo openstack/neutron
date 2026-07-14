@@ -27,7 +27,7 @@ Create Date: 2015-06-14 13:12:04.012457
 
 # revision identifiers, used by Alembic.
 revision = '5ffceebfada'
-down_revision = 'c6c112992c9'
+down_revision = '8a6d8bdae39'
 depends_on = ()
 
 

@@ -34,8 +34,6 @@ def upgrade():
         'qos_policies',
         sa.Column('id', sa.String(length=36), primary_key=True),
         sa.Column('name', sa.String(length=255)),
-        sa.Column('description', sa.String(length=255)),
-        sa.Column('shared', sa.Boolean(), nullable=False),
         sa.Column('tenant_id', sa.String(length=255),
                   index=True))
 
