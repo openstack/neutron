@@ -27,7 +27,6 @@ def upgrade():
         sa.Column('name', sa.String(length=255), nullable=True),
         sa.Column('status', sa.String(length=16), nullable=True),
         sa.Column('admin_state_up', sa.Boolean(), nullable=True),
-        sa.Column('shared', sa.Boolean(), nullable=True),
         sa.Column('mtu', sa.Integer(), nullable=True),
         sa.Column('vlan_transparent', sa.Boolean(), nullable=True),
         sa.PrimaryKeyConstraint('id'))
@@ -64,7 +63,6 @@ def upgrade():
         sa.Column('cidr', sa.String(length=64), nullable=False),
         sa.Column('gateway_ip', sa.String(length=64), nullable=True),
         sa.Column('enable_dhcp', sa.Boolean(), nullable=True),
-        sa.Column('shared', sa.Boolean(), nullable=True),
         sa.Column('ipv6_ra_mode',
                   sa.Enum('slaac', 'dhcpv6-stateful', 'dhcpv6-stateless',
                           name='ipv6_ra_modes'),
