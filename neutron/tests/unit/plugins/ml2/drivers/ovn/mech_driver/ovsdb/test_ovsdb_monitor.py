@@ -100,8 +100,8 @@ OVN_SB_SCHEMA = {
 }
 
 
-ROW_CREATE = ovsdb_monitor.BaseEvent.ROW_CREATE
-ROW_UPDATE = ovsdb_monitor.BaseEvent.ROW_UPDATE
+ROW_CREATE = ovsdb_monitor.row_event.RowEvent.ROW_CREATE
+ROW_UPDATE = ovsdb_monitor.row_event.RowEvent.ROW_UPDATE
 
 
 class TestOvnDbNotifyHandler(base.BaseTestCase):
