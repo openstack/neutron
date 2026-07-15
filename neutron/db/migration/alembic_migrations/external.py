@@ -13,10 +13,6 @@
 
 # These tables are in the neutron database, but their models have moved
 # to separate repositories. We skip the migration checks for these tables.
-
-VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
-                 'ipsec_site_connections', 'ikepolicies']
-
 # BGP models in openstack/neutron-dynamic-routing
 REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
     'bgp_speakers',
@@ -26,5 +22,4 @@ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
     'bgp_speaker_dragent_bindings',
 ]
 
-TABLES = (VPNAAS_TABLES +
-          REPO_NEUTRON_DYNAMIC_ROUTING_TABLES)
+TABLES = REPO_NEUTRON_DYNAMIC_ROUTING_TABLES

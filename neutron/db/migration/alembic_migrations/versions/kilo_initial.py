@@ -23,7 +23,6 @@ from neutron.db.migration.alembic_migrations import ml2_init_ops
 from neutron.db.migration.alembic_migrations import other_extensions_init_ops
 from neutron.db.migration.alembic_migrations import portsec_init_ops
 from neutron.db.migration.alembic_migrations import secgroup_init_ops
-from neutron.db.migration.alembic_migrations import vpn_init_ops
 
 
 # kilo_initial
@@ -46,5 +45,4 @@ def upgrade():
     other_extensions_init_ops.upgrade()
     ml2_init_ops.upgrade()
     dvr_init_opts.upgrade()
-    vpn_init_ops.upgrade()
     metering_init_ops.upgrade()
