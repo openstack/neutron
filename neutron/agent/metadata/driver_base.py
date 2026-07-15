@@ -134,7 +134,7 @@ class HaproxyConfiguratorBase(metaclass=abc.ABCMeta):
             cfg_info[key] = self.haproxy_config[key]
         if self.host_v6 and self.bind_interface:
             cfg_info['bind_v6_line'] = (
-                'bind {}:{} interface {}'.format(
+                'bind [{}]:{} interface {}'.format(
                     self.host_v6, self.port, self.bind_interface)
             )
         # If using the network ID, delete any spurious router ID that might

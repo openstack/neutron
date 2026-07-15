@@ -216,7 +216,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 "%s.conf" % router_id)
             mock_open = self.useFixture(
                 lib_fixtures.OpenFixture(cfg_file)).mock_open
-            bind_v6_line = 'bind {}:{} interface {}'.format(
+            bind_v6_line = 'bind [{}]:{} interface {}'.format(
                 self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
             if dad_failed:
                 mock_wait.side_effect = ip_lib.DADFailed(

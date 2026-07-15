@@ -129,7 +129,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 "%s.conf" % datapath_id)
             mock_open = self.useFixture(
                 lib_fixtures.OpenFixture(cfg_file)).mock_open
-            bind_v6_line = 'bind {}:{} interface {}'.format(
+            bind_v6_line = 'bind [{}]:{} interface {}'.format(
                 self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
             proxy = metadata_driver.MetadataDriver()
             proxy.spawn_monitored_metadata_proxy(
