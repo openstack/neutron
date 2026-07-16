@@ -420,6 +420,8 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 res['started_at'] = current_time
                 res['heartbeat_timestamp'] = current_time
                 res['admin_state_up'] = cfg.CONF.enable_new_agents
+                if 'id' in agent_state:
+                    res['id'] = agent_state['id']
                 agent = agent_obj.Agent(context=context, **res)
                 agent.create()
                 event_type = events.AFTER_CREATE

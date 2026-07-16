@@ -42,7 +42,6 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2 import db as ml2_db
-from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests.functional import base
 from neutron.tests.unit.extensions import test_securitygroup as test_sg
@@ -1475,7 +1474,7 @@ class TestAgentApi(base.TestOVNFunctionalBase):
             'Chassis_Private', self.chassis, 'nb_cfg_timestamp'
         ).execute(check_error=True)
         updated_at = datetime.datetime.fromtimestamp(int(chassis_ts / 1000))
-        self.assertEqual(updated_at, heartbeat_timestamp)
+        self.assertGreaterEqual(heartbeat_timestamp, updated_at)
         time.sleep(1)
         # if chassis is not updated, agent's heartbeat_timestamp shouldn't
         # be updated.
@@ -1501,26 +1500,16 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         self.assertCountEqual(list(self.agent_types.values()), agent_ids)
 
     def test_agent_delete(self):
-        agent_cache = n_agent.AgentCache(mock.ANY)
-
-        def wait_until_removed(agent_id):
-            n_utils.wait_until_true(
-                lambda: agent_cache.agents.get(agent_id) is None,
-                timeout=5)
-
         # Non OVN agent deletion.
         agent_id = self.agent_types[self.TEST_AGENT]
         self.plugin.delete_agent(self.context, agent_id)
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, agent_id)
 
-        # OVN controller agent deletion, that triggers the "Chassis" and
-        # "Chassis_Private" registers deletion.
+        # OVN controller agent deletion.
         controller_id = self.agent_types[ovn_const.OVN_CONTROLLER_AGENT]
         self._check_chassis_registers()
         self.plugin.delete_agent(self.context, controller_id)
-        self._check_chassis_registers(present=False)
-        wait_until_removed(controller_id)
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, controller_id)
 

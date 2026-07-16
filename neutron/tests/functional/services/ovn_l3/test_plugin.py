@@ -41,10 +41,10 @@ class TestRouter(base.TestOVNFunctionalBase):
         super().setUp(**kwargs)
         self.chassis1 = self.add_fake_chassis(
             'ovs-host1', physical_nets=['physnet1', 'physnet3'],
-            enable_chassis_as_gw=True, azs=[])
+            enable_chassis_as_gw=True, azs=[], wait_for_agent=True)
         self.chassis2 = self.add_fake_chassis(
             'ovs-host2', physical_nets=['physnet2', 'physnet3'],
-            enable_chassis_as_gw=True, azs=[])
+            enable_chassis_as_gw=True, azs=[], wait_for_agent=True)
         self.physnet_used = ['physnet1', 'physnet2', 'physnet3']
         self.cr_lrp_pb_event = events.WaitForCrLrpPortBindingEvent()
         self.sb_api.idl.notify_handler.watch_event(self.cr_lrp_pb_event)
@@ -1367,7 +1367,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.sb_api.idl.notify_handler.watch_event(ch_event)
         chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet3'],
-            enable_chassis_as_gw=True, azs=[])
+            enable_chassis_as_gw=True, azs=[], wait_for_agent=True)
         ch_event.wait()
         result = self.l3_plugin.list_routers_on_l3_agent(
             self.context, chassis3)
@@ -1382,7 +1382,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.sb_api.idl.notify_handler.watch_event(ch_event)
         chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet3'],
-            enable_chassis_as_gw=True, azs=[])
+            enable_chassis_as_gw=True, azs=[], wait_for_agent=True)
         ch_event.wait()
 
         # The ChassisEvent will automatically schedule the new gateway
@@ -1453,7 +1453,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # a router.
         chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet3'],
-            enable_chassis_as_gw=False, azs=[])
+            enable_chassis_as_gw=False, azs=[], wait_for_agent=True)
         ch_event.wait()
         self.assertRaises(
             l3agentscheduler.RouterNotHostedByL3Agent,
@@ -1497,7 +1497,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # a router.
         chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet3'],
-            enable_chassis_as_gw=False, azs=[])
+            enable_chassis_as_gw=False, azs=[], wait_for_agent=True)
         ch_event.wait()
         self.assertRaises(
             l3agentscheduler.RouterNotHostedByL3Agent,

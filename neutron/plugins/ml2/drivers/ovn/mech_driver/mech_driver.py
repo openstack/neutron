@@ -15,7 +15,6 @@
 import atexit
 import collections
 import copy
-import datetime
 import functools
 import multiprocessing
 import operator
@@ -44,12 +43,12 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_log import log
+from oslo_service import loopingcall
 from oslo_service import service as oslo_service
-from oslo_utils import timeutils
-from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron._i18n import _
 from neutron.api import wsgi
+from neutron.common import _constants as n_const
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exceptions
@@ -65,7 +64,6 @@ from neutron.db import segments_db
 from neutron.extensions import securitygroup as ext_sg
 from neutron.objects import router
 from neutron.plugins.ml2 import db as ml2_db
-from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import placement as placement_ext
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -125,6 +123,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._plugin_property = None
         self._ovn_client_inst = None
         self._maintenance_thread = None
+        self._heartbeat = None
         self._hash_ring_thread = None
         self._hash_ring_probe_event = multiprocessing.Event()
         self._node_uuid = None
@@ -149,7 +148,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.log_driver = log_driver.register(self)
         pvlan_driver.register(self)
         self._start_time = None
-        self._agent_cache = None
 
     @property
     def nb_schema_helper(self):
@@ -410,16 +408,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         if worker_class == wsgi.WorkerService:
             self._setup_hash_ring()
 
-        # Initialize singleton agent cache and keep a copy.
-        self._agent_cache = n_agent.AgentCache(self)
         self.nb_ovn, self.sb_ovn = impl_idl_ovn.get_ovn_apis(
             self, worker_class)
-
-        # Override agents API methods
-        self.patch_plugin_merge("get_agents", get_agents)
-        self.patch_plugin_choose("get_agent", get_agent)
-        self.patch_plugin_choose("update_agent", update_agent)
-        self.patch_plugin_choose("delete_agent", delete_agent)
 
         # Override availability zone methods
         self.patch_plugin_merge("get_availability_zones",
@@ -467,6 +457,25 @@ class OVNMechanismDriver(api.MechanismDriver):
                 pass
         self._maintenance_thread.start()
         LOG.info("Maintenance task thread has started")
+
+        report_interval = max(cfg.CONF.agent_down_time // 2, 1)
+        self._heartbeat = loopingcall.FixedIntervalLoopingCall(
+            self._report_state)
+        self._heartbeat.start(interval=report_interval)
+
+    def _stop_heartbeat(self):
+        if self._heartbeat is not None:
+            self._heartbeat.stop()
+            self._heartbeat.wait()
+            self._heartbeat = None
+
+    def _report_state(self):
+        if not self.nb_ovn.idl.has_lock:
+            return
+        try:
+            self.ping_all_chassis()
+        except Exception:
+            LOG.exception("Error pinging all chassis")
 
     def _create_security_group_precommit(self, resource, event, trigger,
                                          payload):
@@ -1321,21 +1330,29 @@ class OVNMechanismDriver(api.MechanismDriver):
             LOG.error('Validation of binding profile unexpectedly failed '
                       'while attempting to bind port %s', port['id'])
             raise e
-        agents = n_agent.AgentCache().get_agents(
-            {'host': bind_host,
-             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
+        agents = self._plugin.get_agents(
+            n_context.get_admin_context(),
+            filters={'host': [bind_host],
+                     'agent_type': list(ovn_const.OVN_CONTROLLER_TYPES)})
         if not agents:
             LOG.warning('Refusing to bind port %(port_id)s due to '
                         'no OVN chassis for host: %(host)s',
                         {'port_id': port['id'], 'host': bind_host})
             return
         agent = agents[0]
-        if not agent.alive:
+        if not agent['alive']:
             LOG.warning("Refusing to bind port %(pid)s to dead agent:  "
                         "%(agent)s", {'pid': context.current['id'],
                                       'agent': agent})
             return
-        chassis = agent.chassis
+        chassis_name = agent['configurations']['chassis_name']
+        chassis = self.sb_ovn.lookup('Chassis', chassis_name,
+                                     default=None)
+        if not chassis:
+            LOG.warning('Refusing to bind port %(port_id)s: '
+                        'chassis %(chassis)s not found',
+                        {'port_id': port['id'], 'chassis': chassis_name})
+            return
         other_config = chassis.other_config
         datapath_type = other_config.get(ovn_const.OVN_DATAPATH_TYPE, '')
         iface_types = other_config.get('iface-types', '')
@@ -1402,8 +1419,12 @@ class OVNMechanismDriver(api.MechanismDriver):
                     vif_type = portbindings.VIF_TYPE_OVS
                     vif_details = copy.deepcopy(self.vif_details[vif_type])
 
-                ovn_bridge = ovn_utils.get_ovn_bridge_from_chassis_private(
-                    agent.chassis_private)
+                ext_ids = self.sb_ovn.db_get(
+                    'Chassis_Private', chassis_name,
+                    'external_ids').execute(check_error=False) or {}
+                ovn_bridge = ext_ids.get(
+                    ovn_const.OVN_AGENT_OVN_BRIDGE,
+                    n_const.DEFAULT_BR_INT)
                 dp_type = ovn_utils.get_datapath_type(
                     self.sb_ovn, hostname=bind_host)
                 vif_details.update({
@@ -1421,7 +1442,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         workers, can return a sequence of worker instances.
         """
         # See doc/source/design/ovn_worker.rst for more details.
-        return [worker.MaintenanceWorker()]
+        return [worker.MaintenanceWorker(self)]
 
     def _update_dnat_entry_if_needed(self, port_id, up=True):
         """Update DNAT entry if using distributed floating ips."""
@@ -1628,20 +1649,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         setattr(self._plugin, method_name, types.MethodType(fn, self._plugin))
 
     def ping_all_chassis(self):
-        """Update NB_Global.nb_cfg so that Chassis.nb_cfg will increment
-
-        :returns: (bool) True if nb_cfg was updated. False if it was updated
-            recently and this call didn't trigger any update.
-        """
-        last_ping = self.nb_ovn.nb_global.external_ids.get(
-            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY)
-        if last_ping:
-            interval = max(cfg.CONF.agent_down_time // 2, 1)
-            next_ping = (timeutils.parse_isotime(last_ping) +
-                         datetime.timedelta(seconds=interval))
-            if timeutils.utcnow(with_timezone=True) < next_ping:
-                return False
-
+        """Request agent heartbeats by incrementing NB_Global.nb_cfg."""
+        # The maintenance loop controls the reporting interval. Checking the
+        # last transaction's timestamp here can skip a scheduled heartbeat.
         with self.nb_ovn.create_transaction(check_error=True,
                                             bump_nb_cfg=True) as txn:
             txn.add(self.nb_ovn.check_liveness())
@@ -1720,69 +1730,6 @@ class OVNMechanismDriver(api.MechanismDriver):
                 return False
 
         return False
-
-
-def get_agents(self, context, filters=None, fields=None, _driver=None,
-               sorts=None, limit=None, marker=None, page_reverse=False):
-    _driver.ping_all_chassis()
-    filters = filters or {}
-    agent_list = n_agent.AgentCache().get_agents(filters)
-    return [agent.as_dict() for agent in agent_list]
-
-
-def get_agent(self, context, id, fields=None, _driver=None):
-    try:
-        return n_agent.AgentCache().get(id).as_dict()
-    except KeyError:
-        raise n_exc.agent.AgentNotFound(id=id)
-
-
-def update_agent(self, context, id, agent, _driver=None):
-    ovn_agent = get_agent(self, None, id, _driver=_driver)
-    chassis_name = ovn_agent['configurations']['chassis_name']
-    agent_type = ovn_agent['agent_type']
-    agent = agent['agent']
-    # neutron-client always passes admin_state_up, openstack client doesn't
-    # and we can just fall through to raising in the case that admin_state_up
-    # is being set to False, otherwise the end-state will be fine
-    if not agent.get('admin_state_up', True):
-        raise n_exc.BadRequest(resource='agent',
-                               msg='OVN agent status cannot be updated')
-    if 'description' in agent:
-        _driver.sb_ovn.set_chassis_neutron_description(
-            chassis_name, agent['description'],
-            agent_type).execute(check_error=True)
-    return agent
-
-
-def delete_agent(self, context, id, _driver=None):
-    # raise AgentNotFound if this isn't an ml2/ovn-related agent
-    agent = get_agent(self, None, id, _driver=_driver)
-
-    # NOTE(twilson) According to the API docs, an agent must be disabled
-    # before deletion. Otherwise, behavior seems to be undefined. We could
-    # check that alive=False before allowing deletion, but depending on the
-    # agent_down_time setting, that could take quite a while.
-    # If ovn-controller is up, the Chassis will be recreated and so the agent
-    # will still show as up. The recreated Chassis will cause all kinds of
-    # events to fire. But again, undefined behavior.
-    chassis_name = agent['configurations']['chassis_name']
-    _driver.sb_ovn.chassis_del(chassis_name, if_exists=True).execute(
-        check_error=True)
-    try:
-        _driver.sb_ovn.db_destroy('Chassis_Private', chassis_name).execute(
-            check_error=True)
-    except idlutils.RowNotFound:
-        pass
-    # Send a specific event that all API workers can get to delete the agent
-    # from their caches. Ideally we could send a single transaction that both
-    # created and deleted the key, but alas python-ovs is too "smart"
-    _driver.sb_ovn.db_set(
-        'SB_Global', '.', ('external_ids', {'delete_agent': str(id)})).execute(
-            check_error=True)
-    _driver.sb_ovn.db_remove(
-        'SB_Global', '.', 'external_ids', delete_agent=str(id),
-        if_exists=True).execute(check_error=True)
 
 
 def get_availability_zones(cls, context, _driver, filters=None, fields=None,

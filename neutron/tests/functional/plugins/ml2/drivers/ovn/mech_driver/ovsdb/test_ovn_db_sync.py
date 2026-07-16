@@ -39,7 +39,6 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.db import evpn_db
-from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
@@ -2093,20 +2092,15 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
             self.plugin, self.mech_driver,
             n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
         self.addCleanup(self.sb_synchronizer.stop)
-        self.addCleanup(self._clean_agent_cache)
         self.ctx = context.get_admin_context()
         self.host1 = uuidutils.generate_uuid()
         self.sb_api.idl.notify_handler.watch_events([
-            ovsdb_monitor.ChassisAgentWriteEvent(self),
-            ovsdb_monitor.ChassisAgentDownEvent(self),
-            ovsdb_monitor.ChassisAgentDeleteEvent(self),
+            ovsdb_monitor.ChassisAgentDownEvent(self.mech_driver),
+            ovsdb_monitor.ChassisAgentWriteEvent(self.mech_driver),
         ])
 
     def _sync_resources(self):
         self.sb_synchronizer.sync_hostname_and_physical_networks(self.ctx)
-
-    def _clean_agent_cache(self):
-        del self.sb_synchronizer.agent_cache
 
     def create_segment(self, network_id, physical_network, segmentation_id):
         segment_data = {'network_id': network_id,
@@ -2122,7 +2116,8 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         with self.network() as network:
             network_id = network['network']['id']
         self.create_segment(network_id, self.physnet, 50)
-        self.add_fake_chassis(self.host1, [self.physnet])
+        self.add_fake_chassis(self.host1, [self.physnet],
+                              wait_for_agent=True)
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertFalse(segment_hosts)
         self._sync_resources()
@@ -2137,7 +2132,8 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
             self.ctx, self.host1, {segment['id']})
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1}, segment_hosts)
-        self.add_fake_chassis(self.host1, [self.physnet2])
+        self.add_fake_chassis(self.host1, [self.physnet2],
+                              wait_for_agent=True)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertFalse(segment_hosts)
@@ -2152,13 +2148,14 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         # is created too. The sync call will craete the corresponding segment
         # mapping.
         self.create_segment(network_id, self.physnet, 50)
-        ch1 = self.add_fake_chassis(self.host1, [self.physnet])
+        ch1 = self.add_fake_chassis(self.host1, [self.physnet],
+                                    wait_for_agent=True)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1}, segment_hosts)
 
         # The chassis is deleted but the OVN agent is still present in the
-        # local cache.
+        # database. ChassisAgentDownEvent marks it down.
         self.del_fake_chassis(ch1)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
@@ -2171,16 +2168,17 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         with self.network() as network:
             network_id = network['network']['id']
         self.create_segment(network_id, self.physnet, 50)
-        ch1 = self.add_fake_chassis(self.host1, [self.physnet])
+        ch1 = self.add_fake_chassis(self.host1, [self.physnet],
+                                    wait_for_agent=True)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1}, segment_hosts)
 
-        # Delete the chassis and the local cache OVN agent register. The
-        # existing host mapping is considered by Neutron as an external
-        # mapping, not related to an OVN controller agent.
+        # Delete the chassis and the OVN agent DB record. The existing host
+        # mapping is considered by Neutron as an external mapping, not
+        # related to an OVN controller agent.
         self.del_fake_chassis(ch1)
-        neutron_agent.AgentCache().delete(ch1)
+        self.plugin.delete_agent(self.ctx, ch1)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1}, segment_hosts)
@@ -2216,17 +2214,15 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1, host2, host3}, segment_hosts)
 
-        # The `Private_Chassis` register events are monitored by the SB IDL.
-        # Each register is stored as an OVN controller agent in the agent
-        # local cache singleton.
-        # self.sb_api.idl.notify_handler.watch_events([
-        #     ovsdb_monitor.ChassisAgentWriteEvent(self),
-        #     ovsdb_monitor.ChassisAgentDownEvent(self),
-        #     ovsdb_monitor.ChassisAgentDeleteEvent(self),
-        # ])
-        self.add_fake_chassis(host2, [self.physnet2])
-        self.add_fake_chassis(host3, [self.physnet3])
-        ch4 = self.add_fake_chassis(host4, [self.physnet])
+        # The `Chassis_Private` register events are monitored by the SB IDL.
+        # Each register is stored as an OVN controller agent in the Neutron
+        # database.
+        self.add_fake_chassis(host2, [self.physnet2],
+                              wait_for_agent=True)
+        self.add_fake_chassis(host3, [self.physnet3],
+                              wait_for_agent=True)
+        ch4 = self.add_fake_chassis(host4, [self.physnet],
+                                    wait_for_agent=True)
 
         # host1 must be kept because this mapping doesn't belong to an OVN
         # controller host (could be a baremetal host mapping). Check
@@ -2245,7 +2241,8 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         self.assertEqual({self.host1, host2}, segment_hosts)
 
         # If chassis4 is added again; the mapping should be re-added too.
-        self.add_fake_chassis(host4, [self.physnet])
+        self.add_fake_chassis(host4, [self.physnet],
+                              wait_for_agent=True)
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1, host2, host4}, segment_hosts)

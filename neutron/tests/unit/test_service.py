@@ -56,7 +56,7 @@ class TestPreparePeriodicWorkers(base.BaseTestCase):
         rpc_worker = neutron_service.RpcWorker([mock.Mock()],
                                                worker_process_count=0)
         process_worker = mock.Mock(worker_process_count=2)
-        maintenance_worker = ovn_worker.MaintenanceWorker()
+        maintenance_worker = ovn_worker.MaintenanceWorker(mock.Mock())
 
         with mock.patch.object(neutron_service, 'AllServicesNeutronWorker') \
                 as all_services_worker:

@@ -13,20 +13,9 @@
 #
 
 import abc
-import copy
-import datetime
 
-from oslo_config import cfg
-from oslo_log import log as logging
-from oslo_utils import timeutils
-
-from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
-from neutron.common import utils
-
-
-LOG = logging.getLogger(__name__)
 
 
 class DeletedChassis:
@@ -40,44 +29,27 @@ class NeutronAgent(abc.ABC):
     types = {}
 
     def __init_subclass__(cls):
-        # Register the subclasses to be looked up by their type
         NeutronAgent.types[cls.agent_type] = cls
 
-    def __init__(self, chassis_private, driver):
-        self.driver = driver
-        self.set_down = False
-        self.update(chassis_private)
-
-    def update(self, chassis_private, clear_down=False):
+    def __init__(self, chassis_private):
         self.chassis_private = chassis_private
-        updated_at = datetime.datetime.fromtimestamp(
-            chassis_private.nb_cfg_timestamp / 1000, datetime.UTC)
-        self.updated_at = updated_at
-        if clear_down:
-            self.set_down = False
 
     @staticmethod
     def _get_chassis(chassis_private):
-        """Return the chassis register
-
-        The input could be the chassis register itself or the chassis private.
-        """
         try:
             return chassis_private.chassis[0]
         except IndexError:
-            # Chassis register has been deleted but not Chassis_Private.
             return DeletedChassis
 
     @property
     def chassis(self):
         return self._get_chassis(self.chassis_private)
 
-    def as_dict(self):
+    def agent_state(self):
+        """Build the agent_state dict for create_or_update_agent()."""
         return {
             'binary': self.binary,
             'host': self.chassis.hostname,
-            'heartbeat_timestamp': timeutils.normalize_time(
-                self.updated_at.replace(microsecond=0)),
             'availability_zone': ', '.join(
                 ovn_utils.get_chassis_availability_zones(self.chassis)),
             'topic': 'n/a',
@@ -86,29 +58,13 @@ class NeutronAgent(abc.ABC):
                 'chassis_name': self.chassis.name,
                 'bridge-mappings':
                     ovn_utils.get_ovn_bridge_mappings(self.chassis)},
-            'start_flag': True,
             'agent_type': self.agent_type,
             'id': self.agent_id,
-            'alive': self.alive,
-            'admin_state_up': True}
-
-    @property
-    def alive(self):
-        if self.set_down:
-            return False
-        # TODO(twilson) Determine if we can go back to just checking:
-        # if self.driver.nb_ovn.nb_global.nb_cfg == self.nb_cfg:
-        if self.driver.nb_ovn.nb_global.nb_cfg - self.nb_cfg <= 1:
-            return True
-        now = timeutils.utcnow(with_timezone=True)
-        if (now - self.updated_at).total_seconds() < cfg.CONF.agent_down_time:
-            # down, but not yet timed out
-            return True
-        return False
+        }
 
     @classmethod
-    def from_type(cls, _type, chassis_private, driver):
-        return cls.types[_type](chassis_private, driver)
+    def from_type(cls, _type, chassis_private):
+        return cls.types[_type](chassis_private)
 
     @property
     @abc.abstractmethod
@@ -118,11 +74,6 @@ class NeutronAgent(abc.ABC):
     @property
     @abc.abstractmethod
     def binary(self):
-        pass
-
-    @property
-    @abc.abstractmethod
-    def nb_cfg(self):
         pass
 
     @property
@@ -140,8 +91,8 @@ class ControllerAgent(NeutronAgent):
     agent_type = ovn_const.OVN_CONTROLLER_AGENT
     binary = 'ovn-controller'
 
-    @staticmethod  # it is by default, but this makes pep8 happy
-    def __new__(cls, chassis_private, driver):
+    @staticmethod
+    def __new__(cls, chassis_private):
         _chassis = cls._get_chassis(chassis_private)
         if ovn_utils.is_gateway_chassis(_chassis):
             cls = ControllerGatewayAgent
@@ -152,10 +103,6 @@ class ControllerAgent(NeutronAgent):
         return chassis_private.name
 
     @property
-    def nb_cfg(self):
-        return self.chassis_private.nb_cfg
-
-    @property
     def agent_id(self):
         return self.id_from_chassis_private(self.chassis_private)
 
@@ -164,40 +111,14 @@ class ControllerAgent(NeutronAgent):
         return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_DESC_KEY, '')
 
-    def update(self, chassis_private, clear_down=False):
-        super().update(chassis_private, clear_down)
-        if ovn_utils.is_gateway_chassis(self.chassis):
-            self.__class__ = ControllerGatewayAgent
-
 
 class ControllerGatewayAgent(ControllerAgent):
     agent_type = ovn_const.OVN_CONTROLLER_GW_AGENT
-
-    def update(self, chassis_private, clear_down=False):
-        super().update(chassis_private, clear_down)
-        if not ovn_utils.is_gateway_chassis(self.chassis):
-            self.__class__ = ControllerAgent
 
 
 class OVNNeutronAgent(NeutronAgent):
     agent_type = ovn_const.OVN_NEUTRON_AGENT
     binary = 'neutron-ovn-agent'
-
-    @property
-    def alive(self):
-        # If ovn-controller is down, then OVN Neutron Agent is down even
-        # if the neutron-ovn-agent binary is updating external_ids.
-        try:
-            if not AgentCache().get(self.chassis_private.name).alive:
-                return False
-        except KeyError:
-            return False
-        return super().alive
-
-    @property
-    def nb_cfg(self):
-        return int(self.chassis_private.external_ids.get(
-            ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY, 0))
 
     @staticmethod
     def id_from_chassis_private(chassis_private):
@@ -212,100 +133,3 @@ class OVNNeutronAgent(NeutronAgent):
     def description(self):
         return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_NEUTRON_DESC_KEY, '')
-
-
-@utils.SingletonDecorator
-class AgentCache:
-    def __init__(self, driver=None):
-        # This is just to make pylint happy because it doesn't like calls to
-        # AgentCache() with no arguments, despite init only being called the
-        # first time--and we do really want a driver passed in.
-        if driver is None:
-            raise ValueError(_("driver cannot be None"))
-        self.agents = {}
-        self.driver = driver
-
-    def __iter__(self):
-        # Copying self.agents will avoid any issue during the iteration if an
-        # agent is added or deleted.
-        _agents = copy.copy(self.agents)
-        return iter(_agents.values())
-
-    def get(self, key):
-        return self.agents[key]
-
-    def update(self, agent_type, row, clear_down=False):
-        cls = NeutronAgent.types[agent_type]
-        try:
-            agent = self.agents[cls.id_from_chassis_private(row)]
-            agent.update(row, clear_down=clear_down)
-        except KeyError:
-            agent = NeutronAgent.from_type(agent_type, row, self.driver)
-            self.agents[agent.agent_id] = agent
-        return agent
-
-    def populate(self):
-        """Populate the cache with all existing OVN agents.
-
-        Read all Chassis_Private rows from the SB database and create
-        the corresponding agent entries. This replicates the logic of
-        ChassisAgentWriteEvent and ChassisOVNAgentWriteEvent for
-        contexts where the OVSDB monitor events are not running
-        (e.g. the neutron-ovn-db-sync-util tool).
-        """
-        for ch_private in self.driver.sb_ovn.db_list_rows(
-                'Chassis_Private').execute(check_error=True):
-            if not ch_private.chassis:
-                continue
-
-            self.update(ovn_const.OVN_CONTROLLER_AGENT, ch_private,
-                        clear_down=True)
-
-            external_ids = ch_private.external_ids
-            if external_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY):
-                self.update(ovn_const.OVN_NEUTRON_AGENT, ch_private,
-                            clear_down=True)
-        LOG.debug('Agents populated in the agent cache:')
-        for a in self.agents.values():
-            LOG.debug('- Agent type: %s, hostname: %s, name: %s',
-                      a.agent_type, a.chassis.hostname, a.chassis.name)
-
-    def delete(self, agent_id):
-        del self.agents[agent_id]
-
-    def agents_by_chassis_private(self, chassis_private):
-        # Get unique agent ids based on the chassis_private
-        agent_ids = {cls.id_from_chassis_private(chassis_private)
-                     for cls in NeutronAgent.types.values()}
-        # Return the cached agents of agent_ids whose keys are in the cache
-        return (agent for agent in self if agent.agent_id in agent_ids)
-
-    def get_agents(self, filters=None):
-        filters = filters or {}
-        agent_list = []
-        type_errors = {}
-        for agent in self:
-            agent_dict = agent.as_dict()
-            for k, v in filters.items():
-                if isinstance(agent_dict[k], type(v)):
-                    if agent_dict[k] != v:
-                        break
-                else:
-                    if utils.is_iterable_not_string(v):
-                        if agent_dict[k] not in v:
-                            break
-                    else:
-                        type_errors[k] = (type(agent_dict[k]), v)
-                        break
-            else:
-                agent_list.append(agent)
-        for field, (field_type, value) in type_errors.items():
-            LOG.info('Value "%(value)s" %(vtype)s does not '
-                     'match the OVN related agent field "%(field)s" '
-                     'with type %(ftype)s',
-                     {'value': value,
-                      'vtype': type(value),
-                      'field': field,
-                      'ftype': field_type})
-
-        return agent_list

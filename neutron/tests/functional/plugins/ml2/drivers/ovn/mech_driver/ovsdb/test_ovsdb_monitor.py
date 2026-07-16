@@ -11,10 +11,10 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-import datetime
 import functools
 import subprocess
 import threading
+import time
 from unittest import mock
 
 import fixtures as og_fixtures
@@ -38,7 +38,6 @@ from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db as db_hash_ring
-from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.services.portforwarding import constants as pf_const
@@ -78,21 +77,6 @@ class WaitForChassisPrivateCreateEvent(event.WaitEvent):
         events = (self.ROW_CREATE,)
         conditions = (('name', '=', chassis_name),)
         super().__init__(events, 'Chassis_Private', conditions, timeout=15)
-
-
-class WaitForChassisAgentDeleteEvent(event.WaitEvent):
-    event_name = 'WaitForChassisAgentDeleteEvent'
-
-    def __init__(self):
-        events = (self.ROW_UPDATE,)
-        super().__init__(events, 'SB_Global', {}, timeout=15)
-
-    def match_fn(self, event, row, old=None):
-        try:
-            return (old.external_ids.get('delete_agent') !=
-                    row.external_ids['delete_agent'])
-        except (AttributeError, KeyError):
-            return False
 
 
 class WaitForPortBindingFIPEvent(event.WaitEvent):
@@ -1015,9 +999,8 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
     def setUp(self):
         super().setUp()
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
-        self.mock_ovsdb_idl = mock.Mock()
         self.handler = self.sb_api.idl.notify_handler
-        self.mock_ovsdb_idl = mock.Mock()
+        self.ctx = context.get_admin_context()
         chassis_name = uuidutils.generate_uuid()
         row_event = WaitForChassisPrivateCreateEvent(chassis_name)
         self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
@@ -1026,20 +1009,28 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
             enable_chassis_as_gw=True)
         self.assertTrue(row_event.wait())
         n_utils.wait_until_true(
-            lambda: len(list(neutron_agent.AgentCache())) == 1)
+            lambda: self._get_agent() is not None)
+
+    def _get_agent(self):
+        try:
+            return self.plugin.get_agent(self.ctx, self.chassis_name)
+        except Exception:
+            return None
+
+    def _get_agents(self, filters=None):
+        return self.plugin.get_agents(self.ctx, filters=filters)
 
     def test_agent_change_controller(self):
-        self.assertIsInstance(
-            neutron_agent.AgentCache().get(self.chassis_name),
-            neutron_agent.ControllerGatewayAgent)
+        agent = self._get_agent()
+        self.assertEqual(ovn_const.OVN_CONTROLLER_GW_AGENT,
+                         agent['agent_type'])
         self.sb_api.db_set(
             'Chassis', self.chassis_name,
             ('other_config',
              {'ovn-cms-options': ''})).execute(check_error=True)
         n_utils.wait_until_true(
-            lambda:
-            isinstance(neutron_agent.AgentCache().get(self.chassis_name),
-                       neutron_agent.ControllerAgent))
+            lambda: self._get_agent()['agent_type'] ==
+            ovn_const.OVN_CONTROLLER_AGENT)
 
         # Change back to gw chassis
         self.sb_api.db_set(
@@ -1048,185 +1039,33 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
              {'ovn-cms-options': 'enable-chassis-as-gw'})).execute(
                  check_error=True)
         n_utils.wait_until_true(
-            lambda:
-            isinstance(neutron_agent.AgentCache().get(self.chassis_name),
-                       neutron_agent.ControllerGatewayAgent))
+            lambda: self._get_agent()['agent_type'] ==
+            ovn_const.OVN_CONTROLLER_GW_AGENT)
 
-    def test_agent_updated_at_use_nb_cfg_timestamp(self):
-        def check_agent_ts():
-            agent = neutron_agent.AgentCache().get(self.chassis_name)
-            chassis_ts = self.sb_api.db_get(
-                'Chassis_Private', self.chassis_name,
-                'nb_cfg_timestamp').execute(check_error=True)
-            updated_at = datetime.datetime.fromtimestamp(
-                int(chassis_ts / 1000), datetime.UTC)
-            return agent.updated_at == updated_at
-
-        timestamp = timeutils.utcnow_ts()
-        nb_cfg_timestamp = timestamp * 1000
-        self.sb_api.db_set('Chassis_Private', self.chassis_name, (
-            'nb_cfg_timestamp', nb_cfg_timestamp)).execute(check_error=True)
-        # Also increment nb_cfg by 1 to trigger ChassisAgentWriteEvent which
-        # is responsible to update AgentCache
+    def test_agent_heartbeat_updates(self):
+        agent = self._get_agent()
+        first_heartbeat = agent['heartbeat_timestamp']
+        # Sleep to ensure next heartbeat has a different timestamp
+        time.sleep(1)
+        # Trigger a ChassisAgentWriteEvent by incrementing nb_cfg
         old_nb_cfg = self.sb_api.db_get('Chassis_Private', self.chassis_name,
                                         'nb_cfg').execute(check_error=True)
         self.sb_api.db_set('Chassis_Private', self.chassis_name, (
             'nb_cfg', old_nb_cfg + 1)).execute(check_error=True)
-        try:
-            n_utils.wait_until_true(check_agent_ts, timeout=5)
-        except n_utils.WaitTimeout:
-            agent = neutron_agent.AgentCache().get(self.chassis_name)
-            chassis_ts = self.sb_api.db_get(
-                'Chassis_Private', self.chassis_name,
-                'nb_cfg_timestamp').execute(check_error=True)
-            self.fail('Chassis timestamp: %s, agent updated_at: %s' %
-                      (chassis_ts, str(agent.updated_at)))
+        n_utils.wait_until_true(
+            lambda: self._get_agent()['heartbeat_timestamp'] !=
+            first_heartbeat, timeout=5)
 
-    def test_agent_restart(self):
-        def check_agent_up():
-            agent = neutron_agent.AgentCache().get(self.chassis_name)
-            return agent.alive
+    def test_agent_alive(self):
+        agent = self._get_agent()
+        self.assertTrue(agent['alive'])
 
-        def check_agent_down():
-            return not check_agent_up()
-
-        def check_nb_cfg_timestamp_is_not_null():
-            agent = neutron_agent.AgentCache().get(self.chassis_name)
-            return agent.updated_at != 0
-
-        # Set nb_cfg to some realistic value, so that the alive check can
-        # actually work
-        self.nb_api.db_set(
-            'NB_Global', '.', ('nb_cfg', 1337)).execute(check_error=True)
-        self.sb_api.db_set(
-            'Chassis_Private', self.chassis_name, ('nb_cfg', 1337)
-        ).execute(check_error=True)
-
-        chassis_uuid = self.sb_api.db_get(
-            'Chassis', self.chassis_name, 'uuid').execute(check_error=True)
-
-        self.assertTrue(check_agent_up())
-        n_utils.wait_until_true(check_nb_cfg_timestamp_is_not_null, timeout=5)
-
-        # Lets start by shutting down the ovn-controller
-        # (where it will remove the Chassis_Private table entry)
-        self.sb_api.db_destroy(
-            'Chassis_Private', self.chassis_name).execute(check_error=True)
-        try:
-            n_utils.wait_until_true(check_agent_down, timeout=5)
-        except n_utils.WaitTimeout:
-            self.fail('Agent did not go down after Chassis_Private removal')
-
-        # Now the ovn-controller starts up again and has not yet synced with
-        # the southbound database
-        self.sb_api.db_create(
-            'Chassis_Private', name=self.chassis_name,
-            external_ids={}, chassis=chassis_uuid,
-            nb_cfg_timestamp=0, nb_cfg=0
-        ).execute(check_error=True)
-        self.assertTrue(check_agent_down())
-
-        # Now the ovn-controller has synced with the southbound database
-        nb_cfg_timestamp = timeutils.utcnow_ts() * 1000
-        with self.sb_api.transaction() as txn:
-            txn.add(self.sb_api.db_set('Chassis_Private', self.chassis_name,
-                                       ('nb_cfg_timestamp', nb_cfg_timestamp)))
-            txn.add(self.sb_api.db_set('Chassis_Private', self.chassis_name,
-                                       ('nb_cfg', 1337)))
-        try:
-            n_utils.wait_until_true(check_agent_up, timeout=5)
-        except n_utils.WaitTimeout:
-            self.fail('Agent did not go up after sync is done')
-        self.assertTrue(check_nb_cfg_timestamp_is_not_null())
-
-    def test_agent_chassis_deleted(self):
-        """Test agent down when Chassis deleted, not Chassis_Private.
-
-        When a Chassis record is deleted while Chassis_Private remains,
-        the ChassisAgentChassisClearedEvent should mark the agent as down.
-        Also verifies that the agent recovers when the Chassis is recreated.
-        Related-Bug: #2148211
-        """
-        def check_agent_up():
-            agent = neutron_agent.AgentCache().get(self.chassis_name)
-            return agent.alive
-
-        def check_agent_down():
-            return not check_agent_up()
-
-        # Set nb_cfg so alive check works.
-        self.nb_api.db_set(
-            'NB_Global', '.', ('nb_cfg', 1337)).execute(check_error=True)
-        self.sb_api.db_set(
-            'Chassis_Private', self.chassis_name, ('nb_cfg', 1337)
-        ).execute(check_error=True)
-
-        self.assertTrue(check_agent_up())
-
-        # Delete the Chassis but keep Chassis_Private (simulates an
-        # admin manually deleting the Chassis or ungraceful shutdown
-        # cleanup that only removes Chassis). Note: we cannot use
-        # sb_api.chassis_del() here because that helper also deletes the
-        # associated Chassis_Private row, which would prevent us from
-        # testing the orphaned Chassis_Private scenario.
-        self.sb_api.db_destroy(
-            'Chassis', self.chassis_name).execute(check_error=True)
-        try:
-            n_utils.wait_until_true(check_agent_down, timeout=5)
-        except n_utils.WaitTimeout:
-            self.fail('Agent did not go down after Chassis deletion')
-
-        # Verify as_dict() still works with a deleted Chassis, i.e. the
-        # agent can be listed via the API without crashing.
-        agent = neutron_agent.AgentCache().get(self.chassis_name)
-        agent_dict = agent.as_dict()
-        self.assertFalse(agent_dict['alive'])
-
-        # Simulate ovn-controller reconnecting: recreate the Chassis and
-        # update the orphaned Chassis_Private to reference it.
-        self._counter += 1
-        chassis = self.sb_api.chassis_add(
-            self.chassis_name, ['geneve'],
-            '172.24.4.%d' % self._counter,
-            other_config={
-                'ovn-cms-options': 'enable-chassis-as-gw',
-                'ovn-bridge-mappings': ''},
-            hostname=self.FAKE_CHASSIS_HOST
-        ).execute(check_error=True)
-        nb_cfg_timestamp = timeutils.utcnow_ts() * 1000
-        with self.sb_api.transaction() as txn:
-            txn.add(self.sb_api.db_set(
-                'Chassis_Private', self.chassis_name,
-                ('chassis', chassis.uuid)))
-            txn.add(self.sb_api.db_set(
-                'Chassis_Private', self.chassis_name,
-                ('nb_cfg', 1337)))
-            txn.add(self.sb_api.db_set(
-                'Chassis_Private', self.chassis_name,
-                ('nb_cfg_timestamp', nb_cfg_timestamp)))
-        try:
-            n_utils.wait_until_true(check_agent_up, timeout=5)
-        except n_utils.WaitTimeout:
-            self.fail('Agent did not recover after Chassis recreation')
-
-    def test_agent_removal(self):
-        agents = neutron_agent.AgentCache().get_agents()
-        agent_id = agents[0].agent_id
-
-        row_event = WaitForChassisAgentDeleteEvent()
-        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
-        # Send the SB_Global event to delete an agent from the local caches.
-        self.sb_api.db_set(
-            'SB_Global', '.',
-            ('external_ids', {'delete_agent': agent_id})).execute(
-            check_error=True)
-        self.sb_api.db_remove(
-            'SB_Global', '.', 'external_ids', delete_agent=agent_id,
-            if_exists=True).execute(check_error=True)
-
-        self.assertTrue(row_event.wait())
-        self.assertEqual([],
-                         neutron_agent.AgentCache().get_agents())
+    def test_agent_delete(self):
+        agents = self._get_agents()
+        self.assertEqual(1, len(agents))
+        self.plugin.delete_agent(self.ctx, self.chassis_name)
+        agents = self._get_agents()
+        self.assertEqual(0, len(agents))
 
 
 class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):

@@ -36,7 +36,6 @@ from neutron import manager
 from neutron.objects.port_forwarding import PortForwarding
 from neutron.objects import ports as ports_obj
 from neutron.objects import pvlan as pvlan_obj
-from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as ovn_qos
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -1865,7 +1864,6 @@ class OvnSbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             core_plugin, ovn_driver, mode, is_maintenance,
             plugin_conf=plugin_conf)
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
-        self.agent_cache = neutron_agent.AgentCache(self.ovn_driver)
 
     def do_sync(self):
         """Method to sync the OVN_Southbound DB with neutron DB.
@@ -1887,31 +1885,13 @@ class OvnSbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         LOG.debug("OVN-Southbound DB sync process completed @ %s",
                   str(datetime.now()))
 
-    def _get_hosts_mapped(self, ctx):
-        """Retrieve the hosts mapped with segment associated to controllers"""
-        # NOTE(ralonsoh): the method `get_hosts_mapped_with_segments` cannot
-        # be used with the filters `include_agent_types` nor
-        # `exclude_agent_types`. The OVN agents are not stored in the SQL
-        # database but present only in the `AgentCache` singleton.
-        mapped_hosts = segments_db.get_hosts_mapped_with_segments(ctx)
-        # Populate the ``AgentCache`` only if no OVSDB monitor events have
-        # populated it yet (e.g. in the neutron-ovn-db-sync-util tool).
-        if not self.agent_cache.agents:
-            self.agent_cache.populate()
-        # Even if a chassis has been deleted, the OVN agent cached resource
-        # is preserved.
-        controllers = self.agent_cache.get_agents(
-            filters={'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
-        controllers_hosts = {c.chassis.hostname for c in controllers
-                             if c.chassis}
-        return mapped_hosts & controllers_hosts
-
     def sync_hostname_and_physical_networks(self, ctx):
         LOG.debug('OVN-SB Sync hostname and physical networks started @ %s',
                   str(datetime.now()))
         host_phynets_map = self.ovn_sb_api.get_chassis_hostname_and_physnets()
         current_hosts = set(host_phynets_map)
-        previous_hosts = self._get_hosts_mapped(ctx)
+        previous_hosts = segments_db.get_hosts_mapped_with_segments(
+            ctx, include_agent_types=set(ovn_const.OVN_CONTROLLER_TYPES))
 
         stale_hosts = previous_hosts - current_hosts
         for host in stale_hosts:

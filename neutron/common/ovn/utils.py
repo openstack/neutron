@@ -46,7 +46,6 @@ from pecan import util as pecan_util
 import tenacity
 
 from neutron._i18n import _
-from neutron.common import _constants as n_const
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common import utils as common_utils
@@ -908,18 +907,6 @@ def get_ovn_bridge_mappings(chassis):
     """Return the bridge mappings string configured in a Chassis."""
     return getattr(chassis, 'other_config', {}).get(
         constants.OVN_BRIDGE_MAPPINGS, '')
-
-
-def get_ovn_bridge_from_chassis_private(chassis_private):
-    """Return the OVN bridge used by the local OVN controller
-
-    This information is stored in the Chassis_Private register by the OVN
-    Metadata agent. The default value returned, if not present, is "br-int".
-    NOTE: the default value is not reading the local ``OVS.integration_bridge``
-    configuration knob, that could be different.
-    """
-    return (chassis_private.external_ids.get(constants.OVN_AGENT_OVN_BRIDGE) or
-            n_const.DEFAULT_BR_INT)
 
 
 def get_datapath_type(sb_idl, hostname=None, _uuid=None):

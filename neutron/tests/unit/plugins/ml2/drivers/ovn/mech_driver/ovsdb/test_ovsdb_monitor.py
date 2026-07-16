@@ -1180,17 +1180,16 @@ class TestChassisOVNAgentWriteEvent(base.BaseTestCase):
         self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
 
     def test_run_ovn_neutron_agent(self):
-        # Test run method with neutron agent
+        chassis = self.ovsdb_row(
+            attrs={'hostname': 'test-host', 'other_config': {}})
         row = self.ovsdb_row(
             attrs={'external_ids': {
-                ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123'}})
-
-        with mock.patch('neutron.plugins.ml2.drivers.ovn.agent.neutron_agent.'
-                        'AgentCache') as agent_cache:
-            self.event.run(self.event.ROW_CREATE, row, None)
-            agent_cache.assert_has_calls([
-                mock.call().update(
-                    ovn_const.OVN_NEUTRON_AGENT, row, clear_down=True)])
+                       ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'neutron-123'},
+                   'chassis': [chassis]})
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver._plugin.create_or_update_agent.assert_called_once()
+        state = self.driver._plugin.create_or_update_agent.call_args[0][1]
+        self.assertEqual(ovn_const.OVN_NEUTRON_AGENT, state['agent_type'])
 
 
 class TestFIPAddDeleteEvent(base.BaseTestCase):

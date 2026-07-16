@@ -20,8 +20,9 @@ from neutron.common import config
 class MaintenanceWorker(worker.BaseWorker):
     desc = 'maintenance worker'
 
-    def __init__(self, **kwargs):
+    def __init__(self, driver, **kwargs):
         super().__init__(desc=self.desc, **kwargs)
+        self._driver = driver
 
     def start(self, **kwargs):
         super().start()
@@ -31,6 +32,7 @@ class MaintenanceWorker(worker.BaseWorker):
 
     def stop(self):
         """Stop service."""
+        self._driver._stop_heartbeat()
 
     def wait(self):
         """Wait for service to complete."""

@@ -182,6 +182,6 @@ class WorkerLifecycleProbeTestCase(base.BaseTestCase):
                          completion)
 
     def test_maintenance_worker_idle_methods_return(self):
-        worker = ovn_worker.MaintenanceWorker()
+        worker = ovn_worker.MaintenanceWorker(mock.Mock())
         for method in worker_lifecycle.WORKER_LIFECYCLE_METHODS:
             self._assert_returns(worker, method)
