@@ -2885,14 +2885,8 @@ class TestAgentStatus(base.BaseTestCase):
 
     def test_find_missing_netns_with_missing_and_present(self):
         with TemporaryDirectory() as tmpdir:
-            active_net_ids = ["present-network-id",
-                              "present-in-neutron-db-but-not-on-agent"]
-            active_networks = set(
-                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
-                          admin_state_up=True,
-                          subnets=[mock.Mock(enable_dhcp=True)])
-                for netid in active_net_ids
-            )
+            active_networks = {"present-network-id",
+                              "present-in-neutron-db-but-not-on-agent"}
 
             # Create a netns file for the present network only
             netns_dir = Path(tmpdir)
@@ -2907,25 +2901,19 @@ class TestAgentStatus(base.BaseTestCase):
 
             self.assertEqual(1, len(missing_netns))
             self.assertEqual(
-                "qdhcp-present-in-neutron-db-but-not-on-agent",
+                "present-in-neutron-db-but-not-on-agent",
                 missing_netns.pop(),
             )
 
             # Test successfully synced network (all namespaces present)
-            active_net_ids = ["synced-network-id"]
-            all_synced_networks = set(
-                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
-                          admin_state_up=True,
-                          subnets=[mock.Mock(enable_dhcp=True)])
-                for netid in active_net_ids
-            )
+            active_net_ids = {"synced-network-id"}
 
             synced_netns_file = netns_dir / 'qdhcp-synced-network-id'
             synced_netns_file.touch()
 
             with mock.patch.object(netns, 'NETNS_RUN_DIR', tmpdir):
                 missing_netns = dhcp_agent._find_missing_netns(
-                    all_synced_networks)
+                    active_net_ids)
 
             self.assertEqual(0, len(missing_netns))
             self.assertEqual(set(), missing_netns)
@@ -2958,13 +2946,7 @@ class TestAgentStatus(base.BaseTestCase):
             netns_dir = Path(tmpdir)
 
             # Create networks with corresponding namespace files (all synced)
-            active_net_ids = ["network-1", "network-2"]
-            active_networks = set(
-                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
-                          admin_state_up=True,
-                          subnets=[mock.Mock(enable_dhcp=True)])
-                for netid in active_net_ids
-            )
+            active_net_ids = {"network-1", "network-2"}
 
             # Create netns files for all networks
             (netns_dir / 'qdhcp-network-1').touch()
@@ -2973,7 +2955,7 @@ class TestAgentStatus(base.BaseTestCase):
             with mock.patch.object(dhcp_agent, 'AGENT_STATUS_FILE',
                                    status_file_path):
                 with mock.patch.object(netns, 'NETNS_RUN_DIR', tmpdir):
-                    dhcp_agent._write_sync_status(active_networks)
+                    dhcp_agent._write_sync_status(active_net_ids)
 
                 # Verify the file was created
                 self.assertTrue(status_file_path.exists())
@@ -2993,17 +2975,11 @@ class TestAgentStatus(base.BaseTestCase):
             netns_dir = Path(tmpdir)
 
             # Create networks but only create netns file for one
-            active_net_ids = [
+            active_net_ids = {
                 "synced-network",
                 "missing-network-1",
                 "missing-network-2"
-            ]
-            active_networks = set(
-                mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
-                          admin_state_up=True,
-                          subnets=[mock.Mock(enable_dhcp=True)])
-                for netid in active_net_ids
-            )
+            }
 
             # Create netns file only for the synced network
             (netns_dir / 'qdhcp-synced-network').touch()
@@ -3011,7 +2987,7 @@ class TestAgentStatus(base.BaseTestCase):
             with mock.patch.object(dhcp_agent, 'AGENT_STATUS_FILE',
                                    status_file_path):
                 with mock.patch.object(netns, 'NETNS_RUN_DIR', tmpdir):
-                    dhcp_agent._write_sync_status(active_networks)
+                    dhcp_agent._write_sync_status(active_net_ids)
 
             # Verify the file was created
             self.assertTrue(status_file_path.exists())
@@ -3023,8 +2999,8 @@ class TestAgentStatus(base.BaseTestCase):
             self.assertFalse(status["ready"])
             message = status["message"]
             self.assertIn("Missing 2 of 3 networks", message)
-            self.assertIn("qdhcp-missing-network-1", message)
-            self.assertIn("qdhcp-missing-network-2", message)
+            self.assertIn("missing-network-1", message)
+            self.assertIn("missing-network-2", message)
             self.assertIn("time", status)
             self.assertIsInstance(status["time"], (int, float))
 
@@ -3054,6 +3030,8 @@ class TestAgentStatusIntegration(base.BaseTestCase):
         active_networks = set(
             mock.Mock(id=netid, namespace=f"qdhcp-{netid}",
                       admin_state_up=True,
+                      non_local_subnets=[],
+                      ports=[],
                       subnets=[mock.Mock(enable_dhcp=True)])
             for netid in active_net_ids
         )
@@ -3075,12 +3053,10 @@ class TestAgentStatusIntegration(base.BaseTestCase):
                     dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
                     attrs_to_mock = dict(
                         (a, mock.DEFAULT)
-                        for a in ['disable_dhcp_helper', 'cache',
-                                  'safe_configure_dhcp_for_network']
+                        for a in ['disable_dhcp_helper', 'call_driver',
+                                  'update_isolated_metadata_proxy']
                     )
-                    with mock.patch.multiple(dhcp, **attrs_to_mock) as mocks:
-                        mocks['cache'].get_network_ids.return_value = []
-                        mocks['cache'].get_port_ids.return_value = range(4)
+                    with mock.patch.multiple(dhcp, **attrs_to_mock):
                         with mock.patch.object(netns, 'NETNS_RUN_DIR', net_ns):
                             dhcp.sync_state()
 

@@ -168,6 +168,9 @@ core_opts = [
                 help=_('If False, neutron-server will not listen for signals '
                        'like SIGINT or SIGTERM. This is useful when running '
                        'behind a WSGI server like apache/mod_wsgi.')),
+    cfg.IntOpt('dhcp_agent_check_interval', default=30,
+               help=_('Number of seconds between running '
+                      'the dhcp-agent-check for detecting missing networks')),
 ]
 
 core_cli_opts = [

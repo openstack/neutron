@@ -88,19 +88,17 @@ def _remove_status_file():
     LOG.info("Agent status file %s removed", AGENT_STATUS_FILE)
 
 
-def _find_missing_netns(active_networks):
+def _find_missing_netns(active_network_ids):
     ns = Path(netns.NETNS_RUN_DIR)
     active_ns = set()
     synced_nets = set()
 
-    for net in active_networks:
-        # admin_state_up is a boolean
-        if any(s for s in net.subnets if s.enable_dhcp) and net.admin_state_up:
-            active_ns.add(net.namespace)
+    for net in active_network_ids:
+        active_ns.add(net)
 
     for net in ns.iterdir():
         if net.name.startswith('qdhcp-'):
-            synced_nets.add(net.name)
+            synced_nets.add(net.name.removeprefix('qdhcp-'))
 
     return active_ns - synced_nets
 
@@ -130,12 +128,12 @@ def _write_status_failure(error):
     _create_status_file(False, str(error))
 
 
-def _write_sync_status(active_networks):
-    missing_netns = _find_missing_netns(active_networks)
+def _write_sync_status(active_network_ids):
+    missing_netns = _find_missing_netns(active_network_ids)
 
     if missing_netns:
         ready = False
-        message = (f"Missing {len(missing_netns)} of {len(active_networks)} "
+        message = (f"Missing {len(missing_netns)} of {len(active_network_ids)}"
                    f"networks - {', '.join(sorted(missing_netns)[:5])}")
     else:
         ready = True
@@ -413,7 +411,7 @@ class DhcpAgent(manager.Manager):
             # was down
             self.dhcp_ready_ports |= set(self.cache.get_port_ids(only_nets))
             LOG.info('Synchronizing state complete')
-            _write_sync_status(active_networks)
+            _write_sync_status(self.cache.get_network_ids())
         except Exception as e:
             if only_nets:
                 for network_id in only_nets:
@@ -461,6 +459,7 @@ class DhcpAgent(manager.Manager):
     @utils.exception_logger()
     def _periodic_resync_helper(self):
         """Resync the dhcp state at the configured interval and throttle."""
+        last_check = time.time()
         while True:
             # threading.Event.wait blocks until the internal flag is true. It
             # returns the internal flag on exit, so it will always return True
@@ -485,6 +484,9 @@ class DhcpAgent(manager.Manager):
                     LOG.debug("resync (%(network)s): %(reason)s",
                               {"reason": r, "network": net})
                 self.sync_state(list(reasons.keys()))
+            elif last_check + cfg.CONF.dhcp_agent_check_interval < time.time():
+                last_check = time.time()
+                _write_sync_status(self.cache.get_network_ids())
 
     def periodic_resync(self):
         """Spawn a thread to periodically resync the dhcp state."""
