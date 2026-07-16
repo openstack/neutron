@@ -92,6 +92,9 @@ DHCP_AGENT_OPTS = [
                help=_("resolv.conf search domains inside network namespaces. "
                       "If not set uses the dns_domain. Set to empty string "
                       "to disable search parameter")),
+    cfg.IntOpt('dhcp_agent_check_interval', default=30,
+               help=_('Number of seconds between running '
+                      'the dhcp-agent-check for detecting missing networks')),
 ]
 
 DHCP_OPTS = [
