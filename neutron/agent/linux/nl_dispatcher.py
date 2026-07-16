@@ -19,6 +19,7 @@ import logging
 import os
 import threading
 import time
+import weakref
 
 from oslo_log import log
 from pyroute2 import iproute
@@ -43,6 +44,7 @@ class NetlinkDispatcher:
         self._groups = groups
         self._replay_start_callbacks = []
         self._replay_end_callbacks = []
+        self._ipr = lambda: None
 
     def register_handler(self, event_type, handler):
         """Register a handler for a specific netlink message type.
@@ -75,6 +77,7 @@ class NetlinkDispatcher:
     def _sock(self):
         ipr = iproute.IPRoute()
         ipr.bind(self._groups)
+        self._ipr = weakref.ref(ipr)
         try:
             yield ipr
         finally:
