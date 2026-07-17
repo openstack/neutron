@@ -137,24 +137,6 @@ def set_resources_quota_usage_dirty(context, resources, project_id,
 
 
 @db_api.retry_if_session_inactive()
-@db_api.CONTEXT_WRITER
-def set_all_quota_usage_dirty(context, resource, dirty=True):
-    """Set the dirty bit on quota usage for all projects.
-
-    :param resource: the resource for which the dirty bit should be set
-    :returns: the number of projects for which the dirty bit was
-              actually updated
-    """
-    # TODO(manjeets) consider squashing this method with
-    # set_resources_quota_usage_dirty
-    objs = quota_obj.QuotaUsage.get_objects(context, resource=resource)
-    for obj in objs:
-        obj.dirty = dirty
-        obj.update()
-    return len(objs)
-
-
-@db_api.retry_if_session_inactive()
 def create_reservation(context, project_id, deltas, expiration=None):
     # This method is usually called from within another transaction.
     # Consider using begin_nested

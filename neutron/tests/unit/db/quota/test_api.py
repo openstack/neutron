@@ -161,17 +161,6 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self._verify_quota_usage(usage_info,
                                  expected_dirty=False)
 
-    def _test_set_all_quota_usage_dirty(self, expected):
-        self._create_quota_usage('goals', 26)
-        self._create_quota_usage('goals', 12, project_id='Callejon')
-        self.assertEqual(expected, quota_api.set_all_quota_usage_dirty(
-            self.context, 'goals'))
-
-    def test_set_all_quota_usage_dirty(self):
-        # All goal scorers need a shower after the match, but since this is not
-        # admin context we can clean only one
-        self._test_set_all_quota_usage_dirty(expected=1)
-
     def test_get_quota_usage_by_project(self):
         self._create_quota_usage('goals', 26)
         self._create_quota_usage('assists', 11)
@@ -331,8 +320,3 @@ class TestQuotaDbApiAdminContext(TestQuotaDbApi):
         self.assertEqual(2, len(usage_infos))
         for usage_info in usage_infos:
             self.assertEqual('goals', usage_info.resource)
-
-    def test_set_all_quota_usage_dirty(self):
-        # All goal scorers need a shower after the match, and with admin
-        # context we should be able to clean all of them
-        self._test_set_all_quota_usage_dirty(expected=2)
