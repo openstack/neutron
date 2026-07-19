@@ -54,7 +54,7 @@ DEVSTACKEOF
 
 cat << 'DEVSTACKEOF' >> devstack/local.conf
 
-# Set the availablity zone name (default is nova) for the DHCP service.
+# Set the availability zone name (default is nova) for the DHCP service.
 [[post-config|$Q_DHCP_CONF_FILE]]
 [AGENT]
 availability_zone = nova
