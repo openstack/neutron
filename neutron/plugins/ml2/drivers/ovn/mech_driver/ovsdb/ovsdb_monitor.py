@@ -836,6 +836,10 @@ class HAChassisGroupRouterEvent(row_event.RowEvent):
         if ovn_const.OVN_ROUTER_ID_EXT_ID_KEY not in row.external_ids:
             # This is not a router "HA_Chassis_Group".
             return False
+        if ovn_const.OVN_NETWORK_ID_EXT_ID_KEY in row.external_ids:
+            # Network HA_Chassis_Group (also tagged with router_id, tested in
+            # the previous "if" branch); not used for router chassis pinning.
+            return False
         if hasattr(old, 'ha_chassis'):
             # "HA_Chassis_Group" has been assigned to a router or there are
             # changes in the "ha_chassis" list.
