@@ -16,6 +16,7 @@ OVN Design Notes
    loadbalancer
    distributed_ovsdb_events
    l3_ha_rescheduling
+   live_migration
    port_forwarding
    ovn_network_logging
    pvlan

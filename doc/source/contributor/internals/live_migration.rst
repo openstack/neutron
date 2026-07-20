@@ -23,6 +23,13 @@
 Live-migration
 ==============
 
+.. note::
+
+   This document describes the generic ML2 live migration flow for
+   OVS normal plug, OVS-hybrid plug, MacVTap and SR-IOV. For the
+   ML2/OVN mechanism driver live migration flow, see
+   :doc:`ovn/live_migration`.
+
 Let's consider a VM with one port migrating from host1 with nova-compute1,
 neutron-l2-agent1 and neutron-l3-agent1 to host2 with nova-compute2 and
 neutron-l2-agent2 and neutron-l3agent2.
