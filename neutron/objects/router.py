@@ -303,6 +303,30 @@ class Router(base.NeutronDbObject):
 
         self.obj_reset_changes(fields_to_change)
 
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_gateway_router_for_subnet(cls, context, subnet_id):
+        """Return a Router with an external gateway attached to the subnet.
+
+        Performs a single query joining IPAllocation -> Port -> RouterPort
+        -> Router, filtering for router interface ports and non-null
+        gw_port_id. Returns the Router object or None.
+        """
+        db_obj = context.session.query(l3.Router).join(
+            l3.RouterPort, l3.RouterPort.router_id == l3.Router.id
+        ).join(
+            models_v2.IPAllocation,
+            models_v2.IPAllocation.port_id == l3.RouterPort.port_id
+        ).filter(
+            models_v2.IPAllocation.subnet_id == subnet_id,
+            l3.RouterPort.port_type.in_(n_const.ROUTER_INTERFACE_OWNERS),
+            l3.Router.gw_port_id.isnot(None)).first()
+        if db_obj:
+            router = cls(context)
+            router.from_db_object(db_obj)
+            return router
+        return None
+
     @staticmethod
     @db_api.CONTEXT_READER
     def get_router_ids_without_router_std_attrs(context):

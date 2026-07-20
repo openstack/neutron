@@ -194,6 +194,52 @@ class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             create_r_attr_reg(idx)
             expected_router_ids = expected_router_ids[1:]
 
+    def _create_topology_for_gateway_router(self, with_gw_port=True):
+        network_id = self._create_test_network_id()
+        subnet_id = self._create_test_subnet_id(network_id=network_id)
+        gw_port_id = self._create_test_port_id() if with_gw_port else None
+        router_id = uuidutils.generate_uuid()
+        r = router.Router(self.context, id=router_id,
+                          gw_port_id=gw_port_id)
+        r.create()
+        port = self._create_test_port(
+            network_id=network_id,
+            device_owner=constants.DEVICE_OWNER_ROUTER_INTF,
+            device_id=router_id)
+        rp = router.RouterPort(
+            self.context, router_id=router_id,
+            port_id=port.id,
+            port_type=constants.DEVICE_OWNER_ROUTER_INTF)
+        rp.create()
+        ipa = ports.IPAllocation(
+            self.context, port_id=port.id,
+            subnet_id=subnet_id, network_id=network_id,
+            ip_address=netaddr.IPAddress('10.0.0.1'))
+        ipa.create()
+        return subnet_id, r
+
+    def test_get_gateway_router_for_subnet(self):
+        subnet_id, expected_router = (
+            self._create_topology_for_gateway_router())
+        result = router.Router.get_gateway_router_for_subnet(
+            self.context, subnet_id)
+        self.assertIsNotNone(result)
+        self.assertEqual(expected_router.id, result.id)
+
+    def test_get_gateway_router_for_subnet_no_gw(self):
+        subnet_id, _router = (
+            self._create_topology_for_gateway_router(with_gw_port=False))
+        result = router.Router.get_gateway_router_for_subnet(
+            self.context, subnet_id)
+        self.assertIsNone(result)
+
+    def test_get_gateway_router_for_subnet_no_router(self):
+        network_id = self._create_test_network_id()
+        subnet_id = self._create_test_subnet_id(network_id=network_id)
+        result = router.Router.get_gateway_router_for_subnet(
+            self.context, subnet_id)
+        self.assertIsNone(result)
+
 
 class RouterPortIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
