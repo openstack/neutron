@@ -480,6 +480,15 @@ class TestMetadataAgent(base.BaseTestCase):
         self._test__get_provision_params_returns_provision_parameters(
             'fe80::f816:3eff:feb6:c0c0')
 
+    def test__get_port_ip4_ips_and_ip6_flag_empty_mac(self):
+        """Should return empty IPs for ports with empty MAC column."""
+        port = mock.Mock()
+        port.mac = []
+        port.uuid = 'fake-uuid'
+        ip4_ips, any_ip6 = self.agent._get_port_ip4_ips_and_ip6_flag(port)
+        self.assertEqual([], ip4_ips)
+        self.assertFalse(any_ip6)
+
     def _test_provision_datapath(self, ipv6_enabled):
         """Test datapath provisioning.
 
