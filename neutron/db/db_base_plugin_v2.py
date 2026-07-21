@@ -1453,6 +1453,17 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if not self._network_exists(context, network_id):
             raise exc.NetworkNotFound(net_id=network_id)
 
+        # Prevent cross-project subnet mutation: non-admin callers must own
+        # the network to onboard its subnets. Without this check a caller
+        # with visibility to a shared/RBAC network can reassign subnets
+        # owned by another project to their own subnetpool, potentially
+        # altering address-scope and L3 routing state for victim routers.
+        if not context.is_admin:
+            network = network_obj.Network.get_object(
+                context.elevated(), id=network_id)
+            if network.project_id != context.project_id:
+                raise exc.NotAuthorized()
+
         subnetpool = subnetpool_obj.SubnetPool.get_object(context,
                                                           id=subnetpool_id)
         if not subnetpool:
