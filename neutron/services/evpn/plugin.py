@@ -24,10 +24,12 @@ from neutron_lib.db import resource_extend
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
 from neutron.db import evpn_db
 from neutron.services.evpn import commands as evpn_ovn
+from neutron.services.evpn import exceptions as evpn_exceptions
 
 LOG = logging.getLogger(__name__)
 
@@ -192,7 +194,11 @@ class EVPNPlugin(service_base.ServicePluginBase):
         network_id = port['network_id']
         port_id = port['id']
 
-        self._evpn_db.advertise_port(context, port_id, network_id, router_id)
+        try:
+            self._evpn_db.advertise_port(
+                context, port_id, network_id, router_id)
+        except db_exc.DBReferenceError:
+            raise evpn_exceptions.EVPNVNINotFound(router_id=router_id)
         LOG.info("EVPN advertise_host enabled for port %s on router %s and "
                  "network %s", port_id, router_id, network_id)
 

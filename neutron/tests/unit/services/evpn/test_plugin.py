@@ -172,6 +172,17 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             cmd = self.txn.add.call_args[0][0]
             self.assertIsInstance(cmd, evpn_ovn.AdvertiseHostCommand)
 
+    def test_router_interface_create_advertise_host_no_vni(self):
+        with self.router(as_admin=True) as router, \
+                self.network() as net, \
+                self.subnet(network=net) as subnet:
+            self._router_interface_action(
+                'add', router['router']['id'],
+                subnet['subnet']['id'], None,
+                as_admin=True,
+                advertise_host=True,
+                expected_code=409)
+
     def test_router_interface_delete_cleans_evpn_network(self):
         with self.router(as_admin=True,
                          arg_list=('evpn_vni',), evpn_vni=5000) as router, \
