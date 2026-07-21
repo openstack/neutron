@@ -17,6 +17,7 @@
 import contextlib
 
 import netaddr
+from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as exc
 from oslo_utils import uuidutils
@@ -189,6 +190,37 @@ class SubnetOnboardTestsBase(object):
             self.assertRaises(exc.NetworkNotFound,
                               self._test_onboard_subnet_non_existing_network,
                               subnetpool['id'], self.cidr_to_onboard)
+
+    def test_onboard_subnet_cross_project_not_authorized(self):
+        """Non-admin caller cannot onboard subnets from another project's net.
+        A project member must not be able to mutate subnets owned by a
+        different project via a shared network, even when the network is
+        RBAC-visible to the caller.
+        """
+        _project_id = 'project1-' + _uuid()
+        _ctx = n_context.Context('user1', _project_id, is_admin=False)
+
+        with self.subnetpool(self.ip_version,
+                             prefixes=self.subnetpool_prefixes,
+                             project_id=_project_id) as pool:
+            # Create a shared network owned by the default test project.
+            # Sharing is required so the user1 context can see (but not
+            # own) the network, reproducing the real-world condition.
+            with self.network(shared=True, as_admin=True) as shared_net:
+                network_id = shared_net['network']['id']
+                with self.subnet(network=shared_net,
+                                 cidr=self.cidr_to_onboard,
+                                 ip_version=self.ip_version):
+                    # The user1 can see the shared network but does
+                    # not own it: the call must be rejected.
+                    self.assertRaises(
+                        exc.NotAuthorized,
+                        self.driver.onboard_network_subnets,
+                        _ctx, pool['id'], {'network_id': network_id})
+
+                    # Admin call on the same pool/network must succeed.
+                    self._test_onboard_network_subnets(
+                        network_id, pool['id'])
 
     def _test_onboard_subnet_no_network_id(self, subnetpool_id,
                                            cidr_to_onboard):
