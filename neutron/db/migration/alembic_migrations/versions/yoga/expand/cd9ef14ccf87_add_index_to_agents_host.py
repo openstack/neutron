@@ -26,7 +26,7 @@ Create Date: 2022-01-07 15:45:33.319170
 
 # revision identifiers, used by Alembic.
 revision = 'cd9ef14ccf87'
-down_revision = '8160f7a9cebb'
+down_revision = '1ffef8d6f371'
 
 
 TABLE = 'agents'
