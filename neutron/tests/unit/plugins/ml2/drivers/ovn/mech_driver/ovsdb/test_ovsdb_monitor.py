@@ -919,6 +919,76 @@ class TestChassisEvent(base.BaseTestCase):
             self.event.ROW_UPDATE)
 
 
+class TestHAChassisGroupRouterEvent(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.driver = mock.MagicMock()
+        self.nb_ovn = self.driver.nb_ovn
+        self.event = ovsdb_monitor.HAChassisGroupRouterEvent(self.driver)
+        self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+
+    def test_match_fn_not_a_router_hcg(self):
+        # No "neutron:router_id" tag at all (e.g. an extport HA_Chassis_Group)
+        row = self.ovsdb_row(attrs={'external_ids': {}})
+        self.assertFalse(self.event.match_fn(
+            self.event.ROW_UPDATE, row, self.ovsdb_row(
+                attrs={'ha_chassis': []})))
+
+    def test_match_fn_network_level_hcg_is_ignored(self):
+        # Network HA_Chassis_Group tagged with both network_id and router_id.
+        row = self.ovsdb_row(attrs={'external_ids': {
+            ovn_const.OVN_NETWORK_ID_EXT_ID_KEY: 'net-uuid',
+            ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: 'router-uuid'}})
+        old = self.ovsdb_row(attrs={'ha_chassis': []})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE,
+                                             row, old))
+
+    def test_match_fn_no_ha_chassis_change(self):
+        row = self.ovsdb_row(attrs={'external_ids': {
+            ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: 'router-uuid'}})
+        old = self.ovsdb_row(attrs={})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE,
+                                             row, old))
+
+    def test_match_fn_router_hcg_matches(self):
+        row = self.ovsdb_row(attrs={'external_ids': {
+            ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: 'router-uuid'}})
+        old = self.ovsdb_row(attrs={'ha_chassis': []})
+        self.assertTrue(self.event.match_fn(self.event.ROW_UPDATE,
+                                            row, old))
+
+    def test_run_pins_highest_priority_chassis(self):
+        router_id = uuidutils.generate_uuid()
+        ch_low = self.ovsdb_row(
+            attrs={'priority': 5, 'chassis_name': 'low-prio-chassis'})
+        ch_high = self.ovsdb_row(
+            attrs={'priority': 10, 'chassis_name': 'high-prio-chassis'})
+        row = self.ovsdb_row(attrs={
+            'external_ids': {ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id},
+            'ha_chassis': [ch_low, ch_high]})
+
+        self.event.run(self.event.ROW_UPDATE, row, mock.Mock())
+
+        self.nb_ovn.db_set.assert_called_once_with(
+            'Logical_Router', utils.ovn_name(router_id),
+            ('options', {'chassis': 'high-prio-chassis'}))
+        self.nb_ovn.db_remove.assert_not_called()
+
+    def test_run_no_ha_chassis_removes_pin(self):
+        router_id = uuidutils.generate_uuid()
+        row = self.ovsdb_row(attrs={
+            'external_ids': {ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id},
+            'ha_chassis': []})
+
+        self.event.run(self.event.ROW_UPDATE, row, mock.Mock())
+
+        self.nb_ovn.db_remove.assert_called_once_with(
+            'Logical_Router', utils.ovn_name(router_id), 'options',
+            'chassis', if_exists=True)
+        self.nb_ovn.db_set.assert_not_called()
+
+
 class TestChassisOVNAgentWriteEvent(base.BaseTestCase):
 
     def setUp(self):

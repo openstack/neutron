@@ -1,0 +1,12 @@
+---
+fixes:
+  - |
+    Fixed an ML2/OVN bug where a router with a distributed gateway port
+    (external network with a physical network) could be wrongly pinned to a
+    single gateway chassis (``Logical_Router`` ``options:chassis``) after a
+    chassis event, for example an ``ovn-controller`` restart. The
+    ``HAChassisGroupRouterEvent`` now ignores the unified network
+    ``HA_Chassis_Group`` registers created for the external ports of a
+    network, which are tagged with both ``neutron:network_id`` and
+    ``neutron:router_id``. For more information, see bug
+    `2161232 <https://bugs.launchpad.net/neutron/+bug/2161232>`_.
