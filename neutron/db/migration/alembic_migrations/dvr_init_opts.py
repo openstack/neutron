@@ -44,17 +44,3 @@ def upgrade():
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('port_id', 'host')
     )
-    op.create_table(
-        'csnat_l3_agent_bindings',
-        sa.Column('router_id', sa.String(length=36), nullable=False),
-        sa.Column('l3_agent_id', sa.String(length=36), nullable=False),
-        sa.Column('host_id', sa.String(length=255), nullable=True),
-        sa.Column('csnat_gw_port_id', sa.String(length=36), nullable=True),
-        sa.ForeignKeyConstraint(['l3_agent_id'], ['agents.id'],
-                                ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['router_id'], ['routers.id'],
-                                ondelete='CASCADE'),
-        sa.ForeignKeyConstraint(['csnat_gw_port_id'], ['ports.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('router_id', 'l3_agent_id')
-    )
