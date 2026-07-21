@@ -17,12 +17,6 @@
 VPNAAS_TABLES = ['vpnservices', 'ipsecpolicies', 'ipsecpeercidrs',
                  'ipsec_site_connections', 'ikepolicies']
 
-# Neutron-lbaas is retired, but we need to keep this for the models until
-# we decide to remove the tables.
-LBAAS_TABLES = ['vips', 'sessionpersistences', 'pools', 'healthmonitors',
-                'poolstatisticss', 'members', 'poolloadbalanceragentbindings',
-                'poolmonitorassociations']
-
 FWAAS_TABLES = ['firewall_rules', 'firewalls', 'firewall_policies']
 
 # Arista ML2 driver Models moved to openstack/networking-arista
@@ -41,6 +35,6 @@ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [
     'bgp_speaker_dragent_bindings',
 ]
 
-TABLES = (FWAAS_TABLES + LBAAS_TABLES + VPNAAS_TABLES +
+TABLES = (FWAAS_TABLES + VPNAAS_TABLES +
           REPO_ARISTA_TABLES +
           REPO_NEUTRON_DYNAMIC_ROUTING_TABLES)
