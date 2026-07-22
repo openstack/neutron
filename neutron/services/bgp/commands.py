@@ -605,7 +605,7 @@ class ConnectMainRouterToInterconnectSwitchCommand(
             if netaddr.IPNetwork(ip).version == 4)
         opts = super().lsp_options
         if ipv4_ips:
-            opts[ovn_const.LRP_OPTIONS_ARP_PROXY] = ipv4_ips
+            opts[ovn_const.LSP_OPTIONS_ARP_PROXY] = ipv4_ips
         return opts
 
 
@@ -625,6 +625,8 @@ class ReconcileGatewayIPCommand(ovs_cmd.BaseCommand):
                 f"neutron-{n_net_id}"))
         self.lrp_name = helpers.get_lrp_name(
             constants.MAIN_ROUTER_NAME, interconnect_switch_name)
+        self.lsp_name = helpers.get_lsp_name(
+            interconnect_switch_name, constants.MAIN_ROUTER_NAME)
 
     def run_idl(self, txn):
         try:
@@ -639,7 +641,13 @@ class ReconcileGatewayIPCommand(ovs_cmd.BaseCommand):
         # idempotent for set columns and avoids this race.
         lrp.addvalue('networks', self.gw_ip)
         if netaddr.IPNetwork(self.gw_ip).version == 4:
-            lrp.setkey('options', ovn_const.LRP_OPTIONS_ARP_PROXY, self.gw_ip)
+            try:
+                lsp = self.api.lookup('Logical_Switch_Port', self.lsp_name)
+            except idlutils.RowNotFound:
+                LOG.error("LSP %s not found", self.lsp_name)
+                return
+            lsp.setkey('options', ovn_const.LSP_OPTIONS_ARP_PROXY,
+                       self.gw_ip)
 
 
 class ConnectChassisRouterToSwitchCommand(ConnectRouterToSwitchCommand):
