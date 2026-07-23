@@ -137,8 +137,10 @@ class TestNetworkSegmentRange(testlib_api.SqlTestCase):
     def test__are_allocated_segments_in_range_impacted(self):
         existing_range = self._foo_range
         updated_range = self._vlan_range
-        impacted_existing_ranges = [(150, 250), (250, 320),
-                                    (200, 300), (180, 330)]
+        # updated_range is 200-300; each tuple is the (min, max) of the actual
+        # allocated segments. These fall (partly) outside 200-300, so shrinking
+        # to 200-300 would strand them.
+        impacted_existing_ranges = [(150, 250), (250, 320), (180, 330)]
         for ret in impacted_existing_ranges:
             with mock.patch.object(segments_db,
                                    'min_max_actual_segments_in_range',
@@ -150,12 +152,18 @@ class TestNetworkSegmentRange(testlib_api.SqlTestCase):
     def test__are_allocated_segments_in_range_unimpacted(self):
         existing_range = self._foo_range
         updated_range = self._vlan_range
-        with mock.patch.object(segments_db,
-                               'min_max_actual_segments_in_range',
-                               return_value=(220, 270)):
-            self.assertFalse(
-                self.plugin._are_allocated_segments_in_range_impacted(
-                    self.context, existing_range, updated_range))
+        # updated_range is 200-300; each tuple is the (min, max) of the actual
+        # allocated segments, all of which still fit within 200-300 (including
+        # the exact-boundary case where the allocated extent equals the new
+        # range), so the update is not impacted.
+        unimpacted_existing_ranges = [(220, 270), (200, 300)]
+        for ret in unimpacted_existing_ranges:
+            with mock.patch.object(segments_db,
+                                   'min_max_actual_segments_in_range',
+                                   return_value=ret):
+                self.assertFalse(
+                    self.plugin._are_allocated_segments_in_range_impacted(
+                        self.context, existing_range, updated_range))
 
     def test_create_network_segment_range(self):
         test_range = self._vlan_range
