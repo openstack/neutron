@@ -41,9 +41,12 @@ def is_network_segment_range_enabled():
                for p in ['network_segment_range', network_segment_range_class])
 
 
-def _get_physical_network(network_segment_range):
+def _get_physical_network(network_segment_range) -> str:
+    # Non-VLAN ranges are stored with physical_network='' (not NULL),
+    # so normalize to '' to match the stored rows. Otherwise the
+    # lookup filters on NULL and misses existing tunnel ranges.
     if network_segment_range.get('network_type') != const.TYPE_VLAN:
-        return None
+        return ''
 
     physical_network = network_segment_range.get(
         "physical_network", const.ATTR_NOT_SPECIFIED)
@@ -90,7 +93,8 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                 range_data, network_segment_range.get('network_type'))
 
     def _validate_network_segment_range_overlap(self, context,
-                                                network_segment_range):
+                                                network_segment_range,
+                                                range_id=None):
         filters = {
             'default': False,
             'network_type': network_segment_range['network_type'],
@@ -100,6 +104,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
             context, **filters)
         overlapped_range_id = [
             obj.id for obj in range_objs if
+            obj.id != range_id and
             (network_segment_range['minimum'] <= obj.maximum and
              network_segment_range['maximum'] >= obj.minimum)]
         if overlapped_range_id:
@@ -227,6 +232,8 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
             new_range_data = self._add_unchanged_range_attributes(
                 updated_range_data, existing_range_data)
             self._validate_network_segment_range_eligible(new_range_data)
+            self._validate_network_segment_range_overlap(
+                context, new_range_data, range_id=id)
             network_segment_range.update_fields(new_range_data)
             network_segment_range.update()
 
