@@ -20,6 +20,7 @@ from neutron_lib.db import model_query
 from oslo_config import cfg
 from oslo_upgradecheck import common_checks
 from oslo_upgradecheck import upgradecheck
+from oslo_utils import uuidutils
 from sqlalchemy import and_
 from sqlalchemy import exists
 from sqlalchemy import func
@@ -43,6 +44,7 @@ from neutron.db.models import segment
 from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
 from neutron.db.qos import models as qos_models
+from neutron.db import rbac_db_models
 from neutron.extensions import tagging
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -187,6 +189,24 @@ def is_tags_limit_reached_for_any_resource():
         return bool(query.one_or_none())
 
 
+def get_rbac_policies_with_invalid_target_project():
+    """Return RBAC policies where target_project is not '*' or a UUID."""
+    invalid_policies = []
+    ctx = context.get_admin_context()
+    with db_api.CONTEXT_READER.using(ctx):
+        for rbac_model in rbac_db_models.RBACColumns.__subclasses__():
+            query = model_query.get_collection_query(ctx, rbac_model)
+            for entry in query.all():
+                if (entry.target_project != '*' and
+                        not uuidutils.is_uuid_like(entry.target_project)):
+                    invalid_policies.append(
+                        {'id': entry.id,
+                         'object_type': entry.object_type,
+                         'object_id': entry.object_id,
+                         'target_project': entry.target_project})
+    return invalid_policies
+
+
 def get_ovn_client():
     global _OVN_CLIENT
     if _OVN_CLIENT is None:
@@ -233,7 +253,9 @@ class CoreChecks(base.BaseChecks):
             (_('Floating IP Port forwarding and OVN L3 plugin configuration'),
              self.ovn_port_forwarding_configuration_check),
             (_('Existing tags exceeds limit per resource'),
-             self.tags_over_limit_check)
+             self.tags_over_limit_check),
+            (_('RBAC policies with invalid target_project'),
+             self.rbac_target_project_check),
         ]
 
     @staticmethod
@@ -611,3 +633,42 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _('Number of tags for each resource is below the limit of %d. ') %
               tagging.MAX_TAGS_COUNT)
+
+    @staticmethod
+    def rbac_target_project_check(checker):
+        """Check for RBAC policies with non-UUID target_project values
+
+        Since LP#2161653, the ``target_tenant`` field of RBAC policies is
+        validated to be either ``*`` or a valid UUID. Existing RBAC policies
+        with non-UUID ``target_project`` values (e.g. a project name) are
+        silently ineffective because Neutron compares this field against
+        project IDs (UUIDs) during enforcement. This typically affects
+        non-admin users whose client could not resolve a project name to an
+        ID via Keystone.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for "
+                  "RBAC policies with invalid target_project can't be "
+                  "done."))
+
+        invalid = get_rbac_policies_with_invalid_target_project()
+        if invalid:
+            details = ', '.join(
+                '%(object_type)s RBAC %(id)s '
+                '(target_project=%(target_project)s)' % p
+                for p in invalid)
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('Found %(count)d RBAC policy(ies) with a non-UUID '
+                  'target_project value. These policies are silently '
+                  'ineffective because Neutron compares target_project '
+                  'against project IDs (UUIDs). They should be deleted '
+                  'and re-created with a valid project ID. Affected '
+                  'policies: %(details)s') %
+                {'count': len(invalid), 'details': details})
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _('All RBAC policies have a valid target_project value.'))

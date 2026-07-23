@@ -18,6 +18,7 @@ from unittest import mock
 from neutron_lib.callbacks import events
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib import exceptions as n_exc
 from oslo_utils import uuidutils
 import testtools
 
@@ -26,7 +27,35 @@ from neutron.db import rbac_db_models
 from neutron.extensions import rbac as ext_rbac
 from neutron.objects import network as network_obj
 from neutron.objects.qos import policy as qos_policy_obj
+from neutron.tests import base as tests_base
 from neutron.tests.common import test_db_base_plugin_v2 as test_plugin
+
+
+class ValidateValidTargetProjectTestCase(tests_base.BaseTestCase):
+
+    def test_wildcard(self):
+        self.assertIsNone(ext_rbac._validate_valid_target_project('*'))
+
+    def test_uuid_dashed(self):
+        uuid = 'a1b2c3d4-e5f6-7890-1234-5678abcdef12'
+        self.assertIsNone(ext_rbac._validate_valid_target_project(uuid))
+
+    def test_uuid_hex(self):
+        uuid_hex = uuidutils.generate_uuid().replace('-', '')
+        self.assertIsNone(ext_rbac._validate_valid_target_project(uuid_hex))
+
+    def test_uuid_generated(self):
+        uuid = uuidutils.generate_uuid()
+        self.assertIsNone(ext_rbac._validate_valid_target_project(uuid))
+
+    def test_project_name_rejected(self):
+        self.assertRaises(n_exc.InvalidInput,
+                          ext_rbac._validate_valid_target_project,
+                          'my-project-name')
+
+    def test_empty_string_rejected(self):
+        self.assertRaises(n_exc.InvalidInput,
+                          ext_rbac._validate_valid_target_project, '')
 
 
 class NetworkRbacTestcase(test_plugin.NeutronDbPluginV2TestCase):
