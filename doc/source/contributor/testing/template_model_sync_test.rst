@@ -72,16 +72,13 @@ names, which were moved out of Neutron: ::
 
  FWAAS_TABLES = [...]
 
- # Arista ML2 driver Models moved to openstack/networking-arista
- REPO_ARISTA_TABLES = [...]
-
- # Models moved to openstack/networking-cisco
- REPO_CISCO_TABLES = [...]
+ # BGP models in openstack/neutron-dynamic-routing
+ REPO_NEUTRON_DYNAMIC_ROUTING_TABLES = [...]
 
  ...
 
  TABLES = (FWAAS_TABLES + VPNAAS_TABLES + ...
-           + REPO_ARISTA_TABLES + REPO_CISCO_TABLES)
+           + REPO_NEUTRON_DYNAMIC_ROUTING_TABLES)
 
 
 Also the test uses **VERSION_TABLE**, it is the name of table in database which
