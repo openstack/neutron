@@ -17,6 +17,7 @@ from unittest import mock
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as exc
+from neutron_lib.exceptions import network_segment_range as range_exc
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 
@@ -186,6 +187,42 @@ class TestNetworkSegmentRange(testlib_api.SqlTestCase):
             self.context,
             network_segment_range)
 
+    def test_create_network_segment_range_failed_with_overlapping_vxlan(self):
+        network_segment_range = {'network_segment_range': self._vxlan_range}
+        self.plugin.create_network_segment_range(self.context,
+                                                 network_segment_range)
+        overlapping_range = self._vxlan_range.copy()
+        overlapping_range['minimum'] = 450
+        overlapping_range['maximum'] = 600
+        self.assertRaises(
+            range_exc.NetworkSegmentRangeOverlaps,
+            self.plugin.create_network_segment_range,
+            self.context,
+            {'network_segment_range': overlapping_range})
+
+    def test_create_network_segment_range_adjacent_vxlan_allowed(self):
+        network_segment_range = {'network_segment_range': self._vxlan_range}
+        self.plugin.create_network_segment_range(self.context,
+                                                 network_segment_range)
+        adjacent_range = self._vxlan_range.copy()
+        adjacent_range['minimum'] = 501
+        adjacent_range['maximum'] = 600
+        # No overlap (400-500 and 501-600 are adjacent), should not raise.
+        self.plugin.create_network_segment_range(
+            self.context, {'network_segment_range': adjacent_range})
+
+    def test_create_network_segment_range_same_range_different_type(self):
+        network_segment_range = {'network_segment_range': self._vxlan_range}
+        self.plugin.create_network_segment_range(self.context,
+                                                 network_segment_range)
+        # A GRE range with the same minimum/maximum does not overlap a VXLAN
+        # range; overlap is scoped by network_type.
+        gre_range = self._gre_range.copy()
+        gre_range['minimum'] = self._vxlan_range['minimum']
+        gre_range['maximum'] = self._vxlan_range['maximum']
+        self.plugin.create_network_segment_range(
+            self.context, {'network_segment_range': gre_range})
+
     def test_update_network_segment_range(self):
         test_range = self._vlan_range
         network_segment_range = {'network_segment_range': test_range}
@@ -220,6 +257,50 @@ class TestNetworkSegmentRange(testlib_api.SqlTestCase):
                 self.context,
                 ret['id'],
                 updated_network_segment_range)
+
+    def test_update_network_segment_range_failed_with_overlap(self):
+        first = self._vxlan_range.copy()
+        first['minimum'] = 400
+        first['maximum'] = 500
+        self.plugin.create_network_segment_range(
+            self.context, {'network_segment_range': first})
+        second = self._vxlan_range.copy()
+        second['minimum'] = 600
+        second['maximum'] = 700
+        ret = self.plugin.create_network_segment_range(
+            self.context, {'network_segment_range': second})
+        updated = {'network_segment_range': {'minimum': 450, 'maximum': 550}}
+        with mock.patch.object(self.plugin,
+                               '_are_allocated_segments_in_range_impacted',
+                               return_value=False):
+            self.assertRaises(
+                range_exc.NetworkSegmentRangeOverlaps,
+                self.plugin.update_network_segment_range,
+                self.context,
+                ret['id'],
+                updated)
+
+    def test_update_network_segment_range_self_not_flagged(self):
+        first = self._vxlan_range.copy()
+        first['minimum'] = 400
+        first['maximum'] = 500
+        ret = self.plugin.create_network_segment_range(
+            self.context, {'network_segment_range': first})
+        second = self._vxlan_range.copy()
+        second['minimum'] = 600
+        second['maximum'] = 700
+        self.plugin.create_network_segment_range(
+            self.context, {'network_segment_range': second})
+        # Shrinking the first range within its own space must not be flagged
+        # as overlapping itself.
+        updated = {'network_segment_range': {'minimum': 400, 'maximum': 450}}
+        with mock.patch.object(self.plugin,
+                               '_are_allocated_segments_in_range_impacted',
+                               return_value=False):
+            updated_ret = self.plugin.update_network_segment_range(
+                self.context, ret['id'], updated)
+        self.assertEqual(400, updated_ret['minimum'])
+        self.assertEqual(450, updated_ret['maximum'])
 
     def test_delete_network_segment_range(self):
         test_range = self._vlan_range
