@@ -35,28 +35,23 @@ TABLE = 'qos_policies'
 
 TABLE_MODEL = sa.Table(TABLE, sa.MetaData(),
                        sa.Column('id', sa.String(length=36), nullable=False),
-                       sa.Column('description', sa.String(length=255),
-                                 nullable=True),
                        sa.Column('standard_attr_id', sa.BigInteger(),
                                  nullable=True))
 
 standardattrs = sa.Table(
     'standardattributes', sa.MetaData(),
     sa.Column('id', sa.BigInteger(), primary_key=True, autoincrement=True),
-    sa.Column('resource_type', sa.String(length=255), nullable=False),
-    sa.Column('description', sa.String(length=255), nullable=True))
+    sa.Column('resource_type', sa.String(length=255), nullable=False))
 
 
 def upgrade():
     generate_records_for_existing()
-    # add the constraint now that everything is populated on that table
     op.alter_column(TABLE, 'standard_attr_id', nullable=False,
                     existing_type=sa.BigInteger(), existing_nullable=True,
                     existing_server_default=False)
     op.create_unique_constraint(
         constraint_name='uniq_%s0standard_attr_id' % TABLE,
         table_name=TABLE, columns=['standard_attr_id'])
-    op.drop_column(TABLE, 'description')
     op.create_foreign_key(
         constraint_name=None, source_table=TABLE,
         referent_table='standardattributes',
@@ -66,20 +61,13 @@ def upgrade():
 
 def generate_records_for_existing():
     session = sa.orm.Session(bind=op.get_bind())
-    values = []
     for row in session.query(TABLE_MODEL):
-        # NOTE(kevinbenton): without this disabled, pylint complains
-        # about a missing 'dml' argument.
-        # pylint: disable=no-value-for-parameter
         res = session.execute(
-            standardattrs.insert().values(resource_type=TABLE,
-                                          description=row[1])
+            standardattrs.insert().values(resource_type=TABLE)
         )
         session.execute(
             TABLE_MODEL.update().values(
                 standard_attr_id=res.inserted_primary_key[0]).where(
                     TABLE_MODEL.c.id == row[0])
         )
-    # this commit is necessary to allow further operations
     session.commit()
-    return values
