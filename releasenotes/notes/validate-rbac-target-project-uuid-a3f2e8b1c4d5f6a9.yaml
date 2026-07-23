@@ -1,0 +1,24 @@
+---
+fixes:
+  - |
+    The RBAC policy ``target_tenant`` field now validates that the value is
+    either ``*`` (wildcard) or a valid UUID. Previously, any arbitrary string
+    was accepted, including project names. This was problematic for non-admin
+    users: when a non-admin creates an RBAC policy using a project name via
+    the ``openstack`` CLI, the client cannot resolve the name to a project ID
+    through Keystone (due to insufficient permissions) and silently passes
+    the name as-is to the Neutron API. The resulting RBAC policy was stored
+    but never matched during enforcement, since Neutron compares
+    ``target_project`` against project IDs (UUIDs). Admin users were not
+    affected because the client successfully resolves names to IDs via
+    Keystone before sending the request. For more information, see bug
+    `2161653 <https://bugs.launchpad.net/neutron/+bug/2161653>`_.
+upgrade:
+  - |
+    An upgrade check has been added to detect existing RBAC policies whose
+    ``target_project`` value is not ``*`` or a valid UUID. These policies
+    are silently ineffective because Neutron compares ``target_project``
+    against project IDs (UUIDs) during enforcement. Run
+    ``neutron-status upgrade check`` before upgrading and delete or
+    re-create any flagged policies with a valid project ID. See bug
+    `2161653 <https://bugs.launchpad.net/neutron/+bug/2161653>`_.
