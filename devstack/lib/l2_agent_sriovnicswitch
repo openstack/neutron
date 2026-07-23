@@ -9,6 +9,15 @@ function configure_l2_agent_sriovnicswitch {
     fi
     if [[ -n "$PHYSICAL_DEVICE_MAPPINGS" ]]; then
         iniset /$SRIOV_AGENT_CONF sriov_nic physical_device_mappings $PHYSICAL_DEVICE_MAPPINGS
+        # Register SR-IOV physical networks in ML2 type driver config
+        # so that provider networks can be created on them.
+        local physnets=$(echo "$PHYSICAL_DEVICE_MAPPINGS" | sed 's/:[^,]*//g')
+        local flat=$(iniget /$NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks)
+        if [[ "$flat" != "*" ]]; then
+            iniset /$NEUTRON_CORE_PLUGIN_CONF ml2_type_flat flat_networks "${flat:+${flat},}${physnets}"
+        fi
+        local vlan=$(iniget /$NEUTRON_CORE_PLUGIN_CONF ml2_type_vlan network_vlan_ranges)
+        iniset /$NEUTRON_CORE_PLUGIN_CONF ml2_type_vlan network_vlan_ranges "${vlan:+${vlan},}${physnets}"
     fi
 
     iniset /$SRIOV_AGENT_CONF securitygroup firewall_driver neutron.agent.firewall.NoopFirewallDriver
