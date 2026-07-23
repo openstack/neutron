@@ -59,17 +59,3 @@ def upgrade():
                                 ['ipamsubnets.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id'))
-
-    op.create_table(
-        'ipamavailabilityranges',
-        sa.Column('allocation_pool_id', sa.String(length=36), nullable=False),
-        sa.Column('first_ip', sa.String(length=64), nullable=False),
-        sa.Column('last_ip', sa.String(length=64), nullable=False),
-        sa.ForeignKeyConstraint(['allocation_pool_id'],
-                                ['ipamallocationpools.id'],
-                                ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('allocation_pool_id', 'first_ip', 'last_ip'),
-        sa.Index('ix_ipamavailabilityranges_first_ip_allocation_pool_id',
-                 'first_ip', 'allocation_pool_id'),
-        sa.Index('ix_ipamavailabilityranges_last_ip_allocation_pool_id',
-                 'last_ip', 'allocation_pool_id'))

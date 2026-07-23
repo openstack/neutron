@@ -11,11 +11,15 @@
 #    under the License.
 #
 
-from alembic import op
-
 from neutron.db import migration
 
-"""Remove availability ranges."""
+"""Remove availability ranges.
+
+The tables dropped here (ipavailabilityranges, ipamavailabilityranges) are no
+longer created by core_init_ops or 599c6a226151, so this migration is now a
+no-op.  The revision is kept so that alembic can still resolve it in databases
+that already ran the original migration.
+"""
 
 
 revision = '5c85685d616d'
@@ -26,5 +30,8 @@ neutron_milestone = [migration.NEWTON]
 
 
 def upgrade():
-    op.drop_table('ipavailabilityranges')
-    op.drop_table('ipamavailabilityranges')
+    # NOTE(ralonsoh): since [1], this is a no-op migration script. Because it
+    # is the last contract migration script, is is needed to keep this file
+    # and the revision number is the CONTRACT file.
+    # [1] https://review.opendev.org/c/openstack/neutron/+/996246
+    pass

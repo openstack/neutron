@@ -596,7 +596,7 @@ class TestMigrationsIdempotency(_BaseTestWalkMigrations,
             sqlalchemy.Column('version_num', sqlalchemy.String(32)))
 
         with self.engine.begin() as conn:
-            # Revision "5c85685d616d" is the head of the CONTRACT branch,
+            # Revision "2e0d7a8a1586" is the head of the CONTRACT branch,
             # it is from Newton release and we don't allow any new CONTRACT
             # DB upgrades, so let's don't bother with that branch
             conn.execute(

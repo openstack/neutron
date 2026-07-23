@@ -117,21 +117,6 @@ def upgrade():
         sa.PrimaryKeyConstraint('ip_address', 'subnet_id', 'network_id'))
 
     op.create_table(
-        'ipavailabilityranges',
-        sa.Column('allocation_pool_id', sa.String(length=36), nullable=False),
-        sa.Column('first_ip', sa.String(length=64), nullable=False),
-        sa.Column('last_ip', sa.String(length=64), nullable=False),
-        sa.ForeignKeyConstraint(['allocation_pool_id'],
-                                ['ipallocationpools.id'], ondelete='CASCADE'),
-        sa.PrimaryKeyConstraint('allocation_pool_id', 'first_ip', 'last_ip'),
-        sa.UniqueConstraint(
-            'first_ip', 'allocation_pool_id',
-            name='uniq_ipavailabilityranges0first_ip0allocation_pool_id'),
-        sa.UniqueConstraint(
-            'last_ip', 'allocation_pool_id',
-            name='uniq_ipavailabilityranges0last_ip0allocation_pool_id'))
-
-    op.create_table(
         'networkdhcpagentbindings',
         sa.Column('network_id', sa.String(length=36), nullable=False),
         sa.Column('dhcp_agent_id', sa.String(length=36), nullable=False),
