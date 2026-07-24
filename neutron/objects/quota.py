@@ -90,7 +90,6 @@ class Reservation(base.NeutronDbObject):
             return
         resv_query = context.session.query(
             models.ResourceDelta.resource,
-            models.Reservation.expiration,
             sql.func.cast(
                 sql.func.sum(models.ResourceDelta.amount),
                 sqltypes.Integer)).join(models.Reservation)
@@ -101,11 +100,8 @@ class Reservation(base.NeutronDbObject):
         resv_query = resv_query.filter(sa.and_(
             models.Reservation.project_id == project_id,
             models.ResourceDelta.resource.in_(resources),
-            exp_expr)).group_by(
-                models.ResourceDelta.resource,
-                models.Reservation.expiration)
-        return {resource: total_reserved
-                for (resource, exp, total_reserved) in resv_query}
+            exp_expr)).group_by(models.ResourceDelta.resource)
+        return dict(resv_query)
 
 
 @base.NeutronObjectRegistry.register
