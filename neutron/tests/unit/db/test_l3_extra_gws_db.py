@@ -23,6 +23,8 @@ from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib.api.definitions import l3_ext_gw_multihoming
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
@@ -730,3 +732,149 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
             f'Router already has a port on subnet {self.ext_sub_a_id}',
             self.target_object.add_router_interface, self.context,
             self.router.id, {'subnet_id': self.ext_sub_a_id})
+
+    @staticmethod
+    def _router_gateway_calls(mock_publish):
+        # PRECOMMIT_UPDATE is excluded: l3_gwmode_db._update_router_gw_info
+        # always fires it for the compat gateway port, regardless of
+        # whether the request is adding, removing, or updating a gateway,
+        # so it is not relevant to the create/delete events under test.
+        create_delete_events = (events.BEFORE_CREATE, events.AFTER_CREATE,
+                                events.BEFORE_DELETE, events.AFTER_DELETE)
+        return [call for call in mock_publish.call_args_list
+                if call.args[0] == resources.ROUTER_GATEWAY and
+                call.args[1] in create_delete_events]
+
+    def test_add_external_gateways_multiple_notifies_router_gateway_events(
+            self):
+        '''Adding gateways must fire ROUTER_GATEWAY events for every port.
+
+        The compat (first) gateway port has always gone through the
+        code path in l3_db.py that publishes these events. The extra
+        gateway port used to bypass them entirely (see the now-removed
+        TODO(dmitriis) comments in l3_extra_gws_db.py), which meant
+        callbacks such as the DVR csnat cleanup or NDP proxy validation
+        never ran for it.
+        '''
+        ext_gws = [
+            {"network_id": self.ext_net_a_id},
+            {"network_id": self.ext_net_b_id},
+        ]
+        body = {
+            "router": {
+                "external_gateways": ext_gws
+            }
+        }
+
+        with mock.patch.object(l3_extra_gws_db.registry,
+                               'publish') as mock_publish:
+            self.target_object.add_external_gateways(
+                self.context, self.router.id, body)
+
+        gw_events = self._router_gateway_calls(mock_publish)
+        self.assertEqual(
+            [events.BEFORE_CREATE, events.AFTER_CREATE,
+             events.BEFORE_CREATE, events.AFTER_CREATE],
+            [call.args[1] for call in gw_events])
+
+        # The first pair belongs to the compat gateway (network A), the
+        # second pair to the extra gateway (network B).
+        before_extra, after_extra = gw_events[2], gw_events[3]
+        self.assertEqual(
+            self.ext_net_b_id,
+            before_extra.kwargs['payload'].metadata['network_id'])
+        self.assertEqual(
+            self.router.id,
+            before_extra.kwargs['payload'].resource_id)
+        self.assertEqual(
+            self.ext_net_b_id,
+            after_extra.kwargs['payload'].metadata['network_id'])
+        self.assertEqual(
+            self.router.id,
+            after_extra.kwargs['payload'].resource_id)
+        self.assertEqual(
+            self.router.id,
+            after_extra.kwargs['payload'].latest_state.id)
+
+    def test_add_external_gateways_on_existing_router_notifies_events(self):
+        '''Adding a gateway to a router that already has one must notify.
+
+        Regression test for the case that actually bit us: once a router
+        already has any ROUTER_GW port attached, ``_add_external_gateways``
+        routes *every* subsequent request through ``_create_extra_gw_port``
+        -- even a request with a single new gateway -- so this is not
+        limited to routers with more than one gateway at a time.
+        '''
+        ext_gws = [{"network_id": self.ext_net_a_id}]
+        body = {
+            "router": {
+                "external_gateways": ext_gws
+            }
+        }
+        self.target_object.add_external_gateways(
+            self.context, self.router.id, body)
+
+        ext_gws = [{"network_id": self.ext_net_b_id}]
+        body = {
+            "router": {
+                "external_gateways": ext_gws
+            }
+        }
+        with mock.patch.object(l3_extra_gws_db.registry,
+                               'publish') as mock_publish:
+            self.target_object.add_external_gateways(
+                self.context, self.router.id, body)
+
+        gw_events = self._router_gateway_calls(mock_publish)
+        self.assertEqual(
+            [events.BEFORE_CREATE, events.AFTER_CREATE],
+            [call.args[1] for call in gw_events])
+
+        after_create = gw_events[1]
+        self.assertEqual(
+            self.ext_net_b_id,
+            after_create.kwargs['payload'].metadata['network_id'])
+        self.assertEqual(
+            self.router.id,
+            after_create.kwargs['payload'].resource_id)
+
+    def test_remove_external_gateways_multiple_notifies_router_gateway_events(
+            self):
+        '''Removing gateways must fire ROUTER_GATEWAY events for every port.'''
+        ext_gws = [
+            {"network_id": self.ext_net_a_id},
+            {"network_id": self.ext_net_b_id},
+        ]
+        body = {
+            "router": {
+                "external_gateways": ext_gws
+            }
+        }
+        self.target_object.add_external_gateways(
+            self.context, self.router.id, body)
+
+        with mock.patch.object(l3_extra_gws_db.registry,
+                               'publish') as mock_publish:
+            self.target_object.remove_external_gateways(
+                self.context, self.router.id, body)
+
+        gw_events = self._router_gateway_calls(mock_publish)
+        self.assertEqual(
+            [events.BEFORE_DELETE, events.AFTER_DELETE,
+             events.BEFORE_DELETE, events.AFTER_DELETE],
+            [call.args[1] for call in gw_events])
+
+        # Extra gateways are removed first (network B), then the compat
+        # gateway (network A).
+        before_extra, after_extra = gw_events[0], gw_events[1]
+        self.assertEqual(
+            self.router.id,
+            before_extra.kwargs['payload'].resource_id)
+        self.assertEqual(
+            self.ext_net_b_id,
+            after_extra.kwargs['payload'].metadata['network_id'])
+        self.assertIsNone(
+            after_extra.kwargs['payload'].metadata['new_network_id'])
+        self.assertEqual(
+            self.router.id,
+            after_extra.kwargs['payload'].resource_id)

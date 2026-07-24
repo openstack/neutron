@@ -408,6 +408,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     port_type=DEVICE_OWNER_ROUTER_GW
                 )
                 router_port.create()
+        return gw_port
 
     def _validate_gw_info(self, context, info, ext_ips, router):
         network_id = info['network_id'] if info else None
