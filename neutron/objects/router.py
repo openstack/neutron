@@ -22,6 +22,7 @@ from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
 from sqlalchemy import or_
+from sqlalchemy import orm as sa_orm
 from sqlalchemy import sql
 
 from neutron.db.models import dvr as dvr_models
@@ -325,6 +326,37 @@ class Router(base.NeutronDbObject):
             router = cls(context)
             router.from_db_object(db_obj)
             return router
+        return None
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_gateway_ip_for_subnet(cls, context, subnet_id, ip_version):
+        """Return the router's external gateway IP for a subnet.
+
+        Performs a single query: from the subnet, find the attached router
+        with an external gateway, then return the IP on the gateway port
+        matching the requested IP version. Returns the IP string or None.
+        """
+        gw_alloc = sa_orm.aliased(models_v2.IPAllocation)
+        result = context.session.query(gw_alloc.ip_address).join(
+            l3.Router,
+            l3.Router.gw_port_id == gw_alloc.port_id
+        ).join(
+            l3.RouterPort, l3.RouterPort.router_id == l3.Router.id
+        ).join(
+            models_v2.IPAllocation,
+            models_v2.IPAllocation.port_id == l3.RouterPort.port_id
+        ).join(
+            models_v2.Subnet,
+            models_v2.Subnet.id == gw_alloc.subnet_id
+        ).filter(
+            models_v2.IPAllocation.subnet_id == subnet_id,
+            l3.RouterPort.port_type.in_(n_const.ROUTER_INTERFACE_OWNERS),
+            l3.Router.gw_port_id.isnot(None),
+            models_v2.Subnet.ip_version == ip_version,
+        ).first()
+        if result:
+            return result[0]
         return None
 
     @staticmethod
