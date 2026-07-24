@@ -1031,12 +1031,8 @@ class QoSPlugin(qos.QoSPluginBase):
         :raises: qos_exc.QosRuleNotFound
         """
         with db_api.CONTEXT_READER.using(context):
-            # Ensure we have access to the policy.
-            policy_object.QosPolicy.get_policy_obj(context, policy_id)
-            rule = rule_cls.get_object(context, id=rule_id)
-        if not rule:
-            raise qos_exc.QosRuleNotFound(policy_id=policy_id, rule_id=rule_id)
-        return rule
+            policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
+            return policy.get_rule_by_id(rule_id)
 
     def get_rule(self, context, rule_cls, rule_id, fields=None):
         """Get a QoS policy rule alias. This method processes a QoS policy
