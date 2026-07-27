@@ -428,6 +428,73 @@ class UpdateLocalOVSEventTestCase(BgpBridgeMappingsBase):
             self.assertFalse(th_event.wait(5))
 
 
+class GetInterconnectBridgeNameTestCase(BaseBgpEventsTestCase):
+    schemas = ['Open_vSwitch']
+
+    def _set_ext_id(self, key, value):
+        self.ovs_api.db_set(
+            'Open_vSwitch', '.',
+            external_ids={key: value}
+        ).execute(check_error=True)
+
+    def _clear_ext_id(self, key):
+        self.ovs_api.db_remove(
+            'Open_vSwitch', '.', 'external_ids', key
+        ).execute(check_error=True)
+
+    def test_returns_bridge_name(self):
+        self._set_ext_id(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, 'br-ic')
+        result = events._get_interconnect_bridge_name(self.ovs_api.idl)
+        self.assertEqual('br-ic', result)
+
+    def test_strips_whitespace(self):
+        self._set_ext_id(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, '  br-ic  ')
+        result = events._get_interconnect_bridge_name(self.ovs_api.idl)
+        self.assertEqual('br-ic', result)
+
+    def test_missing_key_returns_none(self):
+        self.assertIsNone(
+            events._get_interconnect_bridge_name(self.ovs_api.idl))
+
+    def test_empty_string_returns_none(self):
+        self._set_ext_id(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, '')
+        self.assertIsNone(
+            events._get_interconnect_bridge_name(self.ovs_api.idl))
+
+    def test_whitespace_only_returns_none(self):
+        self._set_ext_id(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, '   ')
+        self.assertIsNone(
+            events._get_interconnect_bridge_name(self.ovs_api.idl))
+
+    def test_value_updated(self):
+        self._set_ext_id(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, 'br-old')
+        self.assertEqual(
+            'br-old',
+            events._get_interconnect_bridge_name(self.ovs_api.idl))
+
+        self._set_ext_id(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, 'br-new')
+        self.assertEqual(
+            'br-new',
+            events._get_interconnect_bridge_name(self.ovs_api.idl))
+
+    def test_value_cleared(self):
+        self._set_ext_id(
+            constants.AGENT_BGP_INTERCONNECT_BRIDGE, 'br-ic')
+        self.assertEqual(
+            'br-ic',
+            events._get_interconnect_bridge_name(self.ovs_api.idl))
+
+        self._clear_ext_id(constants.AGENT_BGP_INTERCONNECT_BRIDGE)
+        self.assertIsNone(
+            events._get_interconnect_bridge_name(self.ovs_api.idl))
+
+
 class InterconnectBridgeEventBase(BaseBgpEventsTestCase):
     EVENT_CLASS = None
 
