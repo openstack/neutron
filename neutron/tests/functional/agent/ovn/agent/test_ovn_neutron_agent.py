@@ -23,8 +23,8 @@ from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.ovn.agent import ovn_neutron_agent
 from neutron.agent.ovn.agent import ovsdb as agent_ovsdb
-from neutron.agent.ovn.metadata import agent as metadata_agent
-from neutron.agent.ovn.metadata import server_socket
+from neutron.agent.ovn.extensions import metadata as metadata_agent
+from neutron.agent.ovn.extensions.metadata import server_socket
 from neutron.agent.ovsdb import impl_idl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
@@ -212,9 +212,9 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
 
     def test__cleanup_previous_tags(self):
         external_ids = {
-            ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: '1',
-            ovn_const.OVN_AGENT_METADATA_DESC_KEY: 'description',
-            ovn_const.OVN_AGENT_METADATA_ID_KEY: uuidutils.generate_uuid()}
+            'neutron:ovn-metadata-sb-cfg': '1',
+            'neutron:description-metadata': 'description',
+            'neutron:ovn-metadata-id': uuidutils.generate_uuid()}
         self.ovn_agent.sb_idl.db_set(
             'Chassis_Private', self.ovn_agent.chassis,
             ('external_ids', external_ids)).execute(check_error=True)
@@ -227,12 +227,9 @@ class TestOVNNeutronAgentMetadataExtension(TestOVNNeutronAgentBase):
         external_ids = self.ovn_agent.sb_idl.db_get(
             'Chassis_Private', self.ovn_agent.chassis,
             'external_ids').execute(check_error=True)
-        for _key in (ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY,
-                     ovn_const.OVN_AGENT_METADATA_DESC_KEY,
-                     ovn_const.OVN_AGENT_METADATA_ID_KEY):
+        for _key in ('neutron:ovn-metadata-sb-cfg',
+                     'neutron:description-metadata',
+                     'neutron:ovn-metadata-id'):
             self.assertNotIn(_key, external_ids)
 
-        # Just in case, check that we are NOT deleting the needed tags.
-        # NOTE(ralonsoh): OVN_AGENT_METADATA_ID_KEY is missing here, there is
-        # a bug to add it (LP#2118876)
         self.assertIn(ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY, external_ids)

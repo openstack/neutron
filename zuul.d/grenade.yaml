@@ -66,7 +66,6 @@
         q-metering: true
         ovn-controller: false
         ovn-northd: false
-        q-ovn-metadata-agent: false
         # Cinder services
         c-api: false
         c-bak: false
@@ -98,7 +97,6 @@
           ovn-controller: false
           ovs-vswitchd: false
           ovsdb-server: false
-          q-ovn-metadata-agent: false
           # Cinder services
           c-bak: false
           c-vol: false
@@ -140,7 +138,6 @@
         q-metering: true
         ovn-controller: false
         ovn-northd: false
-        q-ovn-metadata-agent: false
         # Cinder services
         c-api: false
         c-bak: false
@@ -194,7 +191,6 @@
           ovn-controller: false
           ovs-vswitchd: false
           ovsdb-server: false
-          q-ovn-metadata-agent: false
           # Cinder services
           c-bak: false
           c-vol: false
@@ -314,7 +310,6 @@
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
-        q-ovn-metadata-agent: false
         q-ovn-agent: true
         ovn-controller: true
         ovn-northd: true
@@ -364,7 +359,6 @@
           q-l3: false
           q-meta: false
           q-metering: false
-          q-ovn-metadata-agent: false
           q-ovn-agent: true
           tls-proxy: false
           # Cinder services

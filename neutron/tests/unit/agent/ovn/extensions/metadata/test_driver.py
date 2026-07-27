@@ -24,8 +24,8 @@ from oslo_utils import uuidutils
 from neutron.agent.linux import external_process as ep
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver_base
-from neutron.agent.ovn.metadata import agent as metadata_agent
-from neutron.agent.ovn.metadata import driver as metadata_driver
+from neutron.agent.ovn.extensions import metadata as metadata_agent
+from neutron.agent.ovn.extensions.metadata import driver as metadata_driver
 from neutron.common import metadata as comm_meta
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf

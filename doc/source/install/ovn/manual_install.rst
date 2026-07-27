@@ -101,7 +101,7 @@ information.
         Permit remote access to TCP ports: 6640 (OVS) to VTEPS (if you use
         vteps), 6642 (SBDB) to hosts running neutron-server, gateway nodes
         that run ovn-controller, and compute node services like ovn-controller
-        and ovn-metadata-agent. 6641 (NBDB) to hosts running neutron-server.
+        and neutron-ovn-agent. 6641 (NBDB) to hosts running neutron-server.
 
     * Since we are using ``options:redirect-type`` set to ``bridged`` for Logical
       Router Ports in VLAN and FLAT networks, OVN redirects packets to the
@@ -310,10 +310,10 @@ Each compute node runs the OVS and ``ovn-controller`` services. The
 ``ovn-controller`` service replaces the conventional OVS layer-2 agent.
 
 #. Install the ``ovn-host``, ``openvswitch`` and
-   ``neutron-ovn-metadata-agent`` packages (RHEL/Fedora).
+   ``neutron-ovn-agent`` packages (RHEL/Fedora).
 
 #. Install the ``ovn-host``, ``openvswitch-switch`` and
-   ``neutron-ovn-metadata-agent`` packages (Ubuntu/Debian).
+   ``neutron-ovn-agent`` packages (Ubuntu/Debian).
 
 #. Start the OVS service.
 
@@ -356,13 +356,19 @@ Each compute node runs the OVS and ``ovn-controller`` services. The
      Replace ``IP_ADDRESS`` with the IP address of the overlay network
      interface on the compute node.
 
-#. Start the ``ovn-controller`` and ``neutron-ovn-metadata-agent`` services.
+#. Start the ``ovn-controller`` and ``neutron-ovn-agent`` services.
+
+   .. note::
+
+      Ensure the ``neutron-ovn-agent`` configuration includes
+      ``extensions = metadata`` in the ``[ovn]`` section to enable the
+      metadata service on each compute node.
 
    Using the *systemd* unit:
 
    .. code-block:: console
 
-      # systemctl start ovn-controller neutron-ovn-metadata-agent
+      # systemctl start ovn-controller neutron-ovn-agent
 
 Verify operation
 ----------------

@@ -24,7 +24,6 @@
         ovn-northd: false
         ovs-vswitchd: false
         ovsdb-server: false
-        q-ovn-metadata-agent: false
         # Neutron services
         q-agt: true
         q-dhcp: true
@@ -509,7 +508,6 @@
         n-novnc-cell1: true
         n-sch: true
         n-super-cond: true
-        q-ovn-metadata-agent: false
         q-ovn-agent: true
         ovn-controller: true
         ovn-northd: true

@@ -136,10 +136,6 @@ class MechDriverSetupBase(abc.ABC):
             ovn_const.OVN_AGENT_OVN_BRIDGE: n_const.DEFAULT_BR_INT,
             ovn_const.OVN_DATAPATH_TYPE: DEFAULT_DP_TYPE,
         }
-        if agent_type == ovn_const.OVN_METADATA_AGENT:
-            chassis_private.external_ids.update({
-                ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: nb_cfg,
-                ovn_const.OVN_AGENT_METADATA_ID_KEY: str(uuid.uuid4())})
         chassis_private.chassis = [self._add_chassis(chassis_private.name,
                                                      hostname)]
         return neutron_agent.AgentCache().update(agent_type, chassis_private)
@@ -2754,55 +2750,51 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_agent_alive_true(self):
         chassis_private = self._add_chassis_private(5)
-        for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
-                           ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver.nb_ovn.nb_global.nb_cfg = 5
-            agent = self._add_chassis_agent(5, agent_type, chassis_private)
-            self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
-                                         (agent.agent_type, agent.alive))
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = 5
+        agent = self._add_chassis_agent(5, ovn_const.OVN_CONTROLLER_AGENT,
+                                        chassis_private)
+        self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
+                                     (agent.agent_type, agent.alive))
 
     def test_agent_alive_true_one_diff(self):
         # Agent should be reported as alive when the nb_cfg delta is 1
         # even if the last update time was old enough.
         nb_cfg = 5
         chassis_private = self._add_chassis_private(nb_cfg)
-        for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
-                           ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 1
-            agent = self._add_chassis_agent(nb_cfg, agent_type,
-                                            chassis_private)
-            now = timeutils.utcnow()
-            fake_now = now + datetime.timedelta(cfg.CONF.agent_down_time + 1)
-            with mock.patch.object(timeutils, 'utcnow') as get_now:
-                get_now.return_value = fake_now
-                self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
-                                             (agent.agent_type, agent.alive))
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 1
+        agent = self._add_chassis_agent(nb_cfg,
+                                        ovn_const.OVN_CONTROLLER_AGENT,
+                                        chassis_private)
+        now = timeutils.utcnow()
+        fake_now = now + datetime.timedelta(cfg.CONF.agent_down_time + 1)
+        with mock.patch.object(timeutils, 'utcnow') as get_now:
+            get_now.return_value = fake_now
+            self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
+                                         (agent.agent_type, agent.alive))
 
     def test_agent_alive_not_timed_out(self):
         nb_cfg = 3
         chassis_private = self._add_chassis_private(nb_cfg)
-        for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
-                           ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
-            agent = self._add_chassis_agent(nb_cfg, agent_type,
-                                            chassis_private)
-            self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
-                                         (agent.agent_type, agent.alive))
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+        agent = self._add_chassis_agent(nb_cfg,
+                                        ovn_const.OVN_CONTROLLER_AGENT,
+                                        chassis_private)
+        self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
+                                     (agent.agent_type, agent.alive))
 
     def test_agent_alive_timed_out(self):
         nb_cfg = 3
         chassis_private = self._add_chassis_private(nb_cfg)
-        for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
-                           ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
-            now = timeutils.utcnow(with_timezone=True)
-            agent = self._add_chassis_agent(nb_cfg, agent_type,
-                                            chassis_private)
-            fake_now = now + datetime.timedelta(cfg.CONF.agent_down_time + 1)
-            with mock.patch.object(timeutils, 'utcnow') as get_now:
-                get_now.return_value = fake_now
-                self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
-                                 (agent.agent_type, agent.alive))
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+        now = timeutils.utcnow(with_timezone=True)
+        agent = self._add_chassis_agent(nb_cfg,
+                                        ovn_const.OVN_CONTROLLER_AGENT,
+                                        chassis_private)
+        fake_now = now + datetime.timedelta(cfg.CONF.agent_down_time + 1)
+        with mock.patch.object(timeutils, 'utcnow') as get_now:
+            get_now.return_value = fake_now
+            self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
+                             (agent.agent_type, agent.alive))
 
     def test_agent_with_nb_cfg_timestamp_timeout(self):
         nb_cfg = 3
@@ -4452,10 +4444,6 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
 
     def test_check_segment_for_agent(self):
         segment = {'physical_network': 'physnet1'}
-        agent = {'agent_type': ovn_const.OVN_METADATA_AGENT}
-        self.assertFalse(
-            self.mech_driver.check_segment_for_agent(segment, agent))
-
         agent = {'agent_type': ovn_const.OVN_CONTROLLER_AGENT,
                  'configurations': {}}
         self.assertFalse(

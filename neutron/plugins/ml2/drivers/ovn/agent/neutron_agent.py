@@ -179,41 +179,6 @@ class ControllerGatewayAgent(ControllerAgent):
             self.__class__ = ControllerAgent
 
 
-class MetadataAgent(NeutronAgent):
-    agent_type = ovn_const.OVN_METADATA_AGENT
-    binary = 'neutron-ovn-metadata-agent'
-
-    @property
-    def alive(self):
-        # If ovn-controller is down, then metadata agent is down even
-        # if the metadata-agent binary is updating external_ids.
-        try:
-            if not AgentCache().get(self.chassis_private.name).alive:
-                return False
-        except KeyError:
-            return False
-        return super().alive
-
-    @property
-    def nb_cfg(self):
-        return int(self.chassis_private.external_ids.get(
-            ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, 0))
-
-    @staticmethod
-    def id_from_chassis_private(chassis_private):
-        return chassis_private.external_ids.get(
-            ovn_const.OVN_AGENT_METADATA_ID_KEY)
-
-    @property
-    def agent_id(self):
-        return self.id_from_chassis_private(self.chassis_private)
-
-    @property
-    def description(self):
-        return self.chassis_private.external_ids.get(
-            ovn_const.OVN_AGENT_METADATA_DESC_KEY, '')
-
-
 class OVNNeutronAgent(NeutronAgent):
     agent_type = ovn_const.OVN_NEUTRON_AGENT
     binary = 'neutron-ovn-agent'
@@ -299,9 +264,6 @@ class AgentCache:
             external_ids = ch_private.external_ids
             if external_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY):
                 self.update(ovn_const.OVN_NEUTRON_AGENT, ch_private,
-                            clear_down=True)
-            elif external_ids.get(ovn_const.OVN_AGENT_METADATA_ID_KEY):
-                self.update(ovn_const.OVN_METADATA_AGENT, ch_private,
                             clear_down=True)
         LOG.debug('Agents populated in the agent cache:')
         for a in self.agents.values():

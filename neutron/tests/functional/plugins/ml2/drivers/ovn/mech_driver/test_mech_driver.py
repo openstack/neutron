@@ -1393,26 +1393,22 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         mock.patch.object(self.mech_driver, 'ping_all_chassis',
                           return_value=False).start()
 
-        metadata_agent_id = uuidutils.generate_uuid()
         # To be *mostly* sure the agent cache has been updated, we need to
         # wait for the Chassis events to run. So add a new event that should
-        # run afterthey do and wait for it. I've only had to do this when
+        # run after they do and wait for it. I've only had to do this when
         # adding *a bunch* of Chassis at a time, but better safe than sorry.
         chassis_name = uuidutils.generate_uuid()
         agent_event = AgentWaitEvent(self.mech_driver, [chassis_name])
         self.sb_api.idl.notify_handler.watch_event(agent_event)
 
         self.chassis = self.add_fake_chassis(
-            self.host, name=chassis_name,
-            external_ids={
-                ovn_const.OVN_AGENT_METADATA_ID_KEY: metadata_agent_id})
+            self.host, name=chassis_name)
 
         self.assertTrue(agent_event.wait())
 
         self.agent_types = {
             self.TEST_AGENT: self._create_test_agent(),
             ovn_const.OVN_CONTROLLER_AGENT: self.chassis,
-            ovn_const.OVN_METADATA_AGENT: metadata_agent_id,
         }
 
     def _create_test_agent(self):
@@ -1464,8 +1460,8 @@ class TestAgentApi(base.TestOVNFunctionalBase):
 
         # "ovn-controller" ends without deleting "Chassis" and
         # "Chassis_Private" registers. If "Chassis" register is deleted,
-        # then Chassis_Private.chassis = []; both metadata and controller
-        # agents will still be present in the agent list.
+        # then Chassis_Private.chassis = []; the controller agent will
+        # still be present in the agent list.
         agent_event = AgentWaitEvent(self.mech_driver, [self.chassis],
                                      events=(event.RowEvent.ROW_DELETE,))
         self.sb_api.idl.notify_handler.watch_event(agent_event)
@@ -1490,25 +1486,14 @@ class TestAgentApi(base.TestOVNFunctionalBase):
                           self.context, agent_id)
 
         # OVN controller agent deletion, that triggers the "Chassis" and
-        # "Chassis_Private" registers deletion. The registers deletion triggers
-        # the host OVN agents deletion, both controller and metadata if
-        # present.
+        # "Chassis_Private" registers deletion.
         controller_id = self.agent_types[ovn_const.OVN_CONTROLLER_AGENT]
-        metadata_id = self.agent_types[ovn_const.OVN_METADATA_AGENT]
         self._check_chassis_registers()
         self.plugin.delete_agent(self.context, controller_id)
         self._check_chassis_registers(present=False)
         wait_until_removed(controller_id)
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, controller_id)
-        self.assertEqual(
-            metadata_id,
-            self.plugin.get_agent(self.context, metadata_id)['id'])
-
-        self.plugin.delete_agent(self.context, metadata_id)
-        wait_until_removed(metadata_id)
-        self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
-                          self.context, metadata_id)
 
 
 class _TestRouter(base.TestOVNFunctionalBase):

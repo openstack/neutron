@@ -21,7 +21,7 @@ from oslo_config import fixture as config_fixture
 import webob
 
 from neutron.agent.metadata import proxy_base
-from neutron.agent.ovn.metadata import server_socket as agent
+from neutron.agent.ovn.extensions.metadata import server_socket as agent
 from neutron.common import metadata as common_metadata
 from neutron.tests import base
 

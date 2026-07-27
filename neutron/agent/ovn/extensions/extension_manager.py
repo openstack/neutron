@@ -43,11 +43,8 @@ class OVNExtensionEventEmptyExtensionName(exceptions.NeutronException):
 class OVNExtensionEvent(metaclass=abc.ABCMeta):
     """Implements a method to retrieve the correct caller agent
 
-    The events inheriting from this class could be called from the OVN metadata
-    agent or as part of an extension of the OVN agent ("metadata" extension,
-    for example). In future releases, the OVN metadata agent will be superseded
-    by the OVN agent (with the "metadata" extension) and this class removed,
-    keeping only the compatibility with the OVN agent (to be removed in C+2).
+    The events inheriting from this class are called as part of an extension
+    of the OVN agent (e.g. the "metadata" extension).
     """
 
     def __init__(self, *args, extension_name=None, **kwargs):
@@ -63,8 +60,7 @@ class OVNExtensionEvent(metaclass=abc.ABCMeta):
     def agent(self):
         """This method provide support for the OVN agent
 
-        This event can be used in the OVN metadata agent and in the OVN
-        agent metadata extension.
+        This event can be used in the OVN agent metadata extension.
         """
         if not self._agent_or_extension:
             if isinstance(self._agent, service.Service):

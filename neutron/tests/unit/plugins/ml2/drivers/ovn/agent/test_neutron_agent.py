@@ -49,10 +49,7 @@ class AgentCacheTestCase(base.BaseTestCase):
                        'hostname': f'host{i:d}',
                        })
             ext_ids = {}
-            if agent_type == ovn_const.OVN_METADATA_AGENT:
-                ext_ids = {
-                    ovn_const.OVN_AGENT_METADATA_ID_KEY: 'chassis' + str(i)}
-            elif agent_type == ovn_const.OVN_NEUTRON_AGENT:
+            if agent_type == ovn_const.OVN_NEUTRON_AGENT:
                 ext_ids = {
                     ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'chassis' + str(i)}
             chassis_private = fakes.FakeOvsdbRow.create_one_ovsdb_row(
@@ -67,7 +64,6 @@ class AgentCacheTestCase(base.BaseTestCase):
 
         self.assertEqual(self.num_agents, len(list(self.agent_cache)))
         for agent_class in (neutron_agent.NeutronAgent,
-                            neutron_agent.MetadataAgent,
                             neutron_agent.OVNNeutronAgent):
             mock.patch.object(agent_class, 'alive', return_value=True).start()
 
@@ -107,7 +103,7 @@ class AgentCacheTestCase(base.BaseTestCase):
         pass
 
     def test_agents_by_chassis_private(self):
-        ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: 'chassis5'}
+        ext_ids = {ovn_const.OVN_AGENT_NEUTRON_ID_KEY: 'chassis5'}
         chassis_private = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'chassis5',
                    'external_ids': ext_ids})
@@ -216,7 +212,6 @@ class AgentCachePopulateTestCase(base.BaseTestCase):
         self.agent_cache = neutron_agent.AgentCache(driver=mock.ANY)
         self.addCleanup(self._clean_agent_cache)
         for agent_class in (neutron_agent.NeutronAgent,
-                            neutron_agent.MetadataAgent,
                             neutron_agent.OVNNeutronAgent):
             mock.patch.object(agent_class, 'alive', return_value=True).start()
 
@@ -270,19 +265,6 @@ class AgentCachePopulateTestCase(base.BaseTestCase):
         self.assertEqual(1, len(agents))
         agents = self.agent_cache.get_agents(
             filters={'agent_type': ovn_const.OVN_CONTROLLER_AGENT})
-        self.assertEqual(1, len(agents))
-
-    def test_populate_metadata_agents(self):
-        ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: 'meta-id-0'}
-        rows = [self._make_chassis_private('ch0', external_ids=ext_ids)]
-        self.agent_cache.driver.sb_ovn = self._mock_sb_idl(rows)
-
-        self.agent_cache.populate()
-
-        # One controller + one metadata agent
-        self.assertEqual(2, len(list(self.agent_cache)))
-        agents = self.agent_cache.get_agents(
-            filters={'agent_type': ovn_const.OVN_METADATA_AGENT})
         self.assertEqual(1, len(agents))
 
     def test_populate_neutron_agents(self):

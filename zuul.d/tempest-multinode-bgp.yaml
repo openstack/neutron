@@ -168,7 +168,6 @@
           placement-api: false
           br-ex-tcpdump: false
           br-int-flows: false
-          q-ovn-metadata-agent: false
           q-ovn-agent: false
           ovn-bgp: false
           ovn-controller: false
@@ -267,7 +266,6 @@
           ovn-northd: false
           br-ex-tcpdump: false
           br-int-flows: true
-          q-ovn-metadata-agent: false
           # Cinder services
           c-api: false
           c-bak: false

@@ -1,0 +1,12 @@
+---
+upgrade:
+  - |
+    The standalone OVN Metadata agent (``neutron-ovn-metadata-agent``) has been
+    removed. It was deprecated in 2025.2 in favor of the
+    `OVN agent <https://docs.openstack.org/neutron/latest/ovn/ovn_agent.html>`_
+    with the "metadata" plugable extension enabled. To migrate, stop the OVN
+    Metadata agent and start the OVN agent (``neutron-ovn-agent``) with the
+    ``metadata`` extension enabled in the configuration file
+    (``extensions = metadata`` in the ``[DEFAULT]`` section). The rest of the
+    configuration is the same; the new agent can reuse the old configuration
+    files.
