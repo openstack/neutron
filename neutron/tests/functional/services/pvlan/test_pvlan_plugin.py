@@ -231,3 +231,88 @@ class TestPVLANPort(PVLANPluginTestCase):
             {'network': {pvlan_const.PVLAN: False}})
         port = self.core_plugin.get_port(self.context, port['id'])
         self.assertIsNone(port[pvlan_const.PVLAN_TYPE])
+
+
+class TestPVLANNetworkFilter(PVLANPluginTestCase):
+
+    def test_filter_networks_pvlan_true(self):
+        self._create_network(name='pvlan-net', pvlan=True)
+        self._create_network(name='regular-net')
+        nets = self.core_plugin.get_networks(
+            self.context, filters={pvlan_const.PVLAN: [True]})
+        self.assertEqual(1, len(nets))
+        self.assertTrue(nets[0][pvlan_const.PVLAN])
+
+    def test_filter_networks_pvlan_false(self):
+        self._create_network(name='pvlan-net', pvlan=True)
+        self._create_network(name='regular-net')
+        nets = self.core_plugin.get_networks(
+            self.context, filters={pvlan_const.PVLAN: [False]})
+        self.assertEqual(1, len(nets))
+        self.assertFalse(nets[0][pvlan_const.PVLAN])
+
+    def test_filter_networks_no_pvlan_filter_returns_all(self):
+        self._create_network(name='pvlan-net', pvlan=True)
+        self._create_network(name='regular-net')
+        nets = self.core_plugin.get_networks(self.context)
+        self.assertEqual(2, len(nets))
+
+
+class TestPVLANPortFilter(PVLANPluginTestCase):
+
+    def test_filter_ports_by_pvlan_type(self):
+        net = self._create_network(pvlan=True)
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.ISOLATED_TYPE)
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.COMMUNITY_TYPE,
+                          pvlan_community='web')
+        self._create_port(net['id'])  # defaults to promiscuous
+        ports = self.core_plugin.get_ports(
+            self.context,
+            filters={pvlan_const.PVLAN_TYPE: [pvlan_const.ISOLATED_TYPE]})
+        self.assertEqual(1, len(ports))
+        self.assertEqual(pvlan_const.ISOLATED_TYPE,
+                         ports[0][pvlan_const.PVLAN_TYPE])
+
+    def test_filter_ports_by_pvlan_type_multiple_values(self):
+        net = self._create_network(pvlan=True)
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.ISOLATED_TYPE)
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.COMMUNITY_TYPE,
+                          pvlan_community='web')
+        self._create_port(net['id'])  # defaults to promiscuous
+        ports = self.core_plugin.get_ports(
+            self.context,
+            filters={pvlan_const.PVLAN_TYPE: [
+                pvlan_const.ISOLATED_TYPE,
+                pvlan_const.COMMUNITY_TYPE]})
+        self.assertEqual(2, len(ports))
+
+    def test_filter_ports_by_pvlan_community(self):
+        net = self._create_network(pvlan=True)
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.COMMUNITY_TYPE,
+                          pvlan_community='web')
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.COMMUNITY_TYPE,
+                          pvlan_community='db')
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.ISOLATED_TYPE)
+        ports = self.core_plugin.get_ports(
+            self.context,
+            filters={pvlan_const.PVLAN_COMMUNITY: ['web']})
+        self.assertEqual(1, len(ports))
+        self.assertEqual('web', ports[0][pvlan_const.PVLAN_COMMUNITY])
+
+    def test_filter_ports_no_pvlan_filter_returns_all(self):
+        net = self._create_network(pvlan=True)
+        self._create_port(net['id'],
+                          pvlan_type=pvlan_const.ISOLATED_TYPE)
+        self._create_port(net['id'])
+        # Also a port on a non-pvlan network
+        net2 = self._create_network(name='regular')
+        self._create_port(net2['id'])
+        ports = self.core_plugin.get_ports(self.context)
+        self.assertEqual(3, len(ports))

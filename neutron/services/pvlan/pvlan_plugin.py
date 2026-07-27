@@ -27,6 +27,7 @@ from neutron_lib.services import base as service_base
 from neutron_lib.services.pvlan import constants as pvlan_const
 from oslo_log import log as logging
 
+from neutron.db import pvlan_db
 from neutron.objects import network as net_object
 from neutron.objects import ports as port_object
 from neutron.objects import pvlan as pvlan_objects
@@ -40,7 +41,7 @@ PVLAN_PLUGIN = 'pvlan_plugin'
 
 @resource_extend.has_resource_extenders
 @registry.has_registry_receivers
-class PVLANPlugin(service_base.ServicePluginBase):
+class PVLANPlugin(pvlan_db.PVLANDbMixin, service_base.ServicePluginBase):
     """Implementation of the Neutron PVLAN Plugin.
 
     This class implements the PVLAN plugin that provides Private VLAN
