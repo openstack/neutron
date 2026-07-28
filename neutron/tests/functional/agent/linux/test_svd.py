@@ -16,6 +16,7 @@
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import svd as linux_svd
 from neutron.agent.linux import utils as agent_utils
+from neutron.agent.ovn.extensions.evpn import constants as evpn_const
 from neutron.common import utils
 from neutron.privileged.agent.linux import ip_lib as privileged
 from neutron.tests.functional.agent.linux import base
@@ -147,8 +148,12 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
+        self.addCleanup(svd.del_vni, svi_name, lo_name, vni, vid)
         self.assertTrue(ip_lib.device_exists(svi_name))
+        self.assertTrue(ip_lib.device_exists(lo_name))
 
         br_vlans = self._bridge_cmd('vlan', 'show', 'dev', self._br)
         self.assertRegex(br_vlans, r'\b%s\b' % vid)
@@ -164,9 +169,10 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
         self.assertRaises(linux_svd.SvdDevsNotFound, brvxlan.add_vni,
-                          svi_name, vni, vid, 'no-such-vrf', self.SVI_MAC,
-                          self.BR_MTU)
+                          svi_name, lo_name, vni, vid, 'no-such-vrf',
+                          self.SVI_MAC, self.BR_MTU)
         self.assertFalse(ip_lib.device_exists(svi_name))
         vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
         self.assertNotIn(str(vni), vni_output)
@@ -176,11 +182,13 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
-        self.addCleanup(svd.del_vni, svi_name, vni, vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
+        self.addCleanup(svd.del_vni, svi_name, lo_name, vni, vid)
         # Add the same VNI a second time to trigger NetlinkError
         self.assertRaises(linux_svd.SvdNetlinkError, svd.add_vni,
-                          svi_name, vni, vid, self._vrf, self.SVI_MAC,
+                          svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
                           self.BR_MTU)
 
     def test_del_vni(self):
@@ -188,20 +196,25 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
 
-        svd.del_vni(svi_name, vni, vid)
+        svd.del_vni(svi_name, lo_name, vni, vid)
 
         self.assertFalse(ip_lib.device_exists(svi_name))
+        self.assertFalse(ip_lib.device_exists(lo_name))
 
         vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
         self.assertNotIn(str(vni), vni_output)
 
     def test_del_vni_svi_not_found(self):
         svd = self._create_svd()
+
         self.assertRaises(linux_svd.SvdSviNotFound, svd.del_vni,
-                          self._svi_name(self._vid()), self._vni(),
-                          self._vid())
+                          self._svi_name(self._vid()),
+                          evpn_const.EVPN_AD_IFNAME % {'vni': self._vni()},
+                          self._vni(), self._vid())
 
     def test_add_multiple_vnis(self):
         svd = self._create_svd()
@@ -211,24 +224,29 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni2 = self._vni(1)
         vid2 = self._vid(1)
         svi_name1 = self._svi_name(vid1)
+        lo_name1 = evpn_const.EVPN_AD_IFNAME % {'vni': vni1}
         svi_name2 = self._svi_name(vid2)
-        svd.add_vni(svi_name1, vni1, vid1, self._vrf,
+        lo_name2 = evpn_const.EVPN_AD_IFNAME % {'vni': vni2}
+        svd.add_vni(svi_name1, lo_name1, vni1, vid1, self._vrf,
                     self.SVI_MAC, self.BR_MTU)
-        svd.add_vni(svi_name2, vni2, vid2, self._vrf,
+        svd.add_vni(svi_name2, lo_name2, vni2, vid2, self._vrf,
                     self.SVI_MAC, self.BR_MTU)
 
         self.assertTrue(ip_lib.device_exists(svi_name1))
+        self.assertTrue(ip_lib.device_exists(lo_name1))
         self.assertTrue(ip_lib.device_exists(svi_name2))
+        self.assertTrue(ip_lib.device_exists(lo_name2))
 
         vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
         self.assertIn(str(vni1), vni_output)
         self.assertIn(str(vni2), vni_output)
 
-        svd.del_vni(svi_name1, vni1, vid1)
+        svd.del_vni(svi_name1, lo_name1, vni1, vid1)
         self.assertFalse(ip_lib.device_exists(svi_name1))
         self.assertTrue(ip_lib.device_exists(svi_name2))
+        self.assertTrue(ip_lib.device_exists(lo_name2))
 
-        svd.del_vni(svi_name2, vni2, vid2)
+        svd.del_vni(svi_name2, lo_name2, vni2, vid2)
 
     def test_svi_attached_to_vrf(self):
         svd = self._create_svd()
@@ -236,7 +254,9 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni = self._vni()
         vid = self._vid()
         svi_name = self._svi_name(vid)
-        svd.add_vni(svi_name, vni, vid, self._vrf, self.SVI_MAC, self.BR_MTU)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
 
         link_output = agent_utils.execute(
             ['ip', '-d', 'link', 'show', svi_name],
@@ -245,4 +265,4 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         self.assertIn('master %s' % self._vrf, link_output)
         self.assertIn('state UP', link_output)
 
-        svd.del_vni(svi_name, vni, vid)
+        svd.del_vni(svi_name, lo_name, vni, vid)

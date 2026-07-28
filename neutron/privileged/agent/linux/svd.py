@@ -249,7 +249,8 @@ def delete_svd(br_evpn, vxlan_evpn):
 
 
 @privileged.default.entrypoint
-def add_vni(br_evpn, vxlan_evpn, svi_name, vni, vid, vrf_name, mac, br_mtu):
+def add_vni(br_evpn, vxlan_evpn, svi_name, lo_name, vni, vid, vrf_name, mac,
+            br_mtu):
     with priv_ip_lib.get_iproute(None) as ipr:
         br_idx = ipr.link_lookup(ifname=br_evpn)[0]
         vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
@@ -284,15 +285,28 @@ def add_vni(br_evpn, vxlan_evpn, svi_name, vni, vid, vrf_name, mac, br_mtu):
                  mtu=br_mtu, state='up')
         _set_addrgenmode_none(ipr, svi_idx)
 
-    LOG.debug("SVD %s/%s: added VLAN %d -> VNI %d, SVI %s",
-              br_evpn, vxlan_evpn, vid, vni, svi_name)
+        # Equivalent to:
+        # ip link add <lo_name> type dummy
+        # ip link set <lo_name> master <br_name>
+        # ip link set <lo_name> up
+        ipr.link(nl_const.IP_LINK_ADD, ifname=lo_name, kind='dummy')
+        lo_idx = ipr.link_lookup(ifname=lo_name)[0]
+        ipr.link(nl_const.IP_LINK_SET, index=lo_idx, master=br_idx, state='up')
+
+    LOG.debug("SVD %s/%s: added VLAN %d -> VNI %d, SVI %s, lo %s",
+              br_evpn, vxlan_evpn, vid, vni, svi_name, lo_name)
 
 
 @privileged.default.entrypoint
-def del_vni(br_evpn, vxlan_evpn, svi_name, vni, vid):
+def del_vni(br_evpn, vxlan_evpn, svi_name, lo_name, vni, vid):
     with priv_ip_lib.get_iproute(None) as ipr:
         br_idx = ipr.link_lookup(ifname=br_evpn)[0]
         vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
+
+        # Equivalent to:
+        # ip link del <lo_name>
+        lo_idx = ipr.link_lookup(ifname=lo_name)[0]
+        ipr.link(nl_const.IP_LINK_DEL, index=lo_idx)
 
         # Equivalent to:
         # ip link del <svi_name>

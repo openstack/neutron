@@ -432,6 +432,7 @@ LR_OPTIONS_DR_VRF_NAME = 'dynamic-routing-vrf-name'
 LS_OTHER_CFG_DR_VNI = 'dynamic-routing-vni'
 LS_OTHER_CFG_DR_BRIDGE_IFNAME = 'dynamic-routing-bridge-ifname'
 LS_OTHER_CFG_DR_VXLAN_IFNAME = 'dynamic-routing-vxlan-ifname'
+LS_OTHER_CFG_DR_AD_IFNAME = 'dynamic-routing-advertise-ifname'
 
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
 LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'

@@ -107,6 +107,10 @@ class CreateEVPNRouterCommand(command.BaseCommand):
                 ovn_const.LS_OTHER_CFG_DR_VXLAN_IFNAME:
                     "%s%d" % (
                         evpn_agent_const.EVPN_VXLAN_IFNAME, self.SVD_INDEX),
+                ovn_const.LS_OTHER_CFG_DR_AD_IFNAME:
+                    evpn_agent_const.EVPN_AD_IFNAME % {
+                        'vni': self.vni,
+                    },
             }).run_idl(txn)
 
     def _create_lrp(self, txn, lrp_name, mac):

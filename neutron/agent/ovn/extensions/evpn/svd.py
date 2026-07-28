@@ -35,9 +35,13 @@ class EvpnSvd(svd.Svd):
     def add_vni(self, vni, vid, vrf_name, mac, br_mtu):
         svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
             'index': self._index, 'vid': vid}
-        super().add_vni(svi_name, vni, vid, vrf_name, mac, br_mtu)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {
+            'vni': vni}
+        super().add_vni(svi_name, lo_name, vni, vid, vrf_name, mac, br_mtu)
         self._svi_names[vni] = svi_name
 
     def del_vni(self, vni, vid):
         svi_name = self._svi_names.pop(vni)
-        super().del_vni(svi_name, vni, vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {
+            'vni': vni}
+        super().del_vni(svi_name, lo_name, vni, vid)
