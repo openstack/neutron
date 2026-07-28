@@ -64,8 +64,13 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
     def _get_evpn_config(self):
         ext_ids = self.agent_api.ovs_idl.db_get(
             'Open_vSwitch', '.', 'external_ids').execute()
-        local_ip = ext_ids['ovn-evpn-local-ip']
-        vxlan_port = ext_ids['ovn-evpn-vxlan-ports']
+        try:
+            local_ip = ext_ids['ovn-evpn-local-ip']
+            vxlan_port = ext_ids['ovn-evpn-vxlan-ports']
+        except KeyError:
+            LOG.exception("Terminating: Must configure ovn-evpn-local-ip and "
+                          "ovn-evpn-vxlan-ports")
+            raise SystemExit(1)
         vxlan_parent = 'vxlan_sys_%s' % vxlan_port
         mac = net_lib.get_random_mac(CONF.base_mac.split(':'))
         self.cfg = EvpnConfig(local_ip=local_ip,
