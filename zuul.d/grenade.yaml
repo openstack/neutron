@@ -281,13 +281,11 @@
       grenade_devstack_localrc:
         old:
           Q_BUILD_OVS_FROM_GIT: true
-          OVN_BUILD_MODULES: true
           OVN_BUILD_FROM_SOURCE: True
           OVN_BRANCH: "branch-24.03"
           OVS_BRANCH: "branch-3.3"
         new:
           Q_BUILD_OVS_FROM_GIT: false
-          OVN_BUILD_MODULES: false
         shared:
           Q_AGENT: ovn
           OVN_AGENT_EXTENSIONS: 'metadata'
@@ -375,13 +373,11 @@
         grenade_devstack_localrc:
           old:
             Q_BUILD_OVS_FROM_GIT: true
-            OVN_BUILD_MODULES: true
             OVN_BUILD_FROM_SOURCE: True
             OVN_BRANCH: "branch-24.03"
             OVS_BRANCH: "branch-3.3"
           new:
             Q_BUILD_OVS_FROM_GIT: false
-            OVN_BUILD_MODULES: false
           shared:
             Q_AGENT: ovn
             OVN_AGENT_EXTENSIONS: 'metadata'
