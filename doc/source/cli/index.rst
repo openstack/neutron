@@ -8,5 +8,6 @@ Command-Line Interface Reference
 .. toctree::
    :maxdepth: 1
 
+   neutron-remove-duplicated-port-bindings
    neutron-sanity-check
    neutron-status

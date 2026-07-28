@@ -172,25 +172,48 @@ after migration finished. During this time window, the instance might not be
 reachable via the network. This should be solved with bug
 https://bugs.launchpad.net/nova/+bug/1605016
 
+.. _live_mig_error_recovery:
+
 Error recovery
 --------------
 
 If the Live Migration fails, Nova will revert the operation. That implies
 deleting any object created in the database or in the destination compute
-node. However, in some cases have been reported the presence of `duplicated
-port bindings per port <https://bugs.launchpad.net/neutron/+bug/1979072>`_.
-In this state, the port cannot be migrated until the inactive port binding
-(the failed destination host port binding) has been deleted.
+node. However, in some cases the presence of `duplicated port bindings per
+port <https://bugs.launchpad.net/neutron/+bug/1979072>`_ has been reported.
 
-To this end, the script ``neutron-remove-duplicated-port-bindings`` has been
-created. This script finds all duplicated port binding (that means, all port
-bindings that point to the same port) and deletes the inactive one.
+During the pre-live-migration phase, an INACTIVE ``PortBinding`` is created
+on the destination host. When the migration fails, Nova's rollback is
+supposed to delete this binding. If the rollback itself encounters an error,
+the INACTIVE binding and its associated ``PortBindingLevel`` records remain
+in the database. In this state, the port cannot be migrated again because
+Neutron detects the stale destination binding as a conflict.
 
-.. note::
+Symptoms of this problem include:
 
-   This script cannot be executed while a Live Migration or a cross cell Cold
-   Migration. The script will delete the inactive port binding and will break
-   the process.
+* A port that repeatedly fails to live-migrate with a binding conflict
+  error.
+* The ``ml2_port_bindings`` table contains two rows for the same
+  ``port_id``: one ACTIVE (on the source host) and one INACTIVE (on the
+  stale destination host).
+
+To resolve this, use the
+:command:`neutron-remove-duplicated-port-bindings` script. This script
+scans the ``ml2_port_bindings`` table, identifies ports with more than one
+binding, and deletes the INACTIVE one together with the corresponding
+``PortBindingLevel`` entries. The ``--port`` option can be used to restrict
+the cleanup to a single port.
+
+For full usage details, options, and examples, see
+:doc:`/cli/neutron-remove-duplicated-port-bindings`.
+
+.. warning::
+
+   This script must **not** be executed while a Live Migration or a
+   cross-cell Cold Migration is in progress. It will delete the INACTIVE
+   port binding that the ongoing migration depends on and break the
+   operation. Always ensure no migrations are running before executing the
+   script.
 
 
 Flow Diagram
