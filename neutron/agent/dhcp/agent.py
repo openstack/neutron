@@ -61,7 +61,7 @@ DELETED_PORT_MAX_AGE = 86400
 
 DHCP_READY_PORTS_SYNC_MAX = 64
 
-AGENT_STATUS_FILE = "/var/run/dhcp-agent-status.json"
+AGENT_STATUS_FILE = "/run/dhcp-agent/status.json"
 
 
 def _sync_lock(f):
@@ -88,19 +88,15 @@ def _remove_status_file():
     LOG.info("Agent status file %s removed", AGENT_STATUS_FILE)
 
 
-def _find_missing_netns(active_network_ids):
-    ns = Path(netns.NETNS_RUN_DIR)
-    active_nets = set(active_network_ids)
+def _find_synced_net_ns():
     synced_nets = set()
-
-    for net in ns.iterdir():
-        if net.name.startswith('qdhcp-'):
-            synced_nets.add(net.name.removeprefix('qdhcp-'))
-
-    return active_nets - synced_nets
+    for net in netns.listnetns():
+        if net.startswith('qdhcp-'):
+            synced_nets.add(net.removeprefix('qdhcp-'))
+    return synced_nets
 
 
-def _create_status_file(ready, message):
+def _create_status_file(ready, message, synced_networks=None):
     path = Path(AGENT_STATUS_FILE)
     try:
         path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -108,25 +104,32 @@ def _create_status_file(ready, message):
         LOG.error('Failed to create directory %s', path.parent)
         return
 
-    status = {
+    if synced_networks is None:
+        synced_networks = _find_synced_net_ns()
+
+    status_message = {
         "time": time.time(),
         "ready": ready,
         "message": message,
+        "synced_networks": sorted(synced_networks),
     }
 
     try:
-        with open(path, "w") as status_file:
-            jsonutils.dump(status, status_file)
+        tmp = path.with_suffix(".tmp")
+        with open(tmp, "w") as status_file:
+            jsonutils.dump(status_message, status_file)
+        tmp.rename(path)
     except OSError:
         LOG.error('Failed to write status file %s', path)
 
 
 def _write_status_failure(error):
-    _create_status_file(False, str(error))
+    _create_status_file(ready=False, message=str(error))
 
 
 def _write_sync_status(active_network_ids):
-    missing_netns = _find_missing_netns(active_network_ids)
+    synced_nets = _find_synced_net_ns()
+    missing_netns = set(active_network_ids) - synced_nets
 
     if missing_netns:
         ready = False
@@ -136,7 +139,8 @@ def _write_sync_status(active_network_ids):
         ready = True
         message = "All networks synced"
 
-    _create_status_file(ready, message)
+    _create_status_file(ready=ready, message=message,
+                        synced_networks=synced_nets)
 
 
 class DHCPResourceUpdate(queue.ResourceUpdate):
@@ -218,7 +222,7 @@ class DhcpAgent(manager.Manager):
         self.restarted_metadata_proxy_set = set()
 
     def init_host(self):
-        _create_status_file(False, "DHCP agent starting")
+        _create_status_file(ready=False, message="DHCP agent starting")
         self.sync_state()
 
     def _populate_networks_cache(self):
