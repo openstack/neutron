@@ -98,21 +98,6 @@ class BaseBgpIDLTestCase(n_base.BaseLoggingTestCase):
                 self.ovs_api = self.useFixture(
                     bgp_fixtures.OvsApiFixture(connection)).obj
 
-
-class BaseBgpNbIdlTestCase(BaseBgpIDLTestCase):
-    schemas = ['OVN_Northbound']
-
-
-class BaseBgpSbIdlTestCase(BaseBgpIDLTestCase):
-    schemas = ['OVN_Southbound']
-
-    def setUp(self):
-        bgp_ovn.OvnSbIdl.tables = ('Chassis', 'Encap', 'Chassis_Private')
-        try:
-            super().setUp()
-        finally:
-            bgp_ovn.OvnSbIdl.tables = bgp_ovn.OVN_SB_TABLES
-
     def add_fake_chassis(self, name, ip, external_ids=None):
         external_ids = external_ids or {}
         chassis = self.sb_api.chassis_add(
@@ -127,6 +112,21 @@ class BaseBgpSbIdlTestCase(BaseBgpIDLTestCase):
 
         return self.sb_api.db_list_rows(
             'Chassis_Private', [name]).execute(check_error=True)[0]
+
+
+class BaseBgpNbIdlTestCase(BaseBgpIDLTestCase):
+    schemas = ['OVN_Northbound']
+
+
+class BaseBgpSbIdlTestCase(BaseBgpIDLTestCase):
+    schemas = ['OVN_Southbound']
+
+    def setUp(self):
+        bgp_ovn.OvnSbIdl.tables = ('Chassis', 'Encap', 'Chassis_Private')
+        try:
+            super().setUp()
+        finally:
+            bgp_ovn.OvnSbIdl.tables = bgp_ovn.OVN_SB_TABLES
 
 
 class BaseBgpTestCase(BaseBgpSbIdlTestCase):
