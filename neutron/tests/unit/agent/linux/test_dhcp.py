@@ -1101,6 +1101,8 @@ class FakeSegment:
 
 
 class LocalChild(dhcp.DhcpLocalProcess):
+    _SERVICE_NAME = 'mock-service'
+
     def __init__(self, *args, **kwargs):
         self.process_monitor = mock.Mock()
         kwargs['process_monitor'] = self.process_monitor
@@ -1327,7 +1329,7 @@ class TestDhcpLocalProcess(TestBase):
                 self.rmtree.assert_called_once()
 
             lp.process_monitor.unregister.assert_called_once_with(
-                '1212/net-id', 'dnsmasq')
+                '1212/net-id', lp.service_name)
             self.assertTrue(self.external_process().disable.called)
 
         delete_ns.assert_called_with('qdhcp-ns')
