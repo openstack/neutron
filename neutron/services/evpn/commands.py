@@ -25,30 +25,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.services.bgp import constants as bgp_const
 from neutron.services.evpn import constants as evpn_const
-
-
-def _evpn_ls_name(vni):
-    return '%s%s' % (evpn_const.EVPN_LS_NAME_PREFIX, vni)
-
-
-def _evpn_lrp_name(router_id, vni):
-    evpn_ls_name = _evpn_ls_name(vni)
-    return evpn_const.EVPN_LRP_NAME_PATTERN % {
-        'lrp_uuid': router_id[:12],
-        'evpn_ls_name': evpn_ls_name,
-    }
-
-
-def _evpn_lsp_name(router_id, vni):
-    evpn_ls_name = _evpn_ls_name(vni)
-    return evpn_const.EVPN_LSP_NAME_PATTERN % {
-        'evpn_ls_name': evpn_ls_name,
-        'lrp_uuid': router_id[:12],
-    }
-
-
-def _evpn_hcg_name(router_id):
-    return '%s%s' % (evpn_const.EVPN_HCG_NAME_PREFIX, router_id)
+from neutron.services.evpn import helpers as evpn_helpers
 
 
 class CreateEVPNRouterCommand(command.BaseCommand):
@@ -72,9 +49,9 @@ class CreateEVPNRouterCommand(command.BaseCommand):
     def run_idl(self, txn):
         self._set_router_options()
 
-        ls_name = _evpn_ls_name(self.vni)
-        lrp_name = _evpn_lrp_name(self.router_id, self.vni)
-        lsp_name = _evpn_lsp_name(self.router_id, self.vni)
+        ls_name = evpn_helpers.evpn_ls_name(self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
+        lsp_name = evpn_helpers.evpn_lsp_name(self.router_id, self.vni)
         mac = n_net.get_random_mac(cfg.CONF.base_mac.split(':'))
 
         self._create_dummy_ls(txn, ls_name)
@@ -118,7 +95,7 @@ class CreateEVPNRouterCommand(command.BaseCommand):
             evpn_const.EVPN_LRP_VLAN_EXT_ID_KEY: str(self.vlan),
         }
 
-        hcg_name = _evpn_hcg_name(self.router_id)
+        hcg_name = evpn_helpers.evpn_hcg_name(self.router_id)
         hcg = self._create_ha_chassis_group(txn, hcg_name)
 
         try:
@@ -204,10 +181,10 @@ class DeleteEVPNRouterCommand(command.BaseCommand):
         self.vni = vni
 
     def run_idl(self, txn):
-        ls_name = _evpn_ls_name(self.vni)
+        ls_name = evpn_helpers.evpn_ls_name(self.vni)
         ovn_nb_commands.LsDelCommand(
             self.api, ls_name, if_exists=True).run_idl(txn)
 
-        hcg_name = _evpn_hcg_name(self.router_id)
+        hcg_name = evpn_helpers.evpn_hcg_name(self.router_id)
         ovn_nb_commands.HAChassisGroupDelCommand(
             self.api, hcg_name, if_exists=True).run_idl(txn)

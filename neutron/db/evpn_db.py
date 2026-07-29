@@ -183,6 +183,35 @@ class EVPNDbHelper:
 
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_READER
+    def get_all_evpn_l3_instances(self, context):
+        """Get all EVPN L3 instances with their VNI and VLAN allocations.
+
+        :param context: Neutron request context
+        :returns: list of dicts with router_id, vni, vlan keys
+        """
+        instances = context.session.query(
+            evpn_models.EVPNL3Instance
+        ).all()
+        return [{'router_id': inst.router_id,
+                 'vni': inst.mapping.vni_allocation.vni,
+                 'vlan': inst.mapping.vlan_allocation.vlan_id}
+                for inst in instances]
+
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
+    def get_all_evpn_advertised_ports(self, context):
+        """Get all port IDs marked for EVPN advertisement.
+
+        :param context: Neutron request context
+        :returns: list of port_id strings
+        """
+        ports = context.session.query(
+            evpn_models.EVPNAdvertisedPort
+        ).all()
+        return [p.port_id for p in ports]
+
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_vni_for_router(self, context, router_id):
         """Get the VNI allocated to a router, or None if not allocated.
 
