@@ -89,7 +89,7 @@ class BGPTopologyReconciler:
             LOG.info("Waiting for BGP topology reconciler to start")
             self._started.wait()
             LOG.info("BGP topology reconciler is ready")
-        if self.nb_api.ovsdb_connection.idl.has_lock:
+        if self.nb_api.has_lock:
             LOG.info("Full BGP topology synchronization started")
             # First make sure all chassis are indexed
             commands.FullSyncBGPTopologyCommand(
