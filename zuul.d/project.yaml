@@ -21,8 +21,10 @@
         - neutron-functional
         - neutron-ovs-grenade-multinode
         - neutron-ovn-grenade-multinode
-        - neutron-ovs-tempest-multinode-full
-        - neutron-ovs-tempest-dvr-ha-multinode-full
+        - neutron-ovs-tempest-multinode-full:
+            voting: false  # LP#2161894
+        - neutron-ovs-tempest-dvr-ha-multinode-full:
+            voting: false  # LP#2161894
         - neutron-ovn-tempest-ipv6-only-ovs-release
         - neutron-ovs-rally-task
         - neutron-ovn-rally-task
@@ -69,7 +71,8 @@
     gate:
       jobs:
         - neutron-functional
-        - neutron-ovs-tempest-multinode-full
+        - neutron-ovs-tempest-multinode-full:
+            voting: false  # LP#2161894
         - neutron-ovn-grenade-multinode
         - neutron-ovs-grenade-multinode
         - neutron-ovn-tempest-ipv6-only-ovs-release
