@@ -44,9 +44,14 @@ def _get_bgp_peer_bridges(row):
 
 def _get_ovn_bridge_mappings(row):
     """Get OVN bridge mappings as {bridge_name: 'network:bridge'} dict."""
-    return {
-        mapping.split(':')[1]: mapping
-        for mapping in _get_external_ids_list(row, 'ovn-bridge-mappings')}
+    result = {}
+    for mapping in _get_external_ids_list(row, 'ovn-bridge-mappings'):
+        parts = mapping.split(':')
+        if len(parts) != 2 or not parts[1]:
+            LOG.warning("Skipping malformed bridge mapping: %s", mapping)
+            continue
+        result[parts[1]] = mapping
+    return result
 
 
 def _get_interconnect_bridge_name(idl):
