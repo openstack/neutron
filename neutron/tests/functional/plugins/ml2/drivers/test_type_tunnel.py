@@ -17,7 +17,7 @@ from concurrent import futures
 import time
 
 from neutron_lib import constants
-from neutron_lib import context
+from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import exceptions as o_exc
 from oslo_config import cfg
@@ -30,8 +30,9 @@ from neutron.plugins.ml2.drivers import type_geneve
 from neutron.tests.unit import testlib_api
 
 
-def _initialize_network_segment_range_support(type_driver, worker_num,
-                                              same_init_time):
+@db_api.retry_if_session_inactive()
+def _initialize_network_segment_range_support(
+        context, type_driver, worker_num, same_init_time):
     # This method is similar to
     # ``_TunnelTypeDriverBase.initialize_network_segment_range_support``.
     # The method first deletes the existing default network ranges and then
@@ -39,14 +40,13 @@ def _initialize_network_segment_range_support(type_driver, worker_num,
     # DB transaction.
     #
     start_time = worker_num if not same_init_time else 0
-    admin_context = context.get_admin_context()
     try:
         time.sleep(worker_num / 4)
-        with db_api.CONTEXT_WRITER.using(admin_context):
+        with db_api.CONTEXT_WRITER.using(context):
             type_driver._delete_expired_default_network_segment_ranges(
-                admin_context, start_time)
+                context, start_time)
             type_driver._populate_new_default_network_segment_ranges(
-                admin_context, start_time)
+                context, start_time)
     except o_exc.NeutronDbObjectDuplicateEntry:
         pass
 
@@ -65,7 +65,7 @@ class TunnelTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
         self.net_type = constants.TYPE_GENEVE
         ml2_config.cfg.CONF.set_override(
             'vni_ranges', f'{self.min}:{self.max}', group='ml2_type_geneve')
-        self.admin_ctx = context.get_admin_context()
+        self.admin_ctx = n_context.get_admin_context()
         self.type_driver = type_geneve.GeneveTypeDriver()
         self.type_driver.initialize()
 
@@ -92,7 +92,8 @@ class TunnelTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
             for idx in range(max_workers):
                 _futures.append(executor.submit(
                     _initialize_network_segment_range_support,
-                    self.type_driver, idx, same_init_time))
+                    n_context.get_admin_context(), self.type_driver, idx,
+                    same_init_time))
             for _future in _futures:
                 _future.result()
 

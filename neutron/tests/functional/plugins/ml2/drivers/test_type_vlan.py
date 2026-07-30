@@ -16,7 +16,7 @@
 from concurrent import futures
 
 from neutron_lib import constants
-from neutron_lib import context
+from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import exceptions as o_exc
 from oslo_config import cfg
@@ -29,19 +29,20 @@ from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 
 
-def _initialize_network_segment_range_support(type_driver, start_time):
+@db_api.retry_if_session_inactive()
+def _initialize_network_segment_range_support(
+        context, type_driver, start_time):
     # This method is similar to
     # ``VlanTypeDriverBase.initialize_network_segment_range_support``.
     # The method first deletes the existing default network ranges and then
     # creates the new ones. It also adds an extra second before closing the
     # DB transaction.
-    admin_context = context.get_admin_context()
     try:
-        with db_api.CONTEXT_WRITER.using(admin_context):
+        with db_api.CONTEXT_WRITER.using(context):
             type_driver._delete_expired_default_network_segment_ranges(
-                admin_context, start_time)
+                context, start_time)
             type_driver._populate_new_default_network_segment_ranges(
-                admin_context, start_time)
+                context, start_time)
     except o_exc.NeutronDbObjectDuplicateEntry:
         pass
 
@@ -64,7 +65,7 @@ class VlanTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
                        ]
         ml2_config.cfg.CONF.set_override(
             'network_vlan_ranges', self.ranges, group='ml2_type_vlan')
-        self.admin_ctx = context.get_admin_context()
+        self.admin_ctx = n_context.get_admin_context()
         self.type_driver = type_vlan.VlanTypeDriver()
         self.type_driver.initialize()
 
@@ -98,13 +99,13 @@ class VlanTypeDriverBaseTestCase(testlib_api.MySQLTestCaseMixin,
                 # All workers are started at the same init time.
                 _futures.append(executor.submit(
                     _initialize_network_segment_range_support,
-                    self.type_driver, 0))
+                    n_context.get_admin_context(), self.type_driver, 0))
             else:
                 # All workers have different init times.
                 for idx in range(max_workers):
                     _futures.append(executor.submit(
                         _initialize_network_segment_range_support,
-                        self.type_driver, idx))
+                        n_context.get_admin_context(), self.type_driver, idx))
             for _future in _futures:
                 _future.result()
 
