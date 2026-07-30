@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    When using keepalived with ``use_vmac``, ARP and GARP packets are sent
+    with the VRRP virtual MAC as the Ethernet source address. The existing
+    ``VRRPv3`` port security entry only allows ARP with the physical MAC as
+    Ethernet source (per RFC 5798), causing OVN to drop these packets at the
+    port security stage and making the VIP unreachable. A plain ``VMAC IP``
+    port security entry is now added alongside the ``VRRPv3`` entry to allow
+    traffic with the VRRP MAC as Ethernet source.

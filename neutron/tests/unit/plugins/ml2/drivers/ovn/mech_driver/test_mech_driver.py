@@ -754,13 +754,38 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_create_port_security_allowed_address_pairs(self):
         # NOTE(mjozefcz): Lets pretend this is nova port to not
         # be treated as VIP.
+        # The expected LSP.port_security field must look like this (before
+        # updating the MAC address):
+        #   1.1) AAP1 VRRPv3
+        #     VRRPv3 <port MAC> 00:00:5e:00:01:01 1.1.1.1
+        #   1.2) AAP1 VMAC VIP
+        #     00:00:5e:00:01:01 1.1.1.1
+        #   2.1) AAP2 VRRPv3
+        #     VRRPv3 <port MAC> 00:00:5e:00:01:22 2.2.2.2
+        #   2.2) AAP2 VMAC VIP
+        #     00:00:5e:00:01:22 2.2.2.2
+        #   3) Port security: <port MAC> <port IP> <VIP3> (AAP with no VMAC)
+        #     <port MAC> <port_ip> 3.3.3.3
+        #
+        # When the port MAC address is updated, AAP3 keeps the original port
+        # MAC. After updating the port MAC address, the LSP.port_security is
+        # this:
+        #    VRRPv3 <new port MAC> 00:00:5e:00:01:01 1.1.1.1
+        #    00:00:5e:00:01:01 1.1.1.1
+        #    VRRPv3 <new port MAC> 00:00:5e:00:01:22 2.2.2.2
+        #    00:00:5e:00:01:22 2.2.2.2
+        #    VRRPv3 <new port MAC> <original port MAC> 3.3.3.3
+        #    <original port MAC> 3.3.3.3
+        #    <new port MAC> <port_ip>
         ip1 = '1.1.1.1'
         ip2 = '2.2.2.2'
+        ip3 = '3.3.3.3'
         mac1 = '00:00:5e:00:01:01'
         mac2 = '00:00:5e:00:01:22'
         kwargs = {'allowed_address_pairs':
                   [{'ip_address': ip1, 'mac_address': mac1},
-                   {'ip_address': ip2, 'mac_address': mac2}],
+                   {'ip_address': ip2, 'mac_address': mac2},
+                   {'ip_address': ip3}],
                   'device_owner': 'compute:nova'}
         with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
@@ -776,8 +801,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                          ).call_args_list[0][1])
                     psec = tools.UnorderedList(
                         [' '.join(['VRRPv3', port_mac, mac1, ip1]),
+                         ' '.join([mac1, ip1]),
                          ' '.join(['VRRPv3', port_mac, mac2, ip2]),
-                         ' '.join([port_mac, port_ip])])
+                         ' '.join([mac2, ip2]),
+                         ' '.join([port_mac, port_ip, ip3])])
                     self.assertEqual(psec,
                                      called_args_dict.get('port_security'))
                     addresses = tools.UnorderedList(
@@ -799,15 +826,22 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                         (self.nb_ovn.set_lswitch_port
                          ).call_args_list[0][1])
 
+                    # VIP3 now has MAC address different from the port MAC
+                    # because it keeps the original one.
                     psec = tools.UnorderedList(
                         [' '.join(['VRRPv3', port_mac_new, mac1, ip1]),
+                         ' '.join([mac1, ip1]),
                          ' '.join(['VRRPv3', port_mac_new, mac2, ip2]),
+                         ' '.join([mac2, ip2]),
+                         ' '.join(['VRRPv3', port_mac_new, port_mac, ip3]),
+                         ' '.join([port_mac, ip3]),
                          ' '.join([port_mac_new, port_ip])])
                     self.assertEqual(psec,
                                      called_args_dict.get('port_security'))
                     addresses = tools.UnorderedList(
                         [mac1,
                          mac2,
+                         port_mac,
                          ' '.join([port_mac_new, port_ip])])
                     self.assertEqual(addresses,
                                      called_args_dict.get('addresses'))
