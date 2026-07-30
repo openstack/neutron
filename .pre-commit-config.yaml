@@ -45,7 +45,7 @@ repos:
         files: .*\.sh
         exclude: '.tox/.*'
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.0
+    rev: v0.16.0
     hooks:
       - id: ruff-check
         args: ['--fix', '--unsafe-fixes']
@@ -59,7 +59,7 @@ repos:
   # fixing an issue changes the code and that should
   # not happen in CI.
   - repo: https://opendev.org/openstack/hacking
-    rev: 8.0.0
+    rev: 8.1.0
     hooks:
       - id: hacking
         additional_dependencies:
