@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Overlapping network segment ranges can no longer be created for tunnel
+    network types (VXLAN, GRE and Geneve). Previously, only VLAN ranges
+    were checked for overlaps. See bug
+    `2161676 <https://bugs.launchpad.net/neutron/+bug/2161676>`_.
