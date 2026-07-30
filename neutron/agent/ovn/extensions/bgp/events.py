@@ -378,3 +378,39 @@ class InterconnectBridgeDeletedEvent(BGPAgentEvent):
 
     def run(self, event, row, old):
         self.bgp_agent.clear_interconnect_bridge()
+
+
+class ChassisPrivateCreateEvent(BGPAgentEvent):
+    """Re-set BGP bridges on Chassis_Private after ovn-controller restart.
+
+    When ovn-controller restarts, it creates a new Chassis_Private row
+    and the previously set external_ids (including the BGP bridges key)
+    are lost. This event detects the re-creation and re-applies the
+    configuration by reading the bridge list from the local OVS
+    configuration (Open_vSwitch external_ids), which persists across
+    ovn-controller restarts.
+
+    On the initial OVSDB dump the OVS external_ids may not yet contain
+    the BGP bridges key, so the check in run() naturally skips the
+    no-op case.
+    """
+    TABLE = 'Chassis_Private'
+    EVENTS = (BGPAgentEvent.ROW_CREATE,)
+
+    def __init__(self, agent_api):
+        super().__init__(agent_api)
+        self.chassis = ovsdb.get_own_chassis_name(agent_api.ovs_idl)
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        return row.name == self.chassis
+
+    def run(self, event, row, old):
+        bridge_names = ovsdb.get_external_id_list(
+            self.agent_api.ovs_idl, constants.AGENT_BGP_PEER_BRIDGES)
+        if not bridge_names:
+            return
+        LOG.info("Chassis_Private for %s was created, "
+                 "setting BGP bridges configuration", self.chassis)
+        self.bgp_agent.set_chassis_bgp_bridges(bridge_names)

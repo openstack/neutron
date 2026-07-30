@@ -15,6 +15,7 @@
 
 import netaddr
 from oslo_log import log
+from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.ovn.extensions.bgp import bridge
@@ -71,12 +72,14 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         return [
             'Port_Binding',
             'Chassis',
+            'Chassis_Private',
         ]
 
     @property
     def sb_idl_events(self):
         return [
             events.PortBindingLrpMacEvent,
+            events.ChassisPrivateCreateEvent,
         ]
 
     @property
@@ -129,11 +132,16 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
         return bgp_bridge
 
     def set_chassis_bgp_bridges(self, bridge_name_list):
-        commands.SetChassisBgpBridgesCommand(
-            self.agent_api.sb_idl,
-            self.chassis_name,
-            bridge_name_list
-        ).execute(check_error=True)
+        try:
+            commands.SetChassisBgpBridgesCommand(
+                self.agent_api.sb_idl,
+                self.chassis_name,
+                bridge_name_list
+            ).execute(check_error=True)
+        except idlutils.RowNotFound:
+            LOG.warning("Chassis_Private %s not found, "
+                        "skipping BGP bridges update",
+                        self.chassis_name)
 
     def get_interconnect_lrp_mac(self, localnet_port_name):
         return commands.GetInterconnectLrpMacCommand(
