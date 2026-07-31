@@ -17,7 +17,6 @@ import netaddr
 from oslo_log import log
 
 from neutron.agent.linux import ip_lib
-from neutron.agent.ovn.agent import ovsdb
 from neutron.agent.ovn.extensions.bgp import bridge
 from neutron.agent.ovn.extensions.bgp import commands
 from neutron.agent.ovn.extensions.bgp import events
@@ -82,7 +81,7 @@ class BGPAgentExtension(ovn_ext_mgr.OVNAgentExtension):
 
     @property
     def chassis_name(self):
-        return ovsdb.get_own_chassis_name(self.agent_api.ovs_idl)
+        return self.agent_api.chassis
 
     @property
     def chassis_id(self):
