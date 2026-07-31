@@ -190,6 +190,14 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                 **self.vif_details,
                 portbindings.OVS_HYBRID_PLUG: a_config.get(
                     portbindings.OVS_HYBRID_PLUG)}
+            datapath_type = a_config.get(
+                'datapath_type', ovs_const.OVS_DATAPATH_SYSTEM)
+            vnic_type = context.current.get(
+                portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
+            if (cfg.CONF.OVS_DRIVER.ovs_create_tap and
+                    datapath_type == ovs_const.OVS_DATAPATH_SYSTEM and
+                    vnic_type != portbindings.VNIC_DIRECT):
+                details['ovs_create_tap'] = True
         else:
             sock_path = self.agent_vhu_sockpath(agent, context.current['id'])
             caps = a_config.get('ovs_capabilities', {})
