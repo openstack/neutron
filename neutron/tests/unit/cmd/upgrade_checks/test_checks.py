@@ -292,3 +292,43 @@ class TestChecks(base.BaseTestCase):
             result = checks.CoreChecks.tags_over_limit_check(mock.ANY)
             self.assertEqual(Code.WARNING, result.code)
             is_tags_limit_reached_for_any_resource.assert_called_once_with()
+
+    def test_rbac_target_project_check_no_db_connection(self):
+        cfg.CONF.set_override('connection', '', group='database')
+        result = checks.CoreChecks.rbac_target_project_check(mock.ANY)
+        self.assertEqual(Code.WARNING, result.code)
+
+    @mock.patch.object(checks, 'get_rbac_policies_with_invalid_target_project')
+    def test_rbac_target_project_check_success(self, mock_get_invalid):
+        mock_get_invalid.return_value = []
+        result = checks.CoreChecks.rbac_target_project_check(mock.ANY)
+        self.assertEqual(Code.SUCCESS, result.code)
+        mock_get_invalid.assert_called_once_with()
+
+    @mock.patch.object(checks, 'get_rbac_policies_with_invalid_target_project')
+    def test_rbac_target_project_check_warning(self, mock_get_invalid):
+        mock_get_invalid.return_value = [
+            {'id': 'rbac-1', 'object_type': 'network',
+             'object_id': 'net-1', 'target_project': 'my-project-name'},
+        ]
+        result = checks.CoreChecks.rbac_target_project_check(mock.ANY)
+        self.assertEqual(Code.WARNING, result.code)
+        self.assertIn('my-project-name', result.details)
+        self.assertIn('rbac-1', result.details)
+        mock_get_invalid.assert_called_once_with()
+
+    @mock.patch.object(checks, 'get_rbac_policies_with_invalid_target_project')
+    def test_rbac_target_project_check_warning_multiple(
+            self, mock_get_invalid):
+        mock_get_invalid.return_value = [
+            {'id': 'rbac-1', 'object_type': 'network',
+             'object_id': 'net-1', 'target_project': 'project-name-1'},
+            {'id': 'rbac-2', 'object_type': 'qos_policy',
+             'object_id': 'qos-1', 'target_project': 'project-name-2'},
+        ]
+        result = checks.CoreChecks.rbac_target_project_check(mock.ANY)
+        self.assertEqual(Code.WARNING, result.code)
+        self.assertIn('project-name-1', result.details)
+        self.assertIn('project-name-2', result.details)
+        self.assertIn('rbac-1', result.details)
+        self.assertIn('rbac-2', result.details)
