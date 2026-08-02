@@ -11,9 +11,6 @@
 #    under the License.
 #
 
-from alembic import op
-import sqlalchemy as sa
-
 from neutron.db import migration
 
 """add mtu for networks
@@ -28,14 +25,9 @@ Create Date: 2017-07-13 19:25:29.204547
 revision = '7d32f979895f'
 down_revision = '349b6fd605a6'
 
-# require the migration rule that dropped the mtu column in the past
-depends_on = ('b67e765a3524',)
-
 neutron_milestone = [migration.PIKE]
 
 
 def upgrade():
-    op.add_column('networks',
-                  sa.Column('mtu',
-                            sa.Integer(),
-                            nullable=True))
+    # No-op migration to keep the ``neutron_milestone`` tag.
+    pass
