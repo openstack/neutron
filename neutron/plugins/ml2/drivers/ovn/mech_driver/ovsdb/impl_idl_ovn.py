@@ -952,6 +952,9 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def check_liveness(self):
         return cmd.CheckLivenessCommand(self)
 
+    def bump_nb_cfg(self):
+        return cmd.BumpNbCfgCommand(self)
+
     def set_lswitch_port_to_virtual_type(self, lport_name, vip,
                                          virtual_parent, if_exists=True):
         return cmd.SetLSwitchPortToVirtualTypeCommand(

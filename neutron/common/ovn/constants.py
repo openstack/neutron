@@ -52,6 +52,7 @@ OVN_QOS_POLICY_EXT_ID_KEY = 'neutron:qos_policy_id'
 OVN_SG_IDS_EXT_ID_KEY = 'neutron:security_group_ids'
 OVN_DEVICE_OWNER_EXT_ID_KEY = 'neutron:device_owner'
 OVN_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:liveness_check_at'
+OVN_NB_CFG_BUMP_EXT_ID_KEY = 'neutron:nb_cfg_bump_at'
 METADATA_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:metadata_liveness_check_at'
 OVN_PORT_BINDING_PROFILE = portbindings.PROFILE
 OVN_HOST_ID_EXT_ID_KEY = 'neutron:host_id'

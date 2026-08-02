@@ -1187,3 +1187,158 @@ class TestLogicalSwitchPortUpdateLogicalRouterPortEvent(
             # update method because this is not a router port.
             self.assertTrue(row_event.wait())
             mock_update_rp.assert_not_called()
+
+
+class TestBumpNbCfgCommand(base.TestOVNFunctionalBase):
+
+    def _get_nb_cfg(self):
+        return self.nb_api.db_get(
+            'NB_Global', '.', 'nb_cfg').execute(check_error=True)
+
+    def _get_nb_external_ids(self):
+        return self.nb_api.db_get(
+            'NB_Global', '.', 'external_ids').execute(check_error=True)
+
+    def test_bump_increments_nb_cfg(self):
+        before = self._get_nb_cfg()
+        self.nb_api.bump_nb_cfg().execute(check_error=True)
+        after = self._get_nb_cfg()
+        self.assertGreater(after, before)
+
+    def test_bump_sets_external_id_timestamp(self):
+        self.nb_api.bump_nb_cfg().execute(check_error=True)
+        ext_ids = self._get_nb_external_ids()
+        self.assertIn(ovn_const.OVN_NB_CFG_BUMP_EXT_ID_KEY, ext_ids)
+
+    def test_bump_multiple_times(self):
+        values = [self._get_nb_cfg()]
+        for _ in range(3):
+            self.nb_api.bump_nb_cfg().execute(check_error=True)
+            values.append(self._get_nb_cfg())
+        self.assertEqual(values, sorted(values))
+        self.assertEqual(len(set(values)), 4)
+
+
+class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
+                                       test_l3.L3NatTestCaseMixin):
+    """Functional tests for the PortBindingChassisUpdateEvent live migration.
+
+    When additional_chassis is set on a Port_Binding (simulating
+    ovn-controller detecting the TAP device on the destination host),
+    PortBindingChassisUpdateEvent.run should:
+    1. Register a WaitForChassisNbCfgEvent
+    2. Bump NB_Global.nb_cfg
+    3. Only call set_port_status_up when the destination chassis's
+       Chassis_Private.nb_cfg reaches the bumped value
+    """
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+        self.src_chassis = self.add_fake_chassis('src-host', azs=[])
+        self.dst_chassis = self.add_fake_chassis(
+            'dst-host', azs=[],
+            other_config={'datapath-type': 'system'})
+        self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        self.net = self._make_network(
+            self.fmt, 'ext_net', True, as_admin=True, **kwargs)
+        self._make_subnet(self.fmt, self.net, '20.0.10.1', '20.0.10.0/24')
+
+        pb_event = WaitForPortBindingCreateEvent(
+            ovn_utils.ovn_name(self.net['network']['id']))
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(pb_event)
+        port_res = self._create_port(self.fmt, self.net['network']['id'])
+        self.port = self.deserialize(self.fmt, port_res)['port']
+        self.assertTrue(pb_event.wait())
+
+        with mock.patch.object(
+                self.mech_driver, 'set_port_status_up') as mock_status_up:
+            self.sb_api.lsp_bind(self.port['id'], self.src_chassis,
+                                 may_exist=True).execute(check_error=True)
+            n_utils.wait_until_true(
+                lambda: mock_status_up.called,
+                timeout=10,
+                exception=Exception(
+                    'LogicalSwitchPortUpdateUpEvent did not call '
+                    'set_port_status_up after lsp_bind'))
+
+        self.nb_cfg_before = self._get_nb_global_nb_cfg()
+
+    def _get_nb_global_nb_cfg(self):
+        return self.nb_api.db_get(
+            'NB_Global', '.', 'nb_cfg').execute(check_error=True)
+
+    def _set_chassis_private_nb_cfg(self, chassis_name, nb_cfg):
+        self.sb_api.db_set(
+            'Chassis_Private', chassis_name, ('nb_cfg', nb_cfg)
+        ).execute(check_error=True)
+
+    def _set_additional_chassis(self, port_id, chassis_name):
+        chassis = self.sb_api.lookup('Chassis', chassis_name)
+        self.sb_api.db_set(
+            'Port_Binding', port_id,
+            ('additional_chassis', [chassis.uuid])
+        ).execute(check_error=True)
+
+    def test_live_migration_waits_for_nb_cfg(self):
+        """Verify set_port_status_up is deferred until nb_cfg is reached.
+
+        Full live migration flow: additional_chassis triggers nb_cfg
+        bump and set_port_status_up is deferred until the destination
+        chassis reaches the expected nb_cfg.
+
+        NOTE: this test was implemented on top of the patch that made
+        ``ovs_create_tap`` config value True by default. This is important
+        because the ``PortBindingChassisUpdateEvent.run`` method validates
+        if this option is enabled.
+        """
+        with mock.patch.object(
+                self.mech_driver, 'set_port_status_up') as mock_status_up:
+            self._set_additional_chassis(self.port['id'], self.dst_chassis)
+            # Wait until ``NB_Global.nb_cfg`` is bumped, called from
+            # ``PortBindingChassisUpdateEvent.run``.
+            n_utils.wait_until_true(
+                lambda: self._get_nb_global_nb_cfg() > self.nb_cfg_before,
+                timeout=5,
+                exception=Exception('NB_Global.nb_cfg has not been bumped'))
+            # In the functional tests framework, the ovn-controller is not
+            # running. The NB_Global.nb_cfg value must be set manually into the
+            # Chassis_Private registers.
+            self._set_chassis_private_nb_cfg(self.dst_chassis,
+                                             self.nb_cfg_before + 1)
+            n_utils.wait_until_true(
+                lambda: mock_status_up.called,
+                timeout=10,
+                exception=Exception(
+                    'set_port_status_up was not called after '
+                    'Chassis_Private.nb_cfg reached the target'))
+            mock_status_up.assert_called_once_with(self.port['id'])
+
+    def test_no_live_migration_chassis_change(self):
+        """Verify regular chassis change calls set_port_status_up directly.
+
+        A regular chassis change (not live migration) should call
+        set_port_status_up directly without waiting for nb_cfg.
+        """
+        dst_chassis2 = self.add_fake_chassis('dst-host2', azs=[])
+        with mock.patch.object(
+                self.mech_driver, 'set_port_status_up') as mock_status_up:
+            # Change the chassis directly via db_set so the
+            # Port_Binding update event carries both old and new
+            # chassis values. ``lsp_bind`` with may_exist is a no-op
+            # when the port is already bound, and lsp_unbind+lsp_bind
+            # produces an empty->new transition that match_fn ignores.
+            chassis = self.sb_api.lookup('Chassis', dst_chassis2)
+            self.sb_api.db_set(
+                'Port_Binding', self.port['id'],
+                ('chassis', chassis.uuid)
+            ).execute(check_error=True)
+
+            n_utils.wait_until_true(
+                lambda: mock_status_up.called,
+                timeout=10,
+                exception=Exception(
+                    'set_port_status_up was not called for regular '
+                    'chassis change'))
+            mock_status_up.assert_called_once_with(self.port['id'])
