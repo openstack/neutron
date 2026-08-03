@@ -212,8 +212,8 @@ class OVNClient:
                     # in _get_ovn_dhcpv6_opts, so entries in DHCP_Options table
                     # should have unicode type 'true' if they were defined as
                     # dhcpv6 stateless.
-                    if opts['options'].get(
-                            ovn_const.DHCPV6_STATELESS_OPT) != 'true':
+                    if not strutils.bool_from_string(opts['options'].get(
+                            ovn_const.DHCPV6_STATELESS_OPT)):
                         return opts
             return get_opts[0]
 

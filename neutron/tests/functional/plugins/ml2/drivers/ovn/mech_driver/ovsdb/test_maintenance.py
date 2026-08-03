@@ -1313,10 +1313,9 @@ class TestMaintenance(_TestMaintenanceHelper):
             self.maint.check_network_broadcast_arps_to_all_routers)
 
         ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
-
-        self.assertEqual(
-            'false',
-            ls.other_config.get(ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS))
+        broadcast_arps = ls.other_config.get(
+            ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS)
+        self.assertFalse(strutils.bool_from_string(broadcast_arps))
 
     def _get_nb_global_external_ids(self):
         return self.nb_api.db_get(

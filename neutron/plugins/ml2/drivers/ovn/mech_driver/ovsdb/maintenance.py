@@ -31,6 +31,7 @@ from neutron_lib.exceptions import address_group as ag_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import strutils
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import event as row_event
 
@@ -665,8 +666,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                             ('options',
                              {ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'true'}
                              )))
-                elif port.options.get(
-                        ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB) == 'true':
+                elif strutils.bool_from_string(port.options.get(
+                        ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB)):
                     txn.add(self._nb_idl.db_set(
                         'Logical_Switch_Port', port.name,
                         ('options',
@@ -1120,18 +1121,16 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         for net in networks:
             ls_name = utils.ovn_name(net['id'])
             ls = self._nb_idl.get_lswitch(ls_name)
-            broadcast_value = ls.other_config.get(
-                ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS)
+            broadcast_value = strutils.bool_from_string(ls.other_config.get(
+                ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS))
             expected_broadcast_value = (
-                'true'
-                if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
-                'false')
+                ovn_conf.is_broadcast_arps_to_all_routers_enabled())
             # Assert the config value is the right one
             if broadcast_value == expected_broadcast_value:
                 continue
             # If not, set the right value
             other_config = {ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS:
-                            expected_broadcast_value}
+                            str(expected_broadcast_value)}
             cmds.append(self._nb_idl.db_set('Logical_Switch', ls_name,
                                             ('other_config', other_config)))
         if cmds:
