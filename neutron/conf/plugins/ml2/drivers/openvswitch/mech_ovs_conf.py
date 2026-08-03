@@ -33,6 +33,19 @@ ovs_driver_opts = [
                        "This allows to support hardware offload via tc and "
                        "that allows us to manage the VF by OpenFlow control "
                        "plane using representor net-device.")),
+    cfg.BoolOpt('ovs_create_tap',
+                default=True,
+                help=_("If enabled, os-vif will create the TAP devices for "
+                       "kernel OVS ports. This controls the ``ovs_create_tap``"
+                       " parameter in the vif-details dictionary. Only applies"
+                       " to kernel datapath ports (not DPDK or HW-offloaded "
+                       "ports)."),
+                deprecated_for_removal=True,
+                deprecated_since='2026.2',
+                deprecated_reason=(
+                    'This flag was added for backwards compatibility during '
+                    'the development of the functionality in Nova '
+                    '(LP#2069718).')),
 ]
 
 

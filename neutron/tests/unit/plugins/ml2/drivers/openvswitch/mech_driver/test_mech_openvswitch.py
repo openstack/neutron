@@ -36,7 +36,9 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
                    portbindings.CAP_PORT_FILTER: True,
                    portbindings.OVS_HYBRID_PLUG: True,
                    portbindings.VIF_DETAILS_CONNECTIVITY:
-                       portbindings.CONNECTIVITY_L2}
+                       portbindings.CONNECTIVITY_L2,
+                   'ovs_create_tap': True,
+                   }
     AGENT_TYPE = constants.AGENT_TYPE_OVS
 
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
@@ -125,7 +127,9 @@ class OpenvswitchMechanismSGDisabledBaseTestCase(
                    portbindings.CAP_PORT_FILTER: False,
                    portbindings.OVS_HYBRID_PLUG: False,
                    portbindings.VIF_DETAILS_CONNECTIVITY:
-                       portbindings.CONNECTIVITY_L2}
+                       portbindings.CONNECTIVITY_L2,
+                   'ovs_create_tap': True,
+                   }
 
     GOOD_MAPPINGS = {'fake_physical_network': 'fake_bridge'}
     GOOD_TUNNEL_TYPES = ['gre', 'vxlan']
@@ -491,3 +495,92 @@ class OpenvswitchMechDeviceMappingsTestCase(OpenvswitchMechanismBaseTestCase):
                       'configurations': {}}
         self.assertRaises(ValueError, self.driver.get_standard_device_mappings,
                           fake_agent)
+
+
+class OpenvswitchMechanismCreateTapTestCase(OpenvswitchMechanismBaseTestCase):
+
+    VNIC_TYPE = portbindings.VNIC_NORMAL
+
+    KERNEL_CONFIGS = {'bridge_mappings': {'fake_physical_network':
+                                          'fake_bridge'},
+                      'integration_bridge': 'br-int',
+                      portbindings.OVS_HYBRID_PLUG: False,
+                      'tunnel_types': ['gre', 'vxlan'],
+                      'datapath_type': a_const.OVS_DATAPATH_SYSTEM,
+                      'ovs_capabilities': {'iface_types': []}}
+
+    NETDEV_CONFIGS = {'bridge_mappings': {'fake_physical_network':
+                                          'fake_bridge'},
+                      'integration_bridge': 'br-int',
+                      portbindings.OVS_HYBRID_PLUG: False,
+                      'tunnel_types': ['gre', 'vxlan'],
+                      'datapath_type': a_const.OVS_DATAPATH_NETDEV,
+                      'ovs_capabilities': {'iface_types': []}}
+
+    DPDK_CONFIGS = {'bridge_mappings': {'fake_physical_network':
+                                        'fake_bridge'},
+                    'integration_bridge': 'br-int',
+                    portbindings.OVS_HYBRID_PLUG: False,
+                    'tunnel_types': ['gre', 'vxlan'],
+                    'datapath_type': a_const.OVS_DATAPATH_NETDEV,
+                    'ovs_capabilities': {
+                        'iface_types': [a_const.OVS_DPDK_VHOST_USER]}}
+
+    def _make_port_ctx(self, agents, vnic_type=portbindings.VNIC_NORMAL,
+                       profile=None):
+        segments = [{api.ID: 'local_segment_id', api.NETWORK_TYPE: 'local'}]
+        return base.FakePortContext(self.AGENT_TYPE, agents, segments,
+                                    vnic_type=vnic_type, profile=profile)
+
+    def test_ovs_create_tap_kernel_normal_port(self):
+        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
+        agents = [{'alive': True,
+                   'configurations': self.KERNEL_CONFIGS,
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE}]
+        context = self._make_port_ctx(agents)
+        self.driver.bind_port(context)
+        self.assertTrue(context._bound_vif_details.get('ovs_create_tap'))
+
+    def test_ovs_create_tap_not_set_for_dpdk(self):
+        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
+        agents = [{'alive': True,
+                   'configurations': self.DPDK_CONFIGS,
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE}]
+        context = self._make_port_ctx(agents)
+        self.driver.bind_port(context)
+        self.assertNotIn('ovs_create_tap', context._bound_vif_details)
+
+    def test_ovs_create_tap_not_set_for_netdev_datapath(self):
+        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
+        agents = [{'alive': True,
+                   'configurations': self.NETDEV_CONFIGS,
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE}]
+        context = self._make_port_ctx(agents)
+        self.driver.bind_port(context)
+        self.assertNotIn('ovs_create_tap', context._bound_vif_details)
+
+    def test_ovs_create_tap_not_set_for_switchdev(self):
+        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
+        agents = [{'alive': True,
+                   'configurations': self.KERNEL_CONFIGS,
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE}]
+        profile = {'capabilities': ['switchdev']}
+        context = self._make_port_ctx(agents,
+                                      vnic_type=portbindings.VNIC_DIRECT,
+                                      profile=profile)
+        self.driver.bind_port(context)
+        self.assertNotIn('ovs_create_tap', context._bound_vif_details)
+
+    def test_ovs_create_tap_not_set_when_config_disabled(self):
+        cfg.CONF.set_override('ovs_create_tap', False, group='OVS_DRIVER')
+        agents = [{'alive': True,
+                   'configurations': self.KERNEL_CONFIGS,
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE}]
+        context = self._make_port_ctx(agents)
+        self.driver.bind_port(context)
+        self.assertNotIn('ovs_create_tap', context._bound_vif_details)

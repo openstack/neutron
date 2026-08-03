@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    Added a new configuration flag: ``[OVS_DRIVER]ovs_create_tap``. This flag
+    controls the ``ovs_create_tap`` parameter added to the ML2/OVS port
+    ``vif_details`` dictionary during port binding. When enabled, Nova/os-vif
+    will pre-create the TAP device before the VM domain starts, which reduces
+    live migration downtime (LP#2069718). This flag only applies to kernel OVS
+    datapath ports; it is not set for OVS DPDK (vhost-user) nor hardware
+    offloaded (switchdev) ports. Enabled by default.
+deprecations:
+  - |
+    The flag ``[OVS_DRIVER]ovs_create_tap`` is deprecated and will be removed
+    once the functionality is stabilised. The default behaviour will remain
+    enabled permanently.
