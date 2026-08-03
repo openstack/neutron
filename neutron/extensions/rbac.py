@@ -14,9 +14,11 @@
 #    under the License.
 
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.api import validators
 from neutron_lib.db import constants as db_const
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
+from oslo_utils import uuidutils
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -52,6 +54,28 @@ def convert_valid_object_type(otype):
     raise n_exc.InvalidInput(error_message=msg)
 
 
+def _validate_valid_target_project(data, valid_values=None):
+    """Validate target project is UUID like.
+
+    :param data: The data to validate (target project).
+    :param valid_values: Not used! Needed by the validators' framework.
+    :return: None if the value can be converted to a bool, otherwise a
+        ``InvalidInput`` exception will be raised.
+    """
+    if data == '*':
+        # Accept all ('*') projects.
+        return
+
+    if not uuidutils.is_uuid_like(data):
+        msg = _("'%s' is not a valid target project ID; "
+                "expected a UUID or '*'") % data
+        raise n_exc.InvalidInput(error_message=msg)
+
+
+validators.add_validator('valid_target_project',
+                         _validate_valid_target_project)
+
+
 RESOURCE_NAME = 'rbac_policy'
 RESOURCE_COLLECTION = 'rbac_policies'
 
@@ -71,8 +95,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'is_visible': True, 'enforce_policy': True,
                       'is_filter': True},
         'target_tenant': {'allow_post': True, 'allow_put': True,
-                          'validate': {
-                              'type:string': db_const.PROJECT_ID_FIELD_SIZE},
+                          'validate': {'type:valid_target_project': None},
                           'is_visible': True, 'enforce_policy': True,
                           'is_filter': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
