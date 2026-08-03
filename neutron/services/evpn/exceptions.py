@@ -38,3 +38,8 @@ class EVPNNoVlanAvailable(exceptions.Conflict):
 
     def __init__(self, min_val, max_val):
         super().__init__(min_vlan=min_val, max_vlan=max_val)
+
+
+class EVPNRequiresOVN(exceptions.BadRequest):
+    message = _("EVPN is only supported with the OVN router provider. "
+                "Router %(router_id)s uses a non-OVN flavor.")

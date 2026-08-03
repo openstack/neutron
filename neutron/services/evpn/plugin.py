@@ -27,6 +27,7 @@ from neutron_lib.services import base as service_base
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
+from neutron.common.ovn import utils as ovn_utils
 from neutron.db import evpn_db
 from neutron.services.evpn import commands as evpn_ovn
 from neutron.services.evpn import exceptions as evpn_exceptions
@@ -107,6 +108,9 @@ class EVPNPlugin(service_base.ServicePluginBase):
         if requested_vni is n_const.ATTR_NOT_SPECIFIED:
             LOG.debug("No EVPN VNI requested for router %s", router_id)
             return
+
+        if not ovn_utils.is_ovn_provider_router(router):
+            raise evpn_exceptions.EVPNRequiresOVN(router_id=router_id)
 
         LOG.debug("Allocating EVPN VNI for router %s, requested_vni=%s",
                   router_id, requested_vni)

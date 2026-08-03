@@ -97,6 +97,13 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             self.assertEqual(5000, cmd.vni)
             self.assertIsNotNone(cmd.vlan)
 
+    def test_router_create_with_vni_non_ovn_flavor(self):
+        res = self._create_router(
+            self.fmt, as_admin=True,
+            arg_list=('evpn_vni',), evpn_vni=5000,
+            flavor_id='fake-flavor-id')
+        self.assertEqual(400, res.status_int)
+
     def test_router_delete_deallocates_vni(self):
         with self.router(as_admin=True,
                          arg_list=('evpn_vni',), evpn_vni=5000) as router:
