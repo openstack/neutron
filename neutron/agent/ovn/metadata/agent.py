@@ -78,14 +78,6 @@ def _match_only_if_additional_chassis_is_supported(f):
     return wrapped
 
 
-class ConfigException(Exception):
-    """Misconfiguration of the agent
-
-    This exception is raised when agent detects its wrong configuration.
-    Typically agent should resync when this is raised.
-    """
-
-
 class PortBindingEvent(extension_manager.OVNExtensionEvent,
                        row_event.RowEvent):
     def __init__(self, agent):
@@ -114,7 +106,7 @@ class PortBindingEvent(extension_manager.OVNExtensionEvent,
             self.log_row(row)
             try:
                 self.agent.provision_datapath(row)
-            except ConfigException:
+            except extension_manager.ConfigException:
                 # We're now in the reader lock mode, we need to exit the
                 # context and then use writer lock
                 resync = True
@@ -837,9 +829,10 @@ class MetadataAgent:
         try:
             ovs_bridges.remove(self.ovn_bridge)
         except KeyError:
-            LOG.warning("Configured OVN bridge %s cannot be found in "
-                        "the system. Resyncing the agent.", self.ovn_bridge)
-            raise ConfigException()
+            msg = ('Configured OVN bridge %s cannot be found in the system' %
+                   self.ovn_bridge)
+            LOG.warning('%s. Resyncing the agent.', msg)
+            raise extension_manager.ConfigException(description=msg)
 
         if ovs_bridges:
             with self.ovs_idl.transaction() as txn:
