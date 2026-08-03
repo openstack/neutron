@@ -1136,6 +1136,7 @@ class TestProvnetPorts(base.TestOVNFunctionalBase):
         ovn_localnetport = self._find_port_row_by_name(
             utils.ovn_provnet_port_name(seg_2['id']))
         self.assertEqual(ovn_localnetport.options['network_name'], 'physnet2')
+        n_utils.wait_until_true(lambda: ovn_localnetport.tag, timeout=5)
         self.assertEqual(ovn_localnetport.tag, [222])
 
         # Delete segments and ensure that localnet

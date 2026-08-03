@@ -26,6 +26,10 @@ class API(api.API, metaclass=abc.ABCMeta):
                             **columns):
         """Create a command to add an OVN logical switch port
 
+        NOTE: Setting a tag sets the LSP tag_request column and northd
+        will eventually set the tag column. tag cannot be set and immediately
+        read.
+
         :param lport_name:    The name of the lport
         :type lport_name:     string
         :param lswitch_name:  The name of the lswitch the lport is created on
@@ -43,6 +47,10 @@ class API(api.API, metaclass=abc.ABCMeta):
     def set_lswitch_port(self, lport_name, external_ids_update=None,
                          if_exists=True, **columns):
         """Create a command to set OVN logical switch port fields
+
+        NOTE: Setting a tag sets the LSP tag_request column and northd
+        will eventually set the tag column. tag cannot be set and immediately
+        read.
 
         :param lport_name:    The name of the lport
         :type lport_name:     string
