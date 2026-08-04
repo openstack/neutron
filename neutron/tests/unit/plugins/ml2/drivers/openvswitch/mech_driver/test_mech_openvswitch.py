@@ -37,7 +37,6 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
                    portbindings.OVS_HYBRID_PLUG: True,
                    portbindings.VIF_DETAILS_CONNECTIVITY:
                        portbindings.CONNECTIVITY_L2,
-                   'ovs_create_tap': True,
                    }
     AGENT_TYPE = constants.AGENT_TYPE_OVS
 
@@ -579,6 +578,18 @@ class OpenvswitchMechanismCreateTapTestCase(OpenvswitchMechanismBaseTestCase):
         cfg.CONF.set_override('ovs_create_tap', False, group='OVS_DRIVER')
         agents = [{'alive': True,
                    'configurations': self.KERNEL_CONFIGS,
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE}]
+        context = self._make_port_ctx(agents)
+        self.driver.bind_port(context)
+        self.assertNotIn('ovs_create_tap', context._bound_vif_details)
+
+    def test_ovs_create_tap_not_set_for_hybrid_plug(self):
+        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
+        hybrid_configs = dict(self.KERNEL_CONFIGS,
+                              **{portbindings.OVS_HYBRID_PLUG: True})
+        agents = [{'alive': True,
+                   'configurations': hybrid_configs,
                    'host': 'host',
                    'agent_type': self.AGENT_TYPE}]
         context = self._make_port_ctx(agents)
