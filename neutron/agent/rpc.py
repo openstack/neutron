@@ -352,6 +352,17 @@ class CacheBackedPluginApi(PluginApi):
             port_obj.bindings, constants.ACTIVE, raise_if_not_found=True,
             port_id=port_obj.id)
         migrating_to = migrating_to_host(port_obj.bindings)
+
+        # If migrating_to is not set in the binding profile yet (race
+        # with Nova), detect migration by the presence of an INACTIVE
+        # binding on another host — the port is migrating there.
+        if not migrating_to and port_obj.device_owner.startswith(
+                constants.DEVICE_OWNER_COMPUTE_PREFIX):
+            inactive_binding = utils.get_port_binding_by_status_and_host(
+                port_obj.bindings, constants.INACTIVE)
+            if inactive_binding and inactive_binding.host != host:
+                migrating_to = inactive_binding.host
+
         if (not migrating_to and port_obj.device_owner.startswith(
                 constants.DEVICE_OWNER_COMPUTE_PREFIX) and
                 binding[pb_ext.HOST] != host):

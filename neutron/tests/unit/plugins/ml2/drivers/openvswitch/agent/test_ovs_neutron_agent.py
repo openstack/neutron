@@ -1025,8 +1025,10 @@ class TestOvsNeutronAgent:
     def test_treat_devices_added_updated_marks_unknown_port_as_dead(self):
         port = mock.Mock()
         port.ofport = 1
+        details = mock.MagicMock()
+        details.get.return_value = None
         self.assertTrue(self._mock_treat_devices_added_updated(
-            mock.MagicMock(), port, 'port_dead'))
+            details, port, 'port_dead'))
 
     def test_treat_devices_added_does_not_process_missing_port(self):
         with mock.patch.object(
@@ -1040,8 +1042,69 @@ class TestOvsNeutronAgent:
     def test_treat_devices_added_updated_updates_known_port(self):
         details = mock.MagicMock()
         details.__contains__.side_effect = lambda x: True
+        details.get.return_value = None
         self.assertTrue(self._mock_treat_devices_added_updated(
             details, mock.Mock(), 'treat_vif_port'))
+
+    def test_treat_devices_added_updated_skips_migrating_port(self):
+        # A port that is being migrated to another host must not be
+        # processed by this agent: treat_vif_port must not be called
+        # and the device must be reported as migrating.
+        details = {'device': 'dev_id',
+                   'port_id': 'port_id',
+                   'network_id': 'net_id',
+                   'migrating_to': 'other-host'}
+        port = mock.Mock()
+        with mock.patch.object(self.agent.plugin_rpc,
+                               'get_devices_details_list_and_failed_devices',
+                               return_value={'devices': [details],
+                                             'failed_devices': []}),\
+                mock.patch.object(self.agent.int_br,
+                                  'get_vifs_by_ids',
+                                  return_value={details['device']: port}),\
+                mock.patch.object(self.agent, 'treat_vif_port') as treat_vif,\
+                mock.patch.object(self.agent, 'port_dead') as port_dead:
+            (skip_devs, _, need_binding_devices, _, _,
+             migrating_devices) = (
+                self.agent.treat_devices_added_or_updated([], False, set()))
+            self.assertFalse(treat_vif.called)
+            self.assertFalse(port_dead.called)
+            self.assertFalse(skip_devs)
+            self.assertFalse(need_binding_devices)
+            self.assertIn('dev_id', migrating_devices)
+
+    def test_treat_devices_added_updated_migrating_to_self_processed(self):
+        # If the destination host equals this agent's host, the port is not
+        # migrating and must be processed normally.
+        self.agent.host = 'this-host'
+        details = {'device': 'dev_id',
+                   'port_id': 'port_id',
+                   'network_id': 'net_id',
+                   'network_type': 'vlan',
+                   'physical_network': 'physnet1',
+                   'segmentation_id': 1,
+                   'admin_state_up': True,
+                   'fixed_ips': [],
+                   'device_owner': 'compute:nova',
+                   'migrating_to': 'this-host'}
+        port = mock.Mock()
+        with mock.patch.object(self.agent.plugin_rpc,
+                               'get_devices_details_list_and_failed_devices',
+                               return_value={'devices': [details],
+                                             'failed_devices': []}),\
+                mock.patch.object(self.agent.int_br,
+                                  'get_vifs_by_ids',
+                                  return_value={details['device']: port}),\
+                mock.patch.object(self.agent, '_get_net_local_vlan_or_none',
+                                  return_value=None),\
+                mock.patch.object(self.agent, '_update_port_network'),\
+                mock.patch.object(self.agent.ext_manager, 'handle_port'),\
+                mock.patch.object(self.agent, 'treat_vif_port',
+                                  return_value=False) as treat_vif:
+            (_, _, _, _, _, migrating_devices) = (
+                self.agent.treat_devices_added_or_updated([], False, set()))
+            self.assertTrue(treat_vif.called)
+            self.assertNotIn('dev_id', migrating_devices)
 
     def test_treat_devices_added_updated_sends_vif_port_into_extension_manager(
             self, *args):

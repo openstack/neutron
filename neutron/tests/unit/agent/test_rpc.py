@@ -367,6 +367,39 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                              mock.ANY, 'host2')
         self.assertEqual('host2', entry['migrating_to'])
 
+    def test_get_device_details_migrating_to_inactive_binding_fallback(self):
+        # Nova has not populated 'migrating_to' in the binding profile yet,
+        # but an INACTIVE binding exists on another host (the destination).
+        # The source agent (host1) must still detect the migration.
+        self._port.bindings.append(
+            ports.PortBinding(port_id=self._port_id,
+                              host='host2',
+                              status=constants.INACTIVE,
+                              profile={},
+                              vif_type='vif_type',
+                              vnic_type='vnic_type'))
+        self._api.remote_resource_cache.get_resource_by_id.side_effect = [
+            self._port, self._network]
+        entry = self._api.get_device_details(mock.ANY, self._port_id,
+                                             mock.ANY, 'host1')
+        self.assertEqual('host2', entry['migrating_to'])
+
+    def test_get_device_details_inactive_binding_same_host_no_migration(self):
+        # An INACTIVE binding on the same host as the querying agent must not
+        # be treated as a migration.
+        self._port.bindings.append(
+            ports.PortBinding(port_id=self._port_id,
+                              host='host1',
+                              status=constants.INACTIVE,
+                              profile={},
+                              vif_type='vif_type',
+                              vnic_type='vnic_type'))
+        self._api.remote_resource_cache.get_resource_by_id.side_effect = [
+            self._port, self._network]
+        entry = self._api.get_device_details(mock.ANY, self._port_id,
+                                             mock.ANY, 'host1')
+        self.assertIsNone(entry['migrating_to'])
+
     def test_get_device_details_hints(self):
         self._api.remote_resource_cache.get_resource_by_id.side_effect = [
             self._port, self._network]
