@@ -198,6 +198,14 @@ class AddLSwitchPortCommand(command.BaseCommand):
         self.columns = columns
 
     def run_idl(self, txn):
+        # NOTE: this method can be executed several times for the same command
+        # instance. ``Transaction.do_commit`` re-runs all the commands of a
+        # transaction when the OVSDB transaction returns TRY_AGAIN, for example
+        # when the IDL connection is re-established while the transaction is in
+        # flight. Consume a copy of ``self.columns``, otherwise the columns
+        # popped below would be missing in any subsequent execution and the
+        # logical switch port would be created without them.
+        columns = dict(self.columns)
         try:
             # We must look in the local cache first, because the LS may have
             # been created as part of the current transaction. or in the case
@@ -225,13 +233,13 @@ class AddLSwitchPortCommand(command.BaseCommand):
 
         port = txn.insert(self.api._tables['Logical_Switch_Port'])
         port.name = self.lport
-        port.tag = self.columns.pop('tag', []) or []
-        dhcpv4_options = self.columns.pop('dhcpv4_options', [])
+        port.tag = columns.pop('tag', []) or []
+        dhcpv4_options = columns.pop('dhcpv4_options', [])
         if isinstance(dhcpv4_options, list):
             port.dhcpv4_options = dhcpv4_options
         else:
             port.dhcpv4_options = [dhcpv4_options.result]
-        dhcpv6_options = self.columns.pop('dhcpv6_options', [])
+        dhcpv6_options = columns.pop('dhcpv6_options', [])
         if isinstance(dhcpv6_options, list):
             port.dhcpv6_options = dhcpv6_options
         else:
@@ -239,12 +247,12 @@ class AddLSwitchPortCommand(command.BaseCommand):
 
         # NOTE(ralonsoh): HA chassis group is created by Neutron, there is no
         # need to create it in this command.
-        ha_chassis_group = self.columns.pop('ha_chassis_group', None)
+        ha_chassis_group = columns.pop('ha_chassis_group', None)
         if ha_chassis_group:
             hcg_uuid = ovsdbapp_utils.get_uuid(ha_chassis_group)
             port.ha_chassis_group = hcg_uuid
 
-        for col, val in self.columns.items():
+        for col, val in columns.items():
             setattr(port, col, val)
         # add the newly created port to existing lswitch
         _addvalue_to_list(lswitch, 'ports', port.uuid)
@@ -263,6 +271,12 @@ class SetLSwitchPortCommand(command.BaseCommand):
         self.if_exists = if_exists
 
     def run_idl(self, txn):
+        # NOTE: this method can be executed several times for the same command
+        # instance, see the note in ``AddLSwitchPortCommand.run_idl``. Consume
+        # a copy of ``self.columns``, otherwise the columns popped below would
+        # be missing in any subsequent execution and the requested update would
+        # be silently skipped.
+        columns = dict(self.columns)
         try:
             port = idlutils.row_by_value(self.api.idl, 'Logical_Switch_Port',
                                          'name', self.lport)
@@ -280,7 +294,7 @@ class SetLSwitchPortCommand(command.BaseCommand):
         cur_port_dhcp_opts = get_lsp_dhcp_options_uuids(
             port, self.lport)
         new_port_dhcp_opts = set()
-        dhcpv4_options = self.columns.pop('dhcpv4_options', None)
+        dhcpv4_options = columns.pop('dhcpv4_options', None)
         if dhcpv4_options is None:
             new_port_dhcp_opts.update([option.uuid for option in
                                        getattr(port, 'dhcpv4_options', [])])
@@ -290,7 +304,7 @@ class SetLSwitchPortCommand(command.BaseCommand):
         else:
             new_port_dhcp_opts.add(dhcpv4_options.result)
             port.dhcpv4_options = [dhcpv4_options.result]
-        dhcpv6_options = self.columns.pop('dhcpv6_options', None)
+        dhcpv6_options = columns.pop('dhcpv6_options', None)
         if dhcpv6_options is None:
             new_port_dhcp_opts.update([option.uuid for option in
                                        getattr(port, 'dhcpv6_options', [])])
@@ -312,7 +326,7 @@ class SetLSwitchPortCommand(command.BaseCommand):
         # NOTE(ralonsoh): HA chassis group is created by Neutron, there is no
         # need to create it in this command. The register is also deleted when
         # the network to which the HA chassis group is associated is deleted.
-        ha_chassis_group = self.columns.pop('ha_chassis_group', None)
+        ha_chassis_group = columns.pop('ha_chassis_group', None)
         if ha_chassis_group:
             hcg_uuid = ovsdbapp_utils.get_uuid(ha_chassis_group)
             try:
@@ -324,7 +338,7 @@ class SetLSwitchPortCommand(command.BaseCommand):
         elif ha_chassis_group == []:
             port.ha_chassis_group = []
 
-        for col, val in self.columns.items():
+        for col, val in columns.items():
             setattr(port, col, val)
 
 
