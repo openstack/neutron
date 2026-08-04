@@ -2115,9 +2115,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
             migrating_to = details.get('migrating_to')
             if migrating_to and migrating_to != self.host:
-                LOG.info('Port %(device)s is being migrated to host %(host)s.',
+                LOG.info('Port %(device)s is being migrated to host '
+                         '%(host)s, skipping further processing on '
+                         'this agent.',
                          {'device': device, 'host': migrating_to})
                 migrating_devices.add(device)
+                # The port is migrated to another host, so avoid
+                # treat_vif_port totally for this port device
+                continue
 
             if 'port_id' in details:
                 details['vif_port'] = port
