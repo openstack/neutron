@@ -623,14 +623,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @db_api.retry_if_session_inactive()
     def delete_router(self, context, id):
+        # Check if the router is in use before firing BEFORE_DELETE callbacks
+        # to avoid partial cleanup (e.g. gateway removal) when deletion fails.
+        # See https://bugs.launchpad.net/neutron/+bug/2162868
+        with db_api.CONTEXT_READER.using(context):
+            router = self._ensure_router_not_in_use(context, id)
+            original = self._make_router_dict(router)
+
         registry.publish(resources.ROUTER, events.BEFORE_DELETE, self,
                          payload=events.DBEventPayload(
                              context, resource_id=id))
 
-        # TODO(nati) Refactor here when we have router insertion model
-        with db_api.CONTEXT_READER.using(context):
-            router = self._ensure_router_not_in_use(context, id)
-            original = self._make_router_dict(router)
         self._delete_current_gw_port(context, id, router, None)
 
         with db_api.CONTEXT_WRITER.using(context):
