@@ -2337,6 +2337,31 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self._delete('routers', router['router']['id'],
                          exc.HTTPConflict.code)
 
+    def test_router_delete_with_port_existed_preserves_gateway(self):
+        """Verify that a failed router deletion (409) does not remove the
+        external gateway. Regression test for LP#2162868.
+        """
+        with self.subnet(cidr='12.0.0.0/24') as public_sub:
+            self._set_net_external(public_sub['subnet']['network_id'])
+            with self.subnet() as private_sub:
+                res = self._create_router(self.fmt)
+                router = self.deserialize(self.fmt, res)
+                router_id = router['router']['id']
+                self._add_external_gateway_to_router(
+                    router_id,
+                    public_sub['subnet']['network_id'])
+                self._router_interface_action('add', router_id,
+                                              private_sub['subnet']['id'],
+                                              None)
+                # Delete should fail because the router has a port attached
+                self._delete('routers', router_id, exc.HTTPConflict.code)
+                # Gateway must still be present after the failed deletion
+                router_body = self._show('routers', router_id)
+                self.assertIsNotNone(
+                    router_body['router']['external_gateway_info'],
+                    "external_gateway_info was unexpectedly removed "
+                    "during a failed router deletion")
+
     def test_router_delete_with_floatingip_existed_returns_409(self):
         with self.port() as p:
             private_sub = {'subnet': {'id':
