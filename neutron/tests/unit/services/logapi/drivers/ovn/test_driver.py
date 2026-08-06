@@ -22,6 +22,7 @@ from neutron.common import utils as neutron_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.objects import securitygroup as sg_obj
+from neutron.services.logapi.common import db_api
 from neutron.services.logapi.drivers.ovn import driver as ovn_driver
 from neutron.tests import base
 from neutron.tests.unit import fake_resources
@@ -142,17 +143,64 @@ class TestOVNDriver(TestOVNDriverBase):
 
     def _fake_pg(self, **kwargs):
         pg_dict = self._fake_pg_dict(**kwargs)
-        return mock.Mock(**pg_dict)
+        pg_name = pg_dict.pop('name', None)
+        pg = mock.Mock(**pg_dict)
+        pg.name = pg_name
+        return pg
 
     def _fake_log_obj(self, **kwargs):
+        log_id = uuidutils.generate_uuid()
         log_obj_defaults_dict = {
-            'uuid': uuidutils.generate_uuid(),
+            'id': log_id,
+            'uuid': log_id,
             'resource_id': None,
             'target_id': None,
             'event': log_const.ALL_EVENT,
+            'enabled': True,
         }
         log_obj_obj_dict = {**log_obj_defaults_dict, **kwargs}
         return mock.Mock(**log_obj_obj_dict)
+
+    def _fake_log_dict(self, **kwargs):
+        log_id = uuidutils.generate_uuid()
+        log_dict_defaults = {
+            'id': log_id,
+            'project_id': uuidutils.generate_uuid(),
+            'name': 'test-log',
+            'resource_type': log_const.SECURITY_GROUP,
+            'resource_id': None,
+            'target_id': None,
+            'event': log_const.ALL_EVENT,
+            'enabled': True,
+        }
+        return {**log_dict_defaults, **kwargs}
+
+    def test__get_logs_with_filters(self):
+        self.log_plugin.get_logs.return_value = [self._fake_log_dict()]
+
+        log_objs = self._log_driver._get_logs(
+            self.context, enabled=True, event=log_const.DROP_EVENT)
+
+        self.log_plugin.get_logs.assert_called_once_with(
+            self.context, filters={'enabled': True,
+                                   'event': log_const.DROP_EVENT})
+        self.assertEqual(1, len(log_objs))
+
+    def test__get_other_sg_drop_logs_uses_filtered_queries(self):
+        log_obj = self._fake_log_obj(id='current-log', resource_id='sg-id')
+        self.log_plugin.get_logs.return_value = []
+
+        with mock.patch.object(
+                db_api, '_get_ports_attached_to_sg', return_value=[]):
+            self.assertEqual(
+                [], self._log_driver._get_other_sg_drop_logs(
+                    self.context, log_obj))
+
+        self.log_plugin.get_logs.assert_called_once_with(
+            self.context, filters={'enabled': True,
+                                   'resource_id': 'sg-id',
+                                   'event': [log_const.DROP_EVENT,
+                                             log_const.ALL_EVENT]})
 
     def test__pgs_from_log_obj_pg_all(self):
         expected_pgs = [self._fake_pg()]
@@ -170,30 +218,18 @@ class TestOVNDriver(TestOVNDriverBase):
             log_obj = self._fake_log_obj(target_id='target_id')
             pgs = self._log_driver._pgs_from_log_obj(self.context, log_obj)
             mock_pgs_all.assert_not_called()
-            self._nb_ovn.lookup.assert_called_once_with(
-                "Port_Group", ovn_const.OVN_DROP_PORT_GROUP_NAME)
             self.fake_get_sgs_attached_to_port.assert_called_once_with(
                 self.context, 'target_id')
             self.assertEqual([], pgs)
 
-    def test__pgs_from_log_obj_pg_drop(self):
+    def test__pgs_from_log_obj_sg_not_found(self):
         with mock.patch.object(self._log_driver, '_pgs_all',
                                return_value=[]) as mock_pgs_all:
-            pg = self._fake_pg()
-
-            def _mock_lookup(_pg_table, pg_name):
-                if pg_name == ovn_const.OVN_DROP_PORT_GROUP_NAME:
-                    return pg
-                raise idlutils.RowNotFound
-
-            self._nb_ovn.lookup.side_effect = _mock_lookup
+            self._nb_ovn.lookup.side_effect = idlutils.RowNotFound
             log_obj = self._fake_log_obj(resource_id='resource_id')
             pgs = self._log_driver._pgs_from_log_obj(self.context, log_obj)
             mock_pgs_all.assert_not_called()
-            self.assertEqual(2, self._nb_ovn.lookup.call_count)
-            self.assertEqual([{'acls': [],
-                               'external_ids': pg.external_ids,
-                               'name': pg.name}], pgs)
+            self.assertEqual([], pgs)
 
     def test__pgs_from_log_obj_pg(self):
         with mock.patch.object(self._log_driver, '_pgs_all',
@@ -338,7 +374,7 @@ class TestOVNDriver(TestOVNDriverBase):
                            'external_ids': {},
                            'acls': [uuidutils.generate_uuid()]}]).start()
         neutron_acl = {'port_group': 'neutron_pg_drop',
-                       'priority': 1001,
+                       'priority': 1000,
                        'action': 'drop',
                        'log': True,
                        'name': '',
@@ -351,12 +387,138 @@ class TestOVNDriver(TestOVNDriverBase):
             self._log_driver.add_label_related(neutron_acl, self.context)
             self.assertNotEqual(neutron_acl['label'], 0)
 
+    def test__get_sg_port_groups_with_resource_id(self):
+        sg_id = uuidutils.generate_uuid()
+        pg_name = ovn_utils.ovn_port_group_name(sg_id)
+        pg = self._fake_pg(name=pg_name,
+                           external_ids={ovn_const.OVN_SG_EXT_ID_KEY: sg_id})
+        self._nb_ovn.lookup.return_value = pg
+        log_obj = self._fake_log_obj(resource_id=sg_id)
+        pgs = self._log_driver._get_sg_port_groups(self.context, log_obj)
+        self._nb_ovn.lookup.assert_called_once_with("Port_Group", pg_name)
+        self.assertEqual(1, len(pgs))
+        self.assertEqual(pg.name, pgs[0]["name"])
+
+    def test__get_sg_port_groups_with_target_id(self):
+        sg_id = uuidutils.generate_uuid()
+        pg_name = ovn_utils.ovn_port_group_name(sg_id)
+        pg = self._fake_pg(name=pg_name,
+                           external_ids={ovn_const.OVN_SG_EXT_ID_KEY: sg_id})
+        self._nb_ovn.lookup.return_value = pg
+        self.fake_get_sgs_attached_to_port.return_value = [sg_id]
+        log_obj = self._fake_log_obj(target_id='port_id')
+        pgs = self._log_driver._get_sg_port_groups(self.context, log_obj)
+        self.fake_get_sgs_attached_to_port.assert_called_once_with(
+            self.context, 'port_id')
+        self.assertEqual(1, len(pgs))
+
+    def test__get_sg_port_groups_not_found(self):
+        self._nb_ovn.lookup.side_effect = idlutils.RowNotFound
+        log_obj = self._fake_log_obj(resource_id='missing_sg')
+        pgs = self._log_driver._get_sg_port_groups(self.context, log_obj)
+        self.assertEqual([], pgs)
+
+    def test__create_sg_drop_acls(self):
+        sg_id = uuidutils.generate_uuid()
+        pg_name = ovn_utils.ovn_port_group_name(sg_id)
+        pg = self._fake_pg(name=pg_name,
+                           external_ids={ovn_const.OVN_SG_EXT_ID_KEY: sg_id})
+        self._nb_ovn.lookup.return_value = pg
+        log_obj = self._fake_log_obj(resource_id=sg_id,
+                                     event=log_const.DROP_EVENT)
+        log_name = ovn_utils.ovn_name(log_obj.id)
+        with self._nb_ovn.transaction(check_error=True) as ovn_txn:
+            self._log_driver._create_sg_drop_acls(
+                self.context, log_obj, ovn_txn, log_name)
+        # Should have called pg_acl_add twice (from-lport and to-lport)
+        self.assertEqual(2, self._nb_ovn.pg_acl_add.call_count)
+        calls = self._nb_ovn.pg_acl_add.call_args_list
+        for call in calls:
+            self.assertEqual(ovn_const.ACL_PRIORITY_LOG_DROP,
+                             call.kwargs.get('priority',
+                                             call.args[1] if len(call.args) > 1
+                                             else None))
+
+    def test__create_sg_drop_acls_accept_event_skipped(self):
+        sg_id = uuidutils.generate_uuid()
+        pg = self._fake_pg()
+        self._nb_ovn.lookup.return_value = pg
+        log_obj = self._fake_log_obj(resource_id=sg_id,
+                                     event=log_const.ACCEPT_EVENT)
+        with self._nb_ovn.transaction(check_error=True) as ovn_txn:
+            self._log_driver._create_sg_drop_acls(
+                self.context, log_obj, ovn_txn, 'log_name')
+        self._nb_ovn.pg_acl_add.assert_not_called()
+
+    def test__remove_sg_drop_acls(self):
+        sg_id = uuidutils.generate_uuid()
+        pg_name = ovn_utils.ovn_port_group_name(sg_id)
+        pg = self._fake_pg(name=pg_name,
+                           external_ids={ovn_const.OVN_SG_EXT_ID_KEY: sg_id})
+        self._nb_ovn.lookup.return_value = pg
+        log_obj = self._fake_log_obj(resource_id=sg_id,
+                                     event=log_const.DROP_EVENT)
+        with self._nb_ovn.transaction(check_error=True) as ovn_txn:
+            self._log_driver._remove_sg_drop_acls(
+                self.context, log_obj, ovn_txn)
+        # Should have called pg_acl_del twice (from-lport and to-lport)
+        self.assertEqual(2, self._nb_ovn.pg_acl_del.call_count)
+        calls = self._nb_ovn.pg_acl_del.call_args_list
+        directions = {call.args[1] for call in calls}
+        self.assertEqual({'from-lport', 'to-lport'}, directions)
+        for call in calls:
+            self.assertEqual(ovn_const.ACL_PRIORITY_LOG_DROP, call.args[2])
+            direction = call.args[1]
+            p = 'inport' if direction == 'from-lport' else 'outport'
+            expected_match = f'{p} == @{pg_name} && ip'
+            self.assertEqual(expected_match, call.args[3])
+
+    def test_update_log_disabled_drop_reassigns_sg_drop_acls(self):
+        sg_id = uuidutils.generate_uuid()
+        disabled_log = self._fake_log_obj(id='disabled-drop-log',
+                                          resource_id=sg_id,
+                                          event=log_const.DROP_EVENT,
+                                          enabled=False)
+        remaining_log = self._fake_log_obj(id='remaining-all-log',
+                                           resource_id=sg_id,
+                                           event=log_const.ALL_EVENT,
+                                           enabled=True)
+
+        with mock.patch.object(self._log_driver, '_get_logs',
+                               return_value=[disabled_log, remaining_log]), \
+                mock.patch.object(db_api, '_get_ports_attached_to_sg',
+                                  return_value=[]), \
+                mock.patch.object(self._log_driver, '_remove_sg_drop_acls'
+                                  ) as remove_sg_drop_acls, \
+                mock.patch.object(self._log_driver, '_create_sg_drop_acls'
+                                  ) as create_sg_drop_acls:
+            self._log_driver.update_log(self.context, disabled_log)
+
+        remove_sg_drop_acls.assert_called_once_with(
+            self.context, disabled_log, mock.ANY)
+        create_sg_drop_acls.assert_called_once_with(
+            self.context, remaining_log, mock.ANY,
+            ovn_utils.ovn_name(remaining_log.id))
+
+    def test__pgs_from_log_obj_drop_with_resource_uses_sg_pg(self):
+        """When logging DROP for a specific SG, use per-SG port group."""
+        sg_id = uuidutils.generate_uuid()
+        pg_name = ovn_utils.ovn_port_group_name(sg_id)
+        pg = self._fake_pg(name=pg_name,
+                           external_ids={ovn_const.OVN_SG_EXT_ID_KEY: sg_id})
+        self._nb_ovn.lookup.return_value = pg
+        log_obj = self._fake_log_obj(resource_id=sg_id,
+                                     event=log_const.DROP_EVENT)
+        pgs = self._log_driver._pgs_from_log_obj(self.context, log_obj)
+        self.assertEqual(1, len(pgs))
+        self.assertEqual(pg.name, pgs[0]["name"])
+
     def test_add_logging_options_to_acls(self):
         mock.patch.object(self._log_driver, '_pgs_from_log_obj', return_value=[
                              {'name': 'neutron_pg_drop', 'external_ids': {},
                               'acls': [uuidutils.generate_uuid()]}]).start()
         n_acls = [{'port_group': 'neutron_pg_drop',
-                   'priority': 1001,
+                   'priority': 1000,
                    'action': 'drop',
                    'log': False,
                    'name': '',

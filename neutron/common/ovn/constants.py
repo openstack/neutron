@@ -108,11 +108,13 @@ OVN_AGENT_TYPES = (OVN_CONTROLLER_AGENT,
 
 # OVN ACLs have priorities.  The highest priority ACL that matches is the one
 # that takes effect.  Our choice of priority numbers is arbitrary, but it
-# leaves room above and below the ACLs we create.  We only need two priorities.
-# The first is for all the things we allow.  The second is for dropping traffic
-# by default.
+# leaves room above and below the ACLs we create.  We need three priorities.
+# The first is for all the things we allow.  The second is for per-security
+# group drop ACLs used for network logging.  The third is for the global
+# default drop in neutron_pg_drop.
 ACL_PRIORITY_ALLOW = 1002
-ACL_PRIORITY_DROP = 1001
+ACL_PRIORITY_LOG_DROP = 1001
+ACL_PRIORITY_DROP = 1000
 
 ACL_ACTION_DROP = 'drop'
 ACL_ACTION_REJECT = 'reject'

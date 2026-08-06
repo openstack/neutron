@@ -892,11 +892,11 @@ class TestPortSecurity(base.TestOVNFunctionalBase):
         expected_acls_with_sg_ps_enabled = [
             {'match': 'inport == @neutron_pg_drop && ip',
              'action': 'drop',
-             'priority': 1001,
+             'priority': ovn_const.ACL_PRIORITY_DROP,
              'direction': 'from-lport'},
             {'match': 'outport == @neutron_pg_drop && ip',
              'action': 'drop',
-             'priority': 1001,
+             'priority': ovn_const.ACL_PRIORITY_DROP,
              'direction': 'to-lport'},
             {'match': 'inport == @' + pg_name + ' && ip6',
              'action': 'allow-related',
@@ -929,11 +929,11 @@ class TestPortSecurity(base.TestOVNFunctionalBase):
         expected_acls_with_no_sg_ps_enabled = [
             {'match': 'inport == @neutron_pg_drop && ip',
              'action': 'drop',
-             'priority': 1001,
+             'priority': ovn_const.ACL_PRIORITY_DROP,
              'direction': 'from-lport'},
             {'match': 'outport == @neutron_pg_drop && ip',
              'action': 'drop',
-             'priority': 1001,
+             'priority': ovn_const.ACL_PRIORITY_DROP,
              'direction': 'to-lport'},
         ]
         self._verify_port_acls(port_id, expected_acls_with_no_sg_ps_enabled)

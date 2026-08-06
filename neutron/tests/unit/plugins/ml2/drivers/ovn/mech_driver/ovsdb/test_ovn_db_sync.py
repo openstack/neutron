@@ -258,7 +258,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     direction='to-lport',
                     action='drop',
                     log=False,
-                    priority=1001,
+                    priority=ovn_const.ACL_PRIORITY_DROP,
                     match=('outport == @%s && ip' %
                            ovn_const.OVN_DROP_PORT_GROUP_NAME),
                     external_ids={}
@@ -270,7 +270,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     direction='from-lport',
                     action='drop',
                     log=False,
-                    priority=1001,
+                    priority=ovn_const.ACL_PRIORITY_DROP,
                     match=('inport == @%s && ip' %
                            ovn_const.OVN_DROP_PORT_GROUP_NAME),
                     external_ids={}
@@ -546,9 +546,9 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                 for pg_acl in pg.acls:
                     if pg.name == ovn_const.OVN_DROP_PORT_GROUP_NAME:
                         pg_acl.log = True
-                    pg_acl.name = ['neutron-1111']
-                    pg_acl.severity = ['info']
-                    pg_acl.meter = ['acl_log_meter']
+                        pg_acl.name = ['neutron-1111']
+                        pg_acl.severity = ['info']
+                        pg_acl.meter = ['acl_log_meter']
         get_sg_port_groups.execute.return_value = self.sg_port_groups_ovn
         ovn_api.db_list_rows.return_value = get_sg_port_groups
         ovn_api.lsp_list.execute.return_value = self.ports_ovn
@@ -1017,12 +1017,12 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
              'priority': 1002,
              'action': 'allow-related',
              'log': False,
-             'name': 'neutron-1111' if test_logging else [],
-             'severity': 'info' if test_logging else [],
+             'name': [],
+             'severity': [],
              'direction': 'from-lport',
              'match': ('inport == @pg_sg2 && ip4 && tcp && '
                        'tcp.dst >= 1 && tcp.dst <= 65535'),
-             'meter': 'acl_log_meter' if test_logging else [],
+             'meter': [],
              ovn_const.OVN_SG_RULE_EXT_ID_KEY: 'ruleid2'
              },
         ]

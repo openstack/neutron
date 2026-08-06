@@ -888,6 +888,18 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.fake_ovn_client._nb_idl.dns_set_options.assert_called_once_with(
             dns.uuid, **dns_options)
 
+    @mock.patch.object(maintenance.LOG, 'error')
+    def test_update_neutron_pg_drop_priority_missing_port_group(self, m_error):
+        self.fake_ovn_client._nb_idl.lookup.return_value = None
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.update_neutron_pg_drop_priority)
+
+        self.fake_ovn_client._nb_idl.lookup.assert_called_once_with(
+            'Port_Group', constants.OVN_DROP_PORT_GROUP_NAME, default=None)
+        m_error.assert_called_once()
+        self.fake_ovn_client._nb_idl.db_set.assert_not_called()
+
     def test_set_ovn_owned_dns_option_already_set(self):
         cfg.CONF.set_override('dns_records_ovn_owned', 'true',
                               group='ovn')
