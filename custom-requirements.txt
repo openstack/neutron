@@ -7,9 +7,6 @@ dumb-init
 # sentry client
 git+https://github.com/sapcc/sentrylogger.git@main#egg=sapcc_sentrylogger
 
-# agent checks for neutron
-openstack-agent-checks
-
 # uwsgi plugins
 uwsgi-dogstatsd
 uwsgi-shortmsecs
