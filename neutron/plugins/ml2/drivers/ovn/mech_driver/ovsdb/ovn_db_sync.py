@@ -22,6 +22,7 @@ from neutron_lib.ovn import constants as n_lib_ovn_const
 from neutron_lib.ovn import db_sync as db_sync_base
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.services.pvlan import constants as pvlan_const
 from neutron_lib.utils import helpers
 from oslo_log import log
 from oslo_utils import strutils
@@ -33,11 +34,14 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron import manager
 from neutron.objects.port_forwarding import PortForwarding
+from neutron.objects import ports as ports_obj
+from neutron.objects import pvlan as pvlan_obj
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as ovn_qos
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.services.logapi.drivers.ovn import driver as log_driver
+from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn
 from neutron.services.segments import db as segments_db
 
 
@@ -52,6 +56,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin',
         'neutron.services.segments.plugin.Plugin',
         'port_forwarding',
+        'pvlan',
         'qos'
     ]
     _required_ml2_ext_drivers = ['qos']
@@ -85,6 +90,14 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
             self.ovn_log_driver = log_driver.OVNDriver()
             self.log_plugin.driver_manager.register_driver(self.ovn_log_driver)
 
+        pvlan_plugin = directory.get_plugin(plugin_constants.PVLAN)
+        self.pvlan_driver = None
+        if pvlan_plugin:
+            self.pvlan_driver = pvlan_plugin.driver
+            if not self.pvlan_driver:
+                self.pvlan_driver = pvlan_ovn.PVLANDriver(self.ovn_driver)
+                pvlan_plugin.register_driver(self.pvlan_driver)
+
     def stop(self):
         if utils.is_ovn_l3(self.l3_plugin):
             self.l3_plugin._nb_ovn.ovsdb_connection.stop()
@@ -105,6 +118,7 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         self.sync_networks_ports_and_dhcp_opts(ctx)
         self.sync_port_dns_records(ctx)
         self.sync_acls(ctx)
+        self.sync_pvlan(ctx)
         self.sync_routers_and_rports(ctx)
         self.sync_port_qos_policies(ctx)
         self.sync_fip_qos_policies(ctx)
@@ -431,6 +445,295 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                 break
 
         LOG.debug('OVN-NB Sync ACLs completed @ %s', str(datetime.now()))
+
+    @staticmethod
+    def _define_drop_pvlan_acls():
+        pg_name = pvlan_ovn.DROP_PORT_GROUP_NAME
+        return [
+            {'priority': pvlan_ovn.DROP_ALL_PRIORITY,
+             'action': 'drop', 'direction': 'to-lport',
+             'match': 'outport == @%s && ip' % pg_name},
+            {'priority': pvlan_ovn.DROP_ALL_PRIORITY,
+             'action': 'drop', 'direction': 'from-lport',
+             'match': 'inport == @%s && ip' % pg_name},
+        ]
+
+    def _expected_isolated_acls(self, network_id):
+        pg = self.pvlan_driver._get_pg_name(
+            network_id, pvlan_const.ISOLATED_TYPE)
+        prm = self.pvlan_driver._get_pg_name(
+            network_id, pvlan_const.PROMISCUOUS_TYPE)
+        return [
+            {'priority': pvlan_ovn.PROMISCUOUS_PRIORITY,
+             'action': 'allow-stateless', 'direction': 'to-lport',
+             'match': ("outport == @%(dst)s && "
+                       "(inport == @%(src)s || "
+                       "ip4.src == $%(src)s_ip4 || "
+                       "ip6.src == $%(src)s_ip6)"
+                       % {"dst": pg, "src": prm})},
+        ]
+
+    def _expected_promiscuous_acls(self, network_id,
+                                   communities=None):
+        pg = self.pvlan_driver._get_pg_name(
+            network_id, pvlan_const.PROMISCUOUS_TYPE)
+        iso = self.pvlan_driver._get_pg_name(
+            network_id, pvlan_const.ISOLATED_TYPE)
+        acls = [
+            {'priority': pvlan_ovn.PROMISCUOUS_PRIORITY,
+             'action': 'allow-stateless', 'direction': 'to-lport',
+             'match': 'outport == @%s' % pg},
+            {'priority': pvlan_ovn.PROMISCUOUS_PRIORITY,
+             'action': 'allow-stateless', 'direction': 'from-lport',
+             'match': 'inport == @%s' % pg},
+            {'priority': pvlan_ovn.PROMISCUOUS_PRIORITY,
+             'action': 'allow-stateless', 'direction': 'from-lport',
+             'match': 'inport == @%s' % iso},
+        ]
+        for community in (communities or []):
+            comm_pg = self.pvlan_driver._get_pg_name(
+                network_id, pvlan_const.COMMUNITY_TYPE,
+                community)
+            acls.append(
+                {'priority': pvlan_ovn.PROMISCUOUS_PRIORITY,
+                 'action': 'allow-stateless',
+                 'direction': 'from-lport',
+                 'match': 'inport == @%s' % comm_pg})
+        return acls
+
+    def _expected_community_acls(self, network_id, community):
+        comm_pg = self.pvlan_driver._get_pg_name(
+            network_id, pvlan_const.COMMUNITY_TYPE,
+            community)
+        prm = self.pvlan_driver._get_pg_name(
+            network_id, pvlan_const.PROMISCUOUS_TYPE)
+        match_tmpl = ("outport == @%(dst)s && "
+                      "(inport == @%(src)s || "
+                      "ip4.src == $%(src)s_ip4 || "
+                      "ip6.src == $%(src)s_ip6)")
+        return [
+            {'priority': pvlan_ovn.COMMUNITY_PRIORITY,
+             'action': 'allow-stateless', 'direction': 'to-lport',
+             'match': match_tmpl % {"dst": comm_pg,
+                                    "src": comm_pg}},
+            {'priority': pvlan_ovn.COMMUNITY_PRIORITY,
+             'action': 'allow-stateless', 'direction': 'to-lport',
+             'match': match_tmpl % {"dst": comm_pg,
+                                    "src": prm}},
+        ]
+
+    @staticmethod
+    def _check_acls_consistent(pg, expected_acls):
+        """Check ACLs match expected exactly."""
+        existing = [{'priority': a.priority, 'action': a.action,
+                     'direction': a.direction, 'match': a.match}
+                    for a in pg.acls]
+        valid = True
+        for acl in expected_acls:
+            if acl not in existing:
+                LOG.warning("PG %s missing ACL: %s", pg.name, acl)
+                valid = False
+        for acl in existing:
+            if acl not in expected_acls:
+                LOG.warning("PG %s has extra ACL: %s", pg.name, acl)
+                valid = False
+        return valid
+
+    @staticmethod
+    def _check_pg_ports(pg, expected_port_ids):
+        """Check port membership matches expected."""
+        existing = {p.name for p in pg.ports}
+        valid = True
+        for port_id in expected_port_ids:
+            if port_id not in existing:
+                LOG.warning("PG %s missing port: %s",
+                            pg.name, port_id)
+                valid = False
+        for port_id in existing:
+            if port_id not in expected_port_ids:
+                LOG.warning("PG %s has stale port: %s",
+                            pg.name, port_id)
+                valid = False
+        return valid
+
+    def _is_pvlan_pg_valid(self, pg, network_id,
+                           communities=None,
+                           expected_port_ids=None):
+        """Check external_ids, ACLs, and ports."""
+        if not pg:
+            return False
+        ext_ids = pg.external_ids or {}
+        if ext_ids.get('neutron:network_id') != network_id:
+            LOG.warning("PG %s has wrong external_ids: %s",
+                        pg.name, ext_ids)
+            return False
+        if pg.name.startswith(pvlan_ovn.ISOLATED_PORT_GROUP_PREFIX):
+            expected = self._expected_isolated_acls(network_id)
+        else:
+            expected = self._expected_promiscuous_acls(
+                network_id, communities)
+        valid = self._check_acls_consistent(pg, expected)
+        if expected_port_ids is not None:
+            if not self._check_pg_ports(pg, expected_port_ids):
+                valid = False
+        return valid
+
+    def _sanitize_pvlan_network(self, ctx, pvlan_network, ovn_pgs):
+        network_id = pvlan_network.network_id
+        net_ports = ports_obj.Port.get_objects(ctx, network_id=network_id)
+        communities = {p.pvlan_community for p in net_ports
+                       if p.pvlan_type == pvlan_const.COMMUNITY_TYPE and
+                       p.pvlan_community}
+
+        iso_name = self.pvlan_driver._get_pg_name(network_id,
+                                                  pvlan_const.ISOLATED_TYPE)
+        prm_name = self.pvlan_driver._get_pg_name(network_id,
+                                                  pvlan_const.PROMISCUOUS_TYPE)
+        isolated_pg = ovn_pgs.get(iso_name)
+        promiscuous_pg = ovn_pgs.get(prm_name)
+
+        iso_port_ids = {p.id for p in net_ports
+                        if p.pvlan_type == pvlan_const.ISOLATED_TYPE}
+        prm_port_ids = {p.id for p in net_ports
+                        if p.pvlan_type == pvlan_const.PROMISCUOUS_TYPE}
+
+        iso_ok = self._is_pvlan_pg_valid(isolated_pg, network_id,
+                                         expected_port_ids=iso_port_ids)
+        prm_ok = self._is_pvlan_pg_valid(promiscuous_pg, network_id,
+                                         communities,
+                                         expected_port_ids=prm_port_ids)
+
+        # Check community PGs
+        comm_ok = True
+        invalid_comms = []
+        for community in communities:
+            comm_name = self.pvlan_driver._get_pg_name(network_id,
+                pvlan_const.COMMUNITY_TYPE, community)
+            comm_pg = ovn_pgs.get(comm_name)
+            expected = self._expected_community_acls(network_id, community)
+            comm_port_ids = {p.id for p in net_ports
+                if p.pvlan_type == pvlan_const.COMMUNITY_TYPE and
+                p.pvlan_community == community}
+            if (not comm_pg or
+                    not self._check_acls_consistent(comm_pg, expected) or
+                    not self._check_pg_ports(comm_pg, comm_port_ids)):
+                comm_ok = False
+                invalid_comms.append(community)
+
+        if iso_ok and prm_ok and comm_ok:
+            LOG.debug("PVLAN PGs for network %s correct.",
+                      network_id)
+            return
+
+        with self.ovn_nb_api.transaction(check_error=True) as txn:
+            if not iso_ok:
+                LOG.warning("Isolated PVLAN PG invalid for "
+                            "network %s, recreating.", network_id)
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if isolated_pg:
+                        txn.add(self.ovn_nb_api.pg_del(
+                            iso_name, if_exists=True))
+                    self.pvlan_driver._create_isolated_port_group(
+                        network_id, txn)
+            if not prm_ok:
+                LOG.warning("Promiscuous PVLAN PG invalid for "
+                            "network %s, recreating.", network_id)
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if promiscuous_pg:
+                        txn.add(self.ovn_nb_api.pg_del(prm_name,
+                                                       if_exists=True))
+                    self.pvlan_driver._create_promiscuous_port_group(
+                        network_id, txn)
+                    invalid_comms = communities
+            for community in invalid_comms:
+                comm_name = self.pvlan_driver._get_pg_name(
+                    network_id, pvlan_const.COMMUNITY_TYPE, community)
+                LOG.warning("Community PVLAN PG '%s' invalid for "
+                            "network %s, recreating.", community, network_id)
+                if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                    if ovn_pgs.get(comm_name):
+                        txn.add(self.ovn_nb_api.pg_del(
+                            comm_name, if_exists=True))
+        if self.mode != n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            return
+        # Use a separate transaction for port creation. Community PG
+        # needs to be deleted to be recreated during create_port.
+        LOG.debug("Re-adding PVLAN ports for network %s...", network_id)
+        with self.ovn_nb_api.transaction(check_error=True) as txn:
+            for port in net_ports:
+                port_dict = {
+                    'id': port.id,
+                    'network_id': port.network_id,
+                    'pvlan_type': port.pvlan_type,
+                    'pvlan_community': port.pvlan_community,
+                }
+                self.pvlan_driver.create_port(
+                    ctx, txn, port_dict)
+
+    def sync_pvlan(self, ctx):
+        if not self.pvlan_driver:
+            LOG.debug('OVN-NB Sync for PVLAN skipped. PVLAN plugin '
+                      'is not present @ %s.', str(datetime.now()))
+            return
+        # Gather all existing PVLAN PGs by name
+        ovn_pgs = {}
+        port_groups = (
+            self.ovn_nb_api.db_list_rows(
+                'Port_Group').execute() or [])
+        for pg in port_groups:
+            if pg.name.startswith(pvlan_ovn.PVLAN_PREFIXES):
+                ovn_pgs[pg.name] = pg
+
+        # 1. PVLAN PG Drop:
+        drop_name = pvlan_ovn.DROP_PORT_GROUP_NAME
+        drop_pg = ovn_pgs.get(drop_name)
+        if not drop_pg:
+            LOG.warning("%s not found in OVN NB DB.", drop_name)
+            if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+                pvlan_ovn.create_pvlan_pg_drop()
+        else:
+            expected_acls = self._define_drop_pvlan_acls()
+            acl_dicts = [
+                {'priority': a.priority, 'action': a.action,
+                 'direction': a.direction, 'match': a.match}
+                for a in drop_pg.acls]
+            with self.ovn_nb_api.transaction(
+                    check_error=True) as txn:
+                for acl in list(acl_dicts):
+                    if acl not in expected_acls:
+                        LOG.warning("Removing extra ACL for %s (%s %s %s)",
+                            drop_name, acl['direction'], acl['action'],
+                            acl['match'])
+                        if (self.mode ==
+                                n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR):
+                            txn.add(self.ovn_nb_api.pg_acl_del(
+                                drop_name, acl['direction'],
+                                acl['priority'], acl['match']))
+                        acl_dicts.remove(acl)
+                for acl in expected_acls:
+                    if acl not in acl_dicts:
+                        LOG.warning(
+                            "Adding missing ACL for %s (%s %s %s)", drop_name,
+                            acl['direction'], acl['action'], acl['match'])
+                        if (self.mode ==
+                                n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR):
+                            txn.add(self.ovn_nb_api.pg_acl_add(
+                                drop_name, acl['direction'],
+                                acl['priority'], acl['match'],
+                                acl['action'],
+                                may_exist=True))
+                    else:
+                        LOG.debug("%s ACL correct: %s %s %s", drop_name,
+                                  acl['direction'], acl['priority'],
+                                  acl['match'])
+
+        # 2. Per-network PVLAN PGs
+        pvlan_networks = pvlan_obj.NetworkPVLAN.get_objects(
+            ctx, pvlan=True)
+        for pvlan_net in pvlan_networks:
+            self._sanitize_pvlan_network(ctx, pvlan_net, ovn_pgs)
+
+        LOG.debug('OVN-NB Sync PVLAN completed @ %s', str(datetime.now()))
 
     def _calculate_routes_differences(self, ovn_routes, db_routes):
         to_add = []

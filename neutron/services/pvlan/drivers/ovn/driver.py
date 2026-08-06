@@ -33,9 +33,11 @@ ISOLATED_PORT_GROUP_PREFIX = "pvlan_isolated"
 COMMUNITY_PORT_GROUP_PREFIX = "pvlan_community"
 PROMISCUOUS_PORT_GROUP_PREFIX = "pvlan_promiscuous"
 DROP_PORT_GROUP_NAME = "pvlan_pg_drop"
+PVLAN_PREFIXES = (ISOLATED_PORT_GROUP_PREFIX, COMMUNITY_PORT_GROUP_PREFIX,
+    PROMISCUOUS_PORT_GROUP_PREFIX, DROP_PORT_GROUP_NAME)
 
 
-def _initialize_pvlan_pg_drop(resource, event, trigger, payload=None):
+def create_pvlan_pg_drop():
     """Create pvlan_pg_drop Port Group.
 
     Same pattern as neutron_pg_drop but at higher priority to override
@@ -82,6 +84,10 @@ def _initialize_pvlan_pg_drop(resource, event, trigger, payload=None):
             }
         }]
     ovn_utils.OvsdbClientTransactCommand.run(command)
+
+
+def _initialize_pvlan_pg_drop(resource, event, trigger, payload=None):
+    create_pvlan_pg_drop()
 
 
 def register(mech_driver):
@@ -202,7 +208,8 @@ class PVLANDriver:
                 direction=direction, match=match, may_exist=True,
                 **{"neutron:network_id": network_id}))
 
-    def _get_pg_name(self, network_id, pvlan_type, community=None):
+    @staticmethod
+    def _get_pg_name(network_id, pvlan_type, community=None):
         net_id = network_id.replace('-', '_')
         if pvlan_type == pvlan_const.COMMUNITY_TYPE:
             return "%s_%s_%s" % (

@@ -28,6 +28,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.services.ovn_l3 import plugin as ovn_plugin
+from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import \
     test_mech_driver
@@ -1614,3 +1615,235 @@ class TestSyncFipDistributedNat(test_mech_driver.OVNMechanismDriverTestCase):
             self.synchronizer.sync_fip_distributed_nat(self.ctx)
 
         self.nb_api.db_set.assert_not_called()
+
+
+class FakePort:
+    """Minimal fake Port OVO for PVLAN sync tests."""
+
+    def __init__(self, port_id, network_id,
+                 pvlan_type=None, pvlan_community=None):
+        self.id = port_id
+        self.network_id = network_id
+        self.pvlan_type = pvlan_type
+        self.pvlan_community = pvlan_community
+
+
+class FakePortGroup:
+    """Minimal fake OVN Port Group for PVLAN sync tests."""
+
+    def __init__(self, name, acls=None, ports=None,
+                 external_ids=None):
+        self.name = name
+        self.acls = acls or []
+        self.ports = ports or []
+        self.external_ids = external_ids or {}
+
+
+class FakeNetworkPVLAN:
+
+    def __init__(self, network_id):
+        self.network_id = network_id
+
+
+class TestSyncPVLAN(test_mech_driver.OVNMechanismDriverTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+        self.nb_api = self.synchronizer.ovn_nb_api
+        self.ctx = mock.Mock()
+        self.network_id = 'net-1'
+        self.net_id_clean = self.network_id.replace('-', '_')
+
+        self.pvlan_driver = mock.Mock(
+            spec=pvlan_ovn.PVLANDriver)
+        self.pvlan_driver._get_pg_name = (
+            pvlan_ovn.PVLANDriver._get_pg_name)
+        self.synchronizer.pvlan_driver = self.pvlan_driver
+
+    def _make_drop_pg(self, acls=None):
+        if acls is None:
+            drop = pvlan_ovn.DROP_PORT_GROUP_NAME
+            acls = [
+                FakeACL(
+                    priority=pvlan_ovn.DROP_ALL_PRIORITY,
+                    action='drop', direction='to-lport',
+                    match='outport == @%s && ip' % drop),
+                FakeACL(
+                    priority=pvlan_ovn.DROP_ALL_PRIORITY,
+                    action='drop', direction='from-lport',
+                    match='inport == @%s && ip' % drop),
+            ]
+        return FakePortGroup(
+            pvlan_ovn.DROP_PORT_GROUP_NAME, acls=acls)
+
+    def _make_isolated_pg(self, network_id=None,
+                          ports=None):
+        nid = network_id or self.network_id
+        nid_clean = nid.replace('-', '_')
+        pg_name = 'pvlan_isolated_%s' % nid_clean
+        prm_name = 'pvlan_promiscuous_%s' % nid_clean
+        acls = [
+            FakeACL(
+                priority=pvlan_ovn.PROMISCUOUS_PRIORITY,
+                action='allow-stateless',
+                direction='to-lport',
+                match=("outport == @%s && "
+                       "(inport == @%s || "
+                       "ip4.src == $%s_ip4 || "
+                       "ip6.src == $%s_ip6)"
+                       % (pg_name, prm_name,
+                          prm_name, prm_name))),
+        ]
+        return FakePortGroup(
+            pg_name, acls=acls, ports=ports or [],
+            external_ids={'neutron:network_id': nid})
+
+    def _make_promiscuous_pg(self, network_id=None,
+                             ports=None,
+                             community_names=None):
+        nid = network_id or self.network_id
+        nid_clean = nid.replace('-', '_')
+        pg_name = 'pvlan_promiscuous_%s' % nid_clean
+        iso_name = 'pvlan_isolated_%s' % nid_clean
+        acls = [
+            FakeACL(
+                priority=pvlan_ovn.PROMISCUOUS_PRIORITY,
+                action='allow-stateless',
+                direction='to-lport',
+                match='outport == @%s' % pg_name),
+            FakeACL(
+                priority=pvlan_ovn.PROMISCUOUS_PRIORITY,
+                action='allow-stateless',
+                direction='from-lport',
+                match='inport == @%s' % pg_name),
+            FakeACL(
+                priority=pvlan_ovn.PROMISCUOUS_PRIORITY,
+                action='allow-stateless',
+                direction='from-lport',
+                match='inport == @%s' % iso_name),
+        ]
+        for comm in (community_names or []):
+            comm_pg = 'pvlan_community_%s_%s' % (
+                comm, nid_clean)
+            acls.append(FakeACL(
+                priority=pvlan_ovn.PROMISCUOUS_PRIORITY,
+                action='allow-stateless',
+                direction='from-lport',
+                match='inport == @%s' % comm_pg))
+        return FakePortGroup(
+            pg_name, acls=acls, ports=ports or [],
+            external_ids={'neutron:network_id': nid})
+
+    # -- _check_acls_consistent --
+
+    def test_check_acls_consistent_valid(self):
+        pg = self._make_drop_pg()
+        expected = (
+            self.synchronizer._define_drop_pvlan_acls())
+        self.assertTrue(
+            self.synchronizer._check_acls_consistent(
+                pg, expected))
+
+    def test_check_acls_consistent_missing(self):
+        pg = self._make_drop_pg(acls=[])
+        expected = (
+            self.synchronizer._define_drop_pvlan_acls())
+        self.assertFalse(
+            self.synchronizer._check_acls_consistent(
+                pg, expected))
+
+    def test_check_acls_consistent_extra(self):
+        extra = FakeACL(priority=999, action='allow',
+                        direction='to-lport',
+                        match='ip')
+        pg = self._make_drop_pg()
+        pg.acls.append(extra)
+        expected = (
+            self.synchronizer._define_drop_pvlan_acls())
+        self.assertFalse(
+            self.synchronizer._check_acls_consistent(
+                pg, expected))
+
+    # -- _check_pg_ports --
+
+    def test_check_pg_ports_valid(self):
+        pg = FakePortGroup(
+            'test',
+            ports=[OvnPortInfo('p1'), OvnPortInfo('p2')])
+        self.assertTrue(
+            self.synchronizer._check_pg_ports(
+                pg, {'p1', 'p2'}))
+
+    def test_check_pg_ports_missing(self):
+        pg = FakePortGroup(
+            'test', ports=[OvnPortInfo('p1')])
+        self.assertFalse(
+            self.synchronizer._check_pg_ports(
+                pg, {'p1', 'p2'}))
+
+    def test_check_pg_ports_stale(self):
+        pg = FakePortGroup(
+            'test',
+            ports=[OvnPortInfo('p1'),
+                   OvnPortInfo('stale')])
+        self.assertFalse(
+            self.synchronizer._check_pg_ports(
+                pg, {'p1'}))
+
+    # -- _is_pvlan_pg_valid --
+
+    def test_is_pvlan_pg_valid_wrong_ext_ids(self):
+        pg = self._make_isolated_pg()
+        pg.external_ids = {'neutron:network_id': 'wrong'}
+        self.assertFalse(
+            self.synchronizer._is_pvlan_pg_valid(
+                pg, self.network_id))
+
+    def test_is_pvlan_pg_valid_promiscuous_with_comm(self):
+        pg = self._make_promiscuous_pg(
+            community_names=['web'])
+        self.assertTrue(
+            self.synchronizer._is_pvlan_pg_valid(
+                pg, self.network_id,
+                communities={'web'}))
+
+    def test_is_pvlan_pg_valid_prm_missing_comm_acl(self):
+        pg = self._make_promiscuous_pg()
+        self.assertFalse(
+            self.synchronizer._is_pvlan_pg_valid(
+                pg, self.network_id,
+                communities={'web'}))
+
+    # -- sync_pvlan --
+
+    @mock.patch.object(ovn_db_sync.OvnNbSynchronizer,
+                       '_sanitize_pvlan_network')
+    @mock.patch('neutron.objects.pvlan.NetworkPVLAN'
+                '.get_objects')
+    def test_sync_pvlan_no_driver(self, mock_get_nets,
+                                  mock_sanitize):
+        self.synchronizer.pvlan_driver = None
+        self.synchronizer.sync_pvlan(self.ctx)
+        mock_get_nets.assert_not_called()
+        mock_sanitize.assert_not_called()
+
+    @mock.patch('neutron.objects.pvlan.NetworkPVLAN'
+                '.get_objects')
+    def test_sync_pvlan_calls_sanitize_per_network(
+            self, mock_get_nets):
+        net1 = FakeNetworkPVLAN('net-1')
+        net2 = FakeNetworkPVLAN('net-2')
+        mock_get_nets.return_value = [net1, net2]
+        drop_pg = self._make_drop_pg()
+        db_list = mock.Mock()
+        db_list.execute.return_value = [drop_pg]
+        self.nb_api.db_list_rows.return_value = db_list
+        self.nb_api.transaction = mock.MagicMock()
+        with mock.patch.object(
+                self.synchronizer,
+                '_sanitize_pvlan_network') as m:
+            self.synchronizer.sync_pvlan(self.ctx)
+            self.assertEqual(2, m.call_count)
