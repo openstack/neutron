@@ -97,11 +97,11 @@ class Svd:
                 _("Failed to delete SVD %(br)s/%(vx)s: %(err)s") %
                 {'br': self.br_evpn, 'vx': self.vxlan_evpn, 'err': e})
 
-    def add_vni(self, svi_name, vni, vid, vrf_name, mac, br_mtu):
+    def add_vni(self, svi_name, lo_name, vni, vid, vrf_name, mac, br_mtu):
         try:
             privileged_svd.add_vni(
                 self.br_evpn, self.vxlan_evpn,
-                svi_name, vni, vid, vrf_name, mac, br_mtu)
+                svi_name, lo_name, vni, vid, vrf_name, mac, br_mtu)
         except IndexError:
             raise SvdDevsNotFound(
                 _("SVD %(br)s/%(vx)s or VRF %(vrf)s not found") %
@@ -114,11 +114,11 @@ class Svd:
                 {'vni': vni, 'br': self.br_evpn,
                  'vx': self.vxlan_evpn, 'err': e})
 
-    def del_vni(self, svi_name, vni, vid):
+    def del_vni(self, svi_name, lo_name, vni, vid):
         try:
             privileged_svd.del_vni(
                 self.br_evpn, self.vxlan_evpn,
-                svi_name, vni, vid)
+                svi_name, lo_name, vni, vid)
         except IndexError:
             raise SvdSviNotFound(
                 _("SVI for VNI %(vni)d not found on SVD %(br)s/%(vx)s") %

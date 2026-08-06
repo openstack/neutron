@@ -24,4 +24,6 @@ EVPN_VXLAN_IFNAME = 'vxlanevpn-'
 
 EVPN_VLAN_IFNAME_PATTERN = 'vl-%(index)d-%(vid)d'
 
+EVPN_AD_IFNAME = 'loevpn-%(vni)d'
+
 EVPN_BR_MTU = 1500

@@ -105,6 +105,10 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
                       evpn_ovn.CreateEVPNRouterCommand.SVD_INDEX),
             ls.other_config.get(
                 ovn_const.LS_OTHER_CFG_DR_VXLAN_IFNAME))
+        self.assertEqual(
+            "loevpn-%d" % (self.vni),
+            ls.other_config.get(
+                ovn_const.LS_OTHER_CFG_DR_AD_IFNAME))
 
     def test_creates_logical_router_port(self):
         self._execute()
