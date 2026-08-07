@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.api.definitions import qos_pps_rule as apidef
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.plugins import constants
@@ -24,11 +23,6 @@ from neutron.api.v2 import base
 
 COLLECTION_NAME = 'packet_rate_limit_rules'
 RESOURCE_NAME = 'packet_rate_limit_rule'
-
-# A quick align for subresource minimum bandwidth ingress direction.
-# TODO(liuyulong): Move to neutron-lib
-apidef.SUB_RESOURCE_ATTRIBUTE_MAP.update(
-    qos_bw_minimum_ingress.SUB_RESOURCE_ATTRIBUTE_MAP)
 
 
 class Qos_pps_rule(api_extensions.APIExtensionDescriptor):
