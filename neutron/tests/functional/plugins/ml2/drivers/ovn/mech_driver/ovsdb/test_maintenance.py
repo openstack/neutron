@@ -1679,6 +1679,146 @@ class TestMaintenance(_TestMaintenanceHelper):
                           f'{ha_chassis.chassis_name} not present in the '
                           f'chassis list')
 
+    def test_migrate_lr_chassis_to_lrp_ha_chassis_group(self):
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        networks = ['192.0.2.0/24']
+        router_id = uuidutils.generate_uuid()
+        lr_name = utils.ovn_name(router_id)
+        lrp_name = utils.ovn_lrouter_port_name(uuidutils.generate_uuid())
+        chassis_list = ['gw_ch1', 'gw_ch2', 'gw_ch3']
+
+        self.nb_api.lr_add(lr_name).execute(check_error=True)
+        ext_ids = {
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lr_name,
+            ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+        }
+        self.nb_api.add_lrouter_port(
+            lrp_name, lr_name, mac=mac,
+            networks=networks,
+            external_ids=ext_ids).execute(check_error=True)
+
+        # Create the per-router HA_Chassis_Group with HA_Chassis entries,
+        # and set LR.options:chassis to simulate the old [1]+[2] state.
+        chassis_prio = {ch: len(chassis_list) - idx
+                        for idx, ch in enumerate(chassis_list)}
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ha_chassis_group_with_hc_add(
+                lr_name, chassis_prio, may_exist=True,
+                external_ids={
+                    ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: '',
+                    ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id}))
+            txn.add(self.nb_api.db_set(
+                'Logical_Router', lr_name,
+                ('options', {'chassis': chassis_list[0]})))
+
+        # Verify old state: LR.options.chassis is set, LRP has no HCG.
+        lr = self.nb_api.lookup('Logical_Router', lr_name)
+        self.assertEqual(chassis_list[0], lr.options.get('chassis'))
+        lrp = self.nb_api.lookup('Logical_Router_Port', lrp_name)
+        self.assertEqual([], lrp.ha_chassis_group)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.migrate_lr_chassis_to_lrp_ha_chassis_group)
+
+        # Verify new state: LR.options.chassis is gone, LRP has HCG and
+        # centralize_routing.
+        lr = self.nb_api.lookup('Logical_Router', lr_name)
+        self.assertNotIn('chassis', lr.options)
+        lrp = self.nb_api.lookup('Logical_Router_Port', lrp_name)
+        self.assertTrue(lrp.ha_chassis_group)
+        hcg = lrp.ha_chassis_group[0]
+        self.assertEqual(lr_name, hcg.name)
+        self.assertEqual(len(chassis_list), len(hcg.ha_chassis))
+        self.assertTrue(strutils.bool_from_string(
+            lrp.options.get(ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING)))
+
+    def test_migrate_lr_chassis_to_lrp_hcg_no_gw_lrp(self):
+        """Router with options:chassis but no GW LRP is skipped."""
+        router_id = uuidutils.generate_uuid()
+        lr_name = utils.ovn_name(router_id)
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        lrp_name = utils.ovn_lrouter_port_name(uuidutils.generate_uuid())
+
+        self.nb_api.lr_add(lr_name).execute(check_error=True)
+        # LRP without is_ext_gw.
+        self.nb_api.add_lrouter_port(
+            lrp_name, lr_name, mac=mac,
+            networks=['10.0.0.0/24']).execute(check_error=True)
+
+        chassis_prio = {'gw_ch1': 3}
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ha_chassis_group_with_hc_add(
+                lr_name, chassis_prio, may_exist=True,
+                external_ids={
+                    ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: '',
+                    ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id}))
+            txn.add(self.nb_api.db_set(
+                'Logical_Router', lr_name,
+                ('options', {'chassis': 'gw_ch1'})))
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.migrate_lr_chassis_to_lrp_ha_chassis_group)
+
+        # options:chassis is NOT removed because no GW LRP was found.
+        lr = self.nb_api.lookup('Logical_Router', lr_name)
+        self.assertEqual('gw_ch1', lr.options.get('chassis'))
+
+    def test_migrate_lr_chassis_to_lrp_hcg_no_hcg(self):
+        """Router with options:chassis but no HCG is skipped."""
+        lr_name = utils.ovn_name(uuidutils.generate_uuid())
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        lrp_name = utils.ovn_lrouter_port_name(uuidutils.generate_uuid())
+
+        self.nb_api.lr_add(lr_name).execute(check_error=True)
+        ext_ids = {
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lr_name,
+            ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+        }
+        self.nb_api.add_lrouter_port(
+            lrp_name, lr_name, mac=mac,
+            networks=['192.0.2.0/24'],
+            external_ids=ext_ids).execute(check_error=True)
+        self.nb_api.db_set(
+            'Logical_Router', lr_name,
+            ('options', {'chassis': 'gw_ch1'})
+        ).execute(check_error=True)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.migrate_lr_chassis_to_lrp_ha_chassis_group)
+
+        # options:chassis is NOT removed because no HCG was found.
+        lr = self.nb_api.lookup('Logical_Router', lr_name)
+        self.assertEqual('gw_ch1', lr.options.get('chassis'))
+        lrp = self.nb_api.lookup('Logical_Router_Port', lrp_name)
+        self.assertEqual([], lrp.ha_chassis_group)
+
+    def test_migrate_lr_chassis_skips_router_without_chassis(self):
+        """Router without options:chassis is not touched."""
+        lr_name = utils.ovn_name(uuidutils.generate_uuid())
+        mac = next(net_utils.random_mac_generator(['ca', 'fe', 'ca', 'fe']))
+        lrp_name = utils.ovn_lrouter_port_name(uuidutils.generate_uuid())
+
+        self.nb_api.lr_add(lr_name).execute(check_error=True)
+        ext_ids = {
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lr_name,
+            ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+        }
+        self.nb_api.add_lrouter_port(
+            lrp_name, lr_name, mac=mac,
+            networks=['192.0.2.0/24'],
+            external_ids=ext_ids).execute(check_error=True)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.migrate_lr_chassis_to_lrp_ha_chassis_group)
+
+        # LRP must not have HCG assigned.
+        lrp = self.nb_api.lookup('Logical_Router_Port', lrp_name)
+        self.assertEqual([], lrp.ha_chassis_group)
+
     def test_add_provnet_ext_id_to_localnet_ports(self):
         n1 = self._create_network(
             'n_provnet_maint_1', provider='physnet1', net_type='flat')

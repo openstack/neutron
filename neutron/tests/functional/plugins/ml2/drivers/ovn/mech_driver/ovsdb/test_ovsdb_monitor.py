@@ -670,32 +670,63 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                         'external_gateway_info': external_gateway_info}})
         return router
 
-    def test_ha_chassis_group_router_event(self):
-        def _check_high_prio_chassis(num_chassis):
-            lr = self.nb_api.lookup('Logical_Router', ovn_r_name)
-            hp_chassis_lr = lr.options['chassis']
-            hcg = self.nb_api.lookup('HA_Chassis_Group', ovn_r_name)
-            self.assertEqual(num_chassis, len(hcg.ha_chassis))
-            hp_chassis_hcg = max(hcg.ha_chassis, key=lambda hc: hc.priority)
-            self.assertEqual(hp_chassis_lr, hp_chassis_hcg.chassis_name)
+    def _get_gw_lrp(self, ovn_r_name):
+        lr = self.nb_api.lookup('Logical_Router', ovn_r_name)
+        gw_lrps = [lrp for lrp in lr.ports if strutils.bool_from_string(
+            lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW))]
+        self.assertEqual(1, len(gw_lrps))
+        return lr, gw_lrps[0]
 
-        chassis_list = []
+    def _check_tunneled_gw_hcg(self, ovn_r_name, num_chassis):
+        lr, gw_lrp = self._get_gw_lrp(ovn_r_name)
+        self.assertNotIn('chassis', lr.options)
+        self.assertTrue(gw_lrp.ha_chassis_group)
+        self.assertTrue(strutils.bool_from_string(
+            gw_lrp.options.get(ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING)))
+
+        hcg = gw_lrp.ha_chassis_group[0]
+        self.assertEqual(ovn_r_name, hcg.name)
+        self.assertEqual(num_chassis, len(hcg.ha_chassis))
+        return lr, gw_lrp, hcg
+
+    def test_ha_chassis_group_router_event(self):
+        """Tunneled GW router uses LRP HCG; OVN binds natively.
+
+        Chassis membership is maintained by ChassisEvent on the per-router
+        HA_Chassis_Group. Neutron must not set LR.options:chassis.
+        """
         num_chassis = 5
         for idx in range(num_chassis):
-            chassis_list.append(
-                self.add_fake_chassis('host-%s' % str(idx), azs=[],
-                                      enable_chassis_as_gw=True))
+            self.add_fake_chassis('host-%s' % idx, azs=[],
+                                  enable_chassis_as_gw=True)
 
         router = self._create_router()
         ovn_r_name = ovn_utils.ovn_name(router['id'])
-        _check_high_prio_chassis(len(chassis_list))
+        _, _, hcg = self._check_tunneled_gw_hcg(ovn_r_name, num_chassis)
+
+        deleted_ch = max(
+            hcg.ha_chassis, key=lambda hc: hc.priority).chassis_name
+        row_event_lr = test_events.WaitForLogicalRouterUpdate()
+        self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event_lr)
+        self.del_fake_chassis(deleted_ch)
+        row_event_lr.wait()
 
         lr = self.nb_api.lookup('Logical_Router', ovn_r_name)
-        row_event = test_events.WaitForLogicalRouterUpdate()
-        self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event)
-        self.del_fake_chassis(lr.options['chassis'])
-        self.assertTrue(row_event.wait())
-        _check_high_prio_chassis(num_chassis - 1)
+        self.assertNotIn(
+            'chassis', lr.options,
+            'Tunneled GW routers must not use LR.options:chassis')
+
+        def hcg_has_expected_members():
+            hcg = self.nb_api.lookup('HA_Chassis_Group', ovn_r_name)
+            if len(hcg.ha_chassis) != num_chassis - 1:
+                return False
+            return deleted_ch not in {hc.chassis_name
+                                      for hc in hcg.ha_chassis}
+
+        n_utils.wait_until_true(hcg_has_expected_members, timeout=10)
+        _, _, hcg = self._check_tunneled_gw_hcg(ovn_r_name, num_chassis - 1)
+        self.assertNotIn(
+            deleted_ch, {hc.chassis_name for hc in hcg.ha_chassis})
 
     def test_ha_chassis_group_router_event_physnet(self):
         """Regression test for LP#2158987.

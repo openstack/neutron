@@ -3019,7 +3019,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_update_network_need_to_frag_enabled(self):
         new_mtu = 1234
         expected_opts = {ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
-                         str(new_mtu)}
+                         str(new_mtu),
+                         ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING: 'true',
+                         }
         self._test_update_network_fragmentation(new_mtu, expected_opts)
 
     def test_ping_all_chassis(self):
