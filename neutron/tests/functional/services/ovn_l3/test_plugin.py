@@ -306,6 +306,109 @@ class TestRouter(base.TestOVNFunctionalBase):
         # candidates.
         self._check_gateway_chassis_candidates(None, physnet=None)
 
+    def _create_router_with_tunnelled_gw_and_internal_net(self):
+        ext1 = self._create_ext_network(
+            'ext1', 'geneve', None, None, "10.0.0.1", "10.0.0.0/24")
+        gw_info = {'network_id': ext1['network']['id']}
+        router = self._create_router('router1', gw_info=gw_info)
+        router_id = router['id']
+
+        int_net = self._make_network(self.fmt, 'int1', True)
+        int_subnet = self._make_subnet(
+            self.fmt, int_net, '20.0.0.1', '20.0.0.0/24',
+            ip_version=n_consts.IP_VERSION_4)
+        network_id = int_net['network']['id']
+        self.l3_plugin.add_router_interface(
+            self.context, router_id,
+            {'subnet_id': int_subnet['subnet']['id']})
+        return router_id, network_id
+
+    def test_link_network_ha_chassis_group_tunnelled_gw_no_wipe(self):
+        # The router's external gateway is on a tunnelled (geneve) network,
+        # so the GW LRP never gets an "HA_Chassis_Group" populated -- see
+        # test_gateway_chassis_no_physnet_tunnelled_network. If the internal
+        # network's own unified HA_Chassis_Group was already correctly
+        # populated by some other means, link_network_ha_chassis_group must
+        # not wipe it out just because the GW LRP has no
+        # "HA_Chassis_Group".
+        ovn_client = self.l3_plugin._ovn_client
+        router_id, network_id = (
+            self._create_router_with_tunnelled_gw_and_internal_net())
+
+        gw_lrps = ovn_client.get_router_gateway_ports(router_id)
+        self.assertEqual([], gw_lrps[0].ha_chassis_group)
+
+        hcg_name = ovn_utils.ovn_name(network_id)
+        with ovn_client._nb_idl.transaction(check_error=True) as txn:
+            ovn_utils.sync_ha_chassis_group_network_unified(
+                self.context, ovn_client._nb_idl, ovn_client._sb_idl,
+                network_id, router_id, {self.chassis1: 32767}, txn)
+        hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+        self.assertEqual([self.chassis1],
+                         [hc.chassis_name for hc in hcg.ha_chassis])
+
+        ovn_client.link_network_ha_chassis_group(
+            self.context, network_id, router_id)
+
+        hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+        self.assertEqual([self.chassis1],
+                         [hc.chassis_name for hc in hcg.ha_chassis])
+
+    def test_link_network_ha_chassis_group_tunnelled_gw_no_preexisting_hcg(
+            self):
+        # Same tunnelled-gateway setup, but with no pre-existing network HCG
+        # at all. link_network_ha_chassis_group must not create one either
+        # (nothing to sync from), and must not raise.
+        ovn_client = self.l3_plugin._ovn_client
+        router_id, network_id = (
+            self._create_router_with_tunnelled_gw_and_internal_net())
+
+        hcg_name = ovn_utils.ovn_name(network_id)
+        self.assertIsNone(
+            self.nb_api.lookup('HA_Chassis_Group', hcg_name, default=None))
+
+        ovn_client.link_network_ha_chassis_group(
+            self.context, network_id, router_id)
+
+        self.assertIsNone(
+            self.nb_api.lookup('HA_Chassis_Group', hcg_name, default=None))
+
+    def test_link_network_ha_chassis_group_gateway_chassis_still_syncs(self):
+        # Sanity check: when the router's external gateway *does* have an
+        # "HA_Chassis_Group" populated (VLAN/FLAT),
+        # link_network_ha_chassis_group must still sync the internal
+        # network's unified HA_Chassis_Group to match it -- the empty-check
+        # guard must not affect this path.
+        ovn_client = self.l3_plugin._ovn_client
+        ext1 = self._create_ext_network(
+            'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
+        gw_info = {'network_id': ext1['network']['id']}
+        router = self._create_router('router1', gw_info=gw_info)
+        router_id = router['id']
+
+        int_net = self._make_network(self.fmt, 'int1', True)
+        int_subnet = self._make_subnet(
+            self.fmt, int_net, '20.0.0.1', '20.0.0.0/24',
+            ip_version=n_consts.IP_VERSION_4)
+        network_id = int_net['network']['id']
+        self.l3_plugin.add_router_interface(
+            self.context, router_id,
+            {'subnet_id': int_subnet['subnet']['id']})
+
+        gw_lrps = ovn_client.get_router_gateway_ports(router_id)
+        self.assertEqual(
+            [self.chassis1],
+            [hc.chassis_name for hc in
+             gw_lrps[0].ha_chassis_group[0].ha_chassis])
+
+        ovn_client.link_network_ha_chassis_group(
+            self.context, network_id, router_id)
+
+        hcg_name = ovn_utils.ovn_name(network_id)
+        hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+        self.assertEqual([self.chassis1],
+                         [hc.chassis_name for hc in hcg.ha_chassis])
+
     def test_gateway_chassis_least_loaded_scheduler(self):
         # This test will create 4 routers each with its own gateway.
         # Using the least loaded policy for scheduling gateway ports, we
