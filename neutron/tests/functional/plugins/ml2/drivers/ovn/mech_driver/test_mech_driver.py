@@ -129,6 +129,35 @@ class TestOvsdbPersistUuid(base.TestOVNFunctionalBase):
         port_lsp = self.nb_api.lsp_get(port).execute(check_error=True)
         self.assertIn(port_lsp, n1_ls.ports)
 
+    def test_old_network_no_duplicated_lswitch(self):
+        if not utils.ovs_persist_uuid_supported(self.nb_api):
+            self.skipTest("OVS persist_uuid not supported")
+        mock_supported = mock.patch.object(utils, 'ovs_persist_uuid_supported',
+                                           return_value=False).start()
+        network = self._make_network(self.fmt, 'n1', True)
+        network_id = network['network']['id']
+        ls_name = utils.ovn_name(network_id)
+        n1_ls = self.nb_api.ls_get(ls_name).execute(check_error=True)
+        self.assertNotEqual(uuid.UUID(network_id), n1_ls.uuid)
+        mock_supported.return_value = True
+
+        # The maintenance task retrieves the Logical_Switch with the network
+        # ID; the lookup must fall back to the name when the register UUID
+        # does not match.
+        self.assertEqual(n1_ls.uuid, self.nb_api.get_lswitch(network_id).uuid)
+        self.assertEqual(n1_ls.uuid, self.nb_api.get_lswitch(ls_name).uuid)
+        self.assertIsNone(self.nb_api.get_lswitch(uuidutils.generate_uuid()))
+
+        # The Logical_Switch register UUID does not match the network ID;
+        # adding the same network again must not create a second register
+        # with the same name.
+        self.nb_api.ls_add(network_id=network_id,
+                           may_exist=True).execute(check_error=True)
+        switches = [ls for ls in
+                    self.nb_api.ls_list().execute(check_error=True)
+                    if ls.name == ls_name]
+        self.assertEqual([n1_ls.uuid], [ls.uuid for ls in switches])
+
 
 class TestPortBinding(base.TestOVNFunctionalBase):
 

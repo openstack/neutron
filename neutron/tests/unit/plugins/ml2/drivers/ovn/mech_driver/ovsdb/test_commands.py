@@ -21,6 +21,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exc
+from neutron.common.ovn import utils
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
@@ -94,6 +95,80 @@ class TestCheckLivenessCommand(TestBaseCommand):
         cmd = commands.CheckLivenessCommand(self.ovn_api)
         cmd.run_idl(self.transaction)
         self.assertNotEqual(cmd.result, old_ng_cfg)
+
+
+class TestAddNetworkCommand(TestBaseCommand):
+
+    def setUp(self):
+        super().setUp()
+        self.net_id = uuidutils.generate_uuid()
+        # The OVSDB backend exposes the tables both as "tables" and
+        # "_tables"; the fake NB IDL only defines the latter.
+        self.ovn_api.tables = self.ovn_api._tables
+        self.ls_table = self.ovn_api.tables['Logical_Switch']
+
+    def _test_network_add(self, persist_uuid):
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        self.transaction.insert.return_value = fake_ls
+        with mock.patch.object(idlutils, 'row_by_value', return_value=None), \
+                mock.patch.object(utils, 'ovs_persist_uuid_supported',
+                                  return_value=persist_uuid):
+            cmd = commands.AddNetworkCommand(self.ovn_api, self.net_id)
+            cmd.run_idl(self.transaction)
+        if persist_uuid:
+            self.transaction.insert.assert_called_once_with(
+                self.ls_table, new_uuid=uuid.UUID(self.net_id),
+                persist_uuid=True)
+        else:
+            self.transaction.insert.assert_called_once_with(self.ls_table)
+        self.assertEqual(utils.ovn_name(self.net_id), fake_ls.name)
+
+    def test_network_add(self):
+        self._test_network_add(True)
+
+    def test_network_add_no_persist_uuid_support(self):
+        self._test_network_add(False)
+
+    def test_network_add_exists_may_exist(self):
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        self.ls_table.rows[uuid.UUID(self.net_id)] = fake_ls
+        cmd = commands.AddNetworkCommand(self.ovn_api, self.net_id,
+                                         may_exist=True)
+        cmd.run_idl(self.transaction)
+        self.assertEqual(fake_ls.uuid, cmd.result.uuid)
+        self.transaction.insert.assert_not_called()
+
+    def test_network_add_exists(self):
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        self.ls_table.rows[uuid.UUID(self.net_id)] = fake_ls
+        cmd = commands.AddNetworkCommand(self.ovn_api, self.net_id)
+        self.assertRaises(RuntimeError, cmd.run_idl, self.transaction)
+        self.transaction.insert.assert_not_called()
+
+    def test_network_add_legacy_lswitch_may_exist(self):
+        # A Logical_Switch created before persist_uuid was used has a random
+        # register UUID and is only found by its name.
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': utils.ovn_name(self.net_id)})
+        with mock.patch.object(idlutils, 'row_by_value',
+                               return_value=fake_ls) as mock_row_by_value:
+            cmd = commands.AddNetworkCommand(self.ovn_api, self.net_id,
+                                             may_exist=True)
+            cmd.run_idl(self.transaction)
+        mock_row_by_value.assert_called_once_with(
+            self.ovn_api.idl, 'Logical_Switch', 'name',
+            utils.ovn_name(self.net_id), None)
+        self.assertEqual(fake_ls.uuid, cmd.result.uuid)
+        self.transaction.insert.assert_not_called()
+
+    def test_network_add_legacy_lswitch(self):
+        fake_ls = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': utils.ovn_name(self.net_id)})
+        with mock.patch.object(idlutils, 'row_by_value',
+                               return_value=fake_ls):
+            cmd = commands.AddNetworkCommand(self.ovn_api, self.net_id)
+            self.assertRaises(RuntimeError, cmd.run_idl, self.transaction)
+        self.transaction.insert.assert_not_called()
 
 
 class TestAddLSwitchPortCommand(TestBaseCommand):
