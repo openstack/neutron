@@ -28,6 +28,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import extraroute as xroute_exc
 from neutron_lib.exceptions import l3 as l3_exc
+from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
@@ -43,6 +44,7 @@ from neutron.extensions import segment as segment_ext
 from neutron.objects import base as base_obj
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
+from neutron.objects.qos import policy as policy_obj
 from neutron.objects import router as l3_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.tests import base
@@ -280,7 +282,9 @@ class TestL3_NAT_dbonly_mixin(
     @mock.patch.object(l3_obj.FloatingIP, 'update')
     @mock.patch.object(l3_obj.FloatingIP, 'get_object')
     @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_make_floatingip_dict')
-    def test__update_floatingip_update_existing_qos(self, make_fip_dict,
+    @mock.patch.object(policy_obj.QosPolicy, 'get_policy_obj')
+    def test__update_floatingip_update_existing_qos(self, mock_get_policy,
+                                                    make_fip_dict,
                                                     mock_get_fip_ovo,
                                                     mock_update_fip_ovo,
                                                     mock_qos_support,
@@ -295,15 +299,20 @@ class TestL3_NAT_dbonly_mixin(
             id=fip_id, qos_policy_id=qos_p_id
         )
 
+        # Update the QoS Id with a new one
+        new_qos_id = uuidutils.generate_uuid()
+        qos_ovo = policy_obj.QosPolicy(
+            id=new_qos_id
+        )
+
         mock_get_fip.return_value = fip_ovo
         mock_get_fip_ovo.return_value = fip_ovo
         make_fip_dict.return_value = {
             'id': mock.sentinel.fip_ip,
             'qos_policy_id': qos_p_id
         }
+        mock_get_policy.return_value = qos_ovo
 
-        # Update the QoS Id with a new one
-        new_qos_id = uuidutils.generate_uuid()
         new_fip = {'floatingip': {'qos_policy_id': new_qos_id}}
         db._update_floatingip(contxt, fip_id, new_fip)
 
@@ -318,6 +327,38 @@ class TestL3_NAT_dbonly_mixin(
 
         mock_update_fip_ovo.assert_called_once()
         self.assertEqual(2, make_fip_dict.call_count)
+
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_get_floatingip')
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_is_fip_qos_supported')
+    @mock.patch.object(l3_obj.FloatingIP, 'update')
+    @mock.patch.object(l3_obj.FloatingIP, 'get_object')
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_make_floatingip_dict')
+    @mock.patch.object(policy_obj.QosPolicy, 'get_policy_obj')
+    def test__update_floatingip_invisible_qos_policy(self, mock_get_policy,
+                                                     make_fip_dict,
+                                                     mock_get_fip_ovo,
+                                                     mock_update_fip_ovo,
+                                                     mock_qos_support,
+                                                     mock_get_fip):
+        fip_id = uuidutils.generate_uuid()
+        qos_p_id = uuidutils.generate_uuid()
+        db = l3_db.L3_NAT_dbonly_mixin()
+        contxt = context.get_admin_context()
+        mock_qos_support.return_value = True
+
+        fip_ovo = l3_obj.FloatingIP(id=fip_id, qos_policy_id=qos_p_id)
+        mock_get_fip.return_value = fip_ovo
+        mock_get_fip_ovo.return_value = fip_ovo
+
+        invisible_policy_id = uuidutils.generate_uuid()
+        mock_get_policy.side_effect = qos_exc.QosPolicyNotFound(
+            policy_id=invisible_policy_id)
+
+        new_fip = {'floatingip': {'qos_policy_id': invisible_policy_id}}
+        self.assertRaises(
+            qos_exc.QosPolicyNotFound,
+            db._update_floatingip, contxt, fip_id, new_fip)
+        mock_update_fip_ovo.assert_not_called()
 
     @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, '_make_floatingip_dict')
     def test__make_floatingip_dict_with_scope(self, make_fip_dict):

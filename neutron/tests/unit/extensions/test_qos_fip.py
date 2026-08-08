@@ -61,7 +61,8 @@ class FloatingIPQoSDBTestCaseBase:
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol1',
+                                      project_id=self._project_id,
+                                      name='pol1',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as s:
@@ -74,11 +75,23 @@ class FloatingIPQoSDBTestCaseBase:
             self.assertEqual(policy_obj.id,
                              fip['floatingip'][qos_consts.QOS_POLICY_ID])
 
+    def test_create_fip_with_invisible_qos_policy_id(self):
+        invisible_policy_id = uuidutils.generate_uuid()
+        with self.subnet(cidr='11.0.0.0/24') as s:
+            network_id = s['subnet']['network_id']
+            self._set_net_external(network_id)
+            res = self._create_floatingip(
+                self.fmt,
+                network_id,
+                qos_policy_id=invisible_policy_id)
+            self.assertEqual(404, res.status_int)
+
     def test_fip_has_qos_policy_id_remove_policy(self):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol1',
+                                      project_id=self._project_id,
+                                      name='pol1',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as s:
@@ -96,12 +109,14 @@ class FloatingIPQoSDBTestCaseBase:
         ctx = context.get_admin_context()
         policy_obj_1 = policy.QosPolicy(ctx,
                                         id=uuidutils.generate_uuid(),
-                                        project_id='tenant', name='pol2',
+                                        project_id=self._project_id,
+                                        name='pol2',
                                         rules=[])
         policy_obj_1.create()
         policy_obj_2 = policy.QosPolicy(ctx,
                                         id=uuidutils.generate_uuid(),
-                                        project_id='tenant', name='pol3',
+                                        project_id=self._project_id,
+                                        name='pol3',
                                         rules=[])
         policy_obj_2.create()
         with self.subnet(cidr='11.0.0.0/24') as s:
@@ -128,11 +143,31 @@ class FloatingIPQoSDBTestCaseBase:
                 self.assertGreater(updated_revision_number,
                                    fip_revision_number)
 
+    def test_floatingip_update_with_invisible_qos_policy_id(self):
+        ctx = context.get_admin_context()
+        policy_obj_instance = policy.QosPolicy(
+            ctx, id=uuidutils.generate_uuid(),
+            project_id=self._project_id, name='visible_pol', rules=[])
+        policy_obj_instance.create()
+        with self.subnet(cidr='11.0.0.0/24') as s:
+            network_id = s['subnet']['network_id']
+            self._set_net_external(network_id)
+            fip = self._make_floatingip(
+                self.fmt, network_id,
+                qos_policy_id=policy_obj_instance.id)
+            invisible_policy_id = uuidutils.generate_uuid()
+            self._update(
+                'floatingips', fip['floatingip']['id'],
+                {'floatingip': {
+                    qos_consts.QOS_POLICY_ID: invisible_policy_id}},
+                expected_code=404)
+
     def test_floatingip_adding_qos_policy_id_by_update(self):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol4',
+                                      project_id=self._project_id,
+                                      name='pol4',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as s:
@@ -171,7 +206,8 @@ class FloatingIPQoSDBTestCaseBase:
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol4',
+                                      project_id=self._project_id,
+                                      name='pol4',
                                       rules=[])
         policy_obj.create()
         with self.network() as ext_net:
@@ -205,12 +241,14 @@ class FloatingIPQoSDBTestCaseBase:
         ctx = context.get_admin_context()
         policy_obj_1 = policy.QosPolicy(ctx,
                                         id=uuidutils.generate_uuid(),
-                                        project_id='tenant', name='pol2',
+                                        project_id=self._project_id,
+                                        name='pol2',
                                         rules=[])
         policy_obj_1.create()
         policy_obj_2 = policy.QosPolicy(ctx,
                                         id=uuidutils.generate_uuid(),
-                                        project_id='tenant', name='pol3',
+                                        project_id=self._project_id,
+                                        name='pol3',
                                         rules=[])
         policy_obj_2.create()
         with self.network() as ext_net:
@@ -279,7 +317,8 @@ class FloatingIPQoSDBTestCaseBase:
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol5',
+                                      project_id=self._project_id,
+                                      name='pol5',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as s:
@@ -303,7 +342,8 @@ class FloatingIPQoSDBTestCaseBase:
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol2',
+                                      project_id=self._project_id,
+                                      name='pol2',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as s:
