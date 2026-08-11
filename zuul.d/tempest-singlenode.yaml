@@ -699,7 +699,7 @@
     pre-run: playbooks/enable-fips.yaml
     vars:
       nslookup_target: 'opendev.org'
-      configure_swap_size: 4096
+      configure_swap_size: 8192
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
