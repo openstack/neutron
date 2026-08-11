@@ -2,15 +2,15 @@
     name: neutron-five-node-noble-bgp
     nodes:
       - name: controller
-        label: ubuntu-noble
+        label: ubuntu-noble-8GB
       - name: compute1
-        label: ubuntu-noble
+        label: ubuntu-noble-8GB
       - name: leaf-1
         label: ubuntu-noble
       - name: leaf-2
         label: ubuntu-noble
       - name: spine
-        label: ubuntu-noble
+        label: ubuntu-noble-8GB
     groups:
       - name: controller
         nodes:
@@ -111,6 +111,8 @@
           ADVANCED_INSTANCE_USER: ubuntu
           CUSTOMIZE_IMAGE: true
           BUILD_TIMEOUT: 784
+          LIVE_MIGRATION_AVAILABLE: True
+          USE_BLOCK_MIGRATION_FOR_LIVE_MIGRATION: True
         devstack_plugins:
           neutron-tempest-plugin: https://opendev.org/openstack/neutron-tempest-plugin
         devstack_services:
@@ -161,20 +163,49 @@
                 nova: True
                 glance: True
                 key: True
+              compute:
+                min_compute_nodes: 2
               neutron_plugin_options:
                 firewall_driver: ovn
         tempest_concurrency: 4
         tempest_test_regex: "\
           (^neutron_tempest_plugin.scenario)|\
           (^tempest.scenario.test_server_basic_ops.TestServerBasicOps)|\
+          (^tempest.scenario.test_network_basic_ops)|\
+          (^tempest.scenario.test_network_advanced_server_ops)|\
           (^tempest.scenario.test_network_v6)"
-        # features not supported with BGP yet
+        # Excluded tests and reasons:
+        # - test_port_forwardings: FIP port forwarding not supported
+        #     by OVN BGP Agent
+        # - test_multiple_gws: creates its own FRR/BFD on br-ex,
+        #     conflicts with the BGP spine-leaf fabric
+        # - test_snat_external_ip, test_default_sec_grp_scenarios,
+        #   test_connectivity_between_vms_on_different_networks,
+        #   test_network_basic_ops, test_subnet_details:
+        #     ping external gw IP from VM, which is not reachable
+        #     with the current BGP implementation
+        # - test_reuse_ip_address_with_other_fip_on_other_router:
+        #     FIP reassignment across routers causes stale BGP
+        #     routes
+        # - test_server_connectivity_rebuild: rebuilds with
+        #     image_ref_alt (ubuntu 2.2GB) which exceeds m1.nano
+        #     1GB disk; also image_alt_ssh_user mismatches
+        # - test_multicast: multicast not forwarded across the
+        #     routed spine-leaf fabric
+        # - test_vlan_transparency: not relevant to BGP validation,
+        #     too slow (1000s+) and risks job timeout
         tempest_exclude_regex: "\
           (^neutron_tempest_plugin.scenario.test_port_forwardings)|\
           (^neutron_tempest_plugin.scenario.test_multiple_gws)|\
           (^neutron_tempest_plugin.scenario.test_floatingip.DefaultSnatToExternal.test_snat_external_ip)|\
           (^neutron_tempest_plugin.scenario.*test_default_sec_grp_scenarios)|\
-          (^neutron_tempest_plugin.scenario.test_floatingip.FloatingIpMultipleRoutersTest.test_reuse_ip_address_with_other_fip_on_other_router)"
+          (^neutron_tempest_plugin.scenario.test_floatingip.FloatingIpMultipleRoutersTest.test_reuse_ip_address_with_other_fip_on_other_router)|\
+          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_connectivity_between_vms_on_different_networks)|\
+          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops)|\
+          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_subnet_details)|\
+          (^tempest.scenario.test_network_advanced_server_ops.TestNetworkAdvancedServerOps.test_server_connectivity_rebuild)|\
+          (^neutron_tempest_plugin.scenario.test_multicast)|\
+          (^neutron_tempest_plugin.scenario.test_vlan_transparency)"
       zbgp_compute:
         devstack_localrc:
           <<: *subnode_localrc
