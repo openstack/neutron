@@ -25,6 +25,7 @@ from neutron.common import utils
 LOG = logging.getLogger(__name__)
 
 _first_worker_result = None
+_start_time = None
 
 
 def _write_temp_file(file_name: str, content: str) -> tuple[bool, str]:
@@ -53,32 +54,36 @@ def _write_temp_file(file_name: str, content: str) -> tuple[bool, str]:
         return False, _path
 
 
-def get_start_time(default=None, current_time=False):
-    """Return the 'start-time=%t' config varible in the WSGI config
+def get_start_time():
+    """Return the start time of the WSGI server process group.
 
-    This variable contains the start time of the WSGI server. Check
-    https://uwsgi-docs.readthedocs.io/en/latest/Configuration.html
-    #magic-variables
+    The first API worker to run records the current time in a temp file
+    keyed by the parent PID. Subsequent workers (and future calls from
+    the same worker) read from that file. The file is automatically
+    invalidated when the WSGI server restarts (new parent PID).
 
-    :param default: (int or float) in case the uwsgi option 'start-time' is not
-                    available or the uwsgi module cannot be loaded, the method
-                    will return this value.
-    :param current_time: (bool) if ``default`` is None and this flag is set,
-                         the method will return the current time.
     :return: (int) start time in seconds.
     """
-    if not default and current_time:
-        default = utils.datetime_to_ts(timeutils.utcnow())
-    default = int(default) if default else None
+    global _start_time
+    if _start_time is not None:
+        return _start_time
+
+    _time = utils.datetime_to_ts(timeutils.utcnow())
+    written, _path = _write_temp_file('neutron_start_time', str(_time))
+    if written:
+        # This API worker succeed. Use the same _time written in the file.
+        _start_time = _time
+        return _start_time
+
     try:
-        # pylint: disable=import-outside-toplevel
-        import uwsgi
-        start_time = uwsgi.opt.get('start-time')
-        if not start_time:
-            return default
-        return int(start_time.decode(encoding='utf-8'))
-    except ImportError:
-        return default
+        with open(_path) as f:
+            content = f.read().strip()
+            if content:
+                _start_time = int(content)
+                return _start_time
+    except (ValueError, OSError):
+        msg = 'Unable to read the start time of the WSGI server process.'
+        raise RuntimeError(msg)
 
 
 def get_api_worker_count() -> int | None:
