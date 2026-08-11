@@ -18,11 +18,13 @@ from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
+from neutron.agent.common import ovs_lib
 from neutron.agent.ovn.agent import ovsdb as agent_ovsdb
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as ovn_qos
+from neutron.tests.functional.agent.linux import base as linux_base
 from neutron.tests.functional import base
 
 
@@ -108,3 +110,71 @@ class GetPortQosTestCase(base.TestOVNFunctionalBase):
         self.assertIsNone(lsp)
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.nb_api, lsp_name)
         self.assertEqual((0, 0), (max_kbps, min_kbps))
+
+
+class GetExternalIdListTestCase(linux_base.BaseOVSLinuxTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.ovs_idl = ovs_lib.BaseOVS().ovsdb
+        self.test_key = 'test-' + uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_ext_id)
+
+    def _cleanup_ext_id(self):
+        self.ovs_idl.db_remove(
+            'Open_vSwitch', '.', 'external_ids', self.test_key,
+            if_exists=True
+        ).execute(check_error=True)
+
+    def _set_ext_id(self, value):
+        self.ovs_idl.db_set(
+            'Open_vSwitch', '.',
+            external_ids={self.test_key: value}
+        ).execute(check_error=True)
+
+    def test_single_value(self):
+        self._set_ext_id('br-one')
+        self.assertEqual(
+            ['br-one'],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))
+
+    def test_multiple_values_sorted(self):
+        self._set_ext_id('br-b,br-a,br-c')
+        self.assertEqual(
+            ['br-a', 'br-b', 'br-c'],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))
+
+    def test_whitespace_stripped(self):
+        self._set_ext_id('  br-a , br-b  ')
+        self.assertEqual(
+            ['br-a', 'br-b'],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))
+
+    def test_empty_entries_ignored(self):
+        self._set_ext_id('br-a,,br-b,,,br-c')
+        self.assertEqual(
+            ['br-a', 'br-b', 'br-c'],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))
+
+    def test_whitespace_only_entries_ignored(self):
+        self._set_ext_id('br-a,  , br-b')
+        self.assertEqual(
+            ['br-a', 'br-b'],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))
+
+    def test_empty_string_returns_empty(self):
+        self._set_ext_id('')
+        self.assertEqual(
+            [],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))
+
+    def test_missing_key_returns_empty(self):
+        self.assertEqual(
+            [],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))
+
+    def test_duplicate_values_preserved(self):
+        self._set_ext_id('br-a,br-a,br-b')
+        self.assertEqual(
+            ['br-a', 'br-a', 'br-b'],
+            agent_ovsdb.get_external_id_list(self.ovs_idl, self.test_key))

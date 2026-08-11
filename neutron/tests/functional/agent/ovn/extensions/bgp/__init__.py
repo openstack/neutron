@@ -16,6 +16,8 @@
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 
+from neutron.services.bgp import constants
+
 
 def unique_bridge_name(prefix='br'):
     return f"{prefix}-{uuidutils.generate_uuid()[:8]}"
@@ -52,3 +54,21 @@ class WaitForPortBindingUpdatedEvent(event.WaitEvent):
             return False
 
         return True
+
+
+class WaitForChassisBgpBridgesEvent(event.WaitEvent):
+    event_name = 'WaitForChassisBgpBridgesEvent'
+
+    def __init__(self, chassis_name, expected_bridges, timeout=10):
+        table = 'Chassis_Private'
+        events = (self.ROW_UPDATE,)
+        conditions = (('name', '=', chassis_name),)
+        self.expected_bridges = expected_bridges
+        super().__init__(events, table, conditions, timeout=timeout)
+
+    def match_fn(self, event, row, old=None):
+        if not hasattr(old, 'external_ids'):
+            return False
+        bridges = row.external_ids.get(
+            constants.CHASSIS_BGP_BRIDGES_EXT_ID_KEY, '')
+        return bridges == self.expected_bridges

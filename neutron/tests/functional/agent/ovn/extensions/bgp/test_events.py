@@ -529,6 +529,27 @@ class CreateLocalOVSEventTestCase(BgpBridgeMappingsBase):
         self._verify_mappings(pm_ev)
         self._verify_chassis_bgp_bridges(cp_ev)
 
+    def test_create_local_ovs_no_chassis_private(self):
+        """OVS reconnect while ovn-controller is stopped."""
+        with self.sb_api.transaction(check_error=True) as txn:
+            txn.add(self.sb_api.db_destroy(
+                'Chassis_Private', self.CHASSIS_NAME))
+            txn.add(self.sb_api.chassis_del(self.CHASSIS_NAME))
+
+        self.ovs_api.db_set(
+            'Open_vSwitch', '.',
+            external_ids={
+                constants.AGENT_BGP_PEER_BRIDGES: 'br-bgp-1,br-bgp-2'}
+        ).execute(check_error=True)
+        expected_mappings = ['br-bgp-1:br-bgp-1', 'br-bgp-2:br-bgp-2']
+        bm_ev = self._watch_bridge_mappings(expected_mappings)
+        pm_ev = self._watch_port_mappings(expected_mappings)
+
+        self.trigger_event()
+
+        self._verify_mappings(bm_ev)
+        self._verify_mappings(pm_ev)
+
     def test_create_local_ovs_event_existing_bgp_in_bridge_mappings(self):
         self.ovs_api.db_set(
             'Open_vSwitch', '.',
@@ -1154,3 +1175,88 @@ class InterconnectPatchPortDeletedEventTestCase(
                 lambda: self.ic_bridge.bgp_patch_port is None,
                 sleep=0.5, timeout=5,
                 exception=EventNotExpected())
+
+
+class ChassisPrivateCreateEventTestCase(BaseBgpEventsTestCase):
+
+    def _create_initial_resources(self):
+        """Skip chassis creation; tests trigger it explicitly.
+
+        Set BGP peer bridges in OVS external_ids — this is the
+        operator-configured source that persists across
+        ovn-controller restarts.
+        """
+        self.ovs_api.db_set(
+            'Open_vSwitch', '.',
+            external_ids={
+                constants.AGENT_BGP_PEER_BRIDGES: 'br-bgp-1,br-bgp-2'}
+        ).execute(check_error=True)
+
+    def _register_event(self):
+        ev = events.ChassisPrivateCreateEvent(self.agent_api)
+        self.sb_api.idl.notify_handler.watch_event(ev)
+        return ev
+
+    def _create_chassis(self, name):
+        self.add_fake_chassis(name, '192.168.1.100')
+
+    def _wait_for_bgp_bridges(self, expected_bridges_str, timeout=10):
+        wait_ev = test_bgp.WaitForChassisBgpBridgesEvent(
+            self.CHASSIS_NAME, expected_bridges_str, timeout=timeout)
+        self.sb_api.idl.notify_handler.watch_event(wait_ev)
+        return wait_ev
+
+    def test_chassis_private_create_sets_bgp_bridges(self):
+        self._register_event()
+
+        wait_ev = self._wait_for_bgp_bridges('br-bgp-1,br-bgp-2')
+        self._create_chassis(self.CHASSIS_NAME)
+        self.assertTrue(
+            wait_ev.wait(),
+            "Chassis_Private was not updated with BGP bridges")
+
+    def test_chassis_private_create_no_bridges_does_not_trigger(self):
+        self._register_event()
+        self.ovs_api.db_remove(
+            'Open_vSwitch', '.',
+            'external_ids', constants.AGENT_BGP_PEER_BRIDGES
+        ).execute(check_error=True)
+
+        wait_ev = self._wait_for_bgp_bridges('', timeout=2)
+        self._create_chassis(self.CHASSIS_NAME)
+        self.assertFalse(
+            wait_ev.wait(),
+            "Chassis_Private should not be updated when no bridges exist")
+
+    def test_other_chassis_does_not_trigger(self):
+        self._register_event()
+
+        wait_ev = self._wait_for_bgp_bridges('br-bgp-1,br-bgp-2', timeout=2)
+        self._create_chassis('other-chassis')
+        self.assertFalse(
+            wait_ev.wait(),
+            "Chassis_Private for a different chassis should not be updated")
+
+    def test_chassis_private_recreate_resets_bgp_bridges(self):
+        """Simulate ovn-controller restart: delete + create."""
+        self._register_event()
+
+        wait_ev = self._wait_for_bgp_bridges('br-bgp-1,br-bgp-2')
+        self._create_chassis(self.CHASSIS_NAME)
+        self.assertTrue(
+            wait_ev.wait(),
+            "Chassis_Private was not updated on first create")
+
+        # Delete the old Chassis + Chassis_Private (simulating
+        # ovn-controller shutdown)
+        with self.sb_api.transaction(check_error=True) as txn:
+            txn.add(self.sb_api.db_destroy(
+                'Chassis_Private', self.CHASSIS_NAME))
+            txn.add(self.sb_api.chassis_del(self.CHASSIS_NAME))
+
+        # Re-create (simulating ovn-controller restart)
+        wait_ev = self._wait_for_bgp_bridges('br-bgp-1,br-bgp-2')
+        self._create_chassis(self.CHASSIS_NAME)
+        self.assertTrue(
+            wait_ev.wait(),
+            "Chassis_Private was not updated after re-create")

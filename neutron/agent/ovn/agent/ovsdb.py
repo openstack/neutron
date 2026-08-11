@@ -135,6 +135,15 @@ def get_own_chassis_name(ovs_idl):
     return ext_ids['system-id']
 
 
+def get_external_id_list(ovs_idl, key):
+    """Return a comma-separated OVS external_ids value as a sorted list."""
+    ext_ids = ovs_idl.db_get('Open_vSwitch', '.', 'external_ids').execute()
+    value = ext_ids.get(key, '')
+    if not value:
+        return []
+    return sorted(s for b in value.split(',') if (s := b.strip()))
+
+
 def get_ovs_port_name(ovs_idl, port_id):
     """Return the OVS port name given the Neutron port ID"""
     int_list = ovs_idl.db_list('Interface', columns=['name', 'external_ids'],
