@@ -365,8 +365,8 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
 
     def setUp(self):
         ml2_config.register_ml2_plugin_opts()
-        mock.patch.object(wsgi_utils, 'get_api_worker_id',
-                          return_value=wsgi_utils.FIRST_WORKER_ID).start()
+        mock.patch.object(wsgi_utils, 'is_first_api_worker',
+                          return_value=True).start()
         super().setUp()
         cfg.CONF.set_override('network_vlan_ranges',
                               NETWORK_VLAN_RANGES,

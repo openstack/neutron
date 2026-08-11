@@ -192,7 +192,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             driver.obj.initialize()
 
     def initialize_network_segment_range_support(self, start_time):
-        if wsgi_utils.get_api_worker_id() != wsgi_utils.FIRST_WORKER_ID:
+        if not wsgi_utils.is_first_api_worker():
             return
 
         for network_type, driver in self.drivers.items():

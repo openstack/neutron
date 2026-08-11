@@ -19,6 +19,7 @@ import datetime
 import functools
 import multiprocessing
 import operator
+import os
 import threading
 import types
 import uuid
@@ -45,7 +46,6 @@ from oslo_db import exception as os_db_exc
 from oslo_log import log
 from oslo_service import service as oslo_service
 from oslo_utils import timeutils
-from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron._i18n import _
@@ -212,20 +212,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         if self._node_uuid:
             return self._node_uuid
 
-        worker_id = wsgi_utils.get_api_worker_id()
-        if worker_id is None:
-            # NOTE(ralonsoh): the hash ring node UUID should be based on the
-            # Neutron API worker ID. Right now only uWSGI mode is supported.
-            # The worker ID is provided via ``uwsgi`` library. If other loader
-            # is used, a random node UUID will be provided.
-            LOG.warning('uWSGI is the only supported loader for the Neutron '
-                        'API; it provides, via ``uwsgi`` library, the worker '
-                        'ID. If other loader is used, a random hash ring node '
-                        'UUID will be provided')
-            self._node_uuid = uuidutils.generate_uuid()
-        else:
-            self._node_uuid = ovn_hash_ring_db.get_node_uuid(
-                self.hash_ring_group, cfg.CONF.host, worker_id)
+        self._node_uuid = ovn_hash_ring_db.get_node_uuid(
+            self.hash_ring_group, cfg.CONF.host, os.getpid())
 
         return self._node_uuid
 
