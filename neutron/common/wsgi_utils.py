@@ -16,10 +16,13 @@
 import os
 import tempfile
 
+from oslo_log import log as logging
 from oslo_utils import timeutils
 
 from neutron.common import utils
 
+
+LOG = logging.getLogger(__name__)
 
 _first_worker_result = None
 
@@ -79,13 +82,28 @@ def get_start_time(default=None, current_time=False):
 
 
 def get_api_worker_count() -> int | None:
-    """Return the configured worker number provided to uWSGI"""
+    """Return the number of API worker processes.
+
+    uWSGI:    ``uwsgi.numproc``.
+    mod_wsgi: ``mod_wsgi.maximum_processes``.
+    """
     try:
         # pylint: disable=import-outside-toplevel
         import uwsgi
         return uwsgi.numproc
     except (ImportError, ModuleNotFoundError):
-        return None
+        pass
+
+    try:
+        # pylint: disable=import-outside-toplevel
+        import mod_wsgi  # type: ignore[import-not-found]
+        return mod_wsgi.maximum_processes
+    except (ImportError, ModuleNotFoundError):
+        pass
+
+    LOG.error('Unable to retrieve the API worker count: neither the '
+              '``uwsgi`` nor the ``mod_wsgi`` module could be loaded')
+    return None
 
 
 def _elect_first_wsgi_worker() -> bool:

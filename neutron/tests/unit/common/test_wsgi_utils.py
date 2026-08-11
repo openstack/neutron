@@ -27,9 +27,25 @@ class TestGetApiWorkerCount(base.BaseTestCase):
         with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
             self.assertEqual(4, wsgi_utils.get_api_worker_count())
 
-    def test_get_api_worker_count_without_uwsgi(self):
-        with mock.patch.dict('sys.modules', uwsgi=None):
+    def test_get_api_worker_count_with_mod_wsgi(self):
+        mod_wsgi_mod = types.ModuleType('mod_wsgi')
+        mod_wsgi_mod.maximum_processes = 6
+        with mock.patch.dict('sys.modules', uwsgi=None,
+                             mod_wsgi=mod_wsgi_mod):
+            self.assertEqual(6, wsgi_utils.get_api_worker_count())
+
+    def test_get_api_worker_count_no_wsgi_server(self):
+        with mock.patch.dict('sys.modules', uwsgi=None, mod_wsgi=None):
             self.assertIsNone(wsgi_utils.get_api_worker_count())
+
+    def test_get_api_worker_count_uwsgi_takes_precedence(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.numproc = 4
+        mod_wsgi_mod = types.ModuleType('mod_wsgi')
+        mod_wsgi_mod.maximum_processes = 6
+        with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod,
+                             mod_wsgi=mod_wsgi_mod):
+            self.assertEqual(4, wsgi_utils.get_api_worker_count())
 
 
 class TestGetStartTime(base.BaseTestCase):
