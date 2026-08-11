@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    The ``get_api_worker_count()`` utility in ``neutron.common.wsgi_utils``
+    now supports ASGI servers (e.g. Hypercorn, uvicorn) via the
+    ``ASGI_WORKERS`` environment variable. This allows Neutron's OVN
+    mechanism driver hash ring to initialize correctly when the API is
+    served under an ASGI server instead of uWSGI or mod_wsgi.
