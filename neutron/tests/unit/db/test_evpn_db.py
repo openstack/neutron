@@ -201,3 +201,22 @@ class TestEVPNDb(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                     network_id=net['network']['id']
                 ).one_or_none()
             self.assertIsNone(evpn_net)
+
+    def test_router_interface_add_second_advertised_subnet_rejected(self):
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=5000) as router, \
+                self.network() as net, \
+                self.subnet(network=net, cidr='10.10.1.0/24') as subnet1, \
+                self.subnet(network=net, cidr='10.10.2.0/24') as subnet2:
+            self._router_interface_action(
+                'add', router['router']['id'],
+                subnet1['subnet']['id'], None,
+                as_admin=True,
+                advertise_host=True)
+            self._router_interface_action(
+                'add', router['router']['id'],
+                subnet2['subnet']['id'], None,
+                as_admin=True,
+                advertise_host=True,
+                expected_code=409)
