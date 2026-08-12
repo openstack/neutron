@@ -168,28 +168,28 @@ class OVNPortForwardingHandler:
         self._validate_router_networks(nb_ovn, pf_obj.router_id)
         pf_objs = pf_obj.unroll_port_ranges()
         is_range = len(pf_objs) > 1
-        for pf_obj in pf_objs:
+        for pf in pf_objs:
             LOG.info("CREATE for port-forwarding %s vip %s:%s to %s:%s",
-                     pf_obj.protocol,
-                     pf_obj.floating_ip_address, pf_obj.external_port,
-                     pf_obj.internal_ip_address, pf_obj.internal_port)
-            self._port_forwarding_created(ovn_txn, nb_ovn, pf_obj,
+                     pf.protocol,
+                     pf.floating_ip_address, pf.external_port,
+                     pf.internal_ip_address, pf.internal_port)
+            self._port_forwarding_created(ovn_txn, nb_ovn, pf,
                                           is_range=is_range)
 
     def port_forwarding_updated(self, ovn_txn, nb_ovn, pf_obj, orig_pf_obj):
         orig_pf_objs = orig_pf_obj.unroll_port_ranges()
         is_range = len(orig_pf_objs) > 1
-        for orig_pf_obj in orig_pf_objs:
-            self._port_forwarding_deleted(ovn_txn, nb_ovn, orig_pf_obj,
+        for orig_pf in orig_pf_objs:
+            self._port_forwarding_deleted(ovn_txn, nb_ovn, orig_pf,
                                           is_range=is_range)
         pf_objs = pf_obj.unroll_port_ranges()
         is_range = len(pf_objs) > 1
-        for pf_obj in pf_objs:
+        for pf in pf_objs:
             LOG.info("UPDATE for port-forwarding %s vip %s:%s to %s:%s",
-                     pf_obj.protocol,
-                     pf_obj.floating_ip_address, pf_obj.external_port,
-                     pf_obj.internal_ip_address, pf_obj.internal_port)
-            self._port_forwarding_created(ovn_txn, nb_ovn, pf_obj,
+                     pf.protocol,
+                     pf.floating_ip_address, pf.external_port,
+                     pf.internal_ip_address, pf.internal_port)
+            self._port_forwarding_created(ovn_txn, nb_ovn, pf,
                                           is_range=is_range)
 
     def _port_forwarding_deleted(self, ovn_txn, nb_ovn, pf_obj,
@@ -206,20 +206,20 @@ class OVNPortForwardingHandler:
         # router from removed lb.
         pf_objs = pf_obj.unroll_port_ranges()
         is_range = is_range or len(pf_objs) > 1
-        for pf_obj in pf_objs:
+        for pf in pf_objs:
             lb_name, vip, _internal_ips, _rtr = self._get_lb_attributes(
-                pf_obj, is_range=is_range)
+                pf, is_range=is_range)
             ovn_txn.add(nb_ovn.lb_del(lb_name, vip, if_exists=True))
 
     def port_forwarding_deleted(self, ovn_txn, nb_ovn, pf_obj):
         pf_objs = pf_obj.unroll_port_ranges()
         is_range = len(pf_objs) > 1
-        for pf_obj in pf_objs:
+        for pf in pf_objs:
             LOG.info("DELETE for port-forwarding %s vip %s:%s to %s:%s",
-                     pf_obj.protocol,
-                     pf_obj.floating_ip_address, pf_obj.external_port,
-                     pf_obj.internal_ip_address, pf_obj.internal_port)
-            self._port_forwarding_deleted(ovn_txn, nb_ovn, pf_obj,
+                     pf.protocol,
+                     pf.floating_ip_address, pf.external_port,
+                     pf.internal_ip_address, pf.internal_port)
+            self._port_forwarding_deleted(ovn_txn, nb_ovn, pf,
                                           is_range=is_range)
 
 

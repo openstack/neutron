@@ -80,9 +80,8 @@ class NeutronModule:
             # load configuration from all matching files to reflect oslo.config
             # behaviour
             config_files = []
-            for neutron_dir in neutron_dirs:
-                ini_path = os.path.join(neutron_dir,
-                                        '%s.conf' % self.module_name)
+            for conf_dir in neutron_dirs:
+                ini_path = os.path.join(conf_dir, '%s.conf' % self.module_name)
                 if os.path.exists(ini_path):
                     config_files.append(ini_path)
 

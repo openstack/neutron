@@ -1146,8 +1146,8 @@ class SegmentAwareIpamTestCase(SegmentTestCase):
     def _create_test_network_and_segment(self, network=None,
                                          physnet='physnet'):
         if not network:
-            with self.network() as network:
-                pass
+            with self.network() as new_net:
+                network = new_net
 
         segment = self._test_create_segment(
             network_id=network['network']['id'],

@@ -226,8 +226,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
             fdb_network_ports + tunnel_network_ports,
             agent.host))
         for agent_ip, fdbs in ports.items():
-            for binding, agent in fdb_network_ports:
-                if l2pop_db.get_agent_ip(agent) == agent_ip:
+            for binding, fdb_agent in fdb_network_ports:
+                if l2pop_db.get_agent_ip(fdb_agent) == agent_ip:
                     fdbs.extend(self._get_port_fdb_entries(binding.port))
 
         return agent_fdb_entries

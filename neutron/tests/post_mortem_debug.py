@@ -87,10 +87,10 @@ def get_ignored_traceback(tb):
 
     # Find all members of an ignored trailing chain
     ignored_tracebacks = []
-    for tb in reversed(tb_list):
-        if '__unittest' not in tb.tb_frame.f_globals:
+    for tb_item in reversed(tb_list):
+        if '__unittest' not in tb_item.tb_frame.f_globals:
             break
-        ignored_tracebacks.append(tb)
+        ignored_tracebacks.append(tb_item)
 
     # Return the first member of the ignored trailing chain
     if ignored_tracebacks:

@@ -33,8 +33,8 @@ def _assign_directives(context, directives, phase=None):
             phases = cli.MIGRATION_BRANCHES
         else:
             phases = (phase,)
-        for phase in phases:
-            decided = decider(context, directive, phase)
+        for cur_phase in phases:
+            decided = decider(context, directive, cur_phase)
             if decided:
                 yield decided
 
