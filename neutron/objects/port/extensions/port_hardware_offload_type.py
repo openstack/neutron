@@ -12,17 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib import constants as lib_constants
 from neutron_lib.objects import common_types
-from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import port_hardware_offload_type
 from neutron.objects import base
-
-
-# TODO(ralonsoh): move to neutron_lib.objects.common_types
-class PortHardwareOffloadTypeEnumField(obj_fields.AutoTypedField):
-    AUTO_TYPE = obj_fields.Enum(valid_values=lib_constants.VALID_HWOL_TYPES)
 
 
 @base.NeutronObjectRegistry.register
@@ -36,7 +29,8 @@ class PortHardwareOffloadType(base.NeutronDbObject):
 
     fields = {
         'port_id': common_types.UUIDField(),
-        'hardware_offload_type': PortHardwareOffloadTypeEnumField(),
+        'hardware_offload_type':
+            common_types.PortHardwareOffloadTypeEnumField(),
     }
 
     foreign_keys = {'Port': {'port_id': 'id'}}
