@@ -95,8 +95,17 @@ def _find_synced_net_ns():
             synced_nets.add(net.removeprefix('qdhcp-'))
     return synced_nets
 
+def _find_synced_bridges():
+    bridge_path = Path(f"/sys/class/net")
+    synced_bridges = set()
 
-def _create_status_file(ready, message, synced_networks=None):
+    for br in bridge_path.iterdir():
+        if br.name.startswith('brq'):
+            synced_bridges.add(br.name.removeprefix("brq"))
+
+    return synced_bridges
+
+def _create_status_file(ready, message, synced_networks=None, synced_bridges=None):
     path = Path(AGENT_STATUS_FILE)
     try:
         path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -107,11 +116,15 @@ def _create_status_file(ready, message, synced_networks=None):
     if synced_networks is None:
         synced_networks = _find_synced_net_ns()
 
+    if synced_bridges is None:
+        synced_bridges = _find_synced_bridges()
+
     status_message = {
         "time": time.time(),
         "ready": ready,
         "message": message,
         "synced_networks": sorted(synced_networks),
+        "synced_bridges": sorted(synced_bridges),
     }
 
     try:
@@ -129,18 +142,33 @@ def _write_status_failure(error):
 
 def _write_sync_status(active_network_ids):
     synced_nets = _find_synced_net_ns()
+    synced_bridges = _find_synced_bridges()
     missing_netns = set(active_network_ids) - synced_nets
+
+    # Bridge is equal to the first eleven character of the network id
+    active_bridges = {net_id[:11] for net_id in active_network_ids}
+    missing_bridges = set(active_bridges) - synced_bridges
+
+    ready = True
+    message = "All networks synced"
 
     if missing_netns:
         ready = False
         message = (f"Missing {len(missing_netns)} of {len(active_network_ids)}"
                    f" networks - {', '.join(sorted(missing_netns)[:5])}")
-    else:
-        ready = True
-        message = "All networks synced"
+
+    if missing_bridges:
+        ready = False
+        tmp = (f"Missing {len(missing_bridges)} of {len(active_bridges)}"
+                   f" networks - {', '.join(sorted(missing_bridges)[:5])}")
+        if message.startswith("Missing"):
+            message = f"{message}, {tmp}"
+        else:
+            message = tmp
 
     _create_status_file(ready=ready, message=message,
-                        synced_networks=synced_nets)
+                        synced_networks=synced_nets,
+                        synced_bridges=synced_bridges)
 
 
 class DHCPResourceUpdate(queue.ResourceUpdate):
