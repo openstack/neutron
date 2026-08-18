@@ -43,6 +43,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
 
+from neutron._i18n import _
 from neutron import privileged
 from neutron.privileged.agent.linux import netlink_constants as nl_constants
 
@@ -252,6 +253,9 @@ def _parse_entry(entry, ipversion, zone):
     and compare with firewall rule
     """
     protocol = entry[1]
+    if protocol not in ATTR_POSITIONS:
+        raise ValueError(
+            _("Unsupported conntrack protocol: %s") % protocol)
     parsed_entry = [ipversion, protocol]
     for attr, position in ATTR_POSITIONS[protocol]:
         val = entry[position].partition('=')[2]
@@ -283,7 +287,10 @@ def list_entries(zone):
 
         for raw_entry in raw_entries:
             _entry = raw_entry.split()
-            parsed_entry = _parse_entry(_entry, ipversion, zone)
+            try:
+                parsed_entry = _parse_entry(_entry, ipversion, zone)
+            except ValueError:
+                continue
             parsed_entries.append(parsed_entry)
     # sort by dest port
     return sorted(parsed_entries, key=lambda x: x[3])

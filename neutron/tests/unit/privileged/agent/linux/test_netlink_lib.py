@@ -32,6 +32,20 @@ FAKE_TCP_ENTRY = {'ipversion': 4, 'protocol': 'tcp',
 FAKE_UDP_ENTRY = {'ipversion': 4, 'protocol': 'udp',
                   'sport': 1, 'dport': 2,
                   'src': '1.1.1.1', 'dst': '2.2.2.2', 'zone': 1}
+FAKE_UNKNOWN_ENTRY = {'ipversion': 4, 'protocol': 'unknown',
+                      'src': '1.1.1.1', 'dst': '2.2.2.2', 'zone': 1}
+
+
+class ParseEntryTestCase(base.BaseTestCase):
+
+    def test_parse_unknown_protocol_raises(self):
+        raw = ('[10.0] '
+               'unknown  255 30 src=%(src)s dst=%(dst)s '
+               'zone=%(zone)d' % FAKE_UNKNOWN_ENTRY)
+        self.assertRaises(ValueError,
+                          nl_lib._parse_entry, raw.split(),
+                          FAKE_UNKNOWN_ENTRY['ipversion'],
+                          FAKE_UNKNOWN_ENTRY['zone'])
 
 
 class NetlinkLibTestCase(base.BaseTestCase):
@@ -53,6 +67,29 @@ class NetlinkLibTestCase(base.BaseTestCase):
                 nl_constants.NFNL_SUBSYS_CTNETLINK, nl_constants.CONNTRACK)
         nl_lib.nfct.nfct_close.assert_called_once_with(nl_lib.nfct.nfct_open(
             nl_constants.NFNL_SUBSYS_CTNETLINK, nl_constants.CONNTRACK))
+
+    def test_list_entries_skips_unknown_protocol(self):
+        tcp_raw = (
+            '[10.0] '
+            'tcp      6 60 ESTABLISHED '
+            'src=%(src)s dst=%(dst)s sport=%(sport)d '
+            'dport=%(dport)d '
+            'src=%(dst)s dst=%(src)s sport=%(dport)d '
+            'dport=%(sport)d '
+            'zone=%(zone)d [ASSURED] use=1' % FAKE_TCP_ENTRY)
+        unknown_raw = (
+            '[10.0] '
+            'unknown  255 30 src=%(src)s dst=%(dst)s '
+            'zone=%(zone)d use=1' % FAKE_UNKNOWN_ENTRY)
+        with mock.patch.object(
+                nl_lib.ConntrackManager, 'list_entries',
+                # list_entries iterates over IPv4 and IPv6
+                side_effect=[[tcp_raw, unknown_raw], []]):
+            # Call the unwrapped function to bypass privsep
+            raw_fn = nl_lib.list_entries.args[0]
+            entries = raw_fn(FAKE_TCP_ENTRY['zone'])
+        self.assertEqual(1, len(entries))
+        self.assertEqual('tcp', entries[0][1])
 
     def test_conntrack_list_entries(self):
         with nl_lib.ConntrackManager() as conntrack:
