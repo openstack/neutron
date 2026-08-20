@@ -200,7 +200,7 @@ class IpConntrackManager:
         # map is populated strictly based on interface names that we don't know
         # the full UUID of.
         if self.zone_per_port:
-            identifier = port['device'][constants.LINUX_DEV_PREFIX_LEN:]
+            identifier = port['device']
         else:
             identifier = port['network_id']
         return identifier[:(constants.LINUX_DEV_LEN -
