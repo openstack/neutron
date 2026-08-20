@@ -22,6 +22,9 @@ COLLECTION_PATH = '/routers'
 RESOURCE_PATH = '/routers/{id}'
 TAGS_PATH = RESOURCE_PATH + '/tags'
 TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
+ADD_EXT_GW_PATH = RESOURCE_PATH + '/add_external_gateways'
+UPDATE_EXT_GW_PATH = RESOURCE_PATH + '/update_external_gateways'
+DEL_EXT_GW_PATH = RESOURCE_PATH + '/remove_external_gateways'
 
 ACTION_POST: list[policy.Operation] = [
     {'method': 'POST', 'path': COLLECTION_PATH},
@@ -50,6 +53,15 @@ ACTION_POST_TAGS: list[policy.Operation] = [
 ACTION_DELETE_TAGS: list[policy.Operation] = [
     {'method': 'DELETE', 'path': TAGS_PATH},
     {'method': 'DELETE', 'path': TAG_PATH},
+]
+ACTION_ADD_EXT_GW: list[policy.Operation] = [
+    {'method': 'PUT', 'path': ADD_EXT_GW_PATH},
+]
+ACTION_UPDATE_EXT_GW: list[policy.Operation] = [
+    {'method': 'PUT', 'path': UPDATE_EXT_GW_PATH},
+]
+ACTION_DEL_EXT_GW: list[policy.Operation] = [
+    {'method': 'PUT', 'path': DEL_EXT_GW_PATH},
 ]
 
 
@@ -436,35 +448,35 @@ rules = [
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Add router external gateways',
-        operations=ACTION_PUT,
+        operations=ACTION_ADD_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='add_external_gateways:external_gateways',
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Add router external gateways',
-        operations=ACTION_PUT,
+        operations=ACTION_ADD_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='add_external_gateways:external_gateways:network_id',
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Add router external gateways with defined network ID',
-        operations=ACTION_PUT,
+        operations=ACTION_ADD_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='add_external_gateways:external_gateways:enable_snat',
         check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Add router external gateways specifying SNAT flag',
-        operations=ACTION_PUT,
+        operations=ACTION_ADD_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='add_external_gateways:external_gateways:external_fixed_ips',
         check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Add router external gateways specifying the fixed IPs',
-        operations=ACTION_PUT,
+        operations=ACTION_ADD_EXT_GW,
     ),
 
     policy.DocumentedRuleDefault(
@@ -472,35 +484,35 @@ rules = [
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update router external gateways',
-        operations=ACTION_PUT,
+        operations=ACTION_UPDATE_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='update_external_gateways:external_gateways',
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update router external gateways',
-        operations=ACTION_PUT,
+        operations=ACTION_UPDATE_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='update_external_gateways:external_gateways:network_id',
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update router external gateways network ID',
-        operations=ACTION_PUT,
+        operations=ACTION_UPDATE_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='update_external_gateways:external_gateways:enable_snat',
         check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update router external gateways SNAT flag',
-        operations=ACTION_PUT,
+        operations=ACTION_UPDATE_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='update_external_gateways:external_gateways:external_fixed_ips',
         check_str=lib_rules.ADMIN,
         scope_types=['project'],
         description='Update router external gateways fixed IPs',
-        operations=ACTION_PUT,
+        operations=ACTION_UPDATE_EXT_GW,
     ),
 
     policy.DocumentedRuleDefault(
@@ -508,14 +520,14 @@ rules = [
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Remove router external gateways',
-        operations=ACTION_PUT,
+        operations=ACTION_DEL_EXT_GW,
     ),
     policy.DocumentedRuleDefault(
         name='remove_external_gateways:external_gateways',
         check_str=lib_rules.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Remove router external gateways',
-        operations=ACTION_PUT,
+        operations=ACTION_DEL_EXT_GW,
     ),
 ]
 
