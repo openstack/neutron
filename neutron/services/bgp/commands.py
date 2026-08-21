@@ -422,6 +422,7 @@ class ReconcileMainRouterCommand(ReconcileRouterCommand):
             self.router,
             '0.0.0.0/0',
             helpers.ipv6_link_local_from_mac(fake_lrp.mac),
+            port=fake_lrp.name,
             may_exist=True,
         ).run_idl(txn)
 
