@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Shrinking a network segment range to boundaries that coincide with the
+    lowest or highest allocated segment was incorrectly rejected with a
+    ``ConflictException`` claiming the range is still referenced by project
+    networks. The update is now allowed as long as all allocated segments
+    remain within the new range boundaries. See bug
+    `2161678 <https://bugs.launchpad.net/neutron/+bug/2161678>`_.
