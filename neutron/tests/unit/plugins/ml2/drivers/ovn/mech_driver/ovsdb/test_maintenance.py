@@ -922,3 +922,90 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         # Assert there was no transactions because the record directly
         # created in ovn i.e not created by neutron
         self.fake_ovn_client._nb_idl.dns_set_options.assert_not_called()
+
+    def test_check_pvlan_plugin_status_plugin_disabled(self):
+        # Plugin removed: all pvlan_* port groups must be deleted, others kept.
+        self.fake_ovn_client.pvlan_driver = None
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        pg1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'pvlan_pg_drop'})
+        pg2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'pvlan_isolated_abc123'})
+        pg_other = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'neutron_pg_drop'})
+        nb_idl.tables['Port_Group'].rows.values.return_value = [
+            pg1, pg2, pg_other]
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_pvlan_plugin_status)
+        nb_idl.pg_del.assert_has_calls([
+            mock.call('pvlan_pg_drop', if_exists=True),
+            mock.call('pvlan_isolated_abc123', if_exists=True),
+        ], any_order=True)
+        self.assertNotIn(
+            mock.call('neutron_pg_drop', if_exists=True),
+            nb_idl.pg_del.call_args_list)
+
+    def test_check_pvlan_plugin_status_plugin_disabled_no_pgs(self):
+        # Plugin removed, no pvlan PGs in OVN: transaction must still be
+        # opened but pg_del must not be called.
+        self.fake_ovn_client.pvlan_driver = None
+        nb_idl = self.fake_ovn_client._nb_idl
+        nb_idl.tables['Port_Group'].rows.values.return_value = []
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_pvlan_plugin_status)
+        nb_idl.pg_del.assert_not_called()
+
+    @mock.patch('neutron.objects.pvlan.NetworkPVLAN.get_objects',
+                return_value=[])
+    def test_check_pvlan_plugin_status_no_pvlan_networks(self, _):
+        # Plugin active but no network has pvlan enabled: nothing to do.
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_pvlan_plugin_status)
+        nb_idl.get_port_group.assert_not_called()
+        self.fake_ovn_client.pvlan_driver\
+            ._create_isolated_port_group.assert_not_called()
+
+    @mock.patch('neutron.objects.pvlan.NetworkPVLAN.get_objects')
+    def test_check_pvlan_plugin_status_pgs_present(self, mock_get):
+        # Plugin active, both PGs already exist: no recreation.
+        net_id = 'aaaa-bbbb-cccc'
+        mock_get.return_value = [mock.MagicMock(network_id=net_id)]
+        nb_idl = self.fake_ovn_client._nb_idl
+        nb_idl.get_port_group.return_value = mock.MagicMock()
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_pvlan_plugin_status)
+        self.fake_ovn_client.pvlan_driver\
+            ._create_isolated_port_group.assert_not_called()
+
+    @mock.patch('neutron.objects.ports.Port.get_objects')
+    @mock.patch('neutron.objects.pvlan.NetworkPVLAN.get_objects')
+    def test_check_pvlan_plugin_status_pgs_missing(self, mock_net_get,
+                                                   mock_port_get):
+        # Plugin active, both PGs missing: recreate PGs and re-add ports.
+        network_id = 'aabbccdd-1122-3344-5566-778899aabbcc'
+        mock_net_get.return_value = [
+            mock.MagicMock(network_id=network_id)]
+        nb_idl = self.fake_ovn_client._nb_idl
+        nb_idl.get_port_group.return_value = None
+
+        fake_port = {'id': 'port-1', 'network_id': network_id,
+                     'pvlan_type': 'isolated',
+                     'pvlan_community': None}
+        mock_port_get.return_value = [fake_port]
+
+        pvlan_drv = self.fake_ovn_client.pvlan_driver
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_pvlan_plugin_status)
+        pvlan_drv._create_isolated_port_group\
+            .assert_called_once_with(network_id, mock.ANY)
+        pvlan_drv._create_promiscuous_port_group\
+            .assert_called_once_with(network_id, mock.ANY)
+        pvlan_drv.create_port\
+            .assert_called_once_with(mock.ANY, mock.ANY,
+                                     fake_port)

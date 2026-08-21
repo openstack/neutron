@@ -29,6 +29,7 @@ from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import address_group as ag_exc
 from neutron_lib.exceptions import l3 as l3_exc
+from neutron_lib.services.pvlan import constants as pvlan_const
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import strutils
@@ -44,8 +45,10 @@ from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.objects import network as network_obj
 from neutron.objects import ports as ports_obj
+from neutron.objects import pvlan as pvlan_obj
 from neutron.objects import router as router_obj
 from neutron.objects import securitygroup as sg_obj
+from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn_driver
 
 
 CONF = cfg.CONF
@@ -1433,6 +1436,82 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
                     txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    @log_maintenance_task(
+        start_message='Check if PVLAN PGs need to be cleaned or created.')
+    def check_pvlan_plugin_status(self):
+        """Remove/Recreate PVLAN OVN resources when disabled or enabled"""
+        pvlan_driver = self._ovn_client.pvlan_driver
+        if pvlan_driver:
+            # Plugin is active. Check if pvlan network related PGs are present.
+            admin_context = n_context.get_admin_context()
+            pvlan_networks = pvlan_obj.NetworkPVLAN.get_objects(
+                admin_context, pvlan=True)
+
+            # No networks have pvlan enabled, nothing to check.
+            if not pvlan_networks:
+                raise periodics.NeverAgain()
+            for pvlan_network in pvlan_networks:
+                network_id = pvlan_network.network_id
+                try:
+                    isolated_pg = self._nb_idl.get_port_group(
+                        pvlan_driver._get_pg_name(
+                            network_id, pvlan_const.ISOLATED_TYPE))
+                    promiscuous_pg = self._nb_idl.get_port_group(
+                        pvlan_driver._get_pg_name(
+                            network_id, pvlan_const.PROMISCUOUS_TYPE))
+                    if isolated_pg and promiscuous_pg:
+                        # Assume all pvlan PGs are present
+                        continue
+
+                    LOG.debug('PVLAN port groups missing for '
+                              'network %s, recreating.', network_id)
+                    # Recreate missing PGs and re-add ports to PGs.
+                    missing_types = set()
+                    net_ports = ports_obj.Port.get_objects(
+                        admin_context, network_id=network_id)
+                    with self._nb_idl.transaction(
+                            check_error=True) as txn:
+                        if not isolated_pg:
+                            pvlan_driver._create_isolated_port_group(
+                                network_id, txn)
+                            missing_types.add(pvlan_const.ISOLATED_TYPE)
+                        if not promiscuous_pg:
+                            pvlan_driver._create_promiscuous_port_group(
+                                network_id, txn)
+                            missing_types.add(pvlan_const.PROMISCUOUS_TYPE)
+                        for port in net_ports:
+                            pvlan_type = port.get('pvlan_type')
+                            if (pvlan_type in missing_types or
+                                    pvlan_type ==
+                                    pvlan_const.COMMUNITY_TYPE):
+                                pvlan_driver.create_port(
+                                    admin_context, txn, port)
+                except Exception:
+                    LOG.exception('Failed to reconcile PVLAN port groups '
+                                  'for network %s', network_id)
+
+            raise periodics.NeverAgain()
+
+        # If not active, remove all pvlan port groups:
+        pvlan_prefixes = (pvlan_ovn_driver.ISOLATED_PORT_GROUP_PREFIX,
+                          pvlan_ovn_driver.PROMISCUOUS_PORT_GROUP_PREFIX,
+                          pvlan_ovn_driver.COMMUNITY_PORT_GROUP_PREFIX,
+                          pvlan_ovn_driver.DROP_PORT_GROUP_NAME)
+        pgs = [
+            pg for pg in self._nb_idl.tables['Port_Group'].rows.values()
+            if any(pg.name.startswith(p) for p in pvlan_prefixes)
+        ]
+        if pgs:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for pg in pgs:
+                    txn.add(self._nb_idl.pg_del(pg.name, if_exists=True))
 
         raise periodics.NeverAgain()
 
