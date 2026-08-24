@@ -567,9 +567,11 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self.sg = copy.deepcopy(FAKE_SECGROUP)
         self.user_ctx = context.Context(user_id='user1',
                                         project_id='project_1',
+                                        roles=['member', 'reader'],
                                         is_admin=False, overwrite=False)
         self.admin_ctx = context.Context(user_id='user2',
                                          project_id='project_2',
+                                         roles=['admin', 'member', 'reader'],
                                          is_admin=True, overwrite=False)
         self.sg_user = self.mixin.create_security_group(
             self.user_ctx, {'security_group': {'name': 'name',
@@ -679,16 +681,31 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             get_default_sg_id.assert_not_called()
 
     def test__ensure_default_security_group_project_mismatch(self):
+        self._create_environment()
         with mock.patch.object(
-                self.mixin, '_get_default_sg_id') as get_default_sg_id,\
+                self.mixin, '_get_default_sg_id', return_value=None
+        ) as get_default_sg_id,\
                 mock.patch.object(
                         self.mixin, 'create_security_group') as create_sg:
-            context = mock.Mock()
-            context.project_id = 'project_0'
-            context.is_admin = False
-            self.mixin._ensure_default_security_group(context, 'project_1')
+            # Regular user shouldn't be able to create default SG for other
+            # project
+            self.mixin._ensure_default_security_group(self.user_ctx,
+                                                      'other_project')
             create_sg.assert_not_called()
             get_default_sg_id.assert_not_called()
+
+            # With admin context it should be fine even for not own project
+            self.mixin._ensure_default_security_group(self.admin_ctx,
+                                                      'other_project')
+            create_sg.assert_called_once_with(
+                self.admin_ctx,
+                {'security_group': {
+                    'name': 'default',
+                    'project_id': 'other_project',
+                    'description': securitygroups_db.DEFAULT_SG_DESCRIPTION}},
+                default_sg=True)
+            get_default_sg_id.assert_called_once_with(self.admin_ctx,
+                                                      'other_project')
 
     def test__check_for_duplicate_default_rules_does_not_drop_protocol(self):
         with mock.patch.object(self.mixin, 'get_default_security_group_rules',

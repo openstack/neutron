@@ -77,6 +77,22 @@ rules = [
                     'project default security group'
     ),
 
+    policy.RuleDefault(
+        name='create_default_security_group',
+        # NOTE(slaweq): PROJECT_READER is allowed to create a default
+        # security group because this default SG should be created
+        # automatically during e.g. SG list API request which PROJECT_READER
+        # has access to. Without granting PROJECT_READER this privilege such
+        # user would not see default SG if other user wouldn't do GET request
+        check_str=neutron_policy.policy_or(
+            lib_rules.ADMIN_OR_SERVICE,
+            lib_rules.PROJECT_READER,
+        ),
+        scope_types=['project'],
+        description='Create a default security group for a project. '
+                    'This rule is only used internally by Neutron while '
+                    'creating a default SG for a project.',
+    ),
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group?
     policy.DocumentedRuleDefault(
