@@ -1165,14 +1165,17 @@ class FrrFixture(fixtures.Fixture):
         with tempfile.NamedTemporaryFile(mode='w') as tmp:
             tmp.write(content)
             tmp.flush()
-            utils.execute(['cp', tmp.name, path], run_as_root=True)
+            utils.execute(['cp', tmp.name, path], run_as_root=True,
+                          privsep_exec=True)
 
     def _create_config(self):
         for pathspace_dir in (self._conf_dir, self._log_dir):
             utils.execute(
-                ['mkdir', '-p', pathspace_dir], run_as_root=True)
+                ['mkdir', '-p', pathspace_dir], run_as_root=True,
+                privsep_exec=True)
             utils.execute(
-                ['chown', '-R', 'frr:frr', pathspace_dir], run_as_root=True)
+                ['chown', '-R', 'frr:frr', pathspace_dir], run_as_root=True,
+                privsep_exec=True)
 
         self._write_file(
             os.path.join(self._conf_dir, 'daemons'),
@@ -1200,7 +1203,7 @@ class FrrFixture(fixtures.Fixture):
              '%s %s %s > /dev/null 2>&1'
              % (self.FRRINIT, frr_action,
                 self.namespace)],
-            run_as_root=True)
+            run_as_root=True, privsep_exec=True)
 
     def start_frr(self):
         self._excute_with_std_discard('start')
@@ -1208,7 +1211,7 @@ class FrrFixture(fixtures.Fixture):
     def stop_frr(self):
         utils.execute(
             [self.FRRINIT, 'stop', self.namespace],
-            run_as_root=True)
+            run_as_root=True, privsep_exec=True)
 
     def restart_frr(self):
         self._excute_with_std_discard('restart')
@@ -1226,6 +1229,7 @@ class FrrFixture(fixtures.Fixture):
         for pathspace_dir in (self._conf_dir, self._state_dir):
             try:
                 utils.execute(
-                    ['rm', '-rf', pathspace_dir], run_as_root=True)
+                    ['rm', '-rf', pathspace_dir], run_as_root=True,
+                    privsep_exec=True)
             except RuntimeError:
                 LOG.error("Failed to remove %s", pathspace_dir)

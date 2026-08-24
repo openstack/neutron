@@ -159,7 +159,9 @@ class FrrVtyshExecutor:
     def _execute_vtysh(self, vtysh_args: list[str]) -> str:
         """Execute any vtysh command args and return stdout."""
         cmd = self._vtysh_base_cmd + vtysh_args
-        return typing.cast(str, linux_utils.execute(cmd, run_as_root=True))
+        return typing.cast(
+            str,
+            linux_utils.execute(cmd, run_as_root=True, privsep_exec=True))
 
     def execute_cli_cmd(self, cmd_string: str) -> str:
         """Execute single vtysh CLI command (e.g. show)."""

@@ -105,8 +105,7 @@ class TestFrrVtyshExecutor(base.BaseTestCase):
         self.assertEqual("BGP summary output", out)
         self.execute.assert_called_once_with(
             ['vtysh', '--vty_socket', self.VTY_SOCKET, '-c', mock_cmd],
-            run_as_root=True,
-        )
+            run_as_root=True, privsep_exec=True)
 
     def test_execute_cli_cmd_raises_on_failure(self):
         self.execute.side_effect = exceptions.ProcessExecutionError(
@@ -136,6 +135,9 @@ class TestFrrVtyshExecutor(base.BaseTestCase):
         self.assertEqual(
             ['vtysh', '--vty_socket', self.VTY_SOCKET,
              '-c', 'write memory'], write_mem_cmd)
+        for call in calls:
+            self.assertEqual(
+                {'run_as_root': True, 'privsep_exec': True}, call[1])
 
     def test_execute_cmds_raises_dryrun_error(self):
         mock_cmds = "bad config"
@@ -177,8 +179,7 @@ class TestFrrVtyshExecutor(base.BaseTestCase):
 
         self.execute.assert_called_once_with(
             ['vtysh', '--vty_socket', custom_path, '-c', 'show version'],
-            run_as_root=True,
-        )
+            run_as_root=True, privsep_exec=True)
 
 
 class TestFrrVtyshDriver(base.BaseTestCase):
