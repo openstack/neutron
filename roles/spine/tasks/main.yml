@@ -106,8 +106,6 @@
 
 - name: Configure FRR
   become: true
-  vars:
-    datapath_spine_ipv4: 172.31.1.1
   ansible.builtin.template:
     src: frr.conf.j2
     dest: /etc/frr/frr.conf
@@ -169,7 +167,7 @@
 
 - name: Prepare spine host for EVPN
   become: true
-  when: enable_evpn | default(false)
+  when: "'l2vpn evpn' in bgp_address_families"
   block:
     - name: Load VRF kernel module
       ansible.builtin.shell: |
@@ -200,15 +198,18 @@
         - net.ipv4.tcp_l3mdev_accept
         - net.ipv4.udp_l3mdev_accept
 
-# FRR is not started here because the controller-side BGP peer
-# interfaces (br-bgp-*, VXLAN tunnels) are not created until
-# devstack runs local.sh. Starting FRR before all peers exist
-# can cause routing loops ("Dead loop on virtual device") that
-# make the node unreachable via SSH.
-# FRR will be started by local.sh after all interfaces are ready.
-- name: Enable FRR (started later by devstack local.sh)
+# When frr_start_service is false (default), FRR is left stopped
+# because peer interfaces may not exist yet. In the Zuul CI setup,
+# the controller-side BGP interfaces (br-bgp-*, VXLAN tunnels) are
+# not created until devstack runs local.sh. Starting FRR before all
+# peers exist can cause routing loops ("Dead loop on virtual device")
+# that make the node unreachable via SSH. The last compute node's
+# local.sh restarts FRR on leaf/spine via SSH once all interfaces
+# are ready. Set frr_start_service to true when interfaces are
+# guaranteed to exist at role execution time (e.g. KubeVirt VMs).
+- name: Set FRR service state
   become: true
   ansible.builtin.service:
     name: frr
     enabled: true
-    state: stopped
+    state: "{{ 'restarted' if frr_start_service else 'stopped' }}"
