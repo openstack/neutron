@@ -134,14 +134,18 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                                               existing_range['minimum'])
         updated_range_max = updated_range.get('maximum',
                                               existing_range['maximum'])
-        existing_range_min, existing_range_max = (
+        lowest_allocated, highest_allocated = (
             segments_db.min_max_actual_segments_in_range(
                 context, existing_range['network_type'],
                 existing_range.get('physical_network'), existing_range))
 
-        if existing_range_min and existing_range_max:
-            return bool(updated_range_min >= existing_range_min or
-                        updated_range_max <= existing_range_max)
+        if lowest_allocated and highest_allocated:
+            # The update is safe as long as the new range still contains every
+            # allocated segment. It is impacted only when the new minimum rises
+            # above the lowest allocated segment or the new maximum drops below
+            # the highest allocated segment, which would strand them.
+            return bool(updated_range_min > lowest_allocated or
+                        updated_range_max < highest_allocated)
         return False
 
     @log_helpers.log_method_call
