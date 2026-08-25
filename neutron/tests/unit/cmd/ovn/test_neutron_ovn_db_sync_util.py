@@ -79,3 +79,47 @@ class TestNeutronOVNDBSyncUtil(base.BaseTestCase):
         util.migrate_neutron_dbs_to_ovn(fake_ext)
 
         migration_fn.assert_called_once_with()
+
+    def test_synchronize_ovn_dbs_respects_sync_order(self):
+        call_order = []
+
+        class PluginOrder0:
+            _sync_order = 0
+
+            def __init__(self, *args):
+                pass
+
+            def do_sync(self):
+                call_order.append('order0')
+
+        class PluginOrder1:
+            _sync_order = 1
+
+            def __init__(self, *args):
+                pass
+
+            def do_sync(self):
+                call_order.append('order1')
+
+        class PluginNoOrder:
+            def __init__(self, *args):
+                pass
+
+            def do_sync(self):
+                call_order.append('no_order')
+
+        ext_order1 = mock.Mock()
+        ext_order1.name = 'late'
+        ext_order1.plugin = PluginOrder1
+
+        ext_order0 = mock.Mock()
+        ext_order0.name = 'early'
+        ext_order0.plugin = PluginOrder0
+
+        ext_no_order = mock.Mock()
+        ext_no_order.name = 'default'
+        ext_no_order.plugin = PluginNoOrder
+
+        mgr = [ext_order1, ext_no_order, ext_order0]
+        util.synchronize_ovn_dbs(mgr, mock.ANY, mock.ANY, 'log')
+        self.assertEqual(['no_order', 'order0', 'order1'], call_order)

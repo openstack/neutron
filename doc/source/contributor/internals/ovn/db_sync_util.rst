@@ -105,6 +105,9 @@ To create a custom sync plugin:
         # Specify required ML2 extension drivers
         _required_ml2_ext_drivers = ['ml2-extension-required-by-project']
 
+        # Run after core NB/SB synchronizers (default is 0)
+        _sync_order = 1
+
         def __init__(self, core_plugin, ovn_driver, mode, is_maintenance=False):
             super().__init__(core_plugin, ovn_driver, mode, is_maintenance)
             # Initialize any plugin-specific resources
@@ -141,6 +144,12 @@ Key implementation guidelines
   ``_required_mechanism_drivers``, ``_required_service_plugins``, and
   ``_required_ml2_ext_drivers`` to ensure all necessary plugins and drivers are
   loaded before synchronization begins.
+
+* **Use ``_sync_order`` to control execution order**: Sync plugins are sorted
+  by the ``_sync_order`` class attribute (default ``0``) before execution.
+  Plugins that depend on resources created by the core NB or SB synchronizers
+  should set ``_sync_order`` to a value greater than ``0`` to ensure they run
+  after the core synchronizers.
 
 * **Implement do_sync() method**: This is the main entry point for your
   synchronization logic. The method should check the mode and act accordingly:

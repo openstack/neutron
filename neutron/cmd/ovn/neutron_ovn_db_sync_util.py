@@ -181,7 +181,9 @@ def configure_ml2_extension_drivers(conf, mgr):
 
 def synchronize_ovn_dbs(mgr, core_plugin, ovn_driver, mode):
     LOG.info('Neutron OVN DBs sync started with mode: %s', mode)
-    for sync_driver in mgr:
+    sorted_drivers = sorted(
+        mgr, key=lambda ext: getattr(ext.plugin, '_sync_order', 0))
+    for sync_driver in sorted_drivers:
         LOG.info('Starting synchronize with %s driver',
                  sync_driver.name)
         sync_obj = sync_driver.plugin(core_plugin, ovn_driver, mode)
