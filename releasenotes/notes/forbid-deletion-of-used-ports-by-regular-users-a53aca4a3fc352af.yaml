@@ -1,0 +1,25 @@
+---
+features:
+  - |
+    Regular project users can no longer delete ports whose ``device_owner``
+    starts with ``compute:``, ``baremetal:``, or ``manila:``. Those ports
+    can still be deleted by admin or service users, and by a project member
+    or network owner when the request also carries a service token, which
+    is how Nova deletes ports during ``server delete``. Unused ports and
+    ports with ``device_owner`` starting with ``network:`` keep the previous
+    ``delete_port`` behaviour.
+upgrade:
+  - |
+    The default ``delete_port`` policy now denies deletion of compute,
+    baremetal, and manila ports unless the caller is an admin, a service
+    user, or a project member or network owner whose request also carries a
+    service token. New helper rules ``compute_device``, ``baremetal_device``,
+    and ``manila_device`` were added. Deployments with customized policy
+    files should review and update ``delete_port`` if they rely on the
+    previous behaviour.
+security:
+  - |
+    Project users could previously delete a port attached to a Nova
+    server, Ironic node, or Manila share with ``DELETE /v2.0/ports/{id}``,
+    leaving the owning service and Neutron out of sync. The default
+    ``delete_port`` policy now rejects those requests.

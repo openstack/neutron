@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import constants as n_const
 from neutron_lib import policy as neutron_policy
 from neutron_lib.policy import rules as lib_rules
 from oslo_log import versionutils
@@ -61,6 +62,21 @@ rules = [
         name='network_device',
         check_str='field:port:device_owner=~^network:',
         description='Definition of port with network device_owner'),
+    policy.RuleDefault(
+        name='compute_device',
+        check_str=('field:port:device_owner=~^' +
+                   n_const.DEVICE_OWNER_COMPUTE_PREFIX),
+        description='Definition of port with compute device_owner'),
+    policy.RuleDefault(
+        name='baremetal_device',
+        check_str=('field:port:device_owner=~^' +
+                   n_const.DEVICE_OWNER_BAREMETAL_PREFIX),
+        description='Definition of port with baremetal device_owner'),
+    policy.RuleDefault(
+        name='manila_device',
+        check_str=('field:port:device_owner=~^' +
+                   n_const.DEVICE_OWNER_MANILA_PREFIX),
+        description='Definition of port with manila device_owner'),
     policy.RuleDefault(
         name='admin_or_data_plane_int',
         check_str=neutron_policy.policy_or(
@@ -733,12 +749,41 @@ rules = [
             deprecated_since="2025.1")
     ),
 
+    # Admin and service users can delete any port. A project member or
+    # network owner can delete unused ports and network-device ports.
+    # Compute, baremetal and manila ports can be deleted by admin/service
+    # users, or by a project member/network owner when the request also
+    # carries a service token (service_roles:service), which is how Nova
+    # deletes ports during server delete.
+    # Expanded check_str:
+    #   (rule:admin_only) or (rule:service_api) or
+    #   (service_roles:service and
+    #    (role:member and rule:network_owner or
+    #     role:member and project_id:%(project_id)s)) or
+    #   (not rule:compute_device and not rule:baremetal_device and
+    #    not rule:manila_device and
+    #    (role:member and rule:network_owner or
+    #     role:member and project_id:%(project_id)s))
     policy.DocumentedRuleDefault(
         name='delete_port',
         check_str=neutron_policy.policy_or(
             lib_rules.ADMIN_OR_SERVICE,
-            base.NET_OWNER_MEMBER,
-            lib_rules.PROJECT_MEMBER,
+            '(' + neutron_policy.policy_and(
+                'service_roles:service',
+                '(' + neutron_policy.policy_or(
+                    base.NET_OWNER_MEMBER,
+                    lib_rules.PROJECT_MEMBER,
+                ) + ')',
+            ) + ')',
+            '(' + neutron_policy.policy_and(
+                'not rule:compute_device',
+                'not rule:baremetal_device',
+                'not rule:manila_device',
+                '(' + neutron_policy.policy_or(
+                    base.NET_OWNER_MEMBER,
+                    lib_rules.PROJECT_MEMBER,
+                ) + ')',
+            ) + ')',
         ),
         scope_types=['project'],
         description='Delete a port',

@@ -698,7 +698,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 'floating_ip_address': '100.0.0.32',
                 'subnet_id': None,
                 'port_id': n4_port_dict['p3']}})
-        self._delete('ports', n4_port_dict['p3'])
+        self._delete('ports', n4_port_dict['p3'], as_admin=True)
 
         self.create_lrouters.append('neutron-' + uuidutils.generate_uuid())
         self.create_lrouter_ports.append(('lrp-' + uuidutils.generate_uuid(),
@@ -1642,7 +1642,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         for port in db_metadata_ports:
             lswitches[port['id']] = 'neutron-' + port['network_id']
             if ports_to_delete:
-                self._delete('ports', port['id'])
+                self._delete('ports', port['id'], as_admin=True)
                 ports_to_delete -= 1
 
         _plugin_nb_ovn = self.mech_driver.nb_ovn
