@@ -145,6 +145,28 @@
     access_time: preserve
     modification_time: preserve
 
+# Pin static routes for VXLAN tunnel endpoint IPs via the physical
+# default gateway. This prevents FRR from installing BGP-learned routes
+# that would override the underlay path and create a routing loop on
+# vxlan_sys_*.
+# Static routes (admin distance 1) are always preferred over BGP (200).
+# Only needed when IPs are assigned as /32 (e.g. OVH); on /24 networks
+# peers are directly reachable via L2 and no conflicting route is learned.
+- name: Pin underlay routes for VXLAN endpoints via physical gateway
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      GW=$(ip route show default | awk '{print $3}')
+      DEV=$(ip route show default | awk '{print $5}')
+      {% for leaf in groups['leafs'] %}
+      ip route replace {{ hostvars[leaf].vxlan_local_ip | trim }}/32 via $GW dev $DEV
+      {% endfor %}
+      {% for compute in groups['compute'] %}
+      ip route replace {{ hostvars[compute].vxlan_local_ip | trim }}/32 via $GW dev $DEV
+      {% endfor %}
+  when: ansible_default_ipv4.prefix | int == 32
+  changed_when: true
+
 # FRR is not started here because the controller-side BGP peer
 # interfaces (br-bgp-*, VXLAN tunnels) are not created until
 # devstack runs local.sh. Starting FRR before all peers exist

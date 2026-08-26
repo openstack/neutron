@@ -27,7 +27,7 @@ router bgp 65000
 
   address-family ipv4 unicast
     redistribute connected
-    neighbor downlink route-map ipv4-set-src in
+    neighbor downlink route-map downlink-in in
     neighbor downlink route-map locally-originated-only out
   exit-address-family
 
@@ -38,9 +38,16 @@ router bgp 65000
     neighbor downlink route-map locally-originated-only out
   exit-address-family
 
-route-map ipv4-set-src permit 10
+route-map downlink-in deny 5
+ match ip address prefix-list leaf-underlay-ips
+
+route-map downlink-in permit 10
  match ip address prefix-list only-host-prefixes
  set src {{ datapath_spine_ipv4 }}
+
+{% for leaf in groups['leafs'] %}
+ip prefix-list leaf-underlay-ips seq {{ loop.index * 5 }} permit {{ hostvars[leaf].vxlan_local_ip | trim }}/32
+{% endfor %}
 
 route-map locally-originated-only permit 10
  match as-path locally-originated
