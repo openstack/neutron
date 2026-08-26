@@ -1,3 +1,12 @@
+---
+description: >-
+  Neutron-specific code review guidelines: test conventions, API change policy,
+  runtime dependency rules, ML2/OVN specifics, DB migration checks, stadium
+  impact, and code rehoming to neutron-lib/ovsdbapp. Use when reviewing Neutron
+  patches, Gerrit changes, or code contributions.
+alwaysApply: false
+---
+
 # Neutron Code Review Guide
 
 Neutron-specific review rules layered on top of the general OpenStack review
@@ -8,7 +17,7 @@ agent. Reference files (in the Neutron repository):
 
 ## Dependencies
 
-Reference: [AGENTS.md § Dependencies](../AGENTS.md#dependencies)
+Reference: [AGENTS.md § Dependencies](../../AGENTS.md#dependencies)
 
 
 ## Neutron Hacking Checks
@@ -94,4 +103,4 @@ check whether they belong in an external library instead:
 
 ## Running Checks Locally
 
-See [`HACKING.rst` § *Running Tests*](../HACKING.rst#running-tests) for full details.
+See [`HACKING.rst` § *Running Tests*](../../HACKING.rst#running-tests) for full details.

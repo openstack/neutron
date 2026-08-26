@@ -1,9 +1,13 @@
-# Neutron Launchpad Bug Triage
+---
+name: neutron-lp-bug-triage
+description: >-
+  Summarize Neutron Launchpad bugs filed in a date range, grouped by
+  importance, with assignee and active patch status. Use when triaging Neutron
+  bugs, preparing bug deputy reports, or when the user asks for a Launchpad bug
+  summary for a period of time.
+---
 
-Summarize Neutron bugs filed on Launchpad in an inclusive date range, grouped
-by importance, with assignee and active patch status. Use when triaging
-Neutron bugs, preparing bug deputy reports, or producing a bug summary for a
-given period.
+# Neutron Launchpad Bug Triage
 
 
 ## Workflow
@@ -14,7 +18,7 @@ given period.
 2. **Fetch bugs** by running the bundled script:
 
 ```bash
-python3 .agents/scripts/list_launchpad_bugs.py \
+python3 .agents/skills/neutron-lp-bug-triage/scripts/list_launchpad_bugs.py \
   --start YYYY-MM-DD \
   --end YYYY-MM-DD \
   --json \
@@ -120,8 +124,8 @@ Triage notes: <brief observations>
 
 ## Script reference
 
-`.agents/scripts/list_launchpad_bugs.py` queries the Launchpad REST API and
-optionally enriches each bug with:
+`scripts/list_launchpad_bugs.py` queries the Launchpad REST API and optionally
+enriches each bug with:
 
 - `assignee` — resolved from Launchpad; `Unassigned` when empty
 - `active_patches` — open Gerrit changes or unresolved Launchpad patch messages
@@ -129,7 +133,8 @@ optionally enriches each bug with:
 Example:
 
 ```bash
-python3 .agents/scripts/list_launchpad_bugs.py --start 2026-05-26 --end 2026-05-27 --json --enrich
+python3 .agents/skills/neutron-lp-bug-triage/scripts/list_launchpad_bugs.py \
+  --start 2026-05-26 --end 2026-05-27 --json --enrich
 ```
 
 JSON fields per bug: `id`, `created`, `status`, `importance`, `title`, `url`,
@@ -139,6 +144,6 @@ JSON fields per bug: `id`, `created`, `status`, `importance`, `title`, `url`,
 ## Notes
 
 - Neutron bugs live at https://bugs.launchpad.net/neutron
-- `--enrich` may be slow (~30–60 s per bug) because Gerrit searches are slow;
+- `--enrich` may be slow (~30-60 s per bug) because Gerrit searches are slow;
   keep date ranges focused.
 - Do not use JIRA for Neutron community bugs; they are tracked in Launchpad.

@@ -50,11 +50,11 @@ and controlled (partially) by the Neutron team:
 - [pyroute2](https://github.com/svinota/pyroute2)
 
 
-## Agent links
+## Rules and skills
 
-- Neutron code review: [.agents/neutron-code-review.md](.agents/neutron-code-review.md)
-- Launchpad bug triage: [.agents/neutron-lp-bug-triage.md](.agents/neutron-lp-bug-triage.md)
-- Git commit messages: [.agents/git-commit-messages.md](.agents/git-commit-messages.md)
+- Neutron code review: [.agents/rules/neutron-code-review.md](.agents/rules/neutron-code-review.md) (rule)
+- Git commit messages: [.agents/rules/git-commit-messages.md](.agents/rules/git-commit-messages.md) (rule)
+- Launchpad bug triage: [.agents/skills/neutron-lp-bug-triage/SKILL.md](.agents/skills/neutron-lp-bug-triage/SKILL.md) (skill)
 
 
 ## Guardrails

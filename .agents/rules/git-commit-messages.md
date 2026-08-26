@@ -1,3 +1,12 @@
+---
+description: >-
+  Git commit message formatting rules for the Neutron repository: mandatory
+  trailers (Assisted-By, Signed-off-by, Change-Id), trailer ordering and
+  preservation, heredoc quoting, and style conventions. Use when creating,
+  amending, or rewording git commits.
+alwaysApply: false
+---
+
 # Git Commit Message Formatting
 
 Rules for formatting commit messages in the Neutron repository. The author
