@@ -43,3 +43,9 @@ class EVPNNoVlanAvailable(exceptions.Conflict):
 class EVPNRequiresOVN(exceptions.BadRequest):
     message = _("EVPN is only supported with the OVN router provider. "
                 "Router %(router_id)s uses a non-OVN flavor.")
+
+
+class EVPNAdvertisedSubnetConflict(exceptions.Conflict):
+    message = _("Network %(network_id)s already has an advertised subnet "
+                "on EVPN router %(router_id)s. Only one subnet per network "
+                "can be advertised with advertise_host.")

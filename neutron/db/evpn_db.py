@@ -15,6 +15,7 @@
 
 from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 
 from neutron.db.models import evpn as evpn_models
@@ -154,7 +155,6 @@ class EVPNDbHelper:
         LOG.debug("Removed EVPN network entry for subnet %s", subnet_id)
 
     @db_api.retry_if_session_inactive()
-    @db_api.CONTEXT_WRITER
     def advertise_port(self, context, port_id, network_id, router_id):
         """Enable EVPN advertisement for a port.
 
@@ -167,16 +167,31 @@ class EVPNDbHelper:
         :param network_id: UUID of the port's network
         :param router_id: UUID of the router
         """
-        evpn_network = evpn_models.EVPNNetwork(
+
+        # NOTE: DB work lives in _advertise_port so this method can translate
+        # oslo DB errors to API exceptions inside the retried call. If
+        # DBDuplicateEntry escaped to @retry_if_session_inactive, the retry
+        # wrapper would treat it as retriable and consume/retry it instead of
+        # returning a Conflict to the caller.
+        try:
+            self._advertise_port(context, port_id, network_id, router_id)
+        except db_exc.DBReferenceError:
+            raise evpn_exc.EVPNVNINotFound(router_id=router_id)
+        except db_exc.DBDuplicateEntry:
+            raise evpn_exc.EVPNAdvertisedSubnetConflict(
+                router_id=router_id,
+                network_id=network_id)
+
+    @db_api.CONTEXT_WRITER
+    def _advertise_port(self, context, port_id, network_id, router_id):
+        context.session.add(evpn_models.EVPNNetwork(
             network_id=network_id,
-            router_id=router_id)
-        context.session.add(evpn_network)
+            router_id=router_id))
         context.session.flush()
 
-        advertised_port = evpn_models.EVPNAdvertisedPort(
+        context.session.add(evpn_models.EVPNAdvertisedPort(
             port_id=port_id,
-            network_id=network_id)
-        context.session.add(advertised_port)
+            network_id=network_id))
 
         LOG.debug("EVPN advertise port %s on network %s for router %s",
                   port_id, network_id, router_id)
