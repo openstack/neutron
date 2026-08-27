@@ -62,6 +62,7 @@ from neutron.objects import base as base_obj
 from neutron.objects import network as network_obj
 from neutron.objects import port_forwarding
 from neutron.objects import ports as port_obj
+from neutron.objects.qos import policy as policy_obj
 from neutron.objects import router as l3_obj
 from neutron.objects import subnet as subnet_obj
 from neutron import worker as neutron_worker
@@ -1508,6 +1509,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _("Network %s does not contain any IPv4 subnet") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
+        qos_policy_id = (fip.get(qos_const.QOS_POLICY_ID)
+                         if self._is_fip_qos_supported else None)
+        if qos_policy_id:
+            # get_policy_obj raises QosPolicyNotFound if the
+            # QoS policy is not found
+            policy_obj.QosPolicy.get_policy_obj(context, qos_policy_id)
+
         # This external port is never exposed to the project.
         # it is used purely for internal system and admin use when
         # managing floating IPs.
@@ -1549,8 +1557,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
             floating_fixed_ip = external_ipv4_ips[0]
             floating_ip_address = floating_fixed_ip['ip_address']
-            qos_policy_id = (fip.get(qos_const.QOS_POLICY_ID)
-                             if self._is_fip_qos_supported else None)
+
             # TODO(ralonsoh): "tenant_id" reference should be removed in G+2
             if fip.get('tenant_id') and fip.get('project_id') is None:
                 fip['project_id'] = fip['tenant_id']
@@ -1631,13 +1638,22 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         dns_data = None
         fip = floatingip['floatingip']
+        policy_id = None
+
+        if self._is_fip_qos_supported and qos_const.QOS_POLICY_ID in fip:
+            policy_id = fip.get(qos_const.QOS_POLICY_ID)
+            if policy_id:
+                # get_policy_obj raises QosPolicyNotFound if the
+                # QoS policy is not found
+                policy_obj.QosPolicy.get_policy_obj(context, policy_id)
+
         with db_api.CONTEXT_WRITER.using(context):
             floatingip_obj = self._get_floatingip(context, id)
             old_floatingip = self._make_floatingip_dict(floatingip_obj)
             old_fixed_port_id = floatingip_obj.fixed_port_id
             assoc_result = self._update_fip_assoc(context, fip, floatingip_obj)
-            if self._is_fip_qos_supported and 'qos_policy_id' in fip:
-                floatingip_obj.qos_policy_id = fip.get(qos_const.QOS_POLICY_ID)
+            if self._is_fip_qos_supported and qos_const.QOS_POLICY_ID in fip:
+                floatingip_obj.qos_policy_id = policy_id
 
             floatingip_obj.update()
             floatingip_dict = self._make_floatingip_dict(floatingip_obj)
