@@ -1,0 +1,25 @@
+---
+features:
+  - |
+    The OVN BGP service plugin (``ovn-bgp``) now supports leaking tenant
+    subnet routes to the physical fabric via the new ``leak_routes`` subnet
+    attribute. When an administrator sets ``leak_routes`` to ``True`` on a
+    Geneve subnet that is attached to a router with an external gateway, the
+    subnet's CIDR is advertised as a static route on the BGP main logical
+    router and redistributed to BGP peers via FRR. This allows external hosts
+    to reach tenant workloads directly without floating IPs. The attribute is
+    an admin-only operation by default. See the
+    `OVN BGP documentation <https://docs.openstack.org/neutron/latest/admin/ovn/bgp.html#leaking-tenant-subnet-routes>`_
+    for details.
+issues:
+  - |
+    When ``leak_routes`` is enabled on a subnet, OVN connects the BGP main
+    logical router (``bgp-lr-main``) to the network's logical switch. Because
+    OVN operates at the logical-switch (network) level rather than the subnet
+    level, IP addresses from **all** subnets on that network are advertised to
+    the physical fabric as host routes -- not only the subnet(s) that were
+    explicitly leaked. ``bgp-lr-main`` does not create routes for non-leaked
+    subnets, so traffic sent to those advertised IPs will be dropped. To
+    avoid advertising unintended addresses, place subnets that require route
+    leaking on dedicated networks that do not share the logical switch with
+    subnets whose IP addresses should remain hidden from the underlay.
