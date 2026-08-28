@@ -286,8 +286,8 @@ Configuring allow list for PCI devices nova-compute (Compute)
       [pci]
       passthrough_whitelist = { "devname": "eth3", "physical_network": "physnet2", "trusted":"true" }
 
-   The ports will have to be created with a binding profile to match the
-   ``trusted`` tag, see `Launching instances with SR-IOV ports`_.
+   The ports will have to be created with the ``trusted`` attribute set to
+   match the ``trusted`` tag, see `Launching instances with SR-IOV ports`_.
 
 #. Restart the ``nova-compute`` service for the changes to go into effect.
 
@@ -309,6 +309,27 @@ Configure neutron-server (Controller)
 
       [ml2]
       mechanism_drivers = openvswitch,sriovnicswitch
+
+#. If you plan to use SR-IOV ports in "trusted mode", add ``port_trusted`` as
+   extension driver. Edit the ``ml2_conf.ini`` file on each controller:
+
+   .. code-block:: ini
+
+      [ml2]
+      extension_drivers = port_trusted
+
+   This driver implements the ``port-trusted-vif`` API extension, which adds
+   the ``trusted`` attribute to the port resource. Setting that attribute is
+   restricted to administrators by the ``create_port:trusted`` and
+   ``update_port:trusted`` policies.
+
+   .. note::
+
+      Without this extension driver there is no supported way to request
+      trusted mode. The ``trusted`` key can no longer be set directly in the
+      port ``binding:profile``, as the ``create_port:binding:profile`` and
+      ``update_port:binding:profile`` policies now default to the ``service``
+      role.
 
 #. Ensure your physnet is configured for the chosen network type. Edit the
    ``ml2_conf.ini`` file on each controller:
@@ -458,13 +479,23 @@ Once configuration is complete, you can launch instances with SR-IOV ports.
           sriov-port
 
    Alternatively, to request that the SR-IOV port accept trusted capabilities,
-   the binding profile should be enhanced with the ``trusted`` tag.
+   set the ``trusted`` attribute of the port. This requires the
+   ``port_trusted`` extension driver to be enabled, see
+   :ref:`configure_sriov_neutron_server`.
 
    .. code-block:: console
 
       $ openstack port create --network $net_id --vnic-type direct \
-          --binding-profile trusted=true \
+          --trusted \
           sriov-port
+
+   .. note::
+
+      Setting the ``trusted`` key directly in the port ``binding:profile`` is
+      deprecated and is only allowed to users with the ``service`` role. The
+      ``port_trusted`` extension driver still copies the value of the
+      ``trusted`` attribute into ``binding:profile``, so that the Compute
+      service keeps finding it where it expects it.
 
 #. Get the ``id`` of the created port:
 
