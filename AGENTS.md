@@ -55,6 +55,7 @@ and controlled (partially) by the Neutron team:
 - Neutron code review: [.agents/rules/neutron-code-review.md](.agents/rules/neutron-code-review.md) (rule)
 - Git commit messages: [.agents/rules/git-commit-messages.md](.agents/rules/git-commit-messages.md) (rule)
 - Launchpad bug triage: [.agents/skills/neutron-lp-bug-triage/SKILL.md](.agents/skills/neutron-lp-bug-triage/SKILL.md) (skill)
+- Testing patches: [.agents/skills/neutron-testing-patches/SKILL.md](.agents/skills/neutron-testing-patches/SKILL.md) (skill)
 
 
 ## Guardrails
