@@ -31,7 +31,7 @@ class FrrVtyshExecutorNamespaced(frr_driver.FrrVtyshExecutor):
     """Namespaced vtysh executor for testing.
 
     Do not add any logic here — this subclass exists only to run
-    vtysh in a network namespace so that functional tests exercise
+    vtysh against an FRR pathspace so that functional tests exercise
     the production FrrVtyshExecutor code paths unchanged.
     """
 
@@ -63,7 +63,7 @@ class NamespacedVRFHandler(interface.EVPNRouterVrfHandler):
     def _ns_exec(self, cmd, **kwargs):
         return linux_utils.execute(
             ['ip', 'netns', 'exec', self._namespace] + cmd,
-            run_as_root=True, **kwargs)
+            run_as_root=True, privsep_exec=True, **kwargs)
 
     def _vni(self, vrf_name):
         return int(vrf_name.split('-')[-1])

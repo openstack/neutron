@@ -55,11 +55,6 @@ neutron-keepalived-state-change: CommandFilter, neutron-keepalived-state-change,
 conntrackd: CommandFilter, conntrackd, root
 conntrackd_env: EnvFilter, env, root, PROCESS_TAG=, conntrackd
 
-# FRR
-vtysh_cmd: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, -c, .*
-vtysh_dryrun: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, --dryrun, -f, .*
-vtysh_apply: RegExpFilter, vtysh, root, vtysh, --vty_socket, /[a-z/]+, -f, .*
-
 # OPEN VSWITCH
 ovs-ofctl: CommandFilter, ovs-ofctl, root
 ovsdb-client: CommandFilter, ovsdb-client, root
