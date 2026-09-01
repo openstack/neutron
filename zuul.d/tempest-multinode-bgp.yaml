@@ -2,9 +2,9 @@
     name: neutron-five-node-noble-bgp
     nodes:
       - name: controller
-        label: ubuntu-noble-8GB
+        label: ubuntu-noble-nested-virt-8GB
       - name: compute1
-        label: ubuntu-noble-8GB
+        label: ubuntu-noble-nested-virt-8GB
       - name: leaf-1
         label: ubuntu-noble
       - name: leaf-2
@@ -52,6 +52,7 @@
         ENABLE_TLS: True
         PUBLIC_SUBNET_ENABLE_DHCP: True
         OVN_BUILD_FROM_SOURCE: True
+        LIBVIRT_TYPE: kvm
         OVN_BRANCH: v26.03.0
         OVS_BRANCH: v3.7.0
         FRR_USE_BFD: True
@@ -214,7 +215,7 @@
           OVN_BUILD_FROM_SOURCE: True
           NOVA_VNC_ENABLED: true
           ENABLE_CHASSIS_AS_GW: false
-          LIBVIRT_TYPE: qemu
+          LIBVIRT_TYPE: kvm
           OVN_BRANCH: v26.03.0
           OVS_BRANCH: v3.7.0
           FRR_USE_BFD: True
