@@ -318,3 +318,64 @@ class TestMechanismDriverWithAgent(mech_agent.AgentMechanismDriverBase,
     @TestMechanismDriver.supported_vnic_types.setter
     def supported_vnic_types(self, vnic_types):
         self._supported_vnic_types = vnic_types
+
+
+# Host used to trigger a hierarchical bind spanning two distinct
+# mechanism drivers (as opposed to "host-hierarchical" above, where a
+# single driver binds both levels itself).
+HIER_TWO_DRIVER_HOST = "host-two-driver-hierarchical"
+
+
+class _HierarchicalRecordingDriver(api.MechanismDriver):
+    """Base for the two-driver hierarchical binding test drivers.
+
+    Each subclass owns exactly one binding level for HIER_TWO_DRIVER_HOST,
+    reproducing the real-world case where a physical fabric driver binds
+    the outer level and a host vswitch driver binds the inner level.
+    delete_port_precommit/postcommit record into `recorder`, a list the
+    test supplies, so cross-driver call order can be asserted.
+    """
+
+    driver_name = None
+
+    def initialize(self):
+        self.recorder = None
+
+    def delete_port_precommit(self, context):
+        if self.recorder is not None:
+            self.recorder.append((self.driver_name, 'precommit'))
+
+    def delete_port_postcommit(self, context):
+        if self.recorder is not None:
+            self.recorder.append((self.driver_name, 'postcommit'))
+
+
+class HierarchicalOuterMechanismDriver(_HierarchicalRecordingDriver):
+    """Binds the outer (level 0) segment, then hands off to level 1."""
+
+    driver_name = 'test_hier_outer'
+
+    def bind_port(self, context):
+        if context.host != HIER_TWO_DRIVER_HOST:
+            return
+        segment = context.segments_to_bind[0]
+        if segment[api.NETWORK_TYPE] != 'local':
+            return
+        next_segment = context.allocate_dynamic_segment(
+            {api.NETWORK_TYPE: 'vlan', api.PHYSICAL_NETWORK: 'physnet1'})
+        context.continue_binding(segment[api.ID], [next_segment])
+
+
+class HierarchicalInnerMechanismDriver(_HierarchicalRecordingDriver):
+    """Binds the inner (level 1) segment handed off by the outer driver."""
+
+    driver_name = 'test_hier_inner'
+
+    def bind_port(self, context):
+        if context.host != HIER_TWO_DRIVER_HOST:
+            return
+        segment = context.segments_to_bind[0]
+        if segment[api.NETWORK_TYPE] != 'vlan':
+            return
+        context.set_binding(segment[api.ID], portbindings.VIF_TYPE_OVS,
+                            {portbindings.CAP_PORT_FILTER: False})

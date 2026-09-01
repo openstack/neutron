@@ -32,6 +32,7 @@ import webob.exc
 
 from neutron.conf.plugins.ml2 import config
 from neutron.conf.plugins.ml2.drivers import driver_type
+from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_context
 from neutron.plugins.ml2 import models as ml2_models
 from neutron.plugins.ml2 import plugin as ml2_plugin
@@ -344,6 +345,70 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             # Get port and verify status is still DOWN.
             port = self._show('ports', port_id)
             self.assertEqual('DOWN', port['port']['status'])
+
+
+class HierarchicalPortBindingDeleteOrderTestCase(
+        test_plugin.NeutronDbPluginV2TestCase):
+    """Delete notifications must unwind a hierarchical bind FILO.
+
+    Unlike PortBindingTestCase.test_hierarchical_binding, which uses a
+    single "test" driver that binds both levels itself, this uses two
+    distinct mechanism drivers -- one per binding level -- to reproduce
+    the real-world hierarchical port binding case (e.g. a fabric driver
+    binding the outer level, a host vswitch driver binding the inner
+    level). It confirms that on port delete, the driver owning the
+    innermost level is notified before the driver owning the outermost
+    level, per the FILO teardown order documented on PortBindingLevel
+    and MechanismManager._call_on_drivers.
+    """
+
+    def setUp(self):
+        cfg.CONF.set_override(
+            'mechanism_drivers',
+            ['logger',
+             mechanism_test.HierarchicalOuterMechanismDriver.driver_name,
+             mechanism_test.HierarchicalInnerMechanismDriver.driver_name],
+            'ml2')
+        driver_type.register_ml2_drivers_vlan_opts()
+        cfg.CONF.set_override('network_vlan_ranges',
+                              ['physnet1:1000:1099'],
+                              group='ml2_type_vlan')
+        super().setUp('ml2')
+        self.plugin = directory.get_plugin()
+
+    def _driver_obj(self, driver_name):
+        return self.plugin.mechanism_manager.mech_drivers[driver_name].obj
+
+    def test_delete_notifies_inner_driver_before_outer_driver(self):
+        outer_name = (
+            mechanism_test.HierarchicalOuterMechanismDriver.driver_name)
+        inner_name = (
+            mechanism_test.HierarchicalInnerMechanismDriver.driver_name)
+        call_order = []
+        self._driver_obj(outer_name).recorder = call_order
+        self._driver_obj(inner_name).recorder = call_order
+
+        host_arg = {portbindings.HOST_ID: mechanism_test.HIER_TWO_DRIVER_HOST}
+        with self.port(name='name', is_admin=True,
+                       arg_list=(portbindings.HOST_ID,),
+                       **host_arg) as port:
+            port_id = port['port']['id']
+
+            # Confirm this genuinely bound through both drivers, one
+            # level each, before trusting the delete-order assertion.
+            ctx = context.get_admin_context()
+            levels = ml2_db.get_binding_level_objs(
+                ctx, port_id, mechanism_test.HIER_TWO_DRIVER_HOST)
+            self.assertEqual(2, len(levels))
+            self.assertEqual(outer_name, levels[0].driver)
+            self.assertEqual(inner_name, levels[1].driver)
+
+            self._delete('ports', port_id)
+
+        self.assertEqual(
+            [(inner_name, 'precommit'), (outer_name, 'precommit'),
+             (inner_name, 'postcommit'), (outer_name, 'postcommit')],
+            call_order)
 
 
 class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
