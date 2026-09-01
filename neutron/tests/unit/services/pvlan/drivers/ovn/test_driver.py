@@ -44,23 +44,26 @@ class TestRegister(base.BaseTestCase):
             callback(pvlan_ovn.PVLAN_PLUGIN, events.BEFORE_SPAWN,
                      self.trigger, payload=None)
 
-    def test_register_creates_both_subscriptions(self, mock_subscribe):
+    def test_register_subscribes_driver_registration_only(
+            self, mock_subscribe):
         pvlan_ovn.register(self.mech_driver)
-        self.assertEqual(2, mock_subscribe.call_count)
-        mock_subscribe.assert_any_call(
+        mock_subscribe.assert_called_once_with(
             mock.ANY, pvlan_ovn.PVLAN_PLUGIN, events.BEFORE_SPAWN)
+
+    def test_callback_registers_driver_and_pg_drop_init(self, mock_subscribe):
+        self._invoke_callback(mock_subscribe, is_loaded=True)
+        self.trigger.register_driver.assert_called_once()
+        self.assertEqual(2, mock_subscribe.call_count)
         mock_subscribe.assert_any_call(
             pvlan_ovn._initialize_pvlan_pg_drop,
             resources.PROCESS, events.AFTER_INIT)
-
-    def test_callback_registers_driver(self, mock_subscribe):
-        self._invoke_callback(mock_subscribe, is_loaded=True)
-        self.trigger.register_driver.assert_called_once()
 
     def test_callback_skips_registration_when_not_loaded(self,
                                                          mock_subscribe):
         self._invoke_callback(mock_subscribe, is_loaded=False)
         self.trigger.register_driver.assert_not_called()
+        mock_subscribe.assert_called_once_with(
+            mock.ANY, pvlan_ovn.PVLAN_PLUGIN, events.BEFORE_SPAWN)
 
 
 class TestPVLANDriverBase(base.BaseTestCase):
