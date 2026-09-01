@@ -88,12 +88,12 @@ def register(mech_driver):
     def _register_pvlan_driver(resource, event, trigger, payload=None):
         driver = PVLANDriver.create(mech_driver=mech_driver)
         if driver.is_loaded:
+            registry.subscribe(_initialize_pvlan_pg_drop,
+                               resources.PROCESS, events.AFTER_INIT)
             trigger.register_driver(driver)
 
     registry.subscribe(_register_pvlan_driver,
                        PVLAN_PLUGIN, events.BEFORE_SPAWN)
-    registry.subscribe(_initialize_pvlan_pg_drop,
-                       resources.PROCESS, events.AFTER_INIT)
 
 
 class PVLANDriver:
