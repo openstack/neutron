@@ -1,16 +1,16 @@
 - nodeset:
-    name: neutron-five-node-noble-bgp
+    name: neutron-five-node-resolute-bgp
     nodes:
       - name: controller
-        label: ubuntu-noble-nested-virt-8GB
+        label: ubuntu-resolute-nested-virt-8GB
       - name: compute1
-        label: ubuntu-noble-nested-virt-8GB
+        label: ubuntu-resolute-nested-virt-8GB
       - name: leaf-1
-        label: ubuntu-noble
+        label: ubuntu-resolute-4GB
       - name: leaf-2
-        label: ubuntu-noble
+        label: ubuntu-resolute-4GB
       - name: spine
-        label: ubuntu-noble-8GB
+        label: ubuntu-resolute-4GB
     groups:
       - name: controller
         nodes:
@@ -42,7 +42,7 @@
 - job:
     name: neutron-ovn-bgp-tempest-multinode
     parent: neutron-tempest-plugin-ovn
-    nodeset: neutron-five-node-noble-bgp
+    nodeset: neutron-five-node-resolute-bgp
     timeout: 10800
     post-timeout: 9600
     required-projects:
@@ -51,10 +51,7 @@
       devstack_localrc:
         ENABLE_TLS: True
         PUBLIC_SUBNET_ENABLE_DHCP: True
-        OVN_BUILD_FROM_SOURCE: True
         LIBVIRT_TYPE: kvm
-        OVN_BRANCH: v26.03.0
-        OVS_BRANCH: v3.7.0
         FRR_USE_BFD: True
         ENABLE_FRR: True
         FRR_BGP_ROUTER_ID: '172.24.4.1'
@@ -212,12 +209,9 @@
           <<: *subnode_localrc
           # Compute1-specific overrides
           Q_PLUGIN: ml2
-          OVN_BUILD_FROM_SOURCE: True
           NOVA_VNC_ENABLED: true
           ENABLE_CHASSIS_AS_GW: false
           LIBVIRT_TYPE: kvm
-          OVN_BRANCH: v26.03.0
-          OVS_BRANCH: v3.7.0
           FRR_USE_BFD: True
           ENABLE_FRR: True
           FRR_BGP_ROUTER_ID: '172.24.4.2'
