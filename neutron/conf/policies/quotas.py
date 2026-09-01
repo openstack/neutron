@@ -20,8 +20,8 @@ The quotas API now supports project scope and default roles.
 """
 
 
-COLLECTION_PATH = '/quota'
-RESOURCE_PATH = '/quota/{id}'
+COLLECTION_PATH = '/quotas'
+RESOURCE_PATH = '/quotas/{id}'
 
 
 rules = [

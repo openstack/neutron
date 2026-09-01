@@ -14,8 +14,9 @@ from neutron_lib.policy import rules as lib_rules
 from oslo_policy import policy
 
 
-BINDING_PATH = '/ports/{port_id}/bindings/'
-ACTIVATE_BINDING_PATH = '/ports/{port_id}/bindings/{host}'
+BINDING_PATH = '/ports/{port_id}/bindings'
+DELETE_BINDING_PATH = BINDING_PATH + '/{host}'
+ACTIVATE_BINDING_PATH = DELETE_BINDING_PATH + '/activate'
 
 
 rules = [
@@ -51,7 +52,7 @@ rules = [
         operations=[
             {
                 'method': 'DELETE',
-                'path': BINDING_PATH,
+                'path': DELETE_BINDING_PATH,
             },
         ],
     ),
