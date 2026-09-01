@@ -1479,7 +1479,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             with mock.patch.object(self.l3_plugin.l3_rpc_notifier,
                                    'router_removed_from_agent') as remove_mock:
                 self._delete('ports', port['port']['id'],
-                             project_id=non_admin_project)
+                             project_id=non_admin_project, as_admin=True)
                 remove_mock.assert_called_once_with(
                     mock.ANY, router['id'], HOST)
 

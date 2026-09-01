@@ -513,7 +513,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # only to virtual ports. This check is done for virtual ports in
         # ``update_virtual_port_parent_host``.
         port = self.create_port()
-        self._delete('ports', port['id'])
+        self._delete('ports', port['id'], as_admin=True)
         # We actively wait for 5 seconds for the ``Port_Binding`` event to
         # arrive and be processed, but the port host must not be updated.
         self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,

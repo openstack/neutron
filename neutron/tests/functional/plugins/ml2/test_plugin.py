@@ -105,7 +105,8 @@ class TestMl2PortBinding(ml2_test_base.ML2TestFramework,
                 models.PortBinding.port_id == port_id).one()
             self.context.session.delete(port_binding)
 
-        req = self.new_delete_request('ports', port['port']['id'])
+        req = self.new_delete_request('ports', port['port']['id'],
+                                      as_admin=True)
         req.get_response(self.api)
         ports = self._list('ports')['ports']
         self.assertEqual(0, len(ports))

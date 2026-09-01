@@ -592,7 +592,8 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
         self._verify_dhcp_option_rows(expected_dhcp_options_rows)
 
         # delete port p1.
-        port_req = self.new_delete_request('ports', p1['port']['id'])
+        port_req = self.new_delete_request('ports', p1['port']['id'],
+                                           as_admin=True)
         port_req.get_response(self.api)
 
         del expected_dhcp_options_rows['v4-' + p1['port']['id']]

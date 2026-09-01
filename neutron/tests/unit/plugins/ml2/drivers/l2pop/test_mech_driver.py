@@ -1015,7 +1015,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.callbacks.update_device_up(self.adminContext,
                                                     agent_id=HOST,
                                                     device=device1)
-                self._delete('ports', port2['port']['id'])
+                self._delete('ports', port2['port']['id'], as_admin=True)
                 p2_ips = [p['ip_address'] for p in p2['fixed_ips']]
                 expected = {p2['network_id']:
                             {'ports':
@@ -1050,7 +1050,7 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                     self.callbacks.update_device_up(self.adminContext,
                                                     agent_id=HOST,
                                                     device=device)
-                self._delete('ports', port['port']['id'])
+                self._delete('ports', port['port']['id'], as_admin=True)
                 p1_ips = [p['ip_address'] for p in p1['fixed_ips']]
                 expected = {p1['network_id']:
                             {'ports':

@@ -98,6 +98,13 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
             user_id=self.user_id,
             roles=['reader'],
             project_id=self.project_id)
+        # Project member request made by a service on the user's behalf
+        # (user token + X-Service-Token).
+        self.project_member_service_token_ctx = context.Context(
+            user_id=self.user_id,
+            roles=['member', 'reader'],
+            project_id=self.project_id,
+            service_roles=['service'])
 
     def _prepare_service_persona(self):
         self.service_ctx = context.Context(
