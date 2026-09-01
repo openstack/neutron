@@ -598,6 +598,12 @@ class TunnelTest:
             mock.call.deferred(full_ordered=True, use_bundle=True),
             mock.call.deferred().__enter__(),
             mock.call.deferred().__exit__(None, None, None),
+            mock.call.check_canary_table(),
+            mock.call.deferred(full_ordered=True, use_bundle=True),
+            mock.call.deferred().__enter__(),
+            mock.call.deferred().__exit__(None, None, None),
+            # Stale flow cleanup is deferred until the rpc_loop populates
+            # the "ports" set (see #2166018), after the first loop iteration.
             mock.call.cleanup_flows(),
             mock.call.check_canary_table(),
             mock.call.deferred(full_ordered=True, use_bundle=True),
@@ -633,12 +639,20 @@ class TunnelTest:
             devices_not_ready = set()
             process_p_events.side_effect = [
                 (reply_pe_1, reply_ancillary, devices_not_ready),
+                (reply_pe_2, reply_ancillary, devices_not_ready),
                 (reply_pe_2, reply_ancillary, devices_not_ready)]
             interface_polling = mock.Mock()
-            interface_polling.get_events.side_effect = [reply_ge_1, reply_ge_2]
+            interface_polling.get_events.side_effect = [
+                reply_ge_1, reply_ge_2, reply_ge_2]
             failed_devices = {'removed': set(), 'added': set()}
             failed_ancillary_devices = {'removed': set(), 'added': set()}
+            # Note: stale flow cleanup is deferred until the rpc_loop
+            # populates the "ports" set (see #2166018). The "ports" set is
+            # only assigned from port_info['current'] *after* the cleanup
+            # check, so it is still empty on the first iteration and cleanup
+            # is skipped.
             process_network_ports.side_effect = [
+                failed_devices,
                 failed_devices,
                 Exception('Fake exception to get out of the loop')]
 

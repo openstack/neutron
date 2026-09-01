@@ -2902,7 +2902,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                  {'iter_num': self.iter_num,
                                   'elapsed': time.time() - start})
 
-                    if need_clean_stale_flow:
+                    # Note(lajoskatona): Before cleaning ports with old
+                    # cookies, wait for the start of port processing.
+                    # The assuption is that ports set is filled only after
+                    # this point of the first loop.
+                    if need_clean_stale_flow and ports:
                         self.cleanup_stale_flows()
                         need_clean_stale_flow = False
                         LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
