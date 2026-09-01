@@ -44,9 +44,10 @@ router bgp 64999
     neighbor downlink route-reflector-client
     neighbor downlink next-hop-self
     neighbor downlink default-originate
-    neighbor downlink prefix-list only-host-prefixes out
+    neighbor downlink prefix-list downlink-out out
+    neighbor downlink prefix-list downlink-in in
     neighbor uplink allowas-in origin
-    neighbor uplink prefix-list only-host-prefixes in
+    neighbor uplink prefix-list uplink-in in
   exit-address-family
 
   address-family ipv6 unicast
@@ -59,6 +60,19 @@ router bgp 64999
     neighbor uplink allowas-in origin
     neighbor uplink prefix-list only-host-prefixes in
   exit-address-family
+
+{% set seq = namespace(n=5) %}
+{% for compute in groups['compute'] %}
+ip prefix-list downlink-in seq {{ seq.n }} deny {{ hostvars[compute].vxlan_local_ip | trim }}/32
+{% set seq.n = seq.n + 5 %}
+{% endfor %}
+ip prefix-list downlink-in seq 1000 permit 0.0.0.0/0 le 32
+
+ip prefix-list downlink-out seq 5 deny {{ vxlan_local_ip | trim }}/32
+ip prefix-list downlink-out seq 1000 permit 0.0.0.0/0 ge 32
+
+ip prefix-list uplink-in seq 5 deny {{ hostvars['spine'].vxlan_local_ip | trim }}/32
+ip prefix-list uplink-in seq 1000 permit 0.0.0.0/0 ge 32
 
 ip prefix-list only-host-prefixes permit 0.0.0.0/0 ge 32
 
