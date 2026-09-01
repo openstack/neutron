@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import netaddr
 from neutron_lib.api.definitions import ovn_bgp as ovn_bgp_apidef
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
@@ -26,6 +27,7 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.conf.services import bgp as bgp_config
+from neutron.objects import bgp as bgp_objects
 from neutron.objects import network as network_objects
 from neutron.objects import router as router_objects
 from neutron.services.bgp import worker
@@ -70,9 +72,26 @@ class BGPServicePlugin(service_base.ServicePluginBase):
                     % {'subnet_id': subnet_id})
 
     @staticmethod
+    def _validate_no_cidr_overlap(context, cidr):
+        leaked_cidrs = bgp_objects.SubnetBGPLeakRoutes.get_leaked_subnet_cidrs(
+            context)
+        new_subnet = netaddr.IPNetwork(cidr)
+        for subnet_id, subnet_cidr in leaked_cidrs:
+            existing = netaddr.IPNetwork(subnet_cidr)
+            if new_subnet.version != existing.version:
+                continue
+            if new_subnet in existing or existing in new_subnet:
+                raise n_exc.BadRequest(
+                    resource='subnet',
+                    msg='The subnet CIDR %s overlaps with already '
+                        'leaked subnet %s (%s).'
+                        % (cidr, subnet_id, subnet_cidr))
+
+    @staticmethod
     @resource_extend.extends([ovn_bgp_apidef.COLLECTION_NAME])
     def _extend_subnet_dict_bgp(subnet_res, subnet_db):
-        subnet_res[ovn_bgp_apidef.LEAK_ROUTES] = False
+        subnet_res[ovn_bgp_apidef.LEAK_ROUTES] = (
+            subnet_db.get('bgp_leak_routes') is not None)
         return subnet_res
 
     @registry.receives(resources.NETWORK, [events.PRECOMMIT_CREATE])
@@ -123,6 +142,11 @@ class BGPServicePlugin(service_base.ServicePluginBase):
 
         if leak_routes:
             self._validate_gateway_router_for_subnet(context, subnet_id)
+            self._validate_no_cidr_overlap(context, updated['cidr'])
+            bgp_objects.SubnetBGPLeakRoutes(
+                context, subnet_id=subnet_id).create()
             LOG.info("Subnet %s updated: leak_routes enabled", subnet_id)
         else:
+            bgp_objects.SubnetBGPLeakRoutes.delete_objects(
+                context, subnet_id=subnet_id)
             LOG.info("Subnet %s updated: leak_routes disabled", subnet_id)

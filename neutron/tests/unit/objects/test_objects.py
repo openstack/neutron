@@ -34,6 +34,7 @@ object_data = {
     'Agent': '1.1-4feb0abf8732a17c16dee962091d9203',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',
     'AutoAllocatedTopology': '1.0-74642e58c53bf3610dc224c59f81b242',
+    'SubnetBGPLeakRoutes': '1.0-8805009df13a1d71d512b4050ae5672b',
     'ConntrackHelper': '1.0-b1a50cfe18178db50c7f206e75613f4b',
     'DefaultSecurityGroup': '1.0-971520cb2e0ec06d747885a0cf78347f',
     'DistributedPortBinding': '1.0-575793af113535b8eae1a0c1eab906e2',
