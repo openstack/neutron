@@ -86,7 +86,7 @@ def get_hypervisor_hostname():
                 not addrinfo[0][3].startswith('localhost')):
             return addrinfo[0][3]
     except OSError as os_err:
-        LOG.warning("Error: %s, occured while querying for fqdn. "
+        LOG.warning("Error: %s, occurred while querying for fqdn. "
                     "get_hypervisor_hostname will just "
                     "return %s", os_err, hypervisor_hostname)
 
