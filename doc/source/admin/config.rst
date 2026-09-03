@@ -48,6 +48,7 @@ Configuration
    config-trunking
    config-neutron-server-processes
    config-wsgi
+   data-center-networks
 
 .. note::
 
