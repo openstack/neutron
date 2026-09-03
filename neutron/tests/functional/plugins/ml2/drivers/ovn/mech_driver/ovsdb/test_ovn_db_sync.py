@@ -52,6 +52,7 @@ from neutron.services.evpn import db_sync as evpn_db_sync
 from neutron.services.evpn import helpers as evpn_helpers
 from neutron.services.portforwarding.drivers.ovn.driver import \
     OVNPortForwarding as ovn_pf
+from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn
 from neutron.services.revisions import revision_plugin
 from neutron.services.segments import db as segments_db
 from neutron.tests.functional import base
@@ -2562,3 +2563,247 @@ class TestOvnNbSyncEVPN(base.TestOVNFunctionalBase):
         self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG)
 
         self.assertNotIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
+
+
+class TestOvnNbSyncPVLAN(base.TestOVNFunctionalBase):
+    """Functional tests for PVLAN sync in ovn-db-sync."""
+
+    _extension_drivers = ['port_security', 'qos']
+
+    def setUp(self):
+        self._mock_has_lock = mock.patch.object(
+            maintenance.DBInconsistenciesPeriodics, 'has_lock',
+            mock.PropertyMock(return_value=True))
+        self.mock_has_lock = self._mock_has_lock.start()
+        self._mock_set_lock = mock.patch.object(
+            ovsdb_monitor.BaseOvnIdl, 'set_lock')
+        self.mock_set_lock = self._mock_set_lock.start()
+        super().setUp(maintenance_worker=True)
+        self.ctx = context.get_admin_context()
+
+    def get_additional_service_plugins(self):
+        p = super().get_additional_service_plugins()
+        p.update({'pvlan': 'pvlan'})
+        return p
+
+    def _get_pg(self, pg_name):
+        """Look up a Port_Group by name from OVN NB."""
+        for row in self.nb_api.tables['Port_Group'].rows.values():
+            if row.name == pg_name:
+                return row
+        return None
+
+    def _get_pg_acl_dicts(self, pg):
+        """Convert PG ACLs to comparable dicts."""
+        return [{'priority': a.priority, 'action': a.action,
+                 'direction': a.direction, 'match': a.match}
+                for a in pg.acls]
+
+    def _create_drop_pg(self):
+        """Create the PVLAN drop PG via the IDL.
+
+        Uses the IDL (like every other OVN operation in this test
+        module) instead of ``ovsdb-client transact`` so that the IDL
+        cache is updated synchronously.
+        """
+        drop_name = pvlan_ovn.DROP_PORT_GROUP_NAME
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.pg_add(
+                name=drop_name, acls=[], may_exist=True))
+        with self.nb_api.transaction(check_error=True) as txn:
+            for direction, match in [
+                ('to-lport',
+                 'outport == @%s && ip' % drop_name),
+                ('from-lport',
+                 'inport == @%s && ip' % drop_name),
+            ]:
+                txn.add(self.nb_api.pg_acl_add(
+                    drop_name, direction,
+                    pvlan_ovn.DROP_ALL_PRIORITY,
+                    match, 'drop', may_exist=True))
+
+    def _create_pvlan_network(self):
+        """Create a PVLAN network via the API."""
+        res = self._create_network(self.fmt, 'pvlan-net', True,
+                                   arg_list=('pvlan',), pvlan=True)
+        network = self.deserialize(self.fmt, res)['network']
+        network_id = network['id']
+
+        res = self._create_subnet(
+            self.fmt, network_id, '10.0.0.0/24')
+        self.deserialize(self.fmt, res)
+
+        # The OVN client creates the per-network PGs (isolated,
+        # promiscuous) during network creation when pvlan=True.
+        # Only the global drop PG needs to be created separately.
+        self._create_drop_pg()
+
+        return network_id
+
+    def _run_sync(self):
+        nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+        self.addCleanup(nb_synchronizer.stop)
+        nb_synchronizer.sync_pvlan(self.ctx)
+
+    def test_sync_pvlan_drop_pg_recreated(self):
+        """Drop PG is recreated if missing."""
+        self._create_drop_pg()
+        drop_pg = self._get_pg(pvlan_ovn.DROP_PORT_GROUP_NAME)
+        self.assertIsNotNone(drop_pg)
+
+        # Delete the drop PG
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.pg_del(
+                pvlan_ovn.DROP_PORT_GROUP_NAME,
+                if_exists=True))
+        self.assertIsNone(
+            self._get_pg(pvlan_ovn.DROP_PORT_GROUP_NAME))
+
+        self._run_sync()
+
+        drop_pg = self._get_pg(pvlan_ovn.DROP_PORT_GROUP_NAME)
+        self.assertIsNotNone(drop_pg)
+        acls = self._get_pg_acl_dicts(drop_pg)
+        self.assertEqual(2, len(acls))
+
+    def test_sync_pvlan_drop_pg_acls_repaired(self):
+        """Missing ACLs on drop PG are re-added."""
+        self._create_drop_pg()
+        drop_name = pvlan_ovn.DROP_PORT_GROUP_NAME
+
+        # Delete the to-lport ACL
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.pg_acl_del(
+                drop_name, direction='to-lport'))
+        drop_pg = self._get_pg(drop_name)
+        self.assertEqual(1, len(drop_pg.acls))
+
+        self._run_sync()
+
+        drop_pg = self._get_pg(drop_name)
+        acls = self._get_pg_acl_dicts(drop_pg)
+        self.assertEqual(2, len(acls))
+        directions = {a['direction'] for a in acls}
+        self.assertEqual({'to-lport', 'from-lport'}, directions)
+
+    def test_sync_pvlan_drop_pg_extra_acl_removed(self):
+        """Extra ACLs on drop PG are removed."""
+        self._create_drop_pg()
+        drop_name = pvlan_ovn.DROP_PORT_GROUP_NAME
+
+        # Add a bogus ACL
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.pg_acl_add(
+                drop_name, 'to-lport', 999,
+                'ip', 'allow'))
+        drop_pg = self._get_pg(drop_name)
+        self.assertEqual(3, len(drop_pg.acls))
+
+        self._run_sync()
+
+        drop_pg = self._get_pg(drop_name)
+        self.assertEqual(2, len(drop_pg.acls))
+
+    def test_sync_pvlan_network_pgs_recreated(self):
+        """Isolated and promiscuous PGs are recreated."""
+        network_id = self._create_pvlan_network()
+        nid = network_id.replace('-', '_')
+        iso_name = 'pvlan_isolated_%s' % nid
+        prm_name = 'pvlan_promiscuous_%s' % nid
+
+        self.assertIsNotNone(self._get_pg(iso_name))
+        self.assertIsNotNone(self._get_pg(prm_name))
+
+        # Delete isolated PG
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.pg_del(
+                iso_name, if_exists=True))
+        self.assertIsNone(self._get_pg(iso_name))
+
+        self._run_sync()
+
+        iso_pg = self._get_pg(iso_name)
+        self.assertIsNotNone(iso_pg)
+        self.assertEqual(1, len(iso_pg.acls))
+
+    def test_sync_pvlan_all_correct_no_changes(self):
+        """When everything is correct, no PGs are modified."""
+        network_id = self._create_pvlan_network()
+        nid = network_id.replace('-', '_')
+        iso_name = 'pvlan_isolated_%s' % nid
+        prm_name = 'pvlan_promiscuous_%s' % nid
+
+        iso_before = self._get_pg(iso_name)
+        prm_before = self._get_pg(prm_name)
+
+        self._run_sync()
+
+        iso_after = self._get_pg(iso_name)
+        prm_after = self._get_pg(prm_name)
+        # UUIDs should be the same (not recreated)
+        self.assertEqual(iso_before.uuid, iso_after.uuid)
+        self.assertEqual(prm_before.uuid, prm_after.uuid)
+
+    def _save_sg_port_groups(self):
+        """Capture UUID and ACLs for every SG port group."""
+        sg_rows = {}
+        for row in self.nb_api.tables['Port_Group'].rows.values():
+            if ovn_const.OVN_SG_EXT_ID_KEY not in row.external_ids:
+                continue
+            sg_rows[row.name] = {
+                'uuid': row.uuid,
+                'acls': sorted(
+                    [{'priority': a.priority, 'action': a.action,
+                      'direction': a.direction, 'match': a.match}
+                     for a in row.acls],
+                    key=lambda a: (a['direction'], a['priority'],
+                                   a['match'])),
+            }
+        return sg_rows
+
+    def test_sync_pvlan_prm_repair_restores_community_acls(self):
+        """Promiscuous PG repair restores community ACLs."""
+        network_id = self._create_pvlan_network()
+        nid = network_id.replace('-', '_')
+        prm_name = 'pvlan_promiscuous_%s' % nid
+
+        self._create_port(
+            self.fmt, network_id,
+            arg_list=('pvlan_type', 'pvlan_community'),
+            pvlan_type='community', pvlan_community='web')
+
+        prm_pg = self._get_pg(prm_name)
+        acls_before = self._get_pg_acl_dicts(prm_pg)
+        self.assertEqual(4, len(acls_before))
+
+        comm_pg_name = 'pvlan_community_web_%s' % nid
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.pg_acl_del(
+                prm_name, direction='from-lport',
+                priority=pvlan_ovn.PROMISCUOUS_PRIORITY,
+                match='inport == @%s' % comm_pg_name))
+        self.assertEqual(3, len(self._get_pg(prm_name).acls))
+
+        self._run_sync()
+
+        acls_after = self._get_pg_acl_dicts(self._get_pg(prm_name))
+        self.assertCountEqual(acls_before, acls_after)
+
+    def test_sync_pvlan_does_not_change_secgroups(self):
+        """Security group PGs and ACLs are untouched by sync_pvlan."""
+        network_id = self._create_pvlan_network()
+
+        # Create a port so the default SG port group has a member.
+        self._create_port(self.fmt, network_id)
+
+        before = self._save_sg_port_groups()
+        # Verify it's not empty:
+        self.assertTrue(before)
+        self._run_sync()
+        after = self._save_sg_port_groups()
+        self.assertEqual(before.keys(), after.keys())
+        for pg_name, pg in before.items():
+            self.assertEqual(pg['uuid'], after[pg_name]['uuid'])
+            self.assertEqual(pg['acls'], after[pg_name]['acls'])
