@@ -24,6 +24,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands
 from neutron.services.bgp import constants as bgp_const
 from neutron.services.evpn import commands as evpn_ovn
 from neutron.services.evpn import constants as evpn_const
+from neutron.services.evpn import helpers as evpn_helpers
 from neutron.tests.functional import base as func_base
 from neutron.tests.functional.services import bgp as bgp_base
 
@@ -91,7 +92,7 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
     def test_creates_dummy_logical_switch(self):
         self._execute()
 
-        ls_name = evpn_ovn._evpn_ls_name(self.vni)
+        ls_name = evpn_helpers.evpn_ls_name(self.vni)
         ls = self.nb_api.ls_get(ls_name).execute(check_error=True)
         self.assertEqual(ls_name, ls.name)
         self.assertEqual(str(self.vni), ls.other_config.get(
@@ -113,7 +114,7 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
     def test_creates_logical_router_port(self):
         self._execute()
 
-        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual(lrp_name, lrp.name)
         self.assertEqual('true', lrp.options.get(
@@ -126,7 +127,7 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
 
         self._execute()
 
-        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
+        hcg_name = evpn_helpers.evpn_hcg_name(self.router_id)
         hcg = self.nb_api.ha_chassis_group_get(
             hcg_name).execute(check_error=True)
         self.assertEqual(hcg_name, hcg.name)
@@ -140,7 +141,7 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
 
         self._execute()
 
-        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
+        hcg_name = evpn_helpers.evpn_hcg_name(self.router_id)
         hcg = self.nb_api.ha_chassis_group_get(
             hcg_name).execute(check_error=True)
         ha_chassis_names = {hc.chassis_name for hc in hcg.ha_chassis}
@@ -151,10 +152,10 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
 
         self._execute()
 
-        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
+        hcg_name = evpn_helpers.evpn_hcg_name(self.router_id)
         hcg = self.nb_api.ha_chassis_group_get(
             hcg_name).execute(check_error=True)
-        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual(1, len(lrp.ha_chassis_group))
         self.assertEqual(hcg.uuid, lrp.ha_chassis_group[0].uuid)
@@ -162,9 +163,9 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
     def test_creates_logical_switch_port(self):
         self._execute()
 
-        ls_name = evpn_ovn._evpn_ls_name(self.vni)
-        lsp_name = evpn_ovn._evpn_lsp_name(self.router_id, self.vni)
-        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
+        ls_name = evpn_helpers.evpn_ls_name(self.vni)
+        lsp_name = evpn_helpers.evpn_lsp_name(self.router_id, self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
 
         lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
         self.assertEqual('router', lsp.type)
@@ -180,10 +181,10 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
         self._execute()
         self._execute()
 
-        ls_name = evpn_ovn._evpn_ls_name(self.vni)
-        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
-        lsp_name = evpn_ovn._evpn_lsp_name(self.router_id, self.vni)
-        hcg_name = evpn_ovn._evpn_hcg_name(self.router_id)
+        ls_name = evpn_helpers.evpn_ls_name(self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
+        lsp_name = evpn_helpers.evpn_lsp_name(self.router_id, self.vni)
+        hcg_name = evpn_helpers.evpn_hcg_name(self.router_id)
 
         self.nb_api.ls_get(ls_name).execute(check_error=True)
         self.nb_api.lrp_get(lrp_name).execute(check_error=True)
@@ -198,7 +199,7 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
     def test_updates_existing_lrp_options_and_external_ids(self):
         self._execute()
 
-        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
         self.nb_api.db_set(
             'Logical_Router_Port', lrp_name,
             options={'dynamic-routing-maintain-vrf': 'false'},
@@ -215,7 +216,7 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
     def test_updates_existing_lsp_attributes(self):
         self._execute()
 
-        lsp_name = evpn_ovn._evpn_lsp_name(self.router_id, self.vni)
+        lsp_name = evpn_helpers.evpn_lsp_name(self.router_id, self.vni)
         self.nb_api.db_set(
             'Logical_Switch_Port', lsp_name,
             type='patch',
@@ -224,7 +225,7 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
 
         self._execute()
 
-        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
         lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
         self.assertEqual('router', lsp.type)
         self.assertEqual(lrp_name, lsp.options.get('router-port'))
@@ -263,7 +264,7 @@ class DeleteEVPNRouterCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
         ).execute(check_error=True)
 
     def test_deletes_dummy_logical_switch(self):
-        ls_name = evpn_ovn._evpn_ls_name(self.vni)
+        ls_name = evpn_helpers.evpn_ls_name(self.vni)
         self.nb_api.ls_get(ls_name).execute(check_error=True)
 
         self.nb_api.lr_del(self.lr_name).execute(check_error=True)
@@ -274,7 +275,7 @@ class DeleteEVPNRouterCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
             self.nb_api.ls_get(ls_name).execute, check_error=True)
 
     def test_deletes_logical_switch_port_via_cascade(self):
-        lsp_name = evpn_ovn._evpn_lsp_name(self.router_id, self.vni)
+        lsp_name = evpn_helpers.evpn_lsp_name(self.router_id, self.vni)
         self.nb_api.lsp_get(lsp_name).execute(check_error=True)
 
         self.nb_api.lr_del(self.lr_name).execute(check_error=True)
@@ -285,7 +286,7 @@ class DeleteEVPNRouterCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
             self.nb_api.lsp_get(lsp_name).execute, check_error=True)
 
     def test_does_not_delete_router_or_lrp(self):
-        lrp_name = evpn_ovn._evpn_lrp_name(self.router_id, self.vni)
+        lrp_name = evpn_helpers.evpn_lrp_name(self.router_id, self.vni)
 
         self._unset_hcg_in_lr(self.lr_name)
         self._execute()

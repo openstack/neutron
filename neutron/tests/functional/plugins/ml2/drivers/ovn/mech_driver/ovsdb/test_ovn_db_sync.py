@@ -38,12 +38,18 @@ from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
+from neutron.db import evpn_db
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
+from neutron.services.bgp import constants as bgp_const
+from neutron.services.evpn import commands as evpn_commands
+from neutron.services.evpn import constants as evpn_const
+from neutron.services.evpn import db_sync as evpn_db_sync
+from neutron.services.evpn import helpers as evpn_helpers
 from neutron.services.portforwarding.drivers.ovn.driver import \
     OVNPortForwarding as ovn_pf
 from neutron.services.revisions import revision_plugin
@@ -2249,3 +2255,310 @@ class TestOvnSbSync(base.TestOVNFunctionalBase):
         self._sync_resources()
         segment_hosts = segments_db.get_hosts_mapped_with_segments(self.ctx)
         self.assertEqual({self.host1, host2, host3, host4}, segment_hosts)
+
+
+class TestOvnNbSyncEVPN(base.TestOVNFunctionalBase):
+
+    _extension_drivers = ['port_security', 'revision_plugin']
+
+    def setUp(self):
+        mock.patch.object(
+            maintenance.DBInconsistenciesPeriodics, 'has_lock',
+            mock.PropertyMock(return_value=True)).start()
+        mock.patch.object(
+            ovsdb_monitor.BaseOvnIdl, 'set_lock').start()
+        super().setUp(maintenance_worker=True)
+        self.ctx = context.get_admin_context()
+        self.rp = revision_plugin.RevisionPlugin()
+
+    def get_additional_service_plugins(self):
+        return {'segments': 'segments'}
+
+    def _create_evpn_resources(self):
+        """Create router with EVPN topology in both Neutron DB and OVN."""
+        res = self._create_network(self.fmt, 'evpn-net', True)
+        net = self.deserialize(self.fmt, res)
+        self.evpn_net_id = net['network']['id']
+
+        res = self._create_subnet(self.fmt, self.evpn_net_id, '10.0.0.0/24')
+        subnet = self.deserialize(self.fmt, res)
+        self.evpn_subnet_id = subnet['subnet']['id']
+
+        self.evpn_router = self.l3_plugin.create_router(
+            self.ctx,
+            {'router': {'name': 'evpn-r1', 'admin_state_up': True,
+                        'project_id': self._project_id}})
+        self.evpn_router_id = self.evpn_router['id']
+
+        rif = self.l3_plugin.add_router_interface(
+            self.ctx, self.evpn_router_id,
+            {'subnet_id': self.evpn_subnet_id})
+        self.evpn_rif_port_id = rif['port_id']
+
+        db_helper = evpn_db.EVPNDbHelper()
+        self.evpn_vni = db_helper.allocate_vni_for_router(
+            self.ctx, self.evpn_router_id, 0)
+        self.evpn_vlan = db_helper.get_vlan_for_router(
+            self.ctx, self.evpn_router_id)
+
+        gw_chassis = self.sb_api.get_gateway_chassis_from_cms_options()
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(evpn_commands.CreateEVPNRouterCommand(
+                self.nb_api, self.evpn_router_id,
+                self.evpn_vni, self.evpn_vlan, gw_chassis))
+
+        db_helper.advertise_port(
+            self.ctx, self.evpn_rif_port_id, self.evpn_net_id,
+            self.evpn_router_id)
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(evpn_commands.AdvertiseHostCommand(
+                self.nb_api, self.evpn_rif_port_id))
+
+        self.evpn_ls_name = evpn_helpers.evpn_ls_name(self.evpn_vni)
+        self.evpn_hcg_name = evpn_helpers.evpn_hcg_name(
+            self.evpn_router_id)
+        self.evpn_lrp_name = evpn_helpers.evpn_lrp_name(
+            self.evpn_router_id, self.evpn_vni)
+        self.evpn_lsp_name = evpn_helpers.evpn_lsp_name(
+            self.evpn_router_id, self.evpn_vni)
+        self.evpn_advertised_lrp = utils.ovn_lrouter_port_name(
+            self.evpn_rif_port_id)
+
+    def _get_ovn_evpn_ls_names(self):
+        return {row.name for row in self.nb_api.db_find_rows(
+            'Logical_Switch',
+            ('other_config', '!=', {
+                ovn_const.LS_OTHER_CFG_DR_VNI: ''}),
+        ).execute(check_error=True)}
+
+    def _get_ovn_evpn_hcg_names(self):
+        return {row.name for row in self.nb_api.db_find_rows(
+            'HA_Chassis_Group',
+            ('external_ids', '!=', {
+                ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: ''}),
+        ).execute(check_error=True)}
+
+    def _get_ovn_evpn_lrp_names(self):
+        return {row.name for row in self.nb_api.db_find_rows(
+            'Logical_Router_Port',
+            ('external_ids', '!=', {
+                evpn_const.EVPN_LRP_VNI_EXT_ID_KEY: ''}),
+        ).execute(check_error=True)}
+
+    def _get_ovn_evpn_lsp_names(self):
+        return {row.name for row in self.nb_api.db_find_rows(
+            'Logical_Switch_Port',
+            ('type', '=', 'router'),
+            ('options', '!=', {'router-port': ''}),
+        ).execute(check_error=True)
+            if row.options.get('router-port', '').startswith('evpn-lrp-')}
+
+    def _get_ovn_advertised_lrp_names(self):
+        return {row.name for row in self.nb_api.db_find_rows(
+            'Logical_Router_Port',
+            ('options', '!=', {
+                bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE: ''}),
+        ).execute(check_error=True)}
+
+    def _validate_evpn_objects_exist(self):
+        self.assertIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
+        self.assertIn(self.evpn_hcg_name, self._get_ovn_evpn_hcg_names())
+        self.assertIn(self.evpn_lrp_name, self._get_ovn_evpn_lrp_names())
+        self.assertIn(self.evpn_lsp_name, self._get_ovn_evpn_lsp_names())
+        self.assertIn(self.evpn_advertised_lrp,
+                      self._get_ovn_advertised_lrp_names())
+
+        lr_name = utils.ovn_name(self.evpn_router_id)
+        lr = self.nb_api.lr_get(lr_name).execute(check_error=True)
+        self.assertEqual('true', lr.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING))
+
+        lrp = self.nb_api.lrp_get(
+            self.evpn_lrp_name).execute(check_error=True)
+        self.assertEqual('true', lrp.options.get(
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_MAINTAIN_VRF))
+
+    def _sync_evpn(self, mode):
+        synchronizer = evpn_db_sync.EvpnOvnSynchronizer(
+            self.plugin, self.mech_driver, mode)
+        self.addCleanup(synchronizer.stop)
+        synchronizer.do_sync()
+
+    def test_evpn_sync_no_discrepancy(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+        self._validate_evpn_objects_exist()
+
+    def test_evpn_sync_repair_missing_ls(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_del(self.evpn_ls_name, if_exists=True))
+
+        self.assertNotIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
+        self.assertNotIn(self.evpn_lsp_name, self._get_ovn_evpn_lsp_names())
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self.assertIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
+        self.assertIn(self.evpn_hcg_name, self._get_ovn_evpn_hcg_names())
+        self.assertIn(self.evpn_lrp_name, self._get_ovn_evpn_lrp_names())
+        self.assertIn(self.evpn_lsp_name, self._get_ovn_evpn_lsp_names())
+
+    def test_evpn_sync_repair_missing_lsp(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_del(
+                self.evpn_lsp_name, if_exists=True))
+
+        self.assertIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
+        self.assertNotIn(self.evpn_lsp_name, self._get_ovn_evpn_lsp_names())
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self._validate_evpn_objects_exist()
+
+    def test_evpn_sync_repair_missing_advertise_host(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.db_remove(
+                'Logical_Router_Port', self.evpn_advertised_lrp,
+                'options',
+                bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE,
+                if_exists=True))
+
+        self.assertNotIn(self.evpn_advertised_lrp,
+                         self._get_ovn_advertised_lrp_names())
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self.assertIn(self.evpn_advertised_lrp,
+                      self._get_ovn_advertised_lrp_names())
+
+    def test_evpn_sync_repair_missing_hcg(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        self.nb_api.db_clear(
+            'Logical_Router_Port', self.evpn_lrp_name,
+            'ha_chassis_group',
+        ).execute(check_error=True)
+        self.nb_api.ha_chassis_group_del(
+            self.evpn_hcg_name, if_exists=True,
+        ).execute(check_error=True)
+
+        self.assertNotIn(self.evpn_hcg_name,
+                         self._get_ovn_evpn_hcg_names())
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self._validate_evpn_objects_exist()
+
+    def test_evpn_sync_repair_wrong_lr_options(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        lr_name = utils.ovn_name(self.evpn_router_id)
+        self.nb_api.db_remove(
+            'Logical_Router', lr_name, 'options',
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING,
+            if_exists=True,
+        ).execute(check_error=True)
+
+        lr = self.nb_api.lr_get(lr_name).execute(check_error=True)
+        self.assertNotIn(bgp_const.LR_OPTIONS_DYNAMIC_ROUTING, lr.options)
+
+        self.nb_api.lsp_del(
+            self.evpn_lsp_name, if_exists=True,
+        ).execute(check_error=True)
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self._validate_evpn_objects_exist()
+
+    def test_evpn_sync_repair_wrong_lrp_options(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        self.nb_api.db_set(
+            'Logical_Router_Port', self.evpn_lrp_name,
+            ('options', {
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_MAINTAIN_VRF: 'false',
+            }),
+        ).execute(check_error=True)
+
+        lrp = self.nb_api.lrp_get(
+            self.evpn_lrp_name).execute(check_error=True)
+        self.assertEqual('false', lrp.options.get(
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_MAINTAIN_VRF))
+
+        self.nb_api.lsp_del(
+            self.evpn_lsp_name, if_exists=True,
+        ).execute(check_error=True)
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self._validate_evpn_objects_exist()
+
+    def test_evpn_sync_repair_orphan_cleanup(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        orphan_ls = 'evpn-ls-999999'
+        orphan_hcg = 'evpn-hcg-' + uuidutils.generate_uuid()
+        orphan_lsp = 'evpn-lsp-orphan'
+        orphan_lsp_ls = 'evpn-lsp-orphan-parent-ls'
+        orphan_lrp = 'lrp-orphan-advertised'
+        lr_name = utils.ovn_name(self.evpn_router_id)
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(
+                orphan_ls, may_exist=True,
+                other_config={ovn_const.LS_OTHER_CFG_DR_VNI: '999999'}))
+            txn.add(self.nb_api.ha_chassis_group_add(
+                orphan_hcg, may_exist=True,
+                external_ids={
+                    ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: 'fake-id'}))
+            txn.add(self.nb_api.ls_add(orphan_lsp_ls, may_exist=True))
+            txn.add(self.nb_api.lsp_add(
+                orphan_lsp_ls, orphan_lsp, type='router',
+                options={'router-port': 'evpn-lrp-orphan'}))
+            txn.add(self.nb_api.lrp_add(
+                lr_name, orphan_lrp,
+                mac='00:00:00:00:00:99',
+                networks=['192.168.99.1/24'],
+                options={
+                    bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
+                        'connected-as-host'}))
+
+        self.assertIn(orphan_ls, self._get_ovn_evpn_ls_names())
+        self.assertIn(orphan_hcg, self._get_ovn_evpn_hcg_names())
+        self.assertIn(orphan_lsp, self._get_ovn_evpn_lsp_names())
+        self.assertIn(orphan_lrp, self._get_ovn_advertised_lrp_names())
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self.assertNotIn(orphan_ls, self._get_ovn_evpn_ls_names())
+        self.assertNotIn(orphan_hcg, self._get_ovn_evpn_hcg_names())
+        self.assertNotIn(orphan_lsp, self._get_ovn_evpn_lsp_names())
+        self.assertNotIn(orphan_lrp, self._get_ovn_advertised_lrp_names())
+        self._validate_evpn_objects_exist()
+
+    def test_evpn_sync_log_does_not_repair(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_del(self.evpn_ls_name, if_exists=True))
+
+        self.assertNotIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG)
+
+        self.assertNotIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
