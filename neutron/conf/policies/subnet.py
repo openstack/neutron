@@ -215,6 +215,13 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_subnet:leak_routes',
+        check_str=lib_rules.ADMIN,
+        scope_types=['project'],
+        description='Update ``leak_routes`` attribute of a subnet',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
         name='update_subnet:tags',
         check_str=neutron_policy.policy_or(
             lib_rules.PROJECT_MEMBER,
