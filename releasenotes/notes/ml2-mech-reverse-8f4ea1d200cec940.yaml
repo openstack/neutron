@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    Fixed ML2 mechanism driver notification order during port deletion to follow
+    proper FILO (first-in, last-out) teardown semantics. Previously, mechanism
+    drivers were notified of port deletion in the same forward order as port
+    creation, which could cause the outermost binding level (closest to network
+    fabric) to be torn down before the innermost level (closest to compute host)
+    had a chance to clean up. This fix ensures that ``delete_port_precommit``
+    and ``delete_port_postcommit`` notify drivers in reverse order so that each
+    binding level is properly cleaned up before the infrastructure beneath it
+    is torn down. See `bug 2153163`_.
+
+    .. _bug 2153163: https://bugs.launchpad.net/neutron/+bug/2153163
