@@ -139,10 +139,14 @@ class FrrCommandBuilder:
             frr_tmpl.TmplName.ADD_EVPN_ROUTER, context)
 
     def delete_evpn_router_cmds(
-            self, config: interface.EVPNRouterConfig) -> str:
+            self, config: interface.EVPNRouterConfig) -> list[str]:
         context = self._build_delete_evpn_context(config=config)
-        return self._render_template(
-            frr_tmpl.TmplName.DEL_EVPN_ROUTER, context)
+        return [
+            self._render_template(frr_tmpl.TmplName.DEL_EVPN_VNI, context),
+            self._render_template(
+                frr_tmpl.TmplName.DEL_EVPN_BGP_VRF, context),
+            self._render_template(frr_tmpl.TmplName.DEL_EVPN_VRF, context),
+        ]
 
     def delete_bgp_router_cmds(
             self, config: interface.EVPNRouterConfig) -> str:
@@ -276,5 +280,10 @@ class FrrVtyshDriver(interface.EVPNRouterDriver):
     def delete_evpn_router(self, config: interface.EVPNRouterConfig) -> None:
         LOG.debug("Deleting EVPN router: %s", config)
         self.vrf_handler.ensure_vrf_deleted(config.vrf_name)
-        self.executor.execute_cmds(
-            self.cmd_builder.delete_evpn_router_cmds(config))
+        for cmds in self.cmd_builder.delete_evpn_router_cmds(config):
+            try:
+                self.executor.execute_cmds(cmds)
+            except (frr_exceptions.FrrDryrunError,
+                    frr_exceptions.FrrApplyError) as err:
+                LOG.warning("Ignoring failed EVPN router delete step "
+                            "for VRF %s: %s", config.vrf_name, err)

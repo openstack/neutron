@@ -335,12 +335,27 @@ class TestFrrVtyshDriverConfiguration(base.BaseSudoTestCase):
         self.assertIn('router bgp 65000 vrf vrf-100', running_config)
         self.assertIn('vni 100', running_config)
 
-    def test_delete_noexisting_router_raises(self):
+    def test_delete_nonexisting_router_is_idempotent(self):
         config = make_evpn_config(vni=101)
 
-        self.assertRaises(
-            frr_exceptions.FrrApplyError,
-            self.driver.delete_evpn_router, config)
+        self.driver.delete_evpn_router(config)
+        self.driver.delete_evpn_router(config)
+
+        running_config = self._get_running_config()
+        self.assertNotIn('router bgp 65000 vrf vrf-101', running_config)
+        self.assertNotIn('vni 101', running_config)
+
+    def test_delete_evpn_router_after_kernel_vrf_gone(self):
+        config = make_evpn_config(vni=100)
+        self.driver.create_evpn_router(config)
+        self.driver.vrf_handler.ensure_vrf_deleted(config.vrf_name)
+        self.assertFalse(self._vrf_exists(config.vrf_name))
+
+        self.driver.delete_evpn_router(config)
+
+        running_config = self._get_running_config()
+        self.assertNotIn('router bgp 65000 vrf vrf-100', running_config)
+        self.assertNotIn('vni 100', running_config)
 
 
 class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
