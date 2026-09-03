@@ -886,3 +886,74 @@ class FullSyncBGPTopologyCommand(ovs_cmd.BaseCommand):
         ReconcileMainRouterCommand(
             self.api,
         ).run_idl(txn)
+
+
+class LeakSubnetCommand(ovs_cmd.BaseCommand):
+    def __init__(self, api, tenant_ls_name, subnet_cidr, nexthop_ip):
+        super().__init__(api)
+        self.tenant_ls_name = tenant_ls_name
+        self.subnet_cidr = subnet_cidr
+        self.nexthop_ip = nexthop_ip
+
+    def run_idl(self, txn):
+        ConnectRouterToSwitchCommand(
+            self.api,
+            constants.MAIN_ROUTER_NAME,
+            self.tenant_ls_name,
+        ).run_idl(txn)
+
+        try:
+            provider_switch = _get_provider_switch(self.api)
+        except exceptions.ReconcileError:
+            LOG.warning("Provider switch not found, skipping static "
+                        "route creation for subnet %s.",
+                        self.subnet_cidr)
+            return
+
+        interconnect_switch_name = (
+            helpers.get_provider_interconnect_switch_name(
+                provider_switch.name))
+        output_port = helpers.get_lrp_name(
+            constants.MAIN_ROUTER_NAME, interconnect_switch_name)
+
+        nb_cmd.LrRouteAddCommand(
+            self.api,
+            constants.MAIN_ROUTER_NAME,
+            self.subnet_cidr,
+            self.nexthop_ip,
+            port=output_port,
+            may_exist=True,
+        ).run_idl(txn)
+
+
+class UnleakSubnetCommand(ovs_cmd.BaseCommand):
+    def __init__(self, api, tenant_ls_name, subnet_cidr,
+                 last_on_network=True):
+        super().__init__(api)
+        self.tenant_ls_name = tenant_ls_name
+        self.subnet_cidr = subnet_cidr
+        self.last_on_network = last_on_network
+
+    def run_idl(self, txn):
+        nb_cmd.LrRouteDelCommand(
+            self.api,
+            constants.MAIN_ROUTER_NAME,
+            self.subnet_cidr,
+            if_exists=True,
+        ).run_idl(txn)
+
+        if self.last_on_network:
+            lrp_name = helpers.get_lrp_name(
+                constants.MAIN_ROUTER_NAME, self.tenant_ls_name)
+            lsp_name = helpers.get_lsp_name(
+                self.tenant_ls_name, constants.MAIN_ROUTER_NAME)
+            nb_cmd.LrpDelCommand(
+                self.api,
+                lrp_name,
+                if_exists=True,
+            ).run_idl(txn)
+            nb_cmd.LspDelCommand(
+                self.api,
+                lsp_name,
+                if_exists=True,
+            ).run_idl(txn)

@@ -22,14 +22,17 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as n_exc
+from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from oslo_config import cfg
 from oslo_log import log
 
+from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.services import bgp as bgp_config
 from neutron.objects import bgp as bgp_objects
 from neutron.objects import network as network_objects
 from neutron.objects import router as router_objects
+from neutron.services.bgp import commands as bgp_commands
 from neutron.services.bgp import worker
 
 LOG = log.getLogger(__name__)
@@ -45,6 +48,15 @@ class BGPServicePlugin(service_base.ServicePluginBase):
         LOG.info("Starting BGP Service Plugin")
         super().__init__()
         bgp_config.register_opts(cfg.CONF)
+        self._nb_ovn_inst = None
+
+    @property
+    def _nb_ovn(self):
+        if self._nb_ovn_inst is None:
+            plugin = directory.get_plugin()
+            mech = plugin.mechanism_manager.mech_drivers['ovn'].obj
+            self._nb_ovn_inst = mech.nb_ovn
+        return self._nb_ovn_inst
 
     def get_workers(self):
         return [worker.BGPWorker()]
@@ -143,6 +155,16 @@ class BGPServicePlugin(service_base.ServicePluginBase):
         if leak_routes:
             self._validate_gateway_router_for_subnet(context, subnet_id)
             self._validate_no_cidr_overlap(context, updated['cidr'])
+            ip_version = netaddr.IPNetwork(updated['cidr']).version
+            nexthop_ip = router_objects.Router.get_gateway_ip_for_subnet(
+                context, subnet_id, ip_version)
+            if not nexthop_ip:
+                raise n_exc.BadRequest(
+                    resource='subnet',
+                    msg='The router external gateway has no IPv%(ip_version)s'
+                        ' address to use as nexthop for subnet '
+                        '%(subnet_id)s.'
+                        % {'ip_version': ip_version, 'subnet_id': subnet_id})
             bgp_objects.SubnetBGPLeakRoutes(
                 context, subnet_id=subnet_id).create()
             LOG.info("Subnet %s updated: leak_routes enabled", subnet_id)
@@ -150,3 +172,93 @@ class BGPServicePlugin(service_base.ServicePluginBase):
             bgp_objects.SubnetBGPLeakRoutes.delete_objects(
                 context, subnet_id=subnet_id)
             LOG.info("Subnet %s updated: leak_routes disabled", subnet_id)
+
+    @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])
+    def _process_subnet_after_update_bgp(self, resource, event, trigger,
+                                         payload):
+        original = payload.states[0]
+        updated = payload.latest_state
+        original_leak = original.get(ovn_bgp_apidef.LEAK_ROUTES, False)
+        current_leak = updated.get(ovn_bgp_apidef.LEAK_ROUTES, False)
+        if original_leak == current_leak:
+            return
+
+        context = payload.context
+        network_id = updated['network_id']
+        tenant_ls_name = ovn_utils.ovn_name(network_id)
+
+        if current_leak:
+            self._leak_subnet(context, updated, tenant_ls_name)
+        else:
+            self._unleak_subnet(context, updated, tenant_ls_name)
+
+    @staticmethod
+    def _is_last_leaked_subnet_on_network(context, network_id):
+        return not bgp_objects.SubnetBGPLeakRoutes.network_has_leaked_subnets(
+            context, network_id)
+
+    def _leak_subnet(self, context, subnet, tenant_ls_name):
+        subnet_id = subnet['id']
+        cidr = subnet['cidr']
+        ip_version = netaddr.IPNetwork(cidr).version
+        nexthop_ip = router_objects.Router.get_gateway_ip_for_subnet(
+            context, subnet_id, ip_version)
+        if not nexthop_ip:
+            LOG.error("No IPv%s nexthop found for subnet %s; "
+                      "skipping OVN route creation, reconciler will retry.",
+                      ip_version, subnet_id)
+            return
+
+        bgp_commands.LeakSubnetCommand(
+            self._nb_ovn,
+            tenant_ls_name,
+            cidr,
+            nexthop_ip,
+        ).execute(check_error=True)
+
+    def _unleak_subnet(self, context, subnet, tenant_ls_name):
+        network_id = subnet['network_id']
+        cidr = subnet['cidr']
+
+        last_on_network = self._is_last_leaked_subnet_on_network(
+            context, network_id)
+
+        bgp_commands.UnleakSubnetCommand(
+            self._nb_ovn,
+            tenant_ls_name,
+            cidr,
+            last_on_network=last_on_network,
+        ).execute(check_error=True)
+
+    @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_DELETE])
+    def _process_router_interface_delete_bgp(self, resource, event, trigger,
+                                             payload):
+        context = payload.context
+        subnet_id = payload.metadata['subnet_id']
+        bgp_objects.SubnetBGPLeakRoutes.delete_objects(
+            context, subnet_id=subnet_id)
+
+    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_DELETE])
+    def _process_router_interface_after_delete_bgp(self, resource, event,
+                                                   trigger, payload):
+        context = payload.context
+        port = payload.metadata['port']
+        network_id = port['network_id']
+        cidrs = payload.metadata['cidrs']
+        try:
+            cidr = cidrs[0]
+        except IndexError:
+            LOG.warning("No subnet on router interface %s", port['id'])
+            return
+        if len(cidrs) > 1:
+            LOG.warning("Unexpected number of subnets on router interface %s: "
+                        "%s", port['id'], cidrs)
+        tenant_ls_name = ovn_utils.ovn_name(network_id)
+        last_on_network = self._is_last_leaked_subnet_on_network(
+            context, network_id)
+        bgp_commands.UnleakSubnetCommand(
+            self._nb_ovn,
+            tenant_ls_name,
+            cidr,
+            last_on_network=last_on_network,
+        ).execute(check_error=True)

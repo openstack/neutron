@@ -34,8 +34,9 @@ class SubnetBGPLeakRoutesDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.update_obj_fields(
             {'subnet_id': lambda: self._create_test_subnet_id()})
 
-    def _create_subnet_with_cidr(self, cidr):
-        network_id = self._create_test_network_id()
+    def _create_subnet_with_cidr(self, cidr, network_id=None):
+        if not network_id:
+            network_id = self._create_test_network_id()
         gateway = str(netaddr.IPNetwork(cidr).network + 1)
         ip_version = (constants.IP_VERSION_6
                       if netaddr.IPNetwork(cidr).version == 6
@@ -100,3 +101,32 @@ class SubnetBGPLeakRoutesDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         result = bgp_objects.SubnetBGPLeakRoutes.get_leaked_subnet_cidrs(
             self.context)
         self.assertEqual([], result)
+
+    def test_network_has_leaked_subnets_false_when_empty(self):
+        network_id = self._create_test_network_id()
+        self.assertFalse(
+            bgp_objects.SubnetBGPLeakRoutes.network_has_leaked_subnets(
+                self.context, network_id))
+
+    def test_network_has_leaked_subnets_true(self):
+        network_id = self._create_test_network_id()
+        sub = self._create_subnet_with_cidr('10.0.0.0/24',
+                                            network_id=network_id)
+        bgp_objects.SubnetBGPLeakRoutes(
+            self.context, subnet_id=sub.id).create()
+
+        self.assertTrue(
+            bgp_objects.SubnetBGPLeakRoutes.network_has_leaked_subnets(
+                self.context, network_id))
+
+    def test_network_has_leaked_subnets_false_different_network(self):
+        network_a = self._create_test_network_id()
+        network_b = self._create_test_network_id()
+        sub = self._create_subnet_with_cidr('10.0.0.0/24',
+                                            network_id=network_a)
+        bgp_objects.SubnetBGPLeakRoutes(
+            self.context, subnet_id=sub.id).create()
+
+        self.assertFalse(
+            bgp_objects.SubnetBGPLeakRoutes.network_has_leaked_subnets(
+                self.context, network_b))

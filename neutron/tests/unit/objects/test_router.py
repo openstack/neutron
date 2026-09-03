@@ -27,6 +27,7 @@ from neutron.objects import ports
 from neutron.objects.qos import binding as qos_binding
 from neutron.objects.qos import policy
 from neutron.objects import router
+from neutron.objects import subnet as subnet_obj
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
@@ -238,6 +239,56 @@ class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         subnet_id = self._create_test_subnet_id(network_id=network_id)
         result = router.Router.get_gateway_router_for_subnet(
             self.context, subnet_id)
+        self.assertIsNone(result)
+
+    def _create_topology_for_gateway_ip(self, gw_ip='172.24.4.5',
+                                        gw_ip_version=4,
+                                        gw_cidr='172.24.4.0/24'):
+        subnet_id, r = self._create_topology_for_gateway_router()
+        gw_network_id = self._create_test_network_id()
+        gw_subnet = subnet_obj.Subnet(
+            self.context,
+            project_id=uuidutils.generate_uuid(),
+            name='gw-subnet',
+            network_id=gw_network_id,
+            ip_version=gw_ip_version,
+            cidr=netaddr.IPNetwork(gw_cidr),
+            gateway_ip=str(netaddr.IPNetwork(gw_cidr).network + 1),
+            enable_dhcp=False,
+            ipv6_ra_mode=None,
+            ipv6_address_mode=None)
+        gw_subnet.create()
+        gw_alloc = ports.IPAllocation(
+            self.context, port_id=r.gw_port_id,
+            subnet_id=gw_subnet.id, network_id=gw_network_id,
+            ip_address=netaddr.IPAddress(gw_ip))
+        gw_alloc.create()
+        return subnet_id
+
+    def test_get_gateway_ip_for_subnet(self):
+        subnet_id = self._create_topology_for_gateway_ip()
+        result = router.Router.get_gateway_ip_for_subnet(
+            self.context, subnet_id, ip_version=4)
+        self.assertEqual('172.24.4.5', result)
+
+    def test_get_gateway_ip_for_subnet_ipv6(self):
+        subnet_id = self._create_topology_for_gateway_ip(
+            gw_ip='2001:db8::1', gw_ip_version=6)
+        result = router.Router.get_gateway_ip_for_subnet(
+            self.context, subnet_id, ip_version=6)
+        self.assertEqual('2001:db8::1', result)
+
+    def test_get_gateway_ip_for_subnet_version_mismatch(self):
+        subnet_id = self._create_topology_for_gateway_ip()
+        result = router.Router.get_gateway_ip_for_subnet(
+            self.context, subnet_id, ip_version=6)
+        self.assertIsNone(result)
+
+    def test_get_gateway_ip_for_subnet_no_router(self):
+        network_id = self._create_test_network_id()
+        subnet_id = self._create_test_subnet_id(network_id=network_id)
+        result = router.Router.get_gateway_ip_for_subnet(
+            self.context, subnet_id, ip_version=4)
         self.assertIsNone(result)
 
 

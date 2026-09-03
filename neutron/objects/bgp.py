@@ -44,3 +44,12 @@ class SubnetBGPLeakRoutes(base.NeutronDbObject):
             bgp_models.SubnetBGPLeakRoutes,
             bgp_models.SubnetBGPLeakRoutes.subnet_id == models_v2.Subnet.id)
         return query.all()
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def network_has_leaked_subnets(cls, context, network_id):
+        query = context.session.query(bgp_models.SubnetBGPLeakRoutes).join(
+            models_v2.Subnet,
+            models_v2.Subnet.id == bgp_models.SubnetBGPLeakRoutes.subnet_id
+        ).filter(models_v2.Subnet.network_id == network_id)
+        return context.session.query(query.exists()).scalar()
