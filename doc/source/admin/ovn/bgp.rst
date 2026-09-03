@@ -203,3 +203,80 @@ Attempting to create a VLAN provider network will fail:
 
 Overlay (Geneve, VXLAN, GRE) self-service networks remain fully supported and
 are unaffected by the BGP plugin.
+
+
+Leaking tenant subnet routes
+-----------------------------
+
+By default, only the external gateway IP addresses of Neutron routers are
+advertised via BGP.  The ``leak_routes`` subnet attribute allows an
+administrator to additionally advertise a tenant (self-service) subnet's CIDR
+to the physical fabric so that external hosts can reach tenant workloads
+directly without floating IPs.
+
+Prerequisites
+~~~~~~~~~~~~~
+
+Before enabling ``leak_routes`` on a subnet, ensure:
+
+* The subnet belongs to a **Geneve** overlay network.
+* The subnet is attached to a Neutron router that has an **external gateway**.
+
+Enabling route leaking
+~~~~~~~~~~~~~~~~~~~~~~
+
+The ``leak_routes`` attribute is set on the subnet via an update operation.  It
+is an admin-only attribute by default:
+
+.. code-block:: console
+
+   $ openstack subnet set --leak-routes <subnet-id>
+
+To disable:
+
+.. code-block:: console
+
+   $ openstack subnet set --no-leak-routes <subnet-id>
+
+When ``leak_routes`` is enabled the plugin:
+
+1. Connects the BGP main logical router (``bgp-lr-main``) to the tenant
+   logical switch corresponding to the subnet's network.
+2. Adds a static route on ``bgp-lr-main`` for the subnet CIDR pointing to the
+   router's external gateway IP as the nexthop.
+
+The static route is then redistributed into BGP by FRR (or whichever routing
+suite runs on the compute nodes), making the tenant subnet reachable from the
+physical fabric.
+
+When ``leak_routes`` is disabled (or the subnet is detached from the router)
+the static route is removed.  If this was the last leaked subnet on the
+network, the connection between ``bgp-lr-main`` and the tenant logical switch
+is also removed.
+
+.. _ovn-bgp-leak-routes-caveat:
+
+Known limitation: all IPs on the network are advertised
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. important::
+
+   OVN operates at the **logical switch** (network) level, not at the
+   individual subnet level.  When ``leak_routes`` is enabled on *any* subnet
+   of a network, the plugin must connect ``bgp-lr-main`` to the network's
+   logical switch.  As a side effect, IP addresses from **all** subnets on
+   that network -- not just the explicitly leaked subnet(s) -- become visible
+   to ``bgp-lr-main`` and are advertised to the physical fabric as host
+   routes via BGP.
+
+   ``bgp-lr-main`` does **not** create routes for non-leaked subnets, so it
+   will not forward traffic for those IPs.  The advertised host routes are
+   therefore misleading: external hosts learn the routes but traffic sent to
+   non-leaked IPs will be dropped at the ``bgp-lr-main`` router.
+
+   This is an inherent limitation of the OVN data model, which does not
+   support connecting a logical router to a single subnet within a logical
+   switch.  To avoid advertising unintended IP addresses, administrators
+   should place subnets that require route leaking on **dedicated networks**
+   that do not share the logical switch with subnets whose addresses should
+   remain hidden from the underlay.
