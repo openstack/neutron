@@ -18,7 +18,7 @@ Neutron Policies
 
 In the Policies Guide, you will find documented policies for developing with
 Neutron. This includes the processes we use for blueprints and specs, bugs,
-contributor onboarding, core reviewer memberships, and other procedural
+core reviewer memberships, and other procedural
 items.
 
 .. toctree::
@@ -27,7 +27,6 @@ items.
    blueprints
    bugs
    code-reviews
-   contributor-onboarding
    gate-failure-triage
    release-checklist
    neutron-teams
