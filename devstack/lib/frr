@@ -21,12 +21,17 @@ function install_frr {
 }
 
 function install_frr_vrf_modules {
-    if is_ubuntu; then
-        install_package linux-modules-extra-$(uname -r)
-    elif is_fedora; then
-        install_package kernel-modules-extra-$(uname -r)
+    # Try to load the vrf module first; if it succeeds the extra
+    # kernel-modules package is not needed (newer kernels may have
+    # it built-in or already included in the base package).
+    if ! sudo modprobe vrf 2>/dev/null; then
+        if is_ubuntu; then
+            install_package linux-modules-extra-$(uname -r)
+        elif is_fedora; then
+            install_package kernel-modules-extra-$(uname -r)
+        fi
+        sudo modprobe vrf
     fi
-    sudo modprobe vrf
 }
 
 function configure_frr {

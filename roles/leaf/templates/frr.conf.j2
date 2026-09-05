@@ -27,7 +27,9 @@ router bgp 64999
   neighbor downlink remote-as internal
   neighbor downlink bfd
   neighbor downlink bfd profile devstack
+{% if not enable_evpn | default(false) %}
   neighbor downlink password f00barZ
+{% endif %}
   ! neighbor downlink capability extended-nexthop
   neighbor controller-port interface peer-group downlink
   neighbor compute1-port interface peer-group downlink
@@ -60,6 +62,16 @@ router bgp 64999
     neighbor uplink allowas-in origin
     neighbor uplink prefix-list only-host-prefixes in
   exit-address-family
+
+{% if enable_evpn | default(false) %}
+  address-family l2vpn evpn
+    neighbor downlink activate
+    neighbor downlink route-reflector-client
+    neighbor uplink activate
+    advertise-all-vni
+    advertise-svi-ip
+  exit-address-family
+{% endif %}
 
 {% set seq = namespace(n=5) %}
 {% for compute in groups['compute'] %}
