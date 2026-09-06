@@ -63,7 +63,7 @@ class Plugin(l3_conntrack_helper.ConntrackHelperPluginBase):
 
         # Option allowed_conntrack_helpers is a list of key, value pairs.
         # The list can contain same key (conntrack helper module) multiple
-        # times with a different value (protocol). Merge to a dictonary
+        # times with a different value (protocol). Merge to a dictionary
         # with key (conntrack helper) and values (protocols) as a list.
         self.constraints = collections.defaultdict(list)
         for x in cfg.CONF.allowed_conntrack_helpers:
