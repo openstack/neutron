@@ -47,9 +47,41 @@ write_log () {
 }
 
 
+prepare_ha_state_path () {
+    local state_file
+
+    if [ "$(id -u)" -ne 0 ]; then
+        return 0
+    fi
+
+    if [ -z "${USER}" ] || [ -z "${GROUP}" ]; then
+        return 0
+    fi
+
+    state_file="${CONF_DIR}/state"
+    chown "${USER}:${GROUP}" "${CONF_DIR}"
+
+    if [ -f "${state_file}" ]; then
+        chown "${USER}:${GROUP}" "${state_file}"
+    fi
+}
+
+
 write_state_file () {
-    echo -n ${1} >"${CONF_DIR}/state"
-    write_log DEBUG "Wrote state ${1} to ${CONF_DIR}/state"
+    local state state_file
+    state=${1}
+    state_file="${CONF_DIR}/state"
+
+    if ! echo -n "${state}" > "${state_file}" 2>/dev/null; then
+        rm -f "${state_file}"
+        echo -n "${state}" > "${state_file}"
+    fi
+
+    if [ "$(id -u)" -eq 0 ] && [ -n "${USER}" ] && [ -n "${GROUP}" ]; then
+        chown "${USER}:${GROUP}" "${state_file}"
+    fi
+
+    write_log DEBUG "Wrote state ${state} to ${state_file}"
 }
 
 
@@ -301,5 +333,6 @@ echo -n $$ >${PID_FILE}
 write_log DEBUG "Writing child PID $$ for SIGTERM"
 
 initial_state="backup"
+prepare_ha_state_path
 handle_initial_state
 monitor_ip_address
