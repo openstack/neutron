@@ -266,6 +266,14 @@ def update_distributed_port_binding_by_host(context, port_id, host, router_id):
         for binding in bindings or []:
             binding['router_id'] = router_id or None
             binding.update(binding)
+            # Unbinding may leave the binding stale (no router and port
+            # already DOWN). delete_distributed_port_binding_if_stale is
+            # otherwise only reached from the L2 status-update path, which
+            # fires on a status transition that may already have happened --
+            # so reap here to avoid leaking the row. Its guard no-ops when the
+            # binding is still bound (router_id set) or the port is up
+            # (status != DOWN), so this is safe for any caller/argument.
+            delete_distributed_port_binding_if_stale(context, binding)
 
 
 def get_distributed_port_bindings(context, port_id):
