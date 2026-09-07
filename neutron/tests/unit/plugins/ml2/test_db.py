@@ -363,7 +363,8 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             return router
 
     def _setup_distributed_binding(self, network_id,
-                                   port_id, router_id, host_id):
+                                   port_id, router_id, host_id,
+                                   status=constants.PORT_STATUS_DOWN):
         with db_api.CONTEXT_WRITER.using(self.ctx):
             record = models.DistributedPortBinding(
                 port_id=port_id,
@@ -371,7 +372,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
                 router_id=router_id,
                 vif_type=portbindings.VIF_TYPE_UNBOUND,
                 vnic_type=portbindings.VNIC_NORMAL,
-                status='DOWN')
+                status=status)
             self.ctx.session.add(record)
             return record
 
@@ -466,15 +467,43 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         port_id = uuidutils.generate_uuid()
         host_id = 'foo_host_id'
         self._setup_neutron_network(network_id, [port_id])
-
-        binding = self._setup_distributed_binding(
-            network_id, port_id, router_id, host_id)
+        self._setup_distributed_binding(
+            network_id, port_id, router_id, host_id,
+            status=constants.PORT_STATUS_ACTIVE)
 
         ml2_db.update_distributed_port_binding_by_host(
-            self.ctx, binding.port_id, host_id, None)
+            self.ctx, port_id, host_id, None)
         binding = (self.ctx.session.query(models.DistributedPortBinding).
                    filter_by(port_id=port_id, host=host_id).one())
         self.assertFalse(binding.router_id)
+        self.assertEqual(constants.PORT_STATUS_ACTIVE, binding.status)
+
+    def test_update_distributed_port_binding_by_host_stale_down_binding(
+            self):
+        network_id = uuidutils.generate_uuid()
+        segment_id = uuidutils.generate_uuid()
+        router_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
+        host_id = 'foo_host_id'
+        self._setup_neutron_network(network_id, [port_id])
+        self._setup_neutron_network_segment(segment_id, network_id)
+        # The port went DOWN before the router was unbound from the host.
+        self._setup_distributed_binding(
+            network_id, port_id, router_id, host_id,
+            status=constants.PORT_STATUS_DOWN)
+        self._setup_port_binding_level(segment_id, port_id, host_id)
+
+        ml2_db.update_distributed_port_binding_by_host(
+            self.ctx, port_id, host_id, None)
+
+        # NOTE(amorin) this is were lp-2166686 is reproduced
+        # we should never have 1
+        count = (self.ctx.session.query(models.DistributedPortBinding).
+                 filter_by(port_id=port_id, host=host_id).count())
+        self.assertEqual(1, count)
+        count = (self.ctx.session.query(models.PortBindingLevel).
+                 filter_by(port_id=port_id, host=host_id).count())
+        self.assertEqual(1, count)
 
     def test_get_distributed_port_binding_by_host_not_found(self):
         port = ml2_db.get_distributed_port_binding_by_host(
