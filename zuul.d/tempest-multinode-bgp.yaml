@@ -324,6 +324,7 @@
       devstack_localrc:
         FRR_USE_EVPN: True
         OVN_AGENT_EXTENSIONS: 'metadata,ovn-evpn'
+        OVN_BRANCH: branch-26.03
         OVN_EVPN_BGP_AS: 64999
         OVN_EVPN_BGP_LOCAL_INTERFACE: br-bgp-0
         OVN_EVPN_LOCAL_IP: "{{ evpn_loopback_ip }}"
@@ -351,6 +352,7 @@
         devstack_localrc:
           FRR_USE_EVPN: True
           OVN_AGENT_EXTENSIONS: 'metadata,ovn-evpn'
+          OVN_BRANCH: branch-26.03
           OVN_EVPN_BGP_AS: 64999
           OVN_EVPN_BGP_LOCAL_INTERFACE: br-bgp-0
           OVN_EVPN_LOCAL_IP: "{{ evpn_loopback_ip }}"
