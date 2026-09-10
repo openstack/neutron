@@ -88,6 +88,7 @@ def unwatch_log():
                                               mode=handler.mode,
                                               encoding=handler.encoding)
         log_root.removeHandler(handler)
+        handler.close()
         log_root.addHandler(new_handler)
 
 
