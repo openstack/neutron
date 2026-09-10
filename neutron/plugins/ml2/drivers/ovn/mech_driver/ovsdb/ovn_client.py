@@ -2385,6 +2385,15 @@ class OVNClient:
             self.unlink_network_ha_chassis_group(network_id)
             return
 
+        if not gw_lrps[0].gateway_chassis:
+            # The gateway port has no "Gateway_Chassis" registers yet (e.g. a
+            # tunnelled/VXLAN external network, which is pinned to a chassis
+            # via the Logical_Router "chassis" option instead and never gets
+            # "Gateway_Chassis" populated). Do nothing rather than wipe out
+            # any existing, valid "HA_Chassis_Group" membership for this
+            # network with an empty one.
+            return
+
         # Retrieve all "Gateway_Chassis" and build the "chassis_prio"
         # dictionary.
         chassis_prio = {}

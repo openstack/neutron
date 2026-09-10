@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    Fixed a bug where ``link_network_ha_chassis_group`` would wipe
+    a network's unified ``HA_Chassis_Group`` down to zero chassis members
+    whenever the router's external gateway had no ``Gateway_Chassis``
+    registers yet -- which is always the case for tunnelled (e.g. VXLAN)
+    external gateways, since those are pinned to a chassis via the
+    ``Logical_Router`` ``chassis`` option instead. This left every
+    external/baremetal port on the network with no chassis to bind to,
+    breaking north/south routing and ARP resolution. The method now leaves
+    an existing ``HA_Chassis_Group`` untouched instead of overwriting it
+    with an empty one in this case.
+    [`bug 2162072 <https://bugs.launchpad.net/neutron/+bug/2162072>`_]
