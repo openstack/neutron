@@ -335,6 +335,14 @@ class TestFailingAsyncProcess(base.BaseTestCase):
                                                    path],
                                                   respawn_interval=0)
 
+    def tearDown(self):
+        process = self.process._process
+        if process is not None:
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None:
+                    stream.close()
+        super().tearDown()
+
     def test_failing_async_process_handle_error_once(self):
         with mock.patch.object(self.process, '_handle_process_error')\
                 as handle_error_mock:
