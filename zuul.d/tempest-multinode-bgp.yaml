@@ -209,6 +209,7 @@
                 firewall_driver: ovn
         tempest_concurrency: 4
         tempest_test_regex: "\
+          (^neutron_tempest_plugin.api.test_ovn_bgp)|\
           (^neutron_tempest_plugin.scenario)|\
           (^tempest.scenario.test_server_basic_ops.TestServerBasicOps)|\
           (^tempest.scenario.test_network_basic_ops)|\
