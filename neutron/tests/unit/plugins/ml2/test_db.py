@@ -496,7 +496,7 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         ml2_db.update_distributed_port_binding_by_host(
             self.ctx, port_id, host_id, None)
 
-        # NOTE(amorin) this is were lp-2166686 is reproduced
+        # NOTE(amorin) this is where lp-2166686 is reproduced
         # we should never have 1
         count = (self.ctx.session.query(models.DistributedPortBinding).
                  filter_by(port_id=port_id, host=host_id).count())
