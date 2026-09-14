@@ -350,7 +350,7 @@ class SegmentBridgeExtension(extension_manager.OVNAgentExtension):
                      'to_add=%d to_del=%d',
                      len(desired), len(actual), len(to_add), len(to_del))
 
-            for item in sorted(to_add):
+            for item in sorted(desired):
                 try:
                     self._ensure_item(item)
                 except Exception:
