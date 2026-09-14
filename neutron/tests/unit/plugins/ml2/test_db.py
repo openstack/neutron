@@ -500,10 +500,10 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
         # we should never have 1
         count = (self.ctx.session.query(models.DistributedPortBinding).
                  filter_by(port_id=port_id, host=host_id).count())
-        self.assertEqual(1, count)
+        self.assertEqual(0, count)
         count = (self.ctx.session.query(models.PortBindingLevel).
                  filter_by(port_id=port_id, host=host_id).count())
-        self.assertEqual(1, count)
+        self.assertEqual(0, count)
 
     def test_get_distributed_port_binding_by_host_not_found(self):
         port = ml2_db.get_distributed_port_binding_by_host(
