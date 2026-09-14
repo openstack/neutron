@@ -47,6 +47,7 @@ from neutron.objects import ports as port_obj
 from neutron.objects import rbac_db as rbac_db_obj
 from neutron.objects import securitygroup as sg_obj
 from neutron.objects import securitygroup_default_rules as sg_default_rules_obj
+from neutron import policy
 from neutron import quota
 
 
@@ -1151,9 +1152,9 @@ class SecurityGroupDbMixin(
 
         :returns: the default security group id for given tenant.
         """
-        # Do not allow a tenant to create a default SG for another one.
-        # See Bug 1987410.
-        if tenant_id != context.tenant_id and not context.is_admin:
+        if not policy.check(context, 'create_default_security_group',
+                            {'tenant_id': tenant_id,
+                             'project_id': tenant_id}):
             return
         if not extensions.is_extension_supported(self, 'security-group'):
             return

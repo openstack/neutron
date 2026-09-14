@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    Default security group creation is now authorized through the new
+    ``create_default_security_group`` RBAC policy instead of a hardcoded
+    database check. This allows service-to-service callers with the
+    ``service`` role to ensure a project's default security group exists,
+    while still preventing regular project members from creating default
+    security groups for other projects.
+upgrade:
+  - |
+    A new default policy rule ``create_default_security_group`` has been added.
+    By default it allows project readers for their own project, admins, and
+    service roles. Operators can override this rule in their policy files.
