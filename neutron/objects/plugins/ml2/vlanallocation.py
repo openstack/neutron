@@ -15,6 +15,7 @@
 from neutron_lib import constants as n_const
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import sql
 
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.objects import base
@@ -47,9 +48,16 @@ class VlanAllocation(base.NeutronDbObject, ml2_base.SegmentAllocation):
 
     @staticmethod
     def delete_physical_networks(context, physical_networks):
+        """Delete the unallocated registers of the given physical networks
+
+        Allocated registers are kept: they are the only record that the
+        segmentation ID is in use.
+        """
         column = VlanAllocation.db_model.physical_network
         context.session.query(VlanAllocation.db_model).filter(
-            column.in_(physical_networks)).delete(synchronize_session=False)
+            column.in_(physical_networks),
+            VlanAllocation.db_model.allocated == sql.false()).delete(
+                synchronize_session=False)
 
     @staticmethod
     def bulk_create(ctx, physical_network, vlan_ids):

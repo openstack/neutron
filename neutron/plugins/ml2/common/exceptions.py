@@ -40,3 +40,12 @@ class ExtensionDriverNotFound(exceptions.InvalidConfigurationOption):
     """Required extension driver not found in ML2 config."""
     message = _("Extension driver %(driver)s required for "
                 "service plugin %(service_plugin)s not found.")
+
+
+class VlanAllocationOutsideConfiguredRanges(exceptions.NeutronException):
+    """Config file VLAN ranges no longer cover an allocated segment."""
+    message = _("Network segments still hold VLAN IDs that "
+                "'[ml2_type_vlan] network_vlan_ranges' no longer covers "
+                "(%(allocations)s). Restore those ranges in the "
+                "configuration file, or delete the networks holding those "
+                "VLAN IDs, before starting Neutron again.")
