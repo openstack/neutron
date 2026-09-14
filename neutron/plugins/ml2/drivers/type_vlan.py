@@ -33,6 +33,7 @@ from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db.models.plugins.ml2 import vlanallocation as vlan_alloc_model
 from neutron.objects import network_segment_range as range_obj
 from neutron.objects.plugins.ml2 import vlanallocation as vlanalloc
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2.drivers import helpers
 from neutron.services.network_segment_range import plugin as range_plugin
 
@@ -87,8 +88,8 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
             physnets = vlanalloc.VlanAllocation.get_physical_networks(ctx)
             physnets_unconfigured = physnets - set(ranges)
             if physnets_unconfigured:
-                LOG.debug('Removing any VLAN register on physical networks %s',
-                          physnets_unconfigured)
+                LOG.debug('Removing any unallocated VLAN register on '
+                          'physical networks %s', physnets_unconfigured)
                 vlanalloc.VlanAllocation.delete_physical_networks(
                     ctx, physnets_unconfigured)
 
@@ -169,15 +170,92 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
             self._sync_vlan_allocations()
         LOG.info("VlanTypeDriver initialization complete")
 
+    @staticmethod
+    def _network_segment_ranges(ctx, default=None):
+        """VLAN ranges per physical network, as stored in the DB
+
+        With ``default`` set to True only the registers populated from
+        ``[ml2_type_vlan] network_vlan_ranges`` are returned, with False only
+        those created through the API, and with None every one of them.
+        """
+        filters = {'network_type': p_const.TYPE_VLAN}
+        if default is not None:
+            filters['default'] = default
+        ranges = collections.defaultdict(list)
+        for obj in range_obj.NetworkSegmentRange.get_objects(ctx, **filters):
+            ranges[obj['physical_network']].append(
+                (obj['minimum'], obj['maximum']))
+        return ranges
+
+    @staticmethod
+    def _covered_by(vlan_id, vlan_ranges):
+        return any(vlan_min <= vlan_id <= vlan_max
+                   for vlan_min, vlan_max in vlan_ranges)
+
+    def _validate_config_ranges_cover_allocations(self, ctx,
+                                                  previous_default_ranges):
+        """Refuse to start when a config file edit orphaned an allocation
+
+        ``network_vlan_ranges`` has been narrowed, or a physical network
+        dropped from it, while segments still hold VLAN IDs that the new
+        ranges no longer cover. Restoring the previous ranges in the
+        configuration file lets Neutron start again, so failing here is
+        recoverable and points at the change that caused it.
+
+        Only the VLAN IDs the ``default`` registers used to cover are
+        considered. Ranges created through the API are left to
+        ``_sync_vlan_allocations``, which keeps their allocated registers:
+        refusing to start over those would leave an administrator unable to
+        reach the API that would undo the change.
+        """
+        if not previous_default_ranges:
+            return
+
+        effective_ranges = self._network_segment_ranges(ctx)
+        orphaned = collections.defaultdict(set)
+        allocations = vlanalloc.VlanAllocation.get_objects(
+            ctx, allocated=True,
+            physical_network=list(previous_default_ranges))
+        for alloc in allocations:
+            physical_network = alloc.physical_network
+            if self._covered_by(alloc.vlan_id,
+                                effective_ranges[physical_network]):
+                continue
+            if not self._covered_by(
+                    alloc.vlan_id,
+                    previous_default_ranges[physical_network]):
+                continue
+            orphaned[physical_network].add(alloc.vlan_id)
+
+        if orphaned:
+            raise ml2_exc.VlanAllocationOutsideConfiguredRanges(
+                allocations='; '.join(
+                    '{}: {}'.format(
+                        physical_network,
+                        ', '.join(str(v) for v in sorted(vlan_ids)))
+                    for physical_network, vlan_ids in sorted(
+                        orphaned.items())))
+
     @db_api.retry_db_errors
     def initialize_network_segment_range_support(self, start_time):
         admin_context = context.get_admin_context()
         try:
             with db_api.CONTEXT_WRITER.using(admin_context):
+                # Read before the expired registers go away: they are the
+                # only record of what the configuration file asked for the
+                # last time Neutron started.
+                previous_default_ranges = self._network_segment_ranges(
+                    admin_context, default=True)
                 self._delete_expired_default_network_segment_ranges(
                     admin_context, start_time)
                 self._populate_new_default_network_segment_ranges(
                     admin_context, start_time)
+                # Raising inside the transaction rolls the two calls above
+                # back, so the previous default registers survive and the
+                # next start reaches the same verdict instead of quietly
+                # accepting the new ranges.
+                self._validate_config_ranges_cover_allocations(
+                    admin_context, previous_default_ranges)
         except o_exc.NeutronDbObjectDuplicateEntry:
             pass
 
