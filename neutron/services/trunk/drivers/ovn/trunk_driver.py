@@ -158,12 +158,33 @@ class OVNTrunkHandler:
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
         return db_port
 
+    def _parent_port_handled_by_ovn(self, pport_id):
+        """Check if the parent port is managed by OVN.
+
+        This method determines whether OVN is responsible for managing
+        trunking on the given parent port. It returns False for ports
+        whose Logical Switch Port (LSP) has type 'external', as these
+        ports are handled out-of-band (e.g., baremetal/SR-IOV ports
+        managed by networking-generic-switch or Ironic). For such ports,
+        actual L2 forwarding and VLAN trunking occur outside OVN.
+
+        :param pport_id: The ID of the parent port to check.
+        :returns: True if OVN manages the parent port's LSP and should
+                  handle trunking; False if the port is external or
+                  the LSP does not exist in OVN.
+        """
+        pport = self.plugin_driver.nb_ovn.lookup(
+            'Logical_Switch_Port', pport_id, default=None)
+
+        if not pport or pport.type == ovn_const.LSP_TYPE_EXTERNAL:
+            return False
+        return True
+
     def trunk_created(self, resource, event, trunk_plugin, payload):
         trunk = payload.states[0]
-        # Check if parent port is handled by OVN.
-        if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
-                                                trunk.port_id, default=None):
+        if not self._parent_port_handled_by_ovn(trunk.port_id):
             return
+
         if trunk.sub_ports:
             self._set_sub_ports(trunk.port_id, trunk.sub_ports)
         trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
@@ -175,22 +196,20 @@ class OVNTrunkHandler:
 
     def subports_added(self, resource, event, trunk_plugin, payload):
         trunk = payload.states[0]
-        subports = payload.metadata['subports']
-        # Check if parent port is handled by OVN.
-        if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
-                                                trunk.port_id, default=None):
+        if not self._parent_port_handled_by_ovn(trunk.port_id):
             return
+
+        subports = payload.metadata['subports']
         if subports:
             self._set_sub_ports(trunk.port_id, subports)
         trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
 
     def subports_deleted(self, resource, event, trunk_plugin, payload):
         trunk = payload.states[0]
-        subports = payload.metadata['subports']
-        # Check if parent port is handled by OVN.
-        if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
-                                                trunk.port_id, default=None):
+        if not self._parent_port_handled_by_ovn(trunk.port_id):
             return
+
+        subports = payload.metadata['subports']
         if subports:
             self._unset_sub_ports(subports)
         trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
