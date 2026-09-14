@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Fixed a ``KeyError`` when retrieving a port with a QoS policy that
+    had no associated port binding register. The API now returns the
+    port without a resource request and logs an error instead. For more
+    information, see bug
+    `2166602 <https://bugs.launchpad.net/neutron/+bug/2166602>`_.

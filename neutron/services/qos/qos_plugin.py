@@ -139,20 +139,27 @@ class QoSPlugin(qos.QoSPluginBase):
         if not qos_id:
             return port_res
 
+        try:
+            vnic_type = port_res[portbindings.VNIC_TYPE]
+        except KeyError:
+            LOG.error('Port %s does not have an associated port_binding '
+                      'register; please check the status/health of this '
+                      'port.', port_db.id)
+            return port_res
+
         if port_res.get('bulk'):
             port_res['resource_request'] = {
                 'qos_id': qos_id,
                 'network_id': port_db.network_id,
-                'vnic_type': port_res[portbindings.VNIC_TYPE],
+                'vnic_type': vnic_type,
                 'port_id': port_db.id,
             }
             return port_res
 
         min_bw_request_group = QoSPlugin._get_min_bw_request_group(
-            qos_id, port_db.id, port_res[portbindings.VNIC_TYPE],
-            port_db.network_id)
+            qos_id, port_db.id, vnic_type, port_db.network_id)
         min_pps_request_group = QoSPlugin._get_min_pps_request_group(
-            qos_id, port_db.id, port_res[portbindings.VNIC_TYPE])
+            qos_id, port_db.id, vnic_type)
 
         port_res['resource_request'] = (
             QoSPlugin._get_resource_request(min_bw_request_group,
