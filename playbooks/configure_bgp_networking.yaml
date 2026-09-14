@@ -14,6 +14,25 @@
       ansible.builtin.set_fact:
         vxlan_local_ip: "{{ nodepool.private_ipv4 | ipv4 | default(nodepool.public_ipv4) }} "
 
+- name: Derive BGP interface names for spine
+  hosts: spine
+  tasks:
+    - name: Set spine downlink interfaces
+      ansible.builtin.set_fact:
+        bgp_downlink_interfaces: "{{ bgp_downlink_interfaces | default([]) + ['leaf' ~ idx | string ~ '-port'] }}"
+      loop: "{{ groups['leafs'] }}"
+      loop_control:
+        index_var: idx
+
+- name: Derive BGP interface names for leafs
+  hosts: leafs
+  tasks:
+    - name: Set leaf downlink and uplink interfaces
+      ansible.builtin.set_fact:
+        bgp_downlink_interfaces: "{{ groups['compute'] | map('regex_replace', '$', '-port') | list }}"
+        bgp_uplink_interfaces:
+          - spine-port
+
 - name: Setup SSH keys so compute nodes can start FRR on leaf/spine
   hosts: compute
   tasks:
@@ -227,7 +246,7 @@
         set -e
 
         tunnel_iface=leaf{{ item.0 }}-tunnel
-        port_iface=leaf{{ item.0 }}-port
+        port_iface={{ bgp_downlink_interfaces[item.0] }}
         local_ip={{ vxlan_local_ip }}
         remote_ip={{ hostvars[item.1].vxlan_local_ip }}
         vlan_tag=200{{ item.0 }}
@@ -253,7 +272,7 @@
         set -e
 
         tunnel_iface=spine-tunnel
-        port_iface=spine-port
+        port_iface={{ hostvars[item.1].bgp_uplink_interfaces[0] }}
         local_ip={{ hostvars[item.1].vxlan_local_ip }}
         remote_ip={{ vxlan_local_ip }}
         vlan_tag=200{{ item.0 }}
@@ -283,9 +302,20 @@
 - name: Configure the spine switch
   hosts: spine
   roles:
-    - spine
+    - role: spine
+      downlink_interfaces: "{{ bgp_downlink_interfaces }}"
+      datapath_spine_ipv4: 172.31.1.1
+      bgp_address_families: >-
+        {{ ['ipv4 unicast', 'ipv6 unicast'] +
+           (['l2vpn evpn'] if enable_evpn | default(false) else []) }}
 
 - name: Configure the leafs switches
   hosts: leafs
   roles:
-    - leaf
+    - role: leaf
+      downlink_interfaces: "{{ bgp_downlink_interfaces }}"
+      uplink_interfaces: "{{ bgp_uplink_interfaces }}"
+      bgp_password: "{{ '' if enable_evpn | default(false) else 'f00barZ' }}"
+      bgp_address_families: >-
+        {{ ['ipv4 unicast', 'ipv6 unicast'] +
+           (['l2vpn evpn'] if enable_evpn | default(false) else []) }}

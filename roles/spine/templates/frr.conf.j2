@@ -13,36 +13,46 @@ debug bgp neighbor-events
 debug bgp updates
 debug bgp update-groups
 
-router bgp 65000
+router bgp {{ bgp_as }}
+{% if bgp_router_id %}
+  bgp router-id {{ bgp_router_id }}
+{% endif %}
   bgp log-neighbor-changes
   bgp graceful-shutdown
 
   neighbor downlink peer-group
-  neighbor downlink remote-as external
+  neighbor downlink remote-as {{ downlink_remote_as }}
   neighbor downlink bfd
-  neighbor downlink bfd profile devstack
+  neighbor downlink bfd profile {{ bfd_profile_name }}
   ! neighbor downlink capability extended-nexthop
-  neighbor leaf0-port interface peer-group downlink
-  neighbor leaf1-port interface peer-group downlink
+{% for iface in downlink_interfaces %}
+  neighbor {{ iface }} interface peer-group downlink
+{% endfor %}
 
+{% if 'ipv4 unicast' in bgp_address_families %}
   address-family ipv4 unicast
     redistribute connected
+{% if datapath_spine_ipv4 %}
     neighbor downlink route-map downlink-in in
+{% endif %}
     neighbor downlink route-map locally-originated-only out
   exit-address-family
+{% endif %}
 
+{% if 'ipv6 unicast' in bgp_address_families %}
   address-family ipv6 unicast
     redistribute connected
     neighbor downlink activate
     neighbor downlink prefix-list only-host-prefixes in
     neighbor downlink route-map locally-originated-only out
   exit-address-family
-{% if enable_evpn | default(false) %}
+{% endif %}
 
+{% if 'l2vpn evpn' in bgp_address_families %}
   address-family l2vpn evpn
     neighbor downlink activate
-    neighbor downlink route-reflector-client
     advertise-all-vni
+    advertise-svi-ip
   exit-address-family
 {% endif %}
 exit
@@ -70,7 +80,7 @@ ipv6 prefix-list only-host-prefixes permit ::/0 ge 128
 ip nht resolve-via-default
 
 bfd
-  profile devstack
-    detect-multiplier 10
-    transmit-interval 500
-    receive-interval 500
+  profile {{ bfd_profile_name }}
+    detect-multiplier {{ bfd_detect_multiplier }}
+    transmit-interval {{ bfd_interval }}
+    receive-interval {{ bfd_interval }}

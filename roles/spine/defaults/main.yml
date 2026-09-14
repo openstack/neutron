@@ -1,0 +1,14 @@
+---
+bgp_as: 65000
+downlink_interfaces: []
+downlink_remote_as: external
+bgp_router_id: ""
+bgp_address_families:
+  - ipv4 unicast
+  - ipv6 unicast
+datapath_spine_ipv4: ""
+evpn_vxlan_port: 4789
+bfd_profile_name: devstack
+bfd_detect_multiplier: 10
+bfd_interval: 500
+frr_start_service: false

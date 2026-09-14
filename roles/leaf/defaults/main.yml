@@ -1,0 +1,15 @@
+---
+bgp_as: 64999
+downlink_interfaces: []
+downlink_remote_as: internal
+uplink_interfaces: []
+uplink_remote_as: external
+bgp_password: "f00barZ"
+bgp_router_id: ""
+bgp_address_families:
+  - ipv4 unicast
+  - ipv6 unicast
+bfd_profile_name: devstack
+bfd_detect_multiplier: 10
+bfd_interval: 500
+frr_start_service: false
