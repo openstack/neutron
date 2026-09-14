@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fixed an issue in the OVN trunk driver where trunks were incorrectly
+    managed for parent ports with ``type=external`` (e.g., baremetal/SR-IOV
+    ports). The driver now checks the Logical Switch Port type and skips
+    trunk management for external ports, leaving it to the appropriate
+    out-of-band mechanism driver. For more information see bug
+    `2167105 <https://bugs.launchpad.net/neutron/+bug/2167105>`_.
