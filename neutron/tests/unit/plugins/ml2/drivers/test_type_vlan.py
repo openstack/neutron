@@ -29,6 +29,7 @@ from neutron.common import wsgi_utils
 from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.objects import network_segment_range as obj_network_segment_range
 from neutron.objects.plugins.ml2 import vlanallocation as vlan_alloc_obj
+from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 
@@ -187,7 +188,8 @@ class VlanTypeTest(testlib_api.SqlTestCase):
         with mock.patch.object(type_vlan.LOG, 'debug') as mock_debug:
             self.driver._sync_vlan_allocations()
             mock_debug.assert_called_once_with(
-                'Removing any VLAN register on physical networks %s',
+                'Removing any unallocated VLAN register on '
+                'physical networks %s',
                 {UNCONFIGURED_NET})
         check_in_ranges(UPDATED_VLAN_RANGES)
 
@@ -403,6 +405,82 @@ class VlanTypeTestWithNetworkSegmentRange(testlib_api.SqlTestCase):
         self.assertEqual(TENANT_NET, network_segment_range.physical_network)
         self.assertEqual(VLAN_MIN, network_segment_range.minimum)
         self.assertEqual(VLAN_MAX, network_segment_range.maximum)
+
+    def _allocate(self, physical_network, vlan_id):
+        # the register already exists for a configured physical network,
+        # created unallocated by the sync in setUp
+        updated = vlan_alloc_obj.VlanAllocation.update_objects(
+            self.context, values={'allocated': True},
+            physical_network=physical_network, vlan_id=vlan_id)
+        if not updated:
+            vlan_alloc_obj.VlanAllocation(
+                self.context, physical_network=physical_network,
+                vlan_id=vlan_id, allocated=True).create()
+
+    def _default_ranges_for(self, physical_network):
+        return sorted(
+            (obj.minimum, obj.maximum)
+            for obj in obj_network_segment_range.NetworkSegmentRange.
+            get_objects(self.context, network_type=p_const.TYPE_VLAN,
+                        default=True, physical_network=physical_network))
+
+    def test_narrowing_config_ranges_over_an_allocation_refuses_to_start(self):
+        # phys_net2 is configured as 200:209 and a segment holds 205; the
+        # operator narrows the config file to 200:204
+        self._allocate(TENANT_NET, VLAN_MAX)
+        self.driver._network_vlan_ranges = {
+            PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)],
+            TENANT_NET: [(VLAN_MIN, VLAN_MAX - 5)]}
+
+        exc_raised = self.assertRaises(
+            ml2_exc.VlanAllocationOutsideConfiguredRanges,
+            self.driver.initialize_network_segment_range_support,
+            self.start_time)
+
+        self.assertIn(TENANT_NET, str(exc_raised))
+        self.assertIn(str(VLAN_MAX), str(exc_raised))
+        # the raise happened inside the transaction, so the previous default
+        # registers survive and the next start reaches the same verdict
+        self.assertEqual([(VLAN_MIN, VLAN_MAX)],
+                         self._default_ranges_for(TENANT_NET))
+
+    def test_dropping_a_physnet_from_config_over_an_allocation_refuses(self):
+        self._allocate(TENANT_NET, VLAN_MIN)
+        self.driver._network_vlan_ranges = {
+            PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)]}
+
+        self.assertRaises(
+            ml2_exc.VlanAllocationOutsideConfiguredRanges,
+            self.driver.initialize_network_segment_range_support,
+            self.start_time)
+
+        self.assertEqual([(VLAN_MIN, VLAN_MAX)],
+                         self._default_ranges_for(TENANT_NET))
+
+    def test_allocation_still_covered_by_config_starts(self):
+        self._allocate(TENANT_NET, VLAN_MIN)
+        self.driver._network_vlan_ranges = {
+            PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)],
+            TENANT_NET: [(VLAN_MIN, VLAN_MAX - 5)]}
+
+        self.driver.initialize_network_segment_range_support(self.start_time)
+
+        self.assertEqual([(VLAN_MIN, VLAN_MAX - 5)],
+                         self._default_ranges_for(TENANT_NET))
+
+    def test_allocation_on_an_api_managed_range_does_not_refuse(self):
+        # an operator shrinking a range through the API must not be able to
+        # stop Neutron from starting: they could not reach the API to undo it
+        obj_network_segment_range.NetworkSegmentRange(
+            self.context, network_type=p_const.TYPE_VLAN,
+            physical_network=UNCONFIGURED_NET, minimum=VLAN_MIN,
+            maximum=VLAN_MAX, default=False, shared=True).create()
+        self._allocate(UNCONFIGURED_NET, VLAN_MIN)
+        self.driver._network_vlan_ranges = {
+            PROVIDER_NET: [(p_const.MIN_VLAN_TAG, p_const.MAX_VLAN_TAG)],
+            TENANT_NET: [(VLAN_MIN, VLAN_MAX)]}
+
+        self.driver.initialize_network_segment_range_support(self.start_time)
 
     def test__delete_expired_default_network_segment_ranges(self):
         self.driver._delete_expired_default_network_segment_ranges(

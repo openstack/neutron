@@ -1,0 +1,23 @@
+---
+upgrade:
+  - |
+    Neutron now refuses to start when ``[ml2_type_vlan]
+    network_vlan_ranges`` no longer covers a VLAN ID that a network segment
+    still holds, either because a range was narrowed or because a physical
+    network was dropped from it. The error names the physical networks and
+    VLAN IDs involved. Restore the ranges in the configuration file, or
+    delete the networks holding those VLAN IDs, to start again. Network
+    segment ranges created through the API are not affected: their allocated
+    registers are kept and Neutron starts normally, since an administrator
+    could not otherwise reach the API to undo such a change.
+fixes:
+  - |
+    Synchronizing the VLAN allocations no longer deletes allocated registers
+    when it removes the registers of a physical network that is no longer
+    configured. Deleting them discarded the only record that a segmentation
+    ID was in use while the network segment referencing it still existed.
+    Allocated registers are now kept and removed when their segment is
+    released, which matches both the per-VLAN removal in the same routine
+    and the behaviour of the tunnel type drivers.
+    See bug: `2167266
+    <https://bugs.launchpad.net/neutron/+bug/2167266>`_.

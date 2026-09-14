@@ -45,3 +45,12 @@ class ExtensionDriverNotFound(exceptions.InvalidConfigurationOption):
 class UnknownNetworkType(exceptions.NeutronException):
     """Network with unknown type."""
     message = _("Unknown network type %(network_type)s.")
+
+
+class VlanAllocationOutsideConfiguredRanges(exceptions.NeutronException):
+    """Config file VLAN ranges no longer cover an allocated segment."""
+    message = _("Network segments still hold VLAN IDs that "
+                "'[ml2_type_vlan] network_vlan_ranges' no longer covers "
+                "(%(allocations)s). Restore those ranges in the "
+                "configuration file, or delete the networks holding those "
+                "VLAN IDs, before starting Neutron again.")
