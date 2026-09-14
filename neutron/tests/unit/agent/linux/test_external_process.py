@@ -59,6 +59,7 @@ class BaseTestProcessMonitor(base.BaseTestCase):
         conf = mock.Mock()
         conf.AGENT.check_child_processes_action = action
         conf.AGENT.check_child_processes = True
+        conf.AGENT.check_child_processes_interval = False
         self.pmonitor = ep.ProcessMonitor(
             config=conf,
             resource_type='test')
