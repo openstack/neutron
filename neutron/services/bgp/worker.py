@@ -30,7 +30,11 @@ class BGPWorker(worker.NeutronBaseWorker):
 
     @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def wait(self):
-        self._reconciler.full_sync()
+        # NOTE(twilson) Nothing to wait for. The reconciler's IDL threads
+        # keep the process alive, and the full sync is driven by acquiring
+        # the BGP topology OVSDB lock rather than by startup, so that
+        # whichever worker wins the lock is the one that reconciles.
+        pass
 
     @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def stop(self):

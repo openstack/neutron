@@ -14,6 +14,7 @@
 #    under the License.
 
 import threading
+import types
 
 from oslo_log import log
 
@@ -60,7 +61,8 @@ class BGPTopologyReconciler:
     def start(self):
         self.nb_api = ovn.OvnNbIdl(
             ovn_conf.get_ovn_nb_connection(),
-            self.nb_events).start(
+            self.nb_events,
+            notify_handler=events.BGPLockEventHandler(self)).start(
                 timeout=ovn_conf.get_ovn_ovsdb_timeout())
         self.sb_api = ovn.OvnSbIdl(
             ovn_conf.get_ovn_sb_connection(),
@@ -91,19 +93,26 @@ class BGPTopologyReconciler:
         ]
 
     def full_sync(self):
+        """Reconcile the whole BGP topology.
+
+        Driven by events.BGPLockEventHandler, i.e. run on the NB IDL's
+        notify_loop thread as soon as this worker wins the BGP topology lock.
+        That hook can fire before start() has assigned nb_api/sb_api, so wait
+        for start() to finish before touching them.
+        """
         if not self._started.is_set():
             LOG.info("Waiting for BGP topology reconciler to start")
             self._started.wait()
             LOG.info("BGP topology reconciler is ready")
-        if self.nb_api.has_lock:
-            LOG.info("Full BGP topology synchronization started")
-            # First make sure all chassis are indexed
-            commands.FullSyncBGPTopologyCommand(
-                self.nb_api, self.sb_api).execute(check_error=True)
-            LOG.info(
-                "Full BGP topology synchronization completed successfully")
-        else:
-            LOG.info("Full BGP topology synchronization already in progress")
+        LOG.info("Full BGP topology synchronization started")
+        # db_list() rather than db_list_rows() as the result is stored and
+        # this gives us a snapshot that won't change like a Row could.
+        chassis = [types.SimpleNamespace(**row) for row in
+                   self.sb_api.db_list('Chassis_Private').execute(
+                       check_error=True)]
+        commands.FullSyncBGPTopologyCommand(
+            self.nb_api, chassis).execute(check_error=True)
+        LOG.info("Full BGP topology synchronization completed successfully")
 
     def reconcile(self, action, resource, trigger):
         try:
