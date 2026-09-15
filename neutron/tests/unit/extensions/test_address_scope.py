@@ -27,7 +27,9 @@ import webob.exc
 
 from neutron.db import address_scope_db
 from neutron.db import db_base_plugin_v2
+from neutron.db import rbac_db_models
 from neutron.extensions import address_scope as ext_address_scope
+from neutron.objects import address_scope as obj_addr_scope
 from neutron.tests.common import test_db_base_plugin_v2
 
 DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_address_scope.'
@@ -96,6 +98,16 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self._compare_resource(addr_scope, expected, 'address_scope')
         return addr_scope
 
+    def _share_address_scope(self, addr_scope, target_project='*'):
+        rbac = obj_addr_scope.AddressScopeRBAC(
+            context.get_admin_context(),
+            project_id=addr_scope['address_scope']['project_id'],
+            object_id=addr_scope['address_scope']['id'],
+            action=rbac_db_models.ACCESS_SHARED,
+            target_project=target_project,
+        )
+        rbac.create()
+
     def _test_update_address_scope(self, addr_scope_id, data, admin=False,
                                    expected=None, project_id=None):
         update_req = self.new_update_request(
@@ -130,7 +142,6 @@ class TestAddressScope(AddressScopeTestCase):
     def test_create_address_scope_ipv4(self):
         expected_addr_scope = {'name': 'foo-address-scope',
                                'project_id': self._project_id,
-                               'shared': False,
                                'ip_version': constants.IP_VERSION_4}
         self._test_create_address_scope(name='foo-address-scope',
                                         expected=expected_addr_scope)
@@ -138,7 +149,6 @@ class TestAddressScope(AddressScopeTestCase):
     def test_create_address_scope_ipv6(self):
         expected_addr_scope = {'name': 'foo-address-scope',
                                'project_id': self._project_id,
-                               'shared': False,
                                'ip_version': constants.IP_VERSION_6}
         self._test_create_address_scope(constants.IP_VERSION_6,
                                         name='foo-address-scope',
@@ -146,24 +156,11 @@ class TestAddressScope(AddressScopeTestCase):
 
     def test_create_address_scope_empty_name(self):
         expected_addr_scope = {'name': '',
-                               'project_id': self._project_id,
-                               'shared': False}
+                               'project_id': self._project_id}
         self._test_create_address_scope(name='', expected=expected_addr_scope)
 
         # no name specified
         self._test_create_address_scope(expected=expected_addr_scope)
-
-    def test_create_address_scope_shared_admin(self):
-        expected_addr_scope = {'name': 'foo-address-scope', 'shared': True}
-        self._test_create_address_scope(name='foo-address-scope', admin=True,
-                                        shared=True,
-                                        expected=expected_addr_scope)
-
-    def test_created_address_scope_shared_non_admin(self):
-        res = self._create_address_scope(self.fmt, name='foo-address-scope',
-                                         project_id=self._project_id,
-                                         admin=False, shared=True)
-        self.assertEqual(webob.exc.HTTPForbidden.code, res.status_int)
 
     def test_created_address_scope_specify_id(self):
         res = self._create_address_scope(self.fmt, name='foo-address-scope',
@@ -181,28 +178,6 @@ class TestAddressScope(AddressScopeTestCase):
         data = {'address_scope': {'name': 'bar-address-scope'}}
         self._test_update_address_scope(addr_scope['address_scope']['id'],
                                         data, expected=data['address_scope'])
-
-    def test_update_address_scope_shared_true_admin(self):
-        addr_scope = self._test_create_address_scope(name='foo-address-scope')
-        data = {'address_scope': {'shared': True}}
-        self._test_update_address_scope(addr_scope['address_scope']['id'],
-                                        data, admin=True,
-                                        expected=data['address_scope'])
-
-    def test_update_address_scope_shared_true_non_admin(self):
-        addr_scope = self._test_create_address_scope(name='foo-address-scope')
-        data = {'address_scope': {'shared': True}}
-        res = self._test_update_address_scope(
-            addr_scope['address_scope']['id'], data, admin=False)
-        self.assertEqual(webob.exc.HTTPForbidden.code, res.status_int)
-
-    def test_update_address_scope_shared_false_admin(self):
-        addr_scope = self._test_create_address_scope(name='foo-address-scope',
-                                                     admin=True, shared=True)
-        data = {'address_scope': {'shared': False}}
-        res = self._test_update_address_scope(
-            addr_scope['address_scope']['id'], data, admin=True)
-        self.assertEqual(webob.exc.HTTPClientError.code, res.status_int)
 
     def test_get_address_scope(self):
         addr_scope = self._test_create_address_scope(name='foo-address-scope')
@@ -222,8 +197,8 @@ class TestAddressScope(AddressScopeTestCase):
         self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 
     def test_get_address_scope_different_projects_shared(self):
-        addr_scope = self._test_create_address_scope(name='foo-address-scope',
-                                                     shared=True, admin=True)
+        addr_scope = self._test_create_address_scope(name='foo-address-scope')
+        self._share_address_scope(addr_scope)
         req = self.new_show_request('address-scopes',
                                     addr_scope['address_scope']['id'])
         neutron_context = context.Context('', 'test-project-2')
@@ -240,8 +215,9 @@ class TestAddressScope(AddressScopeTestCase):
         self.assertEqual(2, len(res['address_scopes']))
 
     def test_list_address_scopes_different_projects_shared(self):
-        self._test_create_address_scope(name='foo-address-scope', shared=True,
-                                        admin=True)
+        addr_scope = self._test_create_address_scope(
+            name='foo-address-scope')
+        self._share_address_scope(addr_scope)
         admin_res = self._list('address-scopes')
         mortal_res = self._list(
             'address-scopes', project_id='not-the-owner')
