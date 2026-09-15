@@ -181,6 +181,8 @@ The following Neutron API extensions are supported with OVN:
      - fwaas_v2
    * - IP Allocation
      - ip_allocation
+   * - IP Substring Filtering
+     - ip_substring_filtering
    * - L3 External Gateway Mode
      - ext-gw-mode
    * - L3 Flavors
