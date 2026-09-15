@@ -40,6 +40,7 @@ from neutron_lib.api.definitions import firewall_v2_stdattrs
 from neutron_lib.api.definitions import flavors
 from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import floatingip_pools
+from neutron_lib.api.definitions import ip_substring_port_filtering
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import l3_enable_default_route_bfd
 from neutron_lib.api.definitions import l3_enable_default_route_ecmp
@@ -218,4 +219,5 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     uplink_status_propagation.ALIAS,
     uplink_status_propagation_updatable.ALIAS,
     tap_mirror.ALIAS,
+    ip_substring_port_filtering.ALIAS,
 ]

@@ -1,0 +1,3 @@
+other:
+  - |
+    Added extension ``ip_substring_filtering`` to the ML2/OVN mechanism driver.
