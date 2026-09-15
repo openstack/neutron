@@ -329,3 +329,28 @@ class TestSegmentBridgePeriodicReconcile(base.BaseTestCase):
 
         reconcile.assert_called_once_with()
         start.assert_called_once_with()
+
+
+class TestSegmentBridgeReconcile(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.ext = segment_bridge.SegmentBridgeExtension()
+        self.item = segment_bridge.SegmentBridge(
+            physnet='physnet1',
+            bridge='br-ex-100',
+            trunk_bridge='br-ex',
+            vlan=100,
+        )
+
+    def test_reconcile_ensures_desired_even_when_already_actual(self):
+        with mock.patch.object(self.ext, '_desired_segment_bridges',
+                               return_value={self.item}), \
+                mock.patch.object(self.ext, '_actual_segment_bridges',
+                                  return_value={self.item}), \
+                mock.patch.object(self.ext, '_ensure_item') as ensure, \
+                mock.patch.object(self.ext, '_delete_item') as delete:
+            self.ext.reconcile()
+
+        ensure.assert_called_once_with(self.item)
+        delete.assert_not_called()
