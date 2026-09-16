@@ -18,11 +18,8 @@ import errno
 from pyroute2.netlink import exceptions as netlink_exc
 
 from neutron._i18n import _
+from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.privileged.agent.linux import svd as privileged_svd
-
-
-class SvdDeviceAlreadyExists(Exception):
-    pass
 
 
 class SvdPortInUse(Exception):
@@ -30,14 +27,6 @@ class SvdPortInUse(Exception):
 
 
 class SvdDevsNotFound(Exception):
-    pass
-
-
-class SvdSviNotFound(Exception):
-    pass
-
-
-class SvdNotFound(Exception):
     pass
 
 
@@ -53,6 +42,9 @@ class Svd:
 
     When a VNI is mapped to a VLAN, the caller-provided VLAN interface
     name is created.
+
+    All operations are idempotent: create/add succeed when resources
+    already exist; delete/remove succeed when resources are already gone.
     """
 
     def __init__(self, br_evpn, vxlan_evpn):
@@ -65,10 +57,6 @@ class Svd:
                 self.br_evpn, self.vxlan_evpn,
                 local_ip, mac, dstport, br_mtu)
         except netlink_exc.NetlinkError as e:
-            if e.code == errno.EEXIST:
-                raise SvdDeviceAlreadyExists(
-                    _("SVD %(br)s/%(vx)s device(s) already exist(s)") %
-                    {'br': self.br_evpn, 'vx': self.vxlan_evpn})
             if e.code == errno.EADDRINUSE:
                 raise SvdPortInUse(
                     _("UDP port %(port)d already in use") %
@@ -80,10 +68,6 @@ class Svd:
     def delete(self):
         try:
             privileged_svd.delete_svd(self.br_evpn, self.vxlan_evpn)
-        except IndexError:
-            raise SvdNotFound(
-                _("SVD %(br)s/%(vx)s not found") %
-                {'br': self.br_evpn, 'vx': self.vxlan_evpn})
         except netlink_exc.NetlinkError as e:
             raise SvdNetlinkError(
                 _("Failed to delete SVD %(br)s/%(vx)s: %(err)s") %
@@ -94,7 +78,7 @@ class Svd:
             privileged_svd.add_vni(
                 self.br_evpn, self.vxlan_evpn,
                 svi_name, lo_name, vni, vid, vrf_name, mac, br_mtu)
-        except IndexError:
+        except priv_ip_lib.NetworkInterfaceNotFound:
             raise SvdDevsNotFound(
                 _("SVD %(br)s/%(vx)s or VRF %(vrf)s not found") %
                 {'br': self.br_evpn, 'vx': self.vxlan_evpn,
@@ -111,11 +95,10 @@ class Svd:
             privileged_svd.del_vni(
                 self.br_evpn, self.vxlan_evpn,
                 svi_name, lo_name, vni, vid)
-        except IndexError:
-            raise SvdSviNotFound(
-                _("SVI for VNI %(vni)d not found on SVD %(br)s/%(vx)s") %
-                {'vni': vni, 'br': self.br_evpn,
-                 'vx': self.vxlan_evpn})
+        except priv_ip_lib.NetworkInterfaceNotFound:
+            raise SvdDevsNotFound(
+                _("SVD %(br)s/%(vx)s not found") %
+                {'br': self.br_evpn, 'vx': self.vxlan_evpn})
         except netlink_exc.NetlinkError as e:
             raise SvdNetlinkError(
                 _("Failed to delete VNI %(vni)d from SVD %(br)s/%(vx)s:"

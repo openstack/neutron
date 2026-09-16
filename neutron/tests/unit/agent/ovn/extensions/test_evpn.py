@@ -113,12 +113,10 @@ class TestCreateSvdWithFreePort(base.BaseTestCase):
         self.ext._create_svd_with_free_port()
         self.assertEqual(3, self.ext.svd.create.call_count)
 
-    def test_reuses_existing_svd(self):
+    def test_idempotent_create_existing_svd(self):
         mock.patch.object(
             evpn_ext.EVPNAgentExtension, '_get_free_udp_port',
             return_value=49152).start()
-        self.ext.svd.create.side_effect = linux_svd.SvdDeviceAlreadyExists(
-            "already exists")
         self.ext._create_svd_with_free_port()
         self.ext.svd.create.assert_called_once()
 

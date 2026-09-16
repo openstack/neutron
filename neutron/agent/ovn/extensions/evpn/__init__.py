@@ -84,9 +84,6 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
                                 dstport=dstport, br_mtu=self.cfg.br_mtu)
                 LOG.debug("EVPN SVD using child vxlan port %d", dstport)
                 return
-            except linux_svd.SvdDeviceAlreadyExists:
-                LOG.warning("SVD already exists, reusing")
-                return
             except linux_svd.SvdPortInUse:
                 LOG.debug("UDP port %d in use, trying next", dstport)
         raise RuntimeError(_("Failed to create SVD after %d attempts: "

@@ -15,10 +15,12 @@
 
 """Low-level functions to create Single VxLAN Device and VNI:VLAN mapping"""
 
+import errno
 
 from oslo_log import log
 from pyroute2 import config as pyroute2_config
 from pyroute2 import netlink
+from pyroute2.netlink import exceptions as netlink_exc
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl.ifinfmsg.plugins import vxlan
 
@@ -118,25 +120,39 @@ def _make_bridge_vni_msg(vxlan_idx, vni):
 
 
 def _bridge_add_vni(ipr, vxlan_idx, vni):
-    """Add a VNI filter entry on a vxlan device.
+    """Add a VNI filter entry or skip if already present.
 
     Equivalent to:
         bridge vni add dev <vxlan> vni <vni>
     """
     msg = _make_bridge_vni_msg(vxlan_idx, vni)
-    ipr.nlm_request(msg, msg_type=RTM_NEWTUNNEL,
-                    msg_flags=BRIDGE_ADD_VNI_MSG_FLAGS)
+    try:
+        ipr.nlm_request(msg, msg_type=RTM_NEWTUNNEL,
+                        msg_flags=BRIDGE_ADD_VNI_MSG_FLAGS)
+    except netlink_exc.NetlinkError as e:
+        if e.code == errno.EEXIST:
+            LOG.debug("Bridge VNI %d on ifindex %d already present, "
+                      "skipping", vni, vxlan_idx)
+            return
+        raise
 
 
 def _bridge_del_vni(ipr, vxlan_idx, vni):
-    """Delete a VNI filter entry on a vxlan device.
+    """Delete a VNI filter entry or skip if already absent.
 
     Equivalent to:
         bridge vni del dev <vxlan> vni <vni>
     """
     msg = _make_bridge_vni_msg(vxlan_idx, vni)
-    ipr.nlm_request(msg, msg_type=RTM_DELTUNNEL,
-                    msg_flags=BRIDGE_DEL_VNI_MSG_FLAGS)
+    try:
+        ipr.nlm_request(msg, msg_type=RTM_DELTUNNEL,
+                        msg_flags=BRIDGE_DEL_VNI_MSG_FLAGS)
+    except netlink_exc.NetlinkError as e:
+        if e.code == errno.ENOENT:
+            LOG.debug("Bridge VNI %d on ifindex %d already absent, "
+                      "skipping", vni, vxlan_idx)
+            return
+        raise
 
 
 def _set_addrgenmode_none(ipr, idx):
@@ -167,66 +183,100 @@ def _set_addrgenmode_none(ipr, idx):
 # End Workarounds for features missing in pyroute2 0.8.x.
 
 
-def _cleanup_partial_svd(ipr, br_evpn, vxlan_evpn):
-    """Remove partially created SVD devices after a failed create."""
-    for ifname in (vxlan_evpn, br_evpn):
-        idx = ipr.link_lookup(ifname=ifname)
-        if idx:
-            ipr.link(nl_const.IP_LINK_DEL, index=idx[0])
+def _add_link(ipr, ifname, **kwargs):
+    """Add link or skip if exists.  Returns the ifindex of the device."""
+    try:
+        ipr.link(nl_const.IP_LINK_ADD, ifname=ifname, **kwargs)
+    except netlink_exc.NetlinkError as e:
+        if e.code == errno.EEXIST:
+            LOG.debug("Link %s already exists, skipping add", ifname)
+            return ipr.link_lookup(ifname=ifname)[0]
+        raise
+    return ipr.link_lookup(ifname=ifname)[0]
+
+
+def _del_link(ipr, ifname):
+    """Delete link or skip if absent."""
+    idx = ipr.link_lookup(ifname=ifname)
+    if not idx:
+        LOG.debug("Link %s already absent, skipping delete", ifname)
+        return
+    ipr.link(nl_const.IP_LINK_DEL, index=idx[0])
+
+
+def _add_vlan_filter(ipr, index, label, **kwargs):
+    """Add vlan_filter or skip if already present."""
+    try:
+        ipr.vlan_filter(nl_const.IP_LINK_ADD, index=index, **kwargs)
+    except netlink_exc.NetlinkError as e:
+        if e.code == errno.EEXIST:
+            LOG.debug("VLAN filter on %s already present, skipping", label)
+            return
+        raise
+
+
+def _del_vlan_filter(ipr, index, label, **kwargs):
+    """Delete vlan_filter or skip if absent."""
+    try:
+        ipr.vlan_filter(nl_const.IP_LINK_DEL, index=index, **kwargs)
+    except netlink_exc.NetlinkError as e:
+        if e.code == errno.ENOENT:
+            LOG.debug("VLAN filter on %s already absent, skipping", label)
+            return
+        raise
+
+
+def _link_idx(ipr, ifname):
+    """Return ifindex for ifname or raise NetworkInterfaceNotFound."""
+    idx = ipr.link_lookup(ifname=ifname)
+    if not idx:
+        raise priv_ip_lib.NetworkInterfaceNotFound(
+            device=ifname, namespace=None)
+    return idx[0]
 
 
 @privileged.default.entrypoint
 def create_svd(br_evpn, vxlan_evpn, local_ip, mac, dstport, br_mtu):
-    """Create a shared Single VxLAN Device (SVD)
+    """Create a shared Single VxLAN Device (SVD).
 
-    A shared SVD consist of a vlan-aware Linux bridge and a vlan-aware VxLAN
+    A shared SVD consists of a vlan-aware Linux bridge and a vlan-aware
+    VxLAN.  Idempotent: if devices already exist, their configuration
+    is re-applied to match the desired state.
     """
     with priv_ip_lib.get_iproute(None) as ipr:
 
-        try:
-            # Equivalent to:
-            # ip link add <vxlan_evpn> type vxlan \
-            #   dstport <dstport> local <local_ip> \
-            #   nolearning external vnifilter
-            ipr.link(nl_const.IP_LINK_ADD, ifname=vxlan_evpn, kind='vxlan',
-                     vxlan_port=dstport,
-                     vxlan_local=local_ip,
-                     vxlan_learning=0,
-                     vxlan_collect_metadata=1,
-                     vxlan_vnifilter=1)
-            vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
+        # ip link add <vxlan_evpn> vxlan ...
+        vxlan_idx = _add_link(
+            ipr, vxlan_evpn, kind='vxlan',
+            vxlan_port=dstport,
+            vxlan_local=local_ip,
+            vxlan_learning=0,
+            vxlan_collect_metadata=1,
+            vxlan_vnifilter=1)
 
-            # Equivalent to:
-            # ip link add <br_evpn> type bridge vlan_filtering 1 \
-            #   vlan_default_pvid 0
-            # ip link set <br_evpn> address <mac>
-            # ip link set <br_evpn> up
-            ipr.link(nl_const.IP_LINK_ADD, ifname=br_evpn, kind='bridge',
-                     br_vlan_filtering=1, br_vlan_default_pvid=0)
-            br_idx = ipr.link_lookup(ifname=br_evpn)[0]
-            ipr.link(nl_const.IP_LINK_SET, index=br_idx, address=mac,
-                     state='up')
+        # ip link add <br_evpn> type bridge vlan_filtering 1 ...
+        br_idx = _add_link(
+            ipr, br_evpn, kind='bridge',
+            br_vlan_filtering=1, br_vlan_default_pvid=0)
 
-            # Equivalent to:
-            # ip link set <vxlan_evpn> address <mac> master <br_evpn>
-            # ip link set <vxlan_evpn> up
-            # bridge link set dev <vxlan_evpn> vlan_tunnel on neigh_suppress
-            #   on learning off
-            ipr.link(nl_const.IP_LINK_SET, index=vxlan_idx, address=mac,
-                     master=br_idx, state='up')
-            ipr.brport(nl_const.IP_LINK_SET, index=vxlan_idx,
-                       vlan_tunnel=1, neigh_suppress=1, learning=0)
+        # ip link set <br_evpn> address <mac> up
+        ipr.link(nl_const.IP_LINK_SET, index=br_idx, address=mac,
+                 state='up')
 
-            # Equivalent to:
-            # ip link set <br_evpn> mtu 1500 addrgenmode none
-            # ip link set <vxlan_evpn> addrgenmode none
-            ipr.link(nl_const.IP_LINK_SET, index=br_idx,
-                     mtu=br_mtu)
-            _set_addrgenmode_none(ipr, br_idx)
-            _set_addrgenmode_none(ipr, vxlan_idx)
-        except Exception:
-            _cleanup_partial_svd(ipr, br_evpn, vxlan_evpn)
-            raise
+        # ip link set <vxlan_evpn> address <mac> master <br_evpn> up
+        # bridge link set dev <vxlan_evpn> vlan_tunnel on neigh_suppress
+        #   on learning off
+        ipr.link(nl_const.IP_LINK_SET, index=vxlan_idx, address=mac,
+                 master=br_idx, state='up')
+        ipr.brport(nl_const.IP_LINK_SET, index=vxlan_idx,
+                   vlan_tunnel=1, neigh_suppress=1, learning=0)
+
+        # ip link set <br_evpn> mtu <br_mtu> addrgenmode none
+        # ip link set <vxlan_evpn> addrgenmode none
+        ipr.link(nl_const.IP_LINK_SET, index=br_idx,
+                 mtu=br_mtu)
+        _set_addrgenmode_none(ipr, br_idx)
+        _set_addrgenmode_none(ipr, vxlan_idx)
 
     LOG.debug("Created SVD: bridge %s, vxlan %s (local_ip %s, dstport %d)",
               br_evpn, vxlan_evpn, local_ip, dstport)
@@ -234,11 +284,10 @@ def create_svd(br_evpn, vxlan_evpn, local_ip, mac, dstport, br_mtu):
 
 @privileged.default.entrypoint
 def delete_svd(br_evpn, vxlan_evpn):
+    """Delete a shared SVD, already-absent devices are skipped."""
     with priv_ip_lib.get_iproute(None) as ipr:
-        vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
-        br_idx = ipr.link_lookup(ifname=br_evpn)[0]
-        ipr.link(nl_const.IP_LINK_DEL, index=vxlan_idx)
-        ipr.link(nl_const.IP_LINK_DEL, index=br_idx)
+        _del_link(ipr, vxlan_evpn)
+        _del_link(ipr, br_evpn)
     LOG.debug("Deleted SVD: bridge %s, vxlan %s",
               br_evpn, vxlan_evpn)
 
@@ -246,47 +295,39 @@ def delete_svd(br_evpn, vxlan_evpn):
 @privileged.default.entrypoint
 def add_vni(br_evpn, vxlan_evpn, svi_name, lo_name, vni, vid, vrf_name, mac,
             br_mtu):
+    """Map a VNI to the SVD, existing sub-resources are skipped."""
     with priv_ip_lib.get_iproute(None) as ipr:
-        br_idx = ipr.link_lookup(ifname=br_evpn)[0]
-        vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
-        vrf_idx = ipr.link_lookup(ifname=vrf_name)[0]
+        br_idx = _link_idx(ipr, br_evpn)
+        vxlan_idx = _link_idx(ipr, vxlan_evpn)
+        vrf_idx = _link_idx(ipr, vrf_name)
 
-        # Equivalent to:
         # bridge vlan add dev <br_evpn> vid <vid> self
-        # bridge vlan add dev <vxlan_evpn> vid <vid>
-        # bridge vlan add dev <vxlan_evpn> vid <vid> \
-        #   tunnel_info id <vni>
-        ipr.vlan_filter(nl_const.IP_LINK_ADD, index=br_idx,
-                        vlan_info={'vid': vid},
-                        vlan_flags='self')
-        ipr.vlan_filter(nl_const.IP_LINK_ADD, index=vxlan_idx,
-                        vlan_info={'vid': vid},
-                        vlan_tunnel_info={'vid': vid, 'id': vni})
+        _add_vlan_filter(
+            ipr, br_idx, br_evpn,
+            vlan_info={'vid': vid}, vlan_flags='self')
+        # bridge vlan add dev <vxlan_evpn> vid <vid> tunnel_info id <vni>
+        _add_vlan_filter(
+            ipr, vxlan_idx, vxlan_evpn,
+            vlan_info={'vid': vid},
+            vlan_tunnel_info={'vid': vid, 'id': vni})
 
-        # Equivalent to:
         # bridge vni add dev <vxlan_evpn> vni <vni>
         _bridge_add_vni(ipr, vxlan_idx, vni)
 
-        # Equivalent to:
         # ip link add <svi_name> link <br_evpn> type vlan id <vid>
-        # ip link set <svi_name> master <vrf_name>
-        # ip link set <svi_name> addr <mac> addrgenmode none
-        # ip link set <svi_name> up
-        ipr.link(nl_const.IP_LINK_ADD, ifname=svi_name, kind='vlan',
-                 link=br_idx, vlan_id=vid)
-        svi_idx = ipr.link_lookup(ifname=svi_name)[0]
+        svi_idx = _add_link(
+            ipr, svi_name, kind='vlan', link=br_idx, vlan_id=vid)
+        # ip link set <svi_name> master <vrf_name> addr <mac> up
         ipr.link(nl_const.IP_LINK_SET, index=svi_idx,
                  master=vrf_idx, address=mac,
                  mtu=br_mtu, state='up')
         _set_addrgenmode_none(ipr, svi_idx)
 
-        # Equivalent to:
         # ip link add <lo_name> type dummy
-        # ip link set <lo_name> master <br_name>
-        # ip link set <lo_name> up
-        ipr.link(nl_const.IP_LINK_ADD, ifname=lo_name, kind='dummy')
-        lo_idx = ipr.link_lookup(ifname=lo_name)[0]
-        ipr.link(nl_const.IP_LINK_SET, index=lo_idx, master=br_idx, state='up')
+        lo_idx = _add_link(ipr, lo_name, kind='dummy')
+        # ip link set <lo_name> master <br_evpn> up
+        ipr.link(nl_const.IP_LINK_SET, index=lo_idx, master=br_idx,
+                 state='up')
 
     LOG.debug("SVD %s/%s: added VLAN %d -> VNI %d, SVI %s, lo %s",
               br_evpn, vxlan_evpn, vid, vni, svi_name, lo_name)
@@ -294,33 +335,28 @@ def add_vni(br_evpn, vxlan_evpn, svi_name, lo_name, vni, vid, vrf_name, mac,
 
 @privileged.default.entrypoint
 def del_vni(br_evpn, vxlan_evpn, svi_name, lo_name, vni, vid):
+    """Remove a VNI mapping from the SVD, missing resources are skipped."""
     with priv_ip_lib.get_iproute(None) as ipr:
-        br_idx = ipr.link_lookup(ifname=br_evpn)[0]
-        vxlan_idx = ipr.link_lookup(ifname=vxlan_evpn)[0]
+        br_idx = _link_idx(ipr, br_evpn)
+        vxlan_idx = _link_idx(ipr, vxlan_evpn)
 
-        # Equivalent to:
         # ip link del <lo_name>
-        lo_idx = ipr.link_lookup(ifname=lo_name)[0]
-        ipr.link(nl_const.IP_LINK_DEL, index=lo_idx)
-
-        # Equivalent to:
+        _del_link(ipr, lo_name)
         # ip link del <svi_name>
-        svi_idx = ipr.link_lookup(ifname=svi_name)[0]
-        ipr.link(nl_const.IP_LINK_DEL, index=svi_idx)
+        _del_link(ipr, svi_name)
 
-        # Equivalent to:
         # bridge vni del dev <vxlan_evpn> vni <vni>
-        # bridge vlan del dev <vxlan_evpn> vid <vid>
-        # bridge vlan del dev <vxlan_evpn> vid <vid> \
-        #   tunnel_info id <vni>
-        # bridge vlan del dev <br_evpn> vid <vid> self
         _bridge_del_vni(ipr, vxlan_idx, vni)
-        ipr.vlan_filter(nl_const.IP_LINK_DEL, index=vxlan_idx,
-                        vlan_info={'vid': vid},
-                        vlan_tunnel_info={'vid': vid, 'id': vni})
-        ipr.vlan_filter(nl_const.IP_LINK_DEL, index=br_idx,
-                        vlan_info={'vid': vid},
-                        vlan_flags='self')
+
+        # bridge vlan del dev <vxlan_evpn> vid <vid> tunnel_info id <vni>
+        _del_vlan_filter(
+            ipr, vxlan_idx, vxlan_evpn,
+            vlan_info={'vid': vid},
+            vlan_tunnel_info={'vid': vid, 'id': vni})
+        # bridge vlan del dev <br_evpn> vid <vid> self
+        _del_vlan_filter(
+            ipr, br_idx, br_evpn,
+            vlan_info={'vid': vid}, vlan_flags='self')
 
     LOG.debug("SVD %s/%s: removed VLAN %d -> VNI %d",
               br_evpn, vxlan_evpn, vid, vni)
