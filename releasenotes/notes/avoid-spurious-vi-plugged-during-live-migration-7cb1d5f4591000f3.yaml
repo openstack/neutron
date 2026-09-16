@@ -1,0 +1,13 @@
+---
+fixes:
+  - |
+    Fixed the ML2/OVS agent on the source host sending a spurious
+    ``network-vif-plugged`` event during live migration. When the source
+    agent received a ``port_update`` for the new ``INACTIVE`` binding on the
+    destination host, it can happen that the agent re-processes the migrating
+    port and calls ``update_device_up()``, making Nova beleive the port is ready
+    for traffic on the destination. The source agent now detects that a port
+    is being migrated to another host (either from the binding profile or,
+    as a fallback, from an ``INACTIVE`` binding on a different host)
+    and skips processing it. See bug:
+    `2162710 <https://bugs.launchpad.net/neutron/+bug/2162710>`_.
