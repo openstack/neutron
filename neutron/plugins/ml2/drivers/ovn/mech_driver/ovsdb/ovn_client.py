@@ -27,6 +27,9 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api.definitions import qinq as qinq_apidef
 from neutron_lib.api.definitions import segment as segment_def
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
@@ -712,6 +715,11 @@ class OVNClient:
             if port.get('pvlan_type') and self.pvlan_driver:
                 self.pvlan_driver.create_port(context, txn, port)
 
+            registry.publish(
+                resources.PORT, ovn_const.OVN_PRECOMMIT_CREATE, self,
+                payload=events.DBEventPayload(
+                    context, states=(port,), metadata={'txn': txn}))
+
         db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
     def _set_unset_virtual_port_type(self, context, txn, parent_port,
@@ -897,6 +905,11 @@ class OVNClient:
                 # We need to remove the old entries
                 self.add_txns_to_remove_port_dns_records(
                     txn, port_object, ls_name=ls_name)
+
+            registry.publish(
+                resources.PORT, ovn_const.OVN_PRECOMMIT_UPDATE, self,
+                payload=events.DBEventPayload(
+                    context, states=(port,), metadata={'txn': txn}))
 
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
             db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)

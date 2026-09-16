@@ -171,7 +171,47 @@ class AdvertiseHostCommand(command.BaseCommand):
         ovn_utils.setkeys(lrp, 'options', {
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
                 bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE:
+                'false',
         })
+
+
+class SuppressMetadataAdvertiseCommand(command.BaseCommand):
+    """Set dynamic-routing-advertise=false on the OVN metadata LSP."""
+
+    def __init__(self, api, port_id):
+        super().__init__(api)
+        self.lsp_name = port_id
+
+    def run_idl(self, txn):
+        lsp = idlutils.row_by_value(
+            self.api.idl, 'Logical_Switch_Port',
+            'name', self.lsp_name)
+
+        ovn_utils.setkeys(lsp, 'options', {
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE: 'false',
+        })
+
+
+class RestoreMetadataAdvertiseCommand(command.BaseCommand):
+    """Drop dynamic-routing-advertise=false on the OVN metadata LSP.
+
+    Removing the key restores the OVN default of true.
+    The metadata port remains after the router interface is deleted.
+    """
+
+    def __init__(self, api, port_id):
+        super().__init__(api)
+        self.lsp_name = port_id
+
+    def run_idl(self, txn):
+        lsp = idlutils.row_by_value(
+            self.api.idl, 'Logical_Switch_Port',
+            'name', self.lsp_name)
+        if bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE in lsp.options:
+            lsp.delkey(
+                'options',
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE)
 
 
 class DeleteEVPNRouterCommand(command.BaseCommand):
