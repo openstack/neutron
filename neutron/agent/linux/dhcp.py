@@ -475,7 +475,7 @@ class Dnsmasq(DhcpLocalProcess):
             ]
 
         possible_leases = 0
-        for subnet in self._get_all_subnets(self.network):
+        for subnet in self.network.subnets:
             mode = None
             # if a subnet is specified to have dhcp disabled
             if not subnet.enable_dhcp:
