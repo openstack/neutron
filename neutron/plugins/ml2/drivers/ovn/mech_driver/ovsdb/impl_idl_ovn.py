@@ -624,6 +624,30 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                 ('ha_chassis_group', '=', hcg.uuid)).execute(check_error=True)
         return ret
 
+    def get_ha_chassis_group_primaries(self, chassis_names):
+        """Return the effective primary chassis name for each HCG.
+
+        The effective primary is the HA_Chassis row with the highest
+        priority whose name is in *chassis_names*.  HCGs with no
+        matching HA_Chassis rows are omitted.
+
+        :param chassis_names: set/list of chassis names to consider
+                              (typically all registered gateway chassis).
+        :returns: list of primary chassis names (one per HCG)
+        """
+        primaries = []
+        for hcg in self.db_list_rows(
+                'HA_Chassis_Group').execute(check_error=True):
+            if not hcg.ha_chassis:
+                continue
+            candidates = [hc for hc in hcg.ha_chassis
+                          if hc.chassis_name in chassis_names]
+            if not candidates:
+                continue
+            primary = max(candidates, key=lambda hc: hc.priority)
+            primaries.append(primary.chassis_name)
+        return primaries
+
     def get_unhosted_gateways(self, port_physnet_dict, chassis_with_physnets,
                               all_gw_chassis, chassis_with_azs):
         """Return the GW LRPs with no chassis assigned
@@ -1035,6 +1059,20 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         for ch in self.chassis_list().execute(check_error=True):
             chassis_azs[ch.name] = utils.get_chassis_availability_zones(ch)
         return chassis_azs
+
+    def get_gateway_chassis_with_az_filter(self, az_hints=None):
+        az_hints = set(az_hints) if az_hints else set()
+        gw_chassis = set()
+        candidates = set()
+        for ch in self.chassis_list().execute(check_error=True):
+            if not utils.is_gateway_chassis(ch):
+                continue
+            gw_chassis.add(ch.name)
+            if not az_hints:
+                candidates.add(ch.name)
+            elif az_hints & utils.get_chassis_availability_zones(ch):
+                candidates.add(ch.name)
+        return gw_chassis, candidates
 
     def get_all_chassis(self, chassis_type=None):
         # TODO(azbiswas): Use chassis_type as input once the compute type

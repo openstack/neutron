@@ -51,6 +51,9 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.nb_idl = self.mock_nb_idl.return_value
         self.sb_idl = self.mock_sb_idl.return_value
         self.txn = self.nb_idl.transaction.return_value.__enter__.return_value
+        self.sb_idl.get_gateway_chassis_with_az_filter.return_value = (
+            {'gw1', 'gw2'}, {'gw1', 'gw2'})
+        self.nb_idl.get_ha_chassis_group_primaries.return_value = []
 
     def test_get_plugin_type(self):
         self.assertEqual(
@@ -214,3 +217,26 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                     network_id=net['network']['id']
                 ).one_or_none()
             self.assertIsNone(evpn_net)
+
+    def test_compute_hcg_primary_load_single_primary(self):
+        self.nb_idl.get_ha_chassis_group_primaries.return_value = ['ch2']
+
+        result = self.evpn_plugin._compute_hcg_primary_load(
+            ['ch1', 'ch2'])
+        self.assertEqual({'ch2': 1}, result)
+
+    def test_compute_hcg_primary_load_same_primary_multiple_hcgs(self):
+        self.nb_idl.get_ha_chassis_group_primaries.return_value = [
+            'ch1', 'ch1']
+
+        result = self.evpn_plugin._compute_hcg_primary_load(
+            ['ch1', 'ch2', 'ch3'])
+        self.assertEqual({'ch1': 2}, result)
+
+    def test_compute_hcg_primary_load_different_primaries(self):
+        self.nb_idl.get_ha_chassis_group_primaries.return_value = [
+            'ch2', 'ch1']
+
+        result = self.evpn_plugin._compute_hcg_primary_load(
+            ['ch1', 'ch2', 'ch3'])
+        self.assertEqual({'ch1': 1, 'ch2': 1}, result)
