@@ -63,3 +63,4 @@ class BGPReconcilerResource(Enum):
     PROVIDER_SWITCH = 'provider-switch'
     GATEWAY_IP = 'gateway-ip'
     FLOATING_IP = 'floating-ip'
+    VIRTUAL_PORT = 'virtual-port'

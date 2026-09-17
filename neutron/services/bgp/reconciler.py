@@ -44,6 +44,8 @@ class BGPTopologyReconciler:
                     self.reconcile_chassis,
                 constants.BGPReconcilerResource.FLOATING_IP:
                     self.reconcile_floating_ip,
+                constants.BGPReconcilerResource.VIRTUAL_PORT:
+                    self.reconcile_virtual_port,
             },
             constants.Action.DELETE: {
                 constants.BGPReconcilerResource.PROVIDER_SWITCH:
@@ -52,6 +54,8 @@ class BGPTopologyReconciler:
                     self.delete_chassis,
                 constants.BGPReconcilerResource.FLOATING_IP:
                     self.reconcile_floating_ip,
+                constants.BGPReconcilerResource.VIRTUAL_PORT:
+                    self.reconcile_virtual_port,
             },
         }
         self.nb_api = None
@@ -83,6 +87,8 @@ class BGPTopologyReconciler:
             events.GatewayIPCreatedEvent(self),
             events.GatewayIPUpdatedEvent(self),
             events.FIPChangedEvent(self),
+            events.VirtualPortChangedEvent(self),
+            events.VirtualPortTypeChangedEvent(self),
         ]
 
     @property
@@ -149,7 +155,21 @@ class BGPTopologyReconciler:
             LOG.warning("NAT row %s missing %s, skipping arp_proxy reconcile",
                         nat_row.uuid, ovn_const.OVN_FIP_NET_ID)
             return
-        commands.ReconcileFIPArpProxyCommand(
+        commands.ReconcileArpProxyCommand(
+            self.nb_api, n_net_id,
+        ).execute(check_error=True)
+
+    def reconcile_virtual_port(self, lsp_row):
+        try:
+            network_name = lsp_row.external_ids[
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
+        except KeyError:
+            LOG.warning("LSP %s missing %s, skipping arp_proxy reconcile",
+                        lsp_row.uuid,
+                        ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
+            return
+        n_net_id = helpers.get_neutron_id_from_ovn_name(network_name)
+        commands.ReconcileArpProxyCommand(
             self.nb_api, n_net_id,
         ).execute(check_error=True)
 

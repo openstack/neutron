@@ -303,6 +303,60 @@ class TestBGPReconciler(BGPReconcilerTestBase):
             '172.24.4.10',
             lsp.options.get(ovn_const.LSP_OPTIONS_ARP_PROXY))
 
+    def test_virtual_port_created_updates_arp_proxy(self):
+        self._create_chassis(
+            'chassis', '192.168.1.100',
+            bgp_bridges=self.chassis_bgp_networks)
+
+        net_id = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+        ls_name = f'neutron-{net_id}'
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self.nb_api.lsp_add(
+                ls_name, f'{ls_name}-localnet',
+                type='localnet',
+                options={'network_name': 'physnet1'},
+                addresses=['unknown'],
+            ))
+            txn.add(self.nb_api.db_set(
+                'Logical_Switch', ls_name,
+                external_ids={
+                    ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'flat'}))
+
+        self.reconciler.full_sync()
+
+        interconnect_name = helpers.get_provider_interconnect_switch_name(
+            ls_name)
+        lsp_name = helpers.get_lsp_name(
+            interconnect_name, constants.MAIN_ROUTER_NAME)
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_add(
+                ls_name, 'virtual-port-1',
+                type=ovn_const.LSP_TYPE_VIRTUAL,
+                options={
+                    ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY: '10.0.0.100',
+                    ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY: 'parent-0',
+                },
+                external_ids={
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: ls_name},
+            ))
+
+        def arp_proxy_set():
+            lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+            return ovn_const.LSP_OPTIONS_ARP_PROXY in lsp.options
+
+        common_utils.wait_until_true(
+            arp_proxy_set,
+            timeout=10,
+            exception=Exception(
+                "arp_proxy was not set after virtual port creation"))
+
+        lsp = self.nb_api.lsp_get(lsp_name).execute(check_error=True)
+        self.assertEqual(
+            '10.0.0.100',
+            lsp.options.get(ovn_const.LSP_OPTIONS_ARP_PROXY))
+
 
 def _unowned_api_cls(api_cls):
     """Return a subclass of api_cls that won't share an ovsdb_connection.
