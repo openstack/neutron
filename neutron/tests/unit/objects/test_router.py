@@ -327,6 +327,7 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj = router.FloatingIP.get_object(self.context, id=obj.id)
         self.assertEqual(policy_obj.id, obj.qos_network_policy_id)
         self.assertIsNone(obj.qos_policy_id)
+        self.assertEqual(set(), obj.obj_what_changed())
 
     def test_v1_1_to_v1_0_drops_qos_policy_id(self):
         obj = self._make_object(self.obj_fields[0])
