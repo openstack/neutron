@@ -416,6 +416,7 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj = router.FloatingIP.get_object(self.context, id=obj.id)
         self.assertEqual(policy_obj.id, obj.qos_network_policy_id)
         self.assertIsNone(obj.qos_policy_id)
+        self.assertEqual(set(), obj.obj_what_changed())
 
     def test_get_scoped_floating_ips(self):
         def compare_results(router_ids, original_fips, host=None):

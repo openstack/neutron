@@ -460,7 +460,7 @@ class FloatingIP(base.NeutronDbObject):
         if db_obj.get('qos_network_policy_binding'):
             self.qos_network_policy_id = (
                 db_obj.qos_network_policy_binding.policy_id)
-            fields_to_change.append('qos_network_policy_binding')
+            fields_to_change.append('qos_network_policy_id')
         self.obj_reset_changes(fields_to_change)
 
     @classmethod
