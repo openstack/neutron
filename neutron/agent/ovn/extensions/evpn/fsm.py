@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import enum
 import threading
 
 from oslo_log import log
@@ -23,14 +24,23 @@ LOG = log.getLogger(__name__)
 _FSM_LOCK = threading.Lock()
 
 
-class Evpn:
-    """Per EVPN instance tracking FSM state."""
-
+class EVPNState(enum.Enum):
     INIT = 'init'
-    WAITING_FOR_ROUTER = 'waiting_for_router'
-    WAITING_FOR_BRIDGE = 'waiting_for_bridge'
+    WAITING_FOR_VRF = 'waiting_for_vrf'
+    WAITING_FOR_PORT_BINDING = 'waiting_for_port_binding'
     ADVERTISING = 'advertising'
     DESTROY = 'destroy'
+
+
+class EVPNEvent(enum.Enum):
+    PORT_BINDING_CREATE = 'port_binding_create'
+    PORT_BINDING_DELETE = 'port_binding_delete'
+    VRF_CREATE = 'vrf_create'
+    VRF_DELETE = 'vrf_delete'
+
+
+class EVPNInstance:
+    """Per EVPN instance tracking FSM state."""
 
     def __init__(self, vrf):
         self.vrf = vrf
@@ -38,47 +48,44 @@ class Evpn:
         self.mac = None
         self.vni = None
         self.vid = None
-        self.state = self.INIT
+        self.state = EVPNState.INIT
 
 
 class EvpnFSM:
     """Finite State Machine for EVPN instances.
 
-    Manages one Evpn instance per VRF.  Event sources
+    Manages one EVPNInstance per VRF.  Event sources
     (PortBindingLrpEvpnEvent, VrfHandler) call the public
     methods; the FSM drives state transitions and triggers
     provisioning actions.
     """
 
-    FSM_EVENT_PORT_BINDING_CREATE = 'port_binding_create'
-    FSM_EVENT_PORT_BINDING_DELETE = 'port_binding_delete'
-    FSM_EVENT_VRF_CREATE = 'vrf_create'
-    FSM_EVENT_VRF_DELETE = 'vrf_delete'
-
     # Transitions in the FSM
     # Each entry contains the following:
-    # (Current state, Event):(New state, transition callback)
+    # (Current state, Event): (New state, callback(action))
     TRANSITIONS = {
-        (Evpn.INIT, FSM_EVENT_PORT_BINDING_CREATE):
-            (Evpn.WAITING_FOR_ROUTER, "_set_evpn_bridge"),
-        (Evpn.INIT, FSM_EVENT_VRF_CREATE):
-            (Evpn.WAITING_FOR_BRIDGE, "_set_evpn_router"),
-        (Evpn.WAITING_FOR_ROUTER, FSM_EVENT_VRF_CREATE):
-            (Evpn.ADVERTISING, "_set_evpn_router_and_advertise"),
-        (Evpn.WAITING_FOR_BRIDGE, FSM_EVENT_PORT_BINDING_CREATE):
-            (Evpn.ADVERTISING, "_set_evpn_bridge_and_advertise"),
-        (Evpn.ADVERTISING, FSM_EVENT_PORT_BINDING_DELETE):
-            (Evpn.WAITING_FOR_BRIDGE, "_unset_evpn_bridge_and_unadvertise"),
-        (Evpn.ADVERTISING, FSM_EVENT_VRF_DELETE):
-            (Evpn.WAITING_FOR_ROUTER, "_unset_evpn_router_and_unadvertise"),
-        (Evpn.WAITING_FOR_BRIDGE, FSM_EVENT_VRF_DELETE):
-            (Evpn.DESTROY, "_destroy"),
-        (Evpn.WAITING_FOR_ROUTER, FSM_EVENT_PORT_BINDING_DELETE):
-            (Evpn.DESTROY, "_destroy"),
+        (EVPNState.INIT, EVPNEvent.PORT_BINDING_CREATE):
+            (EVPNState.WAITING_FOR_VRF, "_set_evpn_bridge"),
+        (EVPNState.INIT, EVPNEvent.VRF_CREATE):
+            (EVPNState.WAITING_FOR_PORT_BINDING, "_set_evpn_router"),
+        (EVPNState.WAITING_FOR_VRF, EVPNEvent.VRF_CREATE):
+            (EVPNState.ADVERTISING, "_set_evpn_router_and_advertise"),
+        (EVPNState.WAITING_FOR_PORT_BINDING, EVPNEvent.PORT_BINDING_CREATE):
+            (EVPNState.ADVERTISING, "_set_evpn_bridge_and_advertise"),
+        (EVPNState.ADVERTISING, EVPNEvent.PORT_BINDING_DELETE):
+            (EVPNState.WAITING_FOR_PORT_BINDING,
+             "_unset_evpn_bridge_and_unadvertise"),
+        (EVPNState.ADVERTISING, EVPNEvent.VRF_DELETE):
+            (EVPNState.WAITING_FOR_VRF,
+             "_unset_evpn_router_and_unadvertise"),
+        (EVPNState.WAITING_FOR_VRF, EVPNEvent.PORT_BINDING_DELETE):
+            (EVPNState.DESTROY, "_destroy"),
+        (EVPNState.WAITING_FOR_PORT_BINDING, EVPNEvent.VRF_DELETE):
+            (EVPNState.DESTROY, "_destroy"),
     }
 
     def __init__(self):
-        self.instances = {}  # vrf -> Evpn
+        self.instances = {}  # vrf -> EVPNInstance
         self._svd = None
         self._cfg = None
         self._driver = None
@@ -93,14 +100,22 @@ class EvpnFSM:
         evpn.vni = vni
         evpn.vid = vid
 
+    def _set_evpn_router(self, evpn):
+        evpn.vrf_up = True
+
+    def _set_evpn_router_and_advertise(self, evpn):
+        self._set_evpn_router(evpn)
+        self._advertise(evpn)
+
+    def _set_evpn_bridge_and_advertise(self, evpn, mac, vni, vid):
+        self._set_evpn_bridge(evpn, mac, vni, vid)
+        self._advertise(evpn)
+
     def _unset_evpn_bridge_and_unadvertise(self, evpn):
         self._unadvertise(evpn)
         evpn.mac = None
         evpn.vni = None
         evpn.vid = None
-
-    def _set_evpn_router(self, evpn):
-        evpn.vrf_up = True
 
     def _unset_evpn_router_and_unadvertise(self, evpn):
         self._unadvertise(evpn)
@@ -117,36 +132,29 @@ class EvpnFSM:
         self._driver.delete_router(evpn.vrf, evpn.vni)
         LOG.debug("EVPN: unadvertised %s", evpn)
 
-    def _set_evpn_router_and_advertise(self, evpn):
-        self._set_evpn_router(evpn)
-        self._advertise(evpn)
-
-    def _set_evpn_bridge_and_advertise(self, evpn, mac, vni, vid):
-        self._set_evpn_bridge(evpn, mac, vni, vid)
-        self._advertise(evpn)
-
     def _destroy(self, evpn):
         LOG.debug("EVPN deleted: VRF %s", evpn.vrf)
-        self.instances.pop(evpn.vrf)
+        self.instances.pop(evpn.vrf, None)
 
     def advance(self, event, vrf, **kwargs):
         """Drive FSM state transition for a VRF in response to an event."""
         with _FSM_LOCK:
-            evpn = self.instances.setdefault(vrf, Evpn(vrf))
-            LOG.debug("Advancing state EVPN: vrf %s", vrf)
-            previous_state = evpn.state
+            evpn = self.instances.setdefault(vrf, EVPNInstance(vrf))
             try:
-                evpn.state, callback_name = self.TRANSITIONS[
+                new_state, callback_name = self.TRANSITIONS[
                     (evpn.state, event)]
             except KeyError:
                 raise evpn_exc.FSMIllegalTransition(
-                    "Cannot transition from %s to new state!" %
-                    (previous_state))
+                    "Cannot transition from %s with event %s!" %
+                    (evpn.state, event))
             try:
                 callback = getattr(self, callback_name)
             except AttributeError:
                 raise evpn_exc.FSMMissingTransitionCallback(
-                    "Transition from %s to %s is missing callback function!" %
-                    (previous_state, evpn.state))
-            LOG.info("EVPN VRF %s: %s -> %s", vrf, previous_state, evpn.state)
+                    "Transition from %s is missing callback function %s!" %
+                    (evpn.state, callback_name))
+            previous_state = evpn.state
             callback(evpn, **kwargs)
+            evpn.state = new_state
+            LOG.info("EVPN %s: %s -> %s (event=%s)",
+                     vrf, previous_state, evpn.state, event)

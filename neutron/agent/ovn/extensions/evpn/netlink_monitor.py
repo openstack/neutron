@@ -74,7 +74,7 @@ class VrfHandler:
         for vrf in stale_vrfs:
             LOG.debug("Stale VRF removed during replay (VRF %s)", vrf)
             self._evpn_fsm.advance(
-                fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
+                fsm.EVPNEvent.VRF_DELETE, vrf)
         self._known_vrfs = self._replay_vrfs
         self._replay_vrfs = None
 
@@ -92,7 +92,7 @@ class VrfHandler:
         if evpnvrf not in self._known_vrfs:
             self._known_vrfs.add(evpnvrf)
             LOG.debug("VRF created: %s", evpnvrf)
-            self._evpn_fsm.advance(fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, evpnvrf)
+            self._evpn_fsm.advance(fsm.EVPNEvent.VRF_CREATE, evpnvrf)
 
     def handle_dellink(self, msg):
         try:
@@ -106,4 +106,4 @@ class VrfHandler:
             # VRF not previously tracked
             return
         LOG.debug("VRF deleted: %s", evpnvrf)
-        self._evpn_fsm.advance(fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, evpnvrf)
+        self._evpn_fsm.advance(fsm.EVPNEvent.VRF_DELETE, evpnvrf)

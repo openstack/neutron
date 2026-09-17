@@ -154,9 +154,9 @@ class TestVrfHandler(base.BaseTestCase):
     def test_handle_dellink_evpn_vrf(self):
         vrf = 'vr0a1b2c3d-ffff'
         self.handler._known_vrfs.add(vrf)
-        evpn = fsm.Evpn(vrf)
+        evpn = fsm.EVPNInstance(vrf)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
+        evpn.state = fsm.EVPNState.WAITING_FOR_PORT_BINDING
         self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg(vrf)
         self.handler.handle_dellink(msg)
@@ -166,9 +166,9 @@ class TestVrfHandler(base.BaseTestCase):
     def test_handle_dellink_unknown_vrf(self):
         vrf = 'vr0a1b2c3d-ffff'
         self.handler._known_vrfs.add(vrf)
-        evpn = fsm.Evpn(vrf)
+        evpn = fsm.EVPNInstance(vrf)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
+        evpn.state = fsm.EVPNState.WAITING_FOR_PORT_BINDING
         self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg('vr0a1b2c3d-eeee')
         self.handler.handle_dellink(msg)
