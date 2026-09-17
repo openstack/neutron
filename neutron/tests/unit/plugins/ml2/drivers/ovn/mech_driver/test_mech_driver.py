@@ -2194,6 +2194,52 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 self.context, port)
             self.assertEqual('fake-src,fake-dest',
                              options.options['requested-chassis'])
+            self.assertEqual('1500', options.mtu)
+
+    def _test__get_port_options_localport_mtu(self, port):
+        # The port dictionary carries the network only when it comes from
+        # the ML2 mechanism driver. Both flavours must report the network
+        # MTU, see bug #2152164.
+        with mock.patch.object(
+            self.mech_driver._plugin, 'get_network',
+            return_value={'id': 'foo', 'mtu': 1442}
+        ) as mock_get_network:
+            options = self.mech_driver._ovn_client._get_port_options(
+                self.context, port)
+        self.assertEqual(ovn_const.LSP_TYPE_LOCALPORT, options.type)
+        self.assertEqual('1442', options.mtu)
+        return mock_get_network
+
+    def test__get_port_options_metadata_port_without_network(self):
+        port = {
+            'id': 'metadata-port',
+            'mac_address': '00:00:00:00:00:00',
+            'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
+            'device_id': 'ovnmeta-foo',
+            'network_id': 'foo',
+            'fixed_ips': [],
+            portbindings.HOST_ID: '',
+            portbindings.PROFILE: {},
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_UNBOUND,
+        }
+        mock_get_network = self._test__get_port_options_localport_mtu(port)
+        mock_get_network.assert_called_once_with(mock.ANY, 'foo')
+
+    def test__get_port_options_metadata_port_with_network(self):
+        port = {
+            'id': 'metadata-port',
+            'mac_address': '00:00:00:00:00:00',
+            'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
+            'device_id': 'ovnmeta-foo',
+            'network_id': 'foo',
+            'network': {'id': 'foo', 'mtu': 1442},
+            'fixed_ips': [],
+            portbindings.HOST_ID: '',
+            portbindings.PROFILE: {},
+            portbindings.VIF_TYPE: portbindings.VIF_TYPE_UNBOUND,
+        }
+        mock_get_network = self._test__get_port_options_localport_mtu(port)
+        mock_get_network.assert_not_called()
 
     def test__get_port_options_migrating_additional_chassis_present(self):
         port = {

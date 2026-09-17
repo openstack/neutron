@@ -408,6 +408,17 @@ class OVNClient:
                 (6, 3, 0))
         return self._is_mcast_flood_broken
 
+    def _get_port_network(self, context, port):
+        """Return the network a port belongs to.
+
+        The ML2 mechanism driver embeds the network in the port dictionary
+        to save a DB call, but other callers (the maintenance worker, the
+        DB sync util, the user defined L3 provider) pass a plain port as
+        returned by the core plugin. Fall back to the DB in that case.
+        """
+        return port.get('network') or self._plugin.get_network(
+            context, port['network_id'])
+
     def _get_port_options(self, context, port):
         admin_context = context.elevated()
         bp_info = utils.validate_and_get_data_from_binding_profile(port)
@@ -477,7 +488,7 @@ class OVNClient:
                 port_type = ovn_const.LSP_TYPE_LOCALPORT
                 # Set MTU for LOCALPORT type ports (metadata and OVN LB HM
                 # ports) from the network
-                mtu = str(port.get('network', {}).get('mtu'))
+                mtu = str(self._get_port_network(admin_context, port)['mtu'])
 
             if utils.is_port_external(port):
                 port_type = ovn_const.LSP_TYPE_EXTERNAL
@@ -504,8 +515,7 @@ class OVNClient:
         if port_type != ovn_const.LSP_TYPE_EXTERNAL:
             if (bp_info.vnic_type == portbindings.VNIC_REMOTE_MANAGED and
                     ovn_const.VIF_DETAILS_PF_MAC_ADDRESS in bp_info.bp_param):
-                port_net = self._plugin.get_network(admin_context,
-                                                    port['network_id'])
+                port_net = self._get_port_network(admin_context, port)
                 mtu = str(port_net['mtu'])
                 options.update({
                     ovn_const.LSP_OPTIONS_VIF_PLUG_TYPE_KEY: 'representor',
