@@ -22,6 +22,7 @@ from neutron_lib import constants as n_consts
 from neutron_lib.utils import runtime
 from oslo_log import log as logging
 
+from neutron.agent.l3 import ha_state
 from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as router
 from neutron.agent.linux import conntrackd
@@ -133,8 +134,7 @@ class HaRouter(router.RouterInfo):
     def ha_state(self, new_state):
         self._ha_state = new_state
         try:
-            with open(self.ha_state_path, 'w') as f:
-                f.write(new_state)
+            ha_state.write_ha_state_file(self.ha_state_path, new_state)
         except OSError as error:
             LOG.error('Error while writing HA state for %s: %s',
                       self.router_id, error)
