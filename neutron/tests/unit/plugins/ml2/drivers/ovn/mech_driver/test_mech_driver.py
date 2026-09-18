@@ -1981,7 +1981,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                   'gateway_ip': '10.0.0.1', 'enable_dhcp': True,
                   'dns_nameservers': [], 'host_routes': []}
         network = {'id': 'network-id', 'mtu': 1000}
-        orignal_options = {'subnet': {
+        original_options = {'subnet': {
             'external_ids': {'subnet_id': subnet['id']},
             'cidr': subnet['cidr'], 'options': {
                 'router': '10.0.0.2',
@@ -1991,7 +1991,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'lease_time': str(12 * 60 * 60),
                 'mtu': str(1000)}}, 'ports': []}
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
-            orignal_options
+            original_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             self.context, subnet, network, mock.Mock())
@@ -2016,7 +2016,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                   'gateway_ip': '10.0.0.1', 'enable_dhcp': True,
                   'dns_nameservers': [], 'host_routes': []}
         network = {'id': 'network-id', 'mtu': 1000}
-        orignal_options = {'subnet': {
+        original_options = {'subnet': {
             'external_ids': {'subnet_id': subnet['id']},
             'cidr': subnet['cidr'], 'options': {
                 'router': subnet['gateway_ip'],
@@ -2026,7 +2026,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'lease_time': str(12 * 60 * 60),
                 'mtu': str(1000)}}, 'ports': []}
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
-            orignal_options
+            original_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             self.context, subnet, network, mock.Mock())
@@ -2039,13 +2039,13 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                   'ipv6_address_mode': 'dhcpv6-stateless',
                   'dns_nameservers': ['10::3'], 'host_routes': []}
         network = {'id': 'network-id', 'mtu': 1000}
-        orignal_options = {'subnet': {
+        original_options = {'subnet': {
             'external_ids': {'subnet_id': subnet['id']},
             'cidr': subnet['cidr'], 'options': {
                 'dhcpv6_stateless': 'true',
                 'server_id': '01:02:03:04:05:06'}}, 'ports': []}
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
-            orignal_options
+            original_options
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             self.context, subnet, network, mock.Mock())
 
@@ -2069,13 +2069,13 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                   'ipv6_address_mode': 'dhcpv6-stateless',
                   'dns_nameservers': [], 'host_routes': []}
         network = {'id': 'network-id', 'mtu': 1000}
-        orignal_options = {'subnet': {
+        original_options = {'subnet': {
             'external_ids': {'subnet_id': subnet['id']},
             'cidr': subnet['cidr'], 'options': {
                 'dhcpv6_stateless': 'true',
                 'server_id': '01:02:03:04:05:06'}}, 'ports': []}
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
-            orignal_options
+            original_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             self.context, subnet, network, mock.Mock())
