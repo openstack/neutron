@@ -27,6 +27,9 @@ from neutron.db import migration
 revision = 'c7f8d9e0f1a2'
 down_revision = 'a1b2c3d4e5f6'
 
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2026_2]
+
 
 def upgrade():
     migration.create_table_if_not_exists(
