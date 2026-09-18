@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
@@ -58,6 +59,20 @@ class EVPNL3Instance(model_base.BASEV2):
         backref=orm.backref('l3_instance', uselist=False, viewonly=True))
 
     revises_on_change = ('router',)
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_all_router_ids(cls, context):
+        """Get all router IDs that have EVPN instances.
+
+        Returns a list of router_id strings without loading joined
+        relationships (mapping, router). This is more efficient than
+        querying full EVPNL3Instance objects when only router_id is needed.
+
+        :param context: Neutron request context
+        :returns: list of router_id strings
+        """
+        return [row[0] for row in context.session.query(cls.router_id).all()]
 
 
 class EVPNNetwork(model_base.BASEV2):

@@ -70,6 +70,8 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING))
         self.assertEqual(str(self.vni), lr.options.get(
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID))
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, lr.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
         self.assertEqual(
             ('vr%s' % self.router_id)[:n_const.DEVICE_NAME_MAX_LEN],
             lr.options.get(
@@ -88,6 +90,8 @@ class CreateEVPNRouterCommandTestCase(bgp_base.BaseBgpTestCase):
                          lr.options.get('existing-key'))
         self.assertEqual('true', lr.options.get(
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING))
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, lr.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
 
     def test_creates_dummy_logical_switch(self):
         self._execute()
@@ -329,7 +333,7 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
 
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual(
-            'connected-as-host',
+            bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
 
@@ -345,7 +349,7 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
         self.assertEqual('existing-value',
                          lrp.options.get('existing-key'))
         self.assertEqual(
-            'connected-as-host',
+            bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
 
@@ -360,6 +364,6 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
 
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual(
-            'connected-as-host',
+            bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))

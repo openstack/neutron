@@ -32,10 +32,13 @@ from neutron_lib.utils import net as net_utils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.common import utils as common_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
+from neutron.db import evpn_db
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
+from neutron.services.bgp import constants as bgp_const
 from neutron.services.portforwarding import constants as pf_consts
 from neutron.tests.functional import base
 from neutron.tests.functional.services.logapi.drivers.ovn \
@@ -1737,6 +1740,123 @@ class TestMaintenance(_TestMaintenanceHelper):
         localnet_coexist = self._find_lswitch_port_row_by_name(coexist_name)
         self.assertNotIn(ovn_const.OVN_PHYSNET_EXT_ID_KEY,
                          localnet_coexist.external_ids)
+
+
+class TestEVPNMaintenance(_TestMaintenanceHelper):
+    """Functional tests for EVPN maintenance tasks."""
+
+    def _create_evpn_router(self, vni, redistribute=''):
+        """Create an EVPN router with database entries.
+
+        Creates:
+        - Actual Neutron router (via API)
+        - EVPNL3Instance database entry (via EVPNDbHelper)
+        - VNI/VLAN allocations and mapping (via EVPNDbHelper)
+        - Sets redistribute option on OVN logical router
+        """
+        # Create actual Neutron router (satisfies FK constraint)
+        router_name = common_utils.get_rand_device_name(prefix='evpn-test-')
+        router = self._create_router(router_name)
+        router_id = router['id']
+        lr_name = utils.ovn_name(router_id)
+
+        # Use EVPNDbHelper to create EVPN instance (production code path)
+        evpn_helper = evpn_db.EVPNDbHelper()
+        evpn_helper.allocate_vni_for_router(self.context, router_id, vni)
+
+        # Set the redistribute option
+        self.nb_api.db_set(
+            'Logical_Router', lr_name,
+            ('options', {
+                bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE: redistribute
+            })
+        ).execute(check_error=True)
+
+        return router_id, lr_name
+
+    def test_provision_evpn_static_route_redistribution_empty(self):
+        """Test adding 'static' when redistribute option is empty."""
+        router_id, lr_name = self._create_evpn_router(
+            vni=6000, redistribute='')
+
+        # Verify initial state
+        lr = self.nb_api.lr_get(lr_name).execute(check_error=True)
+        self.assertEqual('', lr.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+
+        # Run the maintenance task
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_static_route_redistribution)
+
+        # Verify 'static' was added
+        lr = self.nb_api.lr_get(lr_name).execute(check_error=True)
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, lr.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+
+    def test_provision_evpn_static_route_redistribution_no_routers(self):
+        """Test when there are no EVPN routers in the system."""
+        # Don't create any EVPN routers
+
+        # Run the maintenance task
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_static_route_redistribution)
+
+        # Test passes if NeverAgain is raised without errors
+
+    def test_provision_evpn_static_route_redistribution_multiple_routers(self):
+        """Test updating multiple EVPN routers in one run."""
+        # Create routers with different initial states
+        router1_id, lr1_name = self._create_evpn_router(
+            vni=6004, redistribute='')
+        router2_id, lr2_name = self._create_evpn_router(
+            vni=6005, redistribute='')
+        router3_id, lr3_name = self._create_evpn_router(
+            vni=6006, redistribute='')
+
+        # Run the maintenance task
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_static_route_redistribution)
+
+        # Verify all routers were updated correctly
+        lr1 = self.nb_api.lr_get(lr1_name).execute(check_error=True)
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, lr1.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+
+        lr2 = self.nb_api.lr_get(lr2_name).execute(check_error=True)
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, lr2.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+
+        lr3 = self.nb_api.lr_get(lr3_name).execute(check_error=True)
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, lr3.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+
+    def test_provision_evpn_static_route_redistribution_idempotent(self):
+        """Test that setting 'static' when already set doesn't duplicate."""
+        # Create router with 'static' already configured
+        router_id, lr_name = self._create_evpn_router(
+            vni=6007,
+            redistribute=bgp_const.DYNAMIC_ROUTE_TYPE_STATIC)
+
+        # Verify initial state
+        lr = self.nb_api.lr_get(lr_name).execute(check_error=True)
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC,
+                        lr.options.get(
+                            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+
+        # Run the maintenance task
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_static_route_redistribution)
+
+        # Verify 'static' is still set and not duplicated,
+        # e.g., 'static,static'
+        lr = self.nb_api.lr_get(lr_name).execute(check_error=True)
+        redistribute = lr.options.get(
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE)
+        self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, redistribute)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,

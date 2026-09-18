@@ -45,6 +45,9 @@ BGP_BRIDGE_NIC_TYPES = ('', 'system')
 
 BGP_LRP_TO_CHASSIS = 'neutron-bgp-lrp-to-chassis-router'
 
+DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST = 'connected-as-host'
+DYNAMIC_ROUTE_TYPE_STATIC = 'static'
+
 
 class Enum(enum.Enum):
 

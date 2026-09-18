@@ -2536,7 +2536,7 @@ class TestOvnNbSyncEVPN(base.TestOVNFunctionalBase):
                 networks=['192.168.99.1/24'],
                 options={
                     bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
-                        'connected-as-host'}))
+                        bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST}))
 
         self.assertIn(orphan_ls, self._get_ovn_evpn_ls_names())
         self.assertIn(orphan_hcg, self._get_ovn_evpn_hcg_names())

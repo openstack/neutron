@@ -13,9 +13,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron.services.bgp import constants as bgp_const
+
 EVPN_LRP_VNI_EXT_ID_KEY = 'vni'
 EVPN_LRP_VLAN_EXT_ID_KEY = 'vlan'
 EVPN_LS_NAME_PREFIX = 'evpn-ls-'
 EVPN_LRP_NAME_PATTERN = 'evpn-lrp-%(lrp_uuid)s-to-%(evpn_ls_name)s'
 EVPN_LSP_NAME_PATTERN = 'evpn-lsp-%(evpn_ls_name)s-to-%(lrp_uuid)s'
 EVPN_HCG_NAME_PREFIX = 'evpn-hcg-'
+EVPN_LR_REDISTRIBUTE_OPTION = bgp_const.DYNAMIC_ROUTE_TYPE_STATIC
