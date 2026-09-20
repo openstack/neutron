@@ -19,6 +19,7 @@ import threading
 from oslo_log import log
 
 from neutron.agent.ovn.extensions.evpn import exceptions as evpn_exc
+from neutron.agent.ovn.extensions.evpn import executor as evpn_executor
 
 LOG = log.getLogger(__name__)
 _FSM_LOCK = threading.Lock()
@@ -44,7 +45,6 @@ class EVPNInstance:
 
     def __init__(self, vrf):
         self.vrf = vrf
-        self.vrf_up = False
         self.mac = None
         self.vni = None
         self.vid = None
@@ -57,7 +57,7 @@ class EvpnFSM:
     Manages one EVPNInstance per VRF.  Event sources
     (PortBindingLrpEvpnEvent, VrfHandler) call the public
     methods; the FSM drives state transitions and triggers
-    provisioning actions.
+    provisioning actions via a centralized EvpnExecutor.
     """
 
     # Transitions in the FSM
@@ -65,75 +65,59 @@ class EvpnFSM:
     # (Current state, Event): (New state, callback(action))
     TRANSITIONS = {
         (EVPNState.INIT, EVPNEvent.PORT_BINDING_CREATE):
-            (EVPNState.WAITING_FOR_VRF, "_set_evpn_bridge"),
+            (EVPNState.WAITING_FOR_VRF, "_set_port_binding"),
         (EVPNState.INIT, EVPNEvent.VRF_CREATE):
-            (EVPNState.WAITING_FOR_PORT_BINDING, "_set_evpn_router"),
+            (EVPNState.WAITING_FOR_PORT_BINDING, "_noop"),
         (EVPNState.WAITING_FOR_VRF, EVPNEvent.VRF_CREATE):
-            (EVPNState.ADVERTISING, "_set_evpn_router_and_advertise"),
-        (EVPNState.WAITING_FOR_PORT_BINDING, EVPNEvent.PORT_BINDING_CREATE):
-            (EVPNState.ADVERTISING, "_set_evpn_bridge_and_advertise"),
-        (EVPNState.ADVERTISING, EVPNEvent.PORT_BINDING_DELETE):
-            (EVPNState.WAITING_FOR_PORT_BINDING,
-             "_unset_evpn_bridge_and_unadvertise"),
-        (EVPNState.ADVERTISING, EVPNEvent.VRF_DELETE):
-            (EVPNState.WAITING_FOR_VRF,
-             "_unset_evpn_router_and_unadvertise"),
+            (EVPNState.ADVERTISING, "_advertise"),
         (EVPNState.WAITING_FOR_VRF, EVPNEvent.PORT_BINDING_DELETE):
             (EVPNState.DESTROY, "_destroy"),
+        (EVPNState.WAITING_FOR_PORT_BINDING, EVPNEvent.PORT_BINDING_CREATE):
+            (EVPNState.ADVERTISING, "_set_pb_and_advertise"),
         (EVPNState.WAITING_FOR_PORT_BINDING, EVPNEvent.VRF_DELETE):
             (EVPNState.DESTROY, "_destroy"),
+        (EVPNState.ADVERTISING, EVPNEvent.PORT_BINDING_DELETE):
+            (EVPNState.WAITING_FOR_PORT_BINDING,
+             "_unadvertise_and_clear_pb"),
+        (EVPNState.ADVERTISING, EVPNEvent.VRF_DELETE):
+            (EVPNState.WAITING_FOR_VRF, "_unadvertise"),
     }
 
     def __init__(self):
         self.instances = {}  # vrf -> EVPNInstance
-        self._svd = None
-        self._cfg = None
-        self._driver = None
+        self._executor = None
 
     def setup(self, svd, config, frr_driver):
-        self._svd = svd
-        self._cfg = config
-        self._driver = frr_driver
+        self._executor = evpn_executor.EvpnExecutor(
+            svd, config.br_mtu, frr_driver)
 
-    def _set_evpn_bridge(self, evpn, mac, vni, vid):
+    def _noop(self, evpn, **kwargs):
+        pass
+
+    def _set_port_binding(self, evpn, mac, vni, vid):
         evpn.mac = mac
         evpn.vni = vni
         evpn.vid = vid
 
-    def _set_evpn_router(self, evpn):
-        evpn.vrf_up = True
+    def _advertise(self, evpn):
+        self._executor.provision(evpn)
 
-    def _set_evpn_router_and_advertise(self, evpn):
-        self._set_evpn_router(evpn)
-        self._advertise(evpn)
+    def _set_pb_and_advertise(self, evpn, mac, vni, vid):
+        evpn.mac = mac
+        evpn.vni = vni
+        evpn.vid = vid
+        self._executor.provision(evpn)
 
-    def _set_evpn_bridge_and_advertise(self, evpn, mac, vni, vid):
-        self._set_evpn_bridge(evpn, mac, vni, vid)
-        self._advertise(evpn)
-
-    def _unset_evpn_bridge_and_unadvertise(self, evpn):
-        self._unadvertise(evpn)
+    def _unadvertise_and_clear_pb(self, evpn):
+        self._executor.deprovision(evpn)
         evpn.mac = None
         evpn.vni = None
         evpn.vid = None
 
-    def _unset_evpn_router_and_unadvertise(self, evpn):
-        self._unadvertise(evpn)
-        evpn.vrf_up = False
-
-    def _advertise(self, evpn):
-        self._svd.add_vni(evpn.vni, evpn.vid, evpn.vrf, evpn.mac,
-                          self._cfg.br_mtu)
-        self._driver.create_router(evpn.vrf, evpn.vni)
-        LOG.debug("EVPN: advertised %s", evpn)
-
     def _unadvertise(self, evpn):
-        self._svd.del_vni(evpn.vni, evpn.vid)
-        self._driver.delete_router(evpn.vrf, evpn.vni)
-        LOG.debug("EVPN: unadvertised %s", evpn)
+        self._executor.deprovision(evpn)
 
-    def _destroy(self, evpn):
-        LOG.debug("EVPN deleted: VRF %s", evpn.vrf)
+    def _destroy(self, evpn, **kwargs):
         self.instances.pop(evpn.vrf, None)
 
     def advance(self, event, vrf, **kwargs):

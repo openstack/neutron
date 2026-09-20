@@ -14,6 +14,7 @@
 #    under the License.
 
 import socket
+import threading
 from unittest import mock
 
 from oslo_utils import uuidutils
@@ -26,6 +27,7 @@ from neutron.agent.linux import nl_dispatcher
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.ovn.extensions import evpn
 from neutron.agent.ovn.extensions.evpn import constants as evpn_const
+from neutron.agent.ovn.extensions.evpn import executor as evpn_executor
 from neutron.agent.ovn.extensions.evpn import fsm
 from neutron.agent.ovn.extensions.evpn import netlink_monitor
 from neutron.agent.ovn.extensions.evpn import svd
@@ -164,55 +166,62 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self._evpn_fsm.setup(self.svd, self.cfg, mock.Mock())
 
     def _advance_to_advertising(self, vni, vid):
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': 0, 'vid': vid}
         self._evpn_fsm.advance(
             fsm.EVPNEvent.VRF_CREATE, self._vrf)
         self._evpn_fsm.advance(
             fsm.EVPNEvent.PORT_BINDING_CREATE,
             self._vrf, mac=self.SVI_MAC, vni=vni, vid=vid)
+        utils.wait_until_true(
+            lambda: ip_lib.device_exists(svi_name),
+            timeout=30, sleep=0.01)
 
     def test_fsm_advertise_creates_svi(self):
-        index = 0
         vni = 1000
         vid = 10
         svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
-            'index': index, 'vid': vid}
+            'index': 0, 'vid': vid}
         self._advance_to_advertising(vni, vid)
 
-        evpn = self._evpn_fsm.instances[self._vrf]
-        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
+        evpn_inst = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn_inst.state)
         self.assertTrue(ip_lib.device_exists(svi_name))
 
     def test_fsm_port_binding_delete_deletes_svi(self):
-        index = 0
         vni = 2000
         vid = 20
         svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
-            'index': index, 'vid': vid}
+            'index': 0, 'vid': vid}
         self._advance_to_advertising(vni, vid)
         self.assertTrue(ip_lib.device_exists(svi_name))
 
         self._evpn_fsm.advance(
             fsm.EVPNEvent.PORT_BINDING_DELETE, self._vrf)
+        utils.wait_until_true(
+            lambda: not ip_lib.device_exists(svi_name),
+            timeout=30, sleep=0.01)
 
-        evpn = self._evpn_fsm.instances[self._vrf]
-        self.assertEqual(fsm.EVPNState.WAITING_FOR_PORT_BINDING, evpn.state)
-        self.assertFalse(ip_lib.device_exists(svi_name))
+        evpn_inst = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_PORT_BINDING,
+                         evpn_inst.state)
 
     def test_fsm_vrf_delete_deletes_svi(self):
-        index = 0
         vni = 3000
         vid = 30
         svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
-            'index': index, 'vid': vid}
+            'index': 0, 'vid': vid}
         self._advance_to_advertising(vni, vid)
         self.assertTrue(ip_lib.device_exists(svi_name))
 
         self._evpn_fsm.advance(
             fsm.EVPNEvent.VRF_DELETE, self._vrf)
+        utils.wait_until_true(
+            lambda: not ip_lib.device_exists(svi_name),
+            timeout=30, sleep=0.01)
 
-        evpn = self._evpn_fsm.instances[self._vrf]
-        self.assertEqual(fsm.EVPNState.WAITING_FOR_VRF, evpn.state)
-        self.assertFalse(ip_lib.device_exists(svi_name))
+        evpn_inst = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_VRF, evpn_inst.state)
 
     def test_evpn_svd_del_vni_idempotent_without_prior_add(self):
         """del_vni on EvpnSvd succeeds when VNI was never added."""
@@ -246,6 +255,110 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self.svd.del_vni(vni, vid)
         self.assertFalse(ip_lib.device_exists(svi_name))
         self.assertFalse(ip_lib.device_exists(lo_name))
+
+    def test_fsm_provision_retry_creates_svi(self):
+        """Provision fails once then succeeds on retry — SVI is created."""
+        vni = 6000
+        vid = 60
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': 0, 'vid': vid}
+        real_add_vni = self.svd.add_vni
+        attempts = []
+
+        def flaky_add_vni(*args, **kwargs):
+            attempts.append(1)
+            if len(attempts) == 1:
+                raise RuntimeError('transient failure')
+            return real_add_vni(*args, **kwargs)
+
+        self.svd.add_vni = flaky_add_vni
+
+        self._evpn_fsm._executor = evpn_executor.EvpnExecutor(
+            self.svd, self.cfg.br_mtu, mock.Mock(),
+            max_retries=3, initial_backoff=0, max_backoff=0)
+        self._evpn_fsm.advance(fsm.EVPNEvent.VRF_CREATE, self._vrf)
+        self._evpn_fsm.advance(
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
+            self._vrf, mac=self.SVI_MAC, vni=vni, vid=vid)
+
+        utils.wait_until_true(
+            lambda: ip_lib.device_exists(svi_name),
+            timeout=30, sleep=0.01)
+        self.assertEqual(2, len(attempts))
+
+    def test_fsm_cancel_provision_on_pb_delete(self):
+        """PORT_BINDING_DELETE during provision cancels and deprovisions."""
+        vni = 8000
+        vid = 80
+        worker_blocked = threading.Event()
+        worker_proceed = threading.Event()
+
+        def blocking_add_vni(*args, **kwargs):
+            worker_blocked.set()
+            worker_proceed.wait(timeout=30)
+            raise RuntimeError('cancelled by test')
+
+        self.svd.add_vni = blocking_add_vni
+
+        self._evpn_fsm.advance(fsm.EVPNEvent.VRF_CREATE, self._vrf)
+        self._evpn_fsm.advance(
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
+            self._vrf, mac=self.SVI_MAC, vni=vni, vid=vid)
+
+        worker_blocked.wait(timeout=5)
+        evpn_inst = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn_inst.state)
+
+        self._evpn_fsm.advance(
+            fsm.EVPNEvent.PORT_BINDING_DELETE, self._vrf)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_PORT_BINDING,
+                         evpn_inst.state)
+        self.assertIsNone(evpn_inst.mac)
+        worker_proceed.set()
+
+    def test_fsm_cancel_recovery_to_advertising(self):
+        """Cancel provision -> deprovision -> WAITING -> re-provision."""
+        vni = 10000
+        vid = 100
+        recovery_vni = 10001
+        recovery_vid = 101
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': 0, 'vid': recovery_vid}
+        worker_blocked = threading.Event()
+        worker_proceed = threading.Event()
+
+        def blocking_add_vni(*args, **kwargs):
+            worker_blocked.set()
+            worker_proceed.wait(timeout=30)
+            raise RuntimeError('cancelled by test')
+
+        self.svd.add_vni = blocking_add_vni
+
+        self._evpn_fsm.advance(fsm.EVPNEvent.VRF_CREATE, self._vrf)
+        self._evpn_fsm.advance(
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
+            self._vrf, mac=self.SVI_MAC, vni=vni, vid=vid)
+
+        worker_blocked.wait(timeout=5)
+        self._evpn_fsm.advance(
+            fsm.EVPNEvent.PORT_BINDING_DELETE, self._vrf)
+
+        evpn_inst = self._evpn_fsm.instances[self._vrf]
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_PORT_BINDING,
+                         evpn_inst.state)
+
+        worker_proceed.set()
+
+        real_add_vni = svd.EvpnSvd.add_vni
+        self.svd.add_vni = lambda *a, **kw: real_add_vni(self.svd, *a, **kw)
+
+        self._evpn_fsm.advance(
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
+            self._vrf, mac=self.SVI_MAC, vni=recovery_vni, vid=recovery_vid)
+
+        utils.wait_until_true(
+            lambda: ip_lib.device_exists(svi_name),
+            timeout=30, sleep=0.01)
 
 
 class TestGetFreeUdpPort(functional_base.BaseLoggingTestCase):
