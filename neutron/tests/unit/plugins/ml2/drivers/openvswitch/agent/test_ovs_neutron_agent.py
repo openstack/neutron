@@ -2435,10 +2435,22 @@ class TestOvsNeutronAgent:
             process_p_events.side_effect = [(reply2, reply_ancillary,
                                              devices_not_ready),
                                             (reply3, reply_ancillary,
+                                             devices_not_ready),
+                                            (reply3, reply_ancillary,
                                              devices_not_ready)]
             failed_devices = {'added': set(), 'removed': set()}
             failed_ancillary_devices = {'added': set(), 'removed': set()}
+            # Note: The first iteration processes ports but does not clean up
+            # stale flows yet, since the "ports" set tracked in rpc_loop is
+            # still empty at that point (it only gets populated after the
+            # cleanup check). See bug:
+            # https://bugs.launchpad.net/neutron/+bug/2166018
+            # The stale flow cleanup only happens in a
+            # subsequent iteration once "ports" set is populated. Therefore we
+            # need one more successful process_network_ports call before the
+            # loop-breaking exceptiond.
             process_network_ports.side_effect = [
+                failed_devices,
                 failed_devices,
                 Exception('Fake exception to get out of the loop')]
             check_ovs_status.side_effect = args
@@ -2489,6 +2501,57 @@ class TestOvsNeutronAgent:
         # OVS will not DEAD in some exception, like DBConnectionError.
         self._test_ovs_status(ovs_constants.OVS_NORMAL,
                               ovs_constants.OVS_RESTARTED)
+
+    def _run_rpc_loop_for_stale_flow_cleanup(self, num_iterations,
+                                             port_info_current):
+        # Drive rpc_loop for a fixed number of iterations and then break out
+        # of it by raising from check_ovs_status once its side_effects are
+        # exhausted. Every iteration reports OVS_RESTARTED so that the loop
+        # always enters the port processing block.
+        port_info = {'current': port_info_current,
+                     'added': set(), 'removed': set(), 'updated': set()}
+        check_ovs_status_side_effect = (
+            [ovs_constants.OVS_RESTARTED] * num_iterations +
+            [RuntimeError('loop exit')])
+        with mock.patch.object(self.agent, 'check_ovs_status',
+                               side_effect=check_ovs_status_side_effect), \
+                mock.patch.object(self.agent, '_handle_ovs_restart'), \
+                mock.patch.object(self.agent, 'process_port_info',
+                                  return_value=(port_info, {}, 0, set())), \
+                mock.patch.object(self.agent, 'process_deleted_ports'), \
+                mock.patch.object(self.agent, 'process_deactivated_bindings'),\
+                mock.patch.object(self.agent, 'process_activated_bindings'), \
+                mock.patch.object(self.agent, 'update_stale_ofport_rules',
+                                  return_value=[]), \
+                mock.patch.object(self.agent, 'process_network_ports',
+                                  return_value={'added': set(),
+                                                'removed': set()}), \
+                mock.patch.object(self.agent, 'cleanup_stale_flows') as \
+                cleanup:
+            try:
+                self.agent.rpc_loop(polling_manager=mock.Mock())
+            except RuntimeError:
+                pass
+        return cleanup
+
+    def test_cleanup_stale_flows_deferred_while_ports_empty(self):
+        # On the very first iteration the rpc_loop "ports" set is still empty
+        # Therefore cleanup_stale_flows() must not run yet, even though
+        # need_clean_stale_flow is True. This protects against removing
+        # old-cookie per-port flows before the new-cookie
+        # flows have been (re)installed.
+        # See bug https://bugs.launchpad.net/neutron/+bug/2166018
+        cleanup = self._run_rpc_loop_for_stale_flow_cleanup(
+            num_iterations=1, port_info_current={'tap0'})
+        cleanup.assert_not_called()
+
+    def test_cleanup_stale_flows_runs_once_ports_populated(self):
+        # Once a previous iteration has populated the "ports" set from
+        # port_info['current'], a subsequent iteration is allowed to clean up
+        # the stale flowsd.
+        cleanup = self._run_rpc_loop_for_stale_flow_cleanup(
+            num_iterations=2, port_info_current={'tap0'})
+        cleanup.assert_called_once_with()
 
     def test_ovs_restart_for_ingress_direct_goto_flows(self):
         with mock.patch.object(self.agent,
