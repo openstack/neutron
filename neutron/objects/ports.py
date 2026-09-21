@@ -584,7 +584,7 @@ class Port(base.NeutronDbObject):
         if db_obj.get('qos_network_policy_binding'):
             self.qos_network_policy_id = (
                 db_obj.qos_network_policy_binding.policy_id)
-            fields_to_change.append('qos_network_policy_binding')
+            fields_to_change.append('qos_network_policy_id')
 
         if db_obj.get('numa_affinity_policy'):
             self.numa_affinity_policy = (

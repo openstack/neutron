@@ -452,6 +452,7 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj = ports.Port.get_object(self.context, id=obj.id)
         self.assertEqual(policy_obj.id, obj.qos_network_policy_id)
         self.assertIsNone(obj.qos_policy_id)
+        self.assertEqual(set(), obj.obj_what_changed())
 
     def test_get_objects_queries_constant(self):
         self.skipTest(
