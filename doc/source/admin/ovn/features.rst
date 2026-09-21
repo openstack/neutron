@@ -265,12 +265,16 @@ The following Neutron API extensions are supported with OVN:
      - quota_details
    * - Quota Management Support
      - quotas
+   * - RBAC Address Group
+     - rbac-address-group
    * - RBAC Address Scope
      - rbac-address-scope
    * - RBAC Policies
      - rbac-policies
    * - RBAC Security Groups
      - rbac-security-groups
+   * - RBAC Subnetpool
+     - rbac-subnetpool
    * - Resource Revision Numbers
      - standard-attr-revisions
    * - Router Availability Zone

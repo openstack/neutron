@@ -84,8 +84,10 @@ from neutron_lib.api.definitions import qos_rule_type_filter
 from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.api.definitions import quota_check_limit
 from neutron_lib.api.definitions import quota_check_limit_default
+from neutron_lib.api.definitions import rbac_address_groups
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups
+from neutron_lib.api.definitions import rbac_subnetpool
 from neutron_lib.api.definitions import router_availability_zone as raz_def
 from neutron_lib.api.definitions import router_enable_snat
 from neutron_lib.api.definitions import security_groups_default_statefulness
@@ -195,9 +197,11 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     quota_check_limit.ALIAS,
     quota_check_limit_default.ALIAS,
     quotasv2_detail.ALIAS,
+    rbac_address_groups.ALIAS,
     rbac_address_scope.ALIAS,
     'rbac-policies',
     rbac_security_groups.ALIAS,
+    rbac_subnetpool.ALIAS,
     'standard-attr-revisions',
     'security-group',
     security_groups_default_rules.ALIAS,
