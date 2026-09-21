@@ -109,7 +109,7 @@
         - ironic-tempest-bios-ipmi-direct
         - devstack-tobiko-ovs
         - openstacksdk-functional-devstack-networking
-        - neutron-tempest-plugin-openvswitch-iptables_hybrid
+        - neutron-tempest-plugin-openvswitch-iptables_hybrid-2026-1
         - devstack-enforce-scope
         - openstack-tox-py313-with-sqlalchemy-master
         - neutron-functional-with-oslo-master
