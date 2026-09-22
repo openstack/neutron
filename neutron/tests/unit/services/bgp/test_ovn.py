@@ -16,6 +16,7 @@
 from unittest import mock
 
 from ovs import stream
+from ovsdbapp import event as ovsdb_event
 
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.services.bgp import ovn
@@ -39,7 +40,21 @@ class OvnNbIdlTestCase(base.BaseTestCase):
     def test_init_with_ssl(self):
         """Check the SSL is configured correctly"""
         connection = "ssl:127.0.0.1:6640"
-        ovn.OvnNbIdl(connection)
+        idl = ovn.OvnNbIdl(connection)
+        self.addCleanup(idl.notify_handler.shutdown)
         self.assertEqual('nb-ca-cert', stream.Stream._SSL_ca_cert_file)
         self.assertEqual('nb-certificate', stream.Stream._SSL_certificate_file)
         self.assertEqual('nb-private-key', stream.Stream._SSL_private_key_file)
+
+    def test_notify_lock_is_wired_to_the_event_handler(self):
+        """ovsdbapp drives the lock hooks through Idl.notify_lock"""
+        idl = ovn.OvnNbIdl("tcp:127.0.0.1:6641")
+        self.addCleanup(idl.notify_handler.shutdown)
+        self.assertEqual(idl.notify_handler.notify_lock, idl.notify_lock)
+
+    def test_init_with_supplied_notify_handler(self):
+        handler = ovsdb_event.RowEventHandler()
+        self.addCleanup(handler.shutdown)
+        idl = ovn.OvnNbIdl("tcp:127.0.0.1:6641", notify_handler=handler)
+        self.assertIs(handler, idl.notify_handler)
+        self.assertEqual(handler.notify_lock, idl.notify_lock)

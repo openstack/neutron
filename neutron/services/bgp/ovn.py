@@ -37,17 +37,21 @@ OVN_SB_TABLES = ('Chassis', 'Chassis_Private')
 class OvnIdl(connection.OvsdbIdl):
     LEADER_ONLY = False
 
-    def __init__(self, connection_string, events=None):
+    def __init__(self, connection_string, events=None, notify_handler=None):
         if connection_string.startswith("ssl"):
             ovsdb_monitor._check_and_set_ssl_files(self.SCHEMA)
         helper = idlutils.get_schema_helper(connection_string, self.SCHEMA)
         for table in self.tables:
             helper.register_table(table)
-        self.notify_handler = event.RowEventHandler()
+        self.notify_handler = notify_handler or event.RowEventHandler()
         if events:
             self.notify_handler.watch_events(events)
         super().__init__(
             connection_string, helper, leader_only=self.LEADER_ONLY)
+        # ovsdbapp's Connection calls this optional Idl attribute whenever
+        # has_lock changes, so the handler's lock_acquired/lock_lost hooks run
+        # on the notify_loop thread. It is never called if no lock is set.
+        self.notify_lock = self.notify_handler.notify_lock
 
     def notify(self, event, row, updates=None):
         self.notify_handler.notify(event, row, updates)
@@ -58,10 +62,6 @@ class OvnIdl(connection.OvsdbIdl):
 
 
 class BgpOvnNbIdl(nb_impl_idl.OvnNbApiIdlImpl):
-    @property
-    def has_lock(self):
-        return self.ovsdb_connection.idl.has_lock
-
     def stop(self):
         self.ovsdb_connection.stop()
 

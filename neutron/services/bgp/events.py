@@ -20,6 +20,7 @@ from neutron_lib import constants as n_const
 from oslo_log import log
 from ovsdbapp.backend.ovs_idl import event as row_event
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp import event as ovsdb_event
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
@@ -32,6 +33,31 @@ _event_to_action = {
     row_event.RowEvent.ROW_UPDATE: constants.Action.RECONCILE,
     row_event.RowEvent.ROW_DELETE: constants.Action.DELETE,
 }
+
+
+class BGPLockEventHandler(ovsdb_event.RowEventHandler):
+    """Row event handler that full syncs when the OVSDB lock is acquired.
+
+    Only the worker holding the BGP topology lock reconciles. Checking
+    has_lock once at startup is racy.
+
+    ovsdbapp calls these hooks from the notify_loop thread on the actual lock
+    transition, so whichever worker gets the lock reconciles, whenever it
+    gets it.
+    """
+
+    def __init__(self, reconciler):
+        super().__init__()
+        self.reconciler = reconciler
+
+    def lock_acquired(self, lock_name):
+        LOG.info("Acquired OVSDB lock %s, reconciling the BGP topology",
+                 lock_name)
+        self.reconciler.full_sync()
+
+    def lock_lost(self, lock_name):
+        LOG.info("Lost OVSDB lock %s, another worker is now responsible for "
+                 "reconciling the BGP topology", lock_name)
 
 
 class BGPReconcilerResourceEvent(row_event.RowEvent):

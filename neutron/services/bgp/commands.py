@@ -871,9 +871,9 @@ class ReconcileChassisPeerCommand(ovs_cmd.BaseCommand):
 
 
 class FullSyncBGPTopologyCommand(ovs_cmd.BaseCommand):
-    def __init__(self, nb_api, sb_api):
+    def __init__(self, nb_api, chassis):
         super().__init__(nb_api)
-        self.sb_api = sb_api
+        self.chassis = chassis
 
     def run_idl(self, txn):
         LOG.debug("BGP full sync topology started")
@@ -883,7 +883,7 @@ class FullSyncBGPTopologyCommand(ovs_cmd.BaseCommand):
         LOG.debug("BGP full sync topology completed")
 
     def reconcile_all_chassis(self, txn):
-        for chassis in self.sb_api.tables['Chassis_Private'].rows.values():
+        for chassis in self.chassis:
             ReconcileChassisCommand(self.api, chassis).run_idl(txn)
 
     def reconcile_neutron_switch(self, txn):

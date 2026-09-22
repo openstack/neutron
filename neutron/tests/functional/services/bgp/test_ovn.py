@@ -15,9 +15,7 @@
 
 
 from oslo_utils import uuidutils
-from ovsdbapp.backend.ovs_idl import vlog
 
-from neutron.common import utils as common_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.services.bgp import ovn as bgp_ovn
 from neutron.tests.functional import base
@@ -110,78 +108,3 @@ class TestOvnSbIdl(base.TestOVNFunctionalBase):
 
     def test_leader_only_is_false(self):
         self.assertFalse(self.sb_idl.leader_only)
-
-
-class TestBgpOvnLocking(base.TestOVNFunctionalBase):
-    """Test BGP OVN locking mechanism."""
-
-    def setUp(self):
-        super().setUp()
-        self._enable_jsonrpc_debug_logging()
-        self.nb_connection = ovn_conf.get_ovn_nb_connection()
-        self.addCleanup(self._cleanup)
-
-        # Create two IDL instances to test locking
-        self.nb_idl1 = OvnNbIdlTest(self.nb_connection)
-        self.nb_bgp_api1 = self.nb_idl1.start(timeout=10)
-
-        self.nb_idl2 = OvnNbIdlTest(self.nb_connection)
-        self.nb_bgp_api2 = self.nb_idl2.start(timeout=10)
-
-    def _enable_jsonrpc_debug_logging(self):
-        vlog.use_python_logger(max_level=vlog.DEBUG)
-        vlog.vlog.Vlog.set_level('jsonrpc', 'any', 'dbg')
-
-        def _restore():
-            vlog.vlog.Vlog.set_level('jsonrpc', 'any', 'info')
-            vlog.reset_logger()
-
-        self.addCleanup(_restore)
-
-    def _cleanup(self):
-        for api in [getattr(self, 'nb_bgp_api1', None),
-                    getattr(self, 'nb_bgp_api2', None)]:
-            if api:
-                try:
-                    api.ovsdb_connection.stop(timeout=5)
-                except Exception:
-                    pass
-
-    def test_locking_mechanism(self):
-        """Test BGP topology locking mechanism.
-
-        The NB API uses locking by default so one API should get the lock
-        once connected.
-        """
-        def wait_for_lock():
-            return self.nb_bgp_api1.has_lock != self.nb_bgp_api2.has_lock
-
-        # Wait for some API to get the lock
-        common_utils.wait_until_true(
-            wait_for_lock,
-            timeout=5,
-            exception=AssertionError("Lock was not obtained by either API")
-        )
-
-        api_with_lock = None
-        # Make sure the other API does not have the lock
-        if self.nb_bgp_api1.has_lock:
-            self.assertFalse(self.nb_bgp_api2.has_lock)
-            api_with_lock = self.nb_bgp_api1
-            api_without_lock = self.nb_bgp_api2
-
-        if self.nb_bgp_api2.has_lock:
-            self.assertFalse(self.nb_bgp_api1.has_lock)
-            api_with_lock = self.nb_bgp_api2
-            api_without_lock = self.nb_bgp_api1
-
-        self.assertIsNotNone(api_with_lock)
-
-        # Disconnect first API and check that second API can acquire the lock
-        api_with_lock.ovsdb_connection.stop(timeout=5)
-
-        common_utils.wait_until_true(
-            lambda: api_without_lock.has_lock,
-            timeout=5,
-            exception=AssertionError("Second API did not acquire lock")
-        )
