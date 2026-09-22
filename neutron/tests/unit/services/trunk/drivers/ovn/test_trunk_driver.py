@@ -23,7 +23,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_config import cfg
 
-from neutron.common.ovn.constants import OVN_ML2_MECH_DRIVER_NAME
+from neutron.common.ovn import constants as ovn_const
 from neutron.objects.ports import Port
 from neutron.objects.ports import PortBinding
 from neutron.objects import trunk as trunk_objects
@@ -434,6 +434,87 @@ class TestTrunkHandler(base.BaseTestCase):
             fake_payload)
         m__unset_sub_ports.assert_not_called()
 
+    def test_parent_port_handled_by_ovn_returns_true(self):
+        """Test that _parent_port_handled_by_ovn returns True for OVN ports.
+
+        Normal VIF ports have an empty LSP type.
+        """
+        lsp_row = mock.Mock(type='')
+        self.plugin_driver.nb_ovn.lookup.return_value = lsp_row
+        result = self.handler._parent_port_handled_by_ovn('test-port-id')
+        self.assertTrue(result)
+
+    def test_parent_port_handled_by_ovn_returns_false_for_external(self):
+        """Test that _parent_port_handled_by_ovn returns False for external
+        ports.
+
+        External ports (e.g., baremetal, SR-IOV) have LSP type 'external' and
+        are managed out-of-band. OVN should not handle trunking for them.
+        """
+        lsp_row = mock.Mock(type=ovn_const.LSP_TYPE_EXTERNAL)
+        self.plugin_driver.nb_ovn.lookup.return_value = lsp_row
+        result = self.handler._parent_port_handled_by_ovn('test-port-id')
+        self.assertFalse(result)
+
+    def test_parent_port_handled_by_ovn_returns_false_when_not_found(self):
+        """Test that _parent_port_handled_by_ovn returns False when LSP does
+        not exist.
+        """
+        self.plugin_driver.nb_ovn.lookup.return_value = None
+        result = self.handler._parent_port_handled_by_ovn('nonexistent-port')
+        self.assertFalse(result)
+
+    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
+    def test_trunk_created_skips_external_parent(self, m__set_sub_ports):
+        """Test that trunk_created skips trunk creation when the parent port
+        is external.
+
+        When the parent port has LSP type 'external', OVN should not manage
+        the trunk, as L2 forwarding happens outside OVN.
+        """
+        lsp_row = mock.Mock(type=ovn_const.LSP_TYPE_EXTERNAL)
+        self.plugin_driver.nb_ovn.lookup.return_value = lsp_row
+        fake_payload = self._fake_trunk_event_payload()
+        self.handler.trunk_created(
+            resources.TRUNK,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            fake_payload)
+        m__set_sub_ports.assert_not_called()
+        fake_payload.states[0].update.assert_not_called()
+
+    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
+    def test_subports_added_skips_external_parent(self, m__set_sub_ports):
+        """Test that subports_added skips adding subports when the parent port
+        is external.
+        """
+        lsp_row = mock.Mock(type=ovn_const.LSP_TYPE_EXTERNAL)
+        self.plugin_driver.nb_ovn.lookup.return_value = lsp_row
+        fake_payload = self._fake_subport_event_payload()
+        self.handler.subports_added(
+            resources.SUBPORTS,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            fake_payload)
+        m__set_sub_ports.assert_not_called()
+        fake_payload.states[0].update.assert_not_called()
+
+    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_unset_sub_ports')
+    def test_subports_deleted_skips_external_parent(self, m__unset_sub_ports):
+        """Test that subports_deleted skips removing subports when the parent
+        port is external.
+        """
+        lsp_row = mock.Mock(type=ovn_const.LSP_TYPE_EXTERNAL)
+        self.plugin_driver.nb_ovn.lookup.return_value = lsp_row
+        fake_payload = self._fake_subport_event_payload()
+        self.handler.subports_deleted(
+            resources.SUBPORTS,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            fake_payload)
+        m__unset_sub_ports.assert_not_called()
+        fake_payload.states[0].update.assert_not_called()
+
 
 class TestTrunkHandlerWithPlugin(test_plugin.Ml2PluginV2TestCase):
     def setUp(self):
@@ -503,7 +584,7 @@ class TestTrunkDriver(base.BaseTestCase):
     def test_is_loaded(self):
         driver = trunk_driver.OVNTrunkDriver.create(mock.Mock())
         cfg.CONF.set_override('mechanism_drivers',
-                              ["logger", OVN_ML2_MECH_DRIVER_NAME],
+                              ["logger", ovn_const.OVN_ML2_MECH_DRIVER_NAME],
                               group='ml2')
         self.assertTrue(driver.is_loaded)
 
