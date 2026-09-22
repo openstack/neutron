@@ -574,6 +574,24 @@ class TestQosPlugin(base.BaseQosTestCase):
                                             has_qos_policy=False)
         self.assertIsNone(port.get('resource_request'))
 
+    def test__extend_port_resource_request_missing_vnic_type(self):
+        port_data = {
+            'port': {'id': uuidutils.generate_uuid(),
+                     'network_id': uuidutils.generate_uuid(),
+                     'qos_policy_id': self.policy.id}
+        }
+        port = ports_object.Port(self.ctxt, **port_data['port'])
+        port_res = {}
+
+        with mock.patch.object(qos_plugin, 'LOG') as mock_log:
+            result = qos_plugin.QoSPlugin._extend_port_resource_request(
+                port_res, port)
+            mock_log.error.assert_called_once_with(
+                'Port %s does not have an associated port_binding '
+                'register; please check the status/health of this '
+                'port.', port['id'])
+            self.assertIsNone(result['resource_request'])
+
     def test__extend_port_resource_request_min_bw_inherited_policy(
             self):
         self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
