@@ -22,6 +22,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils as common_utils
 from neutron.conf.agent.ovn.evpn import config as evpn_conf
+from neutron.tests.common import helpers
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 from neutron_lib import exceptions
@@ -448,6 +449,16 @@ class TestFrrVtyshDriverOperation(base.BaseSudoTestCase):
                       ip_version=6)
 
     def test_routes_not_advertised_with_mismatched_bgp_password(self):
+        if helpers.is_fips_enabled():
+            self.skipTest(
+                'Under FIPS the MD5 algorithm is disabled, so FRR cannot '
+                'apply a BGP/TCP-MD5 password to a neighbor session: '
+                'setsockopt(TCP_MD5SIG) fails with ENOMEM and vtysh returns '
+                '"Error while applying TCP-Sig to session(s)" (exit 13). '
+                'The mismatched-password apply therefore makes '
+                'create_evpn_router() raise FrrApplyError before the route '
+                'assertions can run. '
+                'See https://github.com/FRRouting/frr/issues/7240')
         vni = 10
         advertised_routes = {'11.1.1.1/32', '12.1.1.0/32'}
         password_a = 'password-a'

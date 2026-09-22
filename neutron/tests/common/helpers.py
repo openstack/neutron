@@ -48,6 +48,15 @@ def get_test_log_path():
     return os.environ.get('OS_LOG_PATH', '/tmp')
 
 
+def is_fips_enabled():
+    """Return True if the host is running in FIPS mode."""
+    try:
+        with open('/proc/sys/crypto/fips_enabled') as f:
+            return f.read().strip() == '1'
+    except OSError:
+        return False
+
+
 class FakePlugin(agents_db.AgentDbMixin):
     pass
 
