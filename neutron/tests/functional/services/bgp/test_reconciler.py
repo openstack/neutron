@@ -18,6 +18,7 @@ from unittest import mock
 
 from oslo_config import cfg
 from ovsdbapp.backend.ovs_idl import connection
+from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.schema.ovn_southbound import impl_idl as sb_impl_idl
 
 from neutron.common.ovn import constants as ovn_const
@@ -30,6 +31,24 @@ from neutron.services.bgp import ovn as bgp_ovn
 from neutron.services.bgp import reconciler
 from neutron.tests.functional import base
 from neutron.tests.functional.services import bgp
+
+
+class WaitForChassisCountEvent(event.WaitEvent):
+    """Wait until a specific number of Chassis_Private rows are created."""
+
+    ONETIME = False
+
+    def __init__(self, expected_count, timeout=10):
+        super().__init__(
+            (self.ROW_CREATE,), 'Chassis_Private', None, timeout=timeout)
+        self.event_name = 'WaitForChassisCountEvent'
+        self.expected_count = expected_count
+        self.count = 0
+
+    def run(self, event, row, old):
+        self.count += 1
+        if self.count >= self.expected_count:
+            self.event.set()
 
 
 class BGPReconcilerTestBase(base.TestOVNFunctionalBase):
@@ -207,11 +226,25 @@ class TestBGPReconciler(BGPReconcilerTestBase):
         self.reconciler.syncs.get(timeout=30)
 
     def test_full_sync(self):
-        for i in range(0, 6):
+        num_chassis = 6
+
+        # Register event before creating chassis to avoid missing any.
+        # The test creates chassis via test_sb_idl, but full_sync queries
+        # the reconciler's sb_api which has a separate IDL connection that
+        # receives updates asynchronously.
+        wait_event = WaitForChassisCountEvent(num_chassis)
+        self.sb_api.ovsdb_connection.idl.notify_handler.watch_event(wait_event)
+
+        for i in range(num_chassis):
             chassis_name = f'chassis{i}'
             self._create_chassis(
                 chassis_name, f'192.168.1.10{i}',
                 bgp_bridges=self.chassis_bgp_networks)
+
+        self.assertTrue(wait_event.wait(),
+                        "Timed out waiting for chassis to appear in "
+                        "reconciler's SB IDL")
+
         self.reconciler.full_sync()
 
         self.validate_topology(self._get_all_chassis_private())
