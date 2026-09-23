@@ -444,7 +444,7 @@ This example demonstrates a complete EVPN VXLAN setup with baremetal servers:
       [ml2]
       type_drivers = vlan,vxlan
       mechanism_drivers = evpn-l2vni,networking-generic-switch
-      tenant_network_types = vxlan
+      project_network_types = vxlan
 
       [ml2_type_vlan]
       network_vlan_ranges = physnet1:100:200,physnet2:100:200
