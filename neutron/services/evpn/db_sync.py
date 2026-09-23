@@ -24,6 +24,7 @@ from neutron.services.bgp import constants as bgp_const
 from neutron.services.evpn import commands as evpn_commands
 from neutron.services.evpn import constants as evpn_const
 from neutron.services.evpn import helpers as evpn_helpers
+from neutron.services.evpn import scheduler as evpn_scheduler
 
 
 LOG = log.getLogger(__name__)
@@ -66,10 +67,11 @@ class EvpnLoggingSynchronizer:
 
 class EvpnRepairSynchronizer(EvpnLoggingSynchronizer):
 
-    def __init__(self, ovn_nb_api, gw_chassis):
+    def __init__(self, ovn_nb_api, ovn_sb_api):
         self.ovn_nb_api = ovn_nb_api
-        self.gw_chassis = gw_chassis
+        self.ovn_sb_api = ovn_sb_api
         self._txn_ctx = ovn_nb_api.transaction(check_error=True)
+        self._scheduler = evpn_scheduler.RoundRobinChassisScheduler()
 
     def __enter__(self):
         self._txn = self._txn_ctx.__enter__()
@@ -81,9 +83,15 @@ class EvpnRepairSynchronizer(EvpnLoggingSynchronizer):
         super()._sync_topology(router_id, inst)
         LOG.warning("Repairing EVPN topology for router %s",
                     router_id)
+        gw_ch_candidates_tuple = (
+            self.ovn_sb_api.get_gateway_chassis_with_az_filter(
+                az_hints=inst.get('availability_zone_hints', [])))
+        ordered_chassis = self._scheduler.select(
+            candidates=gw_ch_candidates_tuple[1],
+            max_chassis=ovn_const.MAX_GW_CHASSIS)
         self._txn.add(evpn_commands.CreateEVPNRouterCommand(
             self.ovn_nb_api, router_id,
-            inst['vni'], inst['vlan'], self.gw_chassis))
+            inst['vni'], inst['vlan'], ordered_chassis))
 
     def _sync_missing_advertised(self, port_id, lrp_name):
         super()._sync_missing_advertised(port_id, lrp_name)
@@ -232,9 +240,7 @@ class EvpnOvnSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
 
         repair = self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR
         if repair:
-            gw_chassis = (
-                self.ovn_sb_api.get_gateway_chassis_from_cms_options())
-            syncer = EvpnRepairSynchronizer(self.ovn_nb_api, gw_chassis)
+            syncer = EvpnRepairSynchronizer(self.ovn_nb_api, self.ovn_sb_api)
         else:
             syncer = EvpnLoggingSynchronizer()
 

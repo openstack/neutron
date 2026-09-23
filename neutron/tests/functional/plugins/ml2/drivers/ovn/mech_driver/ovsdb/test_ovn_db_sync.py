@@ -2387,6 +2387,25 @@ class TestOvnNbSyncEVPN(base.TestOVNFunctionalBase):
         self.addCleanup(synchronizer.stop)
         synchronizer.do_sync()
 
+    def _create_evpn_router_with_vni(self, name, subnet_cidr,
+                                     az_hints=None):
+        """Create a router with a subnet, interface, and VNI allocation."""
+        router_args = {'name': name, 'admin_state_up': True,
+                       'project_id': self._project_id}
+        if az_hints:
+            router_args['availability_zone_hints'] = az_hints
+        r = self.l3_plugin.create_router(
+            self.ctx, {'router': router_args})
+        res = self._create_network(self.fmt, f'{name}-net', True)
+        net = self.deserialize(self.fmt, res)
+        res = self._create_subnet(self.fmt, net['network']['id'], subnet_cidr)
+        subnet = self.deserialize(self.fmt, res)
+        self.l3_plugin.add_router_interface(
+            self.ctx, r['id'], {'subnet_id': subnet['subnet']['id']})
+        db_helper = evpn_db.EVPNDbHelper()
+        vni = db_helper.allocate_vni_for_router(self.ctx, r['id'], 0)
+        return {'id': r['id'], 'vni': vni}
+
     def test_evpn_sync_no_discrepancy(self):
         self._create_evpn_resources()
         self._validate_evpn_objects_exist()
@@ -2586,6 +2605,78 @@ class TestOvnNbSyncEVPN(base.TestOVNFunctionalBase):
         self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG)
 
         self.assertNotIn(self.evpn_ls_name, self._get_ovn_evpn_ls_names())
+
+    def test_evpn_sync_repair_distributes_chassis(self):
+        n_chassis = 3
+        for i in range(1, n_chassis + 1):
+            self.add_fake_chassis(f'host{i}', enable_chassis_as_gw=True)
+
+        routers = [self._create_evpn_router_with_vni(
+            f'evpn-dist-r{i}', f'10.{i}.0.0/24') for i in range(10)]
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        primaries = set()
+        for r in routers:
+            hcg_name = evpn_helpers.evpn_hcg_name(r['id'])
+            hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+            self.assertGreater(len(hcg.ha_chassis), 0)
+            primary = max(hcg.ha_chassis, key=lambda hc: hc.priority)
+            primaries.add(primary.chassis_name)
+
+        self.assertEqual(n_chassis, len(primaries))
+
+    def test_evpn_sync_repair_respects_az_hints(self):
+        """Verify that sync repair filters chassis by router AZ hints."""
+        ch1 = self.add_fake_chassis(
+            'host1', azs=['az-1'], enable_chassis_as_gw=True)
+        ch2 = self.add_fake_chassis(
+            'host2', azs=['az-2'], enable_chassis_as_gw=True)
+        ch3 = self.add_fake_chassis(
+            'host3', azs=['az-1', 'az-2'], enable_chassis_as_gw=True)
+
+        r1 = self._create_evpn_router_with_vni(
+            'evpn-az-r1', '10.98.0.0/24', az_hints=['az-1'])
+        r2 = self._create_evpn_router_with_vni(
+            'evpn-az-r2', '10.99.0.0/24', az_hints=['az-2'])
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        hcg1 = self.nb_api.lookup(
+            'HA_Chassis_Group', evpn_helpers.evpn_hcg_name(r1['id']))
+        chassis1 = {hc.chassis_name for hc in hcg1.ha_chassis}
+        self.assertEqual({ch1, ch3}, chassis1)
+
+        hcg2 = self.nb_api.lookup(
+            'HA_Chassis_Group', evpn_helpers.evpn_hcg_name(r2['id']))
+        chassis2 = {hc.chassis_name for hc in hcg2.ha_chassis}
+        self.assertEqual({ch2, ch3}, chassis2)
+
+    def test_evpn_sync_repair_limits_chassis_to_max_gw(self):
+        n_chassis = ovn_const.MAX_GW_CHASSIS + 3
+        for i in range(1, n_chassis + 1):
+            self.add_fake_chassis(f'host{i}', enable_chassis_as_gw=True)
+
+        r = self._create_evpn_router_with_vni(
+            'evpn-max-gw', '10.50.0.0/24')
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        hcg_name = evpn_helpers.evpn_hcg_name(r['id'])
+        hcg = self.nb_api.lookup('HA_Chassis_Group', hcg_name)
+        self.assertEqual(ovn_const.MAX_GW_CHASSIS, len(hcg.ha_chassis))
+
+    def test_evpn_sync_repair_with_no_canditates(self):
+        for i in range(1, 3):
+            self.add_fake_chassis(f'host{i}')
+
+        r1 = self._create_evpn_router_with_vni('evpn-az-r1', '10.98.0.0/24')
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        hcg1 = self.nb_api.lookup(
+            'HA_Chassis_Group', evpn_helpers.evpn_hcg_name(r1['id']))
+        self.assertFalse(hcg1.ha_chassis)
 
 
 class TestOvnNbSyncPVLAN(base.TestOVNFunctionalBase):
