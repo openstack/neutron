@@ -143,6 +143,13 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_subnet:leak_routes',
+        check_str=lib_rules.ADMIN,
+        scope_types=['project'],
+        description='Get ``leak_routes`` attribute of a subnet',
+        operations=ACTION_GET,
+    ),
+    policy.DocumentedRuleDefault(
         name='get_subnet:segment_id',
         check_str=lib_rules.ADMIN,
         scope_types=['project'],

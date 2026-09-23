@@ -289,6 +289,16 @@ class SystemAdminTests(SubnetAPITestCase):
             self.context, 'update_subnet:service_types',
             self.alt_target_own_net)
 
+    def test_get_subnet_leak_routes(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_subnet:leak_routes', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_subnet:leak_routes', self.alt_target)
+
     def test_update_subnet_leak_routes(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -515,6 +525,14 @@ class AdminTests(SubnetAPITestCase):
             policy.enforce(
                 self.context, 'update_subnet:service_types', self.alt_target))
 
+    def test_get_subnet_leak_routes(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_subnet:leak_routes', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_subnet:leak_routes', self.alt_target))
+
     def test_update_subnet_leak_routes(self):
         self.assertTrue(
             policy.enforce(
@@ -740,6 +758,16 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'update_subnet:service_types',
             self.alt_target_own_net)
+
+    def test_get_subnet_leak_routes(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_subnet:leak_routes', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_subnet:leak_routes', self.alt_target)
 
     def test_update_subnet_leak_routes(self):
         self.assertRaises(
@@ -973,6 +1001,12 @@ class ServiceRoleTests(SubnetAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'update_subnet:service_types', self.target)
+
+    def test_get_subnet_leak_routes(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_subnet:leak_routes', self.target)
 
     def test_update_subnet_leak_routes(self):
         self.assertRaises(
