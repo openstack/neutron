@@ -163,12 +163,15 @@ class EvpnOvnSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     ovn_const.LS_OTHER_CFG_DR_VNI: ''}),
             ).execute(check_error=True)}
 
+        # Ordinary router and network HA_Chassis_Group rows also carry
+        # neutron:router_id. EVPN groups are distinguished by name.
         ovn_hcg = {
             row.name for row in self.ovn_nb_api.db_find_rows(
                 'HA_Chassis_Group',
                 ('external_ids', '!=', {
                     ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: ''}),
-            ).execute(check_error=True)}
+            ).execute(check_error=True)
+            if row.name.startswith(evpn_const.EVPN_HCG_NAME_PREFIX)}
 
         ovn_lrp = {
             row.name for row in self.ovn_nb_api.db_find_rows(
