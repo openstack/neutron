@@ -168,6 +168,7 @@ class BaseSudoTestCase(BaseLoggingTestCase):
             self.skipTest('Testing with sudo is not enabled')
         self.setup_rootwrap()
         config.setup_privsep()
+        self.addCleanup(config.teardown_privsep)
         self._override_default_config()
 
     @common_base.no_skip_on_missing_deps

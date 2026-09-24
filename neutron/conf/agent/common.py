@@ -20,6 +20,7 @@ from oslo_privsep import priv_context
 
 from neutron._i18n import _
 from neutron.common import config
+from neutron import privileged
 
 
 EXTERNAL_PROCESS_OPTS = [
@@ -220,3 +221,13 @@ setup_logging = config.setup_logging
 
 def setup_privsep():
     priv_context.init(root_helper=shlex.split(get_root_helper(cfg.CONF)))
+
+
+def teardown_privsep():
+    for ctx in (privileged.default,
+                privileged.dhcp_release_cmd,
+                privileged.ovs_vsctl_cmd,
+                privileged.namespace_cmd,
+                privileged.conntrack_cmd,
+                privileged.link_cmd):
+        ctx.stop()
