@@ -18,6 +18,7 @@ import time
 from unittest import mock
 
 from futurist import periodics
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net
 from neutron_lib import constants as n_const
 from neutron_lib import context
@@ -941,6 +942,50 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
         # Assert there was no transactions because the value was already set
         self.fake_ovn_client._nb_idl.dns_set_options.assert_not_called()
+
+    def _test_remove_stale_dns_records(self, extension_aliases, dns_domain,
+                                       dns_rows):
+        self.fake_ovn_client._plugin.supported_extension_aliases = (
+            extension_aliases)
+        cfg.CONF.set_override('dns_domain', dns_domain)
+        nb_idl = self.fake_ovn_client._nb_idl
+        nb_idl.dns_list.return_value.execute.return_value = dns_rows
+        nb_idl.is_table_present.return_value = True
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.remove_stale_dns_records)
+
+    def test_remove_stale_dns_records(self):
+        neutron_dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {'ls_name': 'neutron-foo'}})
+        ovn_dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {'ovn_direct': 'ovn-foo'}})
+
+        self._test_remove_stale_dns_records(
+            [], n_const.DNS_DOMAIN_DEFAULT, [neutron_dns, ovn_dns])
+
+        self.fake_ovn_client._nb_idl.dns_del.assert_called_once_with(
+            neutron_dns.uuid)
+
+    def test_remove_stale_dns_records_dns_integration_enabled(self):
+        dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {'ls_name': 'neutron-foo'}})
+
+        self._test_remove_stale_dns_records(
+            [dns_apidef.ALIAS], 'example.org', [dns])
+
+        self.fake_ovn_client._nb_idl.dns_list.assert_not_called()
+        self.fake_ovn_client._nb_idl.dns_del.assert_not_called()
+
+    def test_remove_stale_dns_records_default_domain(self):
+        dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {'ls_name': 'neutron-foo'}})
+
+        self._test_remove_stale_dns_records(
+            [dns_apidef.ALIAS], n_const.DNS_DOMAIN_DEFAULT, [dns])
+
+        self.fake_ovn_client._nb_idl.dns_del.assert_called_once_with(dns.uuid)
 
     def test_set_ovn_owned_dns_option_ovn_direct_record(self):
         dns = fakes.FakeOvsdbRow.create_one_ovsdb_row(
