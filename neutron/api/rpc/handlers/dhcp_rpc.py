@@ -339,6 +339,13 @@ class DhcpRpcCallback:
     @db_api.retry_db_errors
     def dhcp_ready_on_ports(self, context, port_ids):
         for port_id in port_ids:
+            # Skip ports with no active provisioning blocks. Otherwise
+            # complete method emits PROVISIONING_COMPLETE when
+            # no block was removed, which can set service ports, like
+            # ha_router_replicated_interface, to ACTIVE state.
+            if not provisioning_blocks.is_object_blocked(
+                    context, port_id, resources.PORT):
+                continue
             provisioning_blocks.provisioning_complete(
                 context, port_id, resources.PORT,
                 provisioning_blocks.DHCP_ENTITY)

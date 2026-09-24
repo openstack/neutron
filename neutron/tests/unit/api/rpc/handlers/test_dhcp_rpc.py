@@ -410,10 +410,30 @@ class TestDhcpRpcCallback(base.BaseTestCase):
     def test_dhcp_ready_on_ports(self):
         context = mock.Mock()
         port_ids = range(10)
-        with mock.patch.object(provisioning_blocks,
-                               'provisioning_complete') as pc:
+        with mock.patch.object(provisioning_blocks, 'is_object_blocked',
+                               return_value=True), \
+                mock.patch.object(provisioning_blocks,
+                                  'provisioning_complete') as pc:
             self.callbacks.dhcp_ready_on_ports(context, port_ids)
         calls = [mock.call(context, port_id, resources.PORT,
                            provisioning_blocks.DHCP_ENTITY)
                  for port_id in port_ids]
         pc.assert_has_calls(calls)
+
+    def test_dhcp_ready_on_ports_skips_unblocked_ports(self):
+        context = mock.Mock()
+        port_ids = ['blocked-port', 'ha-router-port']
+
+        def _blocked(ctx, port_id, resource):
+            return port_id == 'blocked-port'
+
+        with mock.patch.object(provisioning_blocks, 'is_object_blocked',
+                               side_effect=_blocked), \
+                mock.patch.object(provisioning_blocks,
+                                  'provisioning_complete') as pc:
+            self.callbacks.dhcp_ready_on_ports(context, port_ids)
+            pc.assert_called_once_with(
+                context, 'blocked-port', resources.PORT,
+                provisioning_blocks.DHCP_ENTITY)
+            for call in pc.call_args_list:
+                self.assertNotIn('ha-router-port', call.args)
