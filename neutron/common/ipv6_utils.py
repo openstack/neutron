@@ -51,8 +51,4 @@ def valid_ipv6_url(host, port):
        RFC2732 https://tools.ietf.org/html/rfc2732
        square brackets always required in ipv6 URI.
     """
-    if netutils.is_valid_ipv6(host):
-        uri = f'[{host}]:{port}'
-    else:
-        uri = f'{host}:{port}'
-    return uri
+    return f'{netutils.escape_ipv6(host)}:{port}'
