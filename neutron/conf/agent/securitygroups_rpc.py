@@ -30,7 +30,7 @@ security_group_opts = [
         help=_(
             'Controls whether the neutron security group API is enabled '
             'in the server. It should be false when using no security '
-            'groups or using the Nova security group API.')),
+            'groups.')),
     cfg.BoolOpt(
         'enable_ipset',
         default=True,
