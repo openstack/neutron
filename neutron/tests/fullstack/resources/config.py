@@ -172,7 +172,7 @@ class NeutronConfigFixture(ConfigFixture):
 
 class ML2ConfigFixture(ConfigFixture):
 
-    def __init__(self, env_desc, host_desc, temp_dir, tenant_network_types):
+    def __init__(self, env_desc, host_desc, temp_dir, project_network_types):
         super().__init__(
             env_desc, host_desc, temp_dir, base_filename='ml2_conf.ini')
 
@@ -187,7 +187,7 @@ class ML2ConfigFixture(ConfigFixture):
 
         self.config.update({
             'ml2': {
-                'tenant_network_types': tenant_network_types,
+                'project_network_types': project_network_types,
                 'mechanism_drivers': mechanism_drivers,
             },
             'ml2_type_vlan': {
