@@ -26,10 +26,7 @@ import re
 import sys
 
 from neutron_lib import constants
-from neutron_lib import exceptions
 from neutron_lib.exceptions import l3 as l3_exc
-from neutron_lib.utils import runtime
-from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -298,20 +295,15 @@ class IptablesManager:
 
     """
 
-    # Flag to denote we've already tried and used -w successfully, so don't
-    # run iptables-restore without it.
-    use_table_lock = False
-
     # Flag to denote iptables --random-fully option enabled
     _random_fully = None
 
     def __init__(self, state_less=False, use_ipv6=False, nat=True,
-                 namespace=None, binary_name=binary_name, external_lock=True):
+                 namespace=None, binary_name=binary_name):
         self.use_ipv6 = use_ipv6
         self.namespace = namespace
         self.iptables_apply_deferred = False
         self.wrap_name = binary_name[:16]
-        self.external_lock = external_lock
 
         self.ipv4 = {'filter': IptablesTable(binary_name=self.wrap_name)}
         self.ipv6 = {'filter': IptablesTable(binary_name=self.wrap_name)}
@@ -455,26 +447,17 @@ class IptablesManager:
         return self._apply()
 
     def _apply(self):
-        lock_name = 'iptables'
-        if self.namespace:
-            lock_name += '-' + self.namespace
-
-        # NOTE(ihrachys) we may get rid of the lock once all supported
-        # platforms get iptables with 999eaa241212d3952ddff39a99d0d55a74e3639e
-        # ("iptables-restore: support acquiring the lock.")
-        with lockutils.lock(lock_name, runtime.SYNCHRONIZED_PREFIX,
-                            external=self.external_lock):
-            first = self._apply_synchronized()
-            if not cfg.CONF.AGENT.debug_iptables_rules:
-                return first
-            LOG.debug('List of IPTables Rules applied: %s', '\n'.join(first))
-            second = self._apply_synchronized()
-            if second:
-                msg = (_("IPTables Rules did not converge. Diff: %s") %
-                       '\n'.join(second))
-                LOG.error(msg)
-                raise l3_exc.IpTablesApplyException(msg)
+        first = self._apply_synchronized()
+        if not cfg.CONF.AGENT.debug_iptables_rules:
             return first
+        LOG.debug('List of IPTables Rules applied: %s', '\n'.join(first))
+        second = self._apply_synchronized()
+        if second:
+            msg = (_("IPTables Rules did not converge. Diff: %s") %
+                   '\n'.join(second))
+            LOG.error(msg)
+            raise l3_exc.IpTablesApplyException(msg)
+        return first
 
     def get_rules_for_table(self, table):
         """Runs iptables-save on a table and returns the results."""
@@ -513,35 +496,13 @@ class IptablesManager:
         # give agent some time to report back to server
         return str(max(int(cfg.CONF.AGENT.report_interval / 3.0), 1))
 
-    def _do_run_restore(self, args, commands, lock=False):
-        args = args[:]
-        if lock:
-            args += ['-w', self.xlock_wait_time, '-W', XLOCK_WAIT_INTERVAL]
+    def _run_restore(self, args, commands):
+        args = args + ['-w', self.xlock_wait_time, '-W', XLOCK_WAIT_INTERVAL]
         try:
-            kwargs = {} if lock else {'log_fail_as_error': False}
             linux_utils.execute(args, process_input='\n'.join(commands),
-                                run_as_root=True, privsep_exec=True, **kwargs)
+                                run_as_root=True, privsep_exec=True)
         except RuntimeError as error:
             return error
-
-    def _run_restore(self, args, commands):
-        # If we've already tried and used -w successfully, don't
-        # run iptables-restore without it.
-        if self.use_table_lock:
-            return self._do_run_restore(args, commands, lock=True)
-
-        err = self._do_run_restore(args, commands)
-        if (isinstance(err, exceptions.ProcessExecutionError) and
-                err.returncode == XTABLES_RESOURCE_PROBLEM_CODE):
-            # maybe we run on a platform that includes iptables commit
-            # 999eaa241212d3952ddff39a99d0d55a74e3639e (for example, latest
-            # RHEL) and failed because of xlock acquired by another
-            # iptables process running in parallel. Try to use -w to
-            # acquire xlock.
-            err = self._do_run_restore(args, commands, lock=True)
-            if not err:
-                self.__class__.use_table_lock = True
-        return err
 
     def _log_restore_err(self, err, commands):
         try:

@@ -457,7 +457,7 @@ class MetadataAgent:
 
         iptables_mgr = iptables_manager.IptablesManager(
             use_ipv6=netutils.is_ipv6_enabled(), nat=False,
-            namespace=namespace, external_lock=False)
+            namespace=namespace)
         rule = '-p tcp -m tcp -j CHECKSUM --checksum-fill'
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', rule, wrap=False)
         iptables_mgr.apply()
