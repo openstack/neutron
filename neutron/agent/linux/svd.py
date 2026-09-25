@@ -21,10 +21,6 @@ from neutron._i18n import _
 from neutron.privileged.agent.linux import svd as privileged_svd
 
 
-class SvdNoVxlanParent(Exception):
-    pass
-
-
 class SvdDeviceAlreadyExists(Exception):
     pass
 
@@ -63,15 +59,11 @@ class Svd:
         self.br_evpn = br_evpn
         self.vxlan_evpn = vxlan_evpn
 
-    def create(self, local_ip, mac, vxlan_parent, dstport, br_mtu):
+    def create(self, local_ip, mac, dstport, br_mtu):
         try:
             privileged_svd.create_svd(
                 self.br_evpn, self.vxlan_evpn,
-                local_ip, mac, vxlan_parent, dstport, br_mtu)
-        except IndexError:
-            raise SvdNoVxlanParent(
-                _("Missing VxLAN underlay: %(parent)s") %
-                {'parent': vxlan_parent})
+                local_ip, mac, dstport, br_mtu)
         except netlink_exc.NetlinkError as e:
             if e.code == errno.EEXIST:
                 raise SvdDeviceAlreadyExists(

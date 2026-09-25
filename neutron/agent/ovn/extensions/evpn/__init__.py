@@ -41,7 +41,6 @@ CONF = cfg.CONF
 @dataclasses.dataclass(frozen=True)
 class EvpnConfig:
     local_ip: str
-    vxlan_parent: str
     mac: str
     br_mtu: int
 
@@ -66,18 +65,15 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
             'Open_vSwitch', '.', 'external_ids').execute()
         try:
             local_ip = ext_ids['ovn-evpn-local-ip']
-            vxlan_port = ext_ids['ovn-evpn-vxlan-ports']
         except KeyError:
-            LOG.exception("Terminating: Must configure ovn-evpn-local-ip and "
-                          "ovn-evpn-vxlan-ports")
+            LOG.exception("Terminating: Must configure ovn-evpn-local-ip")
             raise SystemExit(1)
-        vxlan_parent = 'vxlan_sys_%s' % vxlan_port
         mac = net_lib.get_random_mac(CONF.base_mac.split(':'))
         self.cfg = EvpnConfig(local_ip=local_ip,
-                              vxlan_parent=vxlan_parent, mac=mac,
+                              mac=mac,
                               br_mtu=evpn_const.EVPN_BR_MTU)
-        LOG.debug("EVPN config: local_ip %s vxlan_parent %s SVD MAC %s",
-                  self.cfg.local_ip, self.cfg.vxlan_parent, self.cfg.mac)
+        LOG.debug("EVPN config: local_ip %s SVD MAC %s",
+                  self.cfg.local_ip, self.cfg.mac)
 
     def _create_svd_with_free_port(self, max_attempts=10):
         for attempt in range(max_attempts):
@@ -85,7 +81,6 @@ class EVPNAgentExtension(ovn_ext_mgr.OVNAgentExtension):
             try:
                 self.svd.create(local_ip=self.cfg.local_ip,
                                 mac=self.cfg.mac,
-                                vxlan_parent=self.cfg.vxlan_parent,
                                 dstport=dstport, br_mtu=self.cfg.br_mtu)
                 LOG.debug("EVPN SVD using child vxlan port %d", dstport)
                 return

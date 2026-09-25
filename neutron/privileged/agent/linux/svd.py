@@ -176,22 +176,19 @@ def _cleanup_partial_svd(ipr, br_evpn, vxlan_evpn):
 
 
 @privileged.default.entrypoint
-def create_svd(br_evpn, vxlan_evpn, local_ip, mac, vxlan_parent, dstport,
-               br_mtu):
+def create_svd(br_evpn, vxlan_evpn, local_ip, mac, dstport, br_mtu):
     """Create a shared Single VxLAN Device (SVD)
 
     A shared SVD consist of a vlan-aware Linux bridge and a vlan-aware VxLAN
     """
     with priv_ip_lib.get_iproute(None) as ipr:
-        vxlan_parent_idx = ipr.link_lookup(ifname=vxlan_parent)[0]
 
         try:
             # Equivalent to:
-            # ip link add <vxlan_evpn> vxlan \
-            #   dev <vxlan_parent> dstport <dstport> local <local_ip> \
-            #   no learning external vnifilter
+            # ip link add <vxlan_evpn> type vxlan \
+            #   dstport <dstport> local <local_ip> \
+            #   nolearning external vnifilter
             ipr.link(nl_const.IP_LINK_ADD, ifname=vxlan_evpn, kind='vxlan',
-                     vxlan_link=vxlan_parent_idx,
                      vxlan_port=dstport,
                      vxlan_local=local_ip,
                      vxlan_learning=0,
@@ -231,10 +228,8 @@ def create_svd(br_evpn, vxlan_evpn, local_ip, mac, vxlan_parent, dstport,
             _cleanup_partial_svd(ipr, br_evpn, vxlan_evpn)
             raise
 
-    LOG.debug("Created SVD: bridge %s, vxlan %s (parent %s, "
-              "local_ip %s, dstport %d)",
-              br_evpn, vxlan_evpn, vxlan_parent,
-              local_ip, dstport)
+    LOG.debug("Created SVD: bridge %s, vxlan %s (local_ip %s, dstport %d)",
+              br_evpn, vxlan_evpn, local_ip, dstport)
 
 
 @privileged.default.entrypoint

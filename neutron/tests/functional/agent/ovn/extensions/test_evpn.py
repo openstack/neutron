@@ -143,13 +143,7 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
 
     def setUp(self):
         super().setUp()
-        self._parent = utils.get_rand_device_name(prefix='evpnp-')
-        privileged.create_interface(self._parent, None, 'dummy')
-        self._set_link_up(self._parent)
-        ip_lib.IPDevice(self._parent).addr.add(self.LOCAL_IP + '/32')
-        self.addCleanup(self._safe_delete, self._parent)
         self.cfg = evpn.EvpnConfig(local_ip=self.LOCAL_IP,
-                                   vxlan_parent=self._parent,
                                    mac=self.SVD_MAC,
                                    br_mtu=evpn_const.EVPN_BR_MTU)
 
@@ -162,8 +156,7 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self._vx = utils.get_rand_device_name(prefix='evpnvx-')
         self.svd = svd.EvpnSvd(br_evpn=self._br, vxlan_evpn=self._vx)
         self.svd.create(local_ip=self.LOCAL_IP, mac=self.SVD_MAC,
-                        vxlan_parent=self._parent, dstport=self.DSTPORT,
-                        br_mtu=evpn_const.EVPN_BR_MTU)
+                        dstport=self.DSTPORT, br_mtu=evpn_const.EVPN_BR_MTU)
         self.addCleanup(self._safe_delete, self._vx)
         self.addCleanup(self._safe_delete, self._br)
 
