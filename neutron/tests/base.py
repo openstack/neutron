@@ -81,12 +81,23 @@ def bool_from_env(key, strict=False, default=False):
 
 def setup_test_logging(config_opts, log_dir, log_file_path_template):
     # Have each test log into its own log file
+    # NOTE: oslo_log.log.setup() replaces the root logger's handlers on
+    # every call (see _setup_logging_from_conf()) but only removes the old
+    # ones, it never closes them. Since this is called once per test, that
+    # leaks one FileHandler (and its fd) per test for the lifetime of this
+    # worker process. Capture the handlers being replaced and close them
+    # ourselves once setup_logging() has installed their replacements.
+    old_handlers = list(logging.getLogger().handlers)
+
     config_opts.set_override('debug', True)
     fileutils.ensure_tree(log_dir, mode=0o755)
     log_file = sanitize_log_path(
         os.path.join(log_dir, log_file_path_template))
     config_opts.set_override('log_file', log_file)
     config.setup_logging()
+
+    for handler in old_handlers:
+        handler.close()
 
 
 def sanitize_log_path(path):
