@@ -95,7 +95,7 @@
         ENABLE_TLS: True
         PUBLIC_SUBNET_ENABLE_DHCP: True
         OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: v26.03.2
+        OVN_BRANCH: v26.03.3
         OVS_BRANCH: v3.7.1
         ENABLE_FRR: True
         Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false
@@ -250,7 +250,8 @@
           NOVA_VNC_ENABLED: true
           ENABLE_CHASSIS_AS_GW: false
           LIBVIRT_TYPE: kvm
-          OVN_BRANCH: v26.03.2
+          OVN_BUILD_FROM_SOURCE: True
+          OVN_BRANCH: v26.03.3
           OVS_BRANCH: v3.7.1
           ENABLE_FRR: True
           Q_ASSIGN_GATEWAY_TO_PUBLIC_BRIDGE: false
@@ -331,7 +332,6 @@
       devstack_localrc:
         FRR_USE_EVPN: True
         OVN_AGENT_EXTENSIONS: 'metadata,ovn-evpn'
-        OVN_BRANCH: branch-26.03
         OVN_EVPN_BGP_AS: 64999
         OVN_EVPN_BGP_LOCAL_INTERFACE: br-bgp-0
         OVN_EVPN_LOCAL_IP: "{{ evpn_loopback_ip }}"
@@ -340,7 +340,6 @@
         q-ovn-evpn: true
     group-vars:
       tempest:
-        tempest_concurrency: 1
         tempest_test_regex: "\
           (^neutron_tempest_plugin.scenario.test_evpn)|\
           (^neutron_tempest_plugin.api.test_evpn)"
@@ -359,7 +358,6 @@
         devstack_localrc:
           FRR_USE_EVPN: True
           OVN_AGENT_EXTENSIONS: 'metadata,ovn-evpn'
-          OVN_BRANCH: branch-26.03
           OVN_EVPN_BGP_AS: 64999
           OVN_EVPN_BGP_LOCAL_INTERFACE: br-bgp-0
           OVN_EVPN_LOCAL_IP: "{{ evpn_loopback_ip }}"
