@@ -57,12 +57,10 @@ The key differences between the generic ML2 and OVN live migration are:
 TAP Pre-creation (``ovs_create_tap``)
 -------------------------------------
 
-Starting in 2026.1, the ``[ovn] ovs_create_tap`` configuration option
-controls whether os-vif (on the destination compute node) pre-creates the
-TAP device before libvirt starts the VM transfer. This is ``True`` by
-default since 2026.2 and it will be made the default behavior in 2027.1.
-
-When ``ovs_create_tap=True``:
+Starting in 2026.1, Neutron includes ``ovs_create_tap: True`` in the
+port ``vif_details`` for kernel OVS ports. os-vif (on the destination
+compute node) uses this to pre-create the TAP device before libvirt starts
+the VM transfer.
 
 #. Neutron includes ``ovs_create_tap: True`` in the port's ``vif_details``
    during the binding operation.
@@ -77,21 +75,12 @@ When ``ovs_create_tap=True``:
 #. ovn-controller on the destination detects the TAP and starts programming
    OpenFlow rules.
 
-When ``ovs_create_tap=False`` (legacy behavior):
-
-#. The TAP device is created by libvirt during the actual VM transfer
-   (Phase 8). OpenFlow rules cannot be programmed until that point.
-#. A "fake" ``network-vif-plugged`` event is sent immediately when the
-   ``Logical_Switch_Port`` is updated in the NB DB, before flows are
-   programmed. This creates a race window where the VM can be unpaused
-   without network connectivity.
-
 
 Migration Phases
 ----------------
 
-The following phases describe the full live migration flow with
-``ovs_create_tap=True``.
+The following phases describe the full live migration flow with TAP
+pre-creation enabled.
 
 Phase 1: Scheduling
 ~~~~~~~~~~~~~~~~~~~
@@ -236,8 +225,8 @@ Neutron server monitors the SB DB via OVSDB IDL. The
 ``PortBindingChassisUpdateEvent`` detects that
 ``Port_Binding.additional_chassis`` has been populated.
 
-With ``ovs_create_tap=True`` and datapath type ``system`` (not DPDK),
-Neutron does **not** immediately signal the port as UP. Instead it waits
+For kernel OVS datapaths (``system``, not DPDK), Neutron does **not**
+immediately signal the port as UP. Instead it waits
 for the destination ovn-controller to confirm that OpenFlow rules are fully
 installed (see `Waiting for OpenFlow Rules`_).
 
@@ -410,19 +399,17 @@ Migration State Detection in the Mechanism Driver
 
 During ``update_port_postcommit``, the OVN mechanism driver checks if a
 port is in migration state (status ``DOWN`` with ``migrating_to`` in the
-binding profile). The behavior depends on the VIF type and configuration:
+binding profile). The behavior depends on the VIF type:
 
 * ``vif_type=unbound``: The port will be rebound; processing continues
   normally.
 
-* ``ovs_create_tap=True`` and ``vif_type=ovs``: Return immediately
-  without sending a fake event. Wait for the
-  ``PortBindingChassisUpdateEvent`` Southbound event, which fires when
-  ``Port_Binding.additional_chassis`` is populated by ovn-controller.
+* ``vif_type=ovs``: Return immediately without sending a fake event. Wait
+  for the ``PortBindingChassisUpdateEvent`` Southbound event, which fires
+  when ``Port_Binding.additional_chassis`` is populated by ovn-controller.
 
-* ``ovs_create_tap=False`` or ``vif_type=vhostuser``: A "fake"
-  ``network-vif-plugged`` event is sent by forcing the port status to
-  ``ACTIVE``. This is the legacy behavior and does not guarantee that
+* ``vif_type=vhostuser``: A "fake" ``network-vif-plugged`` event is sent
+  by forcing the port status to ``ACTIVE``. This does not guarantee that
   OpenFlow rules are in place.
 
 A revision conflict retry mechanism handles the race between the OVN
