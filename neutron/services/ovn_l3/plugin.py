@@ -262,6 +262,14 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             return super().update_floatingip_status(
                 context, floatingip_id, status)
 
+    def set_router_gateway_port_down(self, port_id):
+        if not port_id:
+            return
+        context = n_context.get_admin_context()
+        # Keep the last Neutron and NB host until this gateway is rebound.
+        self._plugin.update_port_status(
+            context, port_id, n_const.PORT_STATUS_DOWN)
+
     def _get_gateway_port_physnet_mapping(self):
         # This function returns all gateway ports with corresponding
         # external network's physnet

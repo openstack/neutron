@@ -572,6 +572,8 @@ class PortBindingChassisEvent(row_event.RowEvent):
     generated. We will update corresponding router's gateway port with
     the chassis's host_id. Later, users can check router's gateway port
     host_id to find the location of primary HA router.
+    When the chassis is removed, mark the affected gateway DOWN while
+    preserving its host bindings until it is rebound.
     """
 
     def __init__(self, driver):
@@ -603,38 +605,45 @@ class PortBindingChassisEvent(row_event.RowEvent):
         return True
 
     def run(self, event, row, old):
-        router = host = None
         chassis = getattr(row, 'chassis', None)
-        if chassis:
-            router = row.datapath.external_ids.get('name', '').replace(
-                'neutron-', '')
-            host = chassis[0].hostname
-            LOG.info("Router %(router)s is bound to host %(host)s",
-                     {'router': router, 'host': host})
-            # NOTE: the "old" row contains only the modified columns. The
-            # "chassis" column is always present (see "match_fn") but can be
-            # empty if the port was not bound before. If the previous Chassis
-            # register was deleted concurrently, the weak reference resolves
-            # to an empty list too.
+        if not chassis:
+            # "match_fn" ensures the chassis column changed. Do not check
+            # old.chassis: a deleted Chassis resolves to an empty list too.
+            prefix = utils.ovn_cr_lrouter_port_name('')
+            if row.logical_port.startswith(prefix):
+                port_id = row.logical_port.removeprefix(prefix)
+                self.l3_plugin.set_router_gateway_port_down(port_id)
+            return
+
+        router = row.datapath.external_ids.get('name', '').replace(
+            'neutron-', '')
+        host = chassis[0].hostname
+        LOG.info("Router %(router)s is bound to host %(host)s",
+                 {'router': router, 'host': host})
+        # NOTE: the "old" row contains only the modified columns. The
+        # "chassis" column is always present (see "match_fn") but can be
+        # empty if the port was not bound before. If the previous Chassis
+        # register was deleted concurrently, the weak reference resolves
+        # to an empty list too.
+        try:
+            old_chassis_name = old.chassis[0].name
+        except (AttributeError, IndexError):
+            old_chassis_name = None
+        LOG.debug("Chassis failover of port %(port)s, new chassis: "
+                  "%(new_chassis)s, old chassis: %(old_chassis)s",
+                  {'port': row.logical_port,
+                   'new_chassis': chassis[0].name,
+                   'old_chassis': old_chassis_name})
+        if (old_chassis_name and
+                ovn_conf.is_reset_crashed_chassis_priority_enabled()):
             try:
-                old_chassis_name = old.chassis[0].name
-            except (AttributeError, IndexError):
-                old_chassis_name = None
-            LOG.debug("Chassis failover of port %(port)s, new chassis: "
-                      "%(new_chassis)s, old chassis: %(old_chassis)s",
-                      {'port': row.logical_port,
-                       'new_chassis': chassis[0].name,
-                       'old_chassis': old_chassis_name})
-            if (old_chassis_name and
-                    ovn_conf.is_reset_crashed_chassis_priority_enabled()):
-                try:
-                    self.l3_plugin.demote_crashed_chassis_on_failover(
-                        row, old_chassis_name)
-                except Exception:
-                    LOG.exception("Failed to demote the crashed chassis "
-                                  "%(chassis)s, gateway port %(port)s",
-                                  {'chassis': old_chassis_name,
-                                   'port': row.logical_port})
+                self.l3_plugin.demote_crashed_chassis_on_failover(
+                    row, old_chassis_name)
+            except Exception:
+                LOG.exception("Failed to demote the crashed chassis "
+                              "%(chassis)s, gateway port %(port)s",
+                              {'chassis': old_chassis_name,
+                               'port': row.logical_port})
         self.l3_plugin.update_router_gateway_port_bindings(
             router, host)
 

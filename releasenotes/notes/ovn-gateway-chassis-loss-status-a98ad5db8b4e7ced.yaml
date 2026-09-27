@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    OVN now marks an external gateway port DOWN when its chassisredirect
+    port loses its chassis. Only the affected gateway's status changes;
+    other gateway ports and the last Neutron and OVN host bindings are
+    preserved. Binding the gateway again restores its ACTIVE status.

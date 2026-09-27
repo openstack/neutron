@@ -1605,17 +1605,34 @@ class TestPortBindingChassisEvent(base.BaseTestCase):
         (self.l3_plugin.update_router_gateway_port_bindings.
          assert_called_once_with('router-id', 'active-host'))
 
-    def test_run_unbound_port_skips_demotion(self):
-        # When chassis is empty (port unbound), demotion is not called.
+    def test_run_unbound_port_marks_gateway_down(self):
+        # When chassis is empty (port unbound), only the affected gateway is
+        # marked DOWN; demotion and binding updates are not called.
         row = self._make_pb_row(attrs={'chassis': []})
         old = self._make_old({'chassis': [mock.Mock()]})
 
         self.event.run(self.event.ROW_UPDATE, row, old)
 
+        (self.l3_plugin.set_router_gateway_port_down.
+         assert_called_once_with('uuid'))
         (self.l3_plugin.demote_crashed_chassis_on_failover.
          assert_not_called())
         (self.l3_plugin.update_router_gateway_port_bindings.
-         assert_called_once_with(None, None))
+         assert_not_called())
+
+    @mock.patch('neutron.common.ovn.utils.is_ovn_l3', return_value=True)
+    def test_run_deleted_chassis_marks_gateway_down(self, _):
+        # The old reference cannot resolve after the Chassis row is deleted.
+        row = self._make_pb_row(attrs={'chassis': []})
+        old = self._make_old({'chassis': []})
+
+        self.assertTrue(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+        self.event.run(self.event.ROW_UPDATE, row, old)
+
+        (self.l3_plugin.set_router_gateway_port_down.
+         assert_called_once_with('uuid'))
+        (self.l3_plugin.update_router_gateway_port_bindings.
+         assert_not_called())
 
     @mock.patch('neutron.conf.plugins.ml2.drivers.ovn.ovn_conf.'
                 'is_reset_crashed_chassis_priority_enabled',
