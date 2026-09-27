@@ -16,7 +16,6 @@ import abc
 import collections
 import os.path
 import threading
-import time
 
 from neutron_lib import exceptions as n_exc
 from oslo_concurrency import lockutils
@@ -285,15 +284,15 @@ class ProcessMonitor:
         This method will stop the monitoring thread, but no monitored
         process will be stopped.
         """
-        self._monitor_processes = False
         self._stopping_event.set()
         if self._checking_thread:
             self._checking_thread.join(timeout=5)
 
     def _spawn_checking_thread(self):
-        self._monitor_processes = True
+        # A daemon thread, so that a process that never calls stop() can
+        # still exit.
         checking_thread = threading.Thread(
-            target=self._periodic_checking_thread)
+            target=self._periodic_checking_thread, daemon=True)
         checking_thread.start()
         return checking_thread
 
@@ -317,8 +316,9 @@ class ProcessMonitor:
                 self._execute_action(service_id)
 
     def _periodic_checking_thread(self):
-        while self._monitor_processes:
-            time.sleep(self._config.AGENT.check_child_processes_interval)
+        # Waiting on the stopping event lets stop() end the thread at once.
+        while not self._stopping_event.wait(
+                self._config.AGENT.check_child_processes_interval):
             check_thread = threading.Thread(target=self._check_child_processes)
             check_thread.start()
             check_thread.join()

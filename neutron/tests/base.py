@@ -362,8 +362,9 @@ class ProcessMonitorFixture(fixtures.Fixture):
             instance.stop()
 
     def record_calls(self, instance):
-        self.old_callable(instance)
+        thread = self.old_callable(instance)
         self.instances.append(instance)
+        return thread
 
 
 class BaseTestCase(DietTestCase):
