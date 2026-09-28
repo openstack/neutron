@@ -156,11 +156,12 @@
     required-projects:
       - openstack/ovsdbapp
 
+# TODO(tkajinam): Remove this once py313 job is replaced by the py3 job
+# below in all repositories
 - job:
-    # TODO(haleyb): remove once https://review.opendev.org/c/openstack/neutron-lib/+/972735 merges as only consumer
-    name: openstack-tox-py312-with-sqlalchemy-master
+    name: openstack-tox-py313-with-sqlalchemy-master
     branches: ^master$
-    parent: openstack-tox-py312
+    parent: openstack-tox-py313
     required-projects:
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
@@ -170,9 +171,10 @@
         override-checkout: main
 
 - job:
-    name: openstack-tox-py313-with-sqlalchemy-master
+    name: neutron-tox-py3-with-sqlalchemy-master
     branches: ^master$
-    parent: openstack-tox-py313
+    # NOTE: This should be updated to the newest python version
+    parent: openstack-tox-py314
     required-projects:
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main

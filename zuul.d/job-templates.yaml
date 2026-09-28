@@ -33,9 +33,6 @@
               - ^zuul.d/rally.yaml
               - ^zuul.d/tempest-multinode.yaml
               - ^zuul.d/tempest-singlenode.yaml
-        - openstack-tox-py313: # from openstack-python3-jobs template
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
         - openstack-tox-py314: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
@@ -50,9 +47,6 @@
         - openstack-tox-py311-arm64: # from openstack-python3-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py313-arm64: # from openstack-python3-jobs-arm64 template
-            timeout: 4800
-            irrelevant-files:  *irrelevant-files
         - openstack-tox-py314-arm64: # from openstack-python3-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
@@ -61,12 +55,15 @@
         - openstack-tox-py311:  # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py313: # from openstack-python3-jobs template
+        - openstack-tox-py314: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
     periodic:
       jobs:
         - openstack-tox-py312:  # from openstack-python3-jobs template
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
+        - openstack-tox-py313:  # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
 
@@ -112,7 +109,7 @@
         - openstacksdk-functional-devstack-networking
         - neutron-tempest-plugin-openvswitch-iptables_hybrid
         - devstack-enforce-scope
-        - openstack-tox-py313-with-sqlalchemy-master
+        - neutron-tox-py3-with-sqlalchemy-master
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
