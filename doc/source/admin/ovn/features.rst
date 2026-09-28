@@ -90,6 +90,8 @@ The following Neutron API extensions are supported with OVN:
 +----------------------------------+---------------------------------+
 | DNS domain names with keywords   | dns-integration-domain-keywords |
 +----------------------------------+---------------------------------+
+| IP Substring Filtering           | ip-substring-filtering          |
++----------------------------------+---------------------------------+
 | Subnet DNS publish fixed IP      | subnet-dns-publish-fixed-ip     |
 +----------------------------------+---------------------------------+
 | Multi Provider Network           | multi-provider                  |

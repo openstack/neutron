@@ -42,6 +42,7 @@ from neutron_lib.api.definitions import flavors
 from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import floatingip_pools
 from neutron_lib.api.definitions import ip_allocation
+from neutron_lib.api.definitions import ip_substring_port_filtering
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import l3_enable_default_route_bfd
 from neutron_lib.api.definitions import l3_enable_default_route_ecmp
@@ -226,4 +227,5 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     tap_mirror.ALIAS,
     tap_mirror_both_direction.ALIAS,
     ip_allocation.ALIAS,
+    ip_substring_port_filtering.ALIAS,
 ]
