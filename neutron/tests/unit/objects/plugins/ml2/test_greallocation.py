@@ -13,21 +13,8 @@
 #    under the License.
 
 from neutron.objects.plugins.ml2 import greallocation as gre_object
-from neutron.tests.unit.objects.plugins.ml2 import test_base as ml2_test_base
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
-
-
-class GreAllocationIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
-
-    _test_class = gre_object.GreAllocation
-
-
-class GreAllocationDbObjTestCase(
-        test_base.BaseDbObjectTestCase, testlib_api.SqlTestCase,
-        ml2_test_base.SegmentAllocationDbObjTestCase):
-
-    _test_class = gre_object.GreAllocation
 
 
 class GreEndpointIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):

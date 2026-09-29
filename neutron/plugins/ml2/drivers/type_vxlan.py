@@ -19,7 +19,6 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.conf.plugins.ml2.drivers import driver_type
-from neutron.db.models.plugins.ml2 import vxlanallocation as vxlan_alloc_model
 from neutron.objects.plugins.ml2 import vxlanallocation as vxlan_obj
 from neutron.plugins.ml2.drivers import type_tunnel
 
@@ -31,10 +30,7 @@ driver_type.register_ml2_drivers_vxlan_opts()
 class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
 
     def __init__(self):
-        super().__init__(
-            vxlan_obj.VxlanAllocation, vxlan_obj.VxlanEndpoint)
-        self.model_segmentation_id = (
-            vxlan_alloc_model.VxlanAllocation.vxlan_vni)
+        super().__init__(vxlan_obj.VxlanEndpoint)
 
     def get_type(self):
         return p_const.TYPE_VXLAN

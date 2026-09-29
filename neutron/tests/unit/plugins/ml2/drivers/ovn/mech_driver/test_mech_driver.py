@@ -4285,6 +4285,8 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
+        cfg.CONF.set_override('vni_ranges', ['1:500'],
+                              group='ml2_type_geneve')
         cfg.CONF.set_override('max_header_size', 38,
                               group='ml2_type_geneve')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
@@ -4316,7 +4318,6 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
 
         self._test_create_segment(
             network_id=network['id'],
-            segmentation_id=200,
             network_type='geneve')
         self.mech_driver.update_segment_host_mapping(host, ['physnet1'])
         segments_host_db = self._get_segments_for_host(host)

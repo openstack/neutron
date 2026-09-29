@@ -179,8 +179,6 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                 )
                 network_segment_range.create()
 
-        self.type_manager.update_network_segment_range_allocations(
-            network_segment_range['network_type'])
         return network_segment_range.to_dict()
 
     @log_helpers.log_method_call
@@ -240,8 +238,6 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
             network_segment_range.update_fields(new_range_data)
             network_segment_range.update()
 
-        self.type_manager.update_network_segment_range_allocations(
-            network_segment_range['network_type'])
         return network_segment_range.to_dict()
 
     @log_helpers.log_method_call
@@ -260,6 +256,3 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
                 raise range_exc.NetworkSegmentRangeReferencedByProject(
                     range_id=id)
             network_segment_range.delete()
-
-        self.type_manager.update_network_segment_range_allocations(
-            network_segment_range['network_type'])

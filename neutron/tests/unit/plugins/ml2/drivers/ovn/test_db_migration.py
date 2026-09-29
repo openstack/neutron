@@ -17,14 +17,14 @@ import uuid
 
 from neutron_lib.api.definitions import portbindings as pb
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
 from neutron.common import _constants as n_const
-from neutron.db.models.plugins.ml2 import geneveallocation
-from neutron.db.models.plugins.ml2 import vxlanallocation
+from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import servicetype as servicetype_obj
 from neutron.objects import trunk as trunk_obj
@@ -116,20 +116,13 @@ class TestMigrateNeutronDatabaseToOvn(
         for network in networks:
             self.assertEqual("geneve", network["provider:network_type"])
 
-        with db_api.CONTEXT_READER.using(ctx) as session:
-            # Check there are no vxlan allocations
-            vxlan_allocations = session.query(
-                vxlanallocation.VxlanAllocation).filter(
-                    vxlanallocation.VxlanAllocation.allocated.is_(True)
-                        ).all()
-            self.assertFalse(vxlan_allocations)
-
-            # Check all the networks have Geneve allocations
-            geneve_allocations = session.query(
-                geneveallocation.GeneveAllocation).filter(
-                    geneveallocation.GeneveAllocation.allocated.is_(True)
-                        ).all()
-            self.assertEqual(len(networks), len(geneve_allocations))
+        segments = network_obj.NetworkSegment.get_objects(ctx)
+        self.assertEqual(len(networks), len(segments))
+        for segment in segments:
+            self.assertEqual(constants.TYPE_GENEVE, segment.network_type)
+        vxlan_segments = network_obj.NetworkSegment.get_objects(
+            ctx, network_type=constants.TYPE_VXLAN)
+        self.assertFalse(vxlan_segments)
 
         # Check port bindings vif details are as expected
         ports = self.plugin.get_ports(ctx)
@@ -152,13 +145,13 @@ class TestMigrateNeutronDatabaseToOvn(
     def test_db_migration(self):
         """Test the DB migration
 
-        It creates 5 vxlan networks, each should get a vxlan vni allocated.
+        It creates 5 vxlan networks, each with a distinct segmentation ID.
         Then it creates 3 ports with different vif details.
 
-        After the DB migration the vxlan networks should not be allocated but
-        be geneve type and have geneve allocations. Also the port binding vif
-        details should not contain hybrid plugging, bridge name for trunk and
-        l2 connectivity for OVS agent.
+        After the DB migration the networks should be geneve type with the
+        same segmentation IDs. Also the port binding vif details should not
+        contain hybrid plugging, bridge name for trunk and l2 connectivity
+        for OVS agent.
         """
         vif_details_list = [
             {pb.CAP_PORT_FILTER: "true",

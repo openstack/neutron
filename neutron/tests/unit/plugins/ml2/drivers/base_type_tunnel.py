@@ -21,9 +21,11 @@ from neutron_lib import context
 from neutron_lib import exceptions as exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
+from oslo_utils import uuidutils
 import testtools
 from testtools import matchers
 
+from neutron.objects import network as net_obj
 from neutron.objects import network_segment_range as obj_network_segment_range
 from neutron.plugins.ml2.drivers import type_tunnel
 
@@ -49,8 +51,23 @@ class TunnelTypeTestMixin:
         super().setUp()
         self.driver = self.DRIVER_CLASS()
         self.driver._tunnel_ranges = TUNNEL_RANGES
-        self.driver._sync_allocations()
         self.context = context.Context()
+
+    def _create_used_tunnel_segment(self, tunnel_id):
+        network = net_obj.Network(
+            self.context,
+            name='test-net',
+            id=uuidutils.generate_uuid(),
+            project_id=uuidutils.generate_uuid())
+        network.create()
+        net_seg = net_obj.NetworkSegment(
+            self.context,
+            network_id=network.id,
+            network_type=self.driver.get_type(),
+            physical_network='',
+            segmentation_id=tunnel_id,
+            id=uuidutils.generate_uuid())
+        net_seg.create()
 
     def test_tunnel_type(self):
         self.assertEqual(self.TYPE, self.driver.get_type())
@@ -69,69 +86,6 @@ class TunnelTypeTestMixin:
         segment[api.SEGMENTATION_ID] = 1
         self.driver.validate_provider_segment(segment)
 
-    def test_sync_tunnel_allocations(self):
-        self.assertIsNone(
-            self.driver.get_allocation(self.context, (TUN_MIN - 1)))
-        self.assertFalse(
-            self.driver.get_allocation(self.context, (TUN_MIN)).allocated)
-        self.assertFalse(
-            self.driver.get_allocation(self.context, (TUN_MIN + 1)).allocated)
-        self.assertFalse(
-            self.driver.get_allocation(self.context, (TUN_MAX - 1)).allocated)
-        self.assertFalse(
-            self.driver.get_allocation(self.context, (TUN_MAX)).allocated)
-        self.assertIsNone(
-            self.driver.get_allocation(self.context, (TUN_MAX + 1)))
-
-        self.driver._tunnel_ranges = UPDATED_TUNNEL_RANGES
-        self.driver._sync_allocations()
-
-        self.assertIsNone(
-            self.driver.get_allocation(self.context, (TUN_MIN + 5 - 1)))
-        self.assertFalse(
-            self.driver.get_allocation(self.context, (TUN_MIN + 5)).allocated)
-        self.assertFalse(
-            self.driver.get_allocation(self.context,
-                                       (TUN_MIN + 5 + 1)).allocated)
-        self.assertFalse(
-            self.driver.get_allocation(self.context,
-                                       (TUN_MAX + 5 - 1)).allocated)
-        self.assertFalse(
-            self.driver.get_allocation(self.context, (TUN_MAX + 5)).allocated)
-        self.assertIsNone(
-            self.driver.get_allocation(self.context, (TUN_MAX + 5 + 1)))
-
-    def _test_sync_allocations_and_allocated(self, tunnel_id):
-        segment = {api.NETWORK_TYPE: self.TYPE,
-                   api.PHYSICAL_NETWORK: None,
-                   api.SEGMENTATION_ID: tunnel_id}
-        self.driver.reserve_provider_segment(self.context, segment)
-
-        self.driver._tunnel_ranges = UPDATED_TUNNEL_RANGES
-        self.driver._sync_allocations()
-
-        self.assertTrue(
-            self.driver.get_allocation(self.context, tunnel_id).allocated)
-
-    def test_sync_allocations_and_allocated_in_initial_range(self):
-        self._test_sync_allocations_and_allocated(TUN_MIN + 2)
-
-    def test_sync_allocations_and_allocated_in_final_range(self):
-        self._test_sync_allocations_and_allocated(TUN_MAX + 2)
-
-    def test_sync_allocations_no_op(self):
-
-        def verify_no_chunk(iterable, chunk_size):
-            # no segment removed/added
-            self.assertEqual(0, len(list(iterable)))
-            return []
-        with mock.patch.object(
-                type_tunnel, 'chunks', side_effect=verify_no_chunk) as chunks:
-            self.driver._sync_allocations()
-            # No writing operation is done, fast exit: current allocations
-            # already present.
-            self.assertEqual(0, len(chunks.mock_calls))
-
     def test_partial_segment_is_partial_segment(self):
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: None,
@@ -145,32 +99,64 @@ class TunnelTypeTestMixin:
         self.assertFalse(self.driver.is_partial_segment(segment))
 
     def test_reserve_provider_segment_full_specs(self):
+        def get_network_segment(tunnel_id):
+            segments = net_obj.NetworkSegment.get_objects(
+                self.context,
+                network_type=self.driver.get_type(),
+                physical_network='',
+                segmentation_id=tunnel_id)
+            if not segments:
+                return None
+            self.assertEqual(1, len(segments))
+            return segments[0]
+
+        def create_used_tunnel_segment(tunnel_id):
+            network = net_obj.Network(
+                self.context, name='test-net', id=uuidutils.generate_uuid(),
+                project_id=uuidutils.generate_uuid())
+            network.create()
+            net_seg = net_obj.NetworkSegment(
+                self.context,
+                network_id=network.id,
+                network_type=self.driver.get_type(),
+                physical_network='',
+                segmentation_id=tunnel_id,
+                id=uuidutils.generate_uuid())
+            net_seg.create()
+
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: None,
                    api.SEGMENTATION_ID: 101}
         observed = self.driver.reserve_provider_segment(self.context, segment)
-        alloc = self.driver.get_allocation(self.context,
-                                           observed[api.SEGMENTATION_ID])
-        self.assertTrue(alloc.allocated)
+        self.assertEqual(self.TYPE, observed[api.NETWORK_TYPE])
+        self.assertEqual('', observed[api.PHYSICAL_NETWORK])
+        self.assertEqual(101, observed[api.SEGMENTATION_ID])
+        self.assertIsNone(get_network_segment(101))
+
+        create_used_tunnel_segment(101)
+        net_seg = get_network_segment(101)
+        self.assertEqual(self.TYPE, net_seg.network_type)
+        self.assertEqual('', net_seg.physical_network)
+        self.assertEqual(101, net_seg.segmentation_id)
 
         with testtools.ExpectedException(exc.TunnelIdInUse):
             self.driver.reserve_provider_segment(self.context, segment)
 
-        self.driver.release_segment(self.context, segment)
-        alloc = self.driver.get_allocation(self.context,
-                                           observed[api.SEGMENTATION_ID])
-        self.assertFalse(alloc.allocated)
+        with mock.patch.object(type_tunnel.LOG, 'debug') as log_debug:
+            self.driver.release_segment(self.context, segment)
+            log_debug.assert_called_once()
+        self.assertIsNotNone(get_network_segment(101))
 
         segment[api.SEGMENTATION_ID] = 1000
         observed = self.driver.reserve_provider_segment(self.context, segment)
-        alloc = self.driver.get_allocation(self.context,
-                                           observed[api.SEGMENTATION_ID])
-        self.assertTrue(alloc.allocated)
+        self.assertEqual(1000, observed[api.SEGMENTATION_ID])
+        self.assertIsNone(get_network_segment(1000))
 
-        self.driver.release_segment(self.context, segment)
-        alloc = self.driver.get_allocation(self.context,
-                                           observed[api.SEGMENTATION_ID])
-        self.assertIsNone(alloc)
+        create_used_tunnel_segment(1000)
+        net_seg = get_network_segment(1000)
+        self.assertEqual(self.TYPE, net_seg.network_type)
+        self.assertEqual('', net_seg.physical_network)
+        self.assertEqual(1000, net_seg.segmentation_id)
 
     def test_reserve_provider_segment(self):
         tunnel_ids = set()
@@ -187,25 +173,19 @@ class TunnelTypeTestMixin:
             self.assertThat(segment[api.SEGMENTATION_ID],
                             matchers.LessThan(TUN_MAX + 1))
             tunnel_ids.add(segment[api.SEGMENTATION_ID])
+            self._create_used_tunnel_segment(segment[api.SEGMENTATION_ID])
 
         with testtools.ExpectedException(exc.NoNetworkAvailable):
-            segment = self.driver.reserve_provider_segment(self.context,
-                                                           specs)
+            self.driver.reserve_provider_segment(self.context, specs)
 
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: 'None',
-                   api.SEGMENTATION_ID: tunnel_ids.pop()}
-        self.driver.release_segment(self.context, segment)
-        segment = self.driver.reserve_provider_segment(self.context, specs)
-        self.assertThat(segment[api.SEGMENTATION_ID],
-                        matchers.GreaterThan(TUN_MIN - 1))
-        self.assertThat(segment[api.SEGMENTATION_ID],
-                        matchers.LessThan(TUN_MAX + 1))
-        tunnel_ids.add(segment[api.SEGMENTATION_ID])
-
-        for tunnel_id in tunnel_ids:
-            segment[api.SEGMENTATION_ID] = tunnel_id
-            self.driver.release_segment(self.context, segment)
+                   api.SEGMENTATION_ID: None}
+        with mock.patch.object(type_tunnel.LOG, 'debug') as log_debug:
+            for tunnel_id in tunnel_ids:
+                segment[api.SEGMENTATION_ID] = tunnel_id
+                self.driver.release_segment(self.context, segment)
+            self.assertEqual(len(tunnel_ids), log_debug.call_count)
 
     def test_allocate_project_segment(self):
         tunnel_ids = set()
@@ -216,24 +196,19 @@ class TunnelTypeTestMixin:
             self.assertThat(segment[api.SEGMENTATION_ID],
                             matchers.LessThan(TUN_MAX + 1))
             tunnel_ids.add(segment[api.SEGMENTATION_ID])
+            self._create_used_tunnel_segment(segment[api.SEGMENTATION_ID])
 
         segment = self.driver.allocate_tenant_segment(self.context)
         self.assertIsNone(segment)
 
         segment = {api.NETWORK_TYPE: self.TYPE,
                    api.PHYSICAL_NETWORK: 'None',
-                   api.SEGMENTATION_ID: tunnel_ids.pop()}
-        self.driver.release_segment(self.context, segment)
-        segment = self.driver.allocate_tenant_segment(self.context)
-        self.assertThat(segment[api.SEGMENTATION_ID],
-                        matchers.GreaterThan(TUN_MIN - 1))
-        self.assertThat(segment[api.SEGMENTATION_ID],
-                        matchers.LessThan(TUN_MAX + 1))
-        tunnel_ids.add(segment[api.SEGMENTATION_ID])
-
-        for tunnel_id in tunnel_ids:
-            segment[api.SEGMENTATION_ID] = tunnel_id
-            self.driver.release_segment(self.context, segment)
+                   api.SEGMENTATION_ID: None}
+        with mock.patch.object(type_tunnel.LOG, 'debug') as log_debug:
+            for tunnel_id in tunnel_ids:
+                segment[api.SEGMENTATION_ID] = tunnel_id
+                self.driver.release_segment(self.context, segment)
+            self.assertEqual(len(tunnel_ids), log_debug.call_count)
 
     def add_endpoint(self, ip=TUNNEL_IP_ONE, host=HOST_ONE):
         return self.driver.add_endpoint(ip, host)
@@ -295,21 +270,38 @@ class TunnelTypeMultiRangeTestMixin:
         super().setUp()
         self.driver = self.DRIVER_CLASS()
         self.driver._tunnel_ranges = self.TUNNEL_MULTI_RANGES
-        self.driver._sync_allocations()
         self.context = context.Context()
 
     def test_release_segment(self):
-        segments = [self.driver.allocate_tenant_segment(self.context)
-                    for i in range(4)]
+        def create_used_tunnel_segment(tunnel_id):
+            network = net_obj.Network(
+                self.context, name='test-net', id=uuidutils.generate_uuid(),
+                project_id=uuidutils.generate_uuid())
+            network.create()
+            net_seg = net_obj.NetworkSegment(
+                self.context,
+                network_id=network.id,
+                network_type=self.driver.get_type(),
+                physical_network='',
+                segmentation_id=tunnel_id,
+                id=uuidutils.generate_uuid())
+            net_seg.create()
+
+        expected_ids = {self.TUN_MIN0, self.TUN_MAX0,
+                        self.TUN_MIN1, self.TUN_MAX1}
+        segments = []
+        for _ in expected_ids:
+            segment = self.driver.allocate_tenant_segment(self.context)
+            create_used_tunnel_segment(segment[api.SEGMENTATION_ID])
+            segments.append(segment)
+        self.assertEqual(expected_ids,
+                         {s[api.SEGMENTATION_ID] for s in segments})
 
         # Release them in random order. No special meaning.
-        for i in (0, 2, 1, 3):
-            self.driver.release_segment(self.context, segments[i])
-
-        for key in (self.TUN_MIN0, self.TUN_MAX0,
-                    self.TUN_MIN1, self.TUN_MAX1):
-            alloc = self.driver.get_allocation(self.context, key)
-            self.assertFalse(alloc.allocated)
+        with mock.patch.object(type_tunnel.LOG, 'debug') as log_debug:
+            for i in (0, 2, 1, 3):
+                self.driver.release_segment(self.context, segments[i])
+            self.assertEqual(len(expected_ids), log_debug.call_count)
 
 
 class TunnelRpcCallbackTestMixin:
@@ -486,7 +478,6 @@ class TunnelTypeNetworkSegmentRangeTestMixin:
         # one of the `service_plugins`
         self.driver._initialize(RAW_TUNNEL_RANGES)
         self.driver.initialize_network_segment_range_support(self.start_time)
-        self.driver._sync_allocations()
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(
             self.context)
         self.assertEqual(1, len(ret))
@@ -502,7 +493,6 @@ class TunnelTypeNetworkSegmentRangeTestMixin:
 
     def test__delete_expired_default_network_segment_ranges(self):
         self.driver._tunnel_ranges = TUNNEL_RANGES
-        self.driver._sync_allocations()
         self.driver._delete_expired_default_network_segment_ranges(
             self.context, self.start_time)
         ret = obj_network_segment_range.NetworkSegmentRange.get_objects(

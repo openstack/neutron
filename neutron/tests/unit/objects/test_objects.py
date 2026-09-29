@@ -48,9 +48,7 @@ object_data = {
     'FlavorServiceProfileBinding': '1.0-a2c8731e16cefdac4571f80abf1f8930',
     'FloatingIP': '1.2-fb6675ea98d2a37e5883dc5962ec401c',
     'FloatingIPDNS': '1.0-ee3db848500fa1825235f701828c06d5',
-    'GeneveAllocation': '1.0-d5f76e8eac60a778914d61dd8e23e90f',
     'GeneveEndpoint': '1.0-040f026996b5952e2ae4ccd40ac61ca6',
-    'GreAllocation': '1.0-9ee1bbc4d999bea84c99425484b11ac5',
     'GreEndpoint': '1.0-040f026996b5952e2ae4ccd40ac61ca6',
     'IPAllocation': '1.0-47251b4c6d45c3b5feb0297fe5c461f2',
     'IPAllocationPool': '1.0-371016a6480ed0b4299319cb46d9215d',
@@ -134,8 +132,6 @@ object_data = {
     'SubPort': '1.0-72c8471068db1f0491b5480fe49b52bb',
     'Tag': '1.0-1a0d20379920ffa3cebfd3e016d2f7a0',
     'Trunk': '1.1-aa3922b39e37fbb89886c2ee8715cf49',
-    'VlanAllocation': '1.0-72636c1b7d5c8eef987bd09666e64f3e',
-    'VxlanAllocation': '1.0-934638cd32d00f81d6fbf93c8eb5755a',
     'VxlanEndpoint': '1.0-40522eafdcf838758711dfa886cbdb2e',
 }
 

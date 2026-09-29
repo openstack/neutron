@@ -16,7 +16,10 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
+from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.plugins.ml2 import api as ml2_api
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
@@ -41,23 +44,64 @@ def _make_segment_dict(obj):
             NETWORK_ID: obj.network_id}
 
 
-def add_network_segment(context, network_id, segment, segment_index=0,
+def _raise_segment_in_use(network_type, physical_network, segmentation_id):
+    if network_type == n_const.TYPE_VLAN:
+        raise n_exc.VlanIdInUse(vlan_id=segmentation_id,
+                                physical_network=physical_network)
+    raise n_exc.TunnelIdInUse(tunnel_id=segmentation_id)
+
+
+def _check_flat_segment_in_use(context, network_type, physical_network):
+    """Check if a flat segment already exists for this physical network.
+
+    The global unique constraint (network_type, physical_network,
+    segmentation_id) does not catch flat network duplicates because flat
+    segments have segmentation_id=NULL and NULL != NULL in SQL.
+
+    TODO(ralonsoh): in order to implement a real constraint in the DB engine,
+                    it would be needed to migrate the ``segmentation_id`` of
+                    the FLAT networks to be 0 (for example). 0 is not a valid
+                    VLAN ID (1-4094). That will enforce the (segmentation_id,
+                    physical_network, network_type) contraint.
+    """
+    if network_type != n_const.TYPE_FLAT:
+        return
+    existing = network_obj.NetworkSegment.get_objects(
+        context, network_type=network_type,
+        physical_network=physical_network)
+    if existing:
+        # TODO(ralonsoh): move this exception to ``_raise_segment_in_use`` if
+        #                 the upper improvement is implemented.
+        raise n_exc.FlatNetworkInUse(physical_network=physical_network)
+
+
+def add_network_segment(context, network_id, segment, segment_index=None,
                         is_dynamic=False):
-    with db_api.CONTEXT_WRITER.using(context):
-        netseg_obj = network_obj.NetworkSegment(
-            context, id=uuidutils.generate_uuid(), network_id=network_id,
-            network_type=segment.get(NETWORK_TYPE),
-            physical_network=segment.get(PHYSICAL_NETWORK),
-            segmentation_id=segment.get(SEGMENTATION_ID),
-            segment_index=segment_index, is_dynamic=is_dynamic)
-        netseg_obj.create()
-        registry.publish(resources.SEGMENT,
-                         events.PRECOMMIT_CREATE,
-                         add_network_segment,
-                         payload=events.DBEventPayload(
-                             context, resource_id=netseg_obj.id,
-                             states=(netseg_obj,)))
-        segment['id'] = netseg_obj.id
+    network_type = segment.get(NETWORK_TYPE)
+    physical_network = segment.get(PHYSICAL_NETWORK)
+    segmentation_id = segment.get(SEGMENTATION_ID)
+    try:
+        with db_api.CONTEXT_WRITER.using(context):
+            _check_flat_segment_in_use(context, network_type,
+                                       physical_network)
+            netseg_obj = network_obj.NetworkSegment(
+                context, id=uuidutils.generate_uuid(), network_id=network_id,
+                network_type=network_type,
+                physical_network=physical_network,
+                segmentation_id=segmentation_id,
+                segment_index=segment_index, is_dynamic=is_dynamic)
+            netseg_obj.create()
+            registry.publish(resources.SEGMENT,
+                             events.PRECOMMIT_CREATE,
+                             add_network_segment,
+                             payload=events.DBEventPayload(
+                                 context, resource_id=netseg_obj.id,
+                                 states=(netseg_obj,)))
+            segment['id'] = netseg_obj.id
+    except o_exc.NeutronDbObjectDuplicateEntry:
+        if is_dynamic:
+            raise
+        _raise_segment_in_use(network_type, physical_network, segmentation_id)
     LOG.info("Added segment %(id)s of type %(network_type)s for network "
              "%(network_id)s",
              {'id': netseg_obj.id,
@@ -66,13 +110,19 @@ def add_network_segment(context, network_id, segment, segment_index=0,
 
 
 def update_network_segment(context, segment_id, segmentation_id):
-    with db_api.CONTEXT_WRITER.using(context):
-        netseg_obj = network_obj.NetworkSegment.get_object(context,
-                                                           id=segment_id)
-        if not netseg_obj:
-            raise segments_exceptions.SegmentNotFound(segment_id=segment_id)
-        netseg_obj[ml2_api.SEGMENTATION_ID] = segmentation_id
-        netseg_obj.update()
+    try:
+        with db_api.CONTEXT_WRITER.using(context):
+            netseg_obj = network_obj.NetworkSegment.get_object(context,
+                                                               id=segment_id)
+            if not netseg_obj:
+                raise segments_exceptions.SegmentNotFound(
+                    segment_id=segment_id)
+            netseg_obj[ml2_api.SEGMENTATION_ID] = segmentation_id
+            netseg_obj.update()
+    except (o_exc.NeutronDbObjectDuplicateEntry, db_exc.DBDuplicateEntry):
+        _raise_segment_in_use(netseg_obj.network_type,
+                              netseg_obj.physical_network,
+                              segmentation_id)
 
     LOG.info("Updated segment %(id)s, segmentation_id: %(segmentation_id)s)",
              {'id': segment_id, 'segmentation_id': segmentation_id})

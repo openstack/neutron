@@ -40,7 +40,6 @@ from neutron.db.models import agent as agent_model
 from neutron.db.models import external_net
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3ha as l3ha_models
-from neutron.db.models.plugins.ml2 import vlanallocation
 from neutron.db.models import segment
 from neutron.db.models import tag as tag_model
 from neutron.db import models_v2
@@ -105,16 +104,6 @@ def table_exists(table_name):
     with db_api.CONTEXT_READER.using(ctx):
         tables = [t[0] for t in ctx.session.execute(text("SHOW TABLES;"))]
         return table_name in tables
-
-
-def count_vlan_allocations_invalid_segmentation_id():
-    ctx = context.get_admin_context()
-    with db_api.CONTEXT_READER.using(ctx):
-        query = ctx.session.query(vlanallocation.VlanAllocation)
-        query = query.filter(or_(
-            vlanallocation.VlanAllocation.vlan_id < constants.MIN_VLAN_TAG,
-            vlanallocation.VlanAllocation.vlan_id > constants.MAX_VLAN_TAG))
-        return query.count()
 
 
 def port_mac_addresses():
@@ -321,8 +310,6 @@ class CoreChecks(upgrade_checks.BaseChecks):
             (_("Worker counts configured"), self.worker_count_check),
             (_("NIC Switch agent check kernel"),
              self.nic_switch_agent_min_kernel_check),
-            (_("VLAN allocations valid segmentation ID check"),
-             self.vlan_allocations_segid_check),
             (_('Policy File JSON to YAML Migration'),
              (common_checks.check_policy_json, {'conf': cfg.CONF})),
             (_('Port MAC address sanity check'),
@@ -415,34 +402,6 @@ class CoreChecks(upgrade_checks.BaseChecks):
                   "hosts run with a kernel version 3.13 or newer.") % hosts)
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS, _("No NIC Switch agents detected."))
-
-    @staticmethod
-    def vlan_allocations_segid_check(checker):
-        """Checks that "ml2_vlan_allocations.vlan_id" has a valid value
-
-        Database register column "ml2_vlan_allocations.vlan_id" must be between
-        1 and 4094.
-        """
-        if not cfg.CONF.database.connection:
-            return upgradecheck.Result(
-                upgradecheck.Code.WARNING,
-                _("Database connection string is not set. Check for VLAN "
-                  "allocations with invalid segmentation IDs can't be done."))
-
-        count = count_vlan_allocations_invalid_segmentation_id()
-        if count:
-            return upgradecheck.Result(
-                upgradecheck.Code.WARNING,
-                _("There are %(count)s registers in 'ml2_vlan_allocations' "
-                  "table with an invalid segmentation ID. 'vlan_id' must be "
-                  "between %(min_vlan)s and %(max_vlan)s") %
-                {'count': count, 'min_vlan': constants.MIN_VLAN_TAG,
-                 'max_vlan': constants.MAX_VLAN_TAG})
-
-        return upgradecheck.Result(
-            upgradecheck.Code.SUCCESS,
-            _("All 'ml2_vlan_allocations' registers have a valid "
-              "segmentation ID."))
 
     @staticmethod
     def port_mac_address_sanity(checker):

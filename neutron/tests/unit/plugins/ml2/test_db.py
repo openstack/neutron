@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from oslo_utils import uuidutils
@@ -80,10 +81,10 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
     def _create_segments(self, segments, is_seg_dynamic=False,
                          network_id=uuidutils.generate_uuid()):
         self._setup_neutron_network(network_id)
-        for segment in segments:
+        for idx, segment in enumerate(segments):
             segments_db.add_network_segment(
                 self.ctx, network_id, segment,
-                is_dynamic=is_seg_dynamic)
+                segment_index=idx, is_dynamic=is_seg_dynamic)
             segment['network_id'] = network_id
 
         net_segments = segments_db.get_network_segments(
@@ -107,6 +108,60 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                    api.PHYSICAL_NETWORK: 'physnet1',
                    api.SEGMENTATION_ID: 1}
         self._create_segments([segment], is_seg_dynamic=True)
+
+    def test_add_network_segment_duplicate_vlan(self):
+        network_id = uuidutils.generate_uuid()
+        segment = {api.NETWORK_TYPE: constants.TYPE_VLAN,
+                   api.PHYSICAL_NETWORK: 'physnet1',
+                   api.SEGMENTATION_ID: 1}
+        self._create_segments([segment], network_id=network_id)
+        other_network_id = uuidutils.generate_uuid()
+        self._setup_neutron_network(other_network_id)
+        self.assertRaises(
+            n_exc.VlanIdInUse,
+            segments_db.add_network_segment,
+            self.ctx, other_network_id, segment.copy())
+
+    def test_add_network_segment_duplicate_tunnel(self):
+        network_id = uuidutils.generate_uuid()
+        segment = {api.NETWORK_TYPE: constants.TYPE_VXLAN,
+                   api.PHYSICAL_NETWORK: '',
+                   api.SEGMENTATION_ID: 100}
+        self._create_segments([segment], network_id=network_id)
+        other_network_id = uuidutils.generate_uuid()
+        self._setup_neutron_network(other_network_id)
+        self.assertRaises(
+            n_exc.TunnelIdInUse,
+            segments_db.add_network_segment,
+            self.ctx, other_network_id, segment.copy())
+
+    def test_add_network_segment_duplicate_flat(self):
+        network_id = uuidutils.generate_uuid()
+        segment = {api.NETWORK_TYPE: constants.TYPE_FLAT,
+                   api.PHYSICAL_NETWORK: 'physnet1',
+                   api.SEGMENTATION_ID: None}
+        self._create_segments([segment], network_id=network_id)
+        other_network_id = uuidutils.generate_uuid()
+        self._setup_neutron_network(other_network_id)
+        self.assertRaises(
+            n_exc.FlatNetworkInUse,
+            segments_db.add_network_segment,
+            self.ctx, other_network_id, segment.copy())
+
+    def test_update_network_segment_duplicate_vlan(self):
+        network_id = uuidutils.generate_uuid()
+        segment1 = {api.NETWORK_TYPE: constants.TYPE_VLAN,
+                    api.PHYSICAL_NETWORK: 'physnet1',
+                    api.SEGMENTATION_ID: 1}
+        segment2 = {api.NETWORK_TYPE: constants.TYPE_VLAN,
+                    api.PHYSICAL_NETWORK: 'physnet1',
+                    api.SEGMENTATION_ID: 2}
+        net_segments = self._create_segments(
+            [segment1, segment2], network_id=network_id)
+        self.assertRaises(
+            n_exc.VlanIdInUse,
+            segments_db.update_network_segment,
+            self.ctx, net_segments[1]['id'], segment1[api.SEGMENTATION_ID])
 
     def test_network_segments_for_multiprovider_network(self):
         segments = [{api.NETWORK_TYPE: 'vlan',
