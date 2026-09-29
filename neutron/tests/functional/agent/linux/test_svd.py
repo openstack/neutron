@@ -56,12 +56,6 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         method_idx = vni_methods.index(self._testMethodName)
         self._base_vni = 5000 + method_idx * 10
 
-        self._parent = utils.get_rand_name(15, 'svdp-')
-        privileged.create_interface(self._parent, None, 'dummy')
-        self._set_link_up(self._parent)
-        ip_lib.IPDevice(self._parent).addr.add(self.LOCAL_IP + '/32')
-        self.addCleanup(self._safe_delete, self._parent)
-
         self._vrf = utils.get_rand_name(15, 'svdr-')
         privileged.create_interface(self._vrf, None, 'vrf', vrf_table=9999)
         self._set_link_up(self._vrf)
@@ -70,8 +64,7 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
     def _create_svd(self):
         brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
         brvxlan.create(local_ip=self.LOCAL_IP, mac=self.MAC,
-                       vxlan_parent=self._parent, dstport=self.DSTPORT,
-                       br_mtu=self.BR_MTU)
+                       dstport=self.DSTPORT, br_mtu=self.BR_MTU)
         self.addCleanup(self._safe_delete, self._vx)
         self.addCleanup(self._safe_delete, self._br)
         return brvxlan
@@ -111,24 +104,12 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         self.assertIn('external', vx_output)
         self.assertIn('addrgenmode none', vx_output)
 
-    def test_create_svd_parent_not_found(self):
-        brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
-        self.assertRaises(linux_svd.SvdNoVxlanParent, brvxlan.create,
-                          local_ip=self.LOCAL_IP, mac=self.MAC,
-                          vxlan_parent='no-such-dev',
-                          dstport=self.DSTPORT,
-                          br_mtu=self.BR_MTU)
-        self.assertFalse(ip_lib.device_exists(self._br))
-        self.assertFalse(ip_lib.device_exists(self._vx))
-
     def test_create_svd_device_exists(self):
         self._create_svd()
         brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
         self.assertRaises(linux_svd.SvdDeviceAlreadyExists, brvxlan.create,
                           local_ip=self.LOCAL_IP, mac=self.MAC,
-                          vxlan_parent=self._parent,
-                          dstport=self.DSTPORT,
-                          br_mtu=self.BR_MTU)
+                          dstport=self.DSTPORT, br_mtu=self.BR_MTU)
 
     def test_delete_svd(self):
         svd = self._create_svd()
