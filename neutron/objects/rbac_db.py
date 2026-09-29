@@ -248,11 +248,13 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             return self.obj_context.session.delete(shared_prev)
 
     def from_db_object(self, db_obj):
-        self._load_shared(db_obj)
+        if getattr(self.__class__, '_rbac_shared_field', True):
+            self._load_shared(db_obj)
         super().from_db_object(db_obj)
 
     def obj_load_attr(self, attrname):
-        if attrname == 'shared':
+        if (attrname == 'shared' and
+                getattr(self.__class__, '_rbac_shared_field', True)):
             return self._load_shared()
         super().obj_load_attr(attrname)
 
@@ -290,8 +292,9 @@ def _update_hook(self, update_orig):
         # _update_post method because update() will reset all those changes
         obj_changes = self.obj_get_changes()
         update_orig(self)
-        _update_post(self, obj_changes)
-        self._load_shared(db_obj=self.db_obj)
+        if getattr(self.__class__, '_rbac_shared_field', True):
+            _update_post(self, obj_changes)
+            self._load_shared(db_obj=self.db_obj)
 
 
 def _create_post(self):
@@ -302,8 +305,9 @@ def _create_post(self):
 def _create_hook(self, orig_create):
     with self.db_context_writer(self.obj_context):
         orig_create(self)
-        _create_post(self)
-        self._load_shared(db_obj=self.db_obj)
+        if getattr(self.__class__, '_rbac_shared_field', True):
+            _create_post(self)
+            self._load_shared(db_obj=self.db_obj)
 
 
 def _to_dict_hook(self, to_dict_orig):
@@ -347,6 +351,12 @@ class RbacNeutronMetaclass(type):
                 reason=_('already a synthetic attribute'))
         dct['synthetic_fields'].append('shared')
 
+    @classmethod
+    def init_synthetic_fields(cls, bases, dct):
+        if not dct.get('synthetic_fields', None):
+            synthetic_attr = cls.get_attribute('synthetic_fields', bases, dct)
+            dct['synthetic_fields'] = synthetic_attr or []
+
     @staticmethod
     def subscribe_to_rbac_events(class_instance):
         for e in (events.BEFORE_CREATE, events.BEFORE_UPDATE,
@@ -355,8 +365,8 @@ class RbacNeutronMetaclass(type):
                                resources.RBAC_POLICY, e)
 
     @staticmethod
-    def validate_existing_attrs(cls_name, dct):
-        if 'shared' not in dct['fields']:
+    def validate_existing_attrs(cls_name, dct, uses_shared_field=True):
+        if uses_shared_field and 'shared' not in dct['fields']:
             raise KeyError(_('No shared key in %s fields') % cls_name)
         if 'rbac_db_cls' not in dct:
             raise AttributeError(_('rbac_db_cls not found in %s') % cls_name)
@@ -379,11 +389,20 @@ class RbacNeutronMetaclass(type):
             dct[orig_method_name] = hook_method
 
     def __new__(cls, name, bases, dct):
-        cls.validate_existing_attrs(name, dct)
-        cls.update_synthetic_fields(bases, dct)
+        uses_shared_field = dct.get('_rbac_shared_field')
+        if uses_shared_field is None:
+            uses_shared_field = cls._get_attribute('_rbac_shared_field', bases)
+        if uses_shared_field is None:
+            uses_shared_field = True
+        cls.validate_existing_attrs(name, dct, uses_shared_field)
+        if uses_shared_field:
+            cls.update_synthetic_fields(bases, dct)
+        else:
+            cls.init_synthetic_fields(bases, dct)
         cls.replace_class_methods_with_hooks(bases, dct)
         klass = type(name, (RbacNeutronDbObjectMixin,) + bases, dct)
-        klass.add_extra_filter_name('shared')
+        if uses_shared_field:
+            klass.add_extra_filter_name('shared')
         cls.subscribe_to_rbac_events(klass)
 
         return klass

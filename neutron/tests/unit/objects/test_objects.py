@@ -29,7 +29,7 @@ object_data = {
     'AddressAssociation': '1.0-b92160a3dd2fb7b951adcd2e6ae1665a',
     'AddressGroup': '1.2-1ddbf0a9f61785033ce31818ac62687e',
     'AddressGroupRBAC': '1.1-be82ed54376b85ee4f963d479ac48c91',
-    'AddressScope': '1.1-dd0dfdb67775892d3adc090e28e43bd8',
+    'AddressScope': '1.2-2019fecf9701570128fba5d8a9f2f9e3',
     'AddressScopeRBAC': '1.1-be82ed54376b85ee4f963d479ac48c91',
     'Agent': '1.1-4feb0abf8732a17c16dee962091d9203',
     'AllowedAddressPair': '1.0-9f9186b6f952fbf31d257b0458b852c0',

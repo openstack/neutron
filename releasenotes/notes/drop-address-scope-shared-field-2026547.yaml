@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The ``shared`` attribute is no longer accepted when creating or updating
+    address scopes. Use RBAC policies to share address scopes across
+    projects instead.
