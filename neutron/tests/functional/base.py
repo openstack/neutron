@@ -49,6 +49,11 @@ from neutron import manager
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
     placement as ovn_client_placement
+# Imported for its side effect of switching ovs.poller to poll(2) for every
+# OVSDB connection, including the ones of tests that do not load the OVN
+# mechanism driver.
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import \
+    impl_idl_ovn  # noqa
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron import service  # noqa
