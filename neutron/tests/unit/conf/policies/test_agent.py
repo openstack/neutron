@@ -38,6 +38,12 @@ class SystemAdminTests(AgentAPITestCase):
             policy.enforce,
             self.context, "create_agent", self.target)
 
+    def test_create_agent_ha_chassis_priority(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_agent:ha_chassis_priority", self.target)
+
     def test_get_agent(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -135,6 +141,11 @@ class AdminTests(AgentAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, "create_agent", self.target))
 
+    def test_create_agent_ha_chassis_priority(self):
+        self.assertTrue(
+            policy.enforce(self.context, "create_agent:ha_chassis_priority",
+                           self.target))
+
     def test_get_agent(self):
         self.assertTrue(
             policy.enforce(self.context, "get_agent", self.target))
@@ -209,6 +220,12 @@ class ProjectManagerTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "create_agent", self.target)
+
+    def test_create_agent_ha_chassis_priority(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_agent:ha_chassis_priority", self.target)
 
     def test_get_agent(self):
         self.assertRaises(
@@ -307,6 +324,12 @@ class ServiceRoleTests(AgentAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "create_agent", self.target)
+
+    def test_create_agent_ha_chassis_priority(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_agent:ha_chassis_priority", self.target)
 
     def test_get_agent(self):
         self.assertRaises(

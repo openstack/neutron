@@ -36,6 +36,21 @@ rules = [
         scope_types=['project'],
     ),
     policy.DocumentedRuleDefault(
+        name='create_agent:ha_chassis_priority',
+        check_str=lib_rules.ADMIN,
+        description=(
+            'Specify ``ha_chassis_priority`` attribute when creating an '
+            'agent'
+        ),
+        operations=[
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ],
+        scope_types=['project'],
+    ),
+    policy.DocumentedRuleDefault(
         name='get_agent',
         check_str=lib_rules.ADMIN,
         description='Get an agent',
