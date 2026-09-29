@@ -13,11 +13,14 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import copy
 from datetime import datetime
 import errno
 import os
+import select
 import shutil
+import threading
 from unittest import mock
 import warnings
 import weakref
@@ -31,6 +34,7 @@ from oslo_log import log
 from oslo_utils import fileutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
+import ovs.poller
 from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 
 from neutron.agent.linux import utils
@@ -66,6 +70,28 @@ LOG = log.getLogger(__name__)
 # This is the directory from which infra fetches log files for functional tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-functional-logs')
+
+# NOTE: ovs.poller.Poller multiplexes every OVSDB IDL connection -- both
+# the persistent run() loop and new-connection setup -- through
+# select.select() (ovs.poller.SelectPoll = _SelectSelect). The "use the
+# real select.poll() when eventlet/gevent aren't monkey-patching select"
+# alternative that _SelectSelect's own docstring describes is dead code
+# in ovs.poller: it is never actually wired up, so SelectPoll is always
+# the select()-based emulation regardless of whether eventlet is in use.
+# select.select() enforces the C library's FD_SETSIZE (1024) ceiling on
+# any fd *number* it is given, not just on the count of open fds, so a
+# long-lived stestr worker running hundreds of sequential OVN functional
+# tests eventually hits "ValueError: filedescriptor out of range in
+# select()" on every OVN IDL connection -- including brand new ones --
+# once any fd number crosses 1024. That failure retries forever (by
+# design, so it can tolerate a genuinely down OVSDB in production) and
+# hangs the worker. ovs.poller's own POLLIN/POLLOUT/POLLERR/POLLHUP/
+# POLLNVAL constants are defined to numerically match select.poll()'s,
+# confirming select.poll() is meant to be a drop-in SelectPoll. This job
+# doesn't use eventlet/gevent (OSKEN_HUB_TYPE=native), so switch to the
+# real, uncapped select.poll() implementation to remove that ceiling.
+if not ovs.poller._using_eventlet_green_select():
+    ovs.poller.SelectPoll = select.poll
 
 
 class LogCollector(fixtures.Fixture):
@@ -130,6 +156,100 @@ def config_decorator(method_to_decorate, config_tuples):
     return wrapper
 
 
+# NOTE: diagnostic instrumentation kept from investigating LP#2080199 ("Too
+# many open files" / functional job hangs on 'filedescriptor out of range
+# in select()'). It doesn't fix anything itself: it makes the open-fd/
+# thread count, and what's holding those fds, visible for every test in
+# one file per stestr worker process, so any future fd/thread leak can be
+# confirmed and traced to its source directly from collected job logs
+# instead of needing to reproduce it locally first.
+def _open_fds_report_path():
+    # stestr workers run many tests sequentially in the same process, so
+    # that's where an fd leak would accumulate across tests; one file per
+    # worker pid avoids concurrent writers from different workers.
+    # NOTE: this must live under DEFAULT_LOG_DIR (not just OS_LOG_PATH),
+    # since that's the directory the job's post-run playbook actually
+    # archives into dsvm-functional-logs.tar.gz and fetches -- a file
+    # written directly under OS_LOG_PATH is silently dropped and never
+    # makes it into the collected job logs.
+    return os.path.join(DEFAULT_LOG_DIR,
+                        'open-fds-worker-%d.log' % os.getpid())
+
+
+def _describe_open_fds():
+    """Return (num_fds, Counter of fd target -> count) for this process.
+
+    Sockets/pipes/anonymous inodes are bucketed by kind, since each has a
+    unique inode and grouping by the raw target would never repeat.
+    Regular files are bucketed by their exact path instead, since
+    repeated fds to the *same* path is the interesting signal for a leak
+    (e.g. a log file or db connection that is never closed on cleanup).
+    """
+    fd_dir = '/proc/self/fd'
+    counts = collections.Counter()
+    num_fds = 0
+    for fd in os.listdir(fd_dir):
+        num_fds += 1
+        try:
+            target = os.readlink(os.path.join(fd_dir, fd))
+        except OSError:
+            target = '<gone>'
+        if target.startswith('socket:'):
+            target = 'socket'
+        elif target.startswith('pipe:'):
+            target = 'pipe'
+        counts[target] += 1
+    return num_fds, counts
+
+
+def _describe_threads():
+    """Return (count, Counter of thread name -> count) of live threads.
+
+    A leaked socket/pipe pair is usually owned by a background thread
+    (e.g. an IDL connection's poller loop) that was never actually
+    joined on stop(); a thread-name count growing in lockstep with the
+    fd count would confirm a previous test's thread is still alive
+    rather than the fds being leaked with no thread attached.
+    """
+    names = collections.Counter(t.name for t in threading.enumerate())
+    return threading.active_count(), names
+
+
+class _OpenFdsTracker:
+    """Logs open-fd stats before/after each test in this worker process."""
+
+    # Shared by every instance created in this worker process, so the
+    # delta is meaningful test-to-test instead of resetting per TestCase.
+    _last_num_fds = None
+
+    def __init__(self, test_id):
+        self.test_id = test_id
+
+    def report(self, when):
+        try:
+            num_fds, counts = _describe_open_fds()
+        except OSError:
+            return
+        delta = ('n/a' if _OpenFdsTracker._last_num_fds is None
+                 else num_fds - _OpenFdsTracker._last_num_fds)
+        _OpenFdsTracker._last_num_fds = num_fds
+        top = ', '.join(f'{target}={count}'
+                        for target, count in counts.most_common(10))
+        num_threads, thread_names = _describe_threads()
+        threads_top = ', '.join(f'{name}={count}' for name, count in
+                                thread_names.most_common(10))
+        line = ('%s pid=%s when=%s test=%s num_fds=%s delta=%s '
+                'num_threads=%s top=[%s] threads=[%s]\n'
+                % (timeutils.utcnow().isoformat(), os.getpid(), when,
+                   self.test_id, num_fds, delta, num_threads, top,
+                   threads_top))
+        try:
+            with open(_open_fds_report_path(), 'a') as f:
+                f.write(line)
+        except OSError:
+            LOG.debug('Failed to write open-fds report', exc_info=True)
+
+
 class BaseLoggingTestCase(base.BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -140,6 +260,9 @@ class BaseLoggingTestCase(base.BaseTestCase):
         base.setup_test_logging(
             cfg.CONF, DEFAULT_LOG_DIR, "%s.txt" % self.id())
         cfg.CONF.set_override('use_helper_for_ns_read', False, group='AGENT')
+        fd_tracker = _OpenFdsTracker(self.id())
+        fd_tracker.report('setUp')
+        self.addCleanup(fd_tracker.report, 'tearDown')
 
 
 class BaseSudoTestCase(BaseLoggingTestCase):
@@ -417,12 +540,41 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
         if self.maintenance_worker:
             self.mech_driver.nb_synchronizer.stop()
             self.mech_driver.sb_synchronizer.stop()
-        for ovn_conn in (self.mech_driver.nb_ovn.ovsdb_connection,
-                         self.mech_driver.sb_ovn.ovsdb_connection):
+        for ovn_idl in (self.mech_driver.nb_ovn, self.mech_driver.sb_ovn):
+            # NOTE: the notify_loop thread blocks forever reading from its
+            # own queue, independently of the connection's run() thread, so
+            # it must be shut down explicitly here or it (and the fd/socket
+            # it holds) leaks for the lifetime of this worker process even
+            # when ovsdb_connection.stop() below succeeds. shutdown() itself
+            # is fire-and-forget (it just queues a STOP_EVENT), so join the
+            # thread afterwards to actually confirm it exited instead of
+            # assuming it did just because shutdown() didn't raise.
             try:
-                ovn_conn.stop(timeout=10)
-            except Exception:  # pylint:disable=bare-except
-                pass
+                notify_thread = ovn_idl.idl.notify_handler.notify_thread
+                ovn_idl.idl.notify_handler.shutdown()
+                notify_thread.join(30)
+                if notify_thread.is_alive():
+                    LOG.warning(
+                        'notify_thread for %s did not stop within 30s '
+                        'after shutdown() in test %s, it will leak.',
+                        ovn_idl, self.id())
+            except Exception:
+                LOG.debug('Failed to shutdown notify_handler for %s',
+                          ovn_idl, exc_info=True)
+            # NOTE: Connection.stop() joins its run() thread with the given
+            # timeout and, on timeout, returns False *without* raising --
+            # so the run() thread (and the socket it never got to close
+            # via idl.close()) silently leaks unless we check the return
+            # value ourselves.
+            try:
+                if not ovn_idl.ovsdb_connection.stop(timeout=30):
+                    LOG.warning(
+                        'ovsdb_connection.stop() timed out for %s in test '
+                        '%s, its run() thread did not exit and will leak.',
+                        ovn_idl, self.id())
+            except Exception:
+                LOG.debug('Failed to stop ovsdb_connection for %s',
+                          ovn_idl, exc_info=True)
 
     def restart(self, delete_dbs=True):
         self.stop()
