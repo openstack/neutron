@@ -124,13 +124,28 @@ def port_mac_addresses():
 
 
 def get_duplicate_network_segment_count():
+    """Return number of networksegment groups that violate uniqueness.
+
+    Checks both constraints that are enforced after the NULL-to-''
+    migration:
+
+    1. Existing: ``(network_id, network_type, physical_network,
+       segment_index)`` — tunnel segments with NULL
+       ``physical_network`` currently bypass this constraint
+       because ``NULL != NULL``.
+
+    2. New: ``(network_type, physical_network, segmentation_id)``
+       — prevents two networks from using the same segmentation
+       ID on the same physical network / tunnel type.
+    """
     ctx = context.get_admin_context()
     with db_api.CONTEXT_READER.using(ctx):
+        # Existing constraint: non-tunnel duplicates (already
+        # enforced, but check anyway).
         query = ctx.session.query(segment.NetworkSegment.network_id)
-        # for a unique constraint it's always NULL != NULL --> we filter them
-        # out
         query = query.filter(
-            segment.NetworkSegment.physical_network.isnot(None))
+            segment.NetworkSegment.physical_network.isnot(None),
+            segment.NetworkSegment.physical_network != '')
         query = query.group_by(
             segment.NetworkSegment.network_id,
             segment.NetworkSegment.network_type,
@@ -138,7 +153,56 @@ def get_duplicate_network_segment_count():
             segment.NetworkSegment.segment_index,
         )
         query = query.having(func.count() > 1)
-        return query.count()
+        count = query.count()
+
+        # Existing constraint: tunnel duplicates (currently hidden
+        # by NULL != NULL, exposed after NULL -> '').
+        query = ctx.session.query(segment.NetworkSegment.network_id)
+        query = query.filter(or_(
+            segment.NetworkSegment.physical_network.is_(None),
+            segment.NetworkSegment.physical_network == ''))
+        query = query.group_by(
+            segment.NetworkSegment.network_id,
+            segment.NetworkSegment.network_type,
+            segment.NetworkSegment.segment_index,
+        )
+        query = query.having(func.count() > 1)
+        count += query.count()
+
+        # New constraint: duplicate (type, physnet, segmentation_id)
+        # across networks — tunnel types.
+        query = ctx.session.query(
+            segment.NetworkSegment.network_type,
+            segment.NetworkSegment.segmentation_id)
+        query = query.filter(
+            segment.NetworkSegment.segmentation_id.isnot(None),
+            or_(
+                segment.NetworkSegment.physical_network.is_(None),
+                segment.NetworkSegment.physical_network == ''))
+        query = query.group_by(
+            segment.NetworkSegment.network_type,
+            segment.NetworkSegment.segmentation_id)
+        query = query.having(func.count() > 1)
+        count += query.count()
+
+        # New constraint: duplicate (type, physnet, segmentation_id)
+        # across networks — VLAN type.
+        query = ctx.session.query(
+            segment.NetworkSegment.network_type,
+            segment.NetworkSegment.physical_network,
+            segment.NetworkSegment.segmentation_id)
+        query = query.filter(
+            segment.NetworkSegment.segmentation_id.isnot(None),
+            segment.NetworkSegment.physical_network.isnot(None),
+            segment.NetworkSegment.physical_network != '')
+        query = query.group_by(
+            segment.NetworkSegment.network_type,
+            segment.NetworkSegment.physical_network,
+            segment.NetworkSegment.segmentation_id)
+        query = query.having(func.count() > 1)
+        count += query.count()
+
+        return count
 
 
 def port_binding_profiles():
@@ -382,29 +446,39 @@ class CoreChecks(upgrade_checks.BaseChecks):
     def networksegments_unique_constraint_check(checker):
         """Checks that there are no duplicate networksegments
 
-        No two networksegments should never share the same network_id,
-        network_type and physical_network. Two NULL values are not regarded
-        as equal for a unique constraint, so networksegments with NULL as
-        physical_network are ignored by this check.
+        Detects rows that would violate either of the two unique
+        constraints on ``networksegments`` after the migration that
+        converts tunnel ``physical_network`` from NULL to '':
+
+        1. Existing ``(network_id, network_type, physical_network,
+           segment_index)`` — currently bypassed for tunnels because
+           ``NULL != NULL``.
+
+        2. New ``(network_type, physical_network, segmentation_id)``
+           — prevents two networks from sharing the same
+           segmentation ID.
+
+        Duplicates must be resolved manually before upgrading.
         """
         if not cfg.CONF.database.connection:
             return upgradecheck.Result(
                 upgradecheck.Code.WARNING,
-                _("Database connection string is not set. Check for port MAC "
-                  "sanity can't be done."))
+                _("Database connection string is not set. Check for "
+                  "duplicate networksegments can't be done."))
 
         count = get_duplicate_network_segment_count()
         if count:
             return upgradecheck.Result(
                 upgradecheck.Code.WARNING,
-                _("There are %d instances of networksegments sharing the same "
-                  "combination of network_id, network_type and "
-                  "physical_network.") % count)
+                _("There are %d groups of duplicate networksegments "
+                  "that would violate unique constraints after the "
+                  "physical_network NULL-to-empty-string migration. "
+                  "These duplicates must be resolved manually before "
+                  "upgrading.") % count)
 
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
-            _("No networksegments sharing the same network_id, network_type "
-              "and physical_network found."))
+            _("No duplicate networksegments found."))
 
     @staticmethod
     def port_binding_profile_sanity(checker):

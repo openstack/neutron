@@ -148,7 +148,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
     def _populate_new_default_network_segment_ranges(self, ctx, start_time):
         for tun_min, tun_max in self._tunnel_ranges:
             range_obj.NetworkSegmentRange.new_default(
-                ctx, self.get_type(), None, tun_min, tun_max, start_time)
+                ctx, self.get_type(), '', tun_min, tun_max, start_time)
 
     @db_api.retry_db_errors
     def _get_network_segment_ranges_from_db(self, ctx=None):
@@ -300,7 +300,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
             if not alloc:
                 raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
         return {api.NETWORK_TYPE: self.get_type(),
-                api.PHYSICAL_NETWORK: None,
+                api.PHYSICAL_NETWORK: '',
                 api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
                 api.MTU: self.get_mtu()}
 
@@ -310,7 +310,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
         if not alloc:
             return
         return {api.NETWORK_TYPE: self.get_type(),
-                api.PHYSICAL_NETWORK: None,
+                api.PHYSICAL_NETWORK: '',
                 api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
                 api.MTU: self.get_mtu()}
 

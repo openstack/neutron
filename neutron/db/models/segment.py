@@ -61,6 +61,11 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
             segment_index,
             name='uniq_networksegment0network_id0'
                  'network_type0physnet0sidx'),
+        sa.UniqueConstraint(
+            network_type,
+            physical_network,
+            segmentation_id,
+            name='uniq_networksegment0type0physnet0segid'),
         model_base.BASEV2.__table_args__
     )
 
