@@ -14,6 +14,7 @@ from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins.ml2 import api as ml2_api
 from oslo_log import log as logging
@@ -124,6 +125,21 @@ def get_segment_by_id(context, segment_id):
         net_obj = network_obj.NetworkSegment.get_object(context, id=segment_id)
         if net_obj:
             return _make_segment_dict(net_obj)
+
+
+def get_segments_physnets(context, network_id):
+    """Get the segments and their physical networks.
+
+    :param context: neutron context
+    :param network_ids: list of network UUIDs
+    :returns: dict mapping, segment ID to physical network name
+    """
+    segments = get_network_segments(context, network_id)
+    return {
+        s['id']: s[PHYSICAL_NETWORK]
+        for s in segments
+        if s[NETWORK_TYPE] in n_const.TYPE_PHYSICAL
+    }
 
 
 def get_dynamic_segment(context, network_id, physical_network=None,
