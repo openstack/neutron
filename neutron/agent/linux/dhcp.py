@@ -37,6 +37,7 @@ from oslo_utils import fileutils
 from oslo_utils import netutils
 from oslo_utils import uuidutils
 
+from neutron._i18n import _
 from neutron.agent.common import utils as agent_common_utils
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -236,6 +237,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     # Track running interfaces, indexed by network ID, for example,
     # {net-id-1: set(intf_1, intf_2), net-id-2: set(intf_3, intf_4), ...}
     _interfaces = collections.defaultdict(set)
+    _SERVICE_NAME = ''
 
     def __init__(self, conf, network, process_monitor, version=None,
                  plugin=None, segment=None):
@@ -339,7 +341,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
             conf=self.conf,
             uuid=self._get_process_uuid(),
             namespace=self.network.namespace,
-            service=DNSMASQ_SERVICE_NAME,
+            service=self.service_name,
             default_cmd_callback=cmd_callback,
             pid_file=self.get_conf_file_name('pid'),
             run_as_root=True)
@@ -347,7 +349,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def disable(self, retain_port=False, block=False, **kwargs):
         """Disable DHCP for this network by killing the local process."""
         pm = self._get_process_manager()
-        self.process_monitor.unregister(pm.uuid, DNSMASQ_SERVICE_NAME)
+        self.process_monitor.unregister(pm.uuid, self.service_name)
         pm.disable(sig=str(int(signal.SIGTERM)))
         if block:
             try:
@@ -408,6 +410,12 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def active(self):
         return self._get_process_manager().active
 
+    @property
+    def service_name(self):
+        if not self._SERVICE_NAME:
+            raise AttributeError(_('SERVICE_NAME is not set'))
+        return self._SERVICE_NAME
+
     @abc.abstractmethod
     def spawn_process(self):
         pass
@@ -418,6 +426,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
 
 
 class Dnsmasq(DhcpLocalProcess):
+    _SERVICE_NAME = DNSMASQ_SERVICE_NAME
     _SUBNET_TAG_PREFIX = 'subnet-%s'
     _PORT_TAG_PREFIX = 'port-%s'
 
@@ -581,7 +590,7 @@ class Dnsmasq(DhcpLocalProcess):
         pm.enable(reload_cfg=reload_with_HUP, ensure_active=True)
 
         self.process_monitor.register(uuid=pm.uuid,
-                                      service_name=DNSMASQ_SERVICE_NAME,
+                                      service_name=self.service_name,
                                       monitored_process=pm)
 
     def _is_dhcp_release6_supported(self):
