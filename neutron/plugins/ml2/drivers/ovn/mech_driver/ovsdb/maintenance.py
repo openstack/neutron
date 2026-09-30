@@ -20,9 +20,11 @@ import threading
 
 import futurist
 from futurist import periodics
+from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api import extensions
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
@@ -1188,6 +1190,32 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 cmds.append(self._nb_idl.dns_set_options(
                     dns.uuid, **dns_options))
 
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Remove stale DNS records when DNS integration is disabled.'))
+    def remove_stale_dns_records(self):
+        """Remove Neutron-owned DNS records if DNS integration is disabled."""
+        plugin = self._ovn_client._plugin
+        dns_integration_enabled = (
+            extensions.is_extension_supported(plugin, dns_apidef.ALIAS) and
+            CONF.dns_domain != n_const.DNS_DOMAIN_DEFAULT)
+        if dns_integration_enabled:
+            raise periodics.NeverAgain()
+
+        dns_rows = self._nb_idl.dns_list().execute(check_error=True)
+        cmds = [self._nb_idl.dns_del(dns.uuid)
+                for dns in dns_rows if 'ls_name' in dns.external_ids]
         if cmds:
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
