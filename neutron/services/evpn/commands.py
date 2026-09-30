@@ -66,6 +66,8 @@ class CreateEVPNRouterCommand(command.BaseCommand):
         ovn_utils.setkeys(lrouter, 'options', {
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING: 'true',
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_VRF_ID: str(self.vni),
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
+                evpn_const.EVPN_LR_REDISTRIBUTE_OPTION,
             ovn_const.LR_OPTIONS_DR_VRF_NAME:
                 evpn_agent_utils.evpn_vrf_name(self.router_id),
         })
@@ -168,7 +170,7 @@ class AdvertiseHostCommand(command.BaseCommand):
 
         ovn_utils.setkeys(lrp, 'options', {
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
-                'connected-as-host',
+                bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
         })
 
 

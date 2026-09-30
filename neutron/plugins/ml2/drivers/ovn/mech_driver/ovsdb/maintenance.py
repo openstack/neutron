@@ -43,6 +43,7 @@ from neutron.common.ovn import utils
 from neutron.common import wsgi_utils
 from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron.db.models import evpn as evpn_models
 from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.db import segments_db
@@ -51,6 +52,8 @@ from neutron.objects import ports as ports_obj
 from neutron.objects import pvlan as pvlan_obj
 from neutron.objects import router as router_obj
 from neutron.objects import securitygroup as sg_obj
+from neutron.services.bgp import constants as bgp_const
+from neutron.services.evpn import constants as evpn_const
 from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn_driver
 
 
@@ -1595,6 +1598,52 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             with self._nb_idl.transaction(check_error=True) as txn:
                 for pg in pgs:
                     txn.add(self._nb_idl.pg_del(pg.name, if_exists=True))
+
+        raise periodics.NeverAgain()
+
+    # TODO(ichen): Remove this method in the I+4=M (2029.1) cycle (2nd next
+    # SLURP release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    @log_maintenance_task(
+        start_message='Provisioning static route redistribution on existing '
+                      'EVPN routers.')
+    def provision_evpn_static_route_redistribution(self):
+        """Set dynamic-routing-redistribute=static on existing EVPN routers.
+
+        This maintenance method provisions the static route redistribution
+        option on EVPN logical routers that were created before this feature
+        was added. The option enables static routes to be advertised through
+        EVPN, which is required for some EVPN deployments.
+
+        This method queries all routers with EVPN instances, checks if they
+        have the redistribute option set in OVN, and provisions it if missing.
+        """
+
+        context = n_context.get_admin_context()
+
+        # Query all router IDs that have EVPN instances (optimized to avoid
+        # loading joined VNIVLANMapping and Router relationships)
+        router_ids = evpn_models.EVPNL3Instance.get_all_router_ids(context)
+
+        if not router_ids:
+            LOG.debug('No EVPN routers found, skipping maintenance task')
+            raise periodics.NeverAgain()
+
+        # Build all db_set commands for a single transaction
+        options = {bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
+                   evpn_const.EVPN_LR_REDISTRIBUTE_OPTION}
+
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for router_id in router_ids:
+                lr_name = utils.ovn_name(router_id)
+                txn.add(self._nb_idl.db_set(
+                    'Logical_Router', lr_name, ('options', options)))
+
+        LOG.info('Provisioned static route redistribution for %d EVPN '
+                 'routers', len(router_ids))
 
         raise periodics.NeverAgain()
 
