@@ -47,9 +47,11 @@ class IpAvailabilityMixin:
 
     # Columns for the network/subnet and used_ip counts
     network_used_ips_columns = list(common_columns)
-    network_used_ips_columns.append(mod.Network.name.label(NETWORK_NAME))
+    network_used_ips_columns.append(
+        mod.Network.__table__.c.name.label(NETWORK_NAME))
     network_used_ips_columns.append(mod.Network.tenant_id)
-    network_used_ips_columns.append(mod.Subnet.name.label(SUBNET_NAME))
+    network_used_ips_columns.append(
+        mod.Subnet.__table__.c.name.label(SUBNET_NAME))
     # Aggregate query computed column
     network_used_ips_computed_columns = [
         func.count(mod.IPAllocation.subnet_id).label('used_ips')]
