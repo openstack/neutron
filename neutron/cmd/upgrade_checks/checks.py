@@ -58,6 +58,7 @@ LAST_NETWORKING_OVN_EXPAND_HEAD = "e55d09277410"
 LAST_NETWORKING_OVN_CONTRACT_HEAD = "1d271ead4eb6"
 
 _OVN_CLIENT = None
+_OVN_SB_API = None
 
 
 def get_agents(agt_type):
@@ -218,6 +219,31 @@ def get_ovn_client():
     return _OVN_CLIENT
 
 
+def get_ovn_sb_api():
+    global _OVN_SB_API
+    if _OVN_SB_API is None:
+        _OVN_SB_API = impl_idl_ovn.OvsdbSbOvnIdl.from_worker(
+            worker.MaintenanceWorker)
+    return _OVN_SB_API
+
+
+def get_chassis_with_ovn_metadata_agent():
+    """Return Chassis_Private names that still have a metadata agent registered
+
+    The standalone ``neutron-ovn-metadata-agent`` sets
+    ``neutron:ovn-metadata-id`` in Chassis_Private.external_ids.
+    """
+    chassis_names = []
+    for ch_private in get_ovn_sb_api().db_list_rows(
+            'Chassis_Private').execute(check_error=True):
+        # NOTE(ralonsoh): the new OVN agent adds the key
+        # OVN_AGENT_NEUTRON_ID_KEY = 'neutron:ovn-neutron-agent-id' to the
+        # Chassis_Private register, instead of 'neutron:ovn-metadata-id'.
+        if ch_private.external_ids.get('neutron:ovn-metadata-id'):
+            chassis_names.append(ch_private.name)
+    return chassis_names
+
+
 class CoreChecks(upgrade_checks.BaseChecks):
 
     def __init__(self):
@@ -250,6 +276,8 @@ class CoreChecks(upgrade_checks.BaseChecks):
              self.extra_dhcp_options_check),
             (_('OVN support for BM provisioning over IPv6 check'),
              self.ovn_for_bm_provisioning_over_ipv6_check),
+            (_('OVN Metadata agent check'),
+             self.ovn_metadata_agent_check),
             (_('ML2/OVS IGMP Flood check'),
              self.ml2_ovs_igmp_flood_check),
             (_('Floating IP Port forwarding and OVN L3 plugin configuration'),
@@ -562,6 +590,49 @@ class CoreChecks(upgrade_checks.BaseChecks):
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
             _('Version of OVN supports iPXE over IPv6.'))
+
+    @staticmethod
+    def ovn_metadata_agent_check(checker):
+        """Check that the deprecated OVN Met. agent is not registered in OVN.
+
+        The standalone ``neutron-ovn-metadata-agent`` was removed. Its
+        presence is indicated by ``neutron:ovn-metadata-id`` in the OVN SB
+        Chassis_Private table.
+        """
+        if 'ovn' not in cfg.CONF.ml2.mechanism_drivers:
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _('ML2/OVN mechanism driver is not enabled; skipping OVN '
+                  'Metadata agent check.'))
+        try:
+            chassis_names = get_chassis_with_ovn_metadata_agent()
+        except RuntimeError:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('Invalid OVN connection parameters provided. OVN Metadata '
+                  'agent check could not be completed.'))
+        except Exception as err:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('Failed to connect to OVN Southbound database. OVN Metadata '
+                  'agent check could not be completed. Error: %s') % err)
+
+        if chassis_names:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('The deprecated OVN Metadata agent '
+                  '(``neutron-ovn-metadata-agent``) is still registered in '
+                  'the OVN Southbound database on chassis: %(chassis)s. Stop '
+                  'the service on those hosts and use '
+                  '``neutron-ovn-agent`` with the metadata extension '
+                  'instead. The ``neutron-ovn-agent`` will remove the stale '
+                  'Chassis_Private external IDs on startup.') %
+                {'chassis': ', '.join(sorted(chassis_names))})
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _('No OVN Metadata agent is registered in the OVN Southbound '
+              'database.'))
 
     @staticmethod
     def ml2_ovs_igmp_flood_check(checker):
