@@ -44,9 +44,6 @@ disable_service ovn-northd
 # on the controller node that depend on it.
 disable_service ovn-controller
 
-# Disable the ovn metadata agent.
-disable_service neutron-ovn-metadata-agent
-
 # Disable the nova compute service on the controller node because the
 # architecture only deploys it on separate compute nodes.
 disable_service n-cpu

@@ -28,8 +28,8 @@ from neutron.agent.linux.ip_lib import IpLinkCommand as ip_link
 from neutron.agent.linux.ip_lib import IpNetnsCommand as ip_netns
 from neutron.agent.linux.ip_lib import IPWrapper as ip_wrap
 from neutron.agent.linux import utils as linux_utils
-from neutron.agent.ovn.metadata import agent
-from neutron.agent.ovn.metadata import driver
+from neutron.agent.ovn.extensions import metadata as agent
+from neutron.agent.ovn.extensions.metadata import driver
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
 from neutron.conf.agent.metadata import config as meta_conf
@@ -64,8 +64,6 @@ class ConfFixture(config_fixture.Config):
             meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS, self.conf)
         ovn_meta_conf.register_meta_conf_opts(
             meta_conf.METADATA_PROXY_HANDLER_OPTS, self.conf)
-        ovn_meta_conf.register_meta_conf_opts(
-            ovn_meta_conf.OVS_OPTS, self.conf, group='ovs')
         ovn_conf.register_opts()
 
 

@@ -14,7 +14,7 @@
 
 import collections
 import functools
-import secrets
+import re
 import threading
 import uuid
 
@@ -30,22 +30,33 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.ovn.extensions import extension_manager
-from neutron.agent.ovn.metadata import driver as metadata_driver
-from neutron.agent.ovn.metadata import ovsdb
-from neutron.agent.ovn.metadata import server_socket as metadata_server
+from neutron.agent.ovn.extensions.metadata import driver as meta_driver
+from neutron.agent.ovn.extensions.metadata import server_socket as meta_server
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
 from neutron.conf.agent.database import agents_db
+from neutron.conf.agent.metadata import config as meta_conf
+from neutron.conf.agent.ovn.metadata import config as ovn_meta
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 
 
 LOG = log.getLogger(__name__)
+EXT_NAME = 'metadata'
 agents_db.register_db_agents_opts()
 _SYNC_STATE_LOCK = threading.RLock()
 CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
+SB_IDL_TABLES = ['Encap',
+                 'Port_Binding',
+                 'Datapath_Binding',
+                 'SB_Global',
+                 'Chassis',
+                 'Chassis_Private',
+                 ]
+
 NS_PREFIX = ovn_const.OVN_METADATA_PREFIX
+MAC_PATTERN = re.compile(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})', re.I)
 OVN_VIF_PORT_TYPES = (
     "", ovn_const.LSP_TYPE_EXTERNAL, ovn_const.LSP_TYPE_LOCALPORT)
 
@@ -55,7 +66,8 @@ MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
                                                                'mtu',
                                                                ])
 
-OVN_METADATA_UUID_NAMESPACE = uuid.UUID('d34bf9f6-da32-4871-9af8-15a4626b41ab')
+OVN_METADATA_UUID_NAMESPACE = uuid.UUID(
+    'd34bf9f6-da32-4871-9af8-15a4626b41ab')
 
 
 def _sync_lock(f):
@@ -265,73 +277,6 @@ class PortBindingDeletedEvent(PortBindingEvent):
         return True
 
 
-class ChassisPrivateCreateEvent(row_event.RowEvent):
-    """Row create event - Chassis name == our_chassis.
-
-    On connection, we get a dump of all chassis so if we catch a creation
-    of our own chassis it has to be a reconnection. In this case, we need
-    to do a full sync to make sure that we capture all changes while the
-    connection to OVSDB was down.
-    """
-
-    def __init__(self, agent):
-        self._extension = None
-        self.first_time = True
-        events = (self.ROW_CREATE,)
-        super().__init__(events, 'Chassis_Private', None)
-        self.agent = agent
-        self.conditions = (('name', '=', self.agent.chassis),)
-        self.event_name = self.__class__.__name__
-
-    def run(self, event, row, old):
-        if self.first_time:
-            self.first_time = False
-        else:
-            # NOTE(lucasagomes): Re-register the ovn metadata agent
-            # with the local chassis in case its entry was re-created
-            # (happens when restarting the ovn-controller)
-            self.agent.register_metadata_agent()
-            LOG.info("Connection to OVSDB established, doing a full sync")
-            self.agent.sync()
-
-
-class SbGlobalUpdateEvent(row_event.RowEvent):
-    """Row update event on SB_Global table."""
-
-    def __init__(self, agent):
-        table = 'SB_Global'
-        events = (self.ROW_UPDATE,)
-        super().__init__(events, table, None)
-        self.agent = agent
-        self.event_name = self.__class__.__name__
-        self.first_run = True
-
-    def run(self, event, row, old):
-
-        def _update_chassis(self, row):
-            self.agent.sb_idl.db_set(
-                'Chassis_Private', self.agent.chassis, ('external_ids', {
-                    ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY:
-                        str(row.nb_cfg)})).execute()
-
-        delay = 0
-        if self.first_run:
-            self.first_run = False
-        else:
-            # We occasionally see port binding failed errors due to
-            # the ml2 driver refusing to bind the port to a dead agent.
-            # if all agents heartbeat at the same time, they will all
-            # cause a load spike on the server. To mitigate that we
-            # need to spread out the load by introducing a random delay.
-            # clamp the max delay between 3 and 10 seconds.
-            max_delay = max(min(cfg.CONF.agent_down_time // 3, 10), 3)
-            delay = secrets.SystemRandom().randint(0, max_delay)
-
-        LOG.debug("Delaying updating chassis table for %s seconds", delay)
-        timer = threading.Timer(delay, _update_chassis, [self, row])
-        timer.start()
-
-
 class MetadataAgent:
 
     def __init__(self, conf):
@@ -383,110 +328,11 @@ class MetadataAgent:
                   self.chassis, self.chassis_id, self.ovn_bridge)
 
     def _update_chassis_private_config(self):
-        """Update the Chassis_Private register information
-
-        This method should be called once the Metadata Agent has been
-        registered (method ``register_metadata_agent`` has been called) and
-        the corresponding Chassis_Private register has been created/updated.
-        """
+        """Update the Chassis_Private register information."""
         external_ids = {ovn_const.OVN_AGENT_OVN_BRIDGE: self.ovn_bridge}
         self.sb_idl.db_set(
             'Chassis_Private', self.chassis,
             ('external_ids', external_ids)).execute(check_error=True)
-
-    def _update_metadata_sb_cfg_key(self):
-        """Update the Chassis_Private nb_cfg information in external_ids
-
-        This method should be called once the Metadata Agent has been
-        registered (method ``register_metadata_agent`` has been called) and
-        the corresponding Chassis_Private register has been created/updated
-        and chassis private config has been updated.
-        """
-        nb_cfg = self.sb_idl.db_get('Chassis_Private',
-                                    self.chassis, 'nb_cfg').execute()
-        external_ids = {ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: str(nb_cfg)}
-        self.sb_idl.db_set(
-            'Chassis_Private', self.chassis,
-            ('external_ids', external_ids)).execute(check_error=True)
-
-    def _cleanup_previous_tags(self):
-        """Remove any existing tag related to the OVN agent
-
-        The OVN Metadata agent is deprecated and marked for removal in 2026.2.
-
-        While both agents can provide the same functionality (OVN Metadata
-        agent and OVN agent with the metadata extension), it is needed to
-        provide a cleanup method for any leftover tag from the other agent.
-        """
-        metadata_keys = (ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY,
-                         ovn_const.OVN_AGENT_NEUTRON_DESC_KEY,
-                         ovn_const.OVN_AGENT_NEUTRON_ID_KEY)
-        self.sb_idl.db_remove(
-            'Chassis_Private', self.chassis, 'external_ids',
-            *metadata_keys, if_exists=True).execute(check_error=True)
-
-    @_sync_lock
-    def resync(self):
-        """Resync the agent.
-
-        Reload the configuration and sync the agent again.
-        """
-        self._load_config()
-        self._update_chassis_private_config()
-        self._update_metadata_sb_cfg_key()
-        self.sync()
-
-    def start(self):
-        # Open the connection to OVS database
-        self.ovs_idl = ovsdb.MetadataAgentOvsIdl().start()
-        self._load_config()
-
-        tables = ('Encap', 'Port_Binding', 'Datapath_Binding', 'SB_Global',
-                  'Chassis', 'Chassis_Private')
-        events = (PortBindingUpdatedEvent(self),
-                  PortBindingCreateWithChassis(self),
-                  PortBindingDeletedEvent(self),
-                  SbGlobalUpdateEvent(self),
-                  ChassisPrivateCreateEvent(self),
-                  )
-
-        self._post_fork_event.clear()
-        self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
-            chassis=self._chassis, tables=tables, events=events).start()
-
-        # Now IDL connections can be safely used.
-        self._post_fork_event.set()
-
-        # Launch the server that will act as a proxy between the VM's and Nova.
-        self._proxy = metadata_server.UnixDomainMetadataProxy(
-            self.conf, self._chassis, sb_idl=self.sb_idl)
-        self._proxy.run()
-
-        # Do the initial sync.
-        # Provisioning handled by PortBindingCreateWithChassis
-        self.sync(provision=False)
-
-        # Register the agent with its corresponding Chassis
-        self._cleanup_previous_tags()
-        self.register_metadata_agent()
-        self._update_chassis_private_config()
-        self._update_metadata_sb_cfg_key()
-
-        LOG.warning(
-            'The OVN Metadata agent is deprecated in favor of the OVN agent '
-            'with the metadata extension. It has been deprecated in 2025.2 '
-            'and will be removed in 2026.2')
-        self._proxy.wait()
-
-    @ovn_utils.retry()
-    def register_metadata_agent(self):
-        # NOTE(lucasagomes): db_add() will not overwrite the UUID if
-        # it's already set.
-        # Generate unique, but consistent metadata id for chassis name
-        agent_id = uuid.uuid5(self.chassis_id, 'metadata_agent')
-        ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: str(agent_id)}
-        self.sb_idl.db_add('Chassis_Private', self.chassis, 'external_ids',
-                           ext_ids).execute(check_error=True)
 
     def _get_own_chassis_name(self):
         """Return the external_ids:system-id value of the Open_vSwitch table.
@@ -587,7 +433,7 @@ class MetadataAgent:
         LOG.info("Cleaning up %s namespace which is not needed anymore",
                  namespace)
 
-        metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
+        meta_driver.MetadataDriver.destroy_monitored_metadata_proxy(
             self._process_monitor, net_name, self.conf, namespace)
 
         veth_name = self._get_veth_name(net_name)
@@ -859,8 +705,153 @@ class MetadataAgent:
             bind_address_v6 = n_const.METADATA_V6_IP
 
         # Spawn metadata proxy if it's not already running.
-        metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
+        meta_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, namespace, n_const.METADATA_PORT,
             self.conf, bind_address=n_const.METADATA_V4_IP,
             network_id=net_name, bind_address_v6=bind_address_v6,
             bind_interface=veth_name[1])
+
+
+class ChassisPrivateCreateEvent(extension_manager.OVNExtensionEvent,
+                                row_event.RowEvent):
+    """Row create event - Chassis name == our_chassis."""
+
+    def __init__(self, ovn_agent):
+        self._first_time = True
+        events = (self.ROW_CREATE,)
+        super().__init__(events, 'Chassis_Private', None,
+                         extension_name='metadata')
+        self._agent = ovn_agent
+        self.conditions = (('name', '=', self._agent.chassis),)
+        self.event_name = self.__class__.__name__
+
+    def run(self, event, row, old):
+        if self._first_time:
+            self._first_time = False
+            return
+
+        # Re-register the OVN agent with the local chassis in case its
+        # entry was re-created (happens when restarting the ovn-controller)
+        self.agent._update_chassis_private_config()
+        self.agent.sync()
+
+
+class MetadataExtension(extension_manager.OVNAgentExtension,
+                        MetadataAgent):
+
+    def __init__(self):
+        super().__init__(conf=cfg.CONF)
+        vlog.use_python_logger(max_level=config.get_ovn_ovsdb_log_level())
+        self._process_monitor = None
+        self._proxy = None
+        # We'll restart all haproxy instances upon start so that they honor
+        # any potential changes in their configuration.
+        self.restarted_metadata_proxy_set = set()
+
+    @staticmethod
+    def _register_config_options():
+        ovn_meta.register_meta_conf_opts(meta_conf.SHARED_OPTS)
+        ovn_meta.register_meta_conf_opts(
+            meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS)
+        ovn_meta.register_meta_conf_opts(meta_conf.METADATA_PROXY_HANDLER_OPTS)
+        ovn_meta.register_meta_conf_opts(meta_conf.METADATA_RATE_LIMITING_OPTS,
+                                         group=meta_conf.RATE_LIMITING_GROUP)
+        ovn_meta.register_meta_conf_opts(meta_conf.METADATA_HAPROXY_OPTS,
+                                         group=meta_conf.HAPROXY_GROUP)
+
+    def initialize(self, *args):
+        self._register_config_options()
+        self._process_monitor = external_process.ProcessMonitor(
+            config=self.agent_api.conf, resource_type='metadata')
+
+    @property
+    def name(self):
+        return 'Metadata OVN agent extension'
+
+    @property
+    def ovs_idl_events(self):
+        return []
+
+    @property
+    def nb_idl_tables(self):
+        return []
+
+    @property
+    def nb_idl_events(self):
+        return []
+
+    @property
+    def sb_idl_tables(self):
+        return SB_IDL_TABLES
+
+    @property
+    def sb_idl_events(self):
+        return [PortBindingUpdatedEvent,
+                PortBindingDeletedEvent,
+                PortBindingCreateWithChassis,
+                ChassisPrivateCreateEvent,
+                ]
+
+    @property
+    def nb_idl(self):
+        return self.agent_api.nb_idl
+
+    @nb_idl.setter
+    def nb_idl(self, val):
+        self.agent_api.nb_idl = val
+
+    @property
+    def sb_idl(self):
+        return self.agent_api.sb_idl
+
+    @sb_idl.setter
+    def sb_idl(self, val):
+        self.agent_api.sb_idl = val
+
+    @property
+    def ovs_idl(self):
+        return self.agent_api.ovs_idl
+
+    @property
+    def conf(self):
+        return self.agent_api.conf
+
+    @property
+    def chassis(self):
+        return self.agent_api.chassis
+
+    @property
+    def ovn_bridge(self):
+        return self.agent_api.ovn_bridge
+
+    @_sync_lock
+    def resync(self):
+        """Resync the Metadata OVN agent extension.
+
+        Reload the configuration and sync the agent again.
+        """
+        self.agent_api.load_config()
+        self._update_chassis_private_config()
+        self.sync()
+
+    def start(self):
+        self._load_config()
+
+        # Launch the server that will act as a proxy between the VM's and Nova.
+        self._proxy = meta_server.UnixDomainMetadataProxy(
+            self.agent_api.conf, self.agent_api.chassis,
+            sb_idl=self.agent_api.sb_idl)
+        self._proxy.run()
+
+        # Do the initial sync.
+        self.sync(provision=False)
+
+        # Register the agent with its corresponding Chassis
+        self._update_chassis_private_config()
+
+        # Start the metadata server.
+        proxy_thread = threading.Thread(target=self._proxy.wait)
+        proxy_thread.start()
+
+        # Raise the "is_started" flag.
+        self._is_started = True

@@ -33,7 +33,6 @@
         ovn-northd: false
         ovs-vswitchd: false
         ovsdb-server: false
-        q-ovn-metadata-agent: false
         # Neutron services
         q-agt: true
         q-dhcp: true
@@ -153,7 +152,6 @@
         ovn-controller: true
         ovs-vswitchd: true
         ovsdb-server: true
-        q-ovn-metadata-agent: false
         q-ovn-agent: true
         br-ex-tcpdump: true
         br-int-flows: true

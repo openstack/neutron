@@ -1066,19 +1066,6 @@ class TestChassisOVNAgentWriteEvent(base.BaseTestCase):
                 mock.call().update(
                     ovn_const.OVN_NEUTRON_AGENT, row, clear_down=True)])
 
-    def test_run_metadata_agent(self):
-        # Test run method with metadata agent
-        row = self.ovsdb_row(
-            attrs={'external_ids': {
-                ovn_const.OVN_AGENT_METADATA_ID_KEY: 'metadata-456'}})
-
-        with mock.patch('neutron.plugins.ml2.drivers.ovn.agent.neutron_agent.'
-                        'AgentCache') as agent_cache:
-            self.event.run(self.event.ROW_CREATE, row, None)
-            agent_cache.assert_has_calls([
-                mock.call().update(
-                    ovn_const.OVN_METADATA_AGENT, row, clear_down=True)])
-
 
 class TestFIPAddDeleteEvent(base.BaseTestCase):
 

@@ -503,21 +503,13 @@ class ChassisOVNAgentWriteEvent(ChassisAgentEvent):
     @staticmethod
     def _agent_sb_cfg(row):
         external_ids = row.external_ids
-        # Try the OVN agent SB cfg first, then fallback to the OVN Metadata
-        # agent
-        ovn_sb_cfg = external_ids.get(ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY)
-        if ovn_sb_cfg:
-            return int(ovn_sb_cfg)
-        # NOTE(ralonsoh): to remove when the OVN Metadata agent is removed.
         return int(
-            external_ids.get(ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, -1))
+            external_ids.get(ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY, -1))
 
     @staticmethod
     def agent_id(row):
         external_ids = row.external_ids
-        # NOTE(ralonsoh): to update when the OVN Metadata agent is removed.
-        return (external_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY) or
-                external_ids.get(ovn_const.OVN_AGENT_METADATA_ID_KEY))
+        return external_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY)
 
     def match_fn(self, event, row, old=None):
         if not self.agent_id(row):
@@ -545,15 +537,8 @@ class ChassisOVNAgentWriteEvent(ChassisAgentEvent):
             return False
 
     def run(self, event, row, old):
-        external_ids = row.external_ids
-        if external_ids.get(ovn_const.OVN_AGENT_NEUTRON_ID_KEY):
-            n_agent.AgentCache().update(ovn_const.OVN_NEUTRON_AGENT, row,
-                                        clear_down=True)
-        else:
-            # NOTE(ralonsoh): to remove when the OVN Metadata agent is
-            # removed.
-            n_agent.AgentCache().update(ovn_const.OVN_METADATA_AGENT, row,
-                                        clear_down=True)
+        n_agent.AgentCache().update(ovn_const.OVN_NEUTRON_AGENT, row,
+                                    clear_down=True)
 
 
 class PortBindingChassisEvent(row_event.RowEvent):

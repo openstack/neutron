@@ -1071,9 +1071,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
 
     def set_chassis_neutron_description(self, chassis, description,
                                         agent_type):
-        desc_key = (ovn_const.OVN_AGENT_METADATA_DESC_KEY
-                    if agent_type == ovn_const.OVN_METADATA_AGENT else
-                    ovn_const.OVN_AGENT_DESC_KEY)
+        desc_key = ovn_const.OVN_AGENT_DESC_KEY
         return cmd.UpdateChassisExtIdsCommand(
             self, chassis, {desc_key: description}, if_exists=False)
 

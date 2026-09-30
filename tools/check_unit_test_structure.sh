@@ -25,6 +25,8 @@ ignore_regexes=(
     "^plugins/ml2/test_tracked_resources.py$"
     "^plugins/ml2/drivers/openvswitch/agent/test_agent_scheduler.py$"
     "^plugins/ml2/drivers/openvswitch/agent/test_ovs_tunnel.py$"
+    # Code lives in the package __init__.py, not in a separate agent.py
+    "^agent/ovn/extensions/metadata/test_agent.py$"
 )
 
 error_count=0

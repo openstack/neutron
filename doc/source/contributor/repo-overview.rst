@@ -38,7 +38,7 @@ neutron/ Package
 ``neutron/agent/``
     L2/L3/DHCP/metadata agent implementations and their extensions.
 ``neutron/agent/ovn/``
-    OVN metadata agent.
+    OVN agent and metadata extension.
 ``neutron/db/``
     Database models, mixins, and migration scripts (Alembic).
 ``neutron/objects/``
@@ -47,7 +47,7 @@ neutron/ Package
     API extension definitions (resource attributes, actions).
 ``neutron/cmd/``
     Entry points for Neutron services (``neutron-server``,
-    ``neutron-openvswitch-agent``, ``neutron-ovn-metadata-agent``,
+    ``neutron-openvswitch-agent``, ``neutron-ovn-agent``,
     ``neutron-dhcp-agent``, ``neutron-l3-agent``, etc.).
 ``neutron/conf/``
     oslo.config option declarations, one file per subsystem.
