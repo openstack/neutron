@@ -2338,7 +2338,8 @@ class TestOvnNbSyncEVPN(base.TestOVNFunctionalBase):
             'HA_Chassis_Group',
             ('external_ids', '!=', {
                 ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: ''}),
-        ).execute(check_error=True)}
+        ).execute(check_error=True)
+            if row.name.startswith(evpn_const.EVPN_HCG_NAME_PREFIX)}
 
     def _get_ovn_evpn_lrp_names(self):
         return {row.name for row in self.nb_api.db_find_rows(
@@ -2549,6 +2550,28 @@ class TestOvnNbSyncEVPN(base.TestOVNFunctionalBase):
         self.assertNotIn(orphan_hcg, self._get_ovn_evpn_hcg_names())
         self.assertNotIn(orphan_lsp, self._get_ovn_evpn_lsp_names())
         self.assertNotIn(orphan_lrp, self._get_ovn_advertised_lrp_names())
+        self._validate_evpn_objects_exist()
+
+    def test_evpn_sync_repair_preserves_non_evpn_router_hcg(self):
+        self._create_evpn_resources()
+        self._validate_evpn_objects_exist()
+
+        non_evpn_router_id = uuidutils.generate_uuid()
+        non_evpn_hcg = utils.ovn_name(non_evpn_router_id)
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ha_chassis_group_add(
+                non_evpn_hcg, may_exist=True,
+                external_ids={
+                    ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: non_evpn_router_id}))
+
+        self.assertIsNotNone(self.nb_api.lookup(
+            'HA_Chassis_Group', non_evpn_hcg, default=None))
+        self.assertNotIn(non_evpn_hcg, self._get_ovn_evpn_hcg_names())
+
+        self._sync_evpn(n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+
+        self.assertIsNotNone(self.nb_api.lookup(
+            'HA_Chassis_Group', non_evpn_hcg, default=None))
         self._validate_evpn_objects_exist()
 
     def test_evpn_sync_log_does_not_repair(self):
