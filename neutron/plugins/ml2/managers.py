@@ -869,8 +869,19 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                    'vnic_type': binding.vnic_type,
                    'profile': binding.profile})
         context._clear_binding_levels()
-        if not self._bind_port_level(context, 0,
-                                     context.network.network_segments):
+        try:
+            binding_succeeded = self._bind_port_level(
+                context, 0, context.network.network_segments)
+        except exc.PortBindingError:
+            LOG.exception(
+                "A mechanism driver determined that port %(port)s on host "
+                "%(host)s cannot be bound",
+                {'port': context.current['id'], 'host': context.host})
+            context._clear_binding_levels()
+            context._unset_binding()
+            binding_succeeded = False
+
+        if not binding_succeeded:
             binding.vif_type = portbindings.VIF_TYPE_BINDING_FAILED
             LOG.error("Failed to bind port %(port)s on host %(host)s "
                       "for vnic_type %(vnic_type)s using segments "
@@ -1009,6 +1020,8 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                                    'vif_details': binding.vif_details,
                                    'binding_levels': context.binding_levels})
                         return True
+            except exc.PortBindingError:
+                raise
             except Exception:
                 LOG.exception("Mechanism driver %s failed in "
                               "bind_port",
