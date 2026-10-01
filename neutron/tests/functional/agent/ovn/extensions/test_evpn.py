@@ -165,9 +165,9 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
 
     def _advance_to_advertising(self, vni, vid):
         self._evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, self._vrf)
+            fsm.EVPNEvent.VRF_CREATE, self._vrf)
         self._evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
             self._vrf, mac=self.SVI_MAC, vni=vni, vid=vid)
 
     def test_fsm_advertise_creates_svi(self):
@@ -179,7 +179,7 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self._advance_to_advertising(vni, vid)
 
         evpn = self._evpn_fsm.instances[self._vrf]
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
         self.assertTrue(ip_lib.device_exists(svi_name))
 
     def test_fsm_port_binding_delete_deletes_svi(self):
@@ -192,10 +192,10 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self.assertTrue(ip_lib.device_exists(svi_name))
 
         self._evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, self._vrf)
+            fsm.EVPNEvent.PORT_BINDING_DELETE, self._vrf)
 
         evpn = self._evpn_fsm.instances[self._vrf]
-        self.assertEqual(fsm.Evpn.WAITING_FOR_BRIDGE, evpn.state)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_PORT_BINDING, evpn.state)
         self.assertFalse(ip_lib.device_exists(svi_name))
 
     def test_fsm_vrf_delete_deletes_svi(self):
@@ -208,10 +208,10 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self.assertTrue(ip_lib.device_exists(svi_name))
 
         self._evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, self._vrf)
+            fsm.EVPNEvent.VRF_DELETE, self._vrf)
 
         evpn = self._evpn_fsm.instances[self._vrf]
-        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_VRF, evpn.state)
         self.assertFalse(ip_lib.device_exists(svi_name))
 
     def test_evpn_svd_del_vni_idempotent_without_prior_add(self):

@@ -271,7 +271,7 @@ class PortBindingLrpEvpnCreateEventTestCase(BaseEvpnEventsTestCase):
         self._wait_for_advance()
         self.assertIn(vrf, self.fsm.instances)
         instance = self.fsm.instances[vrf]
-        self.assertEqual(evpn_fsm.Evpn.WAITING_FOR_ROUTER, instance.state)
+        self.assertEqual(evpn_fsm.EVPNState.WAITING_FOR_VRF, instance.state)
         self.assertEqual(mac, instance.mac)
         self.assertEqual(vni, instance.vni)
         self.assertEqual(vlan, instance.vid)

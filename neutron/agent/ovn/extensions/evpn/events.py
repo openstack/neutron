@@ -74,7 +74,7 @@ class PortBindingLrpEvpnCreateEvent(EVPNPortBindingEvent):
         vni = int(row.external_ids[svc_const.EVPN_LRP_VNI_EXT_ID_KEY])
         vid = int(row.external_ids[svc_const.EVPN_LRP_VLAN_EXT_ID_KEY])
         try:
-            self.fsm.advance(evpn_fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            self.fsm.advance(evpn_fsm.EVPNEvent.PORT_BINDING_CREATE,
                              vrf, mac=row.mac[0], vni=vni, vid=vid)
         except evpn_exc.FSMIllegalTransition:
             LOG.error("Unexpected FSM transition for VRF %s on %s",
@@ -88,7 +88,7 @@ class PortBindingLrpEvpnDeleteEvent(EVPNPortBindingEvent):
     def run(self, event, row, old):
         vrf = row.options[ovn_const.LR_OPTIONS_DR_VRF_NAME]
         try:
-            self.fsm.advance(evpn_fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE,
+            self.fsm.advance(evpn_fsm.EVPNEvent.PORT_BINDING_DELETE,
                              vrf)
         except evpn_exc.FSMIllegalTransition:
             LOG.error("Unexpected FSM transition for VRF %s on %s",

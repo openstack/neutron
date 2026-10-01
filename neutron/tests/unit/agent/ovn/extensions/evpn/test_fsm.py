@@ -37,12 +37,12 @@ class TestEvpnFSM(base.BaseTestCase):
     def test_vrf_then_port_binding_create(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+            fsm.EVPNEvent.VRF_CREATE, vrf)
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
             vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
         evpn = self.evpn_fsm.instances[vrf]
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
         self.assertEqual('aa:bb:cc:dd:ee:ff', evpn.mac)
         self.assertEqual(10, evpn.vni)
         self.assertEqual(1, evpn.vid)
@@ -54,12 +54,12 @@ class TestEvpnFSM(base.BaseTestCase):
     def test_port_binding_then_vrf_create(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
             vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+            fsm.EVPNEvent.VRF_CREATE, vrf)
         evpn = self.evpn_fsm.instances[vrf]
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
         self.assertEqual('aa:bb:cc:dd:ee:ff', evpn.mac)
         self.assertEqual(10, evpn.vni)
         self.assertEqual(1, evpn.vid)
@@ -70,36 +70,36 @@ class TestEvpnFSM(base.BaseTestCase):
 
     def test_advertise_then_port_binding_delete(self):
         vrf = 'vr0a1b2c3d-fff'
-        evpn = fsm.Evpn(vrf)
+        evpn = fsm.EVPNInstance(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
         evpn.vid = 1
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.ADVERTISING
+        evpn.state = fsm.EVPNState.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
 
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
+            fsm.EVPNEvent.VRF_DELETE, vrf)
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, vrf)
+            fsm.EVPNEvent.PORT_BINDING_DELETE, vrf)
         self.assertNotIn(vrf, self.evpn_fsm.instances)
         self.mock_svd.del_vni.assert_called_once_with(10, 1)
         self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
 
     def test_advertise_then_vrf_delete(self):
         vrf = 'vr0a1b2c3d-fff'
-        evpn = fsm.Evpn(vrf)
+        evpn = fsm.EVPNInstance(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
         evpn.vid = 1
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.ADVERTISING
+        evpn.state = fsm.EVPNState.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
 
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, vrf)
+            fsm.EVPNEvent.PORT_BINDING_DELETE, vrf)
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
+            fsm.EVPNEvent.VRF_DELETE, vrf)
         self.assertNotIn(vrf, self.evpn_fsm.instances)
         self.mock_svd.del_vni.assert_called_once_with(10, 1)
         self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
@@ -112,12 +112,12 @@ class TestEvpnFSM(base.BaseTestCase):
         def netlink_thread():
             barrier.wait()
             self.evpn_fsm.advance(
-                fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+                fsm.EVPNEvent.VRF_CREATE, vrf)
 
         def idl_thread():
             barrier.wait()
             self.evpn_fsm.advance(
-                fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+                fsm.EVPNEvent.PORT_BINDING_CREATE,
                 vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
 
         threads = [threading.Thread(target=netlink_thread),
@@ -128,7 +128,7 @@ class TestEvpnFSM(base.BaseTestCase):
             t.join()
 
         evpn = self.evpn_fsm.instances[vrf]
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
         self.assertEqual('aa:bb:cc:dd:ee:ff', evpn.mac)
         self.assertEqual(10, evpn.vni)
         self.assertEqual(1, evpn.vid)
@@ -137,12 +137,12 @@ class TestEvpnFSM(base.BaseTestCase):
     def test_simultaneous_vrf_and_port_binding_delete(self):
         """Netlink and SB IDL threads both delete for the same VRF."""
         vrf = 'vr0a1b2c3d-fff'
-        evpn = fsm.Evpn(vrf)
+        evpn = fsm.EVPNInstance(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
         evpn.vid = 1
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.ADVERTISING
+        evpn.state = fsm.EVPNState.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
 
         barrier = threading.Barrier(2)
@@ -150,12 +150,12 @@ class TestEvpnFSM(base.BaseTestCase):
         def netlink_thread():
             barrier.wait()
             self.evpn_fsm.advance(
-                fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
+                fsm.EVPNEvent.VRF_DELETE, vrf)
 
         def idl_thread():
             barrier.wait()
             self.evpn_fsm.advance(
-                fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, vrf)
+                fsm.EVPNEvent.PORT_BINDING_DELETE, vrf)
 
         threads = [threading.Thread(target=netlink_thread),
                    threading.Thread(target=idl_thread)]
@@ -169,21 +169,21 @@ class TestEvpnFSM(base.BaseTestCase):
     def test_advertise_then_vrf_delete_then_vrf_create(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+            fsm.EVPNEvent.VRF_CREATE, vrf)
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
             vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
         evpn = self.evpn_fsm.instances[vrf]
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
 
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_DELETE, vrf)
-        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
+            fsm.EVPNEvent.VRF_DELETE, vrf)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_VRF, evpn.state)
         self.mock_svd.del_vni.assert_called_once_with(10, 1)
 
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+            fsm.EVPNEvent.VRF_CREATE, vrf)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
         self.assertEqual(2, self.mock_svd.add_vni.call_count)
         self.assertEqual(2, self.mock_driver.create_router.call_count)
         self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
@@ -191,25 +191,25 @@ class TestEvpnFSM(base.BaseTestCase):
     def test_advertise_then_port_binding_delete_then_port_binding_create(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
             vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+            fsm.EVPNEvent.VRF_CREATE, vrf)
         evpn = self.evpn_fsm.instances[vrf]
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
 
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_DELETE, vrf)
-        self.assertEqual(fsm.Evpn.WAITING_FOR_BRIDGE, evpn.state)
+            fsm.EVPNEvent.PORT_BINDING_DELETE, vrf)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_PORT_BINDING, evpn.state)
         self.assertIsNone(evpn.mac)
         self.assertIsNone(evpn.vni)
         self.assertIsNone(evpn.vid)
         self.mock_svd.del_vni.assert_called_once_with(10, 1)
 
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
             vrf, mac='11:22:33:44:55:66', vni=20, vid=2)
-        self.assertEqual(fsm.Evpn.ADVERTISING, evpn.state)
+        self.assertEqual(fsm.EVPNState.ADVERTISING, evpn.state)
         self.assertEqual('11:22:33:44:55:66', evpn.mac)
         self.assertEqual(20, evpn.vni)
         self.assertEqual(2, evpn.vid)
@@ -220,9 +220,9 @@ class TestEvpnFSM(base.BaseTestCase):
 
     def test_replay_end_deletes_stale_fsm_instance(self):
         vrf1, vrf2 = 'vr0a1b2c3d-eee', 'vr1a2b3c3d-fff'
-        evpn = fsm.Evpn(vrf1)
+        evpn = fsm.EVPNInstance(vrf1)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
+        evpn.state = fsm.EVPNState.WAITING_FOR_PORT_BINDING
         self.evpn_fsm.instances[vrf1] = evpn
         handler = netlink_monitor.VrfHandler(self.evpn_fsm)
         handler._known_vrfs = {vrf1, vrf2}
@@ -233,26 +233,26 @@ class TestEvpnFSM(base.BaseTestCase):
 
     def test_replay_end_transitions_advertising_to_waiting(self):
         vrf = 'vr0a1b2c3d-fff'
-        evpn = fsm.Evpn(vrf)
+        evpn = fsm.EVPNInstance(vrf)
         evpn.mac = 'aa:bb:cc:dd:ee:ff'
         evpn.vni = 10
         evpn.vid = 1
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.ADVERTISING
+        evpn.state = fsm.EVPNState.ADVERTISING
         self.evpn_fsm.instances[vrf] = evpn
         handler = netlink_monitor.VrfHandler(self.evpn_fsm)
         handler._known_vrfs = {vrf}
         handler._replay_vrfs = set()
         handler.replay_end()
-        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_VRF, evpn.state)
         self.assertIn(vrf, self.evpn_fsm.instances)
         self.mock_driver.delete_router.assert_called_once_with(vrf, 10)
 
     def test_replay_end_no_stale_vrfs(self):
         vrf = 'vr0a1b2c3d-fff'
-        evpn = fsm.Evpn(vrf)
+        evpn = fsm.EVPNInstance(vrf)
         evpn.vrf_up = True
-        evpn.state = fsm.Evpn.WAITING_FOR_BRIDGE
+        evpn.state = fsm.EVPNState.WAITING_FOR_PORT_BINDING
         self.evpn_fsm.instances[vrf] = evpn
         handler = netlink_monitor.VrfHandler(self.evpn_fsm)
         handler._known_vrfs = {vrf}
@@ -264,18 +264,18 @@ class TestEvpnFSM(base.BaseTestCase):
     def test_driver_not_called_before_advertising(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_VRF_CREATE, vrf)
+            fsm.EVPNEvent.VRF_CREATE, vrf)
         evpn = self.evpn_fsm.instances[vrf]
-        self.assertEqual(fsm.Evpn.WAITING_FOR_BRIDGE, evpn.state)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_PORT_BINDING, evpn.state)
         self.mock_driver.create_router.assert_not_called()
         self.mock_driver.delete_router.assert_not_called()
 
     def test_driver_not_called_port_binding_before_vrf(self):
         vrf = 'vr0a1b2c3d-fff'
         self.evpn_fsm.advance(
-            fsm.EvpnFSM.FSM_EVENT_PORT_BINDING_CREATE,
+            fsm.EVPNEvent.PORT_BINDING_CREATE,
             vrf, mac='aa:bb:cc:dd:ee:ff', vni=10, vid=1)
         evpn = self.evpn_fsm.instances[vrf]
-        self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
+        self.assertEqual(fsm.EVPNState.WAITING_FOR_VRF, evpn.state)
         self.mock_driver.create_router.assert_not_called()
         self.mock_driver.delete_router.assert_not_called()
