@@ -104,12 +104,63 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         self.assertIn('external', vx_output)
         self.assertIn('addrgenmode none', vx_output)
 
-    def test_create_svd_device_exists(self):
+    def test_create_svd_idempotent(self):
+        svd = self._create_svd()
+        self.assertTrue(ip_lib.device_exists(self._br))
+        self.assertTrue(ip_lib.device_exists(self._vx))
+
+        svd.create(local_ip=self.LOCAL_IP, mac=self.MAC,
+                   dstport=self.DSTPORT,
+                   br_mtu=self.BR_MTU)
+        self.assertTrue(ip_lib.device_exists(self._br))
+        self.assertTrue(ip_lib.device_exists(self._vx))
+
+    def test_create_svd_reapplies_mtu(self):
+        """Re-create SVD with a different MTU.
+
+        Verifies that unconditional SET operations update the bridge
+        MTU when create_svd is called again with a new value.
+        """
         self._create_svd()
+        br_output = agent_utils.execute(
+            ['ip', '-d', 'link', 'show', self._br],
+            run_as_root=True, privsep_exec=True)
+        self.assertIn('mtu 1500', br_output)
+
         brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
-        self.assertRaises(linux_svd.SvdDeviceAlreadyExists, brvxlan.create,
-                          local_ip=self.LOCAL_IP, mac=self.MAC,
-                          dstport=self.DSTPORT, br_mtu=self.BR_MTU)
+        brvxlan.create(local_ip=self.LOCAL_IP, mac=self.MAC,
+                       dstport=self.DSTPORT,
+                       br_mtu=9000)
+
+        br_output = agent_utils.execute(
+            ['ip', '-d', 'link', 'show', self._br],
+            run_as_root=True, privsep_exec=True)
+        self.assertIn('mtu 9000', br_output)
+
+    def test_create_svd_idempotent_preserves_brport_flags(self):
+        """Re-create SVD and verify brport flags survive.
+
+        Checks that neigh_suppress and vlan_tunnel remain set on
+        the vxlan bridge port after an idempotent re-create.
+        """
+        self._create_svd()
+
+        brport_output = self._bridge_cmd(
+            '-d', 'link', 'show', 'dev', self._vx)
+        self.assertIn('neigh_suppress on', brport_output)
+        self.assertIn('vlan_tunnel on', brport_output)
+        self.assertIn('learning off', brport_output)
+
+        brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
+        brvxlan.create(local_ip=self.LOCAL_IP, mac=self.MAC,
+                       dstport=self.DSTPORT,
+                       br_mtu=self.BR_MTU)
+
+        brport_output = self._bridge_cmd(
+            '-d', 'link', 'show', 'dev', self._vx)
+        self.assertIn('neigh_suppress on', brport_output)
+        self.assertIn('vlan_tunnel on', brport_output)
+        self.assertIn('learning off', brport_output)
 
     def test_delete_svd(self):
         svd = self._create_svd()
@@ -119,9 +170,37 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         self.assertFalse(ip_lib.device_exists(self._br))
         self.assertFalse(ip_lib.device_exists(self._vx))
 
-    def test_delete_svd_not_found(self):
-        brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
-        self.assertRaises(linux_svd.SvdNotFound, brvxlan.delete)
+    def test_delete_svd_idempotent(self):
+        svd = self._create_svd()
+
+        svd.delete()
+        self.assertFalse(ip_lib.device_exists(self._br))
+        self.assertFalse(ip_lib.device_exists(self._vx))
+
+        svd.delete()
+        self.assertFalse(ip_lib.device_exists(self._br))
+        self.assertFalse(ip_lib.device_exists(self._vx))
+
+    def test_delete_svd_with_mapped_vnis(self):
+        """Delete SVD without removing VNIs first.
+
+        Verifies that deleting the bridge removes the SVI (a VLAN
+        sub-interface)
+        """
+        svd = self._create_svd()
+        vni = self._vni()
+        vid = self._vid()
+        svi_name = self._svi_name(vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
+        self.addCleanup(self._safe_delete, lo_name)
+
+        svd.delete()
+
+        self.assertFalse(ip_lib.device_exists(self._br))
+        self.assertFalse(ip_lib.device_exists(self._vx))
+        self.assertFalse(ip_lib.device_exists(svi_name))
 
     def test_add_vni(self):
         svd = self._create_svd()
@@ -158,7 +237,7 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
         self.assertNotIn(str(vni), vni_output)
 
-    def test_add_vni_netlink_error(self):
+    def test_add_vni_idempotent(self):
         svd = self._create_svd()
         vni = self._vni()
         vid = self._vid()
@@ -166,11 +245,19 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
         svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
                     self.BR_MTU)
+        self.assertTrue(ip_lib.device_exists(svi_name))
+        self.assertTrue(ip_lib.device_exists(lo_name))
+        vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
+        self.assertIn(str(vni), vni_output)
         self.addCleanup(svd.del_vni, svi_name, lo_name, vni, vid)
-        # Add the same VNI a second time to trigger NetlinkError
-        self.assertRaises(linux_svd.SvdNetlinkError, svd.add_vni,
-                          svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
-                          self.BR_MTU)
+
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
+
+        self.assertTrue(ip_lib.device_exists(svi_name))
+        self.assertTrue(ip_lib.device_exists(lo_name))
+        vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
+        self.assertIn(str(vni), vni_output)
 
     def test_del_vni(self):
         svd = self._create_svd()
@@ -189,13 +276,37 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
         self.assertNotIn(str(vni), vni_output)
 
-    def test_del_vni_svi_not_found(self):
+    def test_del_vni_idempotent(self):
         svd = self._create_svd()
+        vni = self._vni()
+        vid = self._vid()
+        svi_name = self._svi_name(vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
 
-        self.assertRaises(linux_svd.SvdSviNotFound, svd.del_vni,
-                          self._svi_name(self._vid()),
-                          evpn_const.EVPN_AD_IFNAME % {'vni': self._vni()},
-                          self._vni(), self._vid())
+        svd.del_vni(svi_name, lo_name, vni, vid)
+        self.assertFalse(ip_lib.device_exists(svi_name))
+        self.assertFalse(ip_lib.device_exists(lo_name))
+        vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
+        self.assertNotIn(str(vni), vni_output)
+
+        svd.del_vni(svi_name, lo_name, vni, vid)
+        self.assertFalse(ip_lib.device_exists(svi_name))
+        self.assertFalse(ip_lib.device_exists(lo_name))
+        vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
+        self.assertNotIn(str(vni), vni_output)
+
+    def test_del_vni_svd_not_found(self):
+        brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
+        vni = self._vni()
+        vid = self._vid()
+        svi_name = self._svi_name(vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        self.assertRaises(linux_svd.SvdDevsNotFound, brvxlan.del_vni,
+                          svi_name, lo_name, vni, vid)
+        self.assertFalse(ip_lib.device_exists(self._br))
+        self.assertFalse(ip_lib.device_exists(self._vx))
 
     def test_add_multiple_vnis(self):
         svd = self._create_svd()
@@ -247,3 +358,90 @@ class TestSvdFunctional(base.BaseNetlinkTestCase):
         self.assertIn('state UP', link_output)
 
         svd.del_vni(svi_name, lo_name, vni, vid)
+
+    def test_create_svd_partial_recovery(self):
+        """Create only the bridge, then call create_svd.
+
+        Verifies that create_svd completes the vxlan setup when the
+        bridge already exists (crash-recovery scenario).
+        """
+        privileged.create_interface(self._br, None, 'bridge',
+                                    br_vlan_filtering=1,
+                                    br_vlan_default_pvid=0)
+        self.addCleanup(self._safe_delete, self._br)
+        self.addCleanup(self._safe_delete, self._vx)
+        self.assertTrue(ip_lib.device_exists(self._br))
+        self.assertFalse(ip_lib.device_exists(self._vx))
+
+        brvxlan = linux_svd.Svd(br_evpn=self._br, vxlan_evpn=self._vx)
+        brvxlan.create(local_ip=self.LOCAL_IP, mac=self.MAC,
+                       dstport=self.DSTPORT,
+                       br_mtu=self.BR_MTU)
+
+        self.assertTrue(ip_lib.device_exists(self._br))
+        self.assertTrue(ip_lib.device_exists(self._vx))
+
+        br_output = agent_utils.execute(
+            ['ip', '-d', 'link', 'show', self._br],
+            run_as_root=True, privsep_exec=True)
+        self.assertIn('mtu 1500', br_output)
+
+    def test_del_vni_partial_recovery(self):
+        """Delete loopback and SVI manually, then call del_vni.
+
+        Verifies that del_vni cleans up the remaining VLAN filters and
+        VNI filter when the link devices are already gone
+        (crash-recovery scenario).
+        """
+        svd = self._create_svd()
+        vni = self._vni()
+        vid = self._vid()
+        svi_name = self._svi_name(vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
+
+        agent_utils.execute(
+            ['ip', 'link', 'del', lo_name],
+            run_as_root=True, privsep_exec=True)
+        agent_utils.execute(
+            ['ip', 'link', 'del', svi_name],
+            run_as_root=True, privsep_exec=True)
+        self.assertFalse(ip_lib.device_exists(lo_name))
+        self.assertFalse(ip_lib.device_exists(svi_name))
+
+        svd.del_vni(svi_name, lo_name, vni, vid)
+
+        vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
+        self.assertNotIn(str(vni), vni_output)
+        br_vlans = self._bridge_cmd('vlan', 'show', 'dev', self._br)
+        self.assertNotRegex(br_vlans, r'\b%s\b' % vid)
+
+    def test_add_vni_partial_recovery(self):
+        """Create the SVI manually, then call add_vni.
+
+        Verifies that add_vni completes the remaining resources (VLAN
+        filters, VNI filter, loopback) when the SVI already exists.
+        """
+        svd = self._create_svd()
+        vni = self._vni()
+        vid = self._vid()
+        svi_name = self._svi_name(vid)
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+
+        agent_utils.execute(
+            ['ip', 'link', 'add', svi_name, 'link', self._br,
+             'type', 'vlan', 'id', str(vid)],
+            run_as_root=True, privsep_exec=True)
+        self.addCleanup(self._safe_delete, svi_name)
+        self.assertTrue(ip_lib.device_exists(svi_name))
+        self.assertFalse(ip_lib.device_exists(lo_name))
+
+        svd.add_vni(svi_name, lo_name, vni, vid, self._vrf, self.SVI_MAC,
+                    self.BR_MTU)
+        self.addCleanup(svd.del_vni, svi_name, lo_name, vni, vid)
+
+        self.assertTrue(ip_lib.device_exists(svi_name))
+        self.assertTrue(ip_lib.device_exists(lo_name))
+        vni_output = self._bridge_cmd('vni', 'show', 'dev', self._vx)
+        self.assertIn(str(vni), vni_output)

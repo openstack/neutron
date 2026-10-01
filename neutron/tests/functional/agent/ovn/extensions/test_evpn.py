@@ -214,6 +214,39 @@ class TestFsmSvdIntegration(base.BaseNetlinkTestCase):
         self.assertEqual(fsm.Evpn.WAITING_FOR_ROUTER, evpn.state)
         self.assertFalse(ip_lib.device_exists(svi_name))
 
+    def test_evpn_svd_del_vni_idempotent_without_prior_add(self):
+        """del_vni on EvpnSvd succeeds when VNI was never added."""
+        vni = 4000
+        vid = 40
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': 0, 'vid': vid}
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+
+        self.svd.del_vni(vni, vid)
+
+        self.assertFalse(ip_lib.device_exists(svi_name))
+        self.assertFalse(ip_lib.device_exists(lo_name))
+
+    def test_evpn_svd_del_vni_twice_idempotent(self):
+        """del_vni called twice on EvpnSvd does not raise."""
+        vni = 5000
+        vid = 50
+        svi_name = evpn_const.EVPN_VLAN_IFNAME_PATTERN % {
+            'index': 0, 'vid': vid}
+        lo_name = evpn_const.EVPN_AD_IFNAME % {'vni': vni}
+
+        self.svd.add_vni(vni, vid, self._vrf, self.SVI_MAC,
+                         evpn_const.EVPN_BR_MTU)
+        self.assertTrue(ip_lib.device_exists(svi_name))
+
+        self.svd.del_vni(vni, vid)
+        self.assertFalse(ip_lib.device_exists(svi_name))
+        self.assertFalse(ip_lib.device_exists(lo_name))
+
+        self.svd.del_vni(vni, vid)
+        self.assertFalse(ip_lib.device_exists(svi_name))
+        self.assertFalse(ip_lib.device_exists(lo_name))
+
 
 class TestGetFreeUdpPort(functional_base.BaseLoggingTestCase):
 
