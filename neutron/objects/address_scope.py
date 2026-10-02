@@ -14,7 +14,6 @@
 
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
-from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import address_scope as models
@@ -39,12 +38,10 @@ class AddressScopeRBAC(rbac.RBACBaseObject):
 class AddressScope(rbac_db.NeutronRbacObject):
     # Version 1.0: Initial version
     # Version 1.1: Add RBAC support
-    # Version 1.2: Remove "shared" field
-    VERSION = '1.2'
+    VERSION = '1.1'
 
     # required by RbacNeutronMetaclass
     rbac_db_cls = AddressScopeRBAC
-    _rbac_shared_field = False
 
     db_model = models.AddressScope
 
@@ -52,6 +49,7 @@ class AddressScope(rbac_db.NeutronRbacObject):
         'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(nullable=True),
         'name': obj_fields.StringField(),
+        'shared': obj_fields.BooleanField(),
         'ip_version': common_types.IPVersionEnumField(),
     }
 
@@ -78,16 +76,3 @@ class AddressScope(rbac_db.NeutronRbacObject):
         snp_objs = subnetpool.SubnetPool.get_objects(
             context, address_scope_id=obj_id, fields=['project_id'])
         return {snp['project_id'] for snp in snp_objs}
-
-    def obj_make_compatible(self, primitive, target_version):
-        _target_version = versionutils.convert_version_to_tuple(target_version)
-        if _target_version >= (1, 2):
-            primitive.pop('shared', None)
-        elif 'shared' not in primitive:
-            if self.obj_context and self.id:
-                primitive['shared'] = self.get_shared_with_project(
-                    self.obj_context.elevated(), self.rbac_db_cls,
-                    self.id, self.project_id)
-            else:
-                primitive['shared'] = False
-        return super().obj_make_compatible(primitive, target_version)

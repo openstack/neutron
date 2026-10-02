@@ -22,6 +22,7 @@ from neutron_lib.exceptions import address_scope as api_err
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
+from neutron._i18n import _
 from neutron.extensions import address_scope as ext_address_scope
 from neutron.objects import address_scope as obj_addr_scope
 from neutron.objects import base as base_obj
@@ -78,10 +79,10 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
                         'dictionary, using tenant_id instead. This support '
                         'has been deprecated and will be removed in a '
                         'future release.')
-        a_s.pop('shared', None)
         pool_args = {'project_id': a_s['project_id'],
                      'id': address_scope_id,
                      'name': a_s['name'],
+                     'shared': a_s['shared'],
                      'ip_version': a_s['ip_version']}
         address_scope = obj_addr_scope.AddressScope(context, **pool_args)
         address_scope.create()
@@ -89,8 +90,12 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
 
     def update_address_scope(self, context, id, address_scope):
         a_s = address_scope['address_scope']
-        a_s.pop('shared', None)
         address_scope = self._get_address_scope(context, id)
+        if address_scope.shared and not a_s.get('shared', True):
+            reason = _("Shared address scope can't be unshared")
+            raise api_err.AddressScopeUpdateError(
+                address_scope_id=id, reason=reason)
+
         address_scope.update_fields(a_s)
         address_scope.update()
         return self._make_address_scope_dict(address_scope)
