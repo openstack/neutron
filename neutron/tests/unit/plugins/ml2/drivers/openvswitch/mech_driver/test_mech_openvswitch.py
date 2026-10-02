@@ -532,7 +532,6 @@ class OpenvswitchMechanismCreateTapTestCase(OpenvswitchMechanismBaseTestCase):
                                     vnic_type=vnic_type, profile=profile)
 
     def test_ovs_create_tap_kernel_normal_port(self):
-        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
         agents = [{'alive': True,
                    'configurations': self.KERNEL_CONFIGS,
                    'host': 'host',
@@ -542,7 +541,6 @@ class OpenvswitchMechanismCreateTapTestCase(OpenvswitchMechanismBaseTestCase):
         self.assertTrue(context._bound_vif_details.get('ovs_create_tap'))
 
     def test_ovs_create_tap_not_set_for_dpdk(self):
-        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
         agents = [{'alive': True,
                    'configurations': self.DPDK_CONFIGS,
                    'host': 'host',
@@ -552,7 +550,6 @@ class OpenvswitchMechanismCreateTapTestCase(OpenvswitchMechanismBaseTestCase):
         self.assertNotIn('ovs_create_tap', context._bound_vif_details)
 
     def test_ovs_create_tap_not_set_for_netdev_datapath(self):
-        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
         agents = [{'alive': True,
                    'configurations': self.NETDEV_CONFIGS,
                    'host': 'host',
@@ -562,7 +559,6 @@ class OpenvswitchMechanismCreateTapTestCase(OpenvswitchMechanismBaseTestCase):
         self.assertNotIn('ovs_create_tap', context._bound_vif_details)
 
     def test_ovs_create_tap_not_set_for_switchdev(self):
-        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
         agents = [{'alive': True,
                    'configurations': self.KERNEL_CONFIGS,
                    'host': 'host',
@@ -574,18 +570,7 @@ class OpenvswitchMechanismCreateTapTestCase(OpenvswitchMechanismBaseTestCase):
         self.driver.bind_port(context)
         self.assertNotIn('ovs_create_tap', context._bound_vif_details)
 
-    def test_ovs_create_tap_not_set_when_config_disabled(self):
-        cfg.CONF.set_override('ovs_create_tap', False, group='OVS_DRIVER')
-        agents = [{'alive': True,
-                   'configurations': self.KERNEL_CONFIGS,
-                   'host': 'host',
-                   'agent_type': self.AGENT_TYPE}]
-        context = self._make_port_ctx(agents)
-        self.driver.bind_port(context)
-        self.assertNotIn('ovs_create_tap', context._bound_vif_details)
-
     def test_ovs_create_tap_not_set_for_hybrid_plug(self):
-        cfg.CONF.set_override('ovs_create_tap', True, group='OVS_DRIVER')
         hybrid_configs = dict(self.KERNEL_CONFIGS,
                               **{portbindings.OVS_HYBRID_PLUG: True})
         agents = [{'alive': True,

@@ -1296,10 +1296,9 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
         bump and set_port_status_up is deferred until the destination
         chassis reaches the expected nb_cfg.
 
-        NOTE: this test was implemented on top of the patch that made
-        ``ovs_create_tap`` config value True by default. This is important
-        because the ``PortBindingChassisUpdateEvent.run`` method validates
-        if this option is enabled.
+        NOTE: the ``PortBindingChassisUpdateEvent.run`` method defers
+        ``set_port_status_up`` only for kernel OVS datapaths during live
+        migration.
         """
         with mock.patch.object(
                 self.mech_driver, 'set_port_status_up') as mock_status_up:

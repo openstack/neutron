@@ -2639,12 +2639,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             mock.ANY, passed_fake_port, port_object=passed_fake_port_orig)
         mock_notify_dhcp.assert_called_once_with(mock.ANY, fake_port['id'])
 
-    def _test_update_port_postcommit_live_migration(self, ovs_create_tap,
-                                                    vif_type,
+    def _test_update_port_postcommit_live_migration(self, vif_type,
                                                     expected_behavior):
         """Helper function to test update_port_postcommit during live migration
 
-        :param ovs_create_tap: Boolean value for ovs_create_tap config
         :param vif_type: VIF type constant (e.g., portbindings.VIF_TYPE_OVS)
         :param expected_behavior: 'return_early', 'fake_event', or
                                   'normal_processing'
@@ -2658,8 +2656,6 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             mock.patch.object(
                  ovn_client.OVNClient, 'update_port') as mock_update_port:
 
-            ovn_conf.cfg.CONF.set_override(
-                'ovs_create_tap', ovs_create_tap, group='ovn')
             self.plugin.update_port_status = mock.Mock()
             fake_context = 'fake_context'
             fake_port = fakes.FakePort.create_one_port(
@@ -2699,50 +2695,23 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             else:
                 self.fail(f"Unknown expected_behavior: {expected_behavior}")
 
-    def test_update_port_postcommit_migration_no_create_tap_ovs(self):
-        """Test migration: ovs_create_tap=False + OVS returns fake event."""
+    def test_update_port_postcommit_migration_ovs(self):
+        """Test migration with vif_type=ovs returns early."""
         self._test_update_port_postcommit_live_migration(
-            ovs_create_tap=False,
-            vif_type=portbindings.VIF_TYPE_OVS,
-            expected_behavior='fake_event'
-        )
-
-    def test_update_port_postcommit_migration_create_tap_ovs(self):
-        """Test migration: ovs_create_tap=True + OVS returns early."""
-        self._test_update_port_postcommit_live_migration(
-            ovs_create_tap=True,
             vif_type=portbindings.VIF_TYPE_OVS,
             expected_behavior='return_early'
         )
 
-    def test_update_port_postcommit_migration_no_create_tap_vhost_user(self):
-        """test migration: ovs_create_tap=False + vhost returns fake event."""
+    def test_update_port_postcommit_migration_vhost_user(self):
+        """Test migration with vif_type=vhostuser returns fake event."""
         self._test_update_port_postcommit_live_migration(
-            ovs_create_tap=False,
             vif_type=portbindings.VIF_TYPE_VHOST_USER,
             expected_behavior='fake_event'
         )
 
-    def test_update_port_postcommit_migration_create_tap_vhost_user(self):
-        """test migration: ovs_create_tap=True + vhost returns fake event."""
+    def test_update_port_postcommit_migration_unbound(self):
+        """Test migration with vif_type=unbound uses normal processing."""
         self._test_update_port_postcommit_live_migration(
-            ovs_create_tap=True,
-            vif_type=portbindings.VIF_TYPE_VHOST_USER,
-            expected_behavior='fake_event'
-        )
-
-    def test_update_port_postcommit_migration_no_create_tap_unbound(self):
-        """Test migration: ovs_create_tap=False + UNBOUND not returns."""
-        self._test_update_port_postcommit_live_migration(
-            ovs_create_tap=False,
-            vif_type=portbindings.VIF_TYPE_UNBOUND,
-            expected_behavior='normal_processing'
-        )
-
-    def test_update_port_postcommit_migration_create_tap_unbound(self):
-        """Test migration: ovs_create_tap=True + UNBOUND not returns."""
-        self._test_update_port_postcommit_live_migration(
-            ovs_create_tap=True,
             vif_type=portbindings.VIF_TYPE_UNBOUND,
             expected_behavior='normal_processing'
         )

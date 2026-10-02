@@ -355,14 +355,12 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         except IndexError:
             dest_dp_type = ''
         if (not self.is_live_migration(row, old) or
-                not ovn_conf.is_ovs_create_tap() or
-                not dest_dp_type == ovs_constants.OVS_DATAPATH_SYSTEM):
+                dest_dp_type != ovs_constants.OVS_DATAPATH_SYSTEM):
             self.driver.set_port_status_up(row.logical_port)
             return
 
         # NOTE(ralonsoh): this code branch is only reached if:
         # * The port is being migrated.
-        # * The config knob "ovs_create_tap" is enabled.
         # * The datapath type is "system" (not DPDK).
         chassis_name = row.additional_chassis[0].name
 

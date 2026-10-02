@@ -240,14 +240,13 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def _setup_vif_port_bindings(self):
         self.supported_vnic_types = ovn_const.OVN_SUPPORTED_VNIC_TYPES
-        ovs_create_tap = ovn_conf.is_ovs_create_tap()
         self.vif_details = {
             portbindings.VIF_TYPE_OVS: {
                 portbindings.CAP_PORT_FILTER: self.sg_enabled,
                 portbindings.VIF_DETAILS_CONNECTIVITY: self.connectivity,
                 # TODO(ralonsoh): add "ovs_create_tap" to n-lib
                 # port_binding constants.
-                'ovs_create_tap': ovs_create_tap,
+                'ovs_create_tap': True,
             },
             portbindings.VIF_TYPE_AGILIO_OVS: {
                 portbindings.CAP_PORT_FILTER: self.sg_enabled,
@@ -1164,17 +1163,15 @@ class OVNMechanismDriver(api.MechanismDriver):
             # the port will be rebind so we just continue here
             if port[portbindings.VIF_TYPE] == portbindings.VIF_TYPE_UNBOUND:
                 pass
-            # NOTE(ykarel): For ovs_create_tap=True and vif_type=ovs,
-            # just return as we don't need to send any fake event and instead
-            # Wait for PortBindingChassisUpdateEvent Southbound event which is
-            # triggered when ``Port_Binding.additional_chassis`` is populated.
-            elif (ovn_conf.is_ovs_create_tap() and
-                    port[portbindings.VIF_TYPE] == portbindings.VIF_TYPE_OVS):
+            # NOTE(ykarel): For vif_type=ovs, return without sending a fake
+            # event. Wait for PortBindingChassisUpdateEvent Southbound event
+            # which is triggered when ``Port_Binding.additional_chassis`` is
+            # populated.
+            elif port[portbindings.VIF_TYPE] == portbindings.VIF_TYPE_OVS:
                 return
-            # NOTE(ykarel): For ovs_create_tap=False or vif_type=vhostuser
-            # we create fake event instead of waiting for the Southbound event
-            elif (not ovn_conf.is_ovs_create_tap() or
-                    port[portbindings.VIF_TYPE] ==
+            # NOTE(ykarel): For vif_type=vhostuser we create a fake event
+            # instead of waiting for the Southbound event.
+            elif port[portbindings.VIF_TYPE] == (
                     portbindings.VIF_TYPE_VHOST_USER):
                 # Update the port status from DOWN to UP in order to generate
                 # a "fake" ``vif-interface-plugged`` event.

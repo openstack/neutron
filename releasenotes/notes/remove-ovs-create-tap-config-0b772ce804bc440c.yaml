@@ -1,0 +1,8 @@
+---
+upgrade:
+  - |
+    The configuration options ``[ovn]ovs_create_tap`` and
+    ``[OVS_DRIVER]ovs_create_tap`` are removed. Neutron always sets
+    ``ovs_create_tap: True`` in the port ``vif_details`` for kernel OVS
+    ports, enabling os-vif TAP pre-creation during live migration. Remove
+    these options from ``neutron.conf`` if present.
