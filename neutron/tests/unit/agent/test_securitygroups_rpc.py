@@ -3009,21 +3009,21 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
             ['iptables-save'], run_as_root=True, privsep_exec=True,
             return_value='')
         self._register_mock_call(
-            ['iptables-restore', '-n'],
+            ['iptables-restore', '-n', '-w', '10',
+             '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
             process_input=self._regex(v4_filter + nat + raw),
             run_as_root=True,
             privsep_exec=True,
-            log_fail_as_error=False,
             return_value='')
         self._register_mock_call(
             ['ip6tables-save'], run_as_root=True, privsep_exec=True,
             return_value='')
         self._register_mock_call(
-            ['ip6tables-restore', '-n'],
+            ['ip6tables-restore', '-n', '-w', '10',
+             '-W', iptables_manager.XLOCK_WAIT_INTERVAL],
             process_input=self._regex(v6_filter + nat + raw),
             run_as_root=True,
             privsep_exec=True,
-            log_fail_as_error=False,
             return_value='')
 
     def test_prepare_remove_port(self):
