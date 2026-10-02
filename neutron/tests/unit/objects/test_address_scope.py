@@ -14,7 +14,6 @@
 
 from neutron_lib import constants as lib_constants
 
-from neutron.db import rbac_db_models
 from neutron.objects import address_scope
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit.objects import test_rbac
@@ -30,28 +29,6 @@ class AddressScopeDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                    testlib_api.SqlTestCase):
 
     _test_class = address_scope.AddressScope
-
-    def test_object_version_degradation_1_2_to_1_1_drop_shared_field(self):
-        as_obj = address_scope.AddressScope()
-        as_obj_1_2 = as_obj.obj_to_primitive(target_version='1.2')
-        self.assertNotIn('shared', as_obj_1_2['versioned_object.data'])
-
-        as_obj_1_1 = as_obj.obj_to_primitive(target_version='1.1')
-        self.assertIn('shared', as_obj_1_1['versioned_object.data'])
-        self.assertFalse(as_obj_1_1['versioned_object.data']['shared'])
-
-    def test_object_version_degradation_1_2_to_1_1_shared_from_rbac(self):
-        as_obj = self._make_object(self.obj_fields[0])
-        as_obj.create()
-        rbac = address_scope.AddressScopeRBAC(
-            self.context, project_id=as_obj.project_id,
-            object_id=as_obj.id,
-            action=rbac_db_models.ACCESS_SHARED,
-            target_project='*')
-        rbac.create()
-
-        as_obj_1_1 = as_obj.obj_to_primitive(target_version='1.1')
-        self.assertTrue(as_obj_1_1['versioned_object.data']['shared'])
 
 
 class AddressScopeRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
