@@ -60,6 +60,18 @@ def register_custom_supported_check(alias, f, plugin_agnostic=False):
         _PLUGIN_AGNOSTIC_EXTENSIONS.add(alias)
 
 
+def unregister_custom_supported_check(alias):
+    """Remove the custom supported check registered for an alias.
+
+    This is the counterpart of register_custom_supported_check. It is
+    meant to be used by the unit tests that register a custom check,
+    so that the check doesn't leak into the other test classes running
+    in the same process.
+    """
+    EXTENSION_SUPPORTED_CHECK_MAP.pop(alias, None)
+    _PLUGIN_AGNOSTIC_EXTENSIONS.discard(alias)
+
+
 class ActionExtensionController(wsgi.Controller):
 
     def __init__(self, application):

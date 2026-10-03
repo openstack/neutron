@@ -83,6 +83,26 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self, plugin=None, service_plugins=None):
         config.register_common_config_options()
+        # ``reported_hosts`` is a module level variable in
+        # neutron.services.segments.db: the hosts reported by a test
+        # class stay in it for the whole runner process, so the test
+        # classes reusing the same hardcoded host names would process
+        # the agent reports differently depending on which classes
+        # share the runner. Clear it for every test.
+        db.reported_hosts.clear()
+        # ``_USER_CONFIGURED_SEGMENT_PLUGIN`` caches whether the
+        # 'segments' service plugin is listed in
+        # ``cfg.CONF.service_plugins`` the first time
+        # ``check_user_configured_segment_plugin()`` runs in the
+        # runner process.  Any test firing an agent event before the
+        # segment test classes configured their service plugins
+        # poisons the cache with False and the segment host mapping
+        # processing silently stops for every later test in the
+        # worker (empty ``db.reported_hosts``, mocks of
+        # ``update_segment_host_mapping`` never called).  Reset it so
+        # that the check re-evaluates with the current test's
+        # configuration.
+        db._USER_CONFIGURED_SEGMENT_PLUGIN = None
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
         if service_plugins:

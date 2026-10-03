@@ -276,6 +276,14 @@ class SriovSwitchMechVnicTypesTestCase(SriovNicSwitchMechanismBaseTestCase):
         self.default_supported_vnics = list(
             mech_driver.SRIOV_SUPPORTED_VNIC_TYPES)
         mech_driver.SRIOV_SUPPORTED_VNIC_TYPES = self.override_vnic_types
+        # Restore the module level list once the test is done: this
+        # class runs with an overridden SRIOV_SUPPORTED_VNIC_TYPES,
+        # which would otherwise leak into the test classes running
+        # afterwards in the same process (their drivers would then not
+        # support the vnic types that were dropped from the list).
+        self.addCleanup(setattr, mech_driver,
+                        'SRIOV_SUPPORTED_VNIC_TYPES',
+                        self.default_supported_vnics)
         self.driver_with_vnic_types = (
             mech_driver.SriovNicSwitchMechanismDriver())
         self.prohibit_list_cfg = {
