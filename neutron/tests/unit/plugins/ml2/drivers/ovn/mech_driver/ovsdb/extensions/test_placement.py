@@ -30,6 +30,13 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
     def setUp(self):
         super().setUp()
         self.setup_coreplugin(self.CORE_PLUGIN_CLASS, load_plugins=True)
+        # The ``OVNClientPlacementExtension`` is a process wide
+        # singleton that may be kept alive by another object holding a
+        # reference to it, so deleting our own reference (done in the
+        # cleanup) is not enough to get rid of a stale instance.
+        # Explicitly drop the singleton so a fresh instance is created
+        # with the driver of this test.
+        p_extension.OVNClientPlacementExtension.drop()
         self.plugin_driver = mock.Mock()
         self.placement_driver = p_extension.OVNClientPlacementExtension(
             self.plugin_driver)

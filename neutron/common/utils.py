@@ -985,6 +985,16 @@ class SingletonDecorator:
             self._singleton_instances[self._klass] = _inst
         return self._singleton_instances[self._klass]
 
+    def drop(self):
+        """Forget the cached singleton instance.
+
+        The next instantiation will create a new instance. This is
+        mainly useful for the unit tests, where a stale singleton kept
+        alive by another object holding a reference to it could leak
+        state between the tests.
+        """
+        self._singleton_instances.pop(self._klass, None)
+
 
 def with_metaclass(meta, *bases):
     """Function from jinja2/_compat.py. License: BSD.
