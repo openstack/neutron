@@ -71,6 +71,18 @@ configuration options such as ``start-time`` and to obtain the worker ID
 (``uwsgi.worker_id()``). For the full list of available functions, see the
 `uWSGI API documentation <https://uwsgi-docs.readthedocs.io/en/latest/API.html>`_.
 
+Containers without a host PID namespace
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the Neutron API runs inside a container that does not share the host PID
+namespace (i.e. without ``--pid=host`` or ``hostPID: true``), the parent
+process of every API worker is PID 1 and does not change across restarts. In
+this case Neutron cannot reliably determine the API start time or elect the
+first API worker from the parent PID, so the Neutron API **must** run under
+uWSGI with the ``start-time = %t`` option set. Other WSGI servers (for example
+``mod_wsgi``) are not supported in this scenario, and the Neutron API workers
+will fail to start if these conditions are not met.
+
 
 Start Neutron RPC server
 ------------------------

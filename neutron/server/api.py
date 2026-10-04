@@ -22,10 +22,12 @@ from oslo_config import cfg
 from neutron.api import wsgi
 from neutron.common import config
 from neutron.common import profiler
+from neutron.common import wsgi_utils
 
 
 def api_server():
     profiler.setup('neutron-server', cfg.CONF.host)
+    wsgi_utils.init_api_worker()
     app = config.load_paste_app('neutron')
     registry.publish(resources.PROCESS, events.BEFORE_SPAWN,
                      wsgi.WorkerService)

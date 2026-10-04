@@ -1,0 +1,30 @@
+---
+upgrade:
+  - |
+    When the Neutron API runs in a container without ``--pid=host`` or
+    ``hostPID: true`` (the parent process of the API workers is PID 1),
+    it must now run under uWSGI with the ``start-time = %t`` option set.
+    Otherwise the Neutron API workers fail to start, since the API start
+    time and the first API worker cannot be reliably determined. Other
+    WSGI servers, such as mod_wsgi, are not supported in this scenario.
+fixes:
+  - |
+    In containerized deployments (e.g. Kolla with uWSGI), running
+    without ``--pid=host``/``hostPID: true``, the parent process of
+    every container process is PID 1 by default and never changes across
+    restarts of the application, so ``neutron.common.wsgi_utils`` could
+    not detect a WSGI server restart from the PID-keyed
+    ``neutron_start_time<ppid>``/``neutron_first_worker<ppid>`` temp
+    files, causing API workers to register with a stale start time in
+    the ML2/OVN hash ring. This led to ``DBDuplicateEntry`` errors and
+    workers that never finished initializing. When running under uWSGI,
+    restart-independent ``start-time``/``worker_id()`` runtime values
+    are now used instead, since they are refreshed on every (re)start
+    regardless of PID reuse.
+    The start time and "first API worker" election are now also computed
+    once, up front, in a new ``neutron.common.wsgi_utils.init_api_worker``
+    step that runs before the paste app (and therefore any ML2 mechanism
+    driver, such as OVN or OVS) is loaded, instead of being computed lazily
+    the first time a mechanism driver happens to need them.
+    For more information, see bug
+    `2169231 <https://bugs.launchpad.net/neutron/+bug/2169231>`_.
