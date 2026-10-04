@@ -64,6 +64,44 @@ class TestWriteTempFile(base.BaseTestCase):
         self.assertTrue(result_path.endswith('neutron_test_wt_303'))
 
 
+class TestUwsgiStartTime(base.BaseTestCase):
+
+    def test_returns_configured_start_time(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.opt = {'start-time': b'1700000000'}
+        with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
+            self.assertEqual(1700000000, wsgi_utils._uwsgi_start_time())
+
+    def test_missing_option_returns_none(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.opt = {}
+        with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
+            self.assertIsNone(wsgi_utils._uwsgi_start_time())
+
+    def test_uwsgi_not_available_returns_none(self):
+        with mock.patch.dict('sys.modules', uwsgi=None):
+            self.assertIsNone(wsgi_utils._uwsgi_start_time())
+
+
+class TestUwsgiIsFirstWorker(base.BaseTestCase):
+
+    def test_first_worker_returns_true(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.worker_id = lambda: 1
+        with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
+            self.assertTrue(wsgi_utils._uwsgi_is_first_worker())
+
+    def test_other_worker_returns_false(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.worker_id = lambda: 2
+        with mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
+            self.assertFalse(wsgi_utils._uwsgi_is_first_worker())
+
+    def test_uwsgi_not_available_returns_none(self):
+        with mock.patch.dict('sys.modules', uwsgi=None):
+            self.assertIsNone(wsgi_utils._uwsgi_is_first_worker())
+
+
 class TestGetApiWorkerCount(base.BaseTestCase):
 
     def test_get_api_worker_count_with_uwsgi(self):
@@ -192,16 +230,42 @@ class TestGetStartTime(base.BaseTestCase):
                                   return_value=1700000000):
             self.assertRaises(RuntimeError, wsgi_utils.get_start_time)
 
+    def test_container_init_ppid_uses_uwsgi_start_time(self):
+        # When the parent is PID 1 (container without hostPID), the
+        # PID-based temp file can never detect a restart. uWSGI's own
+        # start-time option should be preferred instead.
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.opt = {'start-time': b'1700000000'}
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=uwsgi_mod), \
+                mock.patch.object(wsgi_utils, '_write_temp_file') as wt_mock:
+            result = wsgi_utils.get_start_time()
+        self.assertEqual(1700000000, result)
+        wt_mock.assert_not_called()
+
+    def test_container_init_ppid_without_uwsgi_falls_back_to_file(self):
+        # No uWSGI available while PPID == 1: fall back to the
+        # (documented-as-unreliable) temp-file approach rather than
+        # failing outright.
+        path = self._track(1)
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=None), \
+                mock.patch.object(wsgi_utils.utils, 'datetime_to_ts',
+                                  return_value=1700000000):
+            result = wsgi_utils.get_start_time()
+        self.assertEqual(1700000000, result)
+        self.assertTrue(os.path.exists(path))
+
 
 class TestElectFirstWsgiWorker(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self._orig = wsgi_utils._first_worker_result
-        wsgi_utils._first_worker_result = None
+        self._orig = wsgi_utils._first_worker
+        wsgi_utils._first_worker = None
 
     def tearDown(self):
-        wsgi_utils._first_worker_result = self._orig
+        wsgi_utils._first_worker = self._orig
         super().tearDown()
 
     def test_first_caller_wins(self):
@@ -217,7 +281,7 @@ class TestElectFirstWsgiWorker(base.BaseTestCase):
         with mock.patch('os.getppid', return_value=502):
             self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
 
-        wsgi_utils._first_worker_result = None
+        wsgi_utils._first_worker = None
         with mock.patch('os.getppid', return_value=502):
             self.assertFalse(wsgi_utils._elect_first_wsgi_worker())
 
@@ -228,6 +292,32 @@ class TestElectFirstWsgiWorker(base.BaseTestCase):
             self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
             self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
 
+    def test_container_init_ppid_uses_uwsgi_worker_id(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.worker_id = lambda: 1
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=uwsgi_mod), \
+                mock.patch.object(wsgi_utils, '_write_temp_file') as wt_mock:
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+        wt_mock.assert_not_called()
+
+    def test_container_init_ppid_non_first_uwsgi_worker(self):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.worker_id = lambda: 2
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=uwsgi_mod), \
+                mock.patch.object(wsgi_utils, '_write_temp_file') as wt_mock:
+            self.assertFalse(wsgi_utils._elect_first_wsgi_worker())
+        wt_mock.assert_not_called()
+
+    def test_container_init_ppid_without_uwsgi_falls_back_to_file(self):
+        flag_path = _temp_path('neutron_first_worker', 1)
+        self.addCleanup(_remove_file, flag_path)
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=None):
+            self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+        self.assertTrue(os.path.exists(flag_path))
+
     def test_different_ppid_resets_election(self):
         path1 = _temp_path('neutron_first_worker', 504)
         path2 = _temp_path('neutron_first_worker', 505)
@@ -237,6 +327,54 @@ class TestElectFirstWsgiWorker(base.BaseTestCase):
         with mock.patch('os.getppid', return_value=504):
             self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
 
-        wsgi_utils._first_worker_result = None
+        wsgi_utils._first_worker = None
         with mock.patch('os.getppid', return_value=505):
             self.assertTrue(wsgi_utils._elect_first_wsgi_worker())
+
+
+class TestInitApiWorker(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.get_start_time = mock.patch.object(
+            wsgi_utils, 'get_start_time').start()
+        self.is_first = mock.patch.object(
+            wsgi_utils, 'is_first_api_worker').start()
+        self.addCleanup(mock.patch.stopall)
+
+    def _uwsgi(self, opt):
+        uwsgi_mod = types.ModuleType('uwsgi')
+        uwsgi_mod.opt = opt
+        uwsgi_mod.worker_id = lambda: 1
+        return uwsgi_mod
+
+    def _assert_initialized(self):
+        self.get_start_time.assert_called_once_with()
+        self.is_first.assert_called_once_with()
+
+    def test_host_pid_without_uwsgi(self):
+        with mock.patch('os.getppid', return_value=1234), \
+                mock.patch.dict('sys.modules', uwsgi=None):
+            wsgi_utils.init_api_worker()
+        self._assert_initialized()
+
+    def test_container_init_ppid_with_uwsgi(self):
+        uwsgi_mod = self._uwsgi({'start-time': b'1700000000'})
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=uwsgi_mod):
+            wsgi_utils.init_api_worker()
+        self._assert_initialized()
+
+    def test_container_init_ppid_without_uwsgi_fails(self):
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=None):
+            self.assertRaises(RuntimeError, wsgi_utils.init_api_worker)
+        self.get_start_time.assert_not_called()
+        self.is_first.assert_not_called()
+
+    def test_container_init_ppid_uwsgi_without_start_time_fails(self):
+        with mock.patch('os.getppid', return_value=1), \
+                mock.patch.dict('sys.modules', uwsgi=self._uwsgi({})):
+            self.assertRaises(RuntimeError, wsgi_utils.init_api_worker)
+        self.get_start_time.assert_not_called()
+        self.is_first.assert_not_called()
