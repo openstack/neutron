@@ -205,18 +205,18 @@ class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
 
         # 23: DNS recursive name server
         if dns_nameservers:
-            domain_serach = self.get_bin_dns(dns_nameservers)
+            domain_search = self.get_bin_dns(dns_nameservers)
             option_list.append(
                 dhcp6.option(
                     code=DHCPV6_OPTION_DNS_RECURSIVE_NS,
-                    data=domain_serach, length=len(domain_serach)))
+                    data=domain_search, length=len(domain_search)))
         elif gateway_ip != constants.METADATA_V6_IP:
             # use gateway as the default DNS server address
-            domain_serach = addrconv.ipv6.text_to_bin(gateway_ip)
+            domain_search = addrconv.ipv6.text_to_bin(gateway_ip)
             option_list.append(
                 dhcp6.option(
                     code=DHCPV6_OPTION_DNS_RECURSIVE_NS,
-                    data=domain_serach, length=len(domain_serach)))
+                    data=domain_search, length=len(domain_search)))
 
         # 39: Fully Qualified Domain Name
         fqdn = 'host-%s' % ip_addr.replace('.', '-').replace(':', '-')
