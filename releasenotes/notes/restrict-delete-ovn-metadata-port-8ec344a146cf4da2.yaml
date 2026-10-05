@@ -1,0 +1,17 @@
+---
+upgrade:
+  - |
+    The default ``delete_port`` policy now denies deletion of ports with
+    ``device_owner`` ``network:distributed``, such as the OVN metadata port,
+    unless the caller is an admin, a service user, or a project member or
+    network owner whose request also carries a service token. A new helper
+    rule ``distributed_device`` was added. Deployments with customized policy
+    files should review and update ``delete_port`` if they rely on the
+    previous behaviour.
+fixes:
+  - |
+    Project members can no longer delete the OVN metadata port of their
+    network with ``DELETE /v2.0/ports/{id}``. Deleting it broke metadata
+    access for the instances of the network. Admin users can still delete
+    it. For more information, see bug
+    `1764408 <https://bugs.launchpad.net/neutron/+bug/1764408>`_.
