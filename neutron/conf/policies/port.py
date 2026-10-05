@@ -78,6 +78,12 @@ rules = [
                    n_const.DEVICE_OWNER_MANILA_PREFIX),
         description='Definition of port with manila device_owner'),
     policy.RuleDefault(
+        name='distributed_device',
+        check_str=('field:port:device_owner=' +
+                   n_const.DEVICE_OWNER_DISTRIBUTED),
+        description=('Definition of port with distributed device_owner, '
+                     'such as the OVN metadata port')),
+    policy.RuleDefault(
         name='admin_or_data_plane_int',
         check_str=neutron_policy.policy_or(
             'rule:context_is_admin',
@@ -750,18 +756,19 @@ rules = [
     ),
 
     # Admin and service users can delete any port. A project member or
-    # network owner can delete unused ports and network-device ports.
-    # Compute, baremetal and manila ports can be deleted by admin/service
-    # users, or by a project member/network owner when the request also
-    # carries a service token (service_roles:service), which is how Nova
-    # deletes ports during server delete.
+    # network owner can delete unused ports and network-device ports, except
+    # distributed ports (the OVN metadata port).
+    # Compute, baremetal, manila and distributed ports can be deleted by
+    # admin/service users, or by a project member/network owner when the
+    # request also carries a service token (service_roles:service), which is
+    # how Nova deletes ports during server delete.
     # Expanded check_str:
     #   (rule:admin_only) or (rule:service_api) or
     #   (service_roles:service and
     #    (role:member and rule:network_owner or
     #     role:member and project_id:%(project_id)s)) or
     #   (not rule:compute_device and not rule:baremetal_device and
-    #    not rule:manila_device and
+    #    not rule:manila_device and not rule:distributed_device and
     #    (role:member and rule:network_owner or
     #     role:member and project_id:%(project_id)s))
     policy.DocumentedRuleDefault(
@@ -779,6 +786,7 @@ rules = [
                 'not rule:compute_device',
                 'not rule:baremetal_device',
                 'not rule:manila_device',
+                'not rule:distributed_device',
                 '(' + neutron_policy.policy_or(
                     base.NET_OWNER_MEMBER,
                     lib_rules.PROJECT_MEMBER,
