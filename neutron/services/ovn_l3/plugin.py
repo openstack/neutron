@@ -54,6 +54,7 @@ from neutron.db import l3_fip_port_details
 from neutron.db import l3_fip_qos
 from neutron.db import l3_gateway_ip_qos
 from neutron.db.models import l3 as l3_models
+from neutron.db import segments_db
 from neutron.extensions import l3agentscheduler
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.quota import resource_registry
@@ -265,6 +266,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         # This function returns all gateway ports with corresponding
         # external network's physnet
         net_physnet_dict = {}
+        net_segment_physnets = {}
         port_physnet_dict = {}
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if not l3plugin:
@@ -272,15 +274,42 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         context = n_context.get_admin_context()
         for net in l3plugin._plugin.get_networks(
                 context, {external_net.EXTERNAL: [True]}):
-            if net.get(pnet.NETWORK_TYPE) in [n_const.TYPE_FLAT,
-                                              n_const.TYPE_VLAN]:
-                net_physnet_dict[net['id']] = net.get(pnet.PHYSICAL_NETWORK)
+            if pnet.NETWORK_TYPE in net:
+                if net.get(pnet.NETWORK_TYPE) in n_const.TYPE_PHYSICAL:
+                    net_physnet_dict[net['id']] = net.get(
+                        pnet.PHYSICAL_NETWORK)
+            else:
+                # For multi-segment networks, the top-level provider
+                # attributes are not set. Query the DB segments to
+                # build a segment_id -> physnet mapping.
+                seg_physnets = segments_db.get_segments_physnets(
+                    context, net['id'])
+                if seg_physnets:
+                    net_segment_physnets[net['id']] = seg_physnets
+
         for port in l3plugin._plugin.get_ports(context, filters={
                 'device_owner': [n_const.DEVICE_OWNER_ROUTER_GW]}):
-            if utils.is_ovn_provider_router(
+            if not utils.is_ovn_provider_router(
                     l3plugin.get_router(context, port['device_id'])):
-                port_physnet_dict[port['id']] = net_physnet_dict.get(
-                    port['network_id'])
+                continue
+            physnet = net_physnet_dict.get(port['network_id'])
+            if (physnet is None and
+                    port['network_id'] in net_segment_physnets):
+                seg_physnets = net_segment_physnets[
+                    port['network_id']]
+                subnet_ids = [fip['subnet_id']
+                              for fip in port.get('fixed_ips', [])]
+                if subnet_ids:
+                    subnets = l3plugin._plugin.get_subnets(
+                        context, filters={'id': subnet_ids})
+                    for subnet in subnets:
+                        seg_id = subnet.get('segment_id')
+                        if seg_id and seg_id in seg_physnets:
+                            physnet = seg_physnets[seg_id]
+                            break
+                if physnet is None:
+                    physnet = next(iter(seg_physnets.values()))
+            port_physnet_dict[port['id']] = physnet
         return port_physnet_dict
 
     def update_router_gateway_port_bindings(self, router, host):

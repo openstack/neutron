@@ -1979,6 +1979,74 @@ class BaseTestOVNL3RouterPluginMixin:
         mock_updt_status.assert_called_once_with(
             mock.ANY, fake_port_id, constants.PORT_STATUS_DOWN)
 
+    @mock.patch('neutron.db.segments_db.get_network_segments')
+    def test_get_gateway_port_physnet_mapping_single_segment(
+            self, mock_get_segs):
+        net_id = self.fake_ext_network['id']
+        port_id = 'gw-port-1'
+        router_id = 'router-1'
+        self._get_networks.return_value = [self.fake_ext_network]
+        self.get_port.return_value = {
+            'id': port_id,
+            'network_id': net_id,
+            'device_id': router_id,
+            'device_owner': constants.DEVICE_OWNER_ROUTER_GW,
+            'fixed_ips': [{'subnet_id': 'ext-subnet-id',
+                           'ip_address': '192.168.1.1'}]}
+        mock.patch(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_ports',
+            return_value=[self.get_port.return_value]).start()
+        mock.patch(
+            'neutron.common.ovn.utils.is_ovn_provider_router',
+            return_value=True).start()
+        result = self.l3_inst._get_gateway_port_physnet_mapping()
+        self.assertEqual({port_id: 'physnet1'}, result)
+        mock_get_segs.assert_not_called()
+
+    @mock.patch('neutron.db.segments_db.get_network_segments')
+    def test_get_gateway_port_physnet_mapping_multi_segment(
+            self, mock_get_segs):
+        net_id = 'multi-seg-net-id'
+        port_id = 'gw-port-1'
+        router_id = 'router-1'
+        multi_seg_net = {
+            'id': net_id,
+            'name': 'multi-seg-net',
+            'router:external': True,
+            'segments': [
+                {'provider:network_type': 'flat',
+                 'provider:physical_network': 'physnet1',
+                 'provider:segmentation_id': None},
+                {'provider:network_type': 'flat',
+                 'provider:physical_network': 'physnet2',
+                 'provider:segmentation_id': None}]}
+        self._get_networks.return_value = [multi_seg_net]
+        mock_get_segs.return_value = [
+            {'id': 'seg-1', 'network_type': 'flat',
+             'physical_network': 'physnet1',
+             'network_id': net_id},
+            {'id': 'seg-2', 'network_type': 'flat',
+             'physical_network': 'physnet2',
+             'network_id': net_id}]
+        gw_port = {
+            'id': port_id,
+            'network_id': net_id,
+            'device_id': router_id,
+            'device_owner': constants.DEVICE_OWNER_ROUTER_GW,
+            'fixed_ips': [{'subnet_id': 'subnet-on-seg2',
+                           'ip_address': '10.0.0.5'}]}
+        mock.patch(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_ports',
+            return_value=[gw_port]).start()
+        mock.patch(
+            'neutron.common.ovn.utils.is_ovn_provider_router',
+            return_value=True).start()
+        self.get_subnets.side_effect = None
+        self.get_subnets.return_value = [
+            {'id': 'subnet-on-seg2', 'segment_id': 'seg-2'}]
+        result = self.l3_inst._get_gateway_port_physnet_mapping()
+        self.assertEqual({port_id: 'physnet2'}, result)
+
     @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
                 '_get_gateway_port_physnet_mapping')
     def test_schedule_unhosted_gateways_no_gateways(self, get_gppm):
