@@ -18,7 +18,6 @@ import copy
 from datetime import datetime
 import errno
 import os
-import select
 import shutil
 import threading
 from unittest import mock
@@ -34,7 +33,6 @@ from oslo_log import log
 from oslo_utils import fileutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
-import ovs.poller
 from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 
 from neutron.agent.linux import utils
@@ -53,6 +51,11 @@ from neutron import manager
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
     placement as ovn_client_placement
+# Imported for its side effect of switching ovs.poller to poll(2) for every
+# OVSDB connection, including the ones of tests that do not load the OVN
+# mechanism driver.
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import \
+    impl_idl_ovn  # noqa
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron import service  # noqa
@@ -70,28 +73,6 @@ LOG = log.getLogger(__name__)
 # This is the directory from which infra fetches log files for functional tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-functional-logs')
-
-# NOTE: ovs.poller.Poller multiplexes every OVSDB IDL connection -- both
-# the persistent run() loop and new-connection setup -- through
-# select.select() (ovs.poller.SelectPoll = _SelectSelect). The "use the
-# real select.poll() when eventlet/gevent aren't monkey-patching select"
-# alternative that _SelectSelect's own docstring describes is dead code
-# in ovs.poller: it is never actually wired up, so SelectPoll is always
-# the select()-based emulation regardless of whether eventlet is in use.
-# select.select() enforces the C library's FD_SETSIZE (1024) ceiling on
-# any fd *number* it is given, not just on the count of open fds, so a
-# long-lived stestr worker running hundreds of sequential OVN functional
-# tests eventually hits "ValueError: filedescriptor out of range in
-# select()" on every OVN IDL connection -- including brand new ones --
-# once any fd number crosses 1024. That failure retries forever (by
-# design, so it can tolerate a genuinely down OVSDB in production) and
-# hangs the worker. ovs.poller's own POLLIN/POLLOUT/POLLERR/POLLHUP/
-# POLLNVAL constants are defined to numerically match select.poll()'s,
-# confirming select.poll() is meant to be a drop-in SelectPoll. This job
-# doesn't use eventlet/gevent (OSKEN_HUB_TYPE=native), so switch to the
-# real, uncapped select.poll() implementation to remove that ceiling.
-if not ovs.poller._using_eventlet_green_select():
-    ovs.poller.SelectPoll = select.poll
 
 
 class LogCollector(fixtures.Fixture):
