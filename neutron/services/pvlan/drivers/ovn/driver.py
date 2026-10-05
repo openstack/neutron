@@ -268,7 +268,7 @@ class PVLANDriver:
         promiscuous_pg = self._get_pg_name(
             network_id, pvlan_const.PROMISCUOUS_TYPE)
         txn.add(self.nb_ovn.pg_add(
-            name=pg_name, acls=[],
+            name=pg_name, acls=[], may_exist=True,
             external_ids={"neutron:network_id": network_id}))
         for src_pg in (pg_name, promiscuous_pg):
             txn.add(self.nb_ovn.pg_acl_add(
