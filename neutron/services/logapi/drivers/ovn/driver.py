@@ -166,14 +166,15 @@ class OVNDriver(base.DriverBase):
                              "group, skipping its network log "
                              "setting...", pg["name"])
                     continue
-                sg = sg_obj.SecurityGroup.get_sg_by_id(
-                    context, pg["external_ids"][ovn_const.OVN_SG_EXT_ID_KEY])
-                if not sg:
+                sg_id = pg["external_ids"][ovn_const.OVN_SG_EXT_ID_KEY]
+                sg_stateful = sg_obj.SecurityGroup.get_sgs_stateful_flag(
+                    context, [sg_id])
+                if sg_id not in sg_stateful:
                     LOG.warning("Port Group %s is missing a corresponding "
                                 "security group, skipping its network log "
                                 "setting...", pg["name"])
                     continue
-                if not sg.stateful:
+                if not sg_stateful[sg_id]:
                     meter_name = meter_name + ("_stateless")
             for acl_uuid in pg["acls"]:
                 acl_visits += 1
@@ -509,14 +510,15 @@ class OVNDriver(base.DriverBase):
                              "group, skipping its network log "
                              "setting...", pg["name"])
                     continue
-                sg = sg_obj.SecurityGroup.get_sg_by_id(context,
-                        pg['external_ids'][ovn_const.OVN_SG_EXT_ID_KEY])
-                if not sg:
+                sg_id = pg['external_ids'][ovn_const.OVN_SG_EXT_ID_KEY]
+                sg_stateful = sg_obj.SecurityGroup.get_sgs_stateful_flag(
+                    context, [sg_id])
+                if sg_id not in sg_stateful:
                     LOG.warning("Port Group %s is missing a corresponding "
                                 "security group, skipping its network log "
                                 "setting...", pg["name"])
                     continue
-                if not sg.stateful:
+                if not sg_stateful[sg_id]:
                     meter_name = meter_name + ("_stateless")
             # We need to get the OVN ACL because UUID is not listed as a
             # property on neutron defined ACLs (and it shouldn't), so we need
