@@ -86,7 +86,11 @@ class NetlinkLibTestCase(base.BaseTestCase):
                 # list_entries iterates over IPv4 and IPv6
                 side_effect=[[tcp_raw, unknown_raw], []]):
             # Call the unwrapped function to bypass privsep
-            raw_fn = nl_lib.list_entries.args[0]
+            try:
+                raw_fn = nl_lib.list_entries.__wrapped__
+            except AttributeError:
+                # TODO(ralonsoh): remove when oslo.privsep>3.12.0
+                raw_fn = nl_lib.list_entries.args[0]
             entries = raw_fn(FAKE_TCP_ENTRY['zone'])
         self.assertEqual(1, len(entries))
         self.assertEqual('tcp', entries[0][1])
