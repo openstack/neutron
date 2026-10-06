@@ -16,6 +16,7 @@
 
 from unittest import mock
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as provider
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import placement as place_exc
@@ -75,6 +76,113 @@ class TestManagers(base.BaseTestCase):
                                'bind_port') as bind_port:
             manager._bind_port_level(self.context, 0, self.segments_to_bind)
         self.assertEqual(0, bind_port.call_count)
+
+    def test__bind_port_level_port_binding_error_is_raised(self):
+        cfg.CONF.set_override('mechanism_drivers', ['fake_agent'],
+                              group='ml2')
+        manager = managers.MechanismManager()
+
+        with mock.patch.object(
+                mech_fake_agent.FakeAgentMechanismDriver,
+                'bind_port',
+                side_effect=exc.PortBindingError(
+                    port_id=self.context.current['id'],
+                    host=self.context.host)):
+            self.assertRaises(
+                exc.PortBindingError,
+                manager._bind_port_level,
+                self.context, 0, self.segments_to_bind)
+
+    def test_bind_port_port_binding_error_stops_drivers(self):
+        cfg.CONF.set_override(
+            'mechanism_drivers',
+            ['fake_agent', 'another_fake_agent'],
+            group='ml2')
+        manager = managers.MechanismManager()
+        self.context._clear_binding_levels = mock.Mock(
+            side_effect=self.context._binding_levels.clear)
+        self.context._unset_binding = mock.Mock()
+        self.context._binding.vnic_type = portbindings.VNIC_NORMAL
+
+        with mock.patch.object(
+                mech_fake_agent.FakeAgentMechanismDriver,
+                'bind_port',
+                side_effect=exc.PortBindingError(
+                    port_id=self.context.current['id'],
+                    host=self.context.host)) as first_bind, \
+                mock.patch.object(
+                    mech_fake_agent
+                    .AnotherFakeAgentMechanismDriver,
+                    'bind_port') as second_bind:
+            manager.bind_port(self.context)
+        first_bind.assert_called_once_with(self.context)
+        second_bind.assert_not_called()
+        self.assertEqual(2, self.context._clear_binding_levels.call_count)
+        self.context._unset_binding.assert_called_once_with()
+        self.assertEqual(portbindings.VIF_TYPE_BINDING_FAILED,
+                         self.context._binding.vif_type)
+
+    def test_bind_port_port_binding_error_aborts_hierarchical_binding(self):
+        cfg.CONF.set_override(
+            'mechanism_drivers',
+            ['fake_agent', 'another_fake_agent'],
+            group='ml2')
+        manager = managers.MechanismManager()
+        self.context._clear_binding_levels = mock.Mock(
+            side_effect=self.context._binding_levels.clear)
+        self.context._unset_binding = mock.Mock()
+        self.context._binding.vnic_type = portbindings.VNIC_NORMAL
+        next_segment = dict(self.segments_to_bind[0])
+        next_segment[api.ID] = uuidutils.generate_uuid()
+
+        def continue_binding(context):
+            context._new_bound_segment = self.segment_id
+            context._next_segments_to_bind = [next_segment]
+
+        def make_binding_level(**kwargs):
+            return mock.Mock(**kwargs)
+
+        with mock.patch.object(
+                mech_fake_agent.FakeAgentMechanismDriver,
+                'bind_port', side_effect=continue_binding) as outer_bind, \
+                mock.patch.object(
+                    mech_fake_agent.AnotherFakeAgentMechanismDriver,
+                    'bind_port',
+                    side_effect=exc.PortBindingError(
+                        port_id=self.context.current['id'],
+                        host=self.context.host)) as inner_bind, \
+                mock.patch.object(
+                    managers.ports,
+                    'PortBindingLevel',
+                    side_effect=make_binding_level):
+            manager.bind_port(self.context)
+
+        outer_bind.assert_called_once_with(self.context)
+        inner_bind.assert_called_once_with(self.context)
+        self.assertEqual([], self.context._binding_levels)
+        self.context._unset_binding.assert_called_once_with()
+        self.assertEqual(portbindings.VIF_TYPE_BINDING_FAILED,
+                         self.context._binding.vif_type)
+
+    def test__bind_port_level_generic_exception_continues(self):
+        cfg.CONF.set_override(
+            'mechanism_drivers',
+            ['fake_agent', 'another_fake_agent'],
+            group='ml2')
+        manager = managers.MechanismManager()
+
+        with mock.patch.object(
+                mech_fake_agent.FakeAgentMechanismDriver,
+                'bind_port',
+                side_effect=RuntimeError('generic')) as first_bind, \
+                mock.patch.object(
+                    mech_fake_agent
+                    .AnotherFakeAgentMechanismDriver,
+                    'bind_port') as second_bind:
+            manager._bind_port_level(
+                self.context, 0, self.segments_to_bind)
+        self.assertEqual(1, first_bind.call_count)
+        self.assertEqual(1, second_bind.call_count)
 
     def _check_drivers_connectivity(self, agents):
         cfg.CONF.set_override('mechanism_drivers', agents, group='ml2')
