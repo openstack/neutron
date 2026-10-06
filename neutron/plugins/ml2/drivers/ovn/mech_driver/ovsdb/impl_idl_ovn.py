@@ -12,6 +12,7 @@
 
 import contextlib
 import functools
+import select
 import socket
 import uuid
 
@@ -21,6 +22,7 @@ from neutron_lib.utils import helpers
 from oslo_log import log
 from oslo_utils import strutils
 from oslo_utils import uuidutils
+from ovs import poller as ovs_poller
 from ovs import socket_util
 from ovs import stream
 from ovsdbapp.backend import ovs_idl
@@ -109,9 +111,43 @@ class SSLStream(stream.SSLStream, NoProbesMixin):
         return super()._open(suffix, dscp)
 
 
+_OVS_SELECT_POLL = ovs_poller.SelectPoll
+
+
+def system_poll():
+    """Return a poll(2) based poller instead of the select(2) based one.
+
+    ``ovs.poller.Poller`` instantiates ``ovs.poller.SelectPoll``, which
+    emulates poll(2) on top of ``select.select``. The real select(2) cannot
+    handle a file descriptor numbered ``FD_SETSIZE`` (1024) or higher; Python
+    raises ``ValueError: filedescriptor out of range in select()`` instead.
+
+    A neutron-server API worker holds well over 1024 file descriptors, so an
+    OVSDB socket opened late in the process lifetime (for example on a
+    reconnect) can be numbered above that limit. When it is,
+    ``Connection.run()`` in ovsdbapp logs the ``ValueError`` and retries
+    immediately, never reaching ``TransactionQueue.get_nowait()``. That queue
+    has a maxsize of 1, so every later OVSDB transaction in the process fails
+    with "TXN queue is full" until the process is restarted, and the retry
+    loop burns a full CPU core in the meantime.
+
+    poll(2) has no such limit, so prefer it. Under eventlet it must not be
+    used: ``select.select`` is then ``eventlet.green.select``, which
+    multiplexes through the hub and therefore has no FD_SETSIZE limit
+    either, whereas the real poll(2) would block the whole hub instead of
+    yielding to the other greenthreads. Keep the emulation in that case.
+    """
+    # NOTE: ``_using_eventlet_green_select()`` is private to ``ovs.poller``,
+    # but it is the very check ``get_system_poll()`` relies on.
+    if ovs_poller._using_eventlet_green_select():
+        return _OVS_SELECT_POLL()
+    return select.poll()
+
+
 # Overwriting globals in a library is clearly a good idea
 stream.Stream.register_method("tcp", TCPStream)
 stream.Stream.register_method("ssl", SSLStream)
+ovs_poller.SelectPoll = system_poll
 
 
 # This version of Backend doesn't use a class variable for ovsdb_connection

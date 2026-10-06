@@ -13,9 +13,11 @@
 #
 import collections
 import copy
+import select
 from unittest import mock
 
 from oslo_utils import uuidutils
+from ovs import poller as ovs_poller
 from ovsdbapp.backend import ovs_idl
 
 from neutron.common.ovn import constants as ovn_const
@@ -1017,3 +1019,24 @@ class TestSBImplIdlOvnGetChassisByCardSerialFromCMSOptions(
             'fake-smartnic-dpu-chassis.fqdn',
             self.sb_ovn_idl.get_chassis_by_card_serial_from_cms_options(
                 'fake-serial').hostname)
+
+
+class TestSystemPoll(base.BaseTestCase):
+
+    # select.poll is a builtin function, not a type, so compare against the
+    # type of the object it returns.
+    POLL_TYPE = type(select.poll())
+
+    def test_select_poll_is_replaced(self):
+        self.assertIs(impl_idl_ovn.system_poll, ovs_poller.SelectPoll)
+
+    @mock.patch.object(ovs_poller, '_using_eventlet_green_select',
+                       return_value=False)
+    def test_system_poll(self, *args):
+        self.assertIsInstance(impl_idl_ovn.system_poll(), self.POLL_TYPE)
+
+    @mock.patch.object(impl_idl_ovn, '_OVS_SELECT_POLL')
+    @mock.patch.object(ovs_poller, '_using_eventlet_green_select',
+                       return_value=True)
+    def test_system_poll_keeps_emulation_under_eventlet(self, _, emulation):
+        self.assertIs(emulation.return_value, impl_idl_ovn.system_poll())
