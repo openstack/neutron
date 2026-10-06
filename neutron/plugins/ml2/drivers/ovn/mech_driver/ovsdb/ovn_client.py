@@ -1845,10 +1845,45 @@ class OVNClient:
                   'for "%s" physical network: %s', physnet, candidates)
         return candidates
 
-    def _get_physnet(self, network):
-        if network.get(pnet.NETWORK_TYPE) in [const.TYPE_FLAT,
-                                              const.TYPE_VLAN]:
-            return network.get(pnet.PHYSICAL_NETWORK)
+    def _get_physnet(self, context, network, port=None):
+        """Return the physical network for a gateway port's network.
+
+        For single-segment networks, the physnet is read from the
+        top-level provider attributes. For multi-segment networks
+        (where the top-level attributes are not set by ML2), the
+        physnet is resolved from the port's subnet segment when a
+        port is provided, or from the first flat/VLAN segment
+        otherwise.
+        """
+        if pnet.NETWORK_TYPE in network:
+            if network.get(pnet.NETWORK_TYPE) in const.TYPE_PHYSICAL:
+                return network.get(pnet.PHYSICAL_NETWORK)
+
+            # Tunnelled network
+            return None
+
+        # For multi-segment networks, the top-level provider attributes
+        # are not set. Query the DB segments for this network.
+        seg_physnets = segments_db.get_segments_physnets(
+            context, network['id'])
+        if not seg_physnets:
+            return None
+
+        # If a port is provided, find the physnet for the port's
+        # subnet segment.
+        if port:
+            subnet_ids = [fip['subnet_id']
+                          for fip in port.get('fixed_ips', [])]
+            if subnet_ids:
+                for subnet in self._plugin.get_subnets(
+                        context,
+                        filters={'id': subnet_ids,
+                                 'segment_id': list(seg_physnets)}):
+                    if subnet.get('segment_id'):
+                        return seg_physnets[subnet['segment_id']]
+
+        # Fallback: return the first flat/VLAN segment's physnet.
+        return next(iter(seg_physnets.values()))
 
     def _gen_router_port_ext_ids(self, port, router_id):
         return {
@@ -1983,9 +2018,10 @@ class OVNClient:
         ]
 
         if is_gw_port:
+            admin_ctx = context.elevated()
             port_net = self._plugin.get_network(
-                context.elevated(), port['network_id'])
-            physnet = self._get_physnet(port_net)
+                admin_ctx, port['network_id'])
+            physnet = self._get_physnet(admin_ctx, port_net, port)
             # TODO(ralonsoh): both paths (with and without physnet) now create
             # a ``HA_Chassis_Group`` per router, set to the
             # ``Logical_Router_Port``. Optimize this code to call the HCG

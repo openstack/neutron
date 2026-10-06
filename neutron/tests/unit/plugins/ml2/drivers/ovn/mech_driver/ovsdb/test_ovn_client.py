@@ -1640,6 +1640,124 @@ class TestOVNClient(TestOVNClientBase):
         mock_del_rev.assert_not_called()
 
 
+class TestOVNClientGetPhysnet(TestOVNClientBase):
+
+    def setUp(self):
+        super().setUp()
+        self.get_plugin = mock.patch(
+            'neutron_lib.plugins.directory.get_plugin').start()
+        self.mock_get_segments = mock.patch(
+            'neutron.db.segments_db.get_network_segments').start()
+        self.plugin = mock.MagicMock()
+        self.get_plugin.return_value = self.plugin
+        self.context = mock.MagicMock()
+
+    def test_single_segment_flat(self):
+        network = {
+            'id': 'net-id',
+            'provider:network_type': 'flat',
+            'provider:physical_network': 'physnet1'}
+        result = self.ovn_client._get_physnet(
+            self.context, network)
+        self.assertEqual('physnet1', result)
+        self.mock_get_segments.assert_not_called()
+
+    def test_single_segment_vlan(self):
+        network = {
+            'id': 'net-id',
+            'provider:network_type': 'vlan',
+            'provider:physical_network': 'physnet2'}
+        result = self.ovn_client._get_physnet(
+            self.context, network)
+        self.assertEqual('physnet2', result)
+        self.mock_get_segments.assert_not_called()
+
+    def test_tunnelled_network(self):
+        network = {
+            'id': 'net-id',
+            'provider:network_type': 'geneve'}
+        self.mock_get_segments.return_value = [
+            {'id': 'seg1', 'network_type': 'geneve',
+             'physical_network': None}]
+        result = self.ovn_client._get_physnet(
+            self.context, network)
+        self.assertIsNone(result)
+
+    def test_multi_segment_flat_with_port(self):
+        network = {'id': 'net-id'}
+        port = {'fixed_ips': [{'subnet_id': 'subnet-1',
+                               'ip_address': '10.0.0.5'}]}
+        self.mock_get_segments.return_value = [
+            {'id': 'seg-1', 'network_type': 'flat',
+             'physical_network': 'physnet1'},
+            {'id': 'seg-2', 'network_type': 'flat',
+             'physical_network': 'physnet2'}]
+        self.plugin.get_subnets.return_value = [
+            {'id': 'subnet-1', 'segment_id': 'seg-2'}]
+        result = self.ovn_client._get_physnet(
+            self.context, network, port)
+        self.assertEqual('physnet2', result)
+
+    def test_multi_segment_flat_without_port(self):
+        network = {'id': 'net-id'}
+        self.mock_get_segments.return_value = [
+            {'id': 'seg-1', 'network_type': 'flat',
+             'physical_network': 'physnet1'},
+            {'id': 'seg-2', 'network_type': 'flat',
+             'physical_network': 'physnet2'}]
+        result = self.ovn_client._get_physnet(
+            self.context, network)
+        self.assertEqual('physnet1', result)
+
+    def test_multi_segment_mixed_types(self):
+        network = {'id': 'net-id'}
+        port = {'fixed_ips': [{'subnet_id': 'subnet-1',
+                               'ip_address': '10.0.0.5'}]}
+        self.mock_get_segments.return_value = [
+            {'id': 'seg-1', 'network_type': 'geneve',
+             'physical_network': None},
+            {'id': 'seg-2', 'network_type': 'flat',
+             'physical_network': 'physnet1'}]
+        self.plugin.get_subnets.return_value = [
+            {'id': 'subnet-1', 'segment_id': 'seg-2'}]
+        result = self.ovn_client._get_physnet(
+            self.context, network, port)
+        self.assertEqual('physnet1', result)
+
+    def test_multi_segment_all_tunnelled(self):
+        network = {'id': 'net-id'}
+        self.mock_get_segments.return_value = [
+            {'id': 'seg-1', 'network_type': 'geneve',
+             'physical_network': None},
+            {'id': 'seg-2', 'network_type': 'vxlan',
+             'physical_network': None}]
+        result = self.ovn_client._get_physnet(
+            self.context, network)
+        self.assertIsNone(result)
+
+    def test_multi_segment_no_segments_in_db(self):
+        network = {'id': 'net-id'}
+        self.mock_get_segments.return_value = []
+        result = self.ovn_client._get_physnet(
+            self.context, network)
+        self.assertIsNone(result)
+
+    def test_multi_segment_port_subnet_no_segment_id(self):
+        network = {'id': 'net-id'}
+        port = {'fixed_ips': [{'subnet_id': 'subnet-1',
+                               'ip_address': '10.0.0.5'}]}
+        self.mock_get_segments.return_value = [
+            {'id': 'seg-1', 'network_type': 'flat',
+             'physical_network': 'physnet1'},
+            {'id': 'seg-2', 'network_type': 'flat',
+             'physical_network': 'physnet2'}]
+        self.plugin.get_subnets.return_value = [
+            {'id': 'subnet-1', 'segment_id': None}]
+        result = self.ovn_client._get_physnet(
+            self.context, network, port)
+        self.assertEqual('physnet1', result)
+
+
 class TestOVNClientFairMeter(TestOVNClientBase,
                              test_log_driver.TestOVNDriverBase):
 
