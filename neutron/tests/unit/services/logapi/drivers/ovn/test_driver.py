@@ -340,9 +340,10 @@ class TestOVNDriver(TestOVNDriverBase):
                          self._nb_ovn.db_set.call_count)
 
     @mock.patch.object(ovn_driver.LOG, 'info')
-    @mock.patch.object(sg_obj.SecurityGroup, 'get_sg_by_id')
-    def test__set_acls_log(self, get_sg, m_info):
+    @mock.patch.object(sg_obj.SecurityGroup, 'get_sgs_stateful_flag')
+    def test__set_acls_log(self, get_stateful, m_info):
         pg_dict = self._fake_pg_dict(acls=['acl1', 'acl2', 'acl3', 'acl4'])
+        sg_id = pg_dict['external_ids'][ovn_const.OVN_SG_EXT_ID_KEY]
         log_name = 'test_obj_name'
         used_name = 'test_used_name'
 
@@ -351,15 +352,14 @@ class TestOVNDriver(TestOVNDriverBase):
                 return self._fake_acl()
             return self._fake_acl(name=used_name)
 
-        sg = fake_resources.FakeSecurityGroup.create_one_security_group(
-            attrs={'stateful': True})
-        get_sg.return_value = sg
+        get_stateful.return_value = {sg_id: True}
         self._nb_ovn.lookup.side_effect = _mock_lookup
         actions_enabled = self._log_driver._acl_actions_enabled(
             self._fake_log_obj(event=log_const.ALL_EVENT))
         self._log_driver._set_acls_log([pg_dict], self.context,
                                        self._nb_ovn.transaction,
                                        actions_enabled, log_name)
+        get_stateful.assert_called_once_with(self.context, [sg_id])
         info_args, _info_kwargs = m_info.call_args_list[0]
         self.assertIn('Set %d (out of %d visited) ACLs for network log %s',
                       info_args[0])
@@ -367,6 +367,37 @@ class TestOVNDriver(TestOVNDriverBase):
         self.assertEqual(len(pg_dict["acls"]), info_args[2])
         self.assertEqual(log_name, info_args[3])
         self.assertEqual(1, self._nb_ovn.db_set.call_count)
+        self.assertIn(('meter', self._log_driver.meter_name),
+                      self._nb_ovn.db_set.call_args.args)
+
+    @mock.patch.object(sg_obj.SecurityGroup, 'get_sgs_stateful_flag')
+    def test__set_acls_log_stateless_sg(self, get_stateful):
+        pg_dict = self._fake_pg_dict(acls=['acl1'])
+        sg_id = pg_dict['external_ids'][ovn_const.OVN_SG_EXT_ID_KEY]
+        get_stateful.return_value = {sg_id: False}
+        self._nb_ovn.lookup.return_value = self._fake_acl()
+        actions_enabled = self._log_driver._acl_actions_enabled(
+            self._fake_log_obj(event=log_const.ALL_EVENT))
+        self._log_driver._set_acls_log([pg_dict], self.context,
+                                       self._nb_ovn.transaction,
+                                       actions_enabled, 'test_obj_name')
+        self.assertEqual(1, self._nb_ovn.db_set.call_count)
+        self.assertIn(('meter', self._log_driver.meter_name + '_stateless'),
+                      self._nb_ovn.db_set.call_args.args)
+
+    @mock.patch.object(ovn_driver.LOG, 'warning')
+    @mock.patch.object(sg_obj.SecurityGroup, 'get_sgs_stateful_flag',
+                       return_value={})
+    def test__set_acls_log_missing_sg(self, get_stateful, m_warning):
+        pg_dict = self._fake_pg_dict(acls=['acl1', 'acl2'])
+        actions_enabled = self._log_driver._acl_actions_enabled(
+            self._fake_log_obj(event=log_const.ALL_EVENT))
+        self._log_driver._set_acls_log([pg_dict], self.context,
+                                       self._nb_ovn.transaction,
+                                       actions_enabled, 'test_obj_name')
+        m_warning.assert_called_once()
+        self._nb_ovn.lookup.assert_not_called()
+        self._nb_ovn.db_set.assert_not_called()
 
     def test_add_label_related(self):
         mock.patch.object(self._log_driver, '_pgs_from_log_obj', return_value=[
@@ -538,3 +569,38 @@ class TestOVNDriver(TestOVNDriverBase):
                 self.assertEqual(acl['name'],
                                  ovn_utils.ovn_name(log_objs[0].id))
                 self.assertEqual(acl['meter'], self._log_driver.meter_name)
+
+    @mock.patch.object(sg_obj.SecurityGroup, 'get_sgs_stateful_flag')
+    def test__set_neutron_acls_log_stateless_sg(self, get_stateful):
+        pg_dict = self._fake_pg_dict()
+        sg_id = pg_dict['external_ids'][ovn_const.OVN_SG_EXT_ID_KEY]
+        get_stateful.return_value = {sg_id: False}
+        n_acls = [{'port_group': pg_dict['name'],
+                   'action': ovn_const.ACL_ACTION_ALLOW_STATELESS,
+                   'log': False,
+                   'name': '',
+                   'severity': ''}]
+        actions_enabled = self._log_driver._acl_actions_enabled(
+            self._fake_log_obj(event=log_const.ALL_EVENT))
+        self._log_driver._set_neutron_acls_log(
+            [pg_dict], self.context, actions_enabled, 'test_obj_name', n_acls)
+        get_stateful.assert_called_once_with(self.context, [sg_id])
+        self.assertTrue(n_acls[0]['log'])
+        self.assertEqual(self._log_driver.meter_name + '_stateless',
+                         n_acls[0]['meter'])
+
+    @mock.patch.object(sg_obj.SecurityGroup, 'get_sgs_stateful_flag',
+                       return_value={})
+    def test__set_neutron_acls_log_missing_sg(self, get_stateful):
+        pg_dict = self._fake_pg_dict()
+        n_acls = [{'port_group': pg_dict['name'],
+                   'action': ovn_const.ACL_ACTION_ALLOW_RELATED,
+                   'log': False,
+                   'name': '',
+                   'severity': ''}]
+        actions_enabled = self._log_driver._acl_actions_enabled(
+            self._fake_log_obj(event=log_const.ALL_EVENT))
+        self._log_driver._set_neutron_acls_log(
+            [pg_dict], self.context, actions_enabled, 'test_obj_name', n_acls)
+        self.assertFalse(n_acls[0]['log'])
+        self.assertEqual('', n_acls[0]['name'])
