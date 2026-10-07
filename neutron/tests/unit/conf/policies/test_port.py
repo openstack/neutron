@@ -512,6 +512,16 @@ class SystemAdminTests(PortAPITestCase):
             base_policy.InvalidScope,
             policy.enforce, self.context, 'delete_port', alt_target)
 
+    def test_delete_distributed_device_port(self):
+        target, alt_target = self._get_targets_with_device_owner(
+            'network:distributed')
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'delete_port', target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'delete_port', alt_target)
+
     def test_delete_network_device_port(self):
         target, alt_target = self._get_targets_with_device_owner(
             'network:test')
@@ -942,6 +952,14 @@ class AdminTests(PortAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'delete_port', alt_target))
 
+    def test_delete_distributed_device_port(self):
+        target, alt_target = self._get_targets_with_device_owner(
+            'network:distributed')
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_port', target))
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_port', alt_target))
+
     def test_delete_network_device_port(self):
         target, alt_target = self._get_targets_with_device_owner(
             'network:test')
@@ -1297,6 +1315,16 @@ class ProjectManagerTests(AdminTests):
 
     def test_delete_manila_device_port(self):
         target, alt_target = self._get_targets_with_device_owner('manila:test')
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_port', target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_port', alt_target)
+
+    def test_delete_distributed_device_port(self):
+        target, alt_target = self._get_targets_with_device_owner(
+            'network:distributed')
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'delete_port', target)
@@ -1731,6 +1759,14 @@ class ServiceRoleTests(PortAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'delete_port', alt_target))
 
+    def test_delete_distributed_device_port(self):
+        target, alt_target = self._get_targets_with_device_owner(
+            'network:distributed')
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_port', target))
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_port', alt_target))
+
     def test_delete_network_device_port(self):
         target, alt_target = self._get_targets_with_device_owner(
             'network:test')
@@ -1774,6 +1810,15 @@ class ProjectMemberServiceTokenTests(PortAPITestCase):
     def test_delete_manila_device_port(self):
         target, alt_target = self._get_targets_with_device_owner(
             'manila:test')
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_port', target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_port', alt_target)
+
+    def test_delete_distributed_device_port(self):
+        target, alt_target = self._get_targets_with_device_owner(
+            'network:distributed')
         self.assertTrue(
             policy.enforce(self.context, 'delete_port', target))
         self.assertRaises(
