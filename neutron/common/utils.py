@@ -1124,9 +1124,19 @@ class ThreadPoolExecutorWithBlock(futures.ThreadPoolExecutor):
     This class implements a method that allow to submit new workers but only if
     there are available workers. If not, the method blocks indefinitely.
     """
+
+    def __init__(self, max_workers=None, stopping_event=None, **kwargs):
+        super().__init__(max_workers=max_workers, **kwargs)
+        self._stopping_event = stopping_event or threading.Event()
+
     def submit(self, fn, *args, **kwargs):
+        if self._stopping_event.is_set():
+            LOG.debug("ThreadPoolExecutor submit rejected due to stopping")
+            return None
+
         while self._work_queue.qsize() > 0 and not self._shutdown:
-            time.sleep(0.1)
+            if self._stopping_event.wait(timeout=0.1):
+                return None
 
         if self._shutdown:
             return
