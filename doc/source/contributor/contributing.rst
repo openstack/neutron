@@ -11,6 +11,32 @@ how we communicate as a community, etc.
 Below will cover the more project specific information you need to get started
 with Neutron.
 
+Getting Started
+~~~~~~~~~~~~~~~
+
+If you are new to Neutron, the following first steps are a good way to get
+involved:
+
+- Set up a development environment so you can run the code. DevStack is the
+  usual convenient environment. See `devstack.org <http://devstack.org/>`_
+  or `NeutronDevstack
+  <https://wiki.openstack.org/wiki/NeutronDevstack#Basic_Setup>`_ for more
+  information on using Neutron with DevStack.
+
+- Participate in code reviews on Gerrit. Reviews are a great way to learn
+  about the project.
+
+- Pick up a bug to work on. Search for the `low hanging fruit
+  <https://bugs.launchpad.net/neutron/+bugs?field.tag=low-hanging-fruit>`_
+  tag or browse `low and wishlist priority bugs
+  <https://bugs.launchpad.net/neutron/+bugs?field.importance%3Alist=LOW&field.importance%3Alist=WISHLIST&field.status%3Alist=NEW&field.status%3Alist=CONFIRMED&field.status%3Alist=TRIAGED&field.status%3Alist=INPROGRESS>`_.
+
+- Help with documentation. Tagged documentation and API reference bugs are
+  available on Launchpad:
+
+  * `Documentation bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=doc>`_
+  * `API reference bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=api-ref>`_
+
 Communication
 ~~~~~~~~~~~~~~
 .. This would be a good place to put the channel you chat in as a project; when/
@@ -18,6 +44,8 @@ Communication
 
 - IRC channel: #openstack-neutron
 - Mailing list's prefix: [neutron]
+- While project discussion happens on the mailing list and in IRC, the bulk
+  of patch review discussion takes place in Gerrit itself.
 - Team Meeting:
 
   This is general Neutron team meeting. The discussion in this meeting is about
