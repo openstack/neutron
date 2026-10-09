@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from neutron_lib.api.definitions import evpn as evpn_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
@@ -26,10 +28,12 @@ from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.db import evpn_db
 from neutron.services.evpn import commands as evpn_ovn
 from neutron.services.evpn import exceptions as evpn_exceptions
+from neutron.services.evpn import scheduler as evpn_scheduler
 
 LOG = logging.getLogger(__name__)
 
@@ -72,6 +76,20 @@ class EVPNPlugin(service_base.ServicePluginBase):
     @property
     def _sb_idl(self):
         return self._mech_driver.sb_ovn
+
+    def _compute_hcg_primary_load(self, chassis_names):
+        """Return a count of effective HCG primary bindings per chassis.
+
+        Queries all HA_Chassis_Groups and counts how many times each
+        chassis is the *effective* primary — the highest-priority
+        chassis still registered in the SB Chassis table.
+
+        :param chassis_names: set of registered gateway chassis names
+        :returns: dict ``{chassis_name: int}``
+        """
+        primaries = self._nb_idl.get_ha_chassis_group_primaries(
+            chassis_names=chassis_names)
+        return dict(collections.Counter(primaries))
 
     def get_plugin_description(self):
         return "EVPN service plugin"
@@ -124,7 +142,9 @@ class EVPNPlugin(service_base.ServicePluginBase):
         """Create EVPN OVN topology after router creation.
 
         Sets dynamic-routing options on the logical router so OVN
-        treats it as an EVPN VRF.
+        treats it as an EVPN VRF.  Gateway chassis are selected with
+        AZ-aware, least-loaded scheduling and passed to the HCG
+        ordered by priority.
         """
         router = payload.states[0]
         vni = router.get(evpn_apidef.EVPN_VNI)
@@ -133,10 +153,24 @@ class EVPNPlugin(service_base.ServicePluginBase):
 
         router_id = payload.resource_id
         vlan = self._evpn_db.get_vlan_for_router(payload.context, router_id)
-        gw_chassis = self._sb_idl.get_gateway_chassis_from_cms_options()
+
+        gw_chassis, candidates = (
+            self._sb_idl.get_gateway_chassis_with_az_filter(
+                az_hints=router.get('availability_zone_hints', [])))
+
+        hcg_load = self._compute_hcg_primary_load(chassis_names=gw_chassis)
+        scheduler = evpn_scheduler.LeastLoadedChassisScheduler(hcg_load)
+        ordered_chassis = scheduler.select(
+            candidates=candidates, max_chassis=ovn_const.MAX_GW_CHASSIS)
+        if not ordered_chassis:
+            LOG.warning("No gateway chassis available for EVPN router %s. "
+                        "The VRF will remain unhosted until chassis "
+                        "matching the requested AZ hints become available.",
+                        router_id)
+
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(evpn_ovn.CreateEVPNRouterCommand(
-                self._nb_idl, router_id, vni, vlan, gw_chassis))
+                self._nb_idl, router_id, vni, vlan, ordered_chassis))
 
         LOG.info("Set EVPN dynamic-routing options for router %s VNI %s",
                  router_id, vni)

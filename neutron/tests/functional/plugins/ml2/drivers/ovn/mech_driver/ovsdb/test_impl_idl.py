@@ -246,6 +246,101 @@ class TestSbApi(BaseOvnIdlTest):
             bindings=[binding, binding2],
             expected=[binding, binding2])
 
+    def _add_chassis(self, cms_options='enable-chassis-as-gw'):
+        """Add a chassis with the given ovn-cms-options string."""
+        name = utils.get_rand_device_name('chassis')
+        hostname = '%s.localdomain.com' % name
+        other_config = {
+            'ovn-cms-options': cms_options,
+            'ovn-bridge-mappings': 'public:br-ex',
+        }
+        self.addCleanup(
+            self.api.chassis_del, name, if_exists=True)
+        self.api.chassis_add(
+            name, ['geneve'], hostname,
+            hostname=hostname,
+            other_config=other_config).execute(check_error=True)
+        return name
+
+    def _assert_chassis_subset(self, expected, actual):
+        """Assert that all expected chassis are present in actual."""
+        self.assertLessEqual(expected, actual)
+
+    def test_get_gateway_chassis_with_az_filter_no_gw_chassis(self):
+        # Chassis without enable-chassis-as-gw must be excluded.
+        non_gw = self._add_chassis(cms_options='')
+        gw = self._add_chassis()
+
+        gw_chassis, candidates = self.api.get_gateway_chassis_with_az_filter()
+        self.assertIn(gw, gw_chassis)
+        self.assertNotIn(non_gw, gw_chassis)
+        self.assertIn(gw, candidates)
+        self.assertNotIn(non_gw, candidates)
+
+    def test_get_gateway_chassis_with_az_filter_no_az_hints(self):
+        ch1 = self._add_chassis()
+        ch2 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-1')
+
+        gw_chassis, candidates = self.api.get_gateway_chassis_with_az_filter()
+        self._assert_chassis_subset({ch1, ch2}, gw_chassis)
+        # No AZ filter: candidates == gw_chassis
+        self._assert_chassis_subset({ch1, ch2}, candidates)
+
+    def test_get_gateway_chassis_with_az_filter_single_az(self):
+        ch1 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-1')
+        ch2 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-2')
+        ch3 = self._add_chassis()
+
+        gw_chassis, candidates = self.api.get_gateway_chassis_with_az_filter(
+            az_hints=['az-1'])
+        self._assert_chassis_subset({ch1, ch2, ch3}, gw_chassis)
+        self.assertIn(ch1, candidates)
+        self.assertNotIn(ch2, candidates)
+        self.assertNotIn(ch3, candidates)
+
+    def test_get_gateway_chassis_with_az_filter_multiple_azs(self):
+        ch1 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-1')
+        ch2 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-2')
+        ch3 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-3')
+
+        gw_chassis, candidates = (
+            self.api.get_gateway_chassis_with_az_filter(
+                az_hints=['az-1', 'az-3']))
+        self._assert_chassis_subset({ch1, ch2, ch3}, gw_chassis)
+        self._assert_chassis_subset({ch1, ch3}, candidates)
+        self.assertNotIn(ch2, candidates)
+
+    def test_get_gateway_chassis_with_az_filter_chassis_in_multiple_azs(self):
+        ch1 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-1:az-2')
+        ch2 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-3')
+
+        gw_chassis, candidates = (
+            self.api.get_gateway_chassis_with_az_filter(
+                az_hints=['az-2']))
+        self._assert_chassis_subset({ch1, ch2}, gw_chassis)
+        self.assertIn(ch1, candidates)
+        self.assertNotIn(ch2, candidates)
+
+    def test_get_gateway_chassis_with_az_filter_no_match(self):
+        ch1 = self._add_chassis(
+            'enable-chassis-as-gw,availability-zones=az-1')
+        ch2 = self._add_chassis()
+
+        gw_chassis, candidates = (
+            self.api.get_gateway_chassis_with_az_filter(
+                az_hints=['az-99']))
+        self._assert_chassis_subset({ch1, ch2}, gw_chassis)
+        self.assertNotIn(ch1, candidates)
+        self.assertNotIn(ch2, candidates)
+
 
 class TestNbApi(BaseOvnIdlTest):
 
@@ -968,6 +1063,81 @@ class TestNbApi(BaseOvnIdlTest):
         # Should not raise when port group does not exist and if_exists=True
         self.nbapi.delete_acl_by_sg_id(
             sg_id, sg_rule_id, if_exists=True).execute(check_error=True)
+
+    @staticmethod
+    def _unique_chassis_names(count):
+        return [uuidutils.generate_uuid() for _ in range(count)]
+
+    def test_get_ha_chassis_group_primaries_empty(self):
+        chassis = self._unique_chassis_names(1)
+        result = self.nbapi.get_ha_chassis_group_primaries(
+            chassis_names=chassis)
+        self.assertEqual([], result)
+
+    def test_get_ha_chassis_group_primaries_single(self):
+        c1, c2, c3 = self._unique_chassis_names(3)
+        chassis_priority = {c1: 1, c2: 2, c3: 3}
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority).execute(check_error=True)
+
+        result = self.nbapi.get_ha_chassis_group_primaries(
+            chassis_names=[c1, c2, c3])
+        self.assertEqual([c3], result)
+
+    def test_get_ha_chassis_group_primaries_multiple(self):
+        c1, c2, c3 = self._unique_chassis_names(3)
+        hcg1_name = uuidutils.generate_uuid()
+        hcg2_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, [hcg1_name, hcg2_name])
+        self.nbapi.ha_chassis_group_with_hc_add(
+            hcg1_name, {c1: 1, c2: 5}).execute(check_error=True)
+        self.nbapi.ha_chassis_group_with_hc_add(
+            hcg2_name, {c1: 10, c3: 3}).execute(check_error=True)
+
+        result = self.nbapi.get_ha_chassis_group_primaries(
+            chassis_names=[c1, c2, c3])
+        self.assertCountEqual([c2, c1], result)
+
+    def test_get_ha_chassis_group_primaries_alive_filter(self):
+        c1, c2, c3 = self._unique_chassis_names(3)
+        chassis_priority = {c1: 1, c2: 2, c3: 3}
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority).execute(check_error=True)
+
+        # c3 is the configured primary (priority 3) but is not in the
+        # set; c2 (priority 2) should be the effective primary.
+        result = self.nbapi.get_ha_chassis_group_primaries(
+            chassis_names=[c1, c2])
+        self.assertEqual([c2], result)
+
+    def test_get_ha_chassis_group_primaries_no_alive_chassis(self):
+        c1, c2 = self._unique_chassis_names(2)
+        chassis_priority = {c1: 1, c2: 2}
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        self.nbapi.ha_chassis_group_with_hc_add(
+            hcg_name, chassis_priority).execute(check_error=True)
+
+        # Neither c1 nor c2 is in the set — HCG should be omitted.
+        unrelated = self._unique_chassis_names(1)
+        result = self.nbapi.get_ha_chassis_group_primaries(
+            chassis_names=unrelated)
+        self.assertEqual([], result)
+
+    def test_get_ha_chassis_group_primaries_empty_hcg(self):
+        hcg_name = uuidutils.generate_uuid()
+        self.addCleanup(self._cleanup_delete_hcg, hcg_name)
+        self.nbapi.ha_chassis_group_add(hcg_name).execute(check_error=True)
+
+        # HCG with no HA_Chassis rows should be omitted.
+        chassis = self._unique_chassis_names(1)
+        result = self.nbapi.get_ha_chassis_group_primaries(
+            chassis_names=chassis)
+        self.assertEqual([], result)
 
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
