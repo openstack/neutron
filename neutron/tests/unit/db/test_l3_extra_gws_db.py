@@ -671,3 +671,62 @@ class TestExtraGatewaysDb(testlib_api.SqlTestCase):
             self.target_object.add_external_gateways, self.context,
             self.router.id, body
         )
+
+    def test_add_router_interface_same_subnet_twice(self):
+        net_id = _uuid()
+        sub_id = _uuid()
+        net_obj.Network(
+            self.context,
+            id=net_id,
+            project_id=self.project_id,
+            admin_state_up=True,
+            status=constants.NET_STATUS_ACTIVE).create()
+        subnet_obj.Subnet(
+            self.context,
+            id=sub_id,
+            project_id=self.project_id,
+            ip_version=constants.IP_VERSION_4,
+            cidr=net_utils.AuthenticIPNetwork('198.51.100.0/24'),
+            gateway_ip=netaddr.IPAddress('198.51.100.1'),
+            network_id=net_id).create()
+        ipam_obj.IpamSubnet(self.context, neutron_subnet_id=sub_id).create()
+        interface_info = {'subnet_id': sub_id}
+
+        self.target_object.add_router_interface(
+            self.context, self.router.id, interface_info)
+
+        self.assertRaisesRegex(
+            exceptions.BadRequest,
+            f'Router already has a port on subnet {sub_id}',
+            self.target_object.add_router_interface, self.context,
+            self.router.id, interface_info)
+
+    def test_add_external_gateways_dup_subnet1_returns_400(self):
+        self.target_object.add_router_interface(
+            self.context, self.router.id, {'subnet_id': self.ext_sub_a_id})
+
+        body = {
+            "router": {
+                "external_gateways": [{"network_id": self.ext_net_a_id}]
+            }
+        }
+        self.assertRaisesRegex(
+            exceptions.BadRequest,
+            f'Router already has a port on subnet {self.ext_sub_a_id}',
+            self.target_object.add_external_gateways, self.context,
+            self.router.id, body)
+
+    def test_add_external_gateways_dup_subnet2_returns_400(self):
+        body = {
+            "router": {
+                "external_gateways": [{"network_id": self.ext_net_a_id}]
+            }
+        }
+        self.target_object.add_external_gateways(
+            self.context, self.router.id, body)
+
+        self.assertRaisesRegex(
+            exceptions.BadRequest,
+            f'Router already has a port on subnet {self.ext_sub_a_id}',
+            self.target_object.add_router_interface, self.context,
+            self.router.id, {'subnet_id': self.ext_sub_a_id})
