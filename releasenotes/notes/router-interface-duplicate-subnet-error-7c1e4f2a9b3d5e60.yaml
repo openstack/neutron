@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Adding a router interface on a subnet that is already attached to the
+    router now fails with ``Router already has a port on subnet`` on routers
+    supporting multiple external gateways (for example the OVN L3 plugin),
+    instead of reporting that the subnet overlaps with itself. For more
+    information, see bug
+    `2170284 <https://bugs.launchpad.net/neutron/+bug/2170284>`_.
