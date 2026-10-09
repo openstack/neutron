@@ -32,6 +32,7 @@ from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.plugins import utils as p_utils
 from neutron_lib.utils import net as n_utils
 from oslo_concurrency import processutils
 from oslo_config import cfg
@@ -1060,14 +1061,16 @@ def is_port_external(port):
         else:  # What else could be "port"?
             bindings = []
 
-        if bindings:
-            profile = bindings[0].get('profile')
+        binding = p_utils.get_port_binding_by_status_and_host(
+            bindings, const.ACTIVE, port_id=port.id)
+        if binding:
+            profile = binding.get('profile')
             if profile:
                 # DB object, not OVO, stores the dict in JSON.
                 profile = (jsonutils.loads(profile) if isinstance(profile, str)
                            else profile)
                 capabilities = profile.get(constants.PORT_CAP_PARAM, [])
-            vnic_type = bindings[0].get('vnic_type', portbindings.VNIC_NORMAL)
+            vnic_type = binding.get('vnic_type', portbindings.VNIC_NORMAL)
 
     return (vnic_type in constants.EXTERNAL_PORT_TYPES and
             constants.PORT_CAP_SWITCHDEV not in capabilities)
