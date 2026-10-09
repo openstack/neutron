@@ -32,6 +32,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
+from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.exceptions import l3_ext_gw_multihoming as mh_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -219,11 +220,22 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         :param new_device_owner: A device owner field for the port that is
                                  going to be created with new subnets.
         """
+        new_subnet_ids = {s['id'] for s in new_subnets}
         router_subnets = []
         ext_subnets = set()
         for p in (rp.port for rp in router_db.attached_ports):
+            existing_port_owner = p.get('device_owner')
             for ip in p['fixed_ips']:
-                existing_port_owner = p.get('device_owner')
+                # Multiple gateway ports may share an external subnet, any
+                # other port on a requested subnet is a duplicate.
+                if (ip['subnet_id'] in new_subnet_ids and
+                        not (existing_port_owner ==
+                             constants.DEVICE_OWNER_ROUTER_GW and
+                             new_device_owner ==
+                             constants.DEVICE_OWNER_ROUTER_GW)):
+                    msg = (_("Router already has a port on subnet %s")
+                           % ip['subnet_id'])
+                    raise n_exc.BadRequest(resource='router', msg=msg)
                 if existing_port_owner == constants.DEVICE_OWNER_ROUTER_GW:
                     ext_subts = self._core_plugin.get_subnets(
                         context.elevated(),
