@@ -58,13 +58,17 @@ DEL_BGP_ROUTER = """\
 no router bgp {{ asn }}
 """
 
-DEL_EVPN_ROUTER = """\
+DEL_EVPN_VNI = """\
 vrf {{ vrf_name }}
  no vni {{ vni }}
 exit-vrf
-!
+"""
+
+DEL_EVPN_BGP_VRF = """\
 no router bgp {{ asn }} vrf {{ vrf_name }}
-!
+"""
+
+DEL_EVPN_VRF = """\
 no vrf {{ vrf_name }}
 """
 
@@ -130,7 +134,9 @@ class TmplName(enum.StrEnum):
     ADD_BGP_ROUTER = 'add_bgp_router'
     ADD_EVPN_ROUTER = 'add_evpn_router'
     DEL_BGP_ROUTER = 'del_bgp_router'
-    DEL_EVPN_ROUTER = 'del_evpn_router'
+    DEL_EVPN_VNI = 'del_evpn_vni'
+    DEL_EVPN_BGP_VRF = 'del_evpn_bgp_vrf'
+    DEL_EVPN_VRF = 'del_evpn_vrf'
     BGP_ROUTER_CONFIG = 'bgp_router_config'
     BGP_AF_IPV4_UNICAST = 'bgp_af_ipv4_unicast'
     BGP_AF_IPV6_UNICAST = 'bgp_af_ipv6_unicast'
@@ -145,7 +151,9 @@ TMPL_MAP: dict[str, str] = {
     TmplName.ADD_BGP_ROUTER: ADD_BGP_ROUTER,
     TmplName.ADD_EVPN_ROUTER: ADD_EVPN_ROUTER,
     TmplName.DEL_BGP_ROUTER: DEL_BGP_ROUTER,
-    TmplName.DEL_EVPN_ROUTER: DEL_EVPN_ROUTER,
+    TmplName.DEL_EVPN_VNI: DEL_EVPN_VNI,
+    TmplName.DEL_EVPN_BGP_VRF: DEL_EVPN_BGP_VRF,
+    TmplName.DEL_EVPN_VRF: DEL_EVPN_VRF,
     TmplName.BGP_ROUTER_CONFIG: BGP_ROUTER_CONFIG,
     TmplName.BGP_AF_IPV4_UNICAST: BGP_AF_IPV4_UNICAST,
     TmplName.BGP_AF_IPV6_UNICAST: BGP_AF_IPV6_UNICAST,

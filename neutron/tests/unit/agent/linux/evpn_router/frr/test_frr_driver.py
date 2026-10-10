@@ -81,13 +81,19 @@ class TestFrrCommandBuilder(base.BaseTestCase):
 
     def test_delete_evpn_router_cmds(self):
         config = _build_test_evpn_router_config(100)
-        result = self.builder.delete_evpn_router_cmds(config)
+        cmds = self.builder.delete_evpn_router_cmds(config)
 
-        self.assertIn('no vni %d' % config.vni, result)
-        self.assertIn(
-            'no router bgp %d vrf %s'
-            % (config.asn, config.vrf_name), result)
-        self.assertIn('no vrf %s' % config.vrf_name, result)
+        self.assertEqual(3, len(cmds))
+        self.assertIn('vrf %s' % config.vrf_name, cmds[0])
+        self.assertIn('no vni %d' % config.vni, cmds[0])
+        self.assertIn('exit-vrf', cmds[0])
+        self.assertNotIn('no router bgp', cmds[0])
+        self.assertEqual(
+            'no router bgp %d vrf %s' % (config.asn, config.vrf_name),
+            cmds[1].strip())
+        self.assertNotIn('no vni', cmds[1])
+        self.assertEqual('no vrf %s' % config.vrf_name, cmds[2].strip())
+        self.assertNotIn('no vni', cmds[2])
 
     def test_delete_bgp_router_cmds(self):
         config = _build_test_evpn_router_config(100)
@@ -245,14 +251,62 @@ class TestFrrVtyshDriver(base.BaseTestCase):
 
     def test_delete_evpn_router(self):
         config = _build_test_evpn_router_config(100)
+        cmds = ['no vni 100', 'no router bgp 65000 vrf vrf-100',
+                'no vrf vrf-100']
+        self.cmd_builder.delete_evpn_router_cmds.return_value = cmds
+
         self.driver.delete_evpn_router(config)
 
         self.vrf_handler.ensure_vrf_deleted.assert_called_once_with(
             config.vrf_name)
-        self.cmd_builder.delete_evpn_router_cmds\
-            .assert_called_once_with(config)
-        self.executor.execute_cmds.assert_called_once_with(
-            self.cmd_builder.delete_evpn_router_cmds.return_value)
+        self.cmd_builder.delete_evpn_router_cmds.assert_called_once_with(
+            config)
+        self.assertEqual(
+            [mock.call(cmd) for cmd in cmds],
+            self.executor.execute_cmds.call_args_list)
+
+    def test_delete_evpn_router_continues_after_first_step_fails(self):
+        config = _build_test_evpn_router_config(100)
+        cmds = ['no vni 100', 'no router bgp 65000 vrf vrf-100',
+                'no vrf vrf-100']
+        self.cmd_builder.delete_evpn_router_cmds.return_value = cmds
+        self.executor.execute_cmds.side_effect = [
+            frr_exceptions.FrrApplyError('gone', step='apply'),
+            None,
+            None,
+        ]
+
+        self.driver.delete_evpn_router(config)
+
+        self.assertEqual(
+            [mock.call(cmd) for cmd in cmds],
+            self.executor.execute_cmds.call_args_list)
+
+    def test_delete_evpn_router_continues_after_dryrun_error(self):
+        config = _build_test_evpn_router_config(100)
+        cmds = ['no vni 100', 'no router bgp 65000 vrf vrf-100',
+                'no vrf vrf-100']
+        self.cmd_builder.delete_evpn_router_cmds.return_value = cmds
+        self.executor.execute_cmds.side_effect = [
+            frr_exceptions.FrrDryrunError('dryrun', step='dryrun'),
+            frr_exceptions.FrrApplyError('gone', step='apply'),
+            None,
+        ]
+
+        self.driver.delete_evpn_router(config)
+
+        self.assertEqual(3, self.executor.execute_cmds.call_count)
+
+    def test_delete_evpn_router_twice_does_not_raise(self):
+        config = _build_test_evpn_router_config(100)
+        cmds = ['no vni 100', 'no router bgp 65000 vrf vrf-100',
+                'no vrf vrf-100']
+        self.cmd_builder.delete_evpn_router_cmds.return_value = cmds
+
+        self.driver.delete_evpn_router(config)
+        self.driver.delete_evpn_router(config)
+
+        self.assertEqual(6, self.executor.execute_cmds.call_count)
 
     def test_create_raises_on_vrf_failure(self):
         self.vrf_handler.ensure_vrf_exists.side_effect = (
