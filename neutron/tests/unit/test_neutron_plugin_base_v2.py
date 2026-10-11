@@ -20,6 +20,10 @@ from neutron.tests import base
 
 class NeutronPluginBaseV2TestCase(base.BaseTestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(manager.NeutronManager.clear_instance)
+
     def test_can_load_core_plugin_without_datastore(self):
         cfg.CONF.set_override("core_plugin", 'neutron.tests.unit.dummy_plugin.'
                               'DummyCorePluginWithoutDatastore')
