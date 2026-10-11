@@ -139,6 +139,16 @@ class TestCli(base.BaseTestCase):
         self.mock_alembic_err = mock.patch.object(cli, "log_error").start()
         self.mock_alembic_warn = mock.patch.object(cli, "log_warning").start()
         self.mock_alembic_err.side_effect = SystemExit
+        # cli.main() configures logging with
+        # logging.config.fileConfig(neutron_alembic_ini), which defaults to
+        # disable_existing_loggers=True and sets disabled=True on every
+        # logger that already exists in the test process, silencing them for
+        # all the tests running afterwards in the same worker (with the
+        # stestr --dynamic scheduler that is any test class scheduled after
+        # this one: e.g. the assertLogs() of test_dns_forwarder captures
+        # nothing and crashes with IndexError). These tests only exercise
+        # command dispatch, so make the fileConfig call a no-op.
+        mock.patch('logging.config.fileConfig').start()
 
         def mocked_root_dir(cfg):
             return os.path.join('/fake/dir', cli._get_project_base(cfg))
