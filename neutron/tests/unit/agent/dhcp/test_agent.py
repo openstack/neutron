@@ -1658,7 +1658,11 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def test_port_update_on_dhcp_agents_port_no_ip_change(self):
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = fake_port1
-        payload = {'port': fake_port1, 'priority': FAKE_PRIORITY}
+        # Do not mutate the module level fake_port1 fixture with the
+        # device id: test_setup_device_is_ready and friends would then
+        # find an "existing" DHCP port and never call create_dhcp_port.
+        payload = {'port': copy.deepcopy(
+            fake_port1), 'priority': FAKE_PRIORITY}
         device_id = utils.get_dhcp_agent_device_id(
             payload['port']['network_id'], self.dhcp.conf.host)
         payload['port']['device_id'] = device_id
@@ -1816,7 +1820,11 @@ class TestNetworkCache(base.BaseTestCase):
         self.assertTrue(self.nc.is_port_message_stale(fake_port2))
 
     def test_stale_update_ignored(self):
-        self.nc.put(fake_network)
+        # Do not put the module level fake_network into the cache as is:
+        # put_port() below appends fake_port2 to network.ports in place,
+        # which would mutate the fixture for every test running later in
+        # this process.
+        self.nc.put(copy.deepcopy(fake_network))
         self.nc.put_port(fake_port2)
         stale = copy.copy(fake_port2)
         stale['revision_number'] = 2
