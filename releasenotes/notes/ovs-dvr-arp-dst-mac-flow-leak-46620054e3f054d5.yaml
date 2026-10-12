@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    The OVS agent now removes the DVR ARP destination MAC flows from the
+    ``br-int`` tables 3 and 4 (``ARP_DVR_MAC_TO_DST_MAC`` and
+    ``ARP_DVR_MAC_TO_DST_MAC_PHYSICAL``) where they are installed, using the
+    local VLAN instead of the segmentation ID. Previously these flows were
+    leaked when a DVR router interface was removed. Stale flows left by
+    earlier versions are cleaned up by the agent on restart, as both tables
+    are now part of the stale flow cleanup. See bug
+    `2170618 <https://bugs.launchpad.net/neutron/+bug/2170618>`_.

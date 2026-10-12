@@ -51,7 +51,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                            br_dvr_process.OVSDVRInterfaceMixin):
     """openvswitch agent br-int specific logic."""
 
-    of_tables = constants.INT_BR_ALL_TABLES
+    of_tables = constants.INT_BR_ALL_TABLES + (
+        constants.ARP_DVR_MAC_TO_DST_MAC,
+        constants.ARP_DVR_MAC_TO_DST_MAC_PHYSICAL)
 
     def setup_default_table(self, enable_openflow_dhcp=False,
                             enable_dhcpv6=False, enable_dns_forwarder=False):
@@ -367,7 +369,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
 
     def delete_dvr_dst_mac_for_arp(self, network_type,
                                    vlan_tag, gateway_mac, dvr_mac, rtr_port):
-        table_id = self._dvr_to_src_mac_table_id(network_type)
+        table_id = self._dvr_dst_mac_table_id(network_type)
         (_dp, ofp, ofpp) = self._get_dp()
         match = self._arp_dvr_dst_mac_match(ofp, ofpp, vlan_tag, dvr_mac)
         self.uninstall_flows(

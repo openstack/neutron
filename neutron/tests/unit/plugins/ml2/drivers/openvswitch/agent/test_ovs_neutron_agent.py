@@ -3314,8 +3314,10 @@ class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
             self.agent.cleanup_stale_flows()
 
             dump_flows_expected = [
-                mock.call(tid) for tid in ovs_constants.INT_BR_ALL_TABLES]
+                mock.call(tid) for tid in self.agent.int_br.of_tables]
             dump_flows.assert_has_calls(dump_flows_expected)
+            self.assertIn(mock.call(ovs_constants.ARP_DVR_MAC_TO_DST_MAC),
+                          dump_flows_expected)
 
             expected = [mock.call(table_id=2,
                                   cookie=17185,
@@ -3325,7 +3327,7 @@ class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
                                   cookie_mask=uint64_max)]
             uninstall_flows.assert_has_calls(expected, any_order=True)
             self.assertEqual(
-                len(ovs_constants.INT_BR_ALL_TABLES) * len(expected),
+                len(self.agent.int_br.of_tables) * len(expected),
                 len(uninstall_flows.mock_calls))
 
 
@@ -4303,8 +4305,7 @@ class TestOvsDvrNeutronAgent:
             ])
             if network_type == 'vlan':
                 expected_unbound_dvr = self._expected_port_unbound(
-                    self._port,
-                    self._segmentation_id, network_type=network_type)
+                    self._port, lvid, network_type=network_type)
                 int_br.assert_has_calls(expected_unbound_dvr)
                 tun_br.assert_not_called()
                 phys_br.assert_has_calls(expected)
