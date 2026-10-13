@@ -99,6 +99,7 @@ def init_handler(resource, event, trigger, payload=None):
         LOG.info("Registering Trunk extension")
         manager = trunk_manager.TrunkManager(trigger.int_br)
         handler = ovsdb_handler.OVSDBHandler(manager)
+        handler.cleanup_orphaned_trunk_patch_ports()
         TRUNK_SKELETON = OVSTrunkSkeleton(handler)
 
 

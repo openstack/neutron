@@ -192,3 +192,30 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
             # Check no resources are left behind.
             self.assertFalse(self.trunk_br.exists())
             self.assertFalse(ovsdb_handler.bridge_has_service_port(br_int))
+
+    def test_cleanup_leftover_patch_ports_on_startup(self):
+        br_int = ovs_lib.OVSBridge(self.br_int)
+        ports = self._fill_trunk_dict()
+        self.setup_agent_and_ports(port_dicts=ports)
+        self.wait_until_ports_state(self.ports, up=True)
+
+        # The trunk is wired: the parent (tpi-) and sub-port (spi-) patch
+        # ports are present on the integration bridge.
+        self.assertTrue(ovsdb_handler.bridge_has_service_port(br_int))
+
+        # Simulate a source-host crash followed by evacuation: the agent is
+        # stopped and the trunk bridge is torn down out of band. The
+        # br-int-side patch ports (tpi-/spi-) are left behind without a peer.
+        self.stop_agent(self.agent, self.agent_thread)
+        self.polling_manager.stop()
+        self.trunk_br.destroy()
+
+        # The orphaned patch ports still linger on the integration bridge.
+        self.assertFalse(self.trunk_br.exists())
+        self.assertTrue(ovsdb_handler.bridge_has_service_port(br_int))
+
+        # The startup cleanup (invoked from the trunk driver init_handler)
+        # must reap the orphaned patch ports from the integration bridge.
+        self.ovsdb_handler.cleanup_orphaned_trunk_patch_ports()
+
+        self.assertFalse(ovsdb_handler.bridge_has_service_port(br_int))
