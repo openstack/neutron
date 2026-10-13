@@ -1,19 +1,21 @@
 # The controller and compute1 nodes need nested virtualization to boot
 # advanced (non-cirros) guests with KVM instead of the much slower qemu.
-# The nested-virt-8GB label is only offered by openmetal, ovh and vexxhost,
-# and Zuul must satisfy every node of a nodeset from a single provider. To
-# avoid pinning the whole job to a single provider (which caused random
-# NODE_FAILUREs), the leaf/spine labels are varied across several nodeset
-# alternatives so the resulting combination can be satisfied by more than
-# one provider:
-#   - 4GB  leafs -> openmetal
-#   - 8GB  leafs -> openmetal, ovh
-#   - 16GB leafs -> openmetal, vexxhost
+# The nested-virt-8GB label is only offered by ovh and vexxhost.
+#
+# All five nodes build an inter-node VXLAN fabric over private IPs, so the
+# whole nodeset must run in a single cloud provider. To let more than one
+# provider satisfy the job (avoiding random NODE_FAILUREs when one lacks
+# capacity), the leaf/spine label in each alternative is paired with one
+# that a nested-virt-8GB capable provider also offers, so a single provider
+# can fulfil the alternative:
+#   - 32GB leafs -> vexxhost
+#   - 16GB leafs -> vexxhost
+#   - 8GB  leafs -> ovh
 # The alternatives are defined inline (anonymous nodesets) rather than by
 # name, which is the form used by Zuul's own documentation and tests.
 # See https://zuul-ci.org/docs/zuul/latest/config/nodeset.html#attr-nodeset.alternatives
 - nodeset:
-    name: neutron-five-node-resolute-bgp
+    name: neutron-five-node-resolute-bgp-v2
     alternatives:
       - nodes:
           - name: controller
@@ -21,11 +23,11 @@
           - name: compute1
             label: ubuntu-resolute-nested-virt-8GB
           - name: leaf-1
-            label: ubuntu-resolute-4GB
+            label: ubuntu-resolute-32GB
           - name: leaf-2
-            label: ubuntu-resolute-4GB
+            label: ubuntu-resolute-32GB
           - name: spine
-            label: ubuntu-resolute-4GB
+            label: ubuntu-resolute-32GB
         groups: &neutron_bgp_groups
           - name: controller
             nodes:
@@ -59,11 +61,11 @@
           - name: compute1
             label: ubuntu-resolute-nested-virt-8GB
           - name: leaf-1
-            label: ubuntu-resolute-8GB
+            label: ubuntu-resolute-16GB
           - name: leaf-2
-            label: ubuntu-resolute-8GB
+            label: ubuntu-resolute-16GB
           - name: spine
-            label: ubuntu-resolute-8GB
+            label: ubuntu-resolute-16GB
         groups: *neutron_bgp_groups
       - nodes:
           - name: controller
@@ -71,18 +73,18 @@
           - name: compute1
             label: ubuntu-resolute-nested-virt-8GB
           - name: leaf-1
-            label: ubuntu-resolute-16GB
+            label: ubuntu-resolute-8GB
           - name: leaf-2
-            label: ubuntu-resolute-16GB
+            label: ubuntu-resolute-8GB
           - name: spine
-            label: ubuntu-resolute-16GB
+            label: ubuntu-resolute-8GB
         groups: *neutron_bgp_groups
 
 - job:
     name: neutron-ovn-bgp-tempest-multinode-base
     abstract: true
     parent: neutron-tempest-plugin-ovn
-    nodeset: neutron-five-node-resolute-bgp
+    nodeset: neutron-five-node-resolute-bgp-v2
     timeout: 10800
     post-timeout: 9600
     required-projects:
@@ -311,7 +313,7 @@
 - job:
     name: neutron-ovn-evpn-tempest-multinode
     parent: neutron-ovn-bgp-tempest-multinode-base
-    nodeset: neutron-five-node-resolute-bgp
+    nodeset: neutron-five-node-resolute-bgp-v2
     vars:
       enable_evpn: true
       # OVN discovers remote VTEPs from FDB entries and defaults
