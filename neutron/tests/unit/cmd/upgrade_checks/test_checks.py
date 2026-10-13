@@ -243,6 +243,39 @@ class TestChecks(base.BaseTestCase):
         self.assertEqual(Code.WARNING, result.code)
         mock_get_ovn_client.assert_called_once_with()
 
+    def test_ovn_metadata_agent_check_not_ovn_backend(self):
+        cfg.CONF.set_override('mechanism_drivers', 'openvswitch', group='ml2')
+        with mock.patch.object(
+                checks, 'get_chassis_with_ovn_metadata_agent') as mock_get:
+            result = checks.CoreChecks.ovn_metadata_agent_check(mock.ANY)
+            self.assertEqual(Code.SUCCESS, result.code)
+            mock_get.assert_not_called()
+
+    @mock.patch.object(checks, 'get_chassis_with_ovn_metadata_agent')
+    def test_ovn_metadata_agent_check_success(self, mock_get_chassis):
+        cfg.CONF.set_override('mechanism_drivers', 'ovn', group='ml2')
+        mock_get_chassis.return_value = []
+        result = checks.CoreChecks.ovn_metadata_agent_check(mock.ANY)
+        self.assertEqual(Code.SUCCESS, result.code)
+        mock_get_chassis.assert_called_once_with()
+
+    @mock.patch.object(checks, 'get_chassis_with_ovn_metadata_agent')
+    def test_ovn_metadata_agent_check_warning(self, mock_get_chassis):
+        cfg.CONF.set_override('mechanism_drivers', 'ovn', group='ml2')
+        mock_get_chassis.return_value = ['compute1', 'compute2']
+        result = checks.CoreChecks.ovn_metadata_agent_check(mock.ANY)
+        self.assertEqual(Code.WARNING, result.code)
+        self.assertIn('compute1', result.details)
+        self.assertIn('compute2', result.details)
+
+    @mock.patch.object(checks, 'get_chassis_with_ovn_metadata_agent')
+    def test_ovn_metadata_agent_check_ovn_connection_error(self,
+                                                           mock_get_chassis):
+        cfg.CONF.set_override('mechanism_drivers', 'ovn', group='ml2')
+        mock_get_chassis.side_effect = RuntimeError
+        result = checks.CoreChecks.ovn_metadata_agent_check(mock.ANY)
+        self.assertEqual(Code.WARNING, result.code)
+
     def test_ovn_port_forwarding_configuration_check_no_ovn_l3_router(self):
         cfg.CONF.set_override("service_plugins", 'router,some-other-plugin')
         with mock.patch.object(
