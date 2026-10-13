@@ -89,6 +89,32 @@ class TestIsTrunkServicePort(base.BaseTestCase):
         self.assertFalse(observed)
 
 
+class TestIsTrunkPatchPortOnBrInt(base.BaseTestCase):
+    def test_with_trunk_parent_patch_port_int_side(self):
+        self.assertTrue(
+            ovsdb_handler.is_trunk_patch_port_on_br_int('tpi-foo'))
+
+    def test_with_subport_patch_port_int_side(self):
+        self.assertTrue(
+            ovsdb_handler.is_trunk_patch_port_on_br_int('spi-foo'))
+
+    def test_with_trunk_parent_patch_port_trunk_side(self):
+        self.assertFalse(
+            ovsdb_handler.is_trunk_patch_port_on_br_int('tpt-foo'))
+
+    def test_with_subport_patch_port_trunk_side(self):
+        self.assertFalse(
+            ovsdb_handler.is_trunk_patch_port_on_br_int('spt-foo'))
+
+    def test_with_trunk_bridge(self):
+        self.assertFalse(
+            ovsdb_handler.is_trunk_patch_port_on_br_int('tbr-foo'))
+
+    def test_with_random_string(self):
+        self.assertFalse(
+            ovsdb_handler.is_trunk_patch_port_on_br_int('foo'))
+
+
 class TestBridgeHasInstancePort(base.BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -366,3 +392,104 @@ class TestOVSDBHandler(base.BaseTestCase):
                     'abc')
                 mock_remove.assert_called_once_with(
                     'def', mock.ANY)
+
+    def _set_int_br_interfaces(self, interfaces):
+        int_br = self.trunk_manager.br_int
+        int_br.br_name = 'br-int'
+        int_br.get_ports_attributes.return_value = interfaces
+
+    @mock.patch('neutron.agent.common.ovs_lib.BaseOVS')
+    def test__get_orphaned_trunk_patch_ports_orphan_detected(self, base_ovs):
+        # Peer gone and the datapath rejected the port (ofport=-1).
+        base_ovs.return_value.port_exists.return_value = False
+        self._set_int_br_interfaces([
+            {'name': 'spi-foo', 'options': {'peer': 'spt-foo'},
+             'ofport': -1, 'error': "No usable peer 'spt-foo' exists"},
+        ])
+        orphans = self.ovsdb_handler._get_orphaned_trunk_patch_ports()
+        self.assertEqual(['spi-foo'], orphans)
+
+    @mock.patch('neutron.agent.common.ovs_lib.BaseOVS')
+    def test__get_orphaned_trunk_patch_ports_peer_present(self, base_ovs):
+        # Peer still exists: trunk is intact, must not be touched.
+        base_ovs.return_value.port_exists.return_value = True
+        self._set_int_br_interfaces([
+            {'name': 'spi-foo', 'options': {'peer': 'spt-foo'},
+             'ofport': 5, 'error': None},
+        ])
+        orphans = self.ovsdb_handler._get_orphaned_trunk_patch_ports()
+        self.assertEqual([], orphans)
+
+    @mock.patch('neutron.agent.common.ovs_lib.BaseOVS')
+    def test__get_orphaned_trunk_patch_ports_no_peer(self, base_ovs):
+        # A trunk patch port with no configured peer: we cannot tell whether
+        # the trunk bridge is gone, so leave it alone (conservative).
+        self._set_int_br_interfaces([
+            {'name': 'tpi-foo', 'options': {}, 'ofport': -1, 'error': None},
+        ])
+        orphans = self.ovsdb_handler._get_orphaned_trunk_patch_ports()
+        self.assertEqual([], orphans)
+        self.assertFalse(base_ovs.return_value.port_exists.called)
+
+    @mock.patch('neutron.agent.common.ovs_lib.BaseOVS')
+    def test__get_orphaned_trunk_patch_ports_peer_gone_no_error(
+            self, base_ovs):
+        # Peer gone but the port is not (yet) rejected by the datapath: do
+        # not act, it might be transiently (re)wiring.
+        base_ovs.return_value.port_exists.return_value = False
+        self._set_int_br_interfaces([
+            {'name': 'spi-foo', 'options': {'peer': 'spt-foo'},
+             'ofport': [], 'error': None},
+        ])
+        orphans = self.ovsdb_handler._get_orphaned_trunk_patch_ports()
+        self.assertEqual([], orphans)
+
+    @mock.patch('neutron.agent.common.ovs_lib.BaseOVS')
+    def test__get_orphaned_trunk_patch_ports_ignores_non_trunk_ports(
+            self, base_ovs):
+        base_ovs.return_value.port_exists.return_value = False
+        self._set_int_br_interfaces([
+            {'name': 'tap-foo', 'options': {}, 'ofport': 1, 'error': None},
+            {'name': 'spt-foo', 'options': {'peer': 'spi-foo'},
+             'ofport': -1, 'error': 'err'},
+            {'name': 'patch-tun', 'options': {}, 'ofport': 2, 'error': None},
+        ])
+        orphans = self.ovsdb_handler._get_orphaned_trunk_patch_ports()
+        self.assertEqual([], orphans)
+
+    def test__get_orphaned_trunk_patch_ports_ovsdb_failure(self):
+        int_br = self.trunk_manager.br_int
+        int_br.br_name = 'br-int'
+        int_br.get_ports_attributes.side_effect = RuntimeError
+        orphans = self.ovsdb_handler._get_orphaned_trunk_patch_ports()
+        self.assertEqual([], orphans)
+
+    def test_cleanup_orphaned_trunk_patch_ports(self):
+        int_br = self.trunk_manager.br_int
+        int_br.br_name = 'br-int'
+        with mock.patch.object(self.ovsdb_handler,
+                               '_get_orphaned_trunk_patch_ports',
+                               return_value=['spi-foo', 'tpi-bar']):
+            self.ovsdb_handler.cleanup_orphaned_trunk_patch_ports()
+        int_br.delete_port.assert_has_calls(
+            [mock.call('spi-foo'), mock.call('tpi-bar')])
+
+    def test_cleanup_orphaned_trunk_patch_ports_nothing_to_do(self):
+        int_br = self.trunk_manager.br_int
+        with mock.patch.object(self.ovsdb_handler,
+                               '_get_orphaned_trunk_patch_ports',
+                               return_value=[]):
+            self.ovsdb_handler.cleanup_orphaned_trunk_patch_ports()
+        self.assertFalse(int_br.delete_port.called)
+
+    def test_cleanup_orphaned_trunk_patch_ports_delete_failure(self):
+        int_br = self.trunk_manager.br_int
+        int_br.br_name = 'br-int'
+        int_br.delete_port.side_effect = [RuntimeError, None]
+        with mock.patch.object(self.ovsdb_handler,
+                               '_get_orphaned_trunk_patch_ports',
+                               return_value=['spi-foo', 'tpi-bar']):
+            # The failure on the first port must not prevent cleanup of the
+            # second one.
+            self.ovsdb_handler.cleanup_orphaned_trunk_patch_ports()
+        self.assertEqual(2, int_br.delete_port.call_count)
