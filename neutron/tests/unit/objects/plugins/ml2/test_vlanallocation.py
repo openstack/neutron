@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.utils import helpers
+
 from neutron.objects.plugins.ml2 import vlanallocation
 from neutron.tests.unit.objects.plugins.ml2 import test_base as ml2_test_base
 from neutron.tests.unit.objects import test_base
@@ -30,20 +32,23 @@ class VlanAllocationDbObjTestCase(
     _test_class = vlanallocation.VlanAllocation
 
     def test_delete_physical_networks_keeps_allocated(self):
+        physnet_purged = helpers.get_random_string(16)
+        physnet_other = helpers.get_random_string(16)
         for vlan_id, allocated in ((100, False), (101, True)):
             vlanallocation.VlanAllocation(
-                self.context, physical_network='physnet1', vlan_id=vlan_id,
+                self.context, physical_network=physnet_purged, vlan_id=vlan_id,
                 allocated=allocated).create()
         vlanallocation.VlanAllocation(
-            self.context, physical_network='physnet2', vlan_id=100,
+            self.context, physical_network=physnet_other, vlan_id=100,
             allocated=False).create()
 
         vlanallocation.VlanAllocation.delete_physical_networks(
-            self.context, ['physnet1'])
+            self.context, [physnet_purged])
 
         remaining = {(alloc.physical_network, alloc.vlan_id)
                      for alloc in vlanallocation.VlanAllocation.get_objects(
                          self.context)}
-        # the unallocated physnet1 register is gone, the allocated one is
-        # kept, and other physical networks are untouched
-        self.assertEqual({('physnet1', 101), ('physnet2', 100)}, remaining)
+        # the unallocated register on the purged physnet is gone, the
+        # allocated one is kept, and other physical networks are untouched
+        self.assertEqual(
+            {(physnet_purged, 101), (physnet_other, 100)}, remaining)
