@@ -31,6 +31,12 @@ class AgentCacheTestCase(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
+        # The AgentCache is a process wide singleton that may be kept
+        # alive by another object holding a reference to it (e.g. a
+        # mechanism driver of another test class), so deleting our own
+        # reference is not enough to get rid of it. Explicitly drop the
+        # singleton so a fresh cache is created for this test.
+        neutron_agent.AgentCache.drop()
         self.agent_cache = neutron_agent.AgentCache(driver=mock.ANY)
         self.addCleanup(self._clean_agent_cache)
         self.agents = {}
@@ -209,6 +215,12 @@ class AgentCachePopulateTestCase(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
+        # The AgentCache is a process wide singleton that may be kept
+        # alive by another object holding a reference to it (e.g. a
+        # mechanism driver of another test class), so deleting our own
+        # reference is not enough to get rid of it. Explicitly drop the
+        # singleton so a fresh cache is created for this test.
+        neutron_agent.AgentCache.drop()
         self.agent_cache = neutron_agent.AgentCache(driver=mock.ANY)
         self.addCleanup(self._clean_agent_cache)
         for agent_class in (neutron_agent.NeutronAgent,
