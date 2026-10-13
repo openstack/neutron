@@ -60,6 +60,7 @@ from neutron_lib.api.definitions import network_ha
 from neutron_lib.api.definitions import network_ip_availability
 from neutron_lib.api.definitions import network_mtu
 from neutron_lib.api.definitions import network_mtu_writable
+from neutron_lib.api.definitions import network_segment_range
 from neutron_lib.api.definitions import pagination
 from neutron_lib.api.definitions import port_device_profile
 from neutron_lib.api.definitions import port_hardware_offload_type
@@ -177,6 +178,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     network_mtu_writable.ALIAS,
     network_availability_zone.ALIAS,
     network_ip_availability.ALIAS,
+    network_segment_range.ALIAS,
     port_device_profile.ALIAS,
     port_hardware_offload_type.ALIAS,
     port_mac_address_regenerate.ALIAS,

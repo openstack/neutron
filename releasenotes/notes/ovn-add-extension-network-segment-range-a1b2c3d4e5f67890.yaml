@@ -1,0 +1,4 @@
+other:
+  - |
+    Added extension ``network-segment-range`` to the ML2/OVN mechanism
+    driver supported API extension list.

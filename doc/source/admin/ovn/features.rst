@@ -66,6 +66,12 @@ services:
   Allows for Network segments ranges to be used with OVN. Requires OVN
   version 20.06 or higher.
 
+* Network segment ranges
+
+  The OVN driver supports the network segment range API. Enable the
+  ``network_segment_range`` service plugin in neutron configuration
+  files to use this feature.
+
 * Routed provider networks
 
   Allows for multiple localnet ports to be attached to a single Logical
@@ -207,6 +213,8 @@ The following Neutron API extensions are supported with OVN:
      - net-mtu-writable
    * - Network Segment
      - segment
+   * - Network Segment Range
+     - network-segment-range
    * - Neutron Extra DHCP Opts
      - extra_dhcp_opt
    * - Packet Logging
