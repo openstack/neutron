@@ -404,8 +404,13 @@ def _delete_segments_for_network(resource, event, trigger,
     segments = segments_plugin.get_segments(
         admin_ctx, filters={'network_id': [network_id]})
     for segment in segments:
-        segments_plugin.delete_segment(admin_ctx, segment['id'],
-                                       for_net_delete=True)
+        try:
+            segments_plugin.delete_segment(admin_ctx, segment['id'],
+                                           for_net_delete=True)
+        except exceptions.SegmentNotFound:
+            LOG.debug('Segment %(segment)s of network %(network)s was '
+                      'already deleted',
+                      {'segment': segment['id'], 'network': network_id})
 
 
 def subscribe():
