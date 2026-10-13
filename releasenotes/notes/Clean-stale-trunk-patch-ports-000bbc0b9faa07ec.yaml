@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    The OVS trunk service driver now removes stale ``tpi-`` and ``spi-``
+    patch ports from the integration bridge at agent startup when their
+    peer on the trunk bridge no longer exists (i.e. the trunk bridge was
+    already deleted). This can happen after a compute host crash and VM
+    evacuation, where the source host never ran its trunk teardown.
+
