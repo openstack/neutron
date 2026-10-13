@@ -25,6 +25,7 @@ from os_ken.lib.packet import udp
 from oslo_config import cfg
 
 from neutron.agent.l2.extensions.dns_forwarder import DNSResponder
+from neutron.conf.plugins.ml2.drivers import ovs_conf as ovs_agent_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_agent_extension_api as ovs_ext_api
 from neutron.tests import base
@@ -61,6 +62,12 @@ class DNSForwarderResponderTestCase(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
+        # The DNS_FORWARDER options are registered as an import side effect
+        # of the OVS agent module, which the unit test tree only imports in
+        # the OVS agent test classes. With the stestr --dynamic scheduler
+        # this test class can share a worker process where none of those
+        # classes ran before, so register the options here explicitly.
+        ovs_agent_conf.register_ovs_agent_opts()
         self.int_br = mock.Mock()
         self.tun_br = mock.Mock()
         self.plugin_rpc = mock.Mock()
