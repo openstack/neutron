@@ -185,6 +185,50 @@ class FIPChangedEvent(FIPEvent):
               BGPReconcilerResourceEvent.ROW_DELETE)
 
 
+class VirtualPortEvent(BGPReconcilerResourceEvent):
+    RESOURCE = constants.BGPReconcilerResource.VIRTUAL_PORT
+    TABLE = 'Logical_Switch_Port'
+
+    def _is_flat_provider_network(self, row):
+        try:
+            network_name = row.external_ids[
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
+        except KeyError:
+            return False
+        try:
+            switch = self.reconciler.nb_api.lookup(
+                'Logical_Switch', network_name)
+        except idlutils.RowNotFound:
+            return False
+        net_type = switch.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY)
+        return net_type == n_const.TYPE_FLAT
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        if row.type != ovn_const.LSP_TYPE_VIRTUAL:
+            return False
+        return self._is_flat_provider_network(row)
+
+
+class VirtualPortChangedEvent(VirtualPortEvent):
+    EVENTS = (BGPReconcilerResourceEvent.ROW_CREATE,
+              BGPReconcilerResourceEvent.ROW_DELETE)
+
+
+class VirtualPortTypeChangedEvent(VirtualPortEvent):
+    EVENTS = (BGPReconcilerResourceEvent.ROW_UPDATE,)
+
+    def match_fn(self, event, row, old):
+        if not hasattr(old, 'type'):
+            return False
+        if old.type == row.type:
+            return False
+        if ovn_const.LSP_TYPE_VIRTUAL in (row.type, old.type):
+            return self._is_flat_provider_network(row)
+        return False
+
+
 class BGPChassisEvent(BGPReconcilerResourceEvent):
     EVENTS = (BGPReconcilerResourceEvent.ROW_CREATE,
               BGPReconcilerResourceEvent.ROW_DELETE)

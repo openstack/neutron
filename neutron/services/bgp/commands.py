@@ -23,6 +23,7 @@ from ovsdbapp.schema.ovn_northbound import commands as nb_cmd
 
 from neutron.agent.linux import ip_lib
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.services import bgp as bgp_config
 from neutron.services.bgp import constants
 from neutron.services.bgp import exceptions
@@ -83,7 +84,7 @@ def _get_provider_switch(nb_idl):
 
 
 def _get_switch_dhcp_options(nb_idl, switch):
-    n_net_id = helpers.get_neutron_id_from_ovn_name(switch)
+    n_net_id = helpers.get_neutron_id_from_ovn_name(switch.name)
     for dhcp_opt in nb_idl.tables['DHCP_Options'].rows.values():
         if dhcp_opt.external_ids.get(
                 ovn_const.OVN_NETWORK_ID_EXT_ID_KEY) == n_net_id:
@@ -106,6 +107,18 @@ def _get_fip_ips_for_network(nb_idl, n_net_id):
             if (nat.type == 'dnat_and_snat' and
                 nat.external_ids.get(
                     ovn_const.OVN_FIP_NET_ID) == n_net_id)]
+
+
+def _get_virtual_ips_for_network(nb_idl, n_net_id):
+    try:
+        switch = nb_idl.lookup(
+            'Logical_Switch', ovn_utils.ovn_name(n_net_id))
+    except idlutils.RowNotFound:
+        return []
+    return [lsp.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY]
+            for lsp in switch.ports
+            if (lsp.type == ovn_const.LSP_TYPE_VIRTUAL and
+                ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY in lsp.options)]
 
 
 def _make_main_router_policy_match(ic_switch_lrp_name, chassis_lrp_name):
@@ -300,8 +313,8 @@ class ReconcileNeutronSwitchCommand(_NeutronSwitchBase):
             lrp_ips=_get_gw_ips_for_switch(self.api, self.n_switch),
         ).run_idl(txn)
 
-        n_net_id = helpers.get_neutron_id_from_ovn_name(self.n_switch)
-        ReconcileFIPArpProxyCommand(self.api, n_net_id).run_idl(txn)
+        n_net_id = helpers.get_neutron_id_from_ovn_name(self.n_switch.name)
+        ReconcileArpProxyCommand(self.api, n_net_id).run_idl(txn)
 
         ReconcileMainRouterPoliciesForProviderCommand(
             self.api,
@@ -642,7 +655,7 @@ class ReconcileGatewayIPCommand(ovs_cmd.BaseCommand):
         lrp.addvalue('networks', self.gw_ip)
 
 
-class ReconcileFIPArpProxyCommand(ovs_cmd.BaseCommand):
+class ReconcileArpProxyCommand(ovs_cmd.BaseCommand):
     def __init__(self, api, n_net_id):
         super().__init__(api)
         self.n_net_id = n_net_id
@@ -660,9 +673,11 @@ class ReconcileFIPArpProxyCommand(ovs_cmd.BaseCommand):
                       self.lsp_name)
             return
         fip_ips = _get_fip_ips_for_network(self.api, self.n_net_id)
-        if fip_ips:
+        virtual_ips = _get_virtual_ips_for_network(self.api, self.n_net_id)
+        all_ips = fip_ips + virtual_ips
+        if all_ips:
             lsp.setkey('options', ovn_const.LSP_OPTIONS_ARP_PROXY,
-                       ' '.join(sorted(fip_ips)))
+                       ' '.join(sorted(all_ips)))
         else:
             lsp.delkey('options', ovn_const.LSP_OPTIONS_ARP_PROXY)
 

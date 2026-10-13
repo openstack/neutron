@@ -90,14 +90,14 @@ def get_ip_network(ip_address, ip_network):
     return f"{ip_address}/{ip_network.prefixlen}"
 
 
-def get_neutron_id_from_ovn_name(ovn_obj):
+def get_neutron_id_from_ovn_name(name):
     # Get the ID from the OVN name, which is not ideal but the
     # network ID does not seem to be stored elsewhere in the OVN objects.
     try:
-        return ovn_obj.name.split('neutron-', 1)[1]
+        return name.split('neutron-', 1)[1]
     except IndexError:
         raise ValueError(
-            f"OVN object {ovn_obj.name} does not contain a Neutron ID")
+            f"OVN name {name} does not contain a Neutron ID")
 
 
 def ipv6_link_local_from_mac(mac):

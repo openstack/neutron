@@ -233,3 +233,198 @@ class FIPChangedEventTestCase(EventTestCaseBase):
                 timeout=2,
                 exception=AssertionError(
                     'Reconcile should not be called for snat'))
+
+
+class VirtualPortChangedEventTestCase(EventTestCaseBase):
+    def _create_event(self):
+        return events.VirtualPortChangedEvent(self.reconciler)
+
+    def _create_virtual_port(self, net_id, virtual_ip, vport_name=None):
+        ls_name = f'neutron-{net_id}'
+        vport_name = vport_name or uuidutils.generate_uuid()
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_add(
+                ls_name, vport_name,
+                type=ovn_const.LSP_TYPE_VIRTUAL,
+                options={
+                    ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY: virtual_ip,
+                    ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY: 'parent-0',
+                },
+                external_ids={
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: ls_name},
+            ))
+        return vport_name
+
+    def test_fires_on_virtual_port_create(self):
+        net_id = uuidutils.generate_uuid()
+        self._create_provider_switch(net_id)
+
+        self._create_virtual_port(net_id, '10.0.0.100')
+
+        common_utils.wait_until_true(
+            lambda: self.reconciler.reconcile.called,
+            sleep=0.2,
+            timeout=5,
+            exception=AssertionError(
+                'VirtualPortChangedEvent did not trigger reconcile '
+                'on create'))
+
+        passed_lsp = self.reconciler.reconcile.call_args[0][2]
+        self.assertEqual(ovn_const.LSP_TYPE_VIRTUAL, passed_lsp.type)
+        self.assertEqual(
+            '10.0.0.100',
+            passed_lsp.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
+
+    def test_fires_on_virtual_port_delete(self):
+        net_id = uuidutils.generate_uuid()
+        self._create_provider_switch(net_id)
+
+        vport_name = self._create_virtual_port(net_id, '10.0.0.100')
+
+        self.reconciler.reconcile.reset_mock()
+
+        self.nb_api.lsp_del(vport_name).execute(check_error=True)
+
+        common_utils.wait_until_true(
+            lambda: self.reconciler.reconcile.called,
+            sleep=0.2,
+            timeout=5,
+            exception=AssertionError(
+                'VirtualPortChangedEvent did not trigger reconcile '
+                'on delete'))
+
+    def test_does_not_fire_for_non_flat_network(self):
+        net_id = uuidutils.generate_uuid()
+        ls_name = f'neutron-{net_id}'
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.ls_add(ls_name))
+            txn.add(self.nb_api.db_set(
+                'Logical_Switch', ls_name,
+                external_ids={
+                    ovn_const.OVN_NETTYPE_EXT_ID_KEY: 'vlan'}))
+
+        self._create_virtual_port(net_id, '10.0.0.100')
+
+        with testtools.ExpectedException(AssertionError):
+            common_utils.wait_until_true(
+                lambda: self.reconciler.reconcile.called,
+                sleep=0.2,
+                timeout=2,
+                exception=AssertionError(
+                    'Reconcile should not be called for non-flat network'))
+
+    def test_does_not_fire_for_non_virtual_port(self):
+        net_id = uuidutils.generate_uuid()
+        self._create_provider_switch(net_id)
+
+        ls_name = f'neutron-{net_id}'
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_add(
+                ls_name, uuidutils.generate_uuid(),
+                external_ids={
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: ls_name},
+            ))
+
+        with testtools.ExpectedException(AssertionError):
+            common_utils.wait_until_true(
+                lambda: self.reconciler.reconcile.called,
+                sleep=0.2,
+                timeout=2,
+                exception=AssertionError(
+                    'Reconcile should not be called for non-virtual port'))
+
+
+class VirtualPortTypeChangedEventTestCase(EventTestCaseBase):
+    def _create_event(self):
+        return events.VirtualPortTypeChangedEvent(self.reconciler)
+
+    def test_fires_when_port_type_changes_to_virtual(self):
+        net_id = uuidutils.generate_uuid()
+        self._create_provider_switch(net_id)
+
+        ls_name = f'neutron-{net_id}'
+        port_name = uuidutils.generate_uuid()
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_add(
+                ls_name, port_name,
+                external_ids={
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: ls_name},
+            ))
+
+        self.nb_api.db_set(
+            'Logical_Switch_Port', port_name,
+            type=ovn_const.LSP_TYPE_VIRTUAL,
+            options={
+                ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY: '10.0.0.100',
+                ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY: 'parent-0',
+            },
+        ).execute(check_error=True)
+
+        common_utils.wait_until_true(
+            lambda: self.reconciler.reconcile.called,
+            sleep=0.2,
+            timeout=5,
+            exception=AssertionError(
+                'VirtualPortTypeChangedEvent did not trigger reconcile '
+                'when type changed to virtual'))
+
+    def test_fires_when_port_type_changes_from_virtual(self):
+        net_id = uuidutils.generate_uuid()
+        self._create_provider_switch(net_id)
+
+        ls_name = f'neutron-{net_id}'
+        port_name = uuidutils.generate_uuid()
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_add(
+                ls_name, port_name,
+                type=ovn_const.LSP_TYPE_VIRTUAL,
+                options={
+                    ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY: '10.0.0.100',
+                    ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY: 'parent-0',
+                },
+                external_ids={
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: ls_name},
+            ))
+
+        self.reconciler.reconcile.reset_mock()
+
+        self.nb_api.db_set(
+            'Logical_Switch_Port', port_name,
+            type='',
+        ).execute(check_error=True)
+
+        common_utils.wait_until_true(
+            lambda: self.reconciler.reconcile.called,
+            sleep=0.2,
+            timeout=5,
+            exception=AssertionError(
+                'VirtualPortTypeChangedEvent did not trigger reconcile '
+                'when type changed from virtual'))
+
+    def test_does_not_fire_for_non_virtual_type_change(self):
+        net_id = uuidutils.generate_uuid()
+        self._create_provider_switch(net_id)
+
+        ls_name = f'neutron-{net_id}'
+        port_name = uuidutils.generate_uuid()
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_add(
+                ls_name, port_name,
+                type='localnet',
+                external_ids={
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: ls_name},
+            ))
+
+        self.nb_api.db_set(
+            'Logical_Switch_Port', port_name,
+            type='',
+        ).execute(check_error=True)
+
+        with testtools.ExpectedException(AssertionError):
+            common_utils.wait_until_true(
+                lambda: self.reconciler.reconcile.called,
+                sleep=0.2,
+                timeout=2,
+                exception=AssertionError(
+                    'Reconcile should not be called for non-virtual '
+                    'type change'))
