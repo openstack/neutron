@@ -133,7 +133,6 @@ class NetworkSegmentRange(base.NeutronDbObject):
             return [segmentation_id for (segmentation_id,) in alloc_available]
 
     def _get_used_allocation_mapping(self):
-        phys_net = self.physical_network or None
         with self.db_context_reader(self.obj_context):
             query = self.obj_context.session.query(
                 segments_model.NetworkSegment.segmentation_id,
@@ -141,7 +140,8 @@ class NetworkSegmentRange(base.NeutronDbObject):
             alloc_used = (query.filter(and_(
                 segments_model.NetworkSegment.network_type ==
                 self.network_type,
-                segments_model.NetworkSegment.physical_network == phys_net,
+                segments_model.NetworkSegment.physical_network ==
+                self.physical_network,
                 segments_model.NetworkSegment.segmentation_id >= self.minimum,
                 segments_model.NetworkSegment.segmentation_id <= self.maximum))
                           .filter(segments_model.NetworkSegment.network_id ==

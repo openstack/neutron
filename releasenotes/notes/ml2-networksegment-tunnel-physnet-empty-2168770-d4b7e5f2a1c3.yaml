@@ -1,0 +1,24 @@
+---
+upgrade:
+  - |
+    Tunnel type segments (VxLAN, GRE, Geneve) now store
+    ``physical_network = ''`` (empty string) instead of ``NULL`` in the
+    ``networksegments`` table. An expand migration converts existing NULL
+    values automatically and adds a UNIQUE constraint on
+    ``(network_type, physical_network, segmentation_id)``, which prevents
+    duplicate segment allocations at the database level for VLAN and tunnel
+    types.
+  - |
+    If the database contains corrupt duplicate tunnel segments (the same
+    ``network_id``, ``network_type``, and ``segment_index`` with
+    ``physical_network = NULL``), the migration will fail and the operator
+    must resolve the duplicates manually. The
+    ``networksegments_unique_constraint_check`` entry in
+    ``neutron-status upgrade check`` detects this condition before the
+    migration runs.
+fixes:
+  - |
+    Tunnel segments with ``physical_network = NULL`` did not participate
+    correctly in UNIQUE constraints on ``networksegments`` because SQL
+    treats ``NULL`` values as distinct. See
+    `LP#2168770 <https://bugs.launchpad.net/neutron/+bug/2168770>`_.

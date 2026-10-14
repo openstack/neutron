@@ -145,10 +145,6 @@ def get_segments_physnets(context, network_id):
 def get_dynamic_segment(context, network_id, physical_network=None,
                         segmentation_id=None):
     """Return a dynamic segment for the filters provided if one exists."""
-    # Network segments have physical_network=None in tunnelled networks, unlike
-    # network segment ranges, that have an empty string in order to force the
-    # database constraint.
-    physical_network = physical_network or None
     with db_api.CONTEXT_READER.using(context):
         filters = {
             'network_id': network_id,
@@ -182,10 +178,6 @@ def delete_network_segment(context, segment_id):
 def network_segments_exist_in_range(context, network_type, physical_network,
                                     segment_range=None):
     """Check whether one or more network segments exist in a range."""
-    # Network segments have physical_network=None in tunnelled networks, unlike
-    # network segment ranges, that have an empty string in order to force the
-    # database constraint.
-    physical_network = physical_network or None
     return bool(network_obj.NetworkSegment.count_segments(
         context, network_type, physical_network, segment_range=segment_range))
 
@@ -195,10 +187,6 @@ def min_max_actual_segments_in_range(context, network_type, physical_network,
     """Return the minimum and maximum segmentation IDs used in a network
     segment range
     """
-    # Network segments have physical_network=None in tunnelled networks, unlike
-    # network segment ranges, that have an empty string in order to force the
-    # database constraint.
-    physical_network = physical_network or None
     with db_api.CONTEXT_READER.using(context):
         filters = {
             'network_type': network_type,
