@@ -129,7 +129,6 @@
       - openstack/oslo.service
       - openstack/oslo.utils
       - openstack/oslo.versionedobjects
-      - openstack/oslo.vmware
       - openstack/oslotest
       - openstack/pycadf
       - openstack/stevedore
