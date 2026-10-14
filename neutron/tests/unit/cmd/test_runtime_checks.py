@@ -37,3 +37,34 @@ class TestRuntimeChecks(base.BaseTestCase):
                 exceptions.ProcessExecutionError('', returncode=0))
             keepalived_version = runtime_checks.get_keepalived_version()
             self.assertFalse(keepalived_version)
+
+    def _test_keepalived_bfd_support(self, config_options):
+        exec_keepalived_version = [
+            '', 'Keepalived v2.4.3 (07/20,2026)\n\n'
+                'Copyright(C) 2001-2026 Alexandre Cassen\n\n'
+                'configure options: --enable-bfd\n\n'
+                'Config options:  %s\n\n'
+                'System options:  VSYSLOG MEMFD_CREATE\n' % config_options]
+        with mock.patch.object(agent_utils, 'execute') as mock_exec:
+            mock_exec.return_value = exec_keepalived_version
+            return runtime_checks.keepalived_bfd_support()
+
+    def test_keepalived_bfd_support(self):
+        self.assertTrue(self._test_keepalived_bfd_support(
+            'NFTABLES LVS VRRP VRRP_AUTH JSON BFD SNMP_VRRP'))
+
+    def test_keepalived_bfd_support_not_built(self):
+        self.assertFalse(self._test_keepalived_bfd_support(
+            'NFTABLES LVS VRRP VRRP_AUTH JSON SNMP_VRRP'))
+
+    def test_keepalived_bfd_support_no_config_options(self):
+        exec_keepalived_version = ['', 'Keepalived v1.3.9 (10/21,2017)\n']
+        with mock.patch.object(agent_utils, 'execute') as mock_exec:
+            mock_exec.return_value = exec_keepalived_version
+            self.assertFalse(runtime_checks.keepalived_bfd_support())
+
+    def test_keepalived_bfd_support_fail(self):
+        with mock.patch.object(agent_utils, 'execute') as mock_exec:
+            mock_exec.side_effect = (
+                exceptions.ProcessExecutionError('', returncode=0))
+            self.assertFalse(runtime_checks.keepalived_bfd_support())
