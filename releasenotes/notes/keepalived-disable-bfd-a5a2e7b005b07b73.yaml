@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    The L3 agent now starts ``keepalived`` with ``-B`` (no BFD subsystem)
+    if ``keepalived`` was built with BFD support. Since ``keepalived`` 2.3.2
+    every instance locks the BFD PID file, ``/run/bfd.pid`` by default, so
+    HA routers failed to start if ``/run`` was read-only or if several
+    routers were started at the same time.
