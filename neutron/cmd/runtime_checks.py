@@ -54,6 +54,23 @@ def get_keepalived_version():
         return False
 
 
+def keepalived_bfd_support():
+    """Return True if keepalived was built with BFD support."""
+    cmd = ['keepalived', '--version']
+    env = {'LC_ALL': 'C', 'PATH': '/sbin:/usr/sbin'}
+    try:
+        # keepalived --version returns with stderr only
+        res = agent_utils.execute(cmd, addl_env=env, log_fail_as_error=False,
+                                  return_stderr=True)
+    except exceptions.ProcessExecutionError:
+        LOG.exception("Failed to get keepalived build options")
+        return False
+    for line in res[1].splitlines():
+        if line.startswith('Config options:'):
+            return 'BFD' in line.split()[2:]
+    return False
+
+
 def keepalived_use_no_track_support():
 
     keepalived_with_track = (2, 0, 3)
