@@ -94,7 +94,7 @@ backend, that doesn't import eventlet. The HA flavor replaces the
 Unix socket WSGI server is based on ``socketserver.ThreadingUnixStreamServer``
 and doesn't use ``eventlet``.
 
-Several functional and fullstack tests have been skipped until ``eventlet``
+Several functional tests have been skipped until ``eventlet``
 has been completely removed from the repository and the test frameworks. The
 WSGI server cannot be spawned in an ``eventlet`` patched environment. The
 thread that waits for new messages is a blocking function. In a kernel threads

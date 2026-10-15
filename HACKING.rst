@@ -131,5 +131,5 @@ By default tests log at ``INFO`` level. It is possible to make them
 log at ``DEBUG`` level by exporting the ``OS_DEBUG`` environment
 variable to ``True``.
 
-For more information on testing, including fullstack and tempest tests, see
+For more information on testing, including tempest tests, see
 ``TESTING.rst``.

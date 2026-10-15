@@ -22,7 +22,6 @@
       - ^doc/.*$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$
-      - ^neutron/tests/fullstack/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^plugin.spec$

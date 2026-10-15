@@ -1,4 +1,4 @@
-Configure host to run on it Neutron functional/fullstack tests
+Configure host to run on it Neutron functional tests
 
 **Role Variables**
 

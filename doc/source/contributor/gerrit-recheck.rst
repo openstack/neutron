@@ -7,7 +7,7 @@ tests themselves, it's very helpful to check failed scenarios to investigate
 the cause of the failure. Sometimes the failure will be caused by the patch
 being tested, while other times the failure can be caused by a previously
 untracked bug. Such failures are usually related to tests that interact with
-a live system, like functional, fullstack and tempest jobs.
+a live system, like functional and tempest jobs.
 
 Unnecessary rechecks lead to wasted resources as well as longer result times
 for patches in other projects. As a consequence, before issuing a recheck,

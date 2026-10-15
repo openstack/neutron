@@ -31,7 +31,6 @@ Testing
    :maxdepth: 2
 
    testing
-   fullstack
    ml2_ovs_devstack
    ci_jobs
    ml2_ovn_devstack

@@ -389,9 +389,6 @@ ignore = [
 "neutron/tests/common/agents/ovs_agent.py" = [
     "S324" # Probable use of insecure hash functions
 ]
-"neutron/tests/fullstack/resources/config.py" = [
-    "S103" # `os.chmod` setting a permissive mask on file or directory
-]
 "neutron/tests/functional/agent/linux/test_external_process.py" = [
     "S103" # `os.chmod` setting a permissive mask on file or directory
 ]

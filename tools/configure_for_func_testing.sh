@@ -214,10 +214,6 @@ function _install_rootwrap_sudoers {
     TEMPFILE=$(mktemp)
 
     SECURE_PATH="$PROJECT_VENV/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
-        SECURE_PATH="$REPO_BASE/$PROJECT_NAME/neutron/tests/fullstack/agents:$SECURE_PATH"
-    fi
-
     cat << EOF > $TEMPFILE
 # A bug in oslo.rootwrap [1] prevents commands executed with 'ip netns
 # exec' from being automatically qualified with a prefix from
@@ -319,16 +315,6 @@ if [[ "$IS_GATE" != "True" ]]; then
         _install_database
     else
         configure_host_for_func_testing
-    fi
-fi
-
-if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
-    _enable_ipv6
-    # This module only exists on older kernels, built-in otherwise
-    modinfo ip_conntrack_proto_sctp 1> /dev/null 2>&1 && sudo modprobe ip_conntrack_proto_sctp
-    if is_fedora; then
-        install_package kernel-modules-extra-`uname -r`
-        sudo modprobe sctp
     fi
 fi
 

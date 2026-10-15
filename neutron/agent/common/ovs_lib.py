@@ -468,7 +468,7 @@ class OVSBridge(BaseOVS):
         self.run_ofctl("del-flows", [])
 
     def list_meter_features(self):
-        # For fullstack test mainly
+        # Used to check meter features supported by the bridge
         f_list = self.run_ofctl("meter-features", []).split("\n")[1:]
         max_meter = max_bands = support_drop = support_caps = None
         for output in f_list:

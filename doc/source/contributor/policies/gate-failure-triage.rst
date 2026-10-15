@@ -74,13 +74,12 @@ Troubleshooting Tempest jobs
    it to yourself; otherwise look for an assignee or talk to the Neutron's
    bug deputy to find an assignee.
 
-Troubleshooting functional/fullstack job
-----------------------------------------
+Troubleshooting functional job
+-------------------------------
 1. Go to the job link provided by Zuul CI.
 2. Look at logs/testr_results.html.gz for which particular test failed.
 3. More logs from a particular test are stored at
-   logs/dsvm-functional-logs/<path_of_the_test> (or dsvm-fullstack-logs
-   for fullstack job).
+   logs/dsvm-functional-logs/<path_of_the_test>.
 4. Find the error in the logs and search for similar errors in existing
    launchpad bugs. If no bugs were reported, create a new bug report. Don't
    forget to put a snippet of the trace into the new launchpad bug. If the
@@ -133,7 +132,7 @@ Advanced Troubleshooting of Gate Jobs
 -------------------------------------
 As a first step of troubleshooting a failing gate job, you should always check
 the logs of the job as described above.
-Unfortunately, sometimes when a tempest/functional/fullstack job is
+Unfortunately, sometimes when a tempest/functional job is
 failing, it might be hard to reproduce it in a local environment, and might
 also be hard to understand the reason of such a failure from only reading
 the logs of the failed job.  In such cases there are some additional ways
@@ -178,20 +177,9 @@ This can be done in two ways:
          remote_pdb
 
    * Finally, you need to import and call the remote_pdb module in the part
-     of your test code where you want to start the debugger::
+     of your test code where you want to start the debugger. For example::
 
-        $ diff --git a/neutron/tests/fullstack/test_connectivity.py b/neutron/tests/fullstack/test_connectivity.py
-        index c8650b0..260207b 100644
-        --- a/neutron/tests/fullstack/test_connectivity.py
-        +++ b/neutron/tests/fullstack/test_connectivity.py
-        @@ -189,6 +189,8 @@ class
-        TestOVSConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
-                ]
-
-             def test_connectivity(self):
-        +        import remote_pdb; remote_pdb.set_trace('0.0.0.0', port=44444)
-        +
-        self._test_connectivity()
+        import remote_pdb; remote_pdb.set_trace('0.0.0.0', port=44444)
 
      Please note that discovery of public IP addresses is necessary because by
      default remote_pdb will only bind to the ``127.0.0.1`` IP address.
