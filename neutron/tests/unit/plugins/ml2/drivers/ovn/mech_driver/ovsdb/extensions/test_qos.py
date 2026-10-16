@@ -99,6 +99,12 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('max_header_size', 38, group='ml2_type_geneve')
         extensions.register_custom_supported_check(qos_api.ALIAS, lambda: True,
                                                    plugin_agnostic=True)
+        # Undo the custom check once the test is done: it is stored in
+        # a module level map that would otherwise make the qos
+        # extension supported by every plugin of the test classes
+        # running afterwards in the same process.
+        self.addCleanup(extensions.unregister_custom_supported_check,
+                        qos_api.ALIAS)
         super().setUp()
         self.setup_coreplugin(self.CORE_PLUGIN_CLASS, load_plugins=True)
         self._mock_qos_loaded = mock.patch.object(
