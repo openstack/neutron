@@ -272,7 +272,7 @@ class WaitForChassisNbCfgEvent(utils.TimedOnetimeEvent):
 
 
 class PortBindingChassisUpdateEvent(row_event.RowEvent):
-    """Event for matching a port moving chassis
+    """Event for matching a port (re)binding to a chassis
 
     If the LSP is up and the Port_Binding chassis has just changed,
     there is a good chance the host died without cleaning up the chassis
@@ -284,6 +284,14 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
     LSP migration and the ovn-controller at destination has claimed the
     port. In this case also we need to inform nova via network-vif-plugged
     event, that migration can continue.
+
+    The same applies during a nova instance rebuild: nova unplugs and then
+    quickly replugs the VIF on the same chassis before OVN registers the
+    port going down. The Logical_Switch_Port never transitions DOWN to UP,
+    so LogicalSwitchPortUpdateUpEvent is not fired and nova times out
+    waiting for the network-vif-plugged event. By matching on the
+    Port_Binding chassis being (re)set while the LSP stays up, we emit the
+    required port status update (and therefore the vif-plugged event).
     """
 
     def __init__(self, driver):
@@ -317,8 +325,18 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         old_chassis = getattr(old, 'chassis', None)
         old_additional_chassis = getattr(old, 'additional_chassis', None)
 
-        # No chassis assigned or not chassis change.
-        no_chassis_change = (not (row.chassis and old_chassis) or
+        # ``old`` only carries the chassis column when it changed, so a
+        # missing attribute means no change. When it did change, treat it as a
+        # (re)bind whenever the port now has a chassis that differs from the
+        # previous value, unless the port is being unbound (new chassis empty).
+        # This matches any transition into a chassis from unbound ([] -> X),
+        # which includes a re-bind to the same chassis (chassis cleared and set
+        # again) as happens during a nova instance rebuild. It is intentionally
+        # broad: the emit is gated below on the LSP being up and enabled, and
+        # set_port_status_up is idempotent, so a redundant match (e.g. a first
+        # bind whose LSP is already up) is harmless.
+        no_chassis_change = (not hasattr(old, 'chassis') or
+                             not row.chassis or
                              row.chassis == old_chassis)
 
         # When the chassis/additional_chassis not set or not changed,
