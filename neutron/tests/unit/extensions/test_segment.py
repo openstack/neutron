@@ -462,6 +462,28 @@ class TestSegment(SegmentTestCase):
                                mock.ANY,
                                payload=mock.ANY)
 
+    def test_delete_network_with_segment_deleted_concurrently(self):
+        db.subscribe()
+        with self.network() as network:
+            network = network['network']
+        segment = self.segment(network_id=network['id'], segmentation_id=201,
+                               physical_network='physnet1')['segment']
+        get_segments = db.SegmentDbMixin.get_segments
+
+        def get_segments_and_release_one(plugin, context, *args, **kwargs):
+            segments = get_segments(plugin, context, *args, **kwargs)
+            segments_db.delete_network_segment(context, segment['id'])
+            return segments
+
+        with mock.patch.object(db.SegmentDbMixin, 'get_segments',
+                               autospec=True,
+                               side_effect=get_segments_and_release_one):
+            self._delete('networks', network['id'])
+        self._show('networks', network['id'],
+                   expected_code=webob.exc.HTTPNotFound.code)
+        self._show('segments', segment['id'],
+                   expected_code=webob.exc.HTTPNotFound.code)
+
 
 class TestSegmentML2(SegmentTestCase):
     def setUp(self):
