@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    The OVN mechanism driver no longer uses the first port binding of a port
+    to decide whether the port is an external port (``lsp.type=external``).
+    When a port has multiple bindings, for example during live migration, the
+    first binding could be the inactive one, resulting in the wrong VNIC type
+    and capabilities being evaluated. The ``ACTIVE`` binding is now used.
