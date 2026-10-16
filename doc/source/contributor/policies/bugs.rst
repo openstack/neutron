@@ -397,8 +397,6 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | doc_                          | A bug affecting in-tree doc             | Akihiro Motoki           |
 +-------------------------------+-----------------------------------------+--------------------------+
-| fullstack_                    | A bug in the fullstack subtree          | Rodolfo Alonso Hernandez |
-+-------------------------------+-----------------------------------------+--------------------------+
 | functional-tests_             | A bug in the functional tests subtree   | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
 | gate-failure_                 | A bug affecting gate stability          | Slawek Kaplonski         |
@@ -558,14 +556,6 @@ DOC
 
 * `DOC - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=doc>`_
 * `DOC - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=doc>`_
-
-.. _fullstack:
-
-Fullstack
-+++++++++
-
-* `Fullstack - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=fullstack>`_
-* `Fullstack - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=fullstack>`_
 
 .. _functional-tests:
 

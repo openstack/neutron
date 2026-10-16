@@ -13,7 +13,6 @@
               - ^.*\.rst$
               - ^doc/.*$
               - ^neutron/locale/.*$
-              - ^neutron/tests/fullstack/.*$
               - ^neutron/tests/functional/.*$
               - ^releasenotes/.*$
               - ^setup.cfg$

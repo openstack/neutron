@@ -83,10 +83,10 @@ class InterfacePollingMinimizer(base_polling.BasePollingManager):
 def filter_bridge_names(br_names):
     """Bridge names to filter events received in the Interface monitor
 
-    This method is used only in fullstack testing. Because several OVS agents
-    are executed in the same host and share the same OVS switch, this filtering
-    will remove events of other agents; the Interface monitor will only return
-    events of Interfaces attached to Ports that belong to bridges "br_names".
+    When several OVS agents are executed on the same host and share the
+    same OVS switch, this filtering removes events of other agents; the
+    Interface monitor will only return events of Interfaces attached to
+    Ports that belong to bridges "br_names".
 
     If the list is empty, no filtering is done.
     """

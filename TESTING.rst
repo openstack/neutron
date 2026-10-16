@@ -59,7 +59,7 @@ that broad categorization, here are a few more characteristic:
   such as an agent using no mocks.
 * Integration tests - Run against a running cloud, often target the API level,
   but also 'scenarios', 'user stories' or 'grenade'. You may find such tests
-  under tests/fullstack, and in the Tempest, Rally, Grenade and
+  in the Tempest, Rally, Grenade and
   neutron-tempest-plugin(neutron_tempest_plugin/api|scenario) projects.
 
 Tests in the Neutron tree are typically organized by the testing infrastructure
@@ -218,23 +218,6 @@ for Final flow. It's been fixed in openvswitch
 2.5.1 in `this commit <https://github.com/openvswitch/ovs/commit/8c0b419a0b9ac0141d6973dcc80306dfc6a83d31>`_.
 If openvswitch version meets the test requirement then the test is triggered
 normally.
-
-Fullstack Tests
-~~~~~~~~~~~~~~~
-
-Why?
-++++
-
-The idea behind "fullstack" testing is to fill a gap between unit + functional
-tests and Tempest. Tempest tests are expensive to run, and target black box API
-tests exclusively. Tempest requires an OpenStack deployment to be run against,
-which can be difficult to configure and setup. Full stack testing addresses
-these issues by taking care of the deployment itself, according to the topology
-that the test requires. Developers further benefit from full stack testing as
-it can sufficiently simulate a real environment and provide a rapidly
-reproducible way to verify code while you're still writing it.
-
-More details can be found in :ref:`FullStack Testing<fullstack_testing>` guide.
 
 Integration - tempest tests
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -516,11 +499,6 @@ The '-i' option is optional and instructs the script to use DevStack
 to install and configure all of Neutron's package dependencies. It is
 not necessary to provide this option if DevStack has already been used
 to deploy Neutron to the target host.
-
-Fullstack Tests
-~~~~~~~~~~~~~~~
-
-See :ref:`FullStack Testing<fullstack_testing>` guide.
 
 API & Scenario Tests
 ~~~~~~~~~~~~~~~~~~~~

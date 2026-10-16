@@ -887,8 +887,8 @@ class OVSPortFixture(PortFixture):
             self.plug_port(port_name)
 
     def plug_port(self, port_name):
-        # TODO(jlibosva): Don't use interface driver for fullstack fake
-        # machines as the port should be treated by OVS agent and not by
+        # TODO(jlibosva): Don't use interface driver for fake machines
+        # as the port should be treated by OVS agent and not by
         # external party
         interface_config = cfg.ConfigOpts()
         config.register_interface_opts(interface_config)

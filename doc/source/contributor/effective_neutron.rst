@@ -193,7 +193,7 @@ any test. For anything more elaborate, please visit the testing section.
 * Avoid heavy use of the mock library to test your code. If your code requires
   more than one mock to ensure that it does the correct thing, it needs to be
   refactored into smaller, testable units. Otherwise we depend on
-  fullstack/tempest/api tests to test all of the real behavior and we end up
+  tempest/api tests to test all of the real behavior and we end up
   with code containing way too many hidden dependencies and side effects.
 * All behavior changes to fix bugs should include a test that prevents a
   regression. If you made a change and it didn't break a test, it means the

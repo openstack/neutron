@@ -66,8 +66,7 @@ neutron/ Package
 ``neutron/server/``
     Server bootstrap: workers, WSGI serving, eventlet.
 ``neutron/tests/``
-    Unit (``unit/``), functional (``functional/``), and fullstack
-    (``fullstack/``) test suites.
+    Unit (``unit/``) and functional (``functional/``) test suites.
 
 doc/ Structure
 ==============
