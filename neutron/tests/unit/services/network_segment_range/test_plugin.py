@@ -232,7 +232,7 @@ class TestNetworkSegmentRange(testlib_api.SqlTestCase):
             self.context, {'network_segment_range': gre_range})
 
     def test_update_network_segment_range(self):
-        test_range = self._vlan_range
+        test_range = self._vlan_range.copy()
         network_segment_range = {'network_segment_range': test_range}
         ret = self.plugin.create_network_segment_range(self.context,
                                                        network_segment_range)
