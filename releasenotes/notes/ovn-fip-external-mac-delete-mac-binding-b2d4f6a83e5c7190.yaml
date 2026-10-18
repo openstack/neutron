@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    An in-place change of a floating IP NAT ``external_mac`` now deletes
+    the OVN ``MAC_Binding`` for that IP. ``ovn-controller`` only refreshes
+    a ``MAC_Binding`` when an ARP is punted, and the stale entry prevents
+    that ARP from being sent.
