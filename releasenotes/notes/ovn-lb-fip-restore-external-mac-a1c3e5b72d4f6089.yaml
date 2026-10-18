@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Disassociating an OVN load balancer VIP floating IP restores the member
+    floating IP ``external_mac`` from ``neutron:fip_external_mac``, the
+    floating IP port MAC stored when the NAT row was created. The previous
+    code wrote the member VM port MAC, so OVN answered ARP for an address
+    the network no longer uses.
