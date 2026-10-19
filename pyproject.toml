@@ -1,5 +1,5 @@
 [build-system]
-requires = ["pbr>=6.1.1"]
+requires = ["pbr>=7.1.3"]
 build-backend = "pbr.build"
 
 [project]
