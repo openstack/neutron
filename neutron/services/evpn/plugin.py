@@ -31,6 +31,7 @@ from oslo_log import log as logging
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.db import evpn_db
+from neutron.objects import ports as port_obj
 from neutron.services.evpn import commands as evpn_ovn
 from neutron.services.evpn import exceptions as evpn_exceptions
 from neutron.services.evpn import scheduler as evpn_scheduler
@@ -242,19 +243,48 @@ class EVPNPlugin(service_base.ServicePluginBase):
                                              payload):
         """Set advertise-host on the OVN logical router port.
 
-        Sets dynamic-routing-redistribute=connected-as-host on the LRP
-        so OVN adds host routes from this subnet to the EVPN VRF.
+        Sets dynamic-routing-redistribute=connected-as-host and
+        dynamic-routing-advertise=false on LRP.
+        If the network already has an OVN metadata port, also set
+        dynamic-routing-advertise=false on that LSP.
         """
         interface_info = payload.metadata.get('interface_info', {})
         if not interface_info.get(evpn_apidef.ADVERTISE_HOST):
             return
 
-        port_id = payload.metadata['port']['id']
+        port = payload.metadata['port']
+        port_id = port['id']
+        network_id = port['network_id']
+
+        metadata_port_ids = port_obj.Port.get_metadata_port_ids_by_network(
+            payload.context, network_id)
+
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(evpn_ovn.AdvertiseHostCommand(
                 self._nb_idl, port_id))
-
+            for metadata_port_id in metadata_port_ids:
+                txn.add(evpn_ovn.SuppressMetadataAdvertiseCommand(
+                    self._nb_idl, metadata_port_id))
         LOG.info("Set EVPN advertise-host on LRP for port %s", port_id)
+
+    @registry.receives(resources.PORT, [ovn_const.OVN_PRECOMMIT_CREATE,
+                                       ovn_const.OVN_PRECOMMIT_UPDATE])
+    def _process_metadata_port(self, resource, event, trigger, payload):
+        """Set dynamic-routing-advertise=false on a metadata LSP.
+
+        Called from ovn_client while the NB transaction is still open,
+        after the LSP create or the full options replace.
+        """
+        port = payload.latest_state
+        if not ovn_utils.is_ovn_metadata_port(port):
+            return
+        if not self._evpn_db.get_evpn_network(
+                payload.context, port['network_id']):
+            return
+
+        payload.metadata['txn'].add(
+            evpn_ovn.SuppressMetadataAdvertiseCommand(
+                self._nb_idl, port['id']))
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_DELETE])
     def _process_router_interface_delete(self, resource, event, trigger,
@@ -266,6 +296,20 @@ class EVPNPlugin(service_base.ServicePluginBase):
         """
         context = payload.context
         subnet_id = payload.metadata['subnet_id']
+        subnet = directory.get_plugin().get_subnet(context, subnet_id)
+        network_id = subnet['network_id']
+
+        metadata_port_ids = port_obj.Port.get_metadata_port_ids_by_network(
+            context, network_id)
+
         LOG.debug("Removing EVPN network entry for subnet %s", subnet_id)
         self._evpn_db.remove_evpn_network_by_subnet(context, subnet_id)
         LOG.info("Removed EVPN network entry for subnet %s", subnet_id)
+
+        if metadata_port_ids:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for metadata_port_id in metadata_port_ids:
+                    txn.add(evpn_ovn.RestoreMetadataAdvertiseCommand(
+                        self._nb_idl, metadata_port_id))
+            LOG.info("Cleared dynamic-routing-advertise on metadata "
+                    "LSP for network %s", network_id)

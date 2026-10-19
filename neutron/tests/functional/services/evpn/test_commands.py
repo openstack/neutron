@@ -336,6 +336,10 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
             bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+        self.assertEqual(
+            'false',
+            lrp.options.get(
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE))
 
     def test_preserves_existing_options(self):
         port_id = uuidutils.generate_uuid()
@@ -352,6 +356,10 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
             bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+        self.assertEqual(
+            'false',
+            lrp.options.get(
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE))
 
     def test_idempotent(self):
         port_id = uuidutils.generate_uuid()
@@ -367,3 +375,108 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
             bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+        self.assertEqual(
+            'false',
+            lrp.options.get(
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE))
+
+
+class SuppressMetadataAdvertiseCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
+    def setUp(self):
+        super().setUp()
+        self.ls_name = func_base.get_unique_name("ls")
+        self.nb_api.ls_add(self.ls_name).execute(check_error=True)
+
+    def _create_lsp(self, port_id, **kwargs):
+        self.nb_api.lsp_add(
+            self.ls_name, port_id, **kwargs,
+        ).execute(check_error=True)
+        return port_id
+
+    def test_sets_advertise_false(self):
+        port_id = uuidutils.generate_uuid()
+        self._create_lsp(port_id)
+
+        evpn_ovn.SuppressMetadataAdvertiseCommand(
+            self.nb_api, port_id).execute(check_error=True)
+
+        lsp = self.nb_api.lsp_get(port_id).execute(check_error=True)
+
+        self.assertEqual('false', lsp.options.get(
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE
+        ))
+
+    def test_preserves_existing_options(self):
+        port_id = uuidutils.generate_uuid()
+        self._create_lsp(port_id, options={'existing-key': 'existing-value'})
+
+        evpn_ovn.SuppressMetadataAdvertiseCommand(
+            self.nb_api, port_id).execute(check_error=True)
+        lsp = self.nb_api.lsp_get(port_id).execute(check_error=True)
+
+        self.assertEqual('existing-value',
+                         lsp.options.get('existing-key'))
+        self.assertEqual('false', lsp.options.get(
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE
+        ))
+
+    def test_idempotent(self):
+        port_id = uuidutils.generate_uuid()
+        self._create_lsp(port_id)
+
+        evpn_ovn.SuppressMetadataAdvertiseCommand(
+            self.nb_api, port_id).execute(check_error=True)
+        evpn_ovn.SuppressMetadataAdvertiseCommand(
+            self.nb_api, port_id).execute(check_error=True)
+
+        lsp = self.nb_api.lsp_get(port_id).execute(check_error=True)
+        self.assertEqual(
+            'false',
+            lsp.options.get(
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE
+            ))
+
+
+class RestoreMetadataAdvertiseCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
+    def setUp(self):
+        super().setUp()
+        self.ls_name = func_base.get_unique_name("ls")
+        self.nb_api.ls_add(self.ls_name).execute(check_error=True)
+
+    def _create_lsp(self, port_id, **kwargs):
+        self.nb_api.lsp_add(
+            self.ls_name, port_id, **kwargs,
+        ).execute(check_error=True)
+        return port_id
+
+    def test_removes_advertise_key(self):
+        port_id = uuidutils.generate_uuid()
+        self._create_lsp(port_id, options={
+            'existing-key': 'existing-value',
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE: 'false',
+        })
+
+        evpn_ovn.RestoreMetadataAdvertiseCommand(
+            self.nb_api, port_id).execute(check_error=True)
+
+        lsp = self.nb_api.lsp_get(port_id).execute(check_error=True)
+        self.assertNotIn(
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE,
+            lsp.options)
+        self.assertEqual('existing-value',
+                         lsp.options.get('existing-key'))
+
+    def test_missing_key_does_not_fail(self):
+        port_id = uuidutils.generate_uuid()
+        self._create_lsp(port_id, options={
+            'existing-key': 'existing-value'})
+
+        evpn_ovn.RestoreMetadataAdvertiseCommand(
+            self.nb_api, port_id).execute(check_error=True)
+
+        lsp = self.nb_api.lsp_get(port_id).execute(check_error=True)
+        self.assertNotIn(
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE,
+            lsp.options)
+        self.assertEqual('existing-value',
+                         lsp.options.get('existing-key'))

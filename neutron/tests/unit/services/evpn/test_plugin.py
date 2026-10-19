@@ -16,6 +16,7 @@
 from unittest import mock
 
 from neutron_lib.api.definitions import evpn as evpn_apidef
+from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants as plugin_constants
@@ -145,12 +146,8 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
             # TODO(jlibosva): The API does not expose advertise_host yet,
             # so we validate the DB directly.
-            with db_api.CONTEXT_READER.using(self.ctx):
-                evpn_net = self.ctx.session.query(
-                    evpn_models.EVPNNetwork
-                ).filter_by(
-                    network_id=net['network']['id']
-                ).one_or_none()
+            evpn_net = self.evpn_plugin._evpn_db.get_evpn_network(
+                self.ctx, net['network']['id'])
             self.assertIsNone(evpn_net)
             self.txn.add.assert_not_called()
 
@@ -168,12 +165,8 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
             # TODO(jlibosva): The API does not expose advertise_host yet,
             # so we validate the DB directly.
-            with db_api.CONTEXT_READER.using(self.ctx):
-                evpn_net = self.ctx.session.query(
-                    evpn_models.EVPNNetwork
-                ).filter_by(
-                    network_id=net['network']['id']
-                ).one_or_none()
+            evpn_net = self.evpn_plugin._evpn_db.get_evpn_network(
+                self.ctx, net['network']['id'])
             self.assertIsNotNone(evpn_net)
             self.assertEqual(
                 router['router']['id'], evpn_net.router_id)
@@ -210,12 +203,89 @@ class TestEVPNPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
             # TODO(jlibosva): The API does not expose advertise_host yet,
             # so we validate the DB directly.
-            with db_api.CONTEXT_READER.using(self.ctx):
-                evpn_net = self.ctx.session.query(
-                    evpn_models.EVPNNetwork
-                ).filter_by(
-                    network_id=net['network']['id']
-                ).one_or_none()
+            evpn_net = self.evpn_plugin._evpn_db.get_evpn_network(
+                self.ctx, net['network']['id'])
+            self.assertIsNone(evpn_net)
+
+    def test_metadata_port_create_suppresses_advertise(self):
+        with self.router(as_admin=True,
+                        arg_list=('evpn_vni',), evpn_vni=5000) as router, \
+                self.network() as net, \
+                self.subnet(network=net) as subnet:
+            self._router_interface_action(
+                'add', router['router']['id'],
+                subnet['subnet']['id'], None,
+                as_admin=True,
+                advertise_host=True)
+            self.txn.reset_mock()
+
+            with self.port(subnet=subnet, is_admin=True,
+                           device_owner=n_const.DEVICE_OWNER_DISTRIBUTED,
+                           device_id='ovnmeta-test') as port:
+                payload = mock.Mock()
+                payload.latest_state = port['port']
+                payload.context = self.ctx
+                payload.metadata = {'txn': self.txn}
+                self.evpn_plugin._process_metadata_port(
+                    None, None, None, payload)
+
+                self.txn.add.assert_called_once()
+                cmd = self.txn.add.call_args[0][0]
+                self.assertIsInstance(
+                    cmd, evpn_ovn.SuppressMetadataAdvertiseCommand)
+                self.assertEqual(port['port']['id'], cmd.lsp_name)
+
+    def test_vm_port_on_evpn_network_is_not_suppressed(self):
+        with self.router(as_admin=True,
+                        arg_list=('evpn_vni',), evpn_vni=5000) as router, \
+                self.network() as net, \
+                self.subnet(network=net) as subnet:
+            self._router_interface_action(
+                'add', router['router']['id'],
+                subnet['subnet']['id'], None,
+                as_admin=True,
+                advertise_host=True)
+            self.txn.reset_mock()
+
+            with self.port(subnet=subnet, is_admin=True,
+                           device_owner="compute:nova",
+                           device_id='vm-1') as port:
+                payload = mock.Mock()
+                payload.latest_state = port['port']
+                payload.context = self.ctx
+                payload.metadata = {'txn': self.txn}
+                self.evpn_plugin._process_metadata_port(
+                    None, None, None, payload)
+
+                self.txn.add.assert_not_called()
+
+    def test_router_interface_delete_restores_metadata_advertise(self):
+        with self.router(as_admin=True,
+                        arg_list=('evpn_vni',), evpn_vni=5000) as router, \
+                self.network() as net, \
+                self.subnet(network=net) as subnet:
+            self._router_interface_action(
+                'add', router['router']['id'],
+                subnet['subnet']['id'], None,
+                as_admin=True,
+                advertise_host=True)
+            with self.port(subnet=subnet, is_admin=True,
+                        device_owner=n_const.DEVICE_OWNER_DISTRIBUTED,
+                        device_id='ovnmeta-test') as port:
+                self.txn.reset_mock()
+                self._router_interface_action(
+                    'remove', router['router']['id'],
+                    subnet['subnet']['id'], None,
+                    as_admin=True)
+
+                self.txn.add.assert_called_once()
+                cmd = self.txn.add.call_args[0][0]
+                self.assertIsInstance(
+                    cmd, evpn_ovn.RestoreMetadataAdvertiseCommand)
+                self.assertEqual(port['port']['id'], cmd.lsp_name)
+
+            evpn_net = self.evpn_plugin._evpn_db.get_evpn_network(
+                self.ctx, net['network']['id'])
             self.assertIsNone(evpn_net)
 
     def test_compute_hcg_primary_load_single_primary(self):

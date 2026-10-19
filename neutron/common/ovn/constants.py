@@ -78,6 +78,9 @@ OVN_LOCALNET_PORT_EXT_ID_KEY = 'ovn-localnet-port'
 OVN_NAME_PREFIX = 'neutron-'
 OVN_HA_CH_GROUP_EXTPORT_PREFIX = 'neutron-extport-'
 OVN_METADATA_PREFIX = 'ovnmeta-'
+# String literals representing events associated to data store operations
+OVN_PRECOMMIT_CREATE = 'ovn-precommit-create'
+OVN_PRECOMMIT_UPDATE = 'ovn-precommit-update'
 
 OVN_DATAPATH_TYPE = 'datapath-type'
 

@@ -25,6 +25,7 @@ import sqlalchemy
 from sqlalchemy import and_
 
 from neutron.common import _constants
+from neutron.common.ovn import constants as ovn_const
 from neutron.db.models import dns as dns_models
 from neutron.db.models import l3
 from neutron.db.models import securitygroup as sg_models
@@ -788,3 +789,18 @@ class Port(base.NeutronDbObject):
             device_owner=constants.DEVICE_OWNER_ROUTER_GW,
             network_id=network_id)
         return [gw_port[0] for gw_port in gw_ports]
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_metadata_port_ids_by_network(cls, context, network_id):
+        """Return metadata port IDs on a network.
+
+        Selects port IDs only. device_owner is network:distributed and
+        device_id starts with ovnmeta-
+        """
+        metadata_ports = context.session.query(models_v2.Port.id).filter(
+            models_v2.Port.network_id == network_id,
+            models_v2.Port.device_owner == constants.DEVICE_OWNER_DISTRIBUTED,
+            models_v2.Port.device_id.like(
+                ovn_const.OVN_METADATA_PREFIX + '%'))
+        return [port[0] for port in metadata_ports]

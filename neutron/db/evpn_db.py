@@ -231,6 +231,21 @@ class EVPNDbHelper:
 
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_READER
+    def get_evpn_network(self, context, network_id):
+        """Return the evpn_networks row for this Neutron network,
+        or return None if not found.
+
+        evpn_networks is written in advertise_port() when a router
+        interface is added with advertise_host. The upcoming PORT
+        callback uses this: if the row is missing,
+        the network is not in EVPN and we must not stamp the metadata LSP.
+        """
+        return context.session.query(
+            evpn_models.EVPNNetwork
+        ).filter_by(network_id=network_id).one_or_none()
+
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_vni_for_router(self, context, router_id):
         """Get the VNI allocated to a router, or None if not allocated.
 
