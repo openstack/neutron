@@ -333,7 +333,7 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
 
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual(
-            bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
+            evpn_const.EVPN_LRP_REDISTRIBUTE_OPTION,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
         self.assertEqual(
@@ -353,7 +353,7 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
         self.assertEqual('existing-value',
                          lrp.options.get('existing-key'))
         self.assertEqual(
-            bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
+            evpn_const.EVPN_LRP_REDISTRIBUTE_OPTION,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
         self.assertEqual(
@@ -372,7 +372,7 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
 
         lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
         self.assertEqual(
-            bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
+            evpn_const.EVPN_LRP_REDISTRIBUTE_OPTION,
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
         self.assertEqual(

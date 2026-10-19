@@ -22,3 +22,6 @@ EVPN_LRP_NAME_PATTERN = 'evpn-lrp-%(lrp_uuid)s-to-%(evpn_ls_name)s'
 EVPN_LSP_NAME_PATTERN = 'evpn-lsp-%(evpn_ls_name)s-to-%(lrp_uuid)s'
 EVPN_HCG_NAME_PREFIX = 'evpn-hcg-'
 EVPN_LR_REDISTRIBUTE_OPTION = bgp_const.DYNAMIC_ROUTE_TYPE_STATIC
+EVPN_LRP_REDISTRIBUTE_OPTION = ",".join(
+    [bgp_const.DYNAMIC_ROUTE_TYPE_STATIC,
+     bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST])

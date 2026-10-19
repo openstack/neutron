@@ -144,3 +144,16 @@ class EVPNAdvertisedPort(model_base.BASEV2):
         foreign_keys=[network_id],
         lazy='joined',
         viewonly=True)
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_all_port_ids(cls, context):
+        """Get all port IDs that have EVPN advertisement enabled.
+
+        Returns a list of port_id strings without loading joined
+        relationships (port, evpn_network).
+
+        :param context: Neutron request context
+        :returns: list of port_id strings
+        """
+        return [row[0] for row in context.session.query(cls.port_id).all()]

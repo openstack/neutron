@@ -170,7 +170,7 @@ class AdvertiseHostCommand(command.BaseCommand):
 
         ovn_utils.setkeys(lrp, 'options', {
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
-                bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
+                evpn_const.EVPN_LRP_REDISTRIBUTE_OPTION,
             bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE:
                 'false',
         })

@@ -1647,6 +1647,52 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(ichen): Remove this method in the I+4=M (2029.1) cycle (2nd next
+    # SLURP release)
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    @log_maintenance_task(
+        start_message='Provisioning static route redistribution on existing '
+                      'EVPN LRPs.')
+    def provision_evpn_lrp_static_route_redistribution(self):
+        """Add static to dynamic-routing-redistribute on EVPN advertised LRPs.
+
+        When a port-level dynamic-routing-redistribute is set (e.g.
+        connected-as-host), it overrides the router-level default entirely.
+        This means a static route whose nexthop resolves through that port
+        will not be advertised unless 'static' is also present on the port.
+
+        This method adds 'static' to the redistribute option on all LRPs
+        that have EVPN advertisement enabled.
+        """
+        context = n_context.get_admin_context()
+
+        # Query all port IDs that have EVPN host advertisement enabled
+        port_ids = evpn_models.EVPNAdvertisedPort.get_all_port_ids(context)
+
+        if not port_ids:
+            LOG.debug('No EVPN advertised ports found, skipping '
+                      'maintenance task')
+            raise periodics.NeverAgain()
+
+        options = {bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
+                   evpn_const.EVPN_LRP_REDISTRIBUTE_OPTION}
+
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for port_id in port_ids:
+                lrp_name = utils.ovn_lrouter_port_name(port_id)
+                txn.add(self._nb_idl.db_set(
+                    'Logical_Router_Port', lrp_name, ('options', options)))
+
+        LOG.info('Provisioned static route redistribution for %d EVPN '
+                 'LRPs', len(port_ids))
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics:
 
