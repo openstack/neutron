@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    Setting the ``trusted`` key directly in a port's ``binding:profile``,
+    which was deprecated in 2024.2, is no longer allowed. The dedicated port
+    attribute ``trusted``, added by the API extension ``port_trusted_vif``
+    should be used instead.

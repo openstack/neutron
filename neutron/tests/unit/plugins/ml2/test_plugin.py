@@ -2679,6 +2679,24 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         except webob.exc.HTTPClientError:
             pass
 
+    def test_create_port_binding_profile_trusted_not_allowed(self):
+        profile_arg = {portbindings.PROFILE: {'trusted': True}}
+        with self.subnet() as subnet:
+            net_id = subnet['subnet']['network_id']
+            res = self._create_port(self.fmt, net_id,
+                                    is_service=True,
+                                    arg_list=(portbindings.PROFILE,),
+                                    **profile_arg)
+            self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
+    def test_update_port_binding_profile_trusted_not_allowed(self):
+        profile_arg = {portbindings.PROFILE: {'trusted': True}}
+        with self.port(is_admin=True) as port:
+            port_id = port['port']['id']
+            self._update('ports', port_id, {'port': profile_arg},
+                        as_service=True,
+                        expected_code=webob.exc.HTTPBadRequest.code)
+
     def test_remove_port_binding_profile(self):
         profile = {'e': 5}
         profile_arg = {portbindings.PROFILE: profile}
