@@ -148,15 +148,27 @@ class InitHandlerTest(base.BaseTestCase):
         driver.TRUNK_SKELETON = None
 
     def test_init_handler_plugin_default(self):
-        driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
+        with mock.patch.object(
+                ovsdb_handler.OVSDBHandler,
+                'cleanup_orphaned_trunk_patch_ports') as cleanup:
+            driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
         self.assertIsInstance(driver.TRUNK_SKELETON, driver.OVSTrunkSkeleton)
+        cleanup.assert_called_once_with()
 
     def test_init_handler_plugin_disabled(self):
         cfg.CONF.set_override('trunk_enabled', False, group='OVS')
-        driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
+        with mock.patch.object(
+                ovsdb_handler.OVSDBHandler,
+                'cleanup_orphaned_trunk_patch_ports') as cleanup:
+            driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
         self.assertFalse(driver.TRUNK_SKELETON)
+        self.assertFalse(cleanup.called)
 
     def test_init_handler_plugin_enabled(self):
         cfg.CONF.set_override('trunk_enabled', True, group='OVS')
-        driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
+        with mock.patch.object(
+                ovsdb_handler.OVSDBHandler,
+                'cleanup_orphaned_trunk_patch_ports') as cleanup:
+            driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
         self.assertIsInstance(driver.TRUNK_SKELETON, driver.OVSTrunkSkeleton)
+        cleanup.assert_called_once_with()

@@ -83,6 +83,17 @@ def is_trunk_service_port(port_name):
         tman.SubPort.DEV_PREFIX)
 
 
+def is_trunk_patch_port_on_br_int(port_name):
+    """True if the port is an integration-bridge-side trunk patch port.
+
+    These are the ``tpi-*`` (trunk parent port) and ``spi-*`` (sub-port)
+    patch ports that plug a trunk bridge into the integration bridge.
+    """
+    return port_name[:3] in (
+        tman.TrunkParentPort.DEV_PREFIX + 'i',
+        tman.SubPort.DEV_PREFIX + 'i')
+
+
 def bridge_has_port(bridge, is_port_predicate):
     """True if there is an OVS port for which is_port_predicate is True.
     """
@@ -509,3 +520,71 @@ class OVSDBHandler:
                 {'br_name': bridge.br_name,
                  'timeout': self.timeout})
         return False
+
+    def _get_orphaned_trunk_patch_ports(self):
+        int_br = self.trunk_manager.br_int
+        try:
+            interfaces = int_br.get_ports_attributes(
+                'Interface',
+                columns=['name', 'options', 'ofport', 'error'],
+                if_exists=True)
+        except RuntimeError as e:
+            LOG.error("Cannot obtain interface list for bridge %(bridge)s "
+                      "while scanning for orphaned trunk patch ports: "
+                      "%(err)s",
+                      {'bridge': int_br.br_name, 'err': e})
+            return []
+
+        base_ovs = ovs_lib.BaseOVS()
+        orphans = []
+        for interface in interfaces:
+            name = interface['name']
+            if not is_trunk_patch_port_on_br_int(name):
+                continue
+
+            peer_name = (interface.get('options') or {}).get('peer')
+            # Without a configured peer we cannot tell whether the trunk
+            # bridge is gone, so we conservatively leave the port alone.
+            if not peer_name:
+                continue
+
+            # If the trunk-side peer patch port still exists somewhere, the
+            # trunk is intact (or being (re)wired) and we must not touch it.
+            if base_ovs.port_exists(peer_name):
+                continue
+
+            # Peer is gone. Corroborate with the OVS-reported error / invalid
+            # ofport ("No usable peer ..."). ofport can legitimately be None
+            # for a brief moment right after creation, so we only act when the
+            # datapath actually rejected the port.
+            ofport = interface.get('ofport')
+            error = interface.get('error')
+            if error or ofport == ovs_lib.INVALID_OFPORT:
+                LOG.warning(
+                    "Detected orphaned trunk patch port %(name)s on bridge "
+                    "%(bridge)s: peer %(peer)s is gone (ofport=%(ofport)s, "
+                    "error=%(error)s). It will be removed to clear the stale "
+                    "forwarding entries.",
+                    {'name': name, 'bridge': int_br.br_name,
+                     'peer': peer_name, 'ofport': ofport, 'error': error})
+                orphans.append(name)
+
+        return orphans
+
+    def cleanup_orphaned_trunk_patch_ports(self):
+        orphans = self._get_orphaned_trunk_patch_ports()
+        if not orphans:
+            return
+
+        int_br = self.trunk_manager.br_int
+        for port_name in orphans:
+            try:
+                int_br.delete_port(port_name)
+                LOG.debug("Cleaned orphaned trunk patch port %(name)s from "
+                          "bridge %(bridge)s.",
+                          {'name': port_name, 'bridge': int_br.br_name})
+            except RuntimeError as e:
+                LOG.error("Failed to clean orphaned trunk patch port "
+                          "%(name)s from bridge %(bridge)s: %(err)s",
+                          {'name': port_name, 'bridge': int_br.br_name,
+                           'err': e})
