@@ -22,6 +22,7 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 import webob
 
+from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.services.bgp import plugin as bgp_plugin
 from neutron.tests import base
 from neutron.tests.unit.api import test_extensions
@@ -38,6 +39,7 @@ class BGPServicePluginAPITestCase(test_l3.L3NatTestCaseMixin,
         return {'bgp_plugin': BGP_PLUGIN}
 
     def setUp(self):
+        driver_type.register_ml2_drivers_geneve_opts()
         cfg.CONF.set_override('type_drivers', 'geneve,flat,local',
                               group='ml2')
         cfg.CONF.set_override('vni_ranges', ['1:1000'],
@@ -138,7 +140,8 @@ class BGPServicePluginAPITestCase(test_l3.L3NatTestCaseMixin,
 
     def test_subnet_show_has_leak_routes(self):
         with self.subnet() as subnet:
-            req = self.new_show_request('subnets', subnet['subnet']['id'])
+            req = self.new_show_request('subnets', subnet['subnet']['id'],
+                                        as_admin=True)
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertIn(ovn_bgp_apidef.LEAK_ROUTES, res['subnet'])
             self.assertFalse(res['subnet'][ovn_bgp_apidef.LEAK_ROUTES])
