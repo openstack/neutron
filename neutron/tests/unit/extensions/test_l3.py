@@ -377,8 +377,13 @@ class TestL3NatAgentSchedulingServicePlugin(TestL3NatServicePlugin,
         super().__init__()
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
-        self.agent_notifiers.update(
-            {lib_constants.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
+        # Rebind as an instance level dict instead of updating the shared
+        # class level one, so that the notifier (created with this test's
+        # fake RPC transport) is not leaked to any later test of the worker
+        # process.
+        self.agent_notifiers = {
+            **self.agent_notifiers,
+            lib_constants.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()}
 
 
 class L3NatTestCaseMixin:

@@ -137,8 +137,13 @@ class L3RouterPlugin(service_base.ServicePluginBase,
             l3_dvrscheduler_db.subscribe()
         if 'l3-ha' in self.supported_extension_aliases:
             l3_hascheduler_db.subscribe()
-        self.agent_notifiers.update(
-            {n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()})
+        # Rebind as an instance level dict instead of updating the shared
+        # class level one: the notifier would otherwise leak to any other
+        # plugin instance (in unit tests, to any later test of the worker
+        # process).
+        self.agent_notifiers = {
+            **self.agent_notifiers,
+            n_const.AGENT_TYPE_L3: l3_rpc_agent_api.L3AgentNotifyAPI()}
 
         rpc_worker = service.RpcWorker([self], worker_process_count=1)
 
