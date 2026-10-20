@@ -1249,9 +1249,10 @@ class OVNClient:
                         'NAT', nat.uuid, ('logical_port', lsp.name))
                     port = self._plugin.get_port(context, lsp.name)
                     if port['status'] == const.PORT_STATUS_ACTIVE:
+                        ext_mac = nat.external_ids[
+                            ovn_const.OVN_FIP_EXT_MAC_KEY]
                         yield self._nb_idl.db_set(
-                            'NAT', nat.uuid,
-                            ('external_mac', port['mac_address']))
+                            'NAT', nat.uuid, ('external_mac', ext_mac))
 
     def _delete_floatingip(self, context, fip, lrouter, txn=None):
         commands = [self._nb_idl.delete_nat_rule_in_lrouter(

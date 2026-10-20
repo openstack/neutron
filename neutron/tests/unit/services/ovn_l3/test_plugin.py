@@ -1577,6 +1577,9 @@ class BaseTestOVNL3RouterPluginMixin:
             [self.fake_ovn_nat_rule],
         ]
         nb_ovn.lookup.return_value = self.lb_network
+        fip_mac = 'fa:16:3e:fc:39:29'
+        self.fake_ovn_nat_rule.external_ids[
+            ovn_const.OVN_FIP_EXT_MAC_KEY] = fip_mac
 
         self.l3_inst.delete_floatingip(self.context, 'floatingip-id')
         nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
@@ -1594,7 +1597,7 @@ class BaseTestOVNL3RouterPluginMixin:
             mock.call('NAT', self.fake_ovn_nat_rule.uuid,
                       ('logical_port', self.member_lsp.name)),
             mock.call('NAT', self.fake_ovn_nat_rule.uuid,
-                      ('external_mac', 'aa:aa:aa:aa:aa:aa'))])
+                      ('external_mac', fip_mac))])
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._delete_floatingip')
     def test_delete_floatingip_lsp_external_id(self, df):
