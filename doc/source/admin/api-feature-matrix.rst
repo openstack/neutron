@@ -12,10 +12,11 @@ supports each feature.
 
 .. note::
 
-   The OVN BGP service plugin (``ovn-bgp``) is **not** an API extension.
-   It is an internal service plugin that prepares OVN logical topology and
-   OpenFlow rules for BGP advertisement in spine-and-leaf fabrics.  An
-   external routing suite (e.g. FRR) handles the actual BGP protocol.
+   The OVN BGP service plugin (``ovn-bgp``) is primarily an internal service
+   plugin that prepares the OVN logical topology and OpenFlow rules for BGP
+   advertisement in spine-and-leaf fabrics.  An external routing suite (e.g.
+   FRR) handles the actual BGP protocol.  It does expose a small API surface:
+   the ``ovn-bgp`` extension adds a ``leak_routes`` attribute to subnets.
    See :ref:`ovn_bgp` for details.
 
 Neutron Core L3 APIs
@@ -140,13 +141,30 @@ Neutron Core L3 APIs
      - yes
      - Security and Firewall group logging for auditing accepted/dropped packets
 
-OVN BGP Service Plugin (non-API)
----------------------------------
+.. note::
+
+   When the OVN BGP and EVPN service plugins are enabled, the core L3 APIs
+   above gain extra attributes: the subnet API gets ``leak_routes``
+   (``ovn-bgp`` extension) and the router API gets ``evpn_vni`` together with
+   the ``advertise_host`` router-interface argument (``evpn`` extension).
+   These are OVN-only and are described in :ref:`in-tree-ovn-bgp-evpn`.
+
+.. _in-tree-ovn-bgp-evpn:
+
+In-tree OVN BGP and EVPN
+------------------------
+
+Neutron provides an in-tree implementation for BGP route advertisement and
+EVPN with OVN. It is split between an internal service plugin and agent
+extension (that prepare the OVN topology and OpenFlow rules) and a small
+set of API extensions that control the behaviour. All of these features
+work with OVN only and rely on an external routing suite (e.g. FRR) for the
+actual BGP/EVPN protocol handling.
 
 .. list-table::
    :header-rows: 1
 
-   * - Feature
+   * - API Endpoint / Feature
      - Project
      - OVS
      - OVN
@@ -156,8 +174,39 @@ OVN BGP Service Plugin (non-API)
      - \-
      - yes
      - Prepares OVN logical topology and OpenFlow rules for BGP advertisement
-       in spine-and-leaf fabrics. Requires external FRR for actual BGP protocol.
-       Not exposed as an API extension. See :ref:`ovn_bgp`.
+       in spine-and-leaf fabrics. Requires external FRR for the actual BGP
+       protocol. See :ref:`ovn_bgp`.
+   * - Subnet route leaking (``leak_routes``)
+     - neutron (``ovn-bgp``)
+     - \-
+     - yes
+     - ``leak_routes`` boolean attribute on subnets (``ovn-bgp`` extension)
+       controlling whether the subnet routes are advertised through BGP.
+   * - Router EVPN VNI (``evpn_vni``)
+     - neutron (``evpn``)
+     - \-
+     - yes
+     - ``evpn_vni`` attribute on routers (``evpn`` extension) enabling EVPN
+       Type-5 route advertisement for the router. Requires the ``router``
+       (``l3``) extension.
+   * - Router interface host advertisement (``advertise_host``)
+     - neutron (``evpn``)
+     - \-
+     - yes
+     - ``advertise_host`` argument on the router-interface add operation,
+       requesting per-host (``/32`` or ``/128``) EVPN advertisement for the
+       attached subnet.
+
+.. note::
+
+   The in-tree OVN BGP and EVPN features overlap in scope with the external
+   `ovn-bgp-agent <https://opendev.org/openstack/ovn-bgp-agent>`__ project,
+   and the project direction is to converge on the in-tree implementation.
+   The in-tree implementation does not yet have full feature parity with
+   ``ovn-bgp-agent``; for example, VLAN provider network support is not yet
+   available in-tree. The ``leak_routes``, ``evpn_vni`` and
+   ``advertise_host`` attributes described above are the API surface that
+   configures the in-tree implementation.
 
 BGP Dynamic Routing
 -------------------
