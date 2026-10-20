@@ -135,7 +135,10 @@ class TestVrfHandler(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         self._evpn_fsm = fsm.EvpnFSM()
-        self._evpn_fsm.setup(mock.Mock(), mock.Mock(), mock.Mock())
+        with mock.patch.object(fsm.evpn_executor, 'EvpnExecutor',
+                               return_value=mock.Mock()):
+            self._evpn_fsm.setup(mock.Mock(), mock.Mock(br_mtu=1500),
+                                 mock.Mock())
         self.handler = netlink_monitor.VrfHandler(self._evpn_fsm)
 
     def test_handle_newlink_evpn_vrf(self):
@@ -155,7 +158,6 @@ class TestVrfHandler(base.BaseTestCase):
         vrf = 'vr0a1b2c3d-ffff'
         self.handler._known_vrfs.add(vrf)
         evpn = fsm.EVPNInstance(vrf)
-        evpn.vrf_up = True
         evpn.state = fsm.EVPNState.WAITING_FOR_PORT_BINDING
         self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg(vrf)
@@ -167,7 +169,6 @@ class TestVrfHandler(base.BaseTestCase):
         vrf = 'vr0a1b2c3d-ffff'
         self.handler._known_vrfs.add(vrf)
         evpn = fsm.EVPNInstance(vrf)
-        evpn.vrf_up = True
         evpn.state = fsm.EVPNState.WAITING_FOR_PORT_BINDING
         self._evpn_fsm.instances[vrf] = evpn
         msg = _make_vrf_msg('vr0a1b2c3d-eeee')
