@@ -1,0 +1,10 @@
+---
+security:
+  - |
+    Non-admin users can no longer create or update RBAC policies with the
+    ``access_as_external`` action via the API. The new
+    ``create_rbac_policy:action`` and ``update_rbac_policy:action`` policy
+    rules restrict that action to cloud administrators by default, matching
+    the existing plugin check that only admins may promote a network to
+    external. For more information, see bug
+    `2161501 <https://bugs.launchpad.net/neutron/+bug/2161501>`_.
