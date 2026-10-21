@@ -367,6 +367,13 @@ class L3HATestCase(framework.L3AgentTestFramework):
             raise
         self.assertEqual(1, ip_nonlocal_bind_value)
 
+    def test_ha_router_ha_iface_not_tracked(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router = self.manage_router(self.agent, router_info)
+        raw_rules = router.iptables_manager.get_rules_for_table('raw')
+        for rule in ('-i ha-+ -j CT --notrack', '-o ha-+ -j CT --notrack'):
+            self.assertTrue(any(rule in line for line in raw_rules))
+
     @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
     def test_ha_router_addr_gen_mode(self):
         router_info = self.generate_router_info(enable_ha=True)

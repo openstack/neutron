@@ -126,6 +126,15 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         ha_router.HaRouter.external_gateway_updated(self, ex_gw_port,
                                                     interface_name)
 
+    def initialize_ha_notrack_iptables(self):
+        # The HA interface lives in the SNAT namespace, whose iptables
+        # manager is created with the DVR gateway
+        pass
+
+    def _create_dvr_gateway(self, ex_gw_port, gw_interface_name):
+        super()._create_dvr_gateway(ex_gw_port, gw_interface_name)
+        self._add_ha_notrack_rules(self.snat_iptables_manager)
+
     def _external_gateway_added(self, ex_gw_port, interface_name,
                                 ns_name, preserve_ips):
         self._plug_external_gateway(ex_gw_port, interface_name, ns_name)
