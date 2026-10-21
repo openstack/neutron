@@ -39,6 +39,7 @@ from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.services.bgp import constants as bgp_const
+from neutron.services.evpn import constants as evpn_const
 from neutron.services.portforwarding import constants as pf_consts
 from neutron.tests.functional import base
 from neutron.tests.functional.services.logapi.drivers.ovn \
@@ -1857,6 +1858,81 @@ class TestEVPNMaintenance(_TestMaintenanceHelper):
         redistribute = lr.options.get(
             bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE)
         self.assertEqual(bgp_const.DYNAMIC_ROUTE_TYPE_STATIC, redistribute)
+
+    def _create_evpn_advertised_port(self, vni, lrp_redistribute=''):
+        """Create an EVPN router with an advertised port.
+
+        Creates router, network, subnet, router interface, EVPN instance,
+        advertised port DB entry, and sets redistribute option on the LRP.
+        Returns (port_id, lrp_name).
+        """
+        router_id, lr_name = self._create_evpn_router(vni=vni)
+
+        net_name = common_utils.get_rand_device_name(prefix='evpn-net-')
+        net = self._create_network(net_name)
+        subnet = self._create_subnet(net_name, net['id'])
+        iface = self._add_router_interface(router_id, subnet['id'])
+        port_id = iface['port_id']
+        lrp_name = utils.ovn_lrouter_port_name(port_id)
+
+        evpn_helper = evpn_db.EVPNDbHelper()
+        evpn_helper.advertise_port(
+            self.context, port_id, net['id'], router_id)
+
+        if lrp_redistribute:
+            self.nb_api.db_set(
+                'Logical_Router_Port', lrp_name,
+                ('options', {
+                    bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
+                        lrp_redistribute
+                })
+            ).execute(check_error=True)
+
+        return port_id, lrp_name
+
+    def test_lrp_advertise_host_adds_static(self):
+        """Test adding 'static' to LRP with 'connected-as-host'."""
+        port_id, lrp_name = self._create_evpn_advertised_port(
+            vni=6010,
+            lrp_redistribute=bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_lrp_static_route_redistribution)
+
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(
+            evpn_const.EVPN_LRP_REDISTRIBUTE_OPTION,
+            lrp.options.get(
+                bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+
+    def test_lrp_advertise_host_no_ports(self):
+        """Test when there are no EVPN advertised ports."""
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_lrp_static_route_redistribution)
+
+    def test_lrp_advertise_host_idempotent(self):
+        """Test that running twice doesn't duplicate 'static'."""
+        port_id, lrp_name = self._create_evpn_advertised_port(
+            vni=6011,
+            lrp_redistribute=bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST)
+
+        # First run: adds static
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_lrp_static_route_redistribution)
+
+        # Second run: should not duplicate
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.provision_evpn_lrp_static_route_redistribution)
+
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(
+            evpn_const.EVPN_LRP_REDISTRIBUTE_OPTION,
+            lrp.options.get(
+                bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,
