@@ -41,6 +41,14 @@ class RbacAPITestCase(testscenarios.WithScenarios, base.PolicyBaseTestCase):
         self.wildcard_alt_target = {
             'project_id': self.alt_project_id,
             self._target_label: '*'}
+        self.shared_action_target = {
+            'project_id': self.project_id,
+            self._target_label: 'other-project',
+            'action': 'access_as_shared'}
+        self.external_action_target = {
+            'project_id': self.project_id,
+            self._target_label: 'other-project',
+            'action': 'access_as_external'}
 
 
 class SystemAdminTests(RbacAPITestCase):
@@ -83,6 +91,18 @@ class SystemAdminTests(RbacAPITestCase):
             self.context, 'create_rbac_policy:target_project',
             self.wildcard_alt_target)
 
+    def test_create_rbac_policy_action(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_rbac_policy:action',
+            self.shared_action_target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_rbac_policy:action',
+            self.external_action_target)
+
     def test_update_rbac_policy(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -116,6 +136,18 @@ class SystemAdminTests(RbacAPITestCase):
             policy.enforce,
             self.context, 'update_rbac_policy:target_project',
             self.wildcard_alt_target)
+
+    def test_update_rbac_policy_action(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_rbac_policy:action',
+            self.shared_action_target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_rbac_policy:action',
+            self.external_action_target)
 
     def test_get_rbac_policy(self):
         self.assertRaises(
@@ -175,6 +207,16 @@ class AdminTests(RbacAPITestCase):
                 self.context,
                 'create_rbac_policy:target_project', self.alt_target))
 
+    def test_create_rbac_policy_action(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_rbac_policy:action',
+                self.shared_action_target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_rbac_policy:action',
+                self.external_action_target))
+
     def test_update_rbac_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'update_rbac_policy', self.target))
@@ -201,6 +243,16 @@ class AdminTests(RbacAPITestCase):
             policy.enforce(
                 self.context,
                 'update_rbac_policy:target_project', self.alt_target))
+
+    def test_update_rbac_policy_action(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_rbac_policy:action',
+                self.shared_action_target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_rbac_policy:action',
+                self.external_action_target))
 
     def test_get_rbac_policy(self):
         self.assertTrue(
@@ -258,6 +310,17 @@ class ProjectManagerTests(AdminTests):
             self.context, 'create_rbac_policy:target_project',
             self.wildcard_alt_target)
 
+    def test_create_rbac_policy_action(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_rbac_policy:action',
+                self.shared_action_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_rbac_policy:action',
+            self.external_action_target)
+
     def test_update_rbac_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'update_rbac_policy', self.target))
@@ -293,6 +356,17 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'update_rbac_policy:target_project',
             self.wildcard_alt_target)
+
+    def test_update_rbac_policy_action(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_rbac_policy:action',
+                self.shared_action_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_rbac_policy:action',
+            self.external_action_target)
 
     def test_get_rbac_policy(self):
         self.assertTrue(
