@@ -134,6 +134,17 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
 
         self._delete_router(self.agent, router.router_id)
 
+    def test_legacy_router_ns_conntrack_tcp_timeout(self):
+        self.agent.conf.set_override('conntrack_tcp_timeout_established',
+                                     7200)
+        router_info = self.generate_router_info(False)
+        router = self.manage_router(self.agent, router_info)
+        timeout = ip_lib.IPWrapper(namespace=router.ns_name).netns.execute(
+            ['sysctl', '-n',
+             'net.netfilter.nf_conntrack_tcp_timeout_established'],
+            privsep_exec=True)
+        self.assertEqual('7200', timeout.strip())
+
     def test_conntrack_disassociate_fip_legacy_router(self):
         self._test_conntrack_disassociate_fip(ha=False)
 

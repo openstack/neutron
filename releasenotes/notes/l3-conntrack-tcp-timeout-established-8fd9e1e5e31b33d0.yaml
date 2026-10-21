@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    A new L3 agent option ``[DEFAULT] conntrack_tcp_timeout_established``
+    sets the timeout, in seconds, of the established TCP connections tracked
+    in the router (``qrouter-``) namespaces, HA routers included, and in the
+    DVR SNAT (``snat-``) namespaces. It is not set in the DVR FIP (``fip-``)
+    namespaces, which do not track the connections. The kernel default
+    (5 days) keeps the entries of the connections closed without FIN or RST,
+    which can fill the conntrack table of a busy router and make it drop
+    packets. The default value 0 keeps the kernel default.

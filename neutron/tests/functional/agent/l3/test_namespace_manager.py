@@ -22,6 +22,7 @@ from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.l3 import namespace_manager
 from neutron.agent.l3 import namespaces
 from neutron.agent.linux import ip_lib
+from neutron.conf.agent.l3 import config as l3_config
 from neutron.tests.functional import base
 
 _uuid = uuidutils.generate_uuid
@@ -31,6 +32,7 @@ class NamespaceManagerTestFramework(base.BaseSudoTestCase):
 
     def setUp(self):
         super().setUp()
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         self.agent_conf = cfg.CONF
         self.metadata_driver_mock = mock.Mock()
         self.namespace_manager = namespace_manager.NamespaceManager(

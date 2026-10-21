@@ -20,6 +20,9 @@ from oslo_utils import uuidutils
 from neutron.agent.common import utils
 from neutron.agent.l3 import dvr_snat_ns
 from neutron.agent.linux import ip_lib
+from neutron.conf.agent import common as agent_config
+from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf import common as base_config
 from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
@@ -28,8 +31,10 @@ _uuid = uuidutils.generate_uuid
 class TestDvrSnatNs(base.BaseTestCase):
     def setUp(self):
         super().setUp()
-        self.conf = mock.Mock()
-        self.conf.state_path = cfg.CONF.state_path
+        self.conf = agent_config.setup_conf()
+        self.conf.register_opts(base_config.core_opts)
+        l3_config.register_l3_agent_config_opts(l3_config.OPTS, self.conf)
+        self.conf.set_override('state_path', cfg.CONF.state_path)
         self.driver = mock.Mock()
         self.driver.DEV_NAME_LEN = 14
         self.router_id = _uuid()
@@ -55,3 +60,19 @@ class TestDvrSnatNs(base.BaseTestCase):
 
         create.assert_called_once_with(self.snat_ns.name)
         execute.assert_has_calls(expected)
+
+    @mock.patch('neutron.privileged.agent.linux.ip_lib.set_link_attribute')
+    @mock.patch.object(utils, 'execute')
+    @mock.patch.object(ip_lib, 'create_network_namespace')
+    @mock.patch.object(ip_lib, 'network_namespace_exists')
+    def test_create_conntrack_tcp_timeout(self, exists, create, execute,
+                                          set_link_attr):
+        self.conf.set_override('conntrack_tcp_timeout_established', 7200)
+        exists.return_value = False
+        self.snat_ns.create()
+
+        netns_cmd = ['ip', 'netns', 'exec', self.snat_ns.name]
+        timeout = 'net.netfilter.nf_conntrack_tcp_timeout_established=7200'
+        sysctl_cmds = [call.args[0] for call in execute.call_args_list
+                       if call.args[0][:6] == netns_cmd + ['sysctl', '-w']]
+        self.assertTrue(any(timeout in cmd for cmd in sysctl_cmds))

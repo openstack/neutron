@@ -88,7 +88,8 @@ class Namespace:
         self.driver = driver
         self.use_ipv6 = use_ipv6
 
-    def create(self, ipv6_forwarding=True):
+    def create(self, ipv6_forwarding=True,
+               conntrack_tcp_timeout_established=0):
         self.ip_wrapper_root.ensure_namespace(self.name)
         # See networking (netdev) tree, file
         # Documentation/networking/ip-sysctl.txt for an explanation of
@@ -101,6 +102,8 @@ class Namespace:
         #    address configured on the incoming interface
         # 4) arp_announce=2 - Always use the best local address
         # 5) forwarding=0/1 - Turn on/off IPv6 forwarding
+        # 6) nf_conntrack_tcp_timeout_established - Expire the established
+        #    TCP connections idle for this time, if configured
         cmd = ['net.netfilter.nf_conntrack_tcp_be_liberal=1',
                'net.ipv4.ip_forward=1',
                'net.ipv4.conf.all.arp_ignore=1',
@@ -108,6 +111,9 @@ class Namespace:
         if self.use_ipv6:
             cmd.append(
                 'net.ipv6.conf.all.forwarding=%d' % int(ipv6_forwarding))
+        if conntrack_tcp_timeout_established:
+            cmd.append('net.netfilter.nf_conntrack_tcp_timeout_established='
+                       '%d' % conntrack_tcp_timeout_established)
         ip_lib.sysctl(cmd, namespace=self.name)
 
     def delete(self):
@@ -132,6 +138,12 @@ class RouterNamespace(Namespace):
     @classmethod
     def _get_ns_name(cls, router_id):
         return build_ns_name(NS_PREFIX, router_id)
+
+    def create(self, ipv6_forwarding=True):
+        super().create(
+            ipv6_forwarding=ipv6_forwarding,
+            conntrack_tcp_timeout_established=(
+                self.agent_conf.conntrack_tcp_timeout_established))
 
     @check_ns_existence
     def delete(self):
