@@ -228,7 +228,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         self._nb_idl = self._ovn_client._nb_idl
         self._sb_idl = self._ovn_client._sb_idl
         self._idl = self._nb_idl.idl
-        self._idl.set_lock('ovn_db_inconsistencies_periodics')
         super(DBInconsistenciesPeriodics, self).__init__(ovn_client)
 
         self._resources_func_map = {
