@@ -127,20 +127,27 @@ class PeriodicWorkerTestCase(base.BaseTestCase):
                 return
             worker.start()
             if state == 'running':
+                # Give the looping call time to start before probing
+                utils.wait_until_true(
+                    lambda: long_interval_worker._check_func.called,
+                    timeout=5,
+                    exception=RuntimeError('worker did not start'))
                 return
             if state == 'stopped':
                 worker.stop()
                 return
             raise ValueError('unknown state %r' % state)
 
+        # Use short interval (0.1) to reduce test duration and improve
+        # reliability
         long_interval_worker = neutron_worker.PeriodicWorker(
-            mock.Mock(), interval=60, initial_delay=60, desc=self.desc)
+            mock.Mock(), interval=0.1, initial_delay=0.1, desc=self.desc)
         self.addCleanup(long_interval_worker.stop)
 
         worker_lifecycle.assert_worker_expectations(
             self, long_interval_worker,
             worker_lifecycle.PERIODIC_WORKER_EXPECTATIONS,
-            prepare_state=prepare_state)
+            prepare_state=prepare_state, timeout=1.0)
 
 
 class WorkerLifecycleProbeTestCase(base.BaseTestCase):
