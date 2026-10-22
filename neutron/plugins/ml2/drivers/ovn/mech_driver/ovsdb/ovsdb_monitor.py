@@ -332,7 +332,7 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         # This matches any transition into a chassis from unbound ([] -> X),
         # which includes a re-bind to the same chassis (chassis cleared and set
         # again) as happens during a nova instance rebuild. It is intentionally
-        # broad: the emit is gated below on the LSP being up and enabled, and
+        # broad: run() gates the emit on the LSP being up and enabled, and
         # set_port_status_up is idempotent, so a redundant match (e.g. a first
         # bind whose LSP is already up) is harmless.
         no_chassis_change = (not hasattr(old, 'chassis') or
@@ -346,15 +346,6 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
 
         if row.type == ovn_const.OVN_CHASSIS_REDIRECT:
             return False
-        try:
-            lsp = self.driver.nb_ovn.lookup('Logical_Switch_Port',
-                                            row.logical_port)
-        except idlutils.RowNotFound:
-            LOG.warning("Logical Switch Port %(port)s not found for "
-                        "Port_Binding %(binding)s",
-                        {'port': row.logical_port, 'binding': row.uuid})
-            return False
-
         if old_additional_chassis and row.additional_chassis == []:
             # Now the Port_Binding is cleaned up, so additional_chassis is
             # cleared -> we send no event.
@@ -363,9 +354,24 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
             # got set
             return False
 
-        return utils.is_lsp_enabled(lsp) and utils.is_lsp_up(lsp)
+        return True
 
     def run(self, event, row, old=None):
+        # Matching runs under the SB IDL lock. Defer the NB lookup to the
+        # notification thread to avoid deadlocking with NB transactions
+        # that read SB while scheduling gateway chassis.
+        try:
+            lsp = self.driver.nb_ovn.lookup('Logical_Switch_Port',
+                                            row.logical_port)
+        except idlutils.RowNotFound:
+            LOG.warning("Logical Switch Port %(port)s not found for "
+                        "Port_Binding %(binding)s",
+                        {'port': row.logical_port, 'binding': row.uuid})
+            return
+
+        if not (utils.is_lsp_enabled(lsp) and utils.is_lsp_up(lsp)):
+            return
+
         try:
             add_chassis = row.additional_chassis[0].uuid
             dest_dp_type = utils.get_datapath_type(self.driver.sb_ovn,
