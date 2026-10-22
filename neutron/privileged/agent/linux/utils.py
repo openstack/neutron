@@ -35,7 +35,7 @@ def find_listen_pids_namespace(namespace):
 
 
 def _find_listen_pids_namespace(namespace):
-    """Retrieve a list of pids of listening processes within the given netns
+    """Retrieve a tuple of pids of listening processes within the given netns
 
     This method is implemented separately to allow unit testing.
     """
@@ -46,7 +46,7 @@ def _find_listen_pids_namespace(namespace):
         m = NETSTAT_PIDS_REGEX.match(line)
         if m:
             pids.add(m.group('pid'))
-    return list(pids)
+    return tuple(pids)
 
 
 @privileged.default.entrypoint

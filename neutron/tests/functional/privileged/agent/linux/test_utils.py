@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron.agent.linux import ip_lib
+from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import utils as priv_utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
@@ -32,8 +33,18 @@ class FindListenPidsNamespaceTestCase(functional_base.BaseSudoTestCase):
 
         netcat = net_helpers.NetcatTester(ns, ns, '10.20.30.40', 12345, 'udp')
         proc = netcat.server_process
+        # Wait for the server process to be ready before checking for PIDs
+        common_utils.wait_until_true(
+            lambda: priv_utils.find_listen_pids_namespace(ns),
+            timeout=10,
+            exception=RuntimeError("Server process not found"))
         self.assertEqual((str(proc.child_pid), ),
                          priv_utils.find_listen_pids_namespace(ns))
 
         netcat.stop_processes()
+        # Wait for the server process to be stopped before checking for PIDs
+        common_utils.wait_until_true(
+            lambda: not priv_utils.find_listen_pids_namespace(ns),
+            timeout=10,
+            exception=RuntimeError("Server process still found"))
         self.assertEqual(tuple(), priv_utils.find_listen_pids_namespace(ns))
