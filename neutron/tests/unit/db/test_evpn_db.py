@@ -16,9 +16,12 @@
 from neutron_lib.api.definitions import evpn as evpn_apidef
 from neutron_lib import context
 from neutron_lib.db import api as db_api
+from oslo_serialization import jsonutils
 from webob import exc
 
+from neutron.db import evpn_db
 from neutron.db.models import evpn as evpn_models
+from neutron.db.models import l3_attrs
 from neutron.tests.common import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 
@@ -220,3 +223,54 @@ class TestEVPNDb(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                 as_admin=True,
                 advertise_host=True,
                 expected_code=409)
+
+    def test_get_all_evpn_l3_instances_empty(self):
+        db_helper = evpn_db.EVPNDbHelper()
+        result = db_helper.get_all_evpn_l3_instances(self.ctx)
+        self.assertEqual([], result)
+
+    def test_get_all_evpn_l3_instances_returns_vni_and_vlan(self):
+        db_helper = evpn_db.EVPNDbHelper()
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=5000) as router:
+            result = db_helper.get_all_evpn_l3_instances(self.ctx)
+            self.assertEqual(1, len(result))
+            inst = result[0]
+            self.assertEqual(router['router']['id'], inst['router_id'])
+            self.assertEqual(5000, inst['vni'])
+            self.assertIn('vlan', inst)
+            self.assertEqual([], inst['availability_zone_hints'])
+
+    def test_get_all_evpn_l3_instances_with_az_hints(self):
+        db_helper = evpn_db.EVPNDbHelper()
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=5000) as router:
+            router_id = router['router']['id']
+            with db_api.CONTEXT_WRITER.using(self.ctx):
+                self.ctx.session.query(
+                    l3_attrs.RouterExtraAttributes
+                ).filter_by(
+                    router_id=router_id
+                ).update({
+                    'availability_zone_hints':
+                        jsonutils.dumps(['az-1', 'az-2']),
+                })
+            result = db_helper.get_all_evpn_l3_instances(self.ctx)
+            self.assertEqual(1, len(result))
+            self.assertEqual(['az-1', 'az-2'],
+                             result[0]['availability_zone_hints'])
+
+    def test_get_all_evpn_l3_instances_multiple_routers(self):
+        db_helper = evpn_db.EVPNDbHelper()
+        with self.router(as_admin=True,
+                         arg_list=(evpn_apidef.EVPN_VNI,),
+                         evpn_vni=5000), \
+                self.router(as_admin=True,
+                            arg_list=(evpn_apidef.EVPN_VNI,),
+                            evpn_vni=5001):
+            result = db_helper.get_all_evpn_l3_instances(self.ctx)
+            self.assertEqual(2, len(result))
+            vnis = {inst['vni'] for inst in result}
+            self.assertEqual({5000, 5001}, vnis)

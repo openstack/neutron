@@ -14,6 +14,8 @@
 #    under the License.
 
 import abc
+import collections
+import random
 
 
 class ChassisScheduler(abc.ABC):
@@ -61,3 +63,35 @@ class LeastLoadedChassisScheduler(ChassisScheduler):
 
     def _order(self, candidates):
         return sorted(candidates, key=self._load)
+
+
+class RoundRobinChassisScheduler(ChassisScheduler):
+    """Distribute primaries evenly across chassis using internal tracking.
+
+    Maintains an internal load counter that increments each time a
+    chassis is placed as primary (first in the result list).  On each
+    call the least-used eligible chassis is placed first, with ties
+    broken randomly.
+
+    Intended for batch operations (e.g. DB-sync repair) where all
+    scheduling decisions are collected into a single OVSDB transaction
+    and committed load information is therefore stale.
+
+    Note that this scheduler must be used by a single worker, as the load
+    information (_internal_load) is stored locally. It is not intended to
+    be used as an alternative to LeastLoadedChassisScheduler.
+    """
+
+    def __init__(self):
+        self._internal_load = collections.Counter()
+
+    def select(self, candidates, existing_chassis=None, max_chassis=None):
+        result = super().select(candidates, existing_chassis, max_chassis)
+        if result:
+            self._internal_load[result[0]] += 1
+        return result
+
+    def _order(self, candidates):
+        return sorted(candidates,
+                      key=lambda c: (self._internal_load[c],
+                                     random.random()))  # noqa: S311

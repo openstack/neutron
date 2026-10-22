@@ -17,8 +17,10 @@ from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from oslo_serialization import jsonutils
 
 from neutron.db.models import evpn as evpn_models
+from neutron.db.models import l3_attrs
 from neutron.db import models_v2
 from neutron.db import vni_vlan_allocator
 from neutron.services.evpn import exceptions as evpn_exc
@@ -206,15 +208,25 @@ class EVPNDbHelper:
         """Get all EVPN L3 instances with their VNI and VLAN allocations.
 
         :param context: Neutron request context
-        :returns: list of dicts with router_id, vni, vlan keys
+        :returns: list of dicts with router_id, vni, vlan,
+                  availability_zone_hints keys
         """
-        instances = context.session.query(
-            evpn_models.EVPNL3Instance
-        ).all()
-        return [{'router_id': inst.router_id,
-                 'vni': inst.mapping.vni_allocation.vni,
-                 'vlan': inst.mapping.vlan_allocation.vlan_id}
-                for inst in instances]
+        rows = (
+            context.session.query(
+                evpn_models.EVPNL3Instance,
+                l3_attrs.RouterExtraAttributes.availability_zone_hints,
+            ).outerjoin(
+                l3_attrs.RouterExtraAttributes,
+                evpn_models.EVPNL3Instance.router_id ==
+                l3_attrs.RouterExtraAttributes.router_id,
+            ).all()
+        )
+        return [{
+            'router_id': inst.router_id,
+            'vni': inst.mapping.vni_allocation.vni,
+            'vlan': inst.mapping.vlan_allocation.vlan_id,
+            'availability_zone_hints': jsonutils.loads(az_string or '[]'),
+        } for inst, az_string in rows]
 
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_READER
