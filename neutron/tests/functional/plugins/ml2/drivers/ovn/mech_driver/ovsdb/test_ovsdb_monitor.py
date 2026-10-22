@@ -158,6 +158,33 @@ class WaitForPortBindingCreateEvent(event.WaitEvent):
         super().__init__(events, table, conditions, timeout=15)
 
 
+class WaitForPortBindingChassisBindEvent(event.WaitEvent):
+    """Wait until a logical port is bound to a single chassis on SB."""
+
+    event_name = 'WaitForPortBindingChassisBindEvent'
+
+    def __init__(self, logical_port, chassis_name, timeout=10):
+        self._logical_port = logical_port
+        self._chassis_name = chassis_name
+        super().__init__(
+            (self.ROW_UPDATE,), 'Port_Binding', None, timeout=timeout)
+
+    def match_fn(self, event, row, old=None):
+        if row.logical_port != self._logical_port:
+            return False
+        if not row.chassis:
+            return False
+        try:
+            if row.chassis[0].name != self._chassis_name:
+                return False
+        except (IndexError, AttributeError):
+            return False
+        old_chassis = getattr(old, 'chassis', None)
+        if hasattr(old, 'chassis') and row.chassis == old_chassis:
+            return False
+        return True
+
+
 class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
     def setUp(self):
@@ -1260,18 +1287,43 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
         self.port = self.deserialize(self.fmt, port_res)['port']
         self.assertTrue(pb_event.wait())
 
-        with mock.patch.object(
-                self.mech_driver, 'set_port_status_up') as mock_status_up:
-            self.sb_api.lsp_bind(self.port['id'], self.src_chassis,
-                                 may_exist=True).execute(check_error=True)
-            n_utils.wait_until_true(
-                lambda: mock_status_up.called,
-                timeout=10,
-                exception=Exception(
-                    'LogicalSwitchPortUpdateUpEvent did not call '
-                    'set_port_status_up after lsp_bind'))
-
+        self._port_binding_chassis_bind_event = (
+            WaitForPortBindingChassisBindEvent(
+                self.port['id'], self.src_chassis))
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(
+            self._port_binding_chassis_bind_event)
+        self.sb_api.lsp_bind(self.port['id'], self.src_chassis,
+                             may_exist=True).execute(check_error=True)
+        self._wait_for_single_chassis_lsp_bind()
         self.nb_cfg_before = self._get_nb_global_nb_cfg()
+
+    def _wait_for_single_chassis_lsp_bind(self):
+        """Wait for setUp lsp_bind to finish on SB and in the IDL notifier."""
+        self.assertTrue(
+            self._port_binding_chassis_bind_event.wait(),
+            'Port_Binding chassis bind to %s did not complete' %
+            self.src_chassis)
+        chassis = self.sb_api.lookup('Chassis', self.src_chassis)
+
+        def port_bound_to_src():
+            rows = self.sb_api.db_find_rows(
+                'Port_Binding',
+                ('logical_port', '=', self.port['id'])).execute(
+                    check_error=True)
+            if not rows:
+                return False
+            binding = rows[0]
+            if not binding.chassis:
+                return False
+            return (binding.chassis[0].uuid == chassis.uuid and
+                    binding.up == [True])
+
+        n_utils.wait_until_true(
+            port_bound_to_src,
+            timeout=10,
+            exception=Exception(
+                'Port %s is not bound to chassis %s in SB' %
+                (self.port['id'], self.src_chassis)))
 
     def _get_nb_global_nb_cfg(self):
         return self.nb_api.db_get(
@@ -1312,6 +1364,7 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
             # In the functional tests framework, the ovn-controller is not
             # running. The NB_Global.nb_cfg value must be set manually into the
             # Chassis_Private registers.
+            mock_status_up.reset_mock()
             self._set_chassis_private_nb_cfg(self.dst_chassis,
                                              self.nb_cfg_before + 1)
             n_utils.wait_until_true(
@@ -1320,7 +1373,7 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
                 exception=Exception(
                     'set_port_status_up was not called after '
                     'Chassis_Private.nb_cfg reached the target'))
-            mock_status_up.assert_called_once_with(self.port['id'])
+            mock_status_up.assert_has_calls([mock.call(self.port['id'])])
 
     def test_no_live_migration_chassis_change(self):
         """Verify regular chassis change calls set_port_status_up directly.
@@ -1337,6 +1390,7 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
             # when the port is already bound, and lsp_unbind+lsp_bind
             # produces an empty->new transition that match_fn ignores.
             chassis = self.sb_api.lookup('Chassis', dst_chassis2)
+            mock_status_up.reset_mock()
             self.sb_api.db_set(
                 'Port_Binding', self.port['id'],
                 ('chassis', chassis.uuid)
@@ -1348,4 +1402,4 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
                 exception=Exception(
                     'set_port_status_up was not called for regular '
                     'chassis change'))
-            mock_status_up.assert_called_once_with(self.port['id'])
+            mock_status_up.assert_has_calls([mock.call(self.port['id'])])
