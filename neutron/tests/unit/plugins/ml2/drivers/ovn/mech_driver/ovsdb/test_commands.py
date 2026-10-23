@@ -15,6 +15,7 @@
 from unittest import mock
 
 from neutron_lib import constants as n_const
+from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -194,6 +195,32 @@ class TestAddLSwitchPortCommand(TestBaseCommand):
             for dhcpv6_opts in ([], ['fake-uuid-2'], dhcpv6_opts_cmd):
                 self._test_lswitch_port_add_with_dhcp(dhcpv4_opts, dhcpv6_opts)
 
+    def test_lswitch_port_add_run_idl_twice(self):
+        # ``Transaction.do_commit`` re-runs all the commands of a transaction
+        # when the OVSDB transaction returns TRY_AGAIN. Any execution of
+        # ``run_idl`` must set the same columns.
+        lsp_name = 'fake-lsp'
+        hcg_uuid = uuidutils.generate_uuid()
+        fake_lswitch = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        cmd = commands.AddLSwitchPortCommand(
+            self.ovn_api, lsp_name, fake_lswitch.name, may_exist=True,
+            tag=100, dhcpv4_options=['fake-uuid-1'],
+            dhcpv6_options=['fake-uuid-2'], ha_chassis_group=hcg_uuid,
+            var01='bar')
+        with mock.patch.object(idlutils, 'row_by_value',
+                               side_effect=[fake_lswitch, None,
+                                            fake_lswitch, None]):
+            for _ in range(2):
+                fake_lsp = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+                self.transaction.insert.return_value = fake_lsp
+                cmd.run_idl(self.transaction)
+                self.assertEqual(lsp_name, fake_lsp.name)
+                self.assertEqual(['fake-uuid-1'], fake_lsp.dhcpv4_options)
+                self.assertEqual(['fake-uuid-2'], fake_lsp.dhcpv6_options)
+                self.assertEqual(hcg_uuid, fake_lsp.ha_chassis_group)
+                self.assertEqual(100, fake_lsp.tag_request)
+                self.assertEqual('bar', fake_lsp.var01)
+
 
 class TestSetLSwitchPortCommand(TestBaseCommand):
 
@@ -226,6 +253,35 @@ class TestSetLSwitchPortCommand(TestBaseCommand):
                 if_exists=True, external_ids=new_ext_ids)
             cmd.run_idl(self.transaction)
             self.assertEqual(new_ext_ids, fake_lsp.external_ids)
+
+    def test_lswitch_port_update_run_idl_twice(self):
+        # ``Transaction.do_commit`` re-runs all the commands of a transaction
+        # when the OVSDB transaction returns TRY_AGAIN. Any execution of
+        # ``run_idl`` must set the same columns.
+        hcg_uuid = uuidutils.generate_uuid()
+        fake_lsp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'fake-lsp', 'external_ids': {}})
+        cmd = commands.SetLSwitchPortCommand(
+            self.ovn_api, fake_lsp.name, external_ids_update=None,
+            if_exists=True, tag=100, dhcpv4_options=['fake-uuid-1'],
+            dhcpv6_options=['fake-uuid-2'], ha_chassis_group=hcg_uuid,
+            var01='bar')
+        with mock.patch.object(idlutils, 'row_by_value',
+                               return_value=fake_lsp):
+            for _ in range(2):
+                # Reset the columns to check that any execution of ``run_idl``
+                # sets them again.
+                fake_lsp.dhcpv4_options = []
+                fake_lsp.dhcpv6_options = []
+                fake_lsp.ha_chassis_group = []
+                fake_lsp.tag_request = []
+                fake_lsp.var01 = None
+                cmd.run_idl(self.transaction)
+                self.assertEqual(['fake-uuid-1'], fake_lsp.dhcpv4_options)
+                self.assertEqual(['fake-uuid-2'], fake_lsp.dhcpv6_options)
+                self.assertEqual(hcg_uuid, fake_lsp.ha_chassis_group)
+                self.assertEqual(100, fake_lsp.tag_request)
+                self.assertEqual('bar', fake_lsp.var01)
 
     def _test_lswitch_port_update_del_dhcp(self, clear_v4_opts,
                                            clear_v6_opts, set_v4_opts=False,
