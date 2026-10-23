@@ -53,8 +53,8 @@ class TestLogicalRouterPortEvent(
     def test_add_and_delete_gw_network(self):
         def is_called():
             try:
-                mock_update_router.assert_called_once_with(
-                    mock.ANY, self.router_id)
+                mock_update_router.assert_has_calls(
+                    [mock.call(mock.ANY, self.router_id)])
                 return True
             except AssertionError:
                 return False
@@ -111,8 +111,8 @@ class TestLogicalRouterPortEvent(
         # ``LogicalRouterPortEvent`` event, but nothing is executed/called.
         def is_called():
             try:
-                mock_update_router.assert_called_once_with(
-                    mock.ANY, self.router_id)
+                mock_update_router.assert_has_calls(
+                    [mock.call(mock.ANY, self.router_id)])
                 return True
             except AssertionError:
                 return False
@@ -140,8 +140,8 @@ class TestLogicalRouterPortEvent(
 
         def mock_update_router_called():
             try:
-                mock_update_router.assert_called_once_with(
-                    mock.ANY, self.router_id)
+                mock_update_router.assert_has_calls(
+                    [mock.call(mock.ANY, self.router_id)])
                 return True
             except AssertionError:
                 return False
@@ -204,8 +204,8 @@ class TestLogicalRouterPortEvent(
 
         def mock_update_router_called():
             try:
-                mock_update_router.assert_called_once_with(
-                    mock.ANY, self.router_id)
+                mock_update_router.assert_has_calls(
+                    [mock.call(mock.ANY, self.router_id)])
                 return True
             except AssertionError:
                 return False
@@ -253,8 +253,8 @@ class TestRouterHAChassisGroupEvent(
     def test_add_and_remove_ha_chassis(self):
         def is_called():
             try:
-                mock_update_router.assert_called_once_with(
-                    mock.ANY, self.router_id)
+                mock_update_router.assert_has_calls(
+                    [mock.call(mock.ANY, self.router_id)])
                 return True
             except AssertionError:
                 return False
