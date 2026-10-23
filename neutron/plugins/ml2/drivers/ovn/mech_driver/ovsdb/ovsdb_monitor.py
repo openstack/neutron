@@ -833,15 +833,18 @@ class PortBindingUpdateVirtualPortsEvent(LogicalSwitchPortEvent):
 
 
 class FIPAddDeleteEvent(row_event.RowEvent):
-    """Row event - NAT 'dnat_and_snat' entry added or deleted
+    """Row event - NAT 'dnat_and_snat' entry added, removed, or updated.
 
-    This happens when a FIP is created or removed.
+    Creating or removing a floating IP deletes MAC_Binding rows for its
+    external IP. An in-place external_mac change does the same.
+    ovn-controller only refreshes a MAC_Binding when an ARP is punted,
+    and the stale entry prevents that ARP from being sent.
     """
 
     def __init__(self, driver):
         self.driver = driver
         table = 'NAT'
-        events = (self.ROW_CREATE, self.ROW_DELETE)
+        events = (self.ROW_CREATE, self.ROW_UPDATE, self.ROW_DELETE)
         super().__init__(
             events, table, (('type', '=', 'dnat_and_snat'),))
         self.event_name = 'FIPAddDeleteEvent'
@@ -849,12 +852,19 @@ class FIPAddDeleteEvent(row_event.RowEvent):
     def match_fn(self, event, row, old=None):
         if not super().match_fn(event, row, old):
             return False
-
-        return ovn_const.OVN_FIP_EXT_ID_KEY in row.external_ids
+        if ovn_const.OVN_FIP_EXT_ID_KEY not in row.external_ids:
+            return False
+        if event != self.ROW_UPDATE:
+            return True
+        # old only lists columns that changed. Skip updates that leave
+        # external_mac alone.
+        return (hasattr(old, 'external_mac') and
+                old.external_mac != row.external_mac)
 
     def run(self, event, row, old):
-        # When a FIP is added or deleted, we will delete all entries in the
-        # MAC_Binding table of SB OVSDB corresponding to that IP Address.
+        # When a FIP is added or deleted, or its external_mac changes, we
+        # will delete all entries in the MAC_Binding table of SB OVSDB
+        # corresponding to that IP Address.
         # TODO(dalvarez): Remove this workaround once fixed in core OVN:
         # https://mail.openvswitch.org/pipermail/ovs-discuss/2018-October/047604.html
         self.driver.delete_mac_binding_entries(row.external_ip)

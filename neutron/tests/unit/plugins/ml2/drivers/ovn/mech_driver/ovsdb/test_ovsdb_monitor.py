@@ -1114,6 +1114,62 @@ class TestFIPAddDeleteEvent(base.BaseTestCase):
                    'external_ip': '1.2.3.4'})
         self.assertFalse(self.event.match_fn(self.event.ROW_DELETE, row))
 
+    def test_run_create_deletes_mac_binding(self):
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_FIP_EXT_ID_KEY: 'fip-uuid-123'},
+                   'external_ip': '1.2.3.4'})
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.delete_mac_binding_entries.assert_called_once_with(
+            '1.2.3.4')
+
+    def _fip_row(self, external_mac):
+        return self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_FIP_EXT_ID_KEY: 'fip-uuid-123'},
+                   'external_ip': '198.51.100.17',
+                   'external_mac': external_mac})
+
+    def test_match_fn_update_setting_external_mac(self):
+        row = self._fip_row(['fa:16:3e:fc:39:29'])
+        old = mock.Mock(spec=['external_mac'])
+        old.external_mac = []
+        self.assertTrue(
+            self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_update_clearing_external_mac(self):
+        row = self._fip_row([])
+        old = mock.Mock(spec=['external_mac'])
+        old.external_mac = ['fa:16:3e:fc:39:29']
+        self.assertTrue(
+            self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_update_same_external_mac(self):
+        mac = ['fa:16:3e:fc:39:29']
+        row = self._fip_row(mac)
+        old = mock.Mock(spec=['external_mac'])
+        old.external_mac = list(mac)
+        self.assertFalse(
+            self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_update_ignores_other_columns(self):
+        row = self.ovsdb_row(
+            attrs={'external_ids': {
+                ovn_const.OVN_FIP_EXT_ID_KEY: 'fip-uuid-123'},
+                   'external_ip': '1.2.3.4',
+                   'external_mac': ['fa:16:3e:fc:39:29']})
+        old = mock.Mock(spec=[])
+        self.assertFalse(
+            self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_run_update_deletes_mac_binding(self):
+        row = self._fip_row(['fa:16:3e:fc:39:29'])
+        old = mock.Mock(spec=['external_mac'])
+        old.external_mac = []
+        self.event.run(self.event.ROW_UPDATE, row, old)
+        self.driver.delete_mac_binding_entries.assert_called_once_with(
+            '198.51.100.17')
+
 
 class TestFIPAddExternalMacEvent(base.BaseTestCase):
 
