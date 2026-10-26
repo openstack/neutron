@@ -1444,6 +1444,8 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                                     port['id'], net['id'])
                         self._create_port_in_ovn(ctx, port)
                     db_ports.pop(port['id'])
+                else:
+                    self._sync_metadata_port_mtu(net, port)
 
             if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
                 try:
@@ -1454,6 +1456,37 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
                     LOG.error('Could not allocate IP address for '
                               'metadata port in network %s', net['id'])
         LOG.debug('OVN-NB Sync metadata ports completed')
+
+    def _sync_metadata_port_mtu(self, net, port):
+        """Ensure the metadata port MTU matches the network MTU.
+
+        The metadata agent reads the ``neutron:mtu`` external ID of the
+        metadata port to set the MTU of the interface it creates in the
+        metadata namespace. Metadata ports created before this external ID
+        was introduced don't have it set, which leaves those interfaces with
+        the default MTU.
+        """
+        lsp = self.ovn_nb_api.lookup('Logical_Switch_Port', port['id'],
+                                     default=None)
+        if not lsp:
+            return
+
+        net_mtu = str(net['mtu'])
+        lsp_mtu = lsp.external_ids.get(ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY)
+        if lsp_mtu == net_mtu:
+            return
+
+        LOG.warning('Metadata port %s for network %s has MTU %s in OVN NB DB '
+                    'but %s in Neutron', port['id'], net['id'], lsp_mtu,
+                    net_mtu)
+        if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR:
+            LOG.warning('Setting MTU %s in the metadata port %s for network '
+                        '%s in OVN NB DB', net_mtu, port['id'], net['id'])
+            self.ovn_nb_api.db_set(
+                'Logical_Switch_Port', port['id'],
+                ('external_ids',
+                 {ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: net_mtu})
+            ).execute(check_error=True)
 
     def sync_networks_ports_and_dhcp_opts(self, ctx):
         LOG.debug('OVN-NB Sync networks, ports and DHCP options started @ %s',
