@@ -76,6 +76,11 @@ _update_rbac_target_tenant = policy.DocumentedRuleDefault(
 )
 
 rules = [
+    policy.RuleDefault(
+        name='rbac_access_as_external',
+        check_str='field:rbac_policy:action=access_as_external',
+        description=('Definition of an RBAC policy with action '
+                     '``access_as_external``')),
     # TODO(ralonsoh): remove 'target_tenant=*' reference.
     policy.RuleDefault(
         name='restrict_wildcard',
@@ -117,6 +122,22 @@ rules = [
         ],
         scope_types=['project'],
     ),
+    # NOTE(ralonsoh): ``rbac_access_as_external`` action is only for networks,
+    #                 by default, only admins can set it (see LP#2161501).
+    policy.DocumentedRuleDefault(
+        name='create_rbac_policy:action',
+        check_str=neutron_policy.policy_or(
+            'not rule:rbac_access_as_external',
+            neutron_policy.RULE_ADMIN_ONLY),
+        description='Specify ``action`` when creating an RBAC policy',
+        operations=[
+            {
+                'method': 'POST',
+                'path': COLLECTION_PATH,
+            },
+        ],
+        scope_types=['project'],
+    ),
     policy.DocumentedRuleDefault(
         name='update_rbac_policy',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
@@ -141,6 +162,22 @@ rules = [
             base.ADMIN,
             'not field:rbac_policy:target_project=*'),
         description='Update ``target_project`` attribute of an RBAC policy',
+        operations=[
+            {
+                'method': 'PUT',
+                'path': RESOURCE_PATH,
+            },
+        ],
+        scope_types=['project'],
+    ),
+    # NOTE(ralonsoh): ``rbac_access_as_external`` action is only for networks,
+    #                 by default, only admins can set it (see LP#2161501).
+    policy.DocumentedRuleDefault(
+        name='update_rbac_policy:action',
+        check_str=neutron_policy.policy_or(
+            'not rule:rbac_access_as_external',
+            neutron_policy.RULE_ADMIN_ONLY),
+        description='Specify ``action`` when updating an RBAC policy',
         operations=[
             {
                 'method': 'PUT',
