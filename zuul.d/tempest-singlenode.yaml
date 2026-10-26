@@ -680,6 +680,9 @@
     parent: neutron-ovn-tempest-ovs-master
     nodeset: devstack-single-node-centos-10-stream
     vars:
+      # Kernel panics with zswap enabled, temporary disable
+      devstack_localrc:
+        ENABLE_ZSWAP: False
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'
         '{{ devstack_base_dir }}/data/ovn': 'logs'
@@ -694,6 +697,9 @@
       Scenario testing for a FIPS enabled Centos 10 system
     pre-run: playbooks/enable-fips.yaml
     vars:
+      # Kernel panics with zswap enabled, temporary disable
+      devstack_localrc:
+        ENABLE_ZSWAP: False
       nslookup_target: 'opendev.org'
       configure_swap_size: 8192
       devstack_services:
@@ -713,6 +719,9 @@
       Scenario testing for a FIPS enabled Centos 10 system
     pre-run: playbooks/enable-fips.yaml
     vars:
+      # Kernel panics with zswap enabled, temporary disable
+      devstack_localrc:
+        ENABLE_ZSWAP: False
       nslookup_target: 'opendev.org'
       configure_swap_size: 4096
       devstack_local_conf:
