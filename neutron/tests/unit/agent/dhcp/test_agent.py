@@ -865,6 +865,21 @@ class TestDhcpAgent(base.BaseTestCase):
                 self.assertEqual(dhcp_.needs_resync_reasons[None][1],
                                 'Agent has just been revived')
 
+    def test_report_state_pending_updates(self):
+        dhcp_ = dhcp_agent.DhcpAgentWithStateReport(HOSTNAME)
+        dhcp_.init_host()
+        for network_id in ('1', '2'):
+            dhcp_._queue.add(dhcp_agent.DHCPResourceUpdate(
+                network_id, dhcp_agent.DEFAULT_PRIORITY, obj_type='network'))
+
+        with mock.patch.object(dhcp_.state_rpc,
+                               'report_state') as report_state,\
+                mock.patch.object(dhcp_, 'run'):
+            dhcp_._report_state()
+
+        reported = report_state.call_args[0][1]
+        self.assertEqual(2, reported['configurations']['pending_updates'])
+
     def test_periodic_resync_helper(self):
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         dhcp.init_host()

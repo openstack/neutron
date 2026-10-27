@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    The DHCP agent now reports the number of network, subnet and port
+    updates waiting to be processed as ``pending_updates`` in its
+    ``configurations``, shown by ``openstack network agent show``, as the
+    L3 agent does. A value that stays high or keeps growing means the
+    agent is not keeping up with its work.
