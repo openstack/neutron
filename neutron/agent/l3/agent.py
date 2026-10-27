@@ -1067,6 +1067,7 @@ class L3NATAgentWithStateReport(L3NATAgent):
         configurations['ex_gw_ports'] = num_ex_gw_ports
         configurations['interfaces'] = num_interfaces
         configurations['floating_ips'] = num_floating_ips
+        configurations['pending_updates'] = self._queue.qsize
         try:
             agent_status = self.state_rpc.report_state(self.context,
                                                        self.agent_state,

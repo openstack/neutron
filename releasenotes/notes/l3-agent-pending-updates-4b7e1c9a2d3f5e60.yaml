@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    The L3 agent now reports the number of router and network updates
+    waiting to be processed as ``pending_updates`` in its ``configurations``,
+    shown by ``openstack network agent show``. A value that stays high or
+    keeps growing means the agent is not keeping up with its work.
