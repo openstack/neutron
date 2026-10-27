@@ -1154,8 +1154,9 @@ class DhcpAgentWithStateReport(DhcpAgent):
 
     def _report_state(self):
         try:
-            self.agent_state.get('configurations').update(
-                self.cache.get_state())
+            configurations = self.agent_state.get('configurations')
+            configurations.update(self.cache.get_state())
+            configurations['pending_updates'] = self._queue.qsize
             ctx = context.get_admin_context_without_session()
             agent_status = self.state_rpc.report_state(
                 ctx, self.agent_state, True)
