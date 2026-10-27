@@ -907,3 +907,34 @@ class TestFindUniqueSequence(base.BaseTestCase):
         # One of the groups is empty - no solution possible
         result = utils.find_unique_sequence([['a'], [], ['c']])
         self.assertIsNone(result)
+
+
+class TestTimecost(base.BaseTestCase):
+    @staticmethod
+    def _call_id(message, args):
+        return re.match(r'Time-cost: call (\S+) ', message % args).group(1)
+
+    def test_call_id_per_call(self):
+        @utils.timecost
+        def decorated(value):
+            return value
+
+        with mock.patch.object(utils, 'LOG') as mock_log:
+            self.assertEqual(1, decorated(1))
+            self.assertEqual(2, decorated(2))
+
+        # LOG.debug(message, args) for the start of each call, and
+        # LOG.log(level, message, args) from time_it for the end.
+        start_ids = [self._call_id(*c.args)
+                     for c in mock_log.debug.call_args_list]
+        end_ids = [self._call_id(*c.args[1:])
+                   for c in mock_log.log.call_args_list]
+        self.assertEqual(2, len(set(start_ids)))
+        self.assertEqual(start_ids, end_ids)
+
+    def test_wraps(self):
+        @utils.timecost
+        def decorated():
+            pass
+
+        self.assertEqual('decorated', decorated.__name__)
