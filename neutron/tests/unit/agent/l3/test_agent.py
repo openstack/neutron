@@ -488,6 +488,19 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             agent._report_state()
             self.assertFalse(agent.fullsync)
 
+    def test_report_state_pending_updates(self):
+        with mock.patch.object(agent_rpc.PluginReportStateAPI,
+                               'report_state') as report_state:
+            agent = l3_agent.L3NATAgentWithStateReport(host=HOSTNAME,
+                                                       conf=self.conf)
+            agent.init_host()
+            for router_id in ('r1', 'r2'):
+                agent._queue.add(resource_processing_queue.ResourceUpdate(
+                    router_id, l3_agent.PRIORITY_RPC))
+            agent._report_state()
+            reported = report_state.call_args[0][1]
+            self.assertEqual(2, reported['configurations']['pending_updates'])
+
     def test_periodic_sync_routers_task_call_clean_stale_namespaces(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.init_host()
