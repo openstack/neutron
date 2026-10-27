@@ -17,11 +17,18 @@
 
 Every module neutron.privileged imports stays resident in each privsep
 daemon, so keep the imports here light. In particular, do not import
+neutron_lib, which pulls in neutron_lib.db.api and SQLAlchemy, or
 neutron.common.utils, which pulls in the DB, API and SDK layers.
 """
 
 import netaddr
-from neutron_lib import constants as n_const
+
+
+# Copies of neutron_lib.constants: importing any neutron_lib module imports
+# neutron_lib.db.api and SQLAlchemy. A unit test keeps them in sync.
+IP_VERSION_4 = 4
+IP_VERSION_6 = 6
+DEVICE_NAME_MAX_LEN = 15
 
 
 def cidr_broadcast_address(cidr):
@@ -50,10 +57,21 @@ def cidr_broadcast_address_alternative(cidr):
     if broadcast:
         return str(broadcast)
     net = netaddr.IPNetwork(cidr)
-    if net.prefixlen == 32 and net.version == n_const.IP_VERSION_4:
+    if net.prefixlen == 32 and net.version == IP_VERSION_4:
         return str(net.ip)
     # NOTE(mtomaska): netaddr ver >= 0.9.0 will start returning None
     # for IPv6 cidr /127 /128
+
+
+def safe_decode_utf8(s):
+    """Safe decode a str from UTF (copy of neutron_lib.utils.helpers).
+
+    :param s: The str to decode.
+    :returns: The decoded str.
+    """
+    if isinstance(s, bytes):
+        return s.decode('utf-8', 'surrogateescape')
+    return s
 
 
 def read_file(path: str) -> str:

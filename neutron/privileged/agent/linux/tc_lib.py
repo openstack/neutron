@@ -15,18 +15,21 @@
 import errno
 import socket
 
-from neutron_lib import constants as n_constants
+# NOTE(mikal): every module imported here stays resident in each privsep
+# daemon. Do not import neutron_lib or neutron.common.utils. Put what
+# privileged code needs in neutron.common.privsep_safe_utils instead.
 import pyroute2
 from pyroute2 import protocols as pyroute2_protocols
 
 from neutron._i18n import _
+from neutron.common import privsep_safe_utils
 from neutron import privileged
 from neutron.privileged.agent import linux as priv_linux
 from neutron.privileged.agent.linux import ip_lib
 
 
-_IP_VERSION_FAMILY_MAP = {n_constants.IP_VERSION_4: socket.AF_INET,
-                          n_constants.IP_VERSION_6: socket.AF_INET6}
+_IP_VERSION_FAMILY_MAP = {privsep_safe_utils.IP_VERSION_4: socket.AF_INET,
+                          privsep_safe_utils.IP_VERSION_6: socket.AF_INET6}
 
 
 class TrafficControlClassNotFound(RuntimeError):
