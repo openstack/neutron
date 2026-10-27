@@ -48,7 +48,7 @@ class MonitorAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
         if events:
             self.notify_handler.watch_events(events)
 
-    @ovn_utils.retry(max_=180)
+    @ovn_utils.retry(max_=5)
     def _get_ovsdb_helper(self, connection_string):
         return idlutils.get_schema_helper(connection_string, self.SCHEMA)
 
@@ -77,7 +77,7 @@ class MonitorAgentOvnNbIdl(ovsdb_monitor.OvnIdl):
         if events:
             self.notify_handler.watch_events(events)
 
-    @ovn_utils.retry(max_=180)
+    @ovn_utils.retry(max_=5)
     def _get_ovsdb_helper(self, connection_string):
         return idlutils.get_schema_helper(connection_string, self.SCHEMA)
 
