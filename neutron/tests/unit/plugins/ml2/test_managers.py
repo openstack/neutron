@@ -511,3 +511,26 @@ class TypeManagerTestCase(base.BaseTestCase):
             mock_update_network_segment.assert_called_once_with(
                 self.ctx, segment['id'], segmentation_id)
             mock_release.assert_called_once_with(self.ctx, segment)
+
+    def test_register_types_rejects_old_type_driver(self):
+        old_driver = mock.Mock(spec=api.TypeDriver)
+        old_driver.get_type.return_value = 'fake'
+        ext = mock.Mock()
+        ext.obj = old_driver
+        ext.name = 'fake_old_driver'
+        with mock.patch.object(managers.TypeManager, '__iter__',
+                               return_value=iter([ext])):
+            self.assertRaises(exc.Invalid,
+                              self.type_manager._register_types)
+
+    def test_register_types_accepts_ml2_type_driver(self):
+        ml2_driver = mock.Mock(spec=api.ML2TypeDriver)
+        ml2_driver.get_type.return_value = 'fake'
+        ext = mock.Mock()
+        ext.obj = ml2_driver
+        ext.name = 'fake_ml2_driver'
+        self.type_manager.drivers = {}
+        with mock.patch.object(managers.TypeManager, '__iter__',
+                               return_value=iter([ext])):
+            self.type_manager._register_types()
+        self.assertIn('fake', self.type_manager.drivers)

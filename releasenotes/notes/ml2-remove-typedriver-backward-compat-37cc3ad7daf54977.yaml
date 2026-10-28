@@ -1,0 +1,12 @@
+---
+upgrade:
+  - |
+    The ML2 plugin no longer supports type drivers that inherit from
+    the legacy ``TypeDriver`` base class. All type drivers must now
+    inherit from ``ML2TypeDriver``, which receives a Neutron ``context``
+    object instead of a raw SQLAlchemy ``session``. A startup validation
+    has been added to ``TypeManager._register_types()`` that rejects
+    any type driver not inheriting from ``ML2TypeDriver``, raising
+    a clear error instead of a runtime crash. All in-tree type drivers
+    already use ``ML2TypeDriver``; only out-of-tree drivers that still
+    inherit from the old ``TypeDriver`` class are affected.
