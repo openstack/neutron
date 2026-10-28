@@ -304,7 +304,8 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
         self.driver = mock.Mock()
         self.event = ovsdb_monitor.PortBindingChassisUpdateEvent(self.driver)
 
-    def _test_event(self, event, row, old, expected_match):
+    def _test_event(self, event, row, old, expected_match,
+                    expected_status_up=None):
         # When an event matches, ovsdbapp logs the row via idlutils.row2str,
         # which needs a real UUID; FakeOvsdbRow defaults ``uuid`` to a string.
         row.uuid = uuid.uuid4()
@@ -315,6 +316,9 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
         self.assertEqual(expected_match, self.event.matches(event, row, old))
         if expected_match:
             self.event.run(event, row, old)
+        if expected_status_up is None:
+            expected_status_up = expected_match
+        if expected_status_up:
             self.driver.set_port_status_up.assert_called_once()
         else:
             self.driver.set_port_status_up.assert_not_called()
@@ -396,7 +400,7 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
             ovsdb_row(attrs={'_table': pbtable, 'type': '_fake_'}),
             expected_match=False)
 
-    def test_event_no_match_lsp_down(self):
+    def test_event_no_status_up_lsp_down(self):
         # If the LSP is not up (e.g. a normal first bind where the port has not
         # come up yet) we must not prematurely emit set_port_status_up; the
         # LogicalSwitchPortUpdateUpEvent will handle the DOWN->UP transition.
@@ -413,9 +417,9 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
                              'options': {}}),
             ovsdb_row(attrs={'_table': pbtable, 'chassis': [],
                              'type': '_fake_'}),
-            expected_match=False)
+            expected_match=True, expected_status_up=False)
 
-    def test_event_no_match_lsp_disabled(self):
+    def test_event_no_status_up_lsp_disabled(self):
         # An administratively disabled LSP (enabled=[False]) must not emit
         # set_port_status_up even when it is re-bound to a chassis.
         pbtable = fakes.FakeOvsdbTable.create_one_ovsdb_table(
@@ -431,7 +435,7 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
                              'options': {}}),
             ovsdb_row(attrs={'_table': pbtable, 'chassis': [],
                              'type': '_fake_'}),
-            expected_match=False)
+            expected_match=True, expected_status_up=False)
 
     def test_event_no_match_same_chassis(self):
         # A no-op Port_Binding update where the chassis column is present in
@@ -516,6 +520,22 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
             ovsdb_row(attrs={'_table': pbtable, 'chassis': 'src',
                              'type': '_fake_', 'additional_chassis': ['dst']}),
             expected_match=False)
+
+    def test_event_lsp_deleted_before_run(self):
+        # The NB port may disappear after the SB event is queued.
+        pbtable = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'name': 'Port_Binding'})
+        ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+        self.driver.nb_ovn.lookup.side_effect = idlutils.RowNotFound(
+            table='Logical_Switch_Port', col='name', match='foo')
+        self._test_event(
+            self.event.ROW_UPDATE,
+            ovsdb_row(attrs={'_table': pbtable, 'chassis': 'one',
+                             'type': '', 'logical_port': 'foo'}),
+            ovsdb_row(attrs={'_table': pbtable, 'chassis': []}),
+            expected_match=True, expected_status_up=False)
+        self.driver.nb_ovn.lookup.assert_called_once_with(
+            'Logical_Switch_Port', 'foo')
 
 
 class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):

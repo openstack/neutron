@@ -14,6 +14,7 @@
 import datetime
 import functools
 import subprocess
+import threading
 from unittest import mock
 
 import fixtures as og_fixtures
@@ -1423,3 +1424,61 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
                     'set_port_status_up was not called for regular '
                     'chassis change'))
             mock_status_up.assert_has_calls([mock.call(self.port['id'])])
+
+    def test_chassis_change_does_not_block_sb_reads(self):
+        # Event matching runs with the SB connection lock held. A gateway
+        # scheduling transaction can hold the NB lock while reading SB, so
+        # matching must not acquire the NB lock in the opposite order.
+        pb_event = ovsdb_monitor.PortBindingChassisUpdateEvent
+        match_started = threading.Event()
+        match_finished = threading.Event()
+        match_fn = pb_event.match_fn
+
+        def match(event_self, event, row, old=None):
+            if (row.logical_port != self.port['id'] or
+                    not getattr(old, 'chassis', None) or not row.chassis or
+                    row.chassis[0].uuid != chassis.uuid):
+                return match_fn(event_self, event, row, old)
+            match_started.set()
+            try:
+                return match_fn(event_self, event, row, old)
+            finally:
+                match_finished.set()
+
+        nb_lock = self.mech_driver.nb_ovn.ovsdb_connection.lock
+        sb_lock = self.mech_driver.sb_ovn.ovsdb_connection.lock
+        sb_connection = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
+        chassis = self.sb_api.lookup('Chassis', self.dst_chassis)
+
+        # setUp waits for the source-chassis bind event. Do not drain the
+        # entire notification queue: failed callbacks may leave tasks
+        # unacknowledged even though the notification loop keeps running.
+        with mock.patch.object(pb_event, 'match_fn', autospec=True,
+                               side_effect=match), \
+                mock.patch.object(self.mech_driver,
+                                  'set_port_status_up') as status_up:
+            try:
+                with nb_lock:
+                    # Use a separate writer: the monitored SB connection may
+                    # be blocked in matching before it can return a result.
+                    processutils.execute(
+                        'ovn-sbctl', '--timeout=10', '--db=' + sb_connection,
+                        'set', 'Port_Binding', self.port['id'],
+                        'chassis=' + str(chassis.uuid))
+                    self.assertTrue(match_started.wait(10))
+                    acquired = sb_lock.acquire(timeout=10)
+                    try:
+                        self.assertTrue(
+                            acquired, 'Chassis event blocked SB reads '
+                            'while the NB connection lock was held')
+                        self.mech_driver.sb_ovn.chassis_list().execute(
+                            check_error=True)
+                    finally:
+                        if acquired:
+                            sb_lock.release()
+            finally:
+                # Release NB before waiting, also on the unfixed code, so
+                # failure never leaves either IDL thread deadlocked.
+                match_finished.wait(10)
+            n_utils.wait_until_true(lambda: status_up.called, timeout=10)
+            status_up.assert_has_calls([mock.call(self.port['id'])])
