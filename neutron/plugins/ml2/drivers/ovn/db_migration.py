@@ -23,8 +23,6 @@ from oslo_log import log as logging
 from sqlalchemy.orm import exc as sqla_exc
 
 from neutron.common import _constants as n_const
-from neutron.db.models.plugins.ml2 import geneveallocation
-from neutron.db.models.plugins.ml2 import vxlanallocation
 from neutron.db.models import servicetype
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
@@ -37,28 +35,19 @@ LOG = logging.getLogger(__name__)
 def migrate_neutron_database_to_ovn():
     """Change DB content from OVS to OVN mech driver.
 
-     - Changes vxlan network type to Geneve and updates Geneve allocations.
+     - Changes vxlan network type to Geneve (segmentation IDs unchanged).
      - Removes bridge name from port binding vif details to support operations
        on instances with a trunk bridge.
      - Updates the port profile for trunk ports.
      - Updates provider name in ProviderResourceAssociation
     """
     ctx = n_context.get_admin_context()
-    with db_api.CONTEXT_WRITER.using(ctx) as session:
-        # Change network type from vxlan geneve
+    with db_api.CONTEXT_WRITER.using(ctx):
         segments = network_obj.NetworkSegment.get_objects(
             ctx, network_type=constants.TYPE_VXLAN)
         for segment in segments:
             segment.network_type = constants.TYPE_GENEVE
             segment.update()
-            # Update Geneve allocation for the segment
-            session.query(geneveallocation.GeneveAllocation).filter(
-                geneveallocation.GeneveAllocation.geneve_vni ==
-                segment.segmentation_id).update({"allocated": True})
-            # Zero Vxlan allocations
-            session.query(vxlanallocation.VxlanAllocation).filter(
-                vxlanallocation.VxlanAllocation.vxlan_vni ==
-                segment.segmentation_id).update({"allocated": False})
 
     # Update ``PortBinding`` objects.
     pb_updated = set()

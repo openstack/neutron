@@ -27,6 +27,7 @@ from neutron_lib.exceptions import multiprovidernet as mpnet_exc
 from neutron_lib.exceptions import placement as place_exc
 from neutron_lib.exceptions import vlanqinq as qinq_exc
 from neutron_lib.exceptions import vlantransparent as vlan_exc
+from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.plugins.ml2 import api
 from oslo_config import cfg
 from oslo_log import log
@@ -275,7 +276,11 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         self.validate_provider_segment(segment)
 
         # Reserve segment in type driver
-        return self.reserve_provider_segment(context, segment)
+        filters = {}
+        segment_id = self._get_attribute(segment_data, 'id')
+        if validators.is_attr_set(segment_id):
+            filters['segment_id'] = segment_id
+        return self.reserve_provider_segment(context, segment, filters=filters)
 
     def is_partial_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]
@@ -351,17 +356,24 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         if dynamic_segment:
             return dynamic_segment
 
-        with db_api.CONTEXT_WRITER.using(context):
-            driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
-            if isinstance(driver.obj, api.TypeDriver):
-                dynamic_segment = driver.obj.reserve_provider_segment(
-                    context.session, segment)
-            else:
-                dynamic_segment = driver.obj.reserve_provider_segment(
-                    context, segment)
-            segments_db.add_network_segment(context, network_id,
-                                            dynamic_segment,
-                                            is_dynamic=True)
+        try:
+            with db_api.CONTEXT_WRITER.using(context):
+                driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
+                if isinstance(driver.obj, api.TypeDriver):
+                    dynamic_segment = driver.obj.reserve_provider_segment(
+                        context.session, segment)
+                else:
+                    dynamic_segment = driver.obj.reserve_provider_segment(
+                        context, segment)
+                segments_db.add_network_segment(context, network_id,
+                                                dynamic_segment,
+                                                is_dynamic=True)
+        except o_exc.NeutronDbObjectDuplicateEntry:
+            dynamic_segment = segments_db.get_dynamic_segment(
+                context, network_id, segment.get(api.PHYSICAL_NETWORK),
+                segment.get(api.SEGMENTATION_ID))
+            if not dynamic_segment:
+                raise
         return dynamic_segment
 
     @db_api.retry_if_session_inactive()
@@ -382,10 +394,6 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                               "network type is not supported.", segment)
         else:
             LOG.debug("No segment found with id %(segment_id)s", segment_id)
-
-    def update_network_segment_range_allocations(self, network_type):
-        driver = self.drivers.get(network_type)
-        driver.obj.update_network_segment_range_allocations()
 
     def network_type_supported(self, network_type):
         return bool(network_type in self.drivers)

@@ -1,0 +1,23 @@
+---
+upgrade:
+  - |
+    Neutron no longer reads or writes the four ML2 segment allocation
+    tables (``ml2_vlan_allocations``, ``ml2_vxlan_allocations``,
+    ``ml2_gre_allocations``, and ``ml2_geneve_allocations``).  These
+    tables are deprecated: free segmentation IDs are chosen from
+    configured ranges (``neutron.conf`` or the ``network_segment_range``
+    service plugin) and IDs already in use are taken from the
+    ``networksegments`` table, including enforcement by the
+    ``(network_type, physical_network, segmentation_id)`` UNIQUE
+    constraint added in the preceding database migration.  The legacy
+    allocation tables remain in the database until a future contract
+    migration removes them.
+fixes:
+  - |
+    The denormalised ``allocated`` flag in the ML2 allocation tables
+    could diverge from ``networksegments``, causing in-use segmentation
+    IDs to be silently re-offered as free
+    (`LP#2167266 <https://bugs.launchpad.net/neutron/+bug/2167266>`_).
+    Deriving availability from ``networksegments`` removes this failure
+    mode.  See also
+    `LP#2168770 <https://bugs.launchpad.net/neutron/+bug/2168770>`_.

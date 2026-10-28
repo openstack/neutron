@@ -13,18 +13,23 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import functools
+import itertools
+import secrets
 
+from neutron_lib import constants
 from neutron_lib.db import api as db_api
-from neutron_lib import exceptions
+from neutron_lib import exceptions as exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.plugins import utils as p_utils
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log
+from sqlalchemy import and_
+from sqlalchemy import or_
+from sqlalchemy import sql
 
+from neutron.db.models import segment as seg_model
 from neutron.objects import network_segment_range as ns_range
 
 
@@ -41,128 +46,186 @@ class BaseTypeDriver(api.ML2TypeDriver):
         return p_utils.get_deployment_physnet_mtu()
 
 
+# TODO(ralonsoh): Drop the legacy ML2 allocation tables
+# (``ml2_vlan_allocations``, ``ml2_vxlan_allocations``,
+# ``ml2_gre_allocations``, ``ml2_geneve_allocations``) in the 2028.1
+# contract migration.  Neutron no longer reads or writes them once
+# segment availability is derived from ``networksegments`` (LP#2168770).
 class SegmentTypeDriver(BaseTypeDriver):
     """SegmentTypeDriver for segment allocation.
 
-    Provide methods helping to perform segment allocation fully or partially
-    specified.
+    Derives segment availability from ``networksegments``.  No
+    separate allocation table is needed: the UNIQUE constraint on
+    ``(network_type, physical_network, segmentation_id)`` prevents
+    duplicate allocations at the DB level.
     """
 
-    def __init__(self, model):
-        super().__init__()
-        self.model = model.db_model
-        self.segmentation_obj = model
-        primary_keys_columns = self.model.__table__.primary_key.columns
-        self.primary_keys = {col.name for col in primary_keys_columns}
+    def _get_used_segmentation_ids(self, context, physical_network,
+                                   exclude_segment_id=None):
+        """Return the set of segmentation IDs already in use.
 
-    def allocate_fully_specified_segment(self, context, **raw_segment):
-        """Allocate segment fully specified by raw_segment.
-
-        If segment exists, then try to allocate it and return db object
-        If segment does not exists, then try to create it and return db object
-        If allocation/creation failed, then return None
+        This method must be called inside a reader context.
         """
-
-        network_type = self.get_type()
-        try:
-            with db_api.CONTEXT_WRITER.using(context):
-                alloc = (
-                    context.session.query(self.model).filter_by(**raw_segment).
-                    first())
-                if alloc:
-                    if alloc.allocated:
-                        # Segment already allocated
-                        return
-                    # Segment not allocated
-                    LOG.debug("%(type)s segment %(segment)s allocate started ",
-                              {"type": network_type,
-                               "segment": raw_segment})
-                    count = (context.session.query(self.model).
-                             filter_by(allocated=False, **raw_segment).
-                             update({"allocated": True}))
-                    if count:
-                        LOG.debug(
-                            "%(type)s segment %(segment)s allocate done ",
-                            {"type": network_type, "segment": raw_segment})
-                        return alloc
-
-                    # Segment allocated or deleted since select
-                    LOG.debug("%(type)s segment %(segment)s allocate "
-                              "failed: segment has been allocated or "
-                              "deleted",
-                              {"type": network_type,
-                               "segment": raw_segment})
-
-                # Segment to create or already allocated
-                LOG.debug("%(type)s segment %(segment)s create started",
-                          {"type": network_type, "segment": raw_segment})
-                alloc = self.model(allocated=True, **raw_segment)
-                alloc.save(context.session)
-                LOG.debug("%(type)s segment %(segment)s create done",
-                          {"type": network_type, "segment": raw_segment})
-
-        except db_exc.DBDuplicateEntry:
-            # Segment already allocated (insert failure)
-            alloc = None
-            LOG.debug("%(type)s segment %(segment)s create failed",
-                      {"type": network_type, "segment": raw_segment})
-
-        return alloc
-
-    def allocate_partially_specified_segment(self, context, **filters):
-        """Allocate model segment from pool partially specified by filters.
-
-        Return allocated db object or None.
-        """
-        network_type = self.get_type()
-        if directory.get_plugin(plugin_constants.NETWORK_SEGMENT_RANGE):
-            calls = [
-                functools.partial(
-                    ns_range.NetworkSegmentRange.get_segments_for_project,
-                    context, self.model, network_type,
-                    self.model_segmentation_id, **filters),
-                functools.partial(
-                    ns_range.NetworkSegmentRange.get_segments_shared,
-                    context, self.model, network_type,
-                    self.model_segmentation_id, **filters)]
+        physnet_col = seg_model.NetworkSegment.physical_network
+        if physical_network in (None, ''):
+            physnet_filter = or_(physnet_col.is_(None), physnet_col == '')
         else:
-            calls = [functools.partial(
-                self.segmentation_obj.get_random_unallocated_segment,
-                context, **filters)]
+            physnet_filter = physnet_col == physical_network
+        query = context.session.query(
+            seg_model.NetworkSegment.segmentation_id).filter(
+            seg_model.NetworkSegment.network_type == self.get_type(),
+            physnet_filter,
+            seg_model.NetworkSegment.segmentation_id.isnot(None))
+        if exclude_segment_id:
+            query = query.filter(
+                seg_model.NetworkSegment.id != exclude_segment_id)
+        return {row[0] for row in query}
 
-        try_to_allocate = False
-        for call in calls:
-            allocations = call()
-            if not isinstance(allocations, list):
-                allocations = [allocations] if allocations else []
-            for alloc in allocations:
-                segment = {k: alloc[k] for k in self.primary_keys}
-                try_to_allocate = True
-                if self.segmentation_obj.allocate(context, **segment):
-                    LOG.debug('%(type)s segment allocate from pool success '
-                              'with %(segment)s ', {'type': network_type,
-                                                    'segment': segment})
-                    return alloc
+    def _ensure_segmentation_id_available(self, context, physical_network,
+                                          segmentation_id,
+                                          exclude_segment_id=None):
+        """Raise if another network segment already uses this ID."""
+        if segmentation_id is None:
+            return
+        physnet = physical_network if physical_network is not None else ''
+        if segmentation_id not in self._get_used_segmentation_ids(
+                context, physnet, exclude_segment_id=exclude_segment_id):
+            return
+        network_type = self.get_type()
+        if network_type == constants.TYPE_VLAN:
+            raise exc.VlanIdInUse(vlan_id=segmentation_id,
+                                  physical_network=physnet)
+        raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
 
-        if try_to_allocate:
-            raise db_exc.RetryRequest(
-                exceptions.NoNetworkFoundInMaximumAllowedAttempts())
+    def _pick_random_from_ranges(self, ranges, used_ids):
+        """Pick a random available ID from the given ranges.
 
-        # NOTE(ralonsoh): this debug message is added to debug LP#2086602.
-        # Once fixed, it won't be needed. This debug message should not be
-        # released.
-        LOG.debug('Partial segment allocation fail:')
-        LOG.debug('  - Filters: %s', filters)
-        LOG.debug('  - Non allocated segments:')
-        for non_allocated_segment in (
-                self.segmentation_obj.get_all_unallocated_segments(context,
-                                                                   **filters)):
-            LOG.debug('    - %s', non_allocated_segment)
-        if directory.get_plugin(plugin_constants.NETWORK_SEGMENT_RANGE):
-            LOG.debug('  - Network segment ranges:')
-            for srange in ns_range.NetworkSegmentRange.get_objects(
-                    context.elevated()):
-                LOG.debug('    - %s', srange)
+        Attempts a weighted random pick that avoids materialising the
+        full set for typical fill ratios.  Falls back to full-set
+        computation when random probing fails.
+        """
+        max_attempts = 100
+        intervals = list(ranges)
+        total = sum(hi - lo + 1 for lo, hi in intervals)
+        if total <= 0:
+            return None
+
+        rng = secrets.SystemRandom()
+        for _attempt in range(max_attempts):
+            r = rng.randint(0, total - 1)
+            for lo, hi in intervals:
+                size = hi - lo + 1
+                if r < size:
+                    seg_id = lo + r
+                    if seg_id not in used_ids:
+                        return seg_id
+                    break
+                r -= size
+
+        valid = set()
+        for lo, hi in intervals:
+            valid |= set(range(lo, hi + 1))
+        available = valid - used_ids
+        if available:
+            return rng.choice(list(available))
+        return None
+
+    @db_api.CONTEXT_READER
+    def allocate_partially_specified_segment(self, context,
+                                             physical_network, ranges,
+                                             project_id=None):
+        """Pick a random available segmentation ID.
+
+        When the ``network_segment_range`` service plugin is active,
+        project ownership and shared ranges are respected.
+
+        Returns a segmentation ID (int) or ``None``.
+        """
+        nsr_plugin = directory.get_plugin(
+            plugin_constants.NETWORK_SEGMENT_RANGE)
+
+        used = self._get_used_segmentation_ids(context, physical_network)
+
+        if nsr_plugin:
+            seg_id = self._allocate_from_nsr(
+                context, physical_network, used, project_id)
+        else:
+            seg_id = self._pick_random_from_ranges(ranges, used)
+
+        if seg_id is not None:
+            LOG.debug('%(type)s segment %(seg_id)s allocated from pool',
+                      {'type': self.get_type(), 'seg_id': seg_id})
+        return seg_id
+
+    def _allocate_from_nsr(self, context, physical_network, used_ids,
+                           project_id):
+        """Allocate using network segment range objects."""
+        network_type = self.get_type()
+        if project_id:
+            ranges = self._nsr_ranges_for_project(
+                context, network_type, physical_network, project_id)
+            seg_id = self._pick_random_from_ranges(ranges, used_ids)
+            if seg_id is not None:
+                return seg_id
+
+        ranges = self._nsr_ranges_shared(
+            context, network_type, physical_network, project_id)
+        return self._pick_random_from_ranges(ranges, used_ids)
+
+    @staticmethod
+    def _nsr_ranges_for_project(context, network_type, physical_network,
+                                project_id):
+        """Return ranges owned by a specific project."""
+        objs = ns_range.NetworkSegmentRange.get_objects(
+            context,
+            network_type=network_type,
+            physical_network=physical_network,
+            project_id=project_id)
+        return [(obj.minimum, obj.maximum) for obj in objs]
+
+    @staticmethod
+    def _nsr_ranges_shared(context, network_type, physical_network,
+                           project_id):
+        """Return shared ranges minus other projects' exclusive ranges.
+
+        This method must be called inside a reader context.
+        """
+        nsr_model = ns_range.NetworkSegmentRange.db_model
+        shared_objs = context.session.query(nsr_model).filter(
+            and_(nsr_model.network_type == network_type,
+                 nsr_model.shared == sql.expression.true()))
+        if network_type == constants.TYPE_VLAN:
+            shared_objs = shared_objs.filter(
+                nsr_model.physical_network == physical_network)
+
+        segment_ids = set()
+        for obj in shared_objs.all():
+            segment_ids.update(range(obj.minimum, obj.maximum + 1))
+        if not segment_ids:
+            return []
+
+        other_objs = context.session.query(nsr_model).filter(
+            and_(nsr_model.project_id != project_id,
+                 nsr_model.project_id.isnot(None),
+                 nsr_model.network_type == network_type))
+        if network_type == constants.TYPE_VLAN:
+            other_objs = other_objs.filter(
+                nsr_model.physical_network == physical_network)
+        for obj in other_objs.all():
+            segment_ids -= set(range(obj.minimum, obj.maximum + 1))
+
+        if not segment_ids:
+            return []
+
+        # NOTE(ralonsoh): https://stackoverflow.com/questions/4628333/
+        # converting-a-list-of-integers-into-range-in-python
+        segment_ranges = [
+            [t[0][1], t[-1][1]] for t in
+            (tuple(g[1]) for g in itertools.groupby(
+                enumerate(segment_ids),
+                key=lambda enum_seg: enum_seg[1] - enum_seg[0]))]
+
+        return segment_ranges
 
     def _delete_expired_default_network_segment_ranges(self, ctx, start_time):
         (ns_range.NetworkSegmentRange.

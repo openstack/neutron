@@ -13,8 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import abc
-import itertools
-import operator
 
 import netaddr
 from neutron_lib.agent import topics
@@ -35,30 +33,13 @@ from sqlalchemy import or_
 from neutron._i18n import _
 from neutron.objects import network_segment_range as range_obj
 from neutron.plugins.ml2.drivers import helpers
-from neutron.services.network_segment_range import plugin as range_plugin
 
 LOG = log.getLogger(__name__)
 
 TUNNEL = 'tunnel'
 
 
-def chunks(iterable, chunk_size):
-    """Chunks data into chunk with size<=chunk_size."""
-    iterator = iter(iterable)
-    chunk = list(itertools.islice(iterator, 0, chunk_size))
-    while chunk:
-        yield chunk
-        chunk = list(itertools.islice(iterator, 0, chunk_size))
-
-
 class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
-
-    BULK_SIZE = 100
-
-    def __init__(self, model):
-        super().__init__(model)
-        self.segmentation_key = next(iter(self.primary_keys))
-
     @abc.abstractmethod
     def add_endpoint(self, ip, host):
         """Register the endpoint in the type_driver database.
@@ -120,15 +101,6 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
     def _initialize(self, raw_tunnel_ranges):
         self._tunnel_ranges = []
         self._parse_tunnel_ranges(raw_tunnel_ranges, self._tunnel_ranges)
-        if not range_plugin.is_network_segment_range_enabled():
-            # service plugins are initialized/loaded after the ML2 driver
-            # initialization. Thus, we base on the information whether
-            # ``network_segment_range`` service plugin is enabled/defined in
-            # ``neutron.conf`` to decide whether to skip the first time sync
-            # allocation during driver initialization, instead of using the
-            # directory.get_plugin() method - the normal way used elsewhere to
-            # check if a plugin is loaded.
-            self._sync_allocations()
 
     def _parse_tunnel_ranges(self, tunnel_ranges, current_range):
         for entry in tunnel_ranges:
@@ -174,62 +146,11 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
         except o_exc.NeutronDbObjectDuplicateEntry:
             pass
 
-        # Override self.tunnel_ranges with the network segment range
-        # information from DB and then do a sync_allocations since the
-        # segment range service plugin has not yet been loaded at this
-        # initialization time.
         self._tunnel_ranges = self._get_network_segment_ranges_from_db(
             ctx=admin_context)
-        self._sync_allocations(ctx=admin_context)
 
     def update_network_segment_range_allocations(self):
-        self._sync_allocations()
-
-    @db_api.retry_db_errors
-    def _sync_allocations(self, ctx=None):
-        # determine current configured allocatable tunnel ids
-        tunnel_ids = set()
-        ranges = self.get_network_segment_ranges()
-        for tun_min, tun_max in ranges:
-            tunnel_ids |= set(range(tun_min, tun_max + 1))
-
-        tunnel_id_getter = operator.attrgetter(self.segmentation_key)
-        tunnel_col = getattr(self.model, self.segmentation_key)
-        ctx = ctx or context.get_admin_context()
-        with db_api.CONTEXT_WRITER.using(ctx):
-            # Check if the allocations are updated: if the total number of
-            # allocations for this tunnel type matches the allocations of the
-            # specific IDs, fast exit in that case.
-            # If another worker handled that before or the table was updated
-            # in a previous Neutron API restart, this section will end here.
-            num_allocs = ctx.session.query(self.model).filter(
-                tunnel_col.in_(tunnel_ids)).count()
-            num_allocs_total = ctx.session.query(self.model).count()
-            if len(tunnel_ids) == num_allocs == num_allocs_total:
-                return
-
-            # remove from table unallocated tunnels not currently allocatable
-            # fetch results as list via all() because we'll be iterating
-            # through them twice
-            allocs = ctx.session.query(self.model).all()
-
-            # collect those vnis that needs to be deleted from db
-            unallocateds = (
-                tunnel_id_getter(a) for a in allocs if not a.allocated)
-            to_remove = (x for x in unallocateds if x not in tunnel_ids)
-            # Immediately delete tunnels in chunks. This leaves no work for
-            # flush at the end of transaction
-            for chunk in chunks(to_remove, self.BULK_SIZE):
-                (ctx.session.query(self.model).filter(tunnel_col.in_(chunk)).
-                 filter_by(allocated=False).delete(synchronize_session=False))
-
-            # collect vnis that need to be added
-            existings = {tunnel_id_getter(a) for a in allocs}
-            missings = list(tunnel_ids - existings)
-            for chunk in chunks(missings, self.BULK_SIZE):
-                bulk = [{self.segmentation_key: x, 'allocated': False}
-                        for x in chunk]
-                ctx.session.execute(self.model.__table__.insert(), bulk)
+        pass
 
     def is_partial_segment(self, segment):
         return segment.get(api.SEGMENTATION_ID) is None
@@ -287,70 +208,53 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
     """
 
     def reserve_provider_segment(self, context, segment, filters=None):
+        filters = filters or {}
+        project_id = filters.get('project_id')
+
         if self.is_partial_segment(segment):
-            filters = filters or {}
-            alloc = self.allocate_partially_specified_segment(context,
-                                                              **filters)
-            if not alloc:
+            if not (directory.get_plugin(
+                    plugin_constants.NETWORK_SEGMENT_RANGE) and project_id):
+                project_id = None
+
+            seg_id = self.allocate_partially_specified_segment(
+                context, '', self.get_network_segment_ranges(),
+                project_id=project_id)
+            if seg_id is None:
                 raise exc.NoNetworkAvailable()
         else:
-            segmentation_id = segment.get(api.SEGMENTATION_ID)
-            alloc = self.allocate_fully_specified_segment(
-                context, **{self.segmentation_key: segmentation_id})
-            if not alloc:
-                raise exc.TunnelIdInUse(tunnel_id=segmentation_id)
+            seg_id = segment.get(api.SEGMENTATION_ID)
+            self._ensure_segmentation_id_available(
+                context, '', seg_id,
+                exclude_segment_id=filters.get('segment_id'))
         return {api.NETWORK_TYPE: self.get_type(),
                 api.PHYSICAL_NETWORK: '',
-                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
+                api.SEGMENTATION_ID: seg_id,
                 api.MTU: self.get_mtu()}
 
     def allocate_tenant_segment(self, context, filters=None):
         filters = filters or {}
-        alloc = self.allocate_partially_specified_segment(context, **filters)
-        if not alloc:
+        project_id = filters.get('project_id')
+        seg_id = self.allocate_partially_specified_segment(
+            context, '', self.get_network_segment_ranges(),
+            project_id=project_id)
+        if seg_id is None:
             return
         return {api.NETWORK_TYPE: self.get_type(),
                 api.PHYSICAL_NETWORK: '',
-                api.SEGMENTATION_ID: getattr(alloc, self.segmentation_key),
+                api.SEGMENTATION_ID: seg_id,
                 api.MTU: self.get_mtu()}
 
     def release_segment(self, context, segment):
         tunnel_id = segment[api.SEGMENTATION_ID]
-
-        ranges = self.get_network_segment_ranges()
-        inside = any(lo <= tunnel_id <= hi for lo, hi in ranges)
-
-        info = {'type': self.get_type(), 'id': tunnel_id}
-        with db_api.CONTEXT_WRITER.using(context):
-            query = (context.session.query(self.model).
-                     filter_by(**{self.segmentation_key: tunnel_id}))
-            if inside:
-                count = query.update({"allocated": False})
-                if count:
-                    LOG.debug("Releasing %(type)s tunnel %(id)s to pool",
-                              info)
-            else:
-                count = query.delete()
-                if count:
-                    LOG.debug("Releasing %(type)s tunnel %(id)s outside pool",
-                              info)
-
-        if not count:
-            LOG.warning("%(type)s tunnel %(id)s not found", info)
-
-    @db_api.CONTEXT_READER
-    def get_allocation(self, context, tunnel_id):
-        return (context.session.query(self.model).
-                filter_by(**{self.segmentation_key: tunnel_id}).
-                first())
+        LOG.debug("Releasing %(type)s tunnel %(id)s",
+                  {'type': self.get_type(), 'id': tunnel_id})
 
 
 class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
-    def __init__(self, segment_model, endpoint_model):
-        super().__init__(segment_model)
+    def __init__(self, endpoint_model):
+        super().__init__()
         self.endpoint_model = endpoint_model.db_model
-        self.segmentation_key = next(iter(self.primary_keys))
 
     def get_endpoint_by_host(self, host):
         LOG.debug("get_endpoint_by_host() called for host %s", host)

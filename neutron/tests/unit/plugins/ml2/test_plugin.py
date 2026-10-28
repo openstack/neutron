@@ -3191,13 +3191,12 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         self.assertEqual(seg1[driver_api.SEGMENTATION_ID],
                          seg2[driver_api.SEGMENTATION_ID])
 
-        # make sure that there is only one vlan allocated to our segment
-        vlan_typedriver = self.driver.type_manager.drivers['vlan']
-        seg_obj = vlan_typedriver.obj.segmentation_obj
-        all_allocs = seg_obj.get_objects(self.context)
-        allocs = [obj for obj in all_allocs
-                  if obj.allocated and obj.physical_network == physnet_name]
-        self.assertEqual(1, len(allocs))
+        dynamic_segments = segments_db.get_network_segments(
+            self.context, network_id, filter_dynamic=True)
+        physnet_segments = [
+            s for s in dynamic_segments
+            if s[driver_api.PHYSICAL_NETWORK] == physnet_name]
+        self.assertEqual(1, len(physnet_segments))
 
     def test_allocate_release_dynamic_segment(self):
         data = {'network': {'name': 'net1'}}
@@ -3947,7 +3946,14 @@ class TestML2Segments(Ml2PluginV2TestCase):
 
     def test_reserve_segment_fail_with_duplicate_param(self):
         with self.network() as network:
-            self._reserve_segment(network, 10)
+            segment = self._reserve_segment(network, 10)
+            segments_db.add_network_segment(
+                self.context, network['network']['id'],
+                {driver_api.NETWORK_TYPE: segment[driver_api.NETWORK_TYPE],
+                 driver_api.PHYSICAL_NETWORK: segment[
+                     driver_api.PHYSICAL_NETWORK],
+                 driver_api.SEGMENTATION_ID: segment[
+                     driver_api.SEGMENTATION_ID]})
 
             self.assertRaises(
                 exc.VlanIdInUse, self._reserve_segment, network, 10)

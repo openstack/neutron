@@ -13,16 +13,15 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from unittest import mock
-
+from neutron_lib import constants as p_const
 from neutron_lib import context
 from neutron_lib.plugins import utils as plugin_utils
 from oslo_config import cfg
-from oslo_db import exception as exc
 from oslo_utils import timeutils
-from sqlalchemy.orm import query
+from oslo_utils import uuidutils
 
 from neutron.common import utils as n_utils
+from neutron.objects import network as net_obj
 from neutron.plugins.ml2.drivers import type_vlan
 from neutron.tests.unit import testlib_api
 
@@ -30,7 +29,6 @@ from neutron.tests.unit import testlib_api
 TENANT_NET = 'phys_net2'
 VLAN_MIN = 200
 VLAN_MAX = 209
-VLAN_OUTSIDE = 100
 NETWORK_VLAN_RANGES = {
     TENANT_NET: [(VLAN_MIN, VLAN_MAX)],
 }
@@ -46,100 +44,44 @@ class HelpersTest(testlib_api.SqlTestCase):
         super().setUp()
         self.driver = type_vlan.VlanTypeDriver()
         self.driver._network_vlan_ranges = NETWORK_VLAN_RANGES
-        self.driver._sync_vlan_allocations()
         self.context = context.get_admin_context()
 
-    def check_raw_segment(self, expected, observed):
-        for key, value in expected.items():
-            self.assertEqual(value, observed[key])
+    def _create_segment(self, physical_network, segmentation_id):
+        network = net_obj.Network(
+            self.context, name='test-net', id=uuidutils.generate_uuid(),
+            project_id=uuidutils.generate_uuid())
+        network.create()
+        segment = net_obj.NetworkSegment(
+            self.context,
+            network_id=network.id,
+            network_type=p_const.TYPE_VLAN,
+            physical_network=physical_network,
+            segmentation_id=segmentation_id,
+            id=uuidutils.generate_uuid())
+        segment.create()
 
-    def test_primary_keys(self):
-        self.assertEqual({'physical_network', 'vlan_id'},
-                         self.driver.primary_keys)
+    def test_allocate_partially_specified_segment(self):
+        seg_id = self.driver.allocate_partially_specified_segment(
+            self.context, TENANT_NET, NETWORK_VLAN_RANGES[TENANT_NET])
+        self.assertIsNotNone(seg_id)
+        self.assertGreaterEqual(seg_id, VLAN_MIN)
+        self.assertLessEqual(seg_id, VLAN_MAX)
 
-    def test_allocate_specific_unallocated_segment_in_pools(self):
-        expected = {'physical_network': TENANT_NET, 'vlan_id': VLAN_MIN}
-        observed = self.driver.allocate_fully_specified_segment(self.context,
-                                                                **expected)
-        self.check_raw_segment(expected, observed)
+    def test_allocate_partially_specified_segment_no_resource(self):
+        for vlan_id in range(VLAN_MIN, VLAN_MAX + 1):
+            self._create_segment(TENANT_NET, vlan_id)
+        seg_id = self.driver.allocate_partially_specified_segment(
+            self.context, TENANT_NET, NETWORK_VLAN_RANGES[TENANT_NET])
+        self.assertIsNone(seg_id)
 
-    def test_allocate_specific_allocated_segment_in_pools(self):
-        raw_segment = {'physical_network': TENANT_NET, 'vlan_id': VLAN_MIN}
-        self.driver.allocate_fully_specified_segment(self.context,
-                                                     **raw_segment)
-        observed = self.driver.allocate_fully_specified_segment(self.context,
-                                                                **raw_segment)
-        self.assertIsNone(observed)
-
-    def test_allocate_specific_finally_allocated_segment_in_pools(self):
-        # Test case: allocate a specific unallocated segment in pools but
-        # the segment is allocated concurrently between select and update
-
-        raw_segment = {'physical_network': TENANT_NET, 'vlan_id': VLAN_MIN}
-        with mock.patch.object(query.Query, 'update', return_value=0):
-            observed = self.driver.allocate_fully_specified_segment(
-                self.context, **raw_segment)
-            self.assertIsNone(observed)
-
-    def test_allocate_specific_unallocated_segment_outside_pools(self):
-        expected = {'physical_network': TENANT_NET, 'vlan_id': VLAN_OUTSIDE}
-        observed = self.driver.allocate_fully_specified_segment(self.context,
-                                                                **expected)
-        self.check_raw_segment(expected, observed)
-
-    def test_allocate_specific_allocated_segment_outside_pools(self):
-        raw_segment = {'physical_network': TENANT_NET, 'vlan_id': VLAN_OUTSIDE}
-        self.driver.allocate_fully_specified_segment(self.context,
-                                                     **raw_segment)
-        observed = self.driver.allocate_fully_specified_segment(self.context,
-                                                                **raw_segment)
-        self.assertIsNone(observed)
-
-    def test_allocate_specific_finally_unallocated_segment_outside_pools(self):
-        # Test case: allocate a specific allocated segment in pools but
-        # the segment is concurrently unallocated after select or update
-
-        expected = {'physical_network': TENANT_NET, 'vlan_id': VLAN_MIN}
-        with mock.patch.object(self.driver.model, 'save'):
-            observed = self.driver.allocate_fully_specified_segment(
-                self.context, **expected)
-            self.check_raw_segment(expected, observed)
-
-    def test_allocate_partial_segment_without_filters(self):
-        expected = {'physical_network': TENANT_NET}
-        observed = self.driver.allocate_partially_specified_segment(
-            self.context)
-        self.check_raw_segment(expected, observed)
-
-    def test_allocate_partial_segment_with_filter(self):
-        expected = {'physical_network': TENANT_NET}
-        observed = self.driver.allocate_partially_specified_segment(
-            self.context, **expected)
-        self.check_raw_segment(expected, observed)
-
-    def test_allocate_partial_segment_no_resource_available(self):
-        for i in range(VLAN_MIN, VLAN_MAX + 1):
-            self.driver.allocate_partially_specified_segment(self.context)
-        observed = self.driver.allocate_partially_specified_segment(
-            self.context)
-        self.assertIsNone(observed)
-
-    def test_allocate_partial_segment_outside_pools(self):
-        raw_segment = {'physical_network': 'other_phys_net'}
-        observed = self.driver.allocate_partially_specified_segment(
-            self.context, **raw_segment)
-        self.assertIsNone(observed)
-
-    def test_allocate_partial_segment_first_attempt_fails(self):
-        expected = {'physical_network': TENANT_NET}
-        with mock.patch.object(query.Query, 'update', side_effect=[0, 1]):
-            self.assertRaises(
-                exc.RetryRequest,
-                self.driver.allocate_partially_specified_segment,
-                self.context, **expected)
-            observed = self.driver.allocate_partially_specified_segment(
-                self.context, **expected)
-            self.check_raw_segment(expected, observed)
+    def test_allocate_partially_specified_segment_skips_used(self):
+        self._create_segment(TENANT_NET, VLAN_MIN)
+        for _ in range(20):
+            seg_id = self.driver.allocate_partially_specified_segment(
+                self.context, TENANT_NET,
+                NETWORK_VLAN_RANGES[TENANT_NET])
+            self.assertIsNotNone(seg_id)
+            self.assertNotEqual(VLAN_MIN, seg_id)
 
 
 class HelpersTestWithNetworkSegmentRange(HelpersTest):
@@ -156,4 +98,3 @@ class HelpersTestWithNetworkSegmentRange(HelpersTest):
         self.driver = type_vlan.VlanTypeDriver()
         start_time = n_utils.datetime_to_ts(timeutils.utcnow())
         self.driver.initialize_network_segment_range_support(start_time)
-        self.driver._sync_vlan_allocations()
