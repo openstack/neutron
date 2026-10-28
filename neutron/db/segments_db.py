@@ -80,28 +80,23 @@ def add_network_segment(context, network_id, segment, segment_index=None,
     network_type = segment.get(NETWORK_TYPE)
     physical_network = segment.get(PHYSICAL_NETWORK)
     segmentation_id = segment.get(SEGMENTATION_ID)
-    try:
-        with db_api.CONTEXT_WRITER.using(context):
-            _check_flat_segment_in_use(context, network_type,
-                                       physical_network)
-            netseg_obj = network_obj.NetworkSegment(
-                context, id=uuidutils.generate_uuid(), network_id=network_id,
-                network_type=network_type,
-                physical_network=physical_network,
-                segmentation_id=segmentation_id,
-                segment_index=segment_index, is_dynamic=is_dynamic)
-            netseg_obj.create()
-            registry.publish(resources.SEGMENT,
-                             events.PRECOMMIT_CREATE,
-                             add_network_segment,
-                             payload=events.DBEventPayload(
-                                 context, resource_id=netseg_obj.id,
-                                 states=(netseg_obj,)))
-            segment['id'] = netseg_obj.id
-    except o_exc.NeutronDbObjectDuplicateEntry:
-        if is_dynamic:
-            raise
-        _raise_segment_in_use(network_type, physical_network, segmentation_id)
+    with db_api.CONTEXT_WRITER.using(context):
+        _check_flat_segment_in_use(context, network_type,
+                                   physical_network)
+        netseg_obj = network_obj.NetworkSegment(
+            context, id=uuidutils.generate_uuid(), network_id=network_id,
+            network_type=network_type,
+            physical_network=physical_network,
+            segmentation_id=segmentation_id,
+            segment_index=segment_index, is_dynamic=is_dynamic)
+        netseg_obj.create()
+        registry.publish(resources.SEGMENT,
+                         events.PRECOMMIT_CREATE,
+                         add_network_segment,
+                         payload=events.DBEventPayload(
+                             context, resource_id=netseg_obj.id,
+                             states=(netseg_obj,)))
+        segment['id'] = netseg_obj.id
     LOG.info("Added segment %(id)s of type %(network_type)s for network "
              "%(network_id)s",
              {'id': netseg_obj.id,

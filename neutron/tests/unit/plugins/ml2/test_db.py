@@ -23,6 +23,7 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from oslo_utils import uuidutils
@@ -118,7 +119,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         other_network_id = uuidutils.generate_uuid()
         self._setup_neutron_network(other_network_id)
         self.assertRaises(
-            n_exc.VlanIdInUse,
+            o_exc.NeutronDbObjectDuplicateEntry,
             segments_db.add_network_segment,
             self.ctx, other_network_id, segment.copy())
 
@@ -131,9 +132,24 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         other_network_id = uuidutils.generate_uuid()
         self._setup_neutron_network(other_network_id)
         self.assertRaises(
-            n_exc.TunnelIdInUse,
+            o_exc.NeutronDbObjectDuplicateEntry,
             segments_db.add_network_segment,
             self.ctx, other_network_id, segment.copy())
+
+    def test_add_network_segment_duplicate_is_retriable(self):
+        network_id = uuidutils.generate_uuid()
+        segment = {api.NETWORK_TYPE: constants.TYPE_VLAN,
+                   api.PHYSICAL_NETWORK: 'physnet1',
+                   api.SEGMENTATION_ID: 1}
+        self._create_segments([segment], network_id=network_id)
+        other_network_id = uuidutils.generate_uuid()
+        self._setup_neutron_network(other_network_id)
+        try:
+            segments_db.add_network_segment(
+                self.ctx, other_network_id, segment.copy())
+            self.fail('NeutronDbObjectDuplicateEntry not raised')
+        except o_exc.NeutronDbObjectDuplicateEntry as e:
+            self.assertTrue(db_api.is_retriable(e))
 
     def test_add_network_segment_duplicate_flat(self):
         network_id = uuidutils.generate_uuid()
