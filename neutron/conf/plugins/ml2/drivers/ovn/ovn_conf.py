@@ -302,6 +302,15 @@ ovn_opts = [
                        'This enables multiple segments per host in routed '
                        'provider networks. Requires restart of '
                        'neutron-server.')),
+    cfg.BoolOpt('reset_crashed_chassis_priority',
+                default=False,
+                help=_('Demote the previously active gateway chassis to the '
+                       'lowest priority in all the "HA_Chassis_Group" '
+                       'registers it belongs to, when a router gateway port '
+                       'is bound to another chassis (chassis failover). This '
+                       'prevents the crashed chassis from preempting the new '
+                       'active one when it comes back. If False, Neutron '
+                       'only updates the gateway port host binding.')),
 ]
 
 nb_global_opts = [
@@ -482,3 +491,7 @@ def is_ovn_router_indirect_snat_enabled():
 
 def is_stateless_nat_enabled():
     return cfg.CONF.ovn.stateless_nat_enabled
+
+
+def is_reset_crashed_chassis_priority_enabled():
+    return cfg.CONF.ovn.reset_crashed_chassis_priority

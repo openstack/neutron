@@ -1417,3 +1417,180 @@ class TestFIPAddExternalMacEvent(base.BaseTestCase):
         self.driver.nb_ovn.lookup.return_value = lsp
         self.event.run(self.event.ROW_CREATE, row, None)
         self.driver.nb_ovn.db_set.assert_not_called()
+
+
+class TestPortBindingChassisEvent(base.BaseTestCase):
+    # Unit tests for PortBindingChassisEvent match_fn and run().
+
+    def setUp(self):
+        super().setUp()
+        self.driver = mock.Mock()
+        self.event = ovsdb_monitor.PortBindingChassisEvent(self.driver)
+        self.l3_plugin = mock.Mock()
+        self.event.l3_plugin = self.l3_plugin
+
+    def _make_pb_row(self, attrs=None):
+        """Return a fake chassisredirect Port_Binding row."""
+        defaults = {
+            'type': ovn_const.OVN_CHASSIS_REDIRECT,
+            'external_ids': {
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'neutron-router-id'},
+            'logical_port': 'cr-lrp-uuid',
+            'chassis': [],
+        }
+        if attrs:
+            defaults.update(attrs)
+        return fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs=defaults)
+
+    def _make_old(self, changed_columns):
+        """Return a fake 'old' row with only the given columns in _data."""
+
+        old = mock.Mock()
+        old._data = changed_columns
+        old.chassis = changed_columns.get('chassis', [])
+        return old
+
+    @mock.patch('neutron.common.ovn.utils.is_ovn_l3', return_value=True)
+    def test_match_fn_chassis_change_matches(self, _):
+        row = self._make_pb_row()
+        old = self._make_old({'chassis': []})
+        self.assertTrue(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_no_router_key_skipped(self):
+        row = self._make_pb_row(
+            attrs={'external_ids': {}})
+        old = self._make_old({'chassis': []})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    def test_match_fn_wrong_type_skipped(self):
+        row = self._make_pb_row(attrs={'type': 'patch'})
+        old = self._make_old({'chassis': []})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    @mock.patch('neutron.common.ovn.utils.is_ovn_l3', return_value=True)
+    def test_match_fn_no_chassis_change_skipped(self, _):
+        row = self._make_pb_row()
+        # chassis is NOT in old._data — binding changed for some other reason
+        old = self._make_old({'external_ids': {'key': 'value'}})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    @mock.patch('neutron.common.ovn.utils.is_ovn_l3', return_value=True)
+    def test_match_fn_external_ids_only_skipped(self, _):
+        """External-ids-only updates are skipped (chassis not in old._data)."""
+        row = self._make_pb_row()
+        old = self._make_old({'external_ids': {'changed': 'value'}})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    @mock.patch('neutron.common.ovn.utils.is_ovn_l3', return_value=False)
+    def test_match_fn_non_ovn_l3_skipped(self, _):
+        row = self._make_pb_row()
+        old = self._make_old({'chassis': []})
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE, row, old))
+
+    @mock.patch('neutron.conf.plugins.ml2.drivers.ovn.ovn_conf.'
+                'is_reset_crashed_chassis_priority_enabled',
+                return_value=True)
+    def test_run_calls_demote_crashed_chassis_on_failover(self, _):
+        active_chassis = mock.Mock()
+        active_chassis.name = 'active-chassis-uuid'
+        active_chassis.hostname = 'active-host'
+
+        crashed_chassis = mock.Mock()
+        crashed_chassis.name = 'crashed-chassis-uuid'
+
+        row = self._make_pb_row(attrs={
+            'chassis': [active_chassis],
+            'datapath': mock.Mock(
+                external_ids={'name': 'neutron-router-id'}),
+        })
+        # old._data['chassis'] is non-empty → genuine failover; its .name is
+        # the crashed chassis that just lost the binding.
+        old = self._make_old({'chassis': [crashed_chassis]})
+
+        self.event.run(self.event.ROW_UPDATE, row, old)
+
+        (self.l3_plugin.demote_crashed_chassis_on_failover.
+         assert_called_once_with(row, 'crashed-chassis-uuid'))
+        (self.l3_plugin.update_router_gateway_port_bindings.
+         assert_called_once_with('router-id', 'active-host'))
+
+    def test_run_does_not_demote_when_config_disabled(self):
+        active_chassis = mock.Mock()
+        active_chassis.name = 'active-chassis-uuid'
+        active_chassis.hostname = 'active-host'
+
+        crashed_chassis = mock.Mock()
+        crashed_chassis.name = 'crashed-chassis-uuid'
+
+        row = self._make_pb_row(attrs={
+            'chassis': [active_chassis],
+            'datapath': mock.Mock(
+                external_ids={'name': 'neutron-router-id'}),
+        })
+        old = self._make_old({'chassis': [crashed_chassis]})
+
+        self.event.run(self.event.ROW_UPDATE, row, old)
+
+        (self.l3_plugin.demote_crashed_chassis_on_failover.
+         assert_not_called())
+        (self.l3_plugin.update_router_gateway_port_bindings.
+         assert_called_once_with('router-id', 'active-host'))
+
+    def test_run_initial_bind_no_prev_chassis(self):
+        # Initial bind or deleted "Chassis" register (old.chassis is empty)
+        # must not trigger any demotion.
+        active_chassis = mock.Mock()
+        active_chassis.name = 'active-chassis-uuid'
+        active_chassis.hostname = 'active-host'
+
+        row = self._make_pb_row(attrs={
+            'chassis': [active_chassis],
+            'datapath': mock.Mock(
+                external_ids={'name': 'neutron-router-id'}),
+        })
+        # old._data['chassis'] is empty → initial bind, skip demotion
+        old = self._make_old({'chassis': []})
+
+        self.event.run(self.event.ROW_UPDATE, row, old)
+
+        (self.l3_plugin.demote_crashed_chassis_on_failover.
+         assert_not_called())
+        (self.l3_plugin.update_router_gateway_port_bindings.
+         assert_called_once_with('router-id', 'active-host'))
+
+    def test_run_unbound_port_skips_demotion(self):
+        # When chassis is empty (port unbound), demotion is not called.
+        row = self._make_pb_row(attrs={'chassis': []})
+        old = self._make_old({'chassis': [mock.Mock()]})
+
+        self.event.run(self.event.ROW_UPDATE, row, old)
+
+        (self.l3_plugin.demote_crashed_chassis_on_failover.
+         assert_not_called())
+        (self.l3_plugin.update_router_gateway_port_bindings.
+         assert_called_once_with(None, None))
+
+    @mock.patch('neutron.conf.plugins.ml2.drivers.ovn.ovn_conf.'
+                'is_reset_crashed_chassis_priority_enabled',
+                return_value=True)
+    def test_run_remove_exception_does_not_block_binding_update(self, _):
+        # A failure in demote_crashed_chassis must not prevent binding update.
+        active_chassis = mock.Mock()
+        active_chassis.name = 'active-chassis-uuid'
+        active_chassis.hostname = 'active-host'
+
+        row = self._make_pb_row(attrs={
+            'chassis': [active_chassis],
+            'datapath': mock.Mock(
+                external_ids={'name': 'neutron-router-id'}),
+        })
+        # non-empty old._data['chassis'] triggers demotion call
+        old = self._make_old({'chassis': [mock.Mock()]})
+
+        self.l3_plugin.demote_crashed_chassis_on_failover.side_effect = (
+            Exception("NB transaction failed"))
+
+        self.event.run(self.event.ROW_UPDATE, row, old)
+
+        (self.l3_plugin.update_router_gateway_port_bindings.
+         assert_called_once_with('router-id', 'active-host'))

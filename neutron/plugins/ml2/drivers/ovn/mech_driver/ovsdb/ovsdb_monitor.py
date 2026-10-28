@@ -581,14 +581,12 @@ class PortBindingChassisEvent(row_event.RowEvent):
         if row.type != ovn_const.OVN_CHASSIS_REDIRECT:
             return False
 
-        if len(old._data) == 1 and 'external_ids' in old._data:
-            # NOTE: since [1], the NB logical_router_port.external_ids are
-            # copied into the SB port_binding.external_ids. If only the
-            # external_ids are changed, this event should be dismissed or it
-            # will trigger the Neutron NB update (that will trigger the core
-            # SB update and therefore an infinite loop).
-            # [1] https://www.mail-archive.com/ovs-dev@openvswitch.org/
-            #     msg62836.html
+        # Only process events where the chassis binding actually changed.
+        # This also guards against external_ids-only updates that would
+        # otherwise cause an infinite NB→SB→NB update loop.
+        # See: https://www.mail-archive.com/ovs-dev@openvswitch.org/
+        #      msg62836.html
+        if 'chassis' not in old._data:
             return False
 
         if not utils.is_ovn_l3(self.l3_plugin):
@@ -605,6 +603,30 @@ class PortBindingChassisEvent(row_event.RowEvent):
             host = chassis[0].hostname
             LOG.info("Router %(router)s is bound to host %(host)s",
                      {'router': router, 'host': host})
+            # NOTE: the "old" row contains only the modified columns. The
+            # "chassis" column is always present (see "match_fn") but can be
+            # empty if the port was not bound before. If the previous Chassis
+            # register was deleted concurrently, the weak reference resolves
+            # to an empty list too.
+            try:
+                old_chassis_name = old.chassis[0].name
+            except (AttributeError, IndexError):
+                old_chassis_name = None
+            LOG.debug("Chassis failover of port %(port)s, new chassis: "
+                      "%(new_chassis)s, old chassis: %(old_chassis)s",
+                      {'port': row.logical_port,
+                       'new_chassis': chassis[0].name,
+                       'old_chassis': old_chassis_name})
+            if (old_chassis_name and
+                    ovn_conf.is_reset_crashed_chassis_priority_enabled()):
+                try:
+                    self.l3_plugin.demote_crashed_chassis_on_failover(
+                        row, old_chassis_name)
+                except Exception:
+                    LOG.exception("Failed to demote the crashed chassis "
+                                  "%(chassis)s, gateway port %(port)s",
+                                  {'chassis': old_chassis_name,
+                                   'port': row.logical_port})
         self.l3_plugin.update_router_gateway_port_bindings(
             router, host)
 

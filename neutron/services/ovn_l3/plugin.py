@@ -344,6 +344,42 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             if port['status'] != status:
                 self._plugin.update_port_status(context, port['id'], status)
 
+    def demote_crashed_chassis_on_failover(self, port_binding,
+                                           crashed_chassis_name):
+        """Demote a crashed chassis to the lowest priority on failover
+
+        When a gateway chassis crashes, OVN binds the gateway ports to the
+        next chassis in the ``HA_Chassis_Group`` but the ``HA_Chassis``
+        priorities are not modified. Once the crashed chassis is back, it
+        preempts the currently active one, bouncing the gateway ports again.
+
+        This method demotes the crashed chassis to
+        ``HA_CHASSIS_GROUP_LOWEST_PRIORITY`` in **all** the HCGs it belongs
+        to. A single event only covers the LRP that triggered the rebinding,
+        but the chassis can be a member of several HCGs; updating only the
+        triggering one would leave the chassis with a high priority in the
+        rest of them, bouncing those gateway ports on recovery.
+        """
+        hcgs = self._nb_ovn.get_ha_chassis_group_from_chassis(
+            crashed_chassis_name)
+        if not hcgs:
+            # If the chassis was removed, the chassis removal event already
+            # deleted the ``HA_Chassis`` registers from the HCGs.
+            return
+
+        LOG.info("Chassis failover: demoting the crashed chassis "
+                 "%(chassis)s to priority %(priority)s in %(num)d "
+                 "HA_Chassis_Group(s), triggering port %(port)s",
+                 {'chassis': crashed_chassis_name,
+                  'priority': ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY,
+                  'num': len(hcgs),
+                  'port': port_binding.logical_port})
+        with self._nb_ovn.transaction(check_error=True) as txn:
+            for hcg in hcgs:
+                txn.add(self._nb_ovn.ha_chassis_group_add_chassis(
+                    hcg.name, crashed_chassis_name,
+                    priority=ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY))
+
     def schedule_unhosted_gateways(self, event_from_chassis=None):
         # GW ports and its physnets.
         port_physnet_dict = self._get_gateway_port_physnet_mapping()

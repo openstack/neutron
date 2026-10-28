@@ -144,6 +144,100 @@ class TestRouter(base.TestOVNFunctionalBase):
                         'ovn-cms-options': 'enable-chassis-as-gw'}))
         return chassis_added
 
+    def _get_router_chassis_priorities(self, router):
+        lrp = self.nb_api.lookup(
+            'Logical_Router_Port', ovn_utils.ovn_lrouter_port_name(
+                router['gw_port_id']))
+        self.assertEqual(1, len(lrp.ha_chassis_group))
+        return {hc.chassis_name: hc.priority
+                for hc in lrp.ha_chassis_group[0].ha_chassis}
+
+    def _bind_router_gateway_and_wait(self, router, chassis):
+        port_id = router['gw_port_id']
+        logical_port = 'cr-lrp-%s' % port_id
+        n_utils.wait_until_true(
+            lambda: self.sb_api.db_find_rows(
+                'Port_Binding', ('logical_port', '=', logical_port)).execute(
+                    check_error=True),
+            timeout=10)
+        chassis_row = self.sb_api.lookup('Chassis', chassis)
+        hostname = chassis_row.hostname
+        # lsp_bind(may_exist=True) leaves an existing binding unchanged.
+        # Replace it atomically so the failover event retains the old chassis;
+        # unbinding first would lose the chassis that needs to be demoted.
+        self.sb_api.db_set(
+            'Port_Binding', logical_port,
+            ('chassis', [chassis_row.uuid]), ('up', [True])).execute(
+                check_error=True)
+
+        def binding_updated():
+            port = self.l3_plugin._plugin.get_port(self.context, port_id)
+            lsp = self.nb_api.lookup('Logical_Switch_Port', port_id)
+            return (port[portbindings.HOST_ID] == hostname and
+                    port['status'] == n_consts.PORT_STATUS_ACTIVE and
+                    lsp.external_ids.get(ovn_const.OVN_HOST_ID_EXT_ID_KEY) ==
+                    hostname)
+
+        # These updates follow priority demotion in PortBindingChassisEvent.
+        # Waiting for them also synchronizes assertions when demotion is off.
+        n_utils.wait_until_true(binding_updated, timeout=10)
+
+    @ddt.data((True, 1), (True, 2), (False, 1))
+    @ddt.unpack
+    def test_gateway_chassis_failover_priorities(self, enabled, num_routers):
+        ovn_conf.cfg.CONF.set_override(
+            'reset_crashed_chassis_priority', enabled, group='ovn')
+        chassis = [self.chassis1, self.chassis2, self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet3'],
+            enable_chassis_as_gw=True, azs=[])]
+        ext_net = self._create_ext_network(
+            'ext-failover', 'flat', 'physnet3', None,
+            '192.0.2.1', '192.0.2.0/24')
+        routers = [self._create_router(
+            'router-failover-%s' % idx,
+            gw_info={'network_id': ext_net['network']['id']})
+            for idx in range(num_routers)]
+        priorities = [self._get_router_chassis_priorities(router)
+                      for router in routers]
+
+        for router, expected in zip(routers, priorities):
+            self.assertCountEqual(chassis, expected)
+            self.assertEqual(len(chassis), len(set(expected.values())))
+            self.assertGreater(min(expected.values()),
+                               ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY)
+            active_chassis = max(expected, key=expected.get)
+            self._bind_router_gateway_and_wait(router, active_chassis)
+
+        # Initial bindings must not demote any chassis, including when the
+        # feature is enabled. Use the actual scheduler's priorities.
+        self.assertEqual(priorities, [self._get_router_chassis_priorities(r)
+                                      for r in routers])
+        ordered_chassis = sorted(priorities[0], key=priorities[0].get,
+                                 reverse=True)
+        crashed_chassis, next_chassis = ordered_chassis[:2]
+
+        # There is no ovn-controller/BFD in this fixture. Emulate the SB
+        # rebinding caused by a crash, keeping the failed Chassis row in SB.
+        # Deleting it would exercise graceful removal/rescheduling instead.
+        # Only rebind one router: the failed chassis must be demoted in all
+        # its groups even if no rebinding event arrives for the other router.
+        self._bind_router_gateway_and_wait(routers[0], next_chassis)
+
+        for router, original in zip(routers, priorities):
+            expected = dict(original)
+            if enabled:
+                expected[crashed_chassis] = (
+                    ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY)
+            self.assertEqual(expected,
+                             self._get_router_chassis_priorities(router))
+
+        # The crashed chassis remains a candidate on recovery, below the
+        # chassis now hosting the gateway; all other priorities are preserved.
+        self.assertIsNotNone(self.sb_api.lookup('Chassis', crashed_chassis))
+        current = self._get_router_chassis_priorities(routers[0])
+        highest = max(current, key=current.get)
+        self.assertEqual(next_chassis if enabled else crashed_chassis, highest)
+
     @ddt.data([], ['az1'])
     def test_gateway_chassis_on_router_gateway_port(self, az_hints):
         ch_name_list = [
