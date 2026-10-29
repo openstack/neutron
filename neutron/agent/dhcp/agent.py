@@ -925,8 +925,10 @@ class DhcpPluginApi(base_agent_rpc.BasePluginApi):
     def get_network_info(self, network_id):
         """Make a remote process call to retrieve network info."""
         cctxt = self.client.prepare()
+        # The DHCP disabled subnets are advertised as on-link routes.
         network = cctxt.call(self.context, 'get_network_info',
-                             network_id=network_id, host=self.host)
+                             network_id=network_id, host=self.host,
+                             enable_dhcp=None)
         if network:
             return dhcp.NetModel(network)
 
