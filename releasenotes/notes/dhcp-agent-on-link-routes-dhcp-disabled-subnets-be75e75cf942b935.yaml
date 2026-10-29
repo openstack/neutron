@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    The DHCP agent now advertises the DHCP disabled IPv4 subnets of a network
+    as on-link routes when the network or its subnets are created or updated,
+    not only after the agent is restarted. For more information, see bug
+    `2172290 <https://bugs.launchpad.net/neutron/+bug/2172290>`_.

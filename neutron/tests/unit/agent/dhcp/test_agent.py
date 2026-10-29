@@ -1760,6 +1760,7 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
                 mock.patch.object(proxy.client, 'prepare') as prepare_mock:
             prepare_mock.return_value = proxy.client
             rpc_mock.return_value = kwargs.pop('return_value', [])
+            rpc_kwargs = kwargs.pop('rpc_kwargs', {})
 
             prepare_args = {}
             if 'version' in kwargs:
@@ -1770,14 +1771,16 @@ class TestDhcpPluginApiProxy(base.BaseTestCase):
 
             prepare_mock.assert_called_once_with(**prepare_args)
             kwargs['host'] = proxy.host
-            rpc_mock.assert_called_once_with(mock.ANY, method, **kwargs)
+            rpc_mock.assert_called_once_with(mock.ANY, method, **kwargs,
+                                             **rpc_kwargs)
 
     def test_get_active_networks_info(self):
         self._test_dhcp_api('get_active_networks_info', version='1.1')
 
     def test_get_network_info(self):
         self._test_dhcp_api('get_network_info', network_id='fake_id',
-                            return_value=None)
+                            return_value=None,
+                            rpc_kwargs={'enable_dhcp': None})
 
     def test_create_dhcp_port(self):
         self._test_dhcp_api('create_dhcp_port', port='fake_port',
