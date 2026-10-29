@@ -32,6 +32,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import placement as placement_exc
@@ -43,6 +44,7 @@ from novaclient import exceptions as nova_exc
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
+from sqlalchemy.orm import session as se
 
 from neutron._i18n import _
 from neutron.common import ipv6_utils
@@ -192,6 +194,11 @@ class NovaSegmentNotifier:
         self.p_client, self.n_client = self._get_clients()
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self._send_notifications)
+        self._events_key = 'segment_nova_events_%x' % id(self)
+        db_api.sqla_listen(se.Session, 'after_commit',
+                           self._flush_committed_events)
+        db_api.sqla_listen(se.Session, 'after_soft_rollback',
+                           self._discard_events_on_rollback)
 
     def _get_clients(self):
         p_client = placement_client.PlacementAPIClient(
@@ -413,11 +420,48 @@ class NovaSegmentNotifier:
             payload.context, segment_id=payload.metadata.get(key))
         return {s.segment_id for s in subnets}
 
+    def _queue_event_on_commit(self, context, event):
+        """Queue ``event`` after the current DB transaction commits.
+
+        Host-mapping callbacks fire inside the ``CONTEXT_WRITER`` that
+        updates ``segmenthostmappings``.  The batch notifier spawns a
+        thread that may read the DB from a separate connection, which
+        cannot see the uncommitted row (MySQL isolation).  Deferring
+        to ``after_commit`` ensures every subsequent DB read sees
+        committed state.
+
+        If the session is not in a transaction (unexpected, but
+        defensive), the event is forwarded immediately.
+
+        Events queued inside a nested savepoint that is later rolled
+        back will still be delivered when the outer transaction
+        commits.  This is acceptable because the batch-notifier
+        callbacks are idempotent.
+        """
+        session = context.session
+        if not session.in_transaction():
+            self.batch_notifier.queue_event(event)
+            return
+        session.info.setdefault(self._events_key, []).append(event)
+
+    def _flush_committed_events(self, session):
+        """``after_commit`` listener — drain queued events."""
+        if session.get_nested_transaction() is not None:
+            return
+        for queued in session.info.pop(self._events_key, []):
+            self.batch_notifier.queue_event(queued)
+
+    def _discard_events_on_rollback(self, session, previous_transaction):
+        """``after_soft_rollback`` listener — discard on root rollback."""
+        if not session.in_transaction():
+            session.info.pop(self._events_key, None)
+
     @registry.receives(resources.SEGMENT_HOST_MAPPING, [events.AFTER_CREATE])
     def _notify_host_addition_to_aggregate(self, resource, event, trigger,
                                            payload=None):
         segment_ids = self._payload_segment_ids(payload, 'current_segment_ids')
-        self.batch_notifier.queue_event(
+        self._queue_event_on_commit(
+            payload.context,
             Event(self._add_host_to_aggregate,
                   segment_ids, host=payload.metadata.get('host')))
 
@@ -441,7 +485,8 @@ class NovaSegmentNotifier:
     def _notify_host_removal_from_aggregate(self, resource, event, trigger,
                                             payload=None):
         segment_ids = self._payload_segment_ids(payload, 'deleted_segment_ids')
-        self.batch_notifier.queue_event(
+        self._queue_event_on_commit(
+            payload.context,
             Event(self._remove_host_from_aggregate,
                   segment_ids, host=payload.metadata.get('host')))
 
