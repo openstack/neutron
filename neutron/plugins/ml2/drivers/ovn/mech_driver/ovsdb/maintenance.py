@@ -53,6 +53,7 @@ from neutron.objects import pvlan as pvlan_obj
 from neutron.objects import router as router_obj
 from neutron.objects import securitygroup as sg_obj
 from neutron.services.bgp import constants as bgp_const
+from neutron.services.evpn import commands as evpn_commands
 from neutron.services.evpn import constants as evpn_const
 from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn_driver
 
@@ -1747,6 +1748,71 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 updated += 1
 
         LOG.info('Updated the MTU of %d OVN localports', updated)
+        raise periodics.NeverAgain()
+
+    # TODO(cbuggy): Remove this method in the I+4=M (2029.1) cycle (2nd next
+    # SLURP release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    @log_maintenance_task(
+        start_message='Suppressing EVPN advertisement of gateway and '
+                      'metadata addresses on existing advertise-host rows.')
+    def suppress_evpn_gateway_and_metadata_advertisement(self):
+        """Backfill dynamic-routing-advertise=false on advertise-host rows.
+
+        See LP#2167570.
+        """
+        context = n_context.get_admin_context()
+        network_ids = evpn_models.EVPNNetwork.get_all_network_ids(context)
+        if not network_ids:
+            LOG.debug('No EVPN advertise-host networks found, '
+                      'skipping maintenance task')
+            raise periodics.NeverAgain()
+        port_ids = evpn_models.EVPNAdvertisedPort.get_port_ids_for_networks(
+            context, network_ids)
+        cmds = []
+        for port_id in port_ids:
+            lrp_name = utils.ovn_lrouter_port_name(port_id)
+            lrp = self._nb_idl.lookup(
+                'Logical_Router_Port', lrp_name, default=None)
+            if lrp is None:
+                LOG.warning('OVN Logical_Router_Port %s not found while '
+                            'backfilling dynamic-routing-advertise=false',
+                            lrp_name)
+                continue
+            current = (lrp.options or {}).get(
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE)
+            if not strutils.bool_from_string(current, default=True):
+                continue
+            cmds.append(evpn_commands.SuppressRouterInterfaceAdvertiseCommand(
+                self._nb_idl, port_id))
+        for network_id in network_ids:
+            metadata_port_ids = (
+                ports_obj.Port.get_metadata_port_ids_by_network(
+                    context, network_id))
+            for metadata_port_id in metadata_port_ids:
+                lsp = self._nb_idl.lookup(
+                    'Logical_Switch_Port', metadata_port_id, default=None)
+                if lsp is None:
+                    LOG.warning(
+                        'OVN Logical_Switch_Port %s not found while '
+                        'backfilling dynamic-routing-advertise=false',
+                        metadata_port_id)
+                    continue
+                current = (lsp.options or {}).get(
+                    bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE)
+                if not strutils.bool_from_string(current, default=True):
+                    continue
+                cmds.append(
+                    evpn_commands.SuppressMetadataAdvertiseCommand(
+                        self._nb_idl, metadata_port_id))
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+
         raise periodics.NeverAgain()
 
 

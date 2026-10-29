@@ -381,6 +381,47 @@ class AdvertiseHostCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
                 bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE))
 
 
+class SuppressRouterInterfaceAdvertiseCommandTestCase(
+        bgp_base.BaseBgpNbIdlTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.lr_name = func_base.get_unique_name("lr")
+        self.nb_api.lr_add(self.lr_name).execute(check_error=True)
+
+    def _create_lrp(self, port_id, **kwargs):
+        lrp_name = ovn_utils.ovn_lrouter_port_name(port_id)
+        self.nb_api.lrp_add(
+            self.lr_name, lrp_name,
+            mac='00:00:00:00:00:01',
+            networks=['192.168.1.1/24'],
+            **kwargs,
+        ).execute(check_error=True)
+        return lrp_name
+
+    def test_sets_advertise_false_and_preserves_redistribute(self):
+        port_id = uuidutils.generate_uuid()
+        lrp_name = self._create_lrp(port_id, options={
+            bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE:
+                bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
+            'existing-key': 'existing-value',
+        })
+
+        evpn_ovn.SuppressRouterInterfaceAdvertiseCommand(
+            self.nb_api, port_id).execute(check_error=True)
+
+        lrp = self.nb_api.lrp_get(lrp_name).execute(check_error=True)
+        self.assertEqual(
+            bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST,
+            lrp.options.get(
+                bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
+        self.assertEqual('existing-value', lrp.options.get('existing-key'))
+        self.assertEqual(
+            'false',
+            lrp.options.get(
+                bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE))
+
+
 class SuppressMetadataAdvertiseCommandTestCase(bgp_base.BaseBgpNbIdlTestCase):
     def setUp(self):
         super().setUp()
