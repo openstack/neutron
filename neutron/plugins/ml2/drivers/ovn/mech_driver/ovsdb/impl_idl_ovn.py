@@ -851,6 +851,16 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         try:
             return self.lookup('Logical_Switch', lswitch_name)
         except idlutils.RowNotFound:
+            if not uuidutils.is_uuid_like(lswitch_name):
+                return None
+
+        # NOTE: the maintenance task passes the Neutron network ID. Without
+        # OVS commit 55b9507 (3.1.0) the Logical_Switch UUID is not
+        # persisted and does not match the network ID; such register, as
+        # any register created before that, is only found by its name.
+        try:
+            return self.lookup('Logical_Switch', utils.ovn_name(lswitch_name))
+        except idlutils.RowNotFound:
             return None
 
     def get_ls_and_dns_record(self, lswitch_name):
