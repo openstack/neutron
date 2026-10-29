@@ -1,0 +1,12 @@
+---
+fixes:
+  - |
+    A new OVN maintenance task stores the network MTU in the
+    ``neutron:mtu`` external_id of the existing metadata and OVN load
+    balancer health monitor localports. Ports created before the MTU was
+    stored on them carried an empty (or "None") value, which made the OVN
+    metadata agent and the OVN agent metadata extension fail with
+    ``ValueError: invalid literal for int()`` and stop provisioning
+    metadata namespaces. See bugs
+    `2172533 <https://bugs.launchpad.net/neutron/+bug/2172533>`_ and
+    `2153980 <https://bugs.launchpad.net/neutron/+bug/2153980>`_.

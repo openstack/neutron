@@ -902,6 +902,76 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         m_error.assert_called_once()
         self.fake_ovn_client._nb_idl.db_set.assert_not_called()
 
+    def _make_localport(self, device_owner, network_id, mtu=None):
+        external_ids = {
+            constants.OVN_DEVICE_OWNER_EXT_ID_KEY: device_owner,
+            constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-' + network_id,
+        }
+        if mtu is not None:
+            external_ids[constants.OVN_NETWORK_MTU_EXT_ID_KEY] = mtu
+        return fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_LOCALPORT,
+                   'external_ids': external_ids})
+
+    def test_update_localport_mtu(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        empty = self._make_localport(n_const.DEVICE_OWNER_DISTRIBUTED,
+                                     'net1', mtu='')
+        none = self._make_localport(constants.OVN_LB_HM_PORT_DISTRIBUTED,
+                                    'net1', mtu='None')
+        missing = self._make_localport(n_const.DEVICE_OWNER_DISTRIBUTED,
+                                       'net2')
+        good = self._make_localport(n_const.DEVICE_OWNER_DISTRIBUTED,
+                                    'net2', mtu='1450')
+        unknown_net = self._make_localport(n_const.DEVICE_OWNER_DISTRIBUTED,
+                                           'net3', mtu='')
+        vm_port = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': '',
+                   'external_ids': {
+                       constants.OVN_DEVICE_OWNER_EXT_ID_KEY: 'compute:nova',
+                       constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net1',
+                       constants.OVN_NETWORK_MTU_EXT_ID_KEY: ''}})
+        # The NB query returns localports only; vm_port proves the owner
+        # filter, in case a non metadata localport shows up.
+        vm_port.type = constants.LSP_TYPE_LOCALPORT
+        nb_idl.db_find_rows.return_value.execute.return_value = [
+            empty, none, missing, good, unknown_net, vm_port]
+        self.fake_ovn_client._plugin.get_networks.return_value = [
+            {'id': 'net1', 'mtu': 8950}, {'id': 'net2', 'mtu': 1450}]
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.update_localport_mtu)
+
+        nb_idl.db_find_rows.assert_called_once_with(
+            'Logical_Switch_Port', ('type', '=', constants.LSP_TYPE_LOCALPORT))
+        # Only the networks of the metadata / LB HM localports are queried.
+        kwargs = self.fake_ovn_client._plugin.get_networks.call_args.kwargs
+        self.assertEqual(['id', 'mtu'], kwargs['fields'])
+        self.assertCountEqual(['net1', 'net2', 'net3'],
+                              kwargs['filters']['id'])
+        mtu_key = constants.OVN_NETWORK_MTU_EXT_ID_KEY
+        nb_idl.db_set.assert_has_calls([
+            mock.call('Logical_Switch_Port', empty.uuid,
+                      ('external_ids', {mtu_key: '8950'})),
+            mock.call('Logical_Switch_Port', none.uuid,
+                      ('external_ids', {mtu_key: '8950'})),
+            mock.call('Logical_Switch_Port', missing.uuid,
+                      ('external_ids', {mtu_key: '1450'})),
+        ])
+        # The port already right, the port of a network unknown to Neutron
+        # and the non metadata localport are left alone.
+        self.assertEqual(3, nb_idl.db_set.call_count)
+
+    def test_update_localport_mtu_no_localports(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        nb_idl.db_find_rows.return_value.execute.return_value = []
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.update_localport_mtu)
+
+        self.fake_ovn_client._plugin.get_networks.assert_not_called()
+        nb_idl.db_set.assert_not_called()
+
     def test_set_ovn_owned_dns_option_already_set(self):
         cfg.CONF.set_override('dns_records_ovn_owned', 'true',
                               group='ovn')
