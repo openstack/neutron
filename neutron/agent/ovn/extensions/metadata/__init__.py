@@ -47,6 +47,9 @@ agents_db.register_db_agents_opts()
 _SYNC_STATE_LOCK = threading.RLock()
 CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
+# NOTE: Use the neutron-lib constant once it is available.
+OVS_DATAPATH_DOCA = 'doca'
+
 SB_IDL_TABLES = ['Encap',
                  'Port_Binding',
                  'Datapath_Binding',
@@ -444,15 +447,15 @@ class MetadataAgent:
         ip.garbage_collect_namespace()
 
     def _ensure_datapath_checksum(self, namespace):
-        """Ensure the correct checksum in the metadata packets in DPDK bridges
+        """Ensure correct checksums in metadata packets for DPDK and DOCA
 
         (LP#1904871) In DPDK deployments (integration bridge datapath_type ==
         "netdev"), the checksum between the metadata namespace and OVS is not
         correctly populated.
         """
         if (self.ovs_idl.db_get(
-                'Bridge', self.ovn_bridge, 'datapath_type').execute() !=
-                ovn_const.CHASSIS_DATAPATH_NETDEV):
+                'Bridge', self.ovn_bridge, 'datapath_type').execute() not in
+                (ovn_const.CHASSIS_DATAPATH_NETDEV, OVS_DATAPATH_DOCA)):
             return
 
         iptables_mgr = iptables_manager.IptablesManager(

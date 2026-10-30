@@ -96,6 +96,34 @@ class TestMetadataAgent(base.BaseTestCase):
                     external_ids={'name': 'neutron-%d' % i})))
         self.agent.sb_idl.get_ports_on_chassis.return_value = self.ports
 
+    def test_ensure_datapath_checksum_userspace(self):
+        for datapath_type in ('netdev', 'doca'):
+            with self.subTest(datapath_type=datapath_type):
+                self.agent.ovs_idl.db_get.return_value.execute.return_value = (
+                    datapath_type)
+                with mock.patch.object(agent.iptables_manager,
+                                       'IptablesManager') as iptables_mgr:
+                    self.agent._ensure_datapath_checksum('ovnmeta-test')
+
+                iptables_mgr.assert_called_once_with(
+                    use_ipv6=True, nat=False, namespace='ovnmeta-test')
+                mangle = iptables_mgr.return_value.ipv4['mangle']
+                mangle.add_rule.assert_called_once_with(
+                    'POSTROUTING', '-p tcp -m tcp -j CHECKSUM --checksum-fill',
+                    wrap=False)
+                iptables_mgr.return_value.apply.assert_called_once_with()
+
+    def test_ensure_datapath_checksum_unsupported(self):
+        for datapath_type in ('system', 'custom-dp', 'other', ''):
+            with self.subTest(datapath_type=datapath_type):
+                self.agent.ovs_idl.db_get.return_value.execute.return_value = (
+                    datapath_type)
+                with mock.patch.object(agent.iptables_manager,
+                                       'IptablesManager') as iptables_mgr:
+                    self.agent._ensure_datapath_checksum('ovnmeta-test')
+
+                iptables_mgr.assert_not_called()
+
     def test_sync(self):
 
         with mock.patch.object(
