@@ -66,6 +66,12 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
     def _register_types(self):
         for ext in self:
+            if not isinstance(ext.obj, api.ML2TypeDriver):
+                raise exc.Invalid(
+                    "Type driver '%(name)s' does not inherit from "
+                    "ML2TypeDriver. All type drivers must inherit "
+                    "from ML2TypeDriver."
+                    % {'name': ext.name})
             network_type = ext.obj.get_type()
             if network_type in self.drivers:
                 LOG.error("Type driver '%(new_driver)s' ignored because"
@@ -301,16 +307,10 @@ class TypeManager(stevedore.named.NamedExtensionManager):
     def reserve_provider_segment(self, context, segment, filters=None):
         network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
-        if isinstance(driver.obj, api.TypeDriver):
-            return driver.obj.reserve_provider_segment(context.session,
-                                                       segment, filters)
         return driver.obj.reserve_provider_segment(context, segment, filters)
 
     def _allocate_segment(self, context, network_type, filters=None):
         driver = self.drivers.get(network_type)
-        if isinstance(driver.obj, api.TypeDriver):
-            return driver.obj.allocate_tenant_segment(context.session,
-                                                      filters)
         return driver.obj.allocate_tenant_segment(context, filters)
 
     def _allocate_project_net_segment(self, context, filters=None):
@@ -338,10 +338,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         network_type = segment.get(api.NETWORK_TYPE)
         driver = self.drivers.get(network_type)
         if driver:
-            if isinstance(driver.obj, api.TypeDriver):
-                driver.obj.release_segment(context.session, segment)
-            else:
-                driver.obj.release_segment(context, segment)
+            driver.obj.release_segment(context, segment)
         else:
             LOG.error("Failed to release segment '%s' because "
                       "network type is not supported.", segment)
@@ -359,12 +356,8 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         try:
             with db_api.CONTEXT_WRITER.using(context):
                 driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
-                if isinstance(driver.obj, api.TypeDriver):
-                    dynamic_segment = driver.obj.reserve_provider_segment(
-                        context.session, segment)
-                else:
-                    dynamic_segment = driver.obj.reserve_provider_segment(
-                        context, segment)
+                dynamic_segment = driver.obj.reserve_provider_segment(
+                    context, segment)
                 segments_db.add_network_segment(context, network_id,
                                                 dynamic_segment,
                                                 is_dynamic=True)
@@ -384,10 +377,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             with db_api.CONTEXT_WRITER.using(context):
                 driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
                 if driver:
-                    if isinstance(driver.obj, api.TypeDriver):
-                        driver.obj.release_segment(context.session, segment)
-                    else:
-                        driver.obj.release_segment(context, segment)
+                    driver.obj.release_segment(context, segment)
                     segments_db.delete_network_segment(context, segment_id)
                 else:
                     LOG.error("Failed to release segment '%s' because "
