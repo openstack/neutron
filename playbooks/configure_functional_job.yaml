@@ -6,9 +6,7 @@
       when:
         - enable_fips is defined and enable_fips|bool
         - PYTHON3_VERSION is defined
-    - role: ensure-tox
-      vars:
-        ensure_tox_version: "<4"
+    - ensure-tox
     # TODO(slaweq): remove it when nftables will support syntax for src and
     # destination IP addresses in arp tables:
     - legacy_ebtables
