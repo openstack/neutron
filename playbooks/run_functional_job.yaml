@@ -4,7 +4,5 @@
       bindep_profile: test
       bindep_dir: "{{ zuul_work_dir }}"
     - test-setup
-    - role: ensure-tox
-      vars:
-        ensure_tox_version: "<4"
+    - ensure-tox
     - tox

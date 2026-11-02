@@ -60,6 +60,13 @@
         INSTALL_TESTONLY_PACKAGES: true
         DATABASE_PASSWORD: stackdb
       tox_envlist: dsvm-functional-gate
+      # NOTE: pinned below 4.67.5 to unblock CI. tox 4.67.5 introduced a
+      # package-staging-path permission regression (tox-dev/tox#4357), and
+      # 4.67.6/4.67.7 show a separate, still-under-investigation failure
+      # where the oslo.privsep daemon fails with
+      # "ModuleNotFoundError: No module named 'pyroute2'" in
+      # neutron-functional. Loosen this once both are root-caused/fixed.
+      ensure_tox_version: '<4.67.5'
       tox_environment:
         PYTHONPATH: /opt/stack/data/venv/lib/python3.12/site-packages
       tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/openstack/requirements/upper-constraints.txt'
