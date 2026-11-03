@@ -49,7 +49,7 @@ from neutron.extensions import tagging
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 
 
 OVN_ALEMBIC_TABLE_NAME = "ovn_alembic_version"
@@ -265,9 +265,10 @@ def get_rbac_policies_with_invalid_target_project():
 def get_ovn_client():
     global _OVN_CLIENT
     if _OVN_CLIENT is None:
-        mech_worker = worker.MaintenanceWorker
-        ovn_api = impl_idl_ovn.OvsdbNbOvnIdl.from_worker(mech_worker)
-        ovn_sb_api = impl_idl_ovn.OvsdbSbOvnIdl.from_worker(mech_worker)
+        ovn_api = impl_idl_ovn.OvsdbNbOvnIdl.from_server(
+            ovsdb_monitor.BaseOvnIdl)
+        ovn_sb_api = impl_idl_ovn.OvsdbSbOvnIdl.from_server(
+            ovsdb_monitor.BaseOvnSbIdl)
         _OVN_CLIENT = ovn_client.OVNClient(ovn_api, ovn_sb_api)
     return _OVN_CLIENT
 
@@ -275,8 +276,8 @@ def get_ovn_client():
 def get_ovn_sb_api():
     global _OVN_SB_API
     if _OVN_SB_API is None:
-        _OVN_SB_API = impl_idl_ovn.OvsdbSbOvnIdl.from_worker(
-            worker.MaintenanceWorker)
+        _OVN_SB_API = impl_idl_ovn.OvsdbSbOvnIdl.from_server(
+            ovsdb_monitor.BaseOvnSbIdl)
     return _OVN_SB_API
 
 

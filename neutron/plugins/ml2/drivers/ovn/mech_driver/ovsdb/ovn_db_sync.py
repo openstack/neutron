@@ -107,6 +107,8 @@ class OvnNbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
         super().stop()
 
     def do_sync(self):
+        if self.is_maintenance and not self.ovn_nb_api.idl.has_lock:
+            return
         if self.mode == n_lib_ovn_const.OVN_DB_SYNC_MODE_OFF:
             LOG.debug("Neutron sync mode is off, not checking OVN "
                       "Northbound DB for consistency")
@@ -1837,8 +1839,10 @@ class OvnSbSynchronizer(db_sync_base.BaseOvnDbSynchronizer):
 
         OvnSbSynchronizer will sync data from OVN_Southbound to neutron. And
         the synchronization will always be performed, no matter what mode it
-        is.
+        is. In maintenance mode, only the NB lock owner performs the sync.
         """
+        if self.is_maintenance and not self.ovn_nb_api.idl.has_lock:
+            return
         LOG.debug("OVN-Southbound DB sync process started @ %s",
                   str(datetime.now()))
 

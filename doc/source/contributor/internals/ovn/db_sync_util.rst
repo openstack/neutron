@@ -68,6 +68,24 @@ Example - Running in repair mode to fix inconsistencies::
    neutron-server service to avoid race conditions where the server might
    be modifying the database while the sync tool is running.
 
+Automatic startup synchronization
+---------------------------------
+
+The maintenance worker considers startup synchronization when it first
+acquires the Northbound database lock. The ``neutron_sync_min_interval``
+option in the ``[ovn]`` section sets the minimum interval between these sync
+attempts across workers, in minutes (default: 60). A value of zero disables
+the interval restriction.
+
+The last start time is stored as a Unix timestamp in
+``NB_Global.external_ids:neutron:sync_start`` before synchronization starts.
+If the interval has not elapsed, the worker skips synchronization for the
+rest of its process lifetime, including subsequent lock acquisitions. A
+skip does not update the shared timestamp or schedule a deferred attempt.
+
+This interval does not apply to the explicit sync utility or to the
+maintenance worker's periodic repair and upgrade tasks.
+
 Sync plugins
 ------------
 

@@ -31,7 +31,7 @@ from neutron import manager
 from neutron import opts as neutron_options
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.plugins.ml2 import plugin as ml2_plugin
 
 LOG = logging.getLogger(__name__)
@@ -314,15 +314,16 @@ def main():
         LOG.error('Invalid core plugin: ["%s"].', conf.core_plugin)
         raise SystemExit(1)
 
-    mech_worker = worker.MaintenanceWorker
     try:
-        ovn_nb_api = impl_idl_ovn.OvsdbNbOvnIdl.from_worker(mech_worker)
+        ovn_nb_api = impl_idl_ovn.OvsdbNbOvnIdl.from_server(
+            ovsdb_monitor.BaseOvnIdl)
     except RuntimeError:
         LOG.error('Invalid --ovn-ovn_nb_connection parameter provided.')
         raise SystemExit(1)
 
     try:
-        ovn_sb_api = impl_idl_ovn.OvsdbSbOvnIdl.from_worker(mech_worker)
+        ovn_sb_api = impl_idl_ovn.OvsdbSbOvnIdl.from_server(
+            ovsdb_monitor.BaseOvnSbIdl)
     except RuntimeError:
         LOG.error('Invalid --ovn-ovn_sb_connection parameter provided.')
         raise SystemExit(1)

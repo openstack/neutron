@@ -410,12 +410,10 @@ class OVNMechanismDriver(api.MechanismDriver):
         if worker_class == wsgi.WorkerService:
             self._setup_hash_ring()
 
-        if worker_class == worker.MaintenanceWorker:
-            worker_class.lock_name = ovn_const.MAINTENANCE_NB_IDL_LOCK_NAME
-
         # Initialize singleton agent cache and keep a copy.
         self._agent_cache = n_agent.AgentCache(self)
-        self.nb_ovn, self.sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
+        self.nb_ovn, self.sb_ovn = impl_idl_ovn.get_ovn_apis(
+            self, worker_class)
 
         # Override agents API methods
         self.patch_plugin_merge("get_agents", get_agents)
@@ -441,14 +439,12 @@ class OVNMechanismDriver(api.MechanismDriver):
                 self._plugin, self, ovn_conf.get_ovn_neutron_sync_mode(),
                 is_maintenance=True,
             )
-            self.nb_synchronizer.sync()
-
             # This sync neutron DB to OVN-SB DB only in inconsistent states
             self.sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
                 self._plugin, self, ovn_conf.get_ovn_neutron_sync_mode(),
                 is_maintenance=True,
             )
-            self.sb_synchronizer.sync()
+            self.nb_ovn.idl.notify_handler.sync_ready.set()
 
             self._start_maintenance_thread()
 

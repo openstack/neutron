@@ -52,6 +52,8 @@ from neutron.objects import ports as ports_obj
 from neutron.objects import pvlan as pvlan_obj
 from neutron.objects import router as router_obj
 from neutron.objects import securitygroup as sg_obj
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.services.bgp import constants as bgp_const
 from neutron.services.evpn import constants as evpn_const
 from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn_driver
@@ -62,6 +64,49 @@ LOG = log.getLogger(__name__)
 
 INCONSISTENCY_TYPE_CREATE_UPDATE = 'create/update'
 INCONSISTENCY_TYPE_DELETE = 'delete'
+
+
+class MaintenanceOvnDbNotifyHandler(row_event.RowEventHandler):
+    """Schedule startup synchronization on the existing notification queue."""
+
+    def __init__(self, driver):
+        self.driver = driver
+        self.sync_ready = threading.Event()
+        self._sync_handled = False
+        super().__init__()
+
+    def lock_acquired(self, lock_name):
+        # The initial notification can arrive before the SB API and both
+        # synchronizers have been constructed. Only the notify loop waits;
+        # the connection thread remains free to finish initialization.
+        self.sync_ready.wait()
+        if self._sync_handled or not self.driver.nb_ovn.idl.has_lock:
+            return
+        # A cooldown skip consumes this process's startup opportunity too.
+        self._sync_handled = True
+        min_interval = ovn_conf.get_ovn_neutron_sync_min_interval()
+        if not commands.CheckSyncStartCommand(
+                self.driver.nb_ovn, min_interval).execute(check_error=True):
+            LOG.info('Skipping startup synchronization: minimum interval '
+                     'of %s minutes has not elapsed', min_interval)
+            return
+        for synchronizer in (self.driver.nb_synchronizer,
+                             self.driver.sb_synchronizer):
+            synchronizer.sync(delay_seconds=0)
+
+
+class MaintenanceOvnNbIdl(ovsdb_monitor.BaseOvnIdl):
+    """NB IDL with maintenance leadership and startup lock notifications."""
+
+    def __init__(self, remote, schema, driver):
+        # Locks are per-server, so only a leader-only NB connection can
+        # elect the maintenance owner. Never use the SB connection's lock.
+        super().__init__(remote, schema, leader_only=True,
+                         notify_handler=MaintenanceOvnDbNotifyHandler(driver))
+        self.set_lock(ovn_const.MAINTENANCE_NB_IDL_LOCK_NAME)
+
+    def notify_lock(self, lock_name, acquired):
+        self.notify_handler.notify_lock(lock_name, acquired)
 
 
 def has_lock_periodic(*args, periodic_run_limit=0, **kwargs):

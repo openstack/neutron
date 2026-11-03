@@ -24,17 +24,39 @@ from oslo_utils import uuidutils
 
 from neutron.common.ovn import acl
 from neutron.common.ovn import constants as ovn_const
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.services.ovn_l3 import plugin as ovn_plugin
 from neutron.services.pvlan.drivers.ovn import driver as pvlan_ovn
+from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import \
     test_mech_driver
 from neutron.tests.unit.services.logapi.drivers.ovn import test_driver
 
 OvnPortInfo = collections.namedtuple('OvnPortInfo', ['name'])
+
+
+class TestStartupSync(base.BaseTestCase):
+
+    def test_do_sync_requires_nb_lock_only_in_maintenance(self):
+        for cls in (ovn_db_sync.OvnNbSynchronizer,
+                    ovn_db_sync.OvnSbSynchronizer):
+            for is_maintenance, has_lock in ((False, False), (True, False),
+                                             (True, True)):
+                with self.subTest(synchronizer=cls.__name__,
+                                  maintenance=is_maintenance,
+                                  has_lock=has_lock):
+                    synchronizer = mock.Mock(
+                        is_maintenance=is_maintenance,
+                        mode=n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG)
+                    synchronizer.ovn_nb_api.idl.has_lock = has_lock
+                    synchronizer.ovn_sb_api.idl.has_lock = not has_lock
+                    with mock.patch.object(ovn_db_sync.context,
+                                           'get_admin_context') as get_context:
+                        cls.do_sync(synchronizer)
+                    self.assertEqual(not is_maintenance or has_lock,
+                                     get_context.called)
 
 
 class FakeACL:
@@ -711,7 +733,6 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         self._test_mocks_helper(ovn_nb_synchronizer, test_logging)
 
         ovn_api = ovn_nb_synchronizer.ovn_nb_api
-        mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker').start()
 
         ovn_nb_synchronizer.do_sync()
 

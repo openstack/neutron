@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    Introduced a new config option ``[ovn] neutron_sync_min_interval`` to
+    ensure on startup, Neutron OVN sync only runs after a minimum interval has
+    passed. It defaults to 60 minutes.
+fixes:
+  - |
+    On startup, the MaintenanceWorker would run the OvnNbSynchronizer and
+    OvnSbSynchronizer sync() on every MaintenanceWorker, regardless of whether
+    that was the "active" MaintenanceWorker. On a 3-controller install, this
+    would do 3 simultaneous syncs, with only one able to write the Northbound
+    DB, and all 3 writing to the Southbound and Neutron DBs. Now, only the
+    MaintenanceWorker with the OVN Northbound lock will run the sync.
