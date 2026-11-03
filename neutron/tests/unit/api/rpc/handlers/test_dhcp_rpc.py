@@ -266,12 +266,17 @@ class TestDhcpRpcCallback(base.BaseTestCase):
             _kwargs.update({'network': network,
                             'enable_dhcp': enable_dhcp,
                             'ports': ports})
+        elif enable_dhcp is not True:
+            _kwargs['enable_dhcp'] = enable_dhcp
         retval = self.callbacks.get_network_info(mock.Mock(), **_kwargs)
         reference = _network_to_dict(network, ports, enable_dhcp)
         self.assertEqual(reference, retval)
 
     def test_get_network_info(self):
         self._test_get_network_info()
+
+    def test_get_network_info_all_subnets(self):
+        self._test_get_network_info(enable_dhcp=None)
 
     def test_get_network_info_with_routed_network(self):
         self._test_get_network_info(segmented_network=True,
