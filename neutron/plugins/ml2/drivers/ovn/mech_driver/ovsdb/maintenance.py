@@ -1693,6 +1693,62 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(hiento09): to remove in I+4=M (2029.1) cycle (2nd next SLURP
+    # release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    @log_maintenance_task(
+        start_message='Setting the network MTU on the metadata and OVN LB '
+                      'health monitor localports.')
+    def update_localport_mtu(self):
+        """Store the network MTU on the metadata and OVN LB HM localports.
+
+        The ``neutron:mtu`` external_id of these ports is read by the OVN
+        metadata extension (and the OVN metadata agent) to configure the tap
+        interfaces. Localports created before the MTU was stored on them
+        carry an empty value (and some code paths wrote "None"); make all of
+        them hold the MTU of their network.
+        """
+        ports = self._nb_idl.db_find_rows(
+            'Logical_Switch_Port',
+            ('type', '=', ovn_const.LSP_TYPE_LOCALPORT)
+        ).execute(check_error=True)
+        owners = (n_const.DEVICE_OWNER_DISTRIBUTED,
+                  ovn_const.OVN_LB_HM_PORT_DISTRIBUTED)
+        port_network = [
+            (port, utils.get_neutron_name(port.external_ids.get(
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY, '')))
+            for port in ports
+            if port.external_ids.get(
+                ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY) in owners]
+        if not port_network:
+            raise periodics.NeverAgain()
+
+        network_ids = list({net_id for _port, net_id in port_network})
+        network_mtu = {
+            net['id']: str(net['mtu']) for net in
+            self._ovn_client._plugin.get_networks(
+                n_context.get_admin_context(),
+                filters={'id': network_ids}, fields=['id', 'mtu'])}
+
+        updated = 0
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for port, network_id in port_network:
+                mtu = network_mtu.get(network_id)
+                if (mtu is None or port.external_ids.get(
+                        ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY) == mtu):
+                    continue
+                txn.add(self._nb_idl.db_set(
+                    'Logical_Switch_Port', port.uuid,
+                    ('external_ids',
+                     {ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: mtu})))
+                updated += 1
+
+        LOG.info('Updated the MTU of %d OVN localports', updated)
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics:
 
