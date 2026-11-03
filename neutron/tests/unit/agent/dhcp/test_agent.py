@@ -893,6 +893,35 @@ class TestDhcpAgent(base.BaseTestCase):
             sync_state.assert_called_once_with(list(resync_reasons.keys()))
             self.assertEqual(0, len(dhcp.needs_resync_reasons))
 
+    def test_periodic_resync_helper_throttles_consecutive_events(self):
+        cfg.CONF.set_override('resync_interval', 30)
+        cfg.CONF.set_override('resync_throttle', 10)
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        dhcp.init_host()
+        dhcp.schedule_resync('reason1', 'a')
+        clock = [1000.0]
+        sync_calls = []
+
+        def _sync_state(networks=None):
+            sync_calls.append(networks)
+            if len(sync_calls) == 1:
+                # A second event arrives 3 seconds after the first.
+                clock[0] += 3
+                dhcp.schedule_resync('reason2', 'b')
+                return
+            raise RuntimeError()
+
+        with mock.patch.object(utils, 'time') as mock_time, \
+                mock.patch.object(dhcp, 'sync_state',
+                                  side_effect=_sync_state):
+            mock_time.time.side_effect = lambda: clock[0]
+            with testtools.ExpectedException(RuntimeError):
+                dhcp._periodic_resync_helper()
+            self.assertEqual(2, len(sync_calls))
+            # The first event is not delayed, the second waits for the
+            # remainder of the 10 second throttle.
+            mock_time.sleep.assert_called_once_with(7.0)
+
     def test_periodic_resync_helper_with_event(self):
         with mock.patch.object(dhcp_agent.LOG, 'debug') as log:
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)

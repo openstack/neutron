@@ -127,6 +127,9 @@ class DhcpAgent(manager.Manager):
                 opt_name='resync_throttle',
                 opt_value=self.conf.resync_throttle)
         self._periodic_resync_event = threading.Event()
+        # Built once: the throttler keeps its last-call time in this closure.
+        self._throttled_resync_clear = utils.throttler(
+            self.conf.resync_throttle)(self._periodic_resync_event.clear)
         # create dhcp dir to store dhcp info
         dhcp_dir = os.path.dirname("/%s/dhcp/" % self.conf.state_path)
         fileutils.ensure_tree(dhcp_dir, mode=0o755)
@@ -438,12 +441,8 @@ class DhcpAgent(manager.Manager):
             # except if a timeout is given and the operation times out.
             if self._periodic_resync_event.wait(self.conf.resync_interval):
                 LOG.debug("Resync event has been scheduled")
-                clear_periodic_resync_event = self._periodic_resync_event.clear
-                # configure throttler for clear_periodic_resync_event to
-                # introduce delays between resync state events.
-                throttled_clear_periodic_resync_event = utils.throttler(
-                    self.conf.resync_throttle)(clear_periodic_resync_event)
-                throttled_clear_periodic_resync_event()
+                # Delay consecutive resync events by resync_throttle.
+                self._throttled_resync_clear()
 
             if self.needs_resync_reasons:
                 # be careful to avoid a race with additions to list
