@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import copy
 import os
 import signal
@@ -1156,6 +1157,11 @@ class TestBase(TestConfBase):
 
         self.mock_mgr.return_value.driver.bridged = True
 
+        # The running-interface registry is class level; give each
+        # test its own so no test sees what an earlier one left.
+        mock.patch.object(dhcp.DhcpLocalProcess, '_interfaces',
+                          collections.defaultdict(set)).start()
+
 
 class TestDhcpBase(TestBase):
 
@@ -1333,6 +1339,31 @@ class TestDhcpLocalProcess(TestBase):
             self.assertTrue(self.external_process().disable.called)
 
         delete_ns.assert_called_with('qdhcp-ns')
+
+    def test_destroy_namespace_and_port_other_segment_running(self):
+        network = FakeDualNetwork()
+        lp = LocalChild(self.conf, network, segment=FakeSegment())
+        lp.device_manager = mock.Mock()
+        LocalChild._add_running_interface('tap-other', network.id)
+
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'delete_network_namespace') as delete_ns:
+            lp._destroy_namespace_and_port()
+
+        delete_ns.assert_not_called()
+
+    def test_destroy_namespace_and_port_no_other_segment_running(self):
+        network = FakeDualNetwork()
+        lp = LocalChild(self.conf, network, segment=FakeSegment())
+        lp.device_manager = mock.Mock()
+        LocalChild._add_running_interface('tap-other', network.id)
+        LocalChild._del_running_interface('tap-other', network.id)
+
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'delete_network_namespace') as delete_ns:
+            lp._destroy_namespace_and_port()
+
+        delete_ns.assert_called_once_with('qdhcp-ns')
 
     def test_enable_disable_two_networks(self):
         attrs_to_mock = {'active': mock.DEFAULT}

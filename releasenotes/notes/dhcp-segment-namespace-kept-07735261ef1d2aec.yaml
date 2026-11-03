@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    On routed (multi-segment) networks, disabling DHCP for one segment no
+    longer deletes the network namespace while another segment's dnsmasq is
+    still running in it.
