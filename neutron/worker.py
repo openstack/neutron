@@ -10,6 +10,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import threading
+
 from neutron_lib import worker
 from oslo_config import cfg
 from oslo_service import loopingcall
@@ -39,22 +41,34 @@ class PeriodicWorker(NeutronBaseWorker):
         super().__init__(worker_process_count=0, desc=desc)
         self._check_func = check_func
         self._loop = None
+        self._loop_lock = threading.Lock()
         self._interval = interval
         self._initial_delay = initial_delay
 
     @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def start(self, **kwargs):
         super().start()
-        if self._loop is None:
-            self._loop = loopingcall.FixedIntervalLoopingCall(
-                f=self._check_func)
-        self._loop.start(interval=self._interval,
-                         initial_delay=self._initial_delay)
+        with self._loop_lock:
+            if self._loop is None:
+                self._loop = loopingcall.FixedIntervalLoopingCall(
+                    f=self._check_func)
+            self._loop.start(interval=self._interval,
+                             initial_delay=self._initial_delay)
 
     @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def wait(self):
-        if self._loop is not None:
-            self._loop.wait()
+        loop = self._loop
+        if loop is None:
+            return
+        try:
+            loop.wait()
+        finally:
+            # The loop has finished, but oslo.service can refuse to start it
+            # again until its thread has been released, which may lag behind
+            # wait() returning. The next start() builds a new one instead.
+            with self._loop_lock:
+                if self._loop is loop:
+                    self._loop = None
 
     @common_utils.log_worker_lifecycle(lambda self: self.desc)
     def stop(self):

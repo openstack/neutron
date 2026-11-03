@@ -14,6 +14,8 @@
 
 from unittest import mock
 
+from oslo_service import loopingcall
+
 from neutron.common import utils
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker as \
     ovn_worker
@@ -109,6 +111,24 @@ class PeriodicWorkerTestCase(base.BaseTestCase):
         self.addCleanup(long_interval_worker.stop)
         long_interval_worker.start()
         self._assert_returns(long_interval_worker, 'reset')
+
+    def test_start_before_finished_loop_is_released(self):
+        """start() after wait() does not reuse the finished looping call.
+
+        oslo.service wakes wait() before it releases the loop's thread, and
+        refuses to start that looping call again until it has.
+        """
+        worker = neutron_worker.PeriodicWorker(
+            mock.Mock(), interval=60, initial_delay=60, desc=self.desc)
+        self.addCleanup(worker.stop)
+        # Hold back the release of the first loop's thread.
+        with mock.patch.object(loopingcall.FixedIntervalLoopingCall,
+                               '_on_done'):
+            worker.start()
+        worker.stop()
+        worker.wait()
+
+        worker.start()
 
     def test_periodic_worker_lifecycle_contract(self):
         """Verify PeriodicWorker return/block behavior across states."""
