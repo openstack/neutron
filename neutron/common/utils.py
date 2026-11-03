@@ -960,16 +960,18 @@ def spawn_n(func, *args, **kwargs):
 
 
 def timecost(f):
-    call_id = uuidutils.generate_uuid()
-    message_base = ("Time-cost: call %(call_id)s function %(fname)s ") % {
-        "call_id": call_id, "fname": f.__name__}
-    end_message = message_base + "took %(seconds).3fs seconds to run"
-
-    @timeutils.time_it(LOG, message=end_message, min_duration=None)
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        # A new call id for every call, so that the start and end messages
+        # of overlapping calls to the same function can be paired.
+        call_id = uuidutils.generate_uuid()
+        message_base = ("Time-cost: call %(call_id)s function %(fname)s ") % {
+            "call_id": call_id, "fname": f.__name__}
+        end_message = message_base + "took %(seconds).3fs seconds to run"
+
         LOG.debug('%s start', message_base)
-        ret = f(*args, **kwargs)
-        return ret
+        timed = timeutils.time_it(LOG, message=end_message, min_duration=None)
+        return timed(f)(*args, **kwargs)
     return wrapper
 
 
