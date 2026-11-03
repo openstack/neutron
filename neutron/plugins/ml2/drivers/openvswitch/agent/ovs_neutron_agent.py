@@ -2141,6 +2141,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                                    provisioning_needed)
                 if need_binding:
                     need_binding_devices.append(details)
+                elif device in devices_not_in_datapath:
+                    # No valid ofport yet; retry in the next iteration.
+                    failed_devices.add(device)
                 self._update_port_network(details['port_id'],
                                           details['network_id'],
                                           details['segmentation_id'])

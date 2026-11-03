@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The OVS agent now retries ports it skipped for not having a valid ofport
+    yet. Such ports could stay ``DOWN``. See bug
+    `2172804 <https://launchpad.net/bugs/2172804>`_.
