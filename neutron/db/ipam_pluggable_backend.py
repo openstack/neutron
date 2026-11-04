@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+import random
 
 import netaddr
 from neutron_lib.api.definitions import portbindings
@@ -276,6 +277,10 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                 subnets)
         else:
             ips = []
+            # Spread concurrent requests on crowded networks; stable sort
+            # keeps priority for subnets with service_types.
+            random.shuffle(v4)
+            v4.sort(key=lambda subnet: not subnet.get('service_types'))
             version_subnets = [v4, v6_stateful]
             for subnets in version_subnets:
                 if subnets:

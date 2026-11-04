@@ -813,6 +813,51 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         # Verify incoming port dict is not changed ('id' is not added to it)
         self.assertIsNone(port_dict['port'].get('id'))
 
+    def _v4_subnet(self, network_id, cidr, service_types=None):
+        return {'id': uuidutils.generate_uuid(),
+                'network_id': network_id,
+                'cidr': cidr,
+                'ip_version': constants.IP_VERSION_4,
+                'ipv6_address_mode': None,
+                'ipv6_ra_mode': None,
+                'service_types': service_types or []}
+
+    def _allocate_any_ip(self, pool_mock, subnets, network_id):
+        mocks = self._prepare_mocks_with_pool_mock(pool_mock)
+        port_dict = {'port': {'device_owner': 'compute:nova',
+                              'network_id': network_id,
+                              'fixed_ips': constants.ATTR_NOT_SPECIFIED}}
+        ipam = ipam_pluggable_backend.IpamPluggableBackend()
+        ipam._ipam_get_subnets = mock.Mock(return_value=subnets)
+        with mock.patch.object(ipam_pluggable_backend.random, 'shuffle',
+                               side_effect=lambda lst: lst.reverse()), \
+                mock.patch.object(port_obj.IPAllocation, 'create'):
+            ipam.allocate_ips_for_port_and_store(mock.Mock(), port_dict,
+                                                 uuidutils.generate_uuid())
+        return mocks
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_allocate_any_ip_shuffles_v4_subnets(self, pool_mock):
+        network_id = uuidutils.generate_uuid()
+        subnets = [self._v4_subnet(network_id, '192.0.2.0/24'),
+                   self._v4_subnet(network_id, '198.51.100.0/24'),
+                   self._v4_subnet(network_id, '203.0.113.0/24')]
+        mocks = self._allocate_any_ip(pool_mock, subnets, network_id)
+        mocks['driver'].get_allocator.assert_called_once_with(
+            [s['id'] for s in reversed(subnets)])
+
+    @mock.patch('neutron.ipam.driver.Pool')
+    def test_allocate_any_ip_keeps_service_types_first(self, pool_mock):
+        network_id = uuidutils.generate_uuid()
+        typed = self._v4_subnet(network_id, '192.0.2.0/24',
+                                service_types=['compute:nova'])
+        plain1 = self._v4_subnet(network_id, '198.51.100.0/24')
+        plain2 = self._v4_subnet(network_id, '203.0.113.0/24')
+        mocks = self._allocate_any_ip(pool_mock, [typed, plain1, plain2],
+                                      network_id)
+        mocks['driver'].get_allocator.assert_called_once_with(
+            [typed['id'], plain2['id'], plain1['id']])
+
     def _test_update_db_subnet(self, pool_mock, subnet, expected_subnet,
                                old_pools):
         subnet_factory = mock.Mock()
