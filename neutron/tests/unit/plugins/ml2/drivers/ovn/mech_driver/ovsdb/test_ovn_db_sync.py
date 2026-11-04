@@ -1847,3 +1847,61 @@ class TestSyncPVLAN(test_mech_driver.OVNMechanismDriverTestCase):
                 '_sanitize_pvlan_network') as m:
             self.synchronizer.sync_pvlan(self.ctx)
             self.assertEqual(2, m.call_count)
+
+
+class TestSyncMetadataPortMtu(test_mech_driver.OVNMechanismDriverTestCase):
+    def setUp(self):
+        super().setUp()
+        self.synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver,
+            n_lib_ovn_const.OVN_DB_SYNC_MODE_REPAIR)
+        self.nb_api = self.synchronizer.ovn_nb_api
+        self.net = {'id': 'net-1', 'mtu': 1442}
+        self.port = {'id': 'port-1'}
+
+    def _set_lsp(self, mtu=None):
+        external_ids = {}
+        if mtu is not None:
+            external_ids[ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY] = mtu
+        self.nb_api.lookup.return_value = mock.Mock(
+            external_ids=external_ids)
+
+    def test_mtu_set_when_missing(self):
+        self._set_lsp()
+
+        self.synchronizer._sync_metadata_port_mtu(self.net, self.port)
+
+        self.nb_api.db_set.assert_called_once_with(
+            'Logical_Switch_Port', 'port-1',
+            ('external_ids', {ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: '1442'}))
+
+    def test_mtu_set_when_stale(self):
+        self._set_lsp(mtu='1500')
+
+        self.synchronizer._sync_metadata_port_mtu(self.net, self.port)
+
+        self.nb_api.db_set.assert_called_once_with(
+            'Logical_Switch_Port', 'port-1',
+            ('external_ids', {ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: '1442'}))
+
+    def test_mtu_not_updated_when_correct(self):
+        self._set_lsp(mtu='1442')
+
+        self.synchronizer._sync_metadata_port_mtu(self.net, self.port)
+
+        self.nb_api.db_set.assert_not_called()
+
+    def test_missing_lsp_skipped(self):
+        self.nb_api.lookup.return_value = None
+
+        self.synchronizer._sync_metadata_port_mtu(self.net, self.port)
+
+        self.nb_api.db_set.assert_not_called()
+
+    def test_mtu_not_updated_in_log_mode(self):
+        self.synchronizer.mode = n_lib_ovn_const.OVN_DB_SYNC_MODE_LOG
+        self._set_lsp()
+
+        self.synchronizer._sync_metadata_port_mtu(self.net, self.port)
+
+        self.nb_api.db_set.assert_not_called()

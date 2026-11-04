@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    ``neutron-ovn-db-sync-util`` now checks that the ``neutron:mtu`` external
+    ID of the OVN metadata ports matches the MTU of their networks. Metadata
+    ports created before this external ID was introduced do not have it set,
+    which leaves the interface created by the metadata agent with the default
+    MTU and could lead to fragmentation issues. Run the tool in ``repair``
+    mode to set it on the existing metadata ports. For more information, see
+    `bug 2153980 <https://bugs.launchpad.net/neutron/+bug/2153980>`_.
