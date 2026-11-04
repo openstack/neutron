@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    The traffic of the HA interface of the L3 HA routers (VRRP adverts,
+    conntrackd synchronization) is not tracked by conntrack anymore. When the
+    conntrack table of a router namespace was full, the kernel dropped the
+    VRRP adverts sent by the primary router, which made the backup routers
+    become primary too (split-brain).

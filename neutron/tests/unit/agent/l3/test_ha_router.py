@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
+from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
@@ -265,3 +266,13 @@ class TestBasicRouterOperations(base.BaseTestCase):
         # neutron server return empty HA_INTERFACE_KEY, but
         # agent side router info should remain the original value.
         self.assertIsNotNone(ri.ha_port)
+
+    def test_ha_iface_notrack_rules(self):
+        ri = self._create_router()
+        rules = [
+            iptables_manager.IptablesRule('PREROUTING',
+                                          '-i ha-+ -j CT --notrack'),
+            iptables_manager.IptablesRule('OUTPUT', '-o ha-+ -j CT --notrack')]
+        for rule in rules:
+            self.assertIn(rule, ri.iptables_manager.ipv4['raw'].rules)
+            self.assertNotIn(rule, ri.iptables_manager.ipv6['raw'].rules)

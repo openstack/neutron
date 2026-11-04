@@ -86,6 +86,22 @@ class HaRouter(router.RouterInfo):
         self._ha_state = None
         self._ha_state_path = None
         self.conntrackd_manager = None
+        self.initialize_ha_notrack_iptables()
+
+    def initialize_ha_notrack_iptables(self):
+        self._add_ha_notrack_rules(self.iptables_manager)
+
+    @staticmethod
+    def _add_ha_notrack_rules(iptables_manager):
+        # The HA interface only carries the HA control traffic (VRRP
+        # adverts, conntrackd sync), which needs no connection tracking.
+        # Keeping it out of conntrack ensures a full conntrack table can
+        # not drop the VRRP adverts and make several nodes primary.
+        ha_iface = HA_DEV_PREFIX + '+'
+        iptables_manager.ipv4['raw'].add_rule(
+            'PREROUTING', f'-i {ha_iface} -j CT --notrack')
+        iptables_manager.ipv4['raw'].add_rule(
+            'OUTPUT', f'-o {ha_iface} -j CT --notrack')
 
     def create_router_namespace_object(
             self, router_id, agent_conf, iface_driver, use_ipv6):
