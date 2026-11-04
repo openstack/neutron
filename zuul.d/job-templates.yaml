@@ -47,7 +47,7 @@
         - openstack-tox-py312: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-    periodic:
+    periodic-weekly:
       jobs:
         - openstack-tox-py39:  # from openstack-python3-jobs template
             timeout: 3600
@@ -79,7 +79,7 @@
 
 - project-template:
     name: neutron-periodic-jobs
-    periodic:
+    periodic-weekly:
       jobs: &neutron-periodic-jobs
         - neutron-functional
         - neutron-functional-fips
