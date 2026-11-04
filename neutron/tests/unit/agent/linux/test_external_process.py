@@ -15,6 +15,7 @@
 import os.path
 import shutil
 import tempfile
+import threading
 from unittest import mock
 
 from neutron_lib import fixture as lib_fixtures
@@ -112,6 +113,34 @@ class TestProcessMonitor(BaseTestProcessMonitor):
     def test_unregister_unknown_process(self):
         self.pmonitor.unregister(TEST_UUID, None)
         self.assertEqual(len(self.pmonitor._monitored_processes), 0)
+
+
+class TestProcessMonitorThread(base.BaseTestCase):
+
+    def _process_monitor(self, interval):
+        conf = mock.Mock()
+        conf.AGENT.check_child_processes_interval = interval
+        pmonitor = ep.ProcessMonitor(config=conf, resource_type='test')
+        self.addCleanup(pmonitor.stop)
+        return pmonitor
+
+    def test_checking_thread_checks_each_interval(self):
+        checks = threading.Semaphore(0)
+        with mock.patch.object(ep.ProcessMonitor, '_check_child_processes',
+                               side_effect=checks.release):
+            pmonitor = self._process_monitor(0.01)
+            # The thread checks again after the first check.
+            self.assertTrue(checks.acquire(timeout=5))
+            self.assertTrue(checks.acquire(timeout=5))
+            pmonitor.stop()
+
+    def test_stop_ends_checking_thread_at_once(self):
+        pmonitor = self._process_monitor(60)
+        thread = pmonitor._checking_thread
+        # A process that never calls stop() can still exit.
+        self.assertTrue(thread.daemon)
+        pmonitor.stop()
+        self.assertFalse(thread.is_alive())
 
 
 class TestProcessManager(base.BaseTestCase):
