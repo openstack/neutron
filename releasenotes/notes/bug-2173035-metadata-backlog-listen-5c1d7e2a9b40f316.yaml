@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    ``[DEFAULT] metadata_backlog`` now sets the listen queue of the metadata
+    proxy socket. The value was applied after the socket had started to
+    listen, so the queue stayed at 5, and bursts of metadata requests could
+    get a 503 from haproxy. See bug `2173035
+    <https://bugs.launchpad.net/neutron/+bug/2173035>`_.
