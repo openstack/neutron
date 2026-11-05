@@ -1325,6 +1325,26 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
                 'Port %s is not bound to chassis %s in SB' %
                 (self.port['id'], self.src_chassis)))
 
+        # Also wait for the NB Logical_Switch_Port.up to be propagated
+        # by northd. The PortBindingChassisUpdateEvent.match_fn checks
+        # the NB LSP status, so if the test sets additional_chassis
+        # before northd propagates Port_Binding.up to LSP.up, the
+        # event will not match and nb_cfg will never be bumped.
+        def lsp_is_up():
+            try:
+                lsp = self.nb_api.lookup(
+                    'Logical_Switch_Port', self.port['id'])
+            except idlutils.RowNotFound:
+                return False
+            return lsp.up == [True]
+
+        n_utils.wait_until_true(
+            lsp_is_up,
+            timeout=10,
+            exception=Exception(
+                'Logical_Switch_Port %s is not UP in NB' %
+                self.port['id']))
+
     def _get_nb_global_nb_cfg(self):
         return self.nb_api.db_get(
             'NB_Global', '.', 'nb_cfg').execute(check_error=True)
