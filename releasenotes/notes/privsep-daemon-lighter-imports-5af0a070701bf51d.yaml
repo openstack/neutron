@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Neutron's privsep daemons no longer import ``neutron.common.utils``,
+    which pulled the API and SDK layers into every daemon, saving about
+    28MB of resident memory per daemon.

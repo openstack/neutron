@@ -61,11 +61,17 @@ from sqlalchemy.sql.expression import func as sql_func
 import neutron
 from neutron._i18n import _
 from neutron.api import api_common
+from neutron.common import privsep_safe_utils
 from neutron.conf import service as conf_service
 
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
+
+cidr_broadcast_address = privsep_safe_utils.cidr_broadcast_address
+cidr_broadcast_address_alternative = (
+    privsep_safe_utils.cidr_broadcast_address_alternative)
+read_file = privsep_safe_utils.read_file
 
 DEFAULT_THROTTLER_VALUE = 2
 
@@ -314,38 +320,6 @@ def cidr_mask_length(cidr):
               will be 32 (IPv4) or 128 (IPv6)
     """
     return netaddr.IPNetwork(cidr).netmask.netmask_bits()
-
-
-def cidr_broadcast_address(cidr):
-    """Returns the broadcast address of a cidr
-
-    :param cidr: (string, netaddr.IPNetwork, netaddr.IPAddress) either an ipv4
-                 or ipv6 cidr or a host IP.
-    :returns: (string) broadcast address of the cidr, None if the cidr has no
-              broadcast domain
-    """
-    broadcast = netaddr.IPNetwork(cidr).broadcast
-    if broadcast:
-        return str(broadcast)
-
-
-def cidr_broadcast_address_alternative(cidr):
-    """Wraps cidr_broadcast address and handles last cidr differently in
-    respect to netaddr
-
-    :param cidr: (string, netaddr.IPNetwork, netaddr.IPAddress) either an ipv4
-                 or ipv6 cidr.
-    :returns: (string) broadcast address of the cidr,
-              IP of the cidr if IPv4 /32 CIDR, otherwise None
-    """
-    broadcast = cidr_broadcast_address(cidr)
-    if broadcast:
-        return str(broadcast)
-    net = netaddr.IPNetwork(cidr)
-    if net.prefixlen == 32 and net.version == n_const.IP_VERSION_4:
-        return str(net.ip)
-    # NOTE(mtomaska): netaddr ver >= 0.9.0 will start returning None
-    # for IPv6 cidr /127 /128
 
 
 def get_ip_version(ip_or_cidr):
@@ -1124,19 +1098,6 @@ def parse_permitted_ethertypes(permitted_ethertypes):
             continue
 
     return ret
-
-
-def read_file(path: str) -> str:
-    """Return the content of a text file as a string
-
-    The output includes the empty lines too. If the file does not exist,
-    returns an empty string.
-    """
-    try:
-        with open(path) as file:
-            return file.read()
-    except FileNotFoundError:
-        return ''
 
 
 def ts_to_datetime(timestamp):

@@ -27,7 +27,7 @@ from pyroute2 import netns
 import tenacity
 
 from neutron._i18n import _
-from neutron.common import utils as common_utils
+from neutron.common import privsep_safe_utils
 from neutron import privileged
 from neutron.privileged.agent import linux as priv_linux
 
@@ -282,7 +282,8 @@ def add_ip_addresses(cidrs, device, namespace, scope,
         family = _IP_VERSION_FAMILY_MAP[net.version]
         broadcast = None
         if add_broadcast:
-            broadcast = common_utils.cidr_broadcast_address_alternative(cidr)
+            broadcast = (
+                privsep_safe_utils.cidr_broadcast_address_alternative(cidr))
         try:
             _run_iproute_addr('add',
                               device,

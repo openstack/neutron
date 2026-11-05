@@ -22,7 +22,7 @@ from neutron_lib.utils import helpers
 from oslo_concurrency import processutils
 from oslo_utils import fileutils
 
-from neutron.common import utils
+from neutron.common import privsep_safe_utils
 from neutron import privileged
 
 
@@ -61,7 +61,7 @@ def delete_if_exists(_path, remove=os.unlink):
 
 @privileged.default.entrypoint
 def read_file(_path: str) -> str:
-    return utils.read_file(_path)
+    return privsep_safe_utils.read_file(_path)
 
 
 @privileged.default.entrypoint
