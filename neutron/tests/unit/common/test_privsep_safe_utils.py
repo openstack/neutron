@@ -16,6 +16,10 @@
 import subprocess
 import sys
 
+from neutron_lib import constants as n_const
+from neutron_lib.utils import helpers
+
+from neutron.common import privsep_safe_utils
 from neutron.tests import base
 
 # Modules a privsep daemon imports when it serves neutron entrypoints.
@@ -29,7 +33,7 @@ PRIVILEGED_MODULES = (
     'neutron.privileged.agent.linux.svd',
     'neutron.privileged.agent.ovsdb.native.helpers',
 )
-FORBIDDEN_MODULES = ('neutron.common.utils',)
+FORBIDDEN_MODULES = ('neutron.common.utils', 'neutron_lib')
 
 
 class PrivilegedImportsTestCase(base.BaseTestCase):
@@ -44,4 +48,20 @@ class PrivilegedImportsTestCase(base.BaseTestCase):
                 % (PRIVILEGED_MODULES, FORBIDDEN_MODULES))
         cmd = [sys.executable, '-c', code]
         out = subprocess.check_output(cmd, text=True)  # noqa: S603
-        self.assertEqual('', out.strip())
+        self.assertEqual(
+            '', out.strip(),
+            'Privileged modules must not import these; move what they '
+            'need into neutron.common.privsep_safe_utils')
+
+
+class PrivsepSafeUtilsTestCase(base.BaseTestCase):
+
+    def test_constants_match_neutron_lib(self):
+        for name in ('IP_VERSION_4', 'IP_VERSION_6', 'DEVICE_NAME_MAX_LEN'):
+            self.assertEqual(getattr(n_const, name),
+                             getattr(privsep_safe_utils, name), name)
+
+    def test_safe_decode_utf8_matches_neutron_lib(self):
+        for value in (b'abc', b'\xff\xfe', 'abc', None):
+            self.assertEqual(helpers.safe_decode_utf8(value),
+                             privsep_safe_utils.safe_decode_utf8(value))

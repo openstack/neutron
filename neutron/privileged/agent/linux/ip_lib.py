@@ -14,8 +14,10 @@ import errno
 import os
 import socket
 
+# NOTE(mikal): every module imported here stays resident in each privsep
+# daemon. Do not import neutron_lib or neutron.common.utils. Put what
+# privileged code needs in neutron.common.privsep_safe_utils instead.
 import netaddr
-from neutron_lib import constants
 from oslo_log import log as logging
 import pyroute2
 from pyroute2 import iproute
@@ -357,7 +359,7 @@ def flush_ip_addresses(ip_version, device, namespace):
 
 @privileged.default.entrypoint
 def create_interface(ifname, namespace, kind, **kwargs):
-    ifname = ifname[:constants.DEVICE_NAME_MAX_LEN]
+    ifname = ifname[:privsep_safe_utils.DEVICE_NAME_MAX_LEN]
     try:
         with get_iproute(namespace) as ip:
             physical_interface = kwargs.pop("physical_interface", None)

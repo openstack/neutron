@@ -18,7 +18,9 @@ import re
 import signal
 import subprocess
 
-from neutron_lib.utils import helpers
+# NOTE(mikal): every module imported here stays resident in each privsep
+# daemon. Do not import neutron_lib or neutron.common.utils. Put what
+# privileged code needs in neutron.common.privsep_safe_utils instead.
 from oslo_concurrency import processutils
 from oslo_utils import fileutils
 
@@ -79,8 +81,8 @@ def execute_process(cmd, _process_input, addl_env):
     _stdout, _stderr = obj.communicate(_process_input)
     returncode = obj.returncode
     obj.stdin.close()
-    _stdout = helpers.safe_decode_utf8(_stdout)
-    _stderr = helpers.safe_decode_utf8(_stderr)
+    _stdout = privsep_safe_utils.safe_decode_utf8(_stdout)
+    _stderr = privsep_safe_utils.safe_decode_utf8(_stderr)
     return _stdout, _stderr, returncode
 
 
