@@ -52,6 +52,8 @@ def main():
     """
     conf = cfg.CONF
     setup_conf(conf)
+    logging.setup(conf, 'neutron_remove_duplicated_port_bindings',
+                  fix_eventlet=False)
     _dry_run = conf.cli_script.dry_run
     admin_ctx = context.get_admin_context()
     with db_api.CONTEXT_WRITER.using(admin_ctx):
