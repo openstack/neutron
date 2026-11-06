@@ -107,6 +107,19 @@ class EVPNNetwork(model_base.BASEV2):
         viewonly=True,
         backref=orm.backref('evpn_networks', viewonly=True))
 
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_all_network_ids(cls, context):
+        """Return network IDs with advertise-host enabled.
+
+        Only network_id is loaded.
+
+        :param context: Neutron request context
+        :returns: list of network_id strings
+        """
+        return [row[0] for row in context.session.query(
+            cls.network_id).all()]
+
 
 class EVPNAdvertisedPort(model_base.BASEV2):
     """Ports marked for EVPN advertisement.
@@ -157,3 +170,21 @@ class EVPNAdvertisedPort(model_base.BASEV2):
         :returns: list of port_id strings
         """
         return [row[0] for row in context.session.query(cls.port_id).all()]
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_port_ids_for_networks(cls, context, network_ids):
+        """Lists advertised router-interface port IDs.
+
+        These are the ports passed to advertise_port().
+        The tenant logical router port name is lrp-<port_id>.
+
+        :param context: Neutron request context
+        :param network_ids: iterable of network UUIDs
+        :returns: list of port_id strings
+        """
+        if not network_ids:
+            return []
+        rows = context.session.query(cls.port_id).filter(
+            cls.network_id.in_(network_ids)).all()
+        return [row[0] for row in rows]

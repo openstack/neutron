@@ -176,6 +176,26 @@ class AdvertiseHostCommand(command.BaseCommand):
         })
 
 
+class SuppressRouterInterfaceAdvertiseCommand(command.BaseCommand):
+    """Set dynamic-routing-advertise=false on a project logical router port.
+
+    Merges the key into options. Leaves dynamic-routing-redistribute,
+    including connected-as-host, in place.
+    """
+
+    def __init__(self, api, port_id):
+        super().__init__(api)
+        self.lrp_name = ovn_utils.ovn_lrouter_port_name(port_id)
+
+    def run_idl(self, txn):
+        lrp = idlutils.row_by_value(
+            self.api.idl, 'Logical_Router_Port',
+            'name', self.lrp_name)
+        ovn_utils.setkeys(lrp, 'options', {
+            bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE: 'false',
+        })
+
+
 class SuppressMetadataAdvertiseCommand(command.BaseCommand):
     """Set dynamic-routing-advertise=false on the OVN metadata LSP."""
 

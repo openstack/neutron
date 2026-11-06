@@ -1934,6 +1934,186 @@ class TestEVPNMaintenance(_TestMaintenanceHelper):
             lrp.options.get(
                 bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE))
 
+    def _enable_metadata(self):
+        ovn_config.cfg.CONF.set_override(
+            'ovn_metadata_enabled', True, group='ovn')
+
+    def _metadata_port_ids(self, network_id):
+        return ports_obj.Port.get_metadata_port_ids_by_network(
+            self.context, network_id)
+
+    def _row_options(self, get_cmd, record):
+        row = get_cmd(record).execute(check_error=True)
+        return dict(row.options)
+
+    def _set_row_options(self, table, record, options):
+        self.nb_api.db_set(
+            table, record, ('options', options),
+        ).execute(check_error=True)
+
+    def _run_advertise_backfill(self):
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.suppress_evpn_gateway_and_metadata_advertisement)
+
+    def _create_router_interface(self, lrp_options, metadata_options=None,
+                                 vni=None):
+        """Create a router interface, optionally recorded for advertise-host.
+
+        Pass vni to allocate an EVPN instance and call advertise_port
+        after the OVN rows exist. With vni unset, the network stays out
+        of evpn_networks. Enable metadata before calling when a metadata
+        port is required.
+        """
+        net = self._create_network(uuidutils.generate_uuid())
+        subnet = self._create_subnet(uuidutils.generate_uuid(), net['id'])
+        if vni is None:
+            router = self._create_router(uuidutils.generate_uuid())
+            router_id = router['id']
+        else:
+            router_id, _lr_name = self._create_evpn_router(vni=vni)
+        port_id = self._add_router_interface(
+            router_id, subnet['id'])['port_id']
+        lrp_name = utils.ovn_lrouter_port_name(port_id)
+        if lrp_options:
+            self._set_row_options(
+                'Logical_Router_Port', lrp_name, lrp_options)
+        if vni is not None:
+            evpn_db.EVPNDbHelper().advertise_port(
+                self.context, port_id, net['id'], router_id)
+        metadata_ids = self._metadata_port_ids(net['id'])
+        if metadata_options:
+            for metadata_id in metadata_ids:
+                self._set_row_options(
+                    'Logical_Switch_Port', metadata_id, metadata_options)
+        return {
+            'network_id': net['id'],
+            'port_id': port_id,
+            'lrp_name': lrp_name,
+            'metadata_port_ids': metadata_ids,
+        }
+
+    def test_suppress_evpn_gateway_and_metadata_advertisement_no_networks(
+            self):
+        """No evpn_networks rows: leave other router ports unchanged."""
+        self._enable_metadata()
+        redistribute = bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE
+        connected = bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST
+        advertise = bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE
+        plain = self._create_router_interface(
+            {redistribute: connected, 'existing-key': 'keep-me'},
+            metadata_options={'existing-key': 'keep-me'})
+        self.assertEqual(1, len(plain['metadata_port_ids']))
+        lrp_before = self._row_options(self.nb_api.lrp_get, plain['lrp_name'])
+        meta_id = plain['metadata_port_ids'][0]
+        meta_before = self._row_options(self.nb_api.lsp_get, meta_id)
+        self.assertNotIn(advertise, lrp_before)
+        self.assertNotIn(advertise, meta_before)
+
+        self._run_advertise_backfill()
+
+        self.assertEqual(
+            lrp_before,
+            self._row_options(self.nb_api.lrp_get, plain['lrp_name']))
+        self.assertEqual(
+            meta_before, self._row_options(self.nb_api.lsp_get, meta_id))
+
+    def test_suppress_evpn_gateway_and_metadata_advertisement(self):
+        """Backfill false on the gateway LRP and the metadata LSP.
+
+        connected-as-host and other options stay. A VM port, the
+        router-interface logical switch port, and a non-EVPN network
+        stay unchanged. A second run keeps the merged options.
+        """
+        self._enable_metadata()
+        redistribute = bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE
+        connected = bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST
+        advertise = bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE
+        lrp_options = {
+            redistribute: connected,
+            'existing-key': 'keep-me',
+        }
+        net = self._create_router_interface(
+            lrp_options, metadata_options={'existing-key': 'keep-me'},
+            vni=6100)
+        plain = self._create_router_interface(
+            lrp_options, metadata_options={'existing-key': 'keep-me'})
+        self.assertEqual(1, len(net['metadata_port_ids']))
+        self.assertEqual(1, len(plain['metadata_port_ids']))
+        vm = self._create_port(
+            'vm', net['network_id'],
+            device_owner=n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'nova')
+
+        vm_options = self._row_options(self.nb_api.lsp_get, vm['id'])
+        rif_options = self._row_options(self.nb_api.lsp_get, net['port_id'])
+        plain_lrp = self._row_options(self.nb_api.lrp_get, plain['lrp_name'])
+        plain_meta = self._row_options(
+            self.nb_api.lsp_get, plain['metadata_port_ids'][0])
+        self.assertNotIn(advertise, vm_options)
+        self.assertNotIn(advertise, rif_options)
+        self.assertNotIn(advertise, plain_lrp)
+
+        for _ in range(2):
+            self._run_advertise_backfill()
+
+            lrp = self.nb_api.lrp_get(net['lrp_name']).execute(
+                check_error=True)
+            self.assertEqual('false', lrp.options.get(advertise))
+            self.assertEqual(connected, lrp.options.get(redistribute))
+            self.assertEqual('keep-me', lrp.options.get('existing-key'))
+
+            meta = self.nb_api.lsp_get(
+                net['metadata_port_ids'][0]).execute(check_error=True)
+            self.assertEqual('false', meta.options.get(advertise))
+            self.assertEqual('keep-me', meta.options.get('existing-key'))
+
+            self.assertEqual(
+                vm_options, self._row_options(self.nb_api.lsp_get, vm['id']))
+            self.assertEqual(
+                rif_options,
+                self._row_options(self.nb_api.lsp_get, net['port_id']))
+            self.assertEqual(
+                plain_lrp,
+                self._row_options(self.nb_api.lrp_get, plain['lrp_name']))
+            self.assertEqual(
+                plain_meta,
+                self._row_options(
+                    self.nb_api.lsp_get, plain['metadata_port_ids'][0]))
+
+    def test_suppress_evpn_gateway_and_metadata_advertisement_idempotent(
+            self):
+        """A row that is already false is not rewritten."""
+        self._enable_metadata()
+        redistribute = bgp_const.LR_OPTIONS_DYNAMIC_ROUTING_REDISTRIBUTE
+        connected = bgp_const.DYNAMIC_ROUTE_TYPE_CONNECTED_AS_HOST
+        advertise = bgp_const.LRP_OPTIONS_DYNAMIC_ROUTING_ADVERTISE
+        net = self._create_router_interface(
+            {
+                redistribute: connected,
+                advertise: 'false',
+                'existing-key': 'keep-me',
+            },
+            metadata_options={
+                advertise: 'false',
+                'existing-key': 'keep-me',
+            },
+            vni=6101)
+        self.assertEqual(1, len(net['metadata_port_ids']))
+        lrp_before = self._row_options(self.nb_api.lrp_get, net['lrp_name'])
+        meta_id = net['metadata_port_ids'][0]
+        meta_before = self._row_options(self.nb_api.lsp_get, meta_id)
+
+        self._run_advertise_backfill()
+        self._run_advertise_backfill()
+
+        self.assertEqual(
+            lrp_before,
+            self._row_options(self.nb_api.lrp_get, net['lrp_name']))
+        self.assertEqual(
+            meta_before, self._row_options(self.nb_api.lsp_get, meta_id))
+        self.assertEqual('false', lrp_before.get(advertise))
+        self.assertEqual(connected, lrp_before.get(redistribute))
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):
