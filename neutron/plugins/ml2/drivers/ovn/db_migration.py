@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import collections
 import copy
 
 from neutron_lib.api.definitions import portbindings as pb_api
@@ -30,6 +31,7 @@ from neutron.objects import trunk as trunk_obj
 
 
 LOG = logging.getLogger(__name__)
+MAX_PB_DEADLOCK_RETRIES = 3
 
 
 def migrate_neutron_database_to_ovn():
@@ -52,6 +54,7 @@ def migrate_neutron_database_to_ovn():
     # Update ``PortBinding`` objects.
     pb_updated = set()
     pb_missed = set()
+    pb_deadlocks = collections.defaultdict(int)
     while True:
         pb_current = port_obj.PortBinding.get_port_id_and_host(
             ctx, vif_type='ovs', vnic_type='normal', status='ACTIVE')
@@ -59,6 +62,7 @@ def migrate_neutron_database_to_ovn():
         if not diff:
             break
 
+        pb_retry = set()
         for port_id, host in diff:
             try:
                 with db_api.CONTEXT_WRITER.using(ctx):
@@ -82,13 +86,20 @@ def migrate_neutron_database_to_ovn():
                         n_const.DEFAULT_BR_INT)
                     pb.vif_details = vif_details
                     pb.update()
+            except db_exc.DBDeadlock:
+                # The transaction was rolled back and the register is
+                # unchanged: retry it in the next iteration, a few times.
+                pb_deadlocks[(port_id, host)] += 1
+                if pb_deadlocks[(port_id, host)] < MAX_PB_DEADLOCK_RETRIES:
+                    pb_retry.add((port_id, host))
+                else:
+                    pb_missed.add(port_id)
             except (exceptions.ObjectNotFound,
-                    sqla_exc.StaleDataError,
-                    db_exc.DBDeadlock):
+                    sqla_exc.StaleDataError):
                 # The PortBinding register has been already modified.
                 pb_missed.add(port_id)
 
-        pb_updated.update(diff)
+        pb_updated.update(diff - pb_retry)
 
     if pb_missed:
         LOG.warning('The following ports did not update their port binding '

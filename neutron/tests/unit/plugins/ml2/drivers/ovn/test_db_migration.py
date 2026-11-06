@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import contextlib
 import copy
 from unittest import mock
 import uuid
@@ -21,6 +22,7 @@ from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
+from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
 from neutron.common import _constants as n_const
@@ -29,6 +31,7 @@ from neutron.objects import ports as port_obj
 from neutron.objects import servicetype as servicetype_obj
 from neutron.objects import trunk as trunk_obj
 from neutron.plugins.ml2.drivers.ovn import db_migration
+from neutron.tests import base
 from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import (
     test_mech_driver)
 
@@ -192,3 +195,68 @@ class TestMigrateNeutronDatabaseToOvn(
                                    return_value=[]):
                 db_migration.migrate_neutron_database_to_ovn()
         self._validate_resources_after_migration(vif_details_list)
+
+
+class TestMigratePortBindingDeadlock(base.BaseTestCase):
+    """PortBinding.update() raising DBDeadlock must be retried
+
+    The transaction is rolled back and the register is unchanged, so the
+    migration must retry it (a bounded number of times) instead of marking
+    it as updated.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.vif_details = {pb.VIF_DETAILS_BRIDGE_NAME: 'br-foo'}
+        self.updates = 0
+        self.listings = 0
+
+    def _get_object(self, ctx, port_id=None, host=None):
+        pb_obj = mock.Mock(vif_details=dict(self.vif_details))
+
+        def update():
+            self.updates += 1
+            if self.updates <= self.deadlocks:
+                raise db_exc.DBDeadlock()
+            self.vif_details = dict(pb_obj.vif_details)
+        pb_obj.update = update
+        return pb_obj
+
+    def _get_port_id_and_host(self, ctx, **kwargs):
+        # every ACTIVE 'ovs' binding is returned on each iteration, as in
+        # production: migrating vif_details does not change vif_type
+        self.listings += 1
+        self.assertLess(self.listings, 50, 'migration loop did not terminate')
+        return [('port1', 'host1')]
+
+    def _migrate(self, deadlocks):
+        self.deadlocks = deadlocks
+
+        @contextlib.contextmanager
+        def using(ctx):
+            yield mock.MagicMock()
+
+        writer = mock.Mock(using=using)
+        with mock.patch.object(db_api, 'CONTEXT_WRITER', writer), \
+                mock.patch.object(n_context, 'get_admin_context'), \
+                mock.patch.object(network_obj.NetworkSegment, 'get_objects',
+                                  return_value=[]), \
+                mock.patch.object(trunk_obj.Trunk, 'get_trunk_ids',
+                                  return_value=[]), \
+                mock.patch.object(port_obj.PortBinding, 'get_port_id_and_host',
+                                  side_effect=self._get_port_id_and_host), \
+                mock.patch.object(port_obj.PortBinding, 'get_object',
+                                  side_effect=self._get_object):
+            db_migration.migrate_neutron_database_to_ovn()
+
+    def test_port_binding_retried_after_deadlock(self):
+        self._migrate(deadlocks=1)
+        self.assertEqual(n_const.DEFAULT_BR_INT,
+                         self.vif_details[pb.VIF_DETAILS_BRIDGE_NAME])
+        self.assertEqual(2, self.updates)
+
+    def test_port_binding_deadlock_retry_is_bounded(self):
+        self._migrate(deadlocks=100)
+        self.assertEqual('br-foo',
+                         self.vif_details[pb.VIF_DETAILS_BRIDGE_NAME])
+        self.assertEqual(db_migration.MAX_PB_DEADLOCK_RETRIES, self.updates)
