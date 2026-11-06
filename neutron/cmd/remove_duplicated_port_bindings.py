@@ -62,6 +62,8 @@ def main():
     """
     conf = cfg.CONF
     setup_conf(conf)
+    logging.setup(conf, 'neutron_remove_duplicated_port_bindings',
+                  fix_eventlet=False)
     _dry_run = conf.cli_script.dry_run
     _port_id = conf.port
     if _port_id and not uuidutils.is_uuid_like(_port_id):
