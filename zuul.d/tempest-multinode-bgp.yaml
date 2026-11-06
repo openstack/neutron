@@ -249,7 +249,6 @@
           <<: *subnode_localrc
           Q_PLUGIN: ml2
           NOVA_VNC_ENABLED: true
-          ENABLE_CHASSIS_AS_GW: false
           LIBVIRT_TYPE: kvm
           OVN_BUILD_FROM_SOURCE: True
           OVN_BRANCH: v26.03.3
