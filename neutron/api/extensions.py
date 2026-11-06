@@ -21,7 +21,6 @@ from keystoneauth1 import loading as ks_loading
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
-from openstack import connection
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import base
@@ -674,6 +673,11 @@ class ProjectIdMiddleware(base.ConfigurableMiddleware):
         project = req.params.get('project_id') or req.params.get('tenant_id')
         if project:
             if not _NOVA_CONNECTION:
+                # Imported here because openstacksdk is large and only this
+                # middleware needs it.
+                # pylint: disable=import-outside-toplevel
+                from openstack import connection
+
                 auth = ks_loading.load_auth_from_conf_options(cfg.CONF, 'nova')
                 keystone_session = ks_loading.load_session_from_conf_options(
                     cfg.CONF, 'nova', auth=auth)

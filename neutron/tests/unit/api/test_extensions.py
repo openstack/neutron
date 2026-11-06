@@ -14,6 +14,8 @@
 #    under the License.
 
 import copy
+import subprocess
+import sys
 from unittest import mock
 
 import fixtures
@@ -566,6 +568,51 @@ class RequestExtensionTest(base.BaseTestCase):
                                               handler)
         manager = SimpleExtensionManager(None, None, req_ext)
         return _setup_extensions_test_app(manager)
+
+
+class ExtensionsImportsTest(base.BaseTestCase):
+
+    def test_openstacksdk_not_imported(self):
+        # Run in a fresh interpreter: the test process may already have
+        # imported openstack. Only ProjectIdMiddleware needs it.
+        code = ('import sys\n'
+                'import neutron.api.extensions\n'
+                'import neutron.common.utils\n'
+                'print(",".join(m for m in sys.modules\n'
+                '               if m == "openstack" or\n'
+                '               m.startswith("openstack.")))\n')
+        out = subprocess.check_output(  # noqa: S603
+            [sys.executable, '-c', code], text=True)
+        self.assertEqual('', out.strip())
+
+
+class ProjectIdMiddlewareTest(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        mock.patch.object(extensions, '_NOVA_CONNECTION', None).start()
+        mock.patch.object(extensions.ks_loading,
+                          'load_auth_from_conf_options').start()
+        mock.patch.object(extensions.ks_loading,
+                          'load_session_from_conf_options').start()
+        self.conn = mock.patch(
+            'openstack.connection.Connection').start().return_value
+        self.app = extensions.ProjectIdMiddleware(
+            webob.Response(body=b'ok'))
+
+    def _get(self, project):
+        return webob.Request.blank(
+            '/?project_id=%s' % project).get_response(self.app)
+
+    def test_project_exists(self):
+        self.conn.get_project.return_value = mock.Mock()
+        self.assertEqual(200, self._get('project1').status_code)
+        self.conn.get_project.assert_called_once_with('project1')
+
+    def test_project_missing(self):
+        self.conn.get_project.return_value = None
+        self.assertEqual(404, self._get('project1').status_code)
+        self.conn.get_project.assert_called_once_with('project1')
 
 
 class ExtensionManagerTest(base.BaseTestCase):
