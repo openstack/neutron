@@ -275,7 +275,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     @classmethod
     def _has_running_interfaces(cls, network_id):
         """Safe method that checks for interfaces"""
-        bool(cls._interfaces.get(network_id))
+        return bool(cls._interfaces.get(network_id))
 
     @staticmethod
     def get_confs_dir(conf):
