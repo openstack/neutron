@@ -1098,7 +1098,7 @@ class TestOvsdbClientCommand(base.BaseTestCase):
         self.assert_exec_call(expected)
 
     def test_run_southbound(self):
-        expected = ('ovsdb-client %s %s --timeout 180 '
+        expected = ('ovsdb-client %s %s --timeout 180 --no-leader-only '
                     '\'["OVN_Southbound", "foo"]\'' % (
                         self.OvsdbClientTestCommand.COMMAND,
                         self.sb_connection))
@@ -1155,7 +1155,7 @@ class TestOvsdbClientCommand(base.BaseTestCase):
             ca_auth,
             group='ovn')
 
-        expected = ('ovsdb-client %s %s --timeout 180 '
+        expected = ('ovsdb-client %s %s --timeout 180 --no-leader-only '
                     '-p %s '
                     '-c %s '
                     '-C %s '

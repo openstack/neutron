@@ -146,6 +146,12 @@ class OvsdbClientCommand:
                '--timeout',
                str(ovn_conf.get_ovn_ovsdb_timeout())]
 
+        # SB relays never report themselves as leader and are a
+        # supported deployment (bug 2022914); writes are forwarded to
+        # the leader by the server. NB relays are not supported.
+        if db == cls.OVN_Southbound:
+            cmd.append('--no-leader-only')
+
         if cls._db_settings[db][cls._PRIVATE_KEY]():
             cmd += ['-p', cls._db_settings[db][cls._PRIVATE_KEY](),
                     '-c', cls._db_settings[db][cls._CERTIFICATE](),
