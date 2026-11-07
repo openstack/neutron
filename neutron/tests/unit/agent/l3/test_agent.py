@@ -2781,12 +2781,12 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._process_network_update(ri.router_id, network_id)
         agent._queue.add.assert_not_called()
 
-    def test_create_router_namespace(self):
+    def _test_create_router_namespace(self, conntrack_timeout=0):
         self.mock_ip.ensure_namespace.return_value = self.mock_ip
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.init_host()
-        ns = namespaces.Namespace(
-            'qrouter-bar', self.conf, agent.driver, agent.use_ipv6)
+        ns = namespaces.RouterNamespace(
+            'bar', self.conf, agent.driver, agent.use_ipv6)
         ns.create()
 
         sysctl_settings = ['net.netfilter.nf_conntrack_tcp_be_liberal=1',
@@ -2795,11 +2795,22 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
                            'net.ipv4.conf.all.arp_announce=2']
         if agent.use_ipv6:
             sysctl_settings.append('net.ipv6.conf.all.forwarding=1')
+        if conntrack_timeout:
+            sysctl_settings.append(
+                'net.netfilter.nf_conntrack_tcp_timeout_established=%d' %
+                conntrack_timeout)
 
         calls = [mock.call(
             ['sysctl', '-w'] + sysctl_settings,
             run_as_root=True, log_fail_as_error=True, privsep_exec=True)]
         self.mock_ip.netns.execute.assert_has_calls(calls)
+
+    def test_create_router_namespace(self):
+        self._test_create_router_namespace()
+
+    def test_create_router_namespace_conntrack_tcp_timeout(self):
+        self.conf.set_override('conntrack_tcp_timeout_established', 7200)
+        self._test_create_router_namespace(conntrack_timeout=7200)
 
     def test_destroy_namespace(self):
         namespace = 'qrouter-bar'

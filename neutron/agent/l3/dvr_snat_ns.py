@@ -29,7 +29,9 @@ class SnatNamespace(namespaces.Namespace):
             name, agent_conf, driver, use_ipv6)
 
     def create(self):
-        super().create()
+        super().create(
+            conntrack_tcp_timeout_established=(
+                self.agent_conf.conntrack_tcp_timeout_established))
         # Set nonlocal_bind to 1 to allow setup applications in HA mode
         # for example ipsec from VPNaaS
         ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 1)

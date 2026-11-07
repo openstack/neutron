@@ -111,6 +111,17 @@ OPTS = [
                        'set, neutron-keepalive-state-change will use that '
                        'path to write its logs, instead of loggin in '
                        '/var/log/neutron/ha_confs/<router-id>.')),
+    cfg.IntOpt('conntrack_tcp_timeout_established', default=0, min=0,
+               help=_('Timeout, in seconds, of the established TCP '
+                      'connections tracked in the router (qrouter-) and DVR '
+                      'SNAT (snat-) namespaces '
+                      '(net.netfilter.nf_conntrack_tcp_timeout_established). '
+                      'It is not set in the DVR FIP (fip-) namespaces, which '
+                      'do not track the connections. '
+                      'The kernel default (5 days) keeps the entries of '
+                      'connections closed without FIN or RST, which can '
+                      'fill the conntrack table of a busy router. 0 keeps '
+                      'the kernel default.')),
 ]
 
 
