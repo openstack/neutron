@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The DHCP agent ``resync_throttle`` option now delays consecutive resyncs
+    as documented. Previously the throttle state was rebuilt on every pass of
+    the resync loop, so the option was never applied.
