@@ -71,9 +71,9 @@ Report each active patch with its Gerrit URL and subject when available.
 
 ## Presentation preferences
 
-The summary is **plain text**, ready to paste into an email. Do not use
-Markdown formatting in the output (no `#` headers, no `**bold**`, no
-`[links](url)`, no tables, no separator lines).
+The summary should be ready to paste into an email. Use simple text headings
+and bullets, and use Markdown links for bug and Gerrit URLs. Do not use tables,
+decorative formatting, or separator lines.
 
 Rules:
 
@@ -81,12 +81,14 @@ Rules:
 - Group bugs by importance. Use a simple label followed by a blank line and
   the bug entries (for example: `Critical:`).
 - Prefix each bug entry with `* ` (asterisk and space).
-- Each bug is a single paragraph with fields separated by periods, in this
-  order: Bug ID, title, Created, Status, Assignee, Link, Active patch.
-- Use full URLs for the bug link and any Gerrit review.
-- When there is an active patch, write `Active patch: <subject>. <gerrit-url>`.
-  Do not write `Active patch: Yes`.
-- When there is no active patch, write `Active patch: No.`
+- Put each bug's title on its own bullet line, followed by separate indented
+  lines for Created and Status, Assignee and Link, and Active patch.
+- Format bug and Gerrit URLs as Markdown links, using the full URL as both the
+  link target and readable link text.
+- When there is an active patch, write `Active patch: <subject>. <link>`.
+  Do not write `Active patch: Yes`. Give each additional active patch its own
+  indented line labeled `Also active:`.
+- When there is no active patch, write `Active patch: No.` on its own line.
 - Empty importance sections: write `None.` on the line after the section label.
 - End with a short `Triage notes:` paragraph when relevant.
 - Within each importance section, list bugs oldest-first (the script already
@@ -102,11 +104,17 @@ Overview: Critical N, High N, Medium N, Low N, Wishlist N, Undecided N. With act
 
 Critical:
 
-* Bug NNNNNN - <title>. Created YYYY-MM-DD. Status <status>. Assignee <name or Unassigned>. Link https://bugs.launchpad.net/neutron/+bug/NNNNNN. Active patch: No.
+* Bug NNNNNN - <title>.
+  Created YYYY-MM-DD. Status <status>.
+  Assignee <name or Unassigned>. Link [https://bugs.launchpad.net/neutron/+bug/NNNNNN](https://bugs.launchpad.net/neutron/+bug/NNNNNN).
+  Active patch: No.
 
 High:
 
-* Bug NNNNNN - <title>. Created YYYY-MM-DD. Status <status>. Assignee <name or Unassigned>. Link https://bugs.launchpad.net/neutron/+bug/NNNNNN. Active patch: <subject>. https://review.opendev.org/c/openstack/neutron/+/NNNNNN
+* Bug NNNNNN - <title>.
+  Created YYYY-MM-DD. Status <status>.
+  Assignee <name or Unassigned>. Link [https://bugs.launchpad.net/neutron/+bug/NNNNNN](https://bugs.launchpad.net/neutron/+bug/NNNNNN).
+  Active patch: <subject>. [https://review.opendev.org/c/openstack/neutron/+/NNNNNN](https://review.opendev.org/c/openstack/neutron/+/NNNNNN)
 
 Medium:
 
