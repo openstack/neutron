@@ -30,6 +30,17 @@ PRIORITY_RPC = 0
 
 class TestExclusiveResourceProcessor(base.BaseTestCase):
 
+    def setUp(self):
+        super().setUp()
+        # ``_primaries`` and ``_resource_timestamps`` are class level
+        # dictionaries shared by every test of the runner process: a
+        # test that does not exit its primary processor leaves its
+        # registration behind and the tests running afterwards create
+        # non-primary processors whose ``__exit__()`` is a no-op.
+        # Reset both so that every test starts with a clean state.
+        queue.ExclusiveResourceProcessor._primaries.clear()
+        queue.ExclusiveResourceProcessor._resource_timestamps.clear()
+
     def test_i_am_primary(self):
         primary = queue.ExclusiveResourceProcessor(FAKE_ID)
         not_primary = queue.ExclusiveResourceProcessor(FAKE_ID)
@@ -125,6 +136,7 @@ class TestExclusiveResourceProcessor(base.BaseTestCase):
             raise Exception("Only the primary should process a resource")
 
         self.assertEqual(2, len(list(primary.updates())))
+        primary.__exit__(None, None, None)
 
     def test_hit_retry_limit(self):
         tries = 1
