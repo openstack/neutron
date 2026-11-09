@@ -32,7 +32,22 @@ class TestRegisterValidateMethods(base.BaseTestCase):
 
     def setUp(self):
         self.validator_mgr = validators.ResourceValidateRequest.get_instance()
+        # ``validate_methods`` is a class level singleton shared by
+        # every test of the runner process: the registrations made at
+        # import time of the validator modules would be lost for the
+        # tests running after a test that clears or extends the map
+        # (re-importing the modules is a no-op and the decorated
+        # functions never run again). Snapshot and restore it for
+        # every test.
+        self._saved_validate_methods = dict(
+            self.validator_mgr.validate_methods)
+        self.addCleanup(self._restore_validate_methods)
         super().setUp()
+
+    def _restore_validate_methods(self):
+        self.validator_mgr.validate_methods.clear()
+        self.validator_mgr.validate_methods.update(
+            self._saved_validate_methods)
 
     def test_register_validate_method(self):
         self.validator_mgr.validate_methods.clear()
