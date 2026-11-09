@@ -228,7 +228,8 @@ class NeutronManager(metaclass=profiler.TracedMeta):
         plugin = directory.get_plugin()
         if (hasattr(plugin, 'agent_notifiers') and
                 hasattr(plugin_inst, 'agent_notifiers')):
-            plugin.agent_notifiers.update(plugin_inst.agent_notifiers)
+            plugin.agent_notifiers = {
+                **plugin.agent_notifiers, **plugin_inst.agent_notifiers}
 
         # disable incompatible extensions in core plugin if any
         utils.disable_extension_by_service_plugin(plugin, plugin_inst)

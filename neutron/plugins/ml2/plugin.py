@@ -440,9 +440,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self._ovo_notifier = ovo_rpc.OVOServerRpcInterface()
         self.notifier.notifier_instance = rpc.AgentNotifierApi(topics.AGENT)
         if cfg.CONF.enable_traditional_dhcp:
-            self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
-                dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
-            )
+            self.agent_notifiers = {
+                **self.agent_notifiers,
+                const.AGENT_TYPE_DHCP: dhcp_rpc_agent_api.DhcpAgentNotifyAPI()}
         # NOTE(zhouhenglc): SG notifier is not needed when using ML2/OVN, as
         # there are no agents expecting these updates.
         if 'ovn' not in self.mechanism_manager.mech_drivers:
