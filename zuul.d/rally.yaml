@@ -50,6 +50,7 @@
       - openstack/rally-openstack
       - openstack/osprofiler
     irrelevant-files:
+      - ^\.agents/.*$
       - ^\.gitignore$
       - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
@@ -97,6 +98,7 @@
       - name: openstack/rally
       - name: openstack/rally-openstack
     irrelevant-files:
+      - ^\.agents/.*$
       - ^\.gitignore$
       - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$

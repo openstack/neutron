@@ -57,6 +57,7 @@
         Q_AGENT: openvswitch
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
     irrelevant-files: &openvswitch-irrelevant-files
+      - ^\.agents/.*$
       - ^\.gitignore$
       - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
@@ -193,6 +194,7 @@
     # >10.1, this workaround can be removed (bug 1855912)
     pre-run: playbooks/add_mariadb_repo.yaml
     irrelevant-files: &tempest-db-irrelevant-files
+      - ^\.agents/.*$
       - ^\.gitignore$
       - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
@@ -250,6 +252,7 @@
         s-object: false
         s-proxy: false
     irrelevant-files:
+      - ^\.agents/.*$
       - ^\.gitignore$
       - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
@@ -404,6 +407,7 @@
         '/var/log/openvswitch': 'logs'
         '/var/lib/ovn': 'logs'
     irrelevant-files: &irrelevant-files
+      - ^\.agents/.*$
       - ^\.gitignore$
       - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
@@ -536,6 +540,7 @@
         c-vol: false
         cinder: false
     irrelevant-files: &ovn-irrelevant-files
+      - ^\.agents/.*$
       - ^\.gitignore$
       - ^\.gitreview$
       - ^\.pre-commit-config\.yaml$
