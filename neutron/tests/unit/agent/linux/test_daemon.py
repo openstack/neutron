@@ -23,6 +23,8 @@ from neutron_lib import exceptions
 from neutron_lib import fixture as lib_fixtures
 import testtools
 
+from oslo_log import log as oslo_log
+
 from neutron.agent.linux import daemon
 from neutron.tests import base
 
@@ -38,6 +40,16 @@ class TestUnwatchLog(base.BaseTestCase):
     def setUp(self):
         super().setUp()
         self.temp_file = self.get_temp_file_path('unwatch_log_temp_file')
+        # ``oslo_log.log.getLogger`` caches its logger adapters in a
+        # module level dict: ``unwatch_log()`` only consults the
+        # (patched) stdlib ``logging.getLogger`` on the first call for
+        # a name, so when anything already called it in the worker
+        # process, the real root logger is used instead of the mocked
+        # one and the ``WatchedFileHandler`` of this test is never
+        # replaced. Clear the cache for the duration of the test.
+        logger_cache = mock.patch.dict(oslo_log._loggers, clear=True)
+        logger_cache.start()
+        self.addCleanup(logger_cache.stop)
 
     def test_unwatch_log(self):
         stream_handler = logging.StreamHandler()
