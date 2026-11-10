@@ -184,7 +184,8 @@ class BaseTestOVNL3RouterPluginMixin:
                 utils.ovn_name('router-id'),
             },
             'options': {
-                ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION: str(default_mtu)
+                ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION: str(default_mtu),
+                ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING: 'true',
             }
         }
         self.fake_floating_ip_attrs = {'floating_ip_address': '192.168.0.10',
@@ -2190,8 +2191,12 @@ class BaseTestOVNL3RouterPluginMixin:
                                                    self, payload)
 
         # Make sure that the "gateway_mtu" option was set to the router port
-        fake_router_port_assert = self.fake_router_port_assert
-        fake_router_port_assert['options'] = {}
+        fake_router_port_assert = copy.deepcopy(self.fake_router_port_assert)
+        # NOTE(ralonsoh): this test is reusing the fake port as a GW port.
+        # Because it is in a geneve network, it must have
+        # `centralize_routing=True`.
+        fake_router_port_assert['options'] = {
+            ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING: 'true'}
         fake_router_port_assert['external_ids'][
             ovn_const.OVN_ROUTER_IS_EXT_GW] = 'True'
 
@@ -2440,8 +2445,12 @@ class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
                                                    self, payload)
 
         # Make sure that the "gateway_mtu" option was set to the router port
-        fake_router_port_assert = self.fake_router_port_assert
+        # NOTE(ralonsoh): this test is reusing the fake port as a GW port.
+        # Because it is in a geneve network, it must have
+        # `centralize_routing=True`.
+        fake_router_port_assert = copy.deepcopy(self.fake_router_port_assert)
         fake_router_port_assert['options'] = {
+            ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING: 'true',
             ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
             str(prov_net['mtu']),
         }

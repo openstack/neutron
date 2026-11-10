@@ -121,13 +121,21 @@ class TestOVNClient(base.TestOVNFunctionalBase,
                     router_id = router['router']['id']
                     lr = self.nb_api.lookup('Logical_Router',
                                             ovn_utils.ovn_name(router_id))
-                    self.assertEqual(ch, lr.options['chassis'])
+                    # Tunneled gateway: OVN binds the LRP via
+                    # HA_Chassis_Group + centralize_routing, not
+                    # Logical_Router.options:chassis.
+                    self.assertNotIn('chassis', lr.options)
                     lrp = lr.ports[0]
                     self.assertTrue(strutils.bool_from_string(
                         lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW]))
-                    hcg = self.nb_api.lookup('HA_Chassis_Group',
-                                             ovn_utils.ovn_name(router_id))
-                    self.assertIsNotNone(hcg)
+                    self.assertTrue(strutils.bool_from_string(
+                        lrp.options.get(
+                            ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING)))
+                    self.assertTrue(lrp.ha_chassis_group)
+                    hcg = lrp.ha_chassis_group[0]
+                    self.assertEqual(ovn_utils.ovn_name(router_id), hcg.name)
+                    self.assertEqual(
+                        [ch], [hc.chassis_name for hc in hcg.ha_chassis])
 
                     # Remove the external GW port.
                     self._update('routers', router_id,

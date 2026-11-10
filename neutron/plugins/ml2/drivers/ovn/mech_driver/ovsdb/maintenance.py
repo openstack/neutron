@@ -1493,6 +1493,62 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(ralonsoh): to remove in I+4 (2029.1) cycle (2nd next SLURP release)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def migrate_lr_chassis_to_lrp_ha_chassis_group(self):
+        """Migrate tunnelled GW routers from LR.options:chassis to LRP HCG
+
+        Routers with a tunnelled external network were pinned to a chassis
+        via ``Logical_Router.options:chassis``. This maintenance task
+        migrates them to use a ``HA_Chassis_Group`` on the gateway
+        ``Logical_Router_Port`` with ``centralize_routing=true``, which
+        lets OVN handle the chassis binding natively.
+        """
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for lr in self._nb_idl.db_list_rows(
+                    'Logical_Router').execute(check_error=True):
+                chassis = getattr(lr, 'options', {}).get('chassis')
+                if not chassis:
+                    continue
+
+                hcg = self._nb_idl.lookup('HA_Chassis_Group', lr.name,
+                                          default=None)
+                if not hcg:
+                    LOG.warning('Logical_Router %s has options:chassis '
+                                'but no HA_Chassis_Group found', lr.name)
+                    continue
+
+                gw_lrp = None
+                for lrp in getattr(lr, 'ports', []):
+                    ext_ids = getattr(lrp, 'external_ids', {})
+                    if strutils.bool_from_string(
+                            ext_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW,
+                                        'false')):
+                        gw_lrp = lrp
+                        break
+
+                if not gw_lrp:
+                    LOG.warning('Logical_Router %s has options:chassis '
+                                'but no gateway LRP found', lr.name)
+                    continue
+
+                txn.add(self._nb_idl.db_set(
+                    'Logical_Router_Port', gw_lrp.uuid,
+                    ('ha_chassis_group', hcg.uuid)))
+                lrp_options = dict(getattr(gw_lrp, 'options', {}))
+                lrp_options[ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING] = 'true'
+                txn.add(self._nb_idl.db_set(
+                    'Logical_Router_Port', gw_lrp.uuid,
+                    ('options', lrp_options)))
+                txn.add(self._nb_idl.db_remove(
+                    'Logical_Router', lr.uuid, 'options', 'chassis',
+                    if_exists=True))
+
+        raise periodics.NeverAgain()
+
     # TODO(mnaser): to remove in H+3 (2028.1) cycle (2nd next SLURP release)
     @has_lock_periodic(
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,

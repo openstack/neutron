@@ -1,0 +1,19 @@
+---
+fixes:
+  - |
+    Fixed ML2/OVN handling of routers with a tunnelled external gateway network.
+    The gateway ``Logical_Router_Port`` is now bound to a gateway chassis using
+    a per-router ``HA_Chassis_Group`` and the ``centralize_routing`` option,
+    instead of pinning the ``Logical_Router`` via ``options:chassis``. OVN now
+    selects the highest-priority available chassis natively, removing the
+    Neutron-side ``HAChassisGroupRouterEvent`` monitor. This aligns tunnelled
+    gateway handling with provider networks and requires OVN 24.03 or newer.
+    For more information, see bug
+    `2163021 <https://bugs.launchpad.net/neutron/+bug/2163021>`_.
+upgrade:
+  - |
+    A new maintenance task, ``migrate_lr_chassis_to_lrp_ha_chassis_group``,
+    automatically migrates existing tunnelled gateway routers from
+    ``Logical_Router`` ``options:chassis`` to the gateway
+    ``Logical_Router_Port`` ``HA_Chassis_Group`` with
+    ``centralize_routing=true``.

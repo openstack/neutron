@@ -23,7 +23,6 @@ from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log
-from oslo_utils import strutils
 from oslo_utils import timeutils
 from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
@@ -920,73 +919,6 @@ class FIPAddExternalMacEvent(row_event.RowEvent):
                 check_error=True)
 
 
-class HAChassisGroupRouterEvent(row_event.RowEvent):
-    """Row update event - the HA_Chassis list changes in a router HCG
-
-    When the HA_Chassis list changes (a chassis has been added, deleted or
-    updated), those routers with a HA_Chassis_Group related should update the
-    "LR.options.chassis" value.
-    """
-
-    def __init__(self, driver):
-        self.driver = driver
-        table = 'HA_Chassis_Group'
-        events = (self.ROW_UPDATE,)
-        super().__init__(events, table, None)
-        self.event_name = 'HAChassisGroupRouterEvent'
-
-    def match_fn(self, event, row, old):
-        if ovn_const.OVN_ROUTER_ID_EXT_ID_KEY not in row.external_ids:
-            # This is not a router "HA_Chassis_Group".
-            return False
-        if ovn_const.OVN_NETWORK_ID_EXT_ID_KEY in row.external_ids:
-            # Network HA_Chassis_Group (also tagged with router_id, tested in
-            # the previous "if" branch); not used for router chassis pinning.
-            return False
-        if hasattr(old, 'ha_chassis'):
-            # "HA_Chassis_Group" has been assigned to a router or there are
-            # changes in the "ha_chassis" list.
-            return True
-        return False
-
-    def run(self, event, row, old):
-        router_id = row.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY]
-        router_name = utils.ovn_name(router_id)
-
-        # If any gateway LRP uses ha_chassis_group (physnet/VLAN/flat),
-        # do NOT set LR.options.chassis. OVN handles HA natively via
-        # the chassisredirect port. Setting both is rejected by northd
-        # as "Bad configuration" (LP#2158987).
-        lr = self.driver.nb_ovn.lookup('Logical_Router', router_name,
-                                       default=None)
-        if lr:
-            for lrp in getattr(lr, 'ports', []):
-                ext_gw = lrp.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW)
-                if (strutils.bool_from_string(ext_gw) and
-                        getattr(lrp, 'ha_chassis_group', [])):
-                    return
-
-        if not row.ha_chassis:
-            # No GW chassis are present in the environment.
-            self.driver.nb_ovn.db_remove(
-                'Logical_Router', router_name, 'options', 'chassis',
-                if_exists=True).execute(check_error=True)
-            LOG.info('Router %s is not pinned to any gateway chassis',
-                     router_id)
-            return
-
-        try:
-            highest_prio_hc = max(row.ha_chassis, key=lambda hc: hc.priority)
-        except ValueError:
-            highest_prio_hc = None
-
-        if highest_prio_hc:
-            options = {'chassis': highest_prio_hc.chassis_name}
-            self.driver.nb_ovn.db_set(
-                'Logical_Router', router_name, ('options', options)).execute(
-                check_error=True)
-
-
 class OvnDbNotifyHandler(row_event.RowEventHandler):
     def __init__(self, driver):
         self.driver = driver
@@ -1139,7 +1071,6 @@ class OvnNbIdl(OvnIdlDistributedLock):
             LogicalSwitchPortUpdateLogicalRouterPortEvent(driver))
         self._fip_create_delete_event = FIPAddDeleteEvent(driver)
         self._nat_dnat_and_snat_event = FIPAddExternalMacEvent(driver)
-        self._ha_chassis_group_event = HAChassisGroupRouterEvent(driver)
 
         self.notify_handler.watch_events([self._lsp_create_event,
                                           self._lsp_update_up_event,
@@ -1147,7 +1078,6 @@ class OvnNbIdl(OvnIdlDistributedLock):
                                           self._fip_create_delete_event,
                                           self._nat_dnat_and_snat_event,
                                           self._lsp_lrp_event,
-                                          self._ha_chassis_group_event,
                                           ])
 
     @classmethod

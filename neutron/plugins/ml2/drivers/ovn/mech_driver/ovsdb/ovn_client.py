@@ -49,6 +49,7 @@ from oslo_utils import strutils
 from oslo_utils import timeutils
 from oslo_utils import versionutils
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp import utils as ovsdbapp_utils
 import tenacity
 
 from neutron._i18n import _
@@ -111,6 +112,7 @@ class OVNClient:
         ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH,
         ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION,
         ovn_const.LRP_OPTIONS_REDIRECT_TYPE,
+        ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING,
     )
 
     def __init__(self, nb_idl, sb_idl):
@@ -1964,10 +1966,10 @@ class OVNClient:
                 admin_context, port['device_id'])
             options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = reside_redir_ch
 
-        is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
-            'device_owner')
-
+        is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get('device_owner')
         if is_gw_port:
+            if network_type in const.TYPE_TUNNELLED:
+                options[ovn_const.LRP_OPTIONS_CENTRALIZE_ROUTING] = 'true'
             try:
                 router_ports = self._get_router_ports(admin_context,
                                                       port['device_id'])
@@ -2041,17 +2043,13 @@ class OVNClient:
             # ``Logical_Router_Port``. Optimize this code to call the HCG
             # creation once, with the needed parameters.
             if physnet is None:
-                # The external network is tunnelled, pin the router to a
-                # chassis.
-                _, selected_chassis = utils.sync_ha_chassis_group_router(
+                hcg, _ = utils.sync_ha_chassis_group_router(
                     context, self._nb_idl, self._sb_idl, router['id'], txn)
-                if selected_chassis:
-                    options = {'chassis': selected_chassis}
+                hcg_uuid = ovsdbapp_utils.get_uuid(hcg)
+                if hcg_uuid:
                     commands.append(self._nb_idl.db_set(
-                        'Logical_Router', lrouter, ('options', options)))
-                else:
-                    LOG.info('Router %s is not pinned to any gateway chassis',
-                             router['id'])
+                        'Logical_Router_Port', lrouter_port_name,
+                        ('ha_chassis_group', hcg_uuid)))
             else:
                 # VLAN/flat network with a physical network, bind the LRP to
                 # a chassis using the OVN L3 scheduler.

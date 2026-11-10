@@ -440,6 +440,7 @@ LS_OTHER_CFG_DR_AD_IFNAME = 'dynamic-routing-advertise-ifname'
 
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
 LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'
+LRP_OPTIONS_CENTRALIZE_ROUTING = 'centralize_routing'
 BRIDGE_REDIRECT_TYPE = "bridged"
 
 # FDB AGE Settings
