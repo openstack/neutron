@@ -41,6 +41,7 @@ from neutron.db import ovn_hash_ring_db as db_hash_ring
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
+from neutron.services.portforwarding import constants as pf_const
 from neutron.tests.functional import base
 from neutron.tests.functional.resources.ovsdb import events as test_events
 from neutron.tests.functional.resources.ovsdb import fixtures
@@ -314,6 +315,149 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         n_utils.wait_until_true(
             lambda: not self._check_mac_binding_exists(macb_id),
             timeout=30, sleep=1)
+
+    def _create_external_subnet(self, name, cidr):
+        net_args = {external_net.EXTERNAL: True,
+                    provider_net.NETWORK_TYPE: 'geneve'}
+        net = self._make_network(self.fmt, name, True, as_admin=True,
+                                 arg_list=tuple(net_args.keys()), **net_args)
+        res = self._create_subnet(self.fmt, net['network']['id'], cidr)
+        return net['network'], self.deserialize(self.fmt, res)['subnet']
+
+    def _create_router_with_gateway(self, net, subnet, ip_address):
+        external_gateway_info = {
+            'enable_snat': True, 'network_id': net['id'],
+            'external_fixed_ips': [{'ip_address': ip_address,
+                                    'subnet_id': subnet['id']}]}
+        return self.l3_plugin.create_router(
+            self.context,
+            {'router': {'name': uuidutils.generate_uuid(),
+                        'admin_state_up': True,
+                        'project_id': self._project_id,
+                        'external_gateway_info': external_gateway_info}})
+
+    def _get_router_gateway_port(self, router_id):
+        return directory.get_plugin().get_ports(
+            self.context,
+            filters={'device_id': [router_id],
+                     'device_owner': ['network:router_gateway']})[0]
+
+    def _get_router_datapath(self, router_id):
+        lr_name = ovn_utils.ovn_name(router_id)
+
+        def _find():
+            return self.sb_api.db_find(
+                'Datapath_Binding',
+                ('external_ids', '=', {'name': lr_name})).execute()
+
+        n_utils.wait_until_true(lambda: bool(_find()), timeout=30, sleep=1)
+        return _find()[0]['_uuid']
+
+    def _create_learnt_mac_binding(self, router, ip, mac):
+        """Create the MAC_Binding entry that ovn-controller would learn
+
+        The entry is created on the datapath of the router gateway port,
+        with a current timestamp, as ovn-controller does when the router
+        learns the MAC address of a neighbor on the external network.
+        """
+        gw = self._get_router_gateway_port(router['id'])
+        return self.sb_api.db_create(
+            'MAC_Binding',
+            datapath=self._get_router_datapath(router['id']),
+            logical_port=ovn_utils.ovn_lrouter_port_name(gw['id']),
+            ip=ip, mac=mac,
+            timestamp=int(timeutils.utcnow_ts(microsecond=True) * 1000)
+        ).execute()
+
+    def _setup_neighbor_router(self, name, cidr, neighbor_ip):
+        """Create an external network and the "neighbor" router
+
+        The neighbor router stands for any router connected to the
+        external network that resolves the addresses of the other routers
+        through MAC_Binding (``dynamic_neigh_routers=true``), in real
+        deployments for example the router that is the gateway of the
+        external subnet. The MAC_Binding aging is disabled on it, so its
+        entries are only deleted by the code under test.
+        """
+        self.mech_driver.sb_ovn.idl.update_tables(
+            ['MAC_Binding'], self.mech_driver.sb_schema_helper.schema_json)
+        self.config(mac_binding_age_threshold=0, group='ovn')
+        net, subnet = self._create_external_subnet(name, cidr)
+        neighbor = self._create_router_with_gateway(net, subnet, neighbor_ip)
+        return net, subnet, neighbor
+
+    def _wait_mac_binding_deleted(self, macb_id):
+        n_utils.wait_until_true(
+            lambda: not self._check_mac_binding_exists(macb_id),
+            timeout=30, sleep=1)
+
+    def _assert_mac_binding_kept(self, macb_id, timeout=10):
+        self.assertRaises(
+            n_utils.WaitTimeout, n_utils.wait_until_true,
+            lambda: not self._check_mac_binding_exists(macb_id),
+            timeout=timeout, sleep=1)
+
+    def test_router_gateway_delete_neighbor_router_mac_binding(self):
+        """MAC_Binding of a deleted router gateway in a neighbor router
+
+        The neighbor router learnt the MAC address of the gateway port of
+        router "old" (or of a floating IP or port forwarding VIP that
+        "old" answered for). When "old" is deleted, the entry must be
+        deleted; otherwise, if the address is later used by a port
+        forwarding floating IP on another router, the traffic from the
+        neighbor router is sent to a MAC address that does not exist
+        anymore.
+        """
+        net, subnet, neighbor = self._setup_neighbor_router(
+            'ext-gw', '130.0.0.0/24', '130.0.0.2')
+        old = self._create_router_with_gateway(net, subnet, '130.0.0.10')
+        old_gw = self._get_router_gateway_port(old['id'])
+        macb_id = self._create_learnt_mac_binding(
+            neighbor, '130.0.0.10', old_gw['mac_address'])
+        self._assert_mac_binding_kept(macb_id, timeout=5)
+
+        self.l3_plugin.delete_router(self.context, old['id'])
+        self._wait_mac_binding_deleted(macb_id)
+
+    def test_port_forwarding_lb_mac_bindings(self):
+        """MAC_Binding of a port forwarding VIP in a neighbor router
+
+        A floating IP with port forwardings is a Load_Balancer VIP, it has
+        no NAT entry and OVN sends no GARP for it. The MAC_Binding
+        entries of the VIP address must be deleted when the port
+        forwarding Load_Balancer is created and when it is deleted.
+        """
+        net, subnet, neighbor = self._setup_neighbor_router(
+            'ext-pf', '150.0.0.0/24', '150.0.0.2')
+        macb_id = self._create_learnt_mac_binding(
+            neighbor, '150.0.0.30', 'fa:16:3e:00:00:30')
+        self._assert_mac_binding_kept(macb_id, timeout=5)
+
+        lb_name = 'pf-floatingip-%s-tcp' % uuidutils.generate_uuid()
+        external_ids = {
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                pf_const.PORT_FORWARDING_PLUGIN}
+        self.nb_api.lb_add(lb_name, '150.0.0.30:2222', ['10.0.0.5:22'],
+                           protocol='tcp',
+                           external_ids=external_ids).execute(
+                               check_error=True)
+        self._wait_mac_binding_deleted(macb_id)
+
+        macb_id = self._create_learnt_mac_binding(
+            neighbor, '150.0.0.30', 'fa:16:3e:00:00:31')
+        self.nb_api.lb_del(lb_name).execute(check_error=True)
+        self._wait_mac_binding_deleted(macb_id)
+
+    def test_other_lb_mac_bindings_kept(self):
+        """Load_Balancers not owned by port forwarding keep MAC_Binding"""
+        net, subnet, neighbor = self._setup_neighbor_router(
+            'ext-lb', '160.0.0.0/24', '160.0.0.2')
+        macb_id = self._create_learnt_mac_binding(
+            neighbor, '160.0.0.31', 'fa:16:3e:00:00:32')
+        lb_name = 'lb-%s' % uuidutils.generate_uuid()
+        self.nb_api.lb_add(lb_name, '160.0.0.31:80', ['10.0.0.5:80'],
+                           protocol='tcp').execute(check_error=True)
+        self._assert_mac_binding_kept(macb_id)
 
     def _test_port_binding_and_status(self, port_id, action, status):
         # This function binds or unbinds port to chassis and
