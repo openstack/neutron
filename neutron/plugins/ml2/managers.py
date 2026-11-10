@@ -890,7 +890,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                        'segments': context.network.network_segments})
 
     def _bind_port_level(self, context, level, segments_to_bind,
-                         drivers=None, redoing_bottom=False):
+                         drivers=None, redoing_bottom=False) -> bool:
         if drivers is None:
             drivers = self.ordered_mech_drivers
 
@@ -1024,6 +1024,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 LOG.exception("Mechanism driver %s failed in "
                               "bind_port",
                               driver.name)
+        return False
 
     def _infer_driver_from_allocation(self, context):
         """Choose mechanism driver as implied by allocation in placement.
