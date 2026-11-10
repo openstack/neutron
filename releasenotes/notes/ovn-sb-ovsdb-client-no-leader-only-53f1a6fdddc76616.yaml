@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Fixed router interface removal leaving a stale ``Logical_Router_Port``
+    in the OVN Northbound database when ``[ovn] ovn_sb_connection`` points
+    to OVSDB relays. ``ovsdb-client``, used to delete ``MAC_Binding`` rows,
+    accepted only the cluster leader and rejected every relay. Neutron now
+    passes ``--no-leader-only`` for Southbound commands. For more
+    information, see bug `2173616
+    <https://bugs.launchpad.net/neutron/+bug/2173616>`_.
