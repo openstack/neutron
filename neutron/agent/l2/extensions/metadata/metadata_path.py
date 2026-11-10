@@ -28,6 +28,7 @@ from neutron_lib.utils import net as net_lib
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import uuidutils
 
 from neutron._i18n import _
 from neutron.agent.common import ip_lib
@@ -108,6 +109,13 @@ class MetadataPathExtensionPortInfoAPI:
         port_obj = self.cache_api.get_resource_by_id(
             resources.PORT, port_id)
         if not port_obj or not port_obj.device_id:
+            return
+        if not uuidutils.is_uuid_like(port_obj.device_id):
+            # device_id is project-controlled and rendered into the host
+            # haproxy configuration, so it must be a uuid and not contain
+            # any invalid syntax.
+            LOG.warning("Port %s has a device_id that is not a "
+                        "UUID, skipping metadata path.", port_id)
             return
 
         info = {"instance_id": port_obj.device_id,
