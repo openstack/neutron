@@ -128,7 +128,7 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         """
         if quota_obj.Quota.delete_objects(context, project_id=project_id) < 1:
             # No record deleted means the quota was not found
-            raise exceptions.TenantQuotaNotFound(tenant_id=project_id)
+            raise exceptions.ProjectQuotaNotFound(project_id=project_id)
 
     @staticmethod
     @db_api.retry_if_session_inactive()
