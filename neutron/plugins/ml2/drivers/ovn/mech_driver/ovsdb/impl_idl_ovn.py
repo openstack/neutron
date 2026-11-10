@@ -1055,6 +1055,13 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
+    def start_connection(self, connection):
+        if self.ovsdb_connection.is_running:
+            return
+
+        self.create_index('Chassis', 'hostname')
+        super().start_connection(connection)
+
     @n_utils.classproperty
     def connection_string(cls):
         return cfg.get_ovn_sb_connection()

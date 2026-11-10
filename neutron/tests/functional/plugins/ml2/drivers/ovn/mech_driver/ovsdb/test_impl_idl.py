@@ -96,6 +96,76 @@ class TestSbApi(BaseOvnIdlTest):
             self.data['chassis'][0]['hostname']))
         self.assertFalse(self.api.chassis_exists("nochassishere"))
 
+    def test_chassis_hostname_index_exists(self):
+        table = self.api.tables['Chassis']
+        self.assertIn('hostname', table.rows.indexes)
+
+    def test_chassis_hostname_index_different_hostnames(self):
+        name1 = utils.get_rand_device_name('chassis')
+        name2 = utils.get_rand_device_name('chassis')
+        host1 = '%s.example.com' % name1
+        host2 = '%s.example.com' % name2
+        with self.api.transaction(check_error=True) as txn:
+            txn.add(self.api.chassis_add(
+                name1, ['geneve'], host1, hostname=host1))
+            txn.add(self.api.chassis_add(
+                name2, ['geneve'], host2, hostname=host2))
+
+        rows = self.api.db_find(
+            'Chassis', ('hostname', '=', host1)
+        ).execute(check_error=True)
+        self.assertEqual(1, len(rows))
+        self.assertEqual(name1, rows[0]['name'])
+
+        rows = self.api.db_find(
+            'Chassis', ('hostname', '=', host2)
+        ).execute(check_error=True)
+        self.assertEqual(1, len(rows))
+        self.assertEqual(name2, rows[0]['name'])
+
+    def test_chassis_hostname_index_with_and_without_hostname(self):
+        name1 = utils.get_rand_device_name('chassis')
+        name2 = utils.get_rand_device_name('chassis')
+        host1 = '%s.example.com' % name1
+        ip1 = '%s.localdomain.com' % name1
+        ip2 = '%s.localdomain.com' % name2
+        with self.api.transaction(check_error=True) as txn:
+            txn.add(self.api.chassis_add(
+                name1, ['geneve'], ip1, hostname=host1))
+            txn.add(self.api.chassis_add(
+                name2, ['geneve'], ip2))
+
+        rows = self.api.db_find(
+            'Chassis', ('hostname', '=', host1)
+        ).execute(check_error=True)
+        self.assertEqual(1, len(rows))
+        self.assertEqual(name1, rows[0]['name'])
+
+        rows = self.api.db_find(
+            'Chassis', ('hostname', '=', '')
+        ).execute(check_error=True)
+        names = {r['name'] for r in rows}
+        self.assertIn(name2, names)
+        self.assertNotIn(name1, names)
+
+    def test_chassis_hostname_index_multiple_empty_hostnames(self):
+        name1 = utils.get_rand_device_name('chassis')
+        name2 = utils.get_rand_device_name('chassis')
+        ip1 = '%s.localdomain.com' % name1
+        ip2 = '%s.localdomain.com' % name2
+        with self.api.transaction(check_error=True) as txn:
+            txn.add(self.api.chassis_add(
+                name1, ['geneve'], ip1))
+            txn.add(self.api.chassis_add(
+                name2, ['geneve'], ip2))
+
+        rows = self.api.db_find(
+            'Chassis', ('hostname', '=', '')
+        ).execute(check_error=True)
+        names = {r['name'] for r in rows}
+        self.assertIn(name1, names)
+        self.assertIn(name2, names)
+
     def test_get_chassis_and_physnets(self):
         mapping = self.api.get_chassis_and_physnets()
         self.assertLessEqual(len(self.data['chassis']), len(mapping))
