@@ -1418,9 +1418,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         The confirmation of the internal port whether owned by the project who
         owns the floating IP will be confirmed by _get_router_for_floatingip.
         """
-        (internal_port, internal_subnet_id,
-         internal_ip_address) = self._internal_fip_assoc_data(
-             context, fip, floatingip_obj.project_id)
+        internal_port = internal_subnet_id = internal_ip_address = None
+        if fip.get('port_id'):
+            (internal_port, internal_subnet_id,
+             internal_ip_address) = self._internal_fip_assoc_data(
+                 context, fip, floatingip_obj.project_id)
         requested_router_id = fip.get(l3_apidef.ROUTER_ID)
         if requested_router_id:
             self._validate_requested_floatingip_router(
@@ -1439,14 +1441,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         'DVR mode')
                 raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
-        return (fip['port_id'], internal_ip_address, router_id)
+        return (fip.get('port_id'), internal_ip_address, router_id)
 
     def _check_and_get_fip_assoc(self, context, fip, floatingip_obj):
         port_id = internal_ip_address = router_id = None
         if fip.get('fixed_ip_address') and not fip.get('port_id'):
             msg = _("fixed_ip_address cannot be specified without a port_id")
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
-        if fip.get('port_id'):
+        if fip.get('port_id') or fip.get('router_id'):
             port_id, internal_ip_address, router_id = self._get_assoc_data(
                 context,
                 fip,
@@ -1456,21 +1458,22 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 # Floating IP association is not changed.
                 return port_id, internal_ip_address, router_id
 
-            fip_exists = l3_obj.FloatingIP.objects_exist(
-                context,
-                fixed_port_id=fip['port_id'],
-                floating_network_id=floatingip_obj.floating_network_id,
-                fixed_ip_address=netaddr.IPAddress(internal_ip_address))
-            if fip_exists:
-                floating_ip_address = (str(floatingip_obj.floating_ip_address)
-                                       if floatingip_obj.floating_ip_address
-                                       else None)
-                raise l3_exc.FloatingIPPortAlreadyAssociated(
-                    port_id=fip['port_id'],
-                    fip_id=floatingip_obj.id,
-                    floating_ip_address=floating_ip_address,
-                    fixed_ip=internal_ip_address,
-                    net_id=floatingip_obj.floating_network_id)
+            if port_id:
+                fip_exists = l3_obj.FloatingIP.objects_exist(
+                    context,
+                    fixed_port_id=port_id,
+                    floating_network_id=floatingip_obj.floating_network_id,
+                    fixed_ip_address=netaddr.IPAddress(internal_ip_address))
+                if fip_exists:
+                    floating_ip_address = (
+                        str(floatingip_obj.floating_ip_address)
+                        if floatingip_obj.floating_ip_address else None)
+                    raise l3_exc.FloatingIPPortAlreadyAssociated(
+                        port_id=port_id,
+                        fip_id=floatingip_obj.id,
+                        floating_ip_address=floating_ip_address,
+                        fixed_ip=internal_ip_address,
+                        net_id=floatingip_obj.floating_network_id)
 
         if fip and 'port_id' not in fip and floatingip_obj.fixed_port_id:
             # NOTE(liuyulong): without the fix of bug #1610045 here could
