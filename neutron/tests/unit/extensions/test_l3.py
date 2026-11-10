@@ -3510,6 +3510,29 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     }})
                 self.assertEqual(gateway_router_id, floatingip['router_id'])
 
+    def test_floatingip_with_router_id_without_internal_port(self):
+        with self.subnet(cidr='10.0.0.0/24') as external_subnet:
+            external_network_id = external_subnet['subnet']['network_id']
+            self._set_net_external(external_network_id)
+            with self.router() as router:
+                router_id = router['router']['id']
+                self._add_external_gateway_to_router(
+                    router_id, external_network_id)
+                plugin = directory.get_plugin(plugin_constants.L3)
+                admin_ctx = context.get_admin_context()
+                floatingip = plugin.create_floatingip(
+                    admin_ctx,
+                    {'floatingip': {
+                        'floating_network_id': external_network_id,
+                        'project_id': self._project_id,
+                        'router_id': router_id,
+                    }})
+                floatingip = plugin.get_floatingip(admin_ctx, floatingip['id'])
+
+                self.assertEqual(router_id, floatingip['router_id'])
+                self.assertIsNone(floatingip['port_id'])
+                self.assertIsNone(floatingip['fixed_ip_address'])
+
     def test_floatingip_with_router_without_external_gateway_returns_409(self):
         with self.subnet(cidr='10.0.0.0/24') as external_subnet:
             external_network_id = external_subnet['subnet']['network_id']
