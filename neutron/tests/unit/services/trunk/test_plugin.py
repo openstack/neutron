@@ -21,6 +21,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib.plugins import directory
 from neutron_lib.services.trunk import constants
+from oslo_config import cfg
 import testtools
 
 from neutron.objects import trunk as trunk_objects
@@ -220,6 +221,26 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_add_subports_notify_precommit_create(self):
         self._test_add_subports_notify(events.PRECOMMIT_CREATE)
+
+    def test_create_trunk_exceeds_max_subports(self):
+        cfg.CONF.set_override('max_subports_per_trunk', 1, group='trunk')
+        with self.port() as parent, self.port() as sp1, self.port() as sp2:
+            subports = [create_subport_dict(sp1['port']['id']),
+                        create_subport_dict(sp2['port']['id'])]
+            subports[1]['segmentation_id'] = 124
+            self.assertRaises(trunk_exc.TooManySubPorts,
+                              self._create_test_trunk, parent, subports)
+
+    def test_add_subports_exceeds_max_subports(self):
+        cfg.CONF.set_override('max_subports_per_trunk', 1, group='trunk')
+        with self.port() as parent, self.port() as sp1, self.port() as sp2:
+            trunk = self._create_test_trunk(
+                parent, [create_subport_dict(sp1['port']['id'])])
+            new = create_subport_dict(sp2['port']['id'])
+            new['segmentation_id'] = 124
+            self.assertRaises(
+                trunk_exc.TooManySubPorts, self.trunk_plugin.add_subports,
+                self.context, trunk['id'], {'sub_ports': [new]})
 
     def _test_remove_subports_notify(self, event):
         with self.port() as parent_port, self.port() as child_port:

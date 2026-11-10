@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    A new ``[trunk] max_subports_per_trunk`` configuration option allows
+    operators to limit the number of subports on a single trunk. This protects
+    physical switches that are programmed by ML2 mechanism drivers and can only
+    handle a limited number of VLANs per port. Requests exceeding the limit
+    are rejected. The default value is ``128``.

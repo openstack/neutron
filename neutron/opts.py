@@ -58,6 +58,7 @@ import neutron.conf.services.extdns_designate_driver
 import neutron.conf.services.logging
 import neutron.conf.services.metering_agent
 import neutron.conf.services.provider_configuration
+import neutron.conf.services.trunk
 import neutron.db.migration.cli
 import neutron.extensions.l3  # noqa: F401
 import neutron.extensions.securitygroup  # noqa: F401
@@ -203,6 +204,8 @@ def list_opts():
          neutron.conf.services.extdns_designate_driver.designate_opts
          ),
         ('quotas', neutron.conf.quota.core_quota_opts),
+        (neutron.conf.services.trunk.TRUNK_GROUP,
+         neutron.conf.services.trunk.trunk_opts),
         ('service_providers',
          neutron.conf.services.provider_configuration.serviceprovider_opts)
     ]

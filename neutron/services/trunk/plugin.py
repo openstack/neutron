@@ -27,10 +27,12 @@ from neutron_lib.db import resource_extend
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from neutron_lib.services.trunk import constants
+from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
 
+from neutron.conf.services import trunk as trunk_conf
 from neutron.db import db_base_plugin_common
 from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
@@ -55,6 +57,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
     __native_sorting_support = True
 
     def __init__(self):
+        trunk_conf.register_trunk_opts()
         self._rpc_server = None
         self._rpc_notifier = None
         self._drivers = []
@@ -194,9 +197,18 @@ class TrunkPlugin(service_base.ServicePluginBase):
         self._segmentation_types[segmentation_type] = id_validator
         LOG.debug('Added support for segmentation type %s', segmentation_type)
 
+    @staticmethod
+    def _check_max_subports(trunk_id, requested):
+        max_subports = cfg.CONF.trunk.max_subports_per_trunk
+        if requested > max_subports:
+            raise trunk_exc.TooManySubPorts(
+                trunk_id=trunk_id or 'new', max=max_subports,
+                requested=requested)
+
     def validate(self, context, trunk):
         """Return a valid trunk or raises an error if unable to do so."""
         trunk_details = trunk
+        self._check_max_subports(None, len(trunk[trunk_apidef.SUB_PORTS]))
 
         trunk_validator = rules.TrunkPortValidator(trunk['port_id'])
         trunk_details['port_id'] = trunk_validator.validate(context)
@@ -336,6 +348,8 @@ class TrunkPlugin(service_base.ServicePluginBase):
             # Check for basic validation since the request body here is not
             # automatically validated by the API layer.
             subports = subports[trunk_apidef.SUB_PORTS]
+            self._check_max_subports(
+                trunk_id, len(trunk.sub_ports) + len(subports))
             subports_validator = rules.SubPortsValidator(
                 self._segmentation_types, subports, trunk['port_id'])
             subports = subports_validator.validate(

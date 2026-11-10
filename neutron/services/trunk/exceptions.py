@@ -94,3 +94,8 @@ class TrunkPluginDriverConflict(n_exc.Conflict):
 class SubPortBindingError(n_exc.NeutronException):
     message = _("Failed to set port binding for port %(port_id)s on trunk "
                 "%(trunk_id)s.")
+
+
+class TooManySubPorts(n_exc.InvalidInput):
+    message = _("Trunk %(trunk_id)s cannot have more than %(max)s subports, "
+                "%(requested)s requested.")
