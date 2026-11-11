@@ -593,6 +593,81 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                     ('options', options))]
         nb_idl.db_set.assert_has_calls(expected_calls)
 
+    @mock.patch.object(maintenance.utils, 'network_needs_lswitch',
+                       return_value=True)
+    @mock.patch.object(maintenance.network_obj.NetworkSegment, 'get_objects')
+    def test_set_tag_request_on_localnet_ports(self, mock_get_objects,
+                                               mock_needs_lswitch):
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        # A VLAN segment with a segmentation ID, its localnet port needs
+        # the tag back.
+        seg1 = mock.Mock(id='seg1', network_id='net1', segmentation_id=100)
+        # A flat segment, no segmentation ID, nothing to backfill.
+        seg2 = mock.Mock(id='seg2', network_id='net2', segmentation_id=None)
+        mock_get_objects.return_value = [seg1, seg2]
+
+        # Localnet port matching seg1, missing ``tag_request``.
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': utils.ovn_provnet_port_name('seg1'),
+                   'type': constants.LSP_TYPE_LOCALNET,
+                   'tag': [100],
+                   'tag_request': []})
+
+        # Localnet port matching a VLAN segment but already migrated.
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': utils.ovn_provnet_port_name('seg2'),
+                   'type': constants.LSP_TYPE_LOCALNET,
+                   'tag': [222],
+                   'tag_request': [222]})
+
+        # Localnet port not owned by Neutron, must not be touched.
+        lsp3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'provnet-not-neutron',
+                   'type': constants.LSP_TYPE_LOCALNET,
+                   'tag': [333],
+                   'tag_request': []})
+
+        nb_idl.db_find_rows.return_value.execute.return_value = [
+            lsp1, lsp2, lsp3]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.set_tag_request_on_localnet_ports)
+
+        expected_calls = [
+            mock.call('Logical_Switch_Port',
+                      utils.ovn_provnet_port_name('seg1'),
+                      ('tag_request', [100]))]
+        nb_idl.db_set.assert_has_calls(expected_calls)
+        self.assertEqual(1, nb_idl.db_set.call_count)
+
+    @mock.patch.object(maintenance.utils, 'network_needs_lswitch',
+                       return_value=False)
+    @mock.patch.object(maintenance.network_obj.NetworkSegment, 'get_objects')
+    def test_set_tag_request_on_localnet_ports_routed(self, mock_get_objects,
+                                                      mock_needs_lswitch):
+        # In routed networks with per-VLAN-segment logical switches, the
+        # localnet ports must not get a ``tag_request``.
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        seg1 = mock.Mock(id='seg1', network_id='net1', segmentation_id=100)
+        mock_get_objects.return_value = [seg1]
+
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': utils.ovn_provnet_port_name('seg1'),
+                   'type': constants.LSP_TYPE_LOCALNET,
+                   'tag': [100],
+                   'tag_request': []})
+
+        nb_idl.db_find_rows.return_value.execute.return_value = [lsp1]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.set_tag_request_on_localnet_ports)
+
+        nb_idl.db_set.assert_not_called()
+
     def _test_check_redirect_type_router_gateway_ports(self, networks,
                                                        redirect_value,
                                                        flavored_router=False):
