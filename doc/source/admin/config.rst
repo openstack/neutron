@@ -41,7 +41,6 @@ Configuration
    config-routed-networks
    config-router-flavor-ovn
    config-sriov
-   config-sfc
    config-service-subnets
    config-subnet-onboard
    config-subnet-pools
