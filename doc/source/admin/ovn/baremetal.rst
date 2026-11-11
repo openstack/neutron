@@ -30,12 +30,12 @@ Metadata access
 ~~~~~~~~~~~~~~~
 
 Different from ML2/OVS, ML2/OVN requires to have the
-``ovn-metadata-agent`` running on the node that the virtual machines
-are running onto. Since baremetal requires an external port that will
-be bound to another node, as explained `Scheduling baremetal ports`_
-section, it is required that the ``ovn-metadata-agent`` is also deployed
-on the nodes marked with the ``enable-chassis-as-gw`` option so it can
-serve metadata to the baremetal nodes booting off those external ports.
+``ovn-agent`` running on the node that the virtual machines are running onto.
+Since baremetal requires an external port that will be bound to another node,
+as explained `Scheduling baremetal ports`_ section, it is required that
+the ``ovn-agent`` is also deployed on the nodes marked with
+the ``enable-chassis-as-gw`` option so it can serve metadata to the baremetal
+nodes booting off those external ports.
 
 Using OVN built-in DHCP for PXE booting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

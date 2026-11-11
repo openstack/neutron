@@ -51,7 +51,7 @@ The two compute nodes contain the following components:
 * OVS data plane service (``ovs-vswitchd``)
 * OVS database service (``ovsdb-server``) with OVS local configuration
   (``conf.db``) database
-* OVN metadata agent (``ovn-metadata-agent``)
+* OVN agent (``ovn-agent``)
 
 
 The gateway nodes contain the following components:
@@ -68,8 +68,8 @@ The gateway nodes contain the following components:
    Each OVN metadata agent provides metadata service locally on the compute
    nodes in a lightweight way. Each network being accessed by the instances of
    the compute node will have a corresponding metadata ovnmeta-$net_uuid
-   namespace, and inside an haproxy will funnel the requests to the
-   ovn-metadata-agent over a unix socket.
+   namespace, and inside an haproxy will funnel the requests to
+   the ovn-agent over a unix socket.
 
    Such namespace can be very helpful for debug purposes to access the local
    instances on the compute node. If you login as root on such compute node
