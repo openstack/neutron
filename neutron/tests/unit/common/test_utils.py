@@ -25,7 +25,10 @@ from unittest import mock
 import ddt
 import netaddr
 from neutron_lib import constants
+from neutron_lib import context
+from neutron_lib.db import api as db_api
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import timeutils
 from osprofiler import profiler
@@ -33,6 +36,7 @@ import testtools
 
 from neutron.common import utils
 from neutron.tests import base
+from neutron.tests import tools
 from neutron.tests.unit import tests
 
 
@@ -907,6 +911,76 @@ class TestFindUniqueSequence(base.BaseTestCase):
         # One of the groups is empty - no solution possible
         result = utils.find_unique_sequence([['a'], [], ['c']])
         self.assertIsNone(result)
+
+
+class CreateObjectWithDependencyTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.dep_getter = mock.Mock(return_value=None)
+        self.dep_creator = mock.Mock(return_value=mock.Mock(id='dep'))
+        self.dep_deleter = mock.Mock()
+        self.creator = mock.Mock(return_value='result')
+
+    def _create(self):
+        return utils.create_object_with_dependency(
+            self.creator, self.dep_getter, self.dep_creator, 'id',
+            self.dep_deleter)
+
+    def test_creates_dependency(self):
+        dependency = self.dep_creator.return_value
+        self.assertEqual(('result', dependency), self._create())
+        self.creator.assert_called_once_with(dependency)
+        self.dep_deleter.assert_not_called()
+
+    @mock.patch.object(utils.time, 'sleep')
+    def test_dependency_created_concurrently(self, sleep):
+        dependency = mock.Mock(id='dep')
+        self.dep_getter.side_effect = [None, dependency]
+        self.dep_creator.side_effect = db_exc.DBDuplicateEntry()
+        self.assertEqual(('result', dependency), self._create())
+        self.creator.assert_called_once_with(dependency)
+
+    def test_gives_up_after_max_retries(self):
+        # The dependency is gone each time creating the object fails.
+        self.creator.side_effect = ValueError()
+        self.assertRaises(ValueError, self._create)
+        self.assertEqual(db_api.MAX_RETRIES, self.creator.call_count)
+
+
+class TransactionGuardTestCase(base.BaseTestCase):
+
+    @utils.transaction_guard
+    def _guarded(self, ctx):
+        return 'called'
+
+    @mock.patch.object(db_api, 'is_session_active', return_value=False)
+    def test_outside_transaction(self, is_session_active):
+        ctx = context.Context()
+        self.assertEqual('called', self._guarded(ctx))
+        is_session_active.assert_called_once_with(ctx.session)
+
+    @mock.patch.object(db_api, 'is_session_active', return_value=True)
+    def test_inside_transaction(self, is_session_active):
+        self.assertRaises(RuntimeError, self._guarded, context.Context())
+
+
+class ServerOnlyImportsTestCase(base.BaseTestCase):
+    # neutron.common.utils is imported by every agent, and with it
+    # neutron.api.api_common; neutron.service by the DHCP, L3 and OVN agents.
+    MODULES = ('neutron.api.api_common', 'neutron.common.utils',
+               'neutron.service')
+
+    def test_modules_do_not_import_server_only_modules(self):
+        result = tools.check_imports(self.MODULES, tools.SERVER_ONLY_MODULES)
+        self.assertEqual([], result['holders'])
+
+    def test_modules_do_not_load_server_only_modules(self):
+        result = tools.check_imports(self.MODULES, tools.SERVER_ONLY_MODULES)
+        if result['preloaded']:
+            self.skipTest('neutron_lib loads %s itself' %
+                          ', '.join(result['preloaded']))
+        self.assertEqual([], result['loaded'])
 
 
 class TestTimecost(base.BaseTestCase):

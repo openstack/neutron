@@ -18,7 +18,6 @@ import urllib
 
 from neutron_lib.api import attributes
 from neutron_lib import constants
-from neutron_lib.db import model_base
 from neutron_lib import exceptions
 from oslo_config import cfg
 import oslo_i18n
@@ -84,6 +83,11 @@ def get_filters_from_dict(data, attr_info, skips=None,
     becomes:
     {'check': [u'a', u'b'], 'name': [u'Bob']}
     """
+    # Imported here because the agents import this module, through
+    # neutron.common.utils, but have no database.
+    # pylint: disable=import-outside-toplevel
+    from neutron_lib.db import model_base
+
     attributes.populate_project_info(attr_info)
     is_empty_string_supported = is_empty_string_filtering_supported()
     skips = skips or []

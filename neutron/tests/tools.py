@@ -15,6 +15,8 @@
 
 import datetime
 import random
+import subprocess
+import sys
 import unittest
 
 import fixtures
@@ -23,11 +25,66 @@ from neutron_lib import constants
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
+from oslo_serialization import jsonutils
 from oslo_utils import netutils
 from oslo_utils import timeutils
 
 
 LAST_RANDOM_PORT_RANGE_GENERATED = 1
+
+# Modules that only the API and RPC servers need: the DB API, the neutron-lib
+# modules that load it, and pecan, which it imports.
+SERVER_ONLY_MODULES = ('neutron_lib.db.api', 'neutron_lib.db.model_base',
+                       'neutron_lib.db.standard_attr', 'pecan')
+
+_IMPORT_CHECK = """
+import importlib
+import json
+import sys
+import types
+
+modules, forbidden = json.loads(sys.argv[1])
+
+
+def is_forbidden(name):
+    return any(name == f or name.startswith(f + '.') for f in forbidden)
+
+
+def forbidden_loaded():
+    return sorted(f for f in forbidden if f in sys.modules)
+
+
+import neutron_lib
+preloaded = forbidden_loaded()
+for module in modules:
+    importlib.import_module(module)
+holders = sorted(
+    name for name, module in list(sys.modules.items())
+    if module is not None and name.split('.')[0] == 'neutron' and
+    any(isinstance(v, types.ModuleType) and is_forbidden(v.__name__)
+        for v in list(vars(module).values())))
+print(json.dumps({'preloaded': preloaded, 'loaded': forbidden_loaded(),
+                  'holders': holders}))
+"""
+
+
+def check_imports(modules, forbidden):
+    """Import modules in a fresh interpreter and look for forbidden ones.
+
+    The test process has usually imported most of neutron already, so the
+    check runs in a new interpreter. It returns a dict of three sorted lists:
+    'preloaded' holds the forbidden modules that importing neutron_lib alone
+    loads, 'loaded' those loaded once the modules are imported too, and
+    'holders' the neutron modules that refer to a forbidden module directly.
+
+    'holders' does not depend on what neutron-lib imports, so it shows what
+    neutron itself imports even when neutron-lib loads a forbidden module
+    first. A test of 'loaded' is only meaningful when 'preloaded' is empty.
+    """
+    cmd = [sys.executable, '-c', _IMPORT_CHECK,
+           jsonutils.dumps([list(modules), list(forbidden)])]
+    out = subprocess.check_output(cmd, text=True)  # noqa: S603
+    return jsonutils.loads(out.strip().splitlines()[-1])
 
 
 class SafeCleanupFixture(fixtures.Fixture):

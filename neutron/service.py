@@ -21,7 +21,6 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import context
-from neutron_lib.db import api as session
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
 from neutron_lib import worker as base_worker
@@ -261,7 +260,10 @@ def _start_workers(workers, neutron_api=None):
 
             # dispose the whole pool before os.fork, otherwise there will
             # be shared DB connections in child processes which may cause
-            # DB errors.
+            # DB errors. The DB API is imported here because the agents
+            # import this module but have no database.
+            # pylint: disable=import-outside-toplevel
+            from neutron_lib.db import api as session
             session.get_context_manager().dispose_pool()
 
             for worker in process_workers:
