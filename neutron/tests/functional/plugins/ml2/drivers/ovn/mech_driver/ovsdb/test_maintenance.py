@@ -1882,6 +1882,72 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertNotIn(ovn_const.OVN_PHYSNET_EXT_ID_KEY,
                          localnet_coexist.external_ids)
 
+    def test_set_tag_request_on_localnet_ports(self):
+        n1 = self._create_network(
+            'n_tag_req_maint_1', provider='physnet1', net_type='vlan')
+        n2 = self._create_network(
+            'n_tag_req_maint_2', provider='physnet2', net_type='vlan')
+
+        seg1 = self.segments_plugin.get_segments(
+            self.context, filters={'network_id': [n1['id']]})[0]
+        seg2 = self.segments_plugin.get_segments(
+            self.context, filters={'network_id': [n2['id']]})[0]
+        tag1 = seg1['segmentation_id']
+        tag2 = seg2['segmentation_id']
+
+        localnet1_name = utils.ovn_provnet_port_name(seg1['id'])
+        localnet2_name = utils.ovn_provnet_port_name(seg2['id'])
+        localnet1 = self._find_lswitch_port_row_by_name(localnet1_name)
+        localnet2 = self._find_lswitch_port_row_by_name(localnet2_name)
+
+        # Simulate pre-``tag_request`` Neutron: ``tag`` set and
+        # ``tag_request`` empty, as left by the old ``create_provnet_port``.
+        for localnet, tag in ((localnet1, tag1), (localnet2, tag2)):
+            self.nb_api.db_set(
+                'Logical_Switch_Port', localnet.uuid,
+                ('tag', [tag])
+            ).execute(check_error=True)
+            self.nb_api.db_clear(
+                'Logical_Switch_Port', localnet.uuid, 'tag_request'
+            ).execute(check_error=True)
+
+        localnet1 = self._find_lswitch_port_row_by_name(localnet1_name)
+        self.assertEqual([], localnet1.tag_request)
+        localnet2 = self._find_lswitch_port_row_by_name(localnet2_name)
+        self.assertEqual([], localnet2.tag_request)
+
+        # A localnet port that does not belong to any Neutron segment must
+        # not be touched.
+        coexist_name = (
+            'provnet-my-coexisting-service-' + uuidutils.generate_uuid())
+        ls_name = utils.ovn_name(n1['id'])
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.create_lswitch_port(
+                coexist_name, ls_name, True,
+                addresses=[ovn_const.UNKNOWN_ADDR],
+                type=ovn_const.LSP_TYPE_LOCALNET,
+                options={'network_name': 'physnet1'}))
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.set_tag_request_on_localnet_ports)
+
+        localnet1 = self._find_lswitch_port_row_by_name(localnet1_name)
+        self.assertEqual([tag1], localnet1.tag_request)
+        localnet2 = self._find_lswitch_port_row_by_name(localnet2_name)
+        self.assertEqual([tag2], localnet2.tag_request)
+        localnet_coexist = self._find_lswitch_port_row_by_name(coexist_name)
+        self.assertEqual([], localnet_coexist.tag_request)
+
+        # ovn-northd copies ``tag_request`` into ``tag``; wait for the
+        # derived tag to be back before ending the test.
+        common_utils.wait_until_true(
+            lambda: self._find_lswitch_port_row_by_name(
+                localnet1_name).tag == [tag1], timeout=5)
+        common_utils.wait_until_true(
+            lambda: self._find_lswitch_port_row_by_name(
+                localnet2_name).tag == [tag2], timeout=5)
+
 
 class TestEVPNMaintenance(_TestMaintenanceHelper):
     """Functional tests for EVPN maintenance tasks."""
