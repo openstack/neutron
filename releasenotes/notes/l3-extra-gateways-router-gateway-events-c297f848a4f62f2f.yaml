@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Fixed an issue where adding or removing an additional external gateway
+    on a router did not trigger the internal housekeeping that normally
+    accompanies a gateway change. For example, DVR gateway-related ports
+    were not cleaned up and NDP proxy checks were not run for those
+    gateways. These steps now run for every external gateway on a router,
+    the same as for a router's first gateway.
+    See `bug 2170404 <https://bugs.launchpad.net/neutron/+bug/2170404>`_
+    for details.
