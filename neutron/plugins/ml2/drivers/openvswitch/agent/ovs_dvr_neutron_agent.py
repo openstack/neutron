@@ -736,7 +736,7 @@ class OVSDVRNeutronAgent:
 
             self.int_br.delete_dvr_dst_mac_for_arp(
                 network_type=network_type,
-                vlan_tag=vlan_to_use,
+                vlan_tag=lvm.vlan,
                 gateway_mac=port.vif_mac,
                 dvr_mac=self.dvr_mac_address,
                 rtr_port=port.ofport)

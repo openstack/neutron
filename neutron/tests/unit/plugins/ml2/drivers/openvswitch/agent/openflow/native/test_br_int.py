@@ -790,9 +790,9 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
 
     def _test_delete_dvr_dst_mac_for_arp(self, network_type):
         if network_type in (p_const.TYPE_VLAN, p_const.TYPE_FLAT):
-            table_id = ovs_constants.DVR_TO_SRC_MAC_PHYSICAL
+            table_id = ovs_constants.ARP_DVR_MAC_TO_DST_MAC_PHYSICAL
         else:
-            table_id = ovs_constants.DVR_TO_SRC_MAC
+            table_id = ovs_constants.ARP_DVR_MAC_TO_DST_MAC
 
         if network_type == p_const.TYPE_FLAT:
             vlan_tag = None
