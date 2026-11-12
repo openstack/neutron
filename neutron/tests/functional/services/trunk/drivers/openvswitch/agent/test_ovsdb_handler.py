@@ -216,6 +216,13 @@ class OVSDBHandlerTestCase(base.OVSAgentTestFramework):
 
         # The startup cleanup (invoked from the trunk driver init_handler)
         # must reap the orphaned patch ports from the integration bridge.
+        # ovs-vswitchd flags the peerless patch ports (``Interface.error``
+        # set to "No usable peer ..." or an invalid ``ofport``) only after
+        # it reconfigures its datapath, asynchronously from the trunk
+        # bridge deletion. Wait until the cleanup scan can actually see
+        # the orphaned ports before invoking it.
+        common_utils.wait_until_true(
+            self.ovsdb_handler._get_orphaned_trunk_patch_ports)
         self.ovsdb_handler.cleanup_orphaned_trunk_patch_ports()
 
         self.assertFalse(ovsdb_handler.bridge_has_service_port(br_int))
