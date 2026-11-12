@@ -329,12 +329,15 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
     @mock.patch.object(pf_plugin.PortForwardingPlugin,
                        '_find_a_router_for_fip_port_forwarding',
                        return_value='target_router_id')
+    @mock.patch.object(pf_plugin.PortForwardingPlugin,
+                       '_validate_internal_port_and_ip',
+                       return_value=(mock.Mock(), 'subnet_id'))
     @mock.patch.object(router.FloatingIP, 'get_object')
     @mock.patch('neutron.objects.port_forwarding.PortForwarding')
     def test_create_floatingip_port_forwarding(
             self, mock_port_forwarding, mock_fip_get_object, mock_find_router,
-            mock_check_router_match, mock_push_api, mock_registry_publish,
-            mock_update_objects, mock_check_bind_fip):
+            mock_validate_port, mock_check_router_match, mock_push_api,
+            mock_registry_publish, mock_update_objects, mock_check_bind_fip):
         # Update fip
         pf_input = {
             'port_forwarding':
@@ -391,11 +394,14 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
     @mock.patch.object(pf_plugin.PortForwardingPlugin,
                        '_find_a_router_for_fip_port_forwarding',
                        return_value='target_router_id')
+    @mock.patch.object(pf_plugin.PortForwardingPlugin,
+                       '_validate_internal_port_and_ip',
+                       return_value=(mock.Mock(), 'subnet_id'))
     @mock.patch.object(router.FloatingIP, 'get_object')
     @mock.patch('neutron.objects.port_forwarding.PortForwarding')
     def test_negative_create_floatingip_port_forwarding(
             self, mock_port_forwarding, mock_fip_get_object,
-            mock_find_router,
+            mock_find_router, mock_validate_port,
             mock_check_router_match, mock_try_find_exist,
             mock_check_bind_fip):
         pf_input = {
@@ -416,29 +422,24 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
             self.pf_plugin.create_floatingip_port_forwarding,
             self.ctxt, 'fip_id', pf_input)
 
-    @mock.patch.object(pf_plugin.PortForwardingPlugin,
-                       '_get_internal_ip_subnet')
     @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, 'get_router_for_floatingip')
-    @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_port')
+    @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_subnet')
+    def test_find_a_router_uses_existing_fip_router(
+            self, mock_get_subnet, mock_get_router):
+        fip_obj = mock.Mock(router_id='existing-router-id')
+
+        router_id = self.pf_plugin._find_a_router_for_fip_port_forwarding(
+            self.ctxt, fip_obj, {'id': 'ID'}, 'subnet-id')
+
+        self.assertEqual('existing-router-id', router_id)
+        mock_get_subnet.assert_not_called()
+        mock_get_router.assert_not_called()
+
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin, 'get_router_for_floatingip')
     @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_subnet')
     def test_negative_find_a_router_for_fip_port_forwarding(
-            self, mock_get_subnet, mock_get_port, mock_get_router,
-            mock_get_ip_subnet):
-        fip_obj = mock.Mock()
-        pf_dict = {'internal_port_id': 'internal_neutron_port',
-                   'internal_ip_address': '10.0.0.1'}
-        port_dict = {'id': 'ID', 'fixed_ips': [{"subnet_id": "test-subnet-id",
-                                                "ip_address": "10.0.0.1"}]}
-        mock_get_port.return_value = port_dict
-        mock_get_ip_subnet.return_value = None
-        self.assertRaises(
-            lib_exc.BadRequest,
-            self.pf_plugin._find_a_router_for_fip_port_forwarding,
-            self.ctxt, pf_dict, fip_obj)
-        self.assertTrue(not mock_get_subnet.called)
-
-        mock_get_ip_subnet.return_value = 'internal_subnet_id'
-
+            self, mock_get_subnet, mock_get_router):
+        fip_obj = mock.Mock(router_id=None)
         mock_get_router.side_effect = (
             lib_l3_exc.ExternalGatewayForFloatingIPNotFound(
                 external_network_id=mock.Mock(),
@@ -446,17 +447,49 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         self.assertRaises(
             lib_exc.BadRequest,
             self.pf_plugin._find_a_router_for_fip_port_forwarding,
-            self.ctxt, pf_dict, fip_obj)
+            self.ctxt, fip_obj, {'id': 'ID'}, 'internal_subnet_id')
         self.assertTrue(mock_get_subnet.called)
 
-        ipv6_port_dict = {'id': 'ID',
-                          'fixed_ips': [{"subnet_id": "test-subnet-id",
-                                         "ip_address": "1::1"}]}
-        mock_get_port.return_value = ipv6_port_dict
+    @mock.patch.object(pf_plugin.PortForwardingPlugin,
+                       '_get_internal_ip_subnet')
+    @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_port')
+    def test_validate_internal_port_and_ip(
+            self, mock_get_port, mock_get_ip_subnet):
+        pf_dict = {'internal_port_id': 'internal_neutron_port'}
+        port_dict = {'id': 'ID', 'fixed_ips': [
+            {"subnet_id": "subnet-1", "ip_address": "1::1"},
+            {"subnet_id": "subnet-2", "ip_address": "10.0.0.1"}]}
+        mock_get_port.return_value = port_dict
+
+        # internal_ip_address defaulted to the first IPv4 address
+        port, subnet_id = self.pf_plugin._validate_internal_port_and_ip(
+            self.ctxt, pf_dict)
+        self.assertEqual(port_dict, port)
+        self.assertEqual('subnet-2', subnet_id)
+        self.assertEqual('10.0.0.1', pf_dict['internal_ip_address'])
+        mock_get_ip_subnet.assert_not_called()
+
+        # internal_ip_address not belonging to the port
+        pf_dict['internal_ip_address'] = '10.0.0.2'
+        mock_get_ip_subnet.return_value = None
         self.assertRaises(
             lib_exc.BadRequest,
-            self.pf_plugin._find_a_router_for_fip_port_forwarding,
-            self.ctxt, pf_dict, fip_obj)
+            self.pf_plugin._validate_internal_port_and_ip,
+            self.ctxt, pf_dict)
+
+        # internal_ip_address belonging to the port
+        mock_get_ip_subnet.return_value = 'subnet-2'
+        port, subnet_id = self.pf_plugin._validate_internal_port_and_ip(
+            self.ctxt, pf_dict)
+        self.assertEqual('subnet-2', subnet_id)
+
+        # port without IPv4 address
+        mock_get_port.return_value = {'id': 'ID', 'fixed_ips': [
+            {"subnet_id": "subnet-1", "ip_address": "1::1"}]}
+        self.assertRaises(
+            lib_exc.BadRequest,
+            self.pf_plugin._validate_internal_port_and_ip,
+            self.ctxt, pf_dict)
 
     @mock.patch.object(port_forwarding.PortForwarding, 'get_objects')
     def test_negative_check_router_match(self, mock_pf_get_objects):
