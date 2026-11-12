@@ -100,6 +100,37 @@ could break any active sessions.
 .. end
 
 
+Demote a ``Chassis`` that crashed
+---------------------------------
+
+A ``Chassis`` can stop forwarding traffic without being removed from the
+environment, for example if the node crashes or loses connectivity. In that
+case OVN detects the failure (BFD) and binds the ``Logical_Router_Port``
+registers to the next ``HA_Chassis`` in the group, but the ``HA_Chassis``
+priorities are not modified. Once the failed ``Chassis`` is back, it still
+holds the highest priority and preempts the currently active one, bouncing
+the gateway ports a second time.
+
+The ``[ovn]reset_crashed_chassis_priority`` configuration option (disabled
+by default) enables the following behaviour: when a router gateway port is
+bound to a different ``Chassis``, Neutron demotes the previously active
+``Chassis`` to the lowest priority (0) in **all** the ``HA_Chassis_Group``
+registers it belongs to. The rebinding event reports only the
+``Logical_Router_Port`` that triggered it, but the same ``Chassis`` can be a
+member of several groups with a high priority; demoting it everywhere
+prevents any other gateway port from bouncing when the ``Chassis`` recovers.
+
+The ``Chassis`` is not removed from the ``HA_Chassis_Group``: it remains as a
+valid, lowest priority candidate and will be promoted again by the
+re-scheduling process described above, if needed.
+
+.. note::
+
+   This option changes the priorities of the ``HA_Chassis`` registers when a
+   gateway ``Chassis`` fails. If the deployment relies on a fixed, preferred
+   gateway ``Chassis`` per router, this option should be kept disabled.
+
+
 Availability Zones (AZ) distribution
 ------------------------------------
 

@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    A new configuration option ``[ovn]reset_crashed_chassis_priority`` has been
+    added. When enabled and a router gateway port is bound to another chassis
+    (chassis failover), Neutron demotes the previously active chassis to the
+    lowest priority in all the ``HA_Chassis_Group`` registers it belongs to.
+    This prevents the recovered chassis from reclaiming the highest priority
+    upon restart, thus avoiding unnecessary port bouncing (extra failover).
+    The default value is ``False`` to preserve existing behaviour.
+    For more information, see bug
+    `2136733 <https://bugs.launchpad.net/neutron/+bug/2136733>`_.

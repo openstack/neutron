@@ -1983,6 +1983,76 @@ class BaseTestOVNL3RouterPluginMixin:
         mock_updt_status.assert_called_once_with(
             mock.ANY, fake_port_id, constants.PORT_STATUS_DOWN)
 
+    def _make_hcg(self, name, chassis_priorities):
+        # Build a fake HA_Chassis_Group with given {chassis_name: priority}.
+        ha_chassis = []
+        for chassis_name, priority in chassis_priorities.items():
+            hc = mock.Mock()
+            hc.chassis_name = chassis_name
+            hc.priority = priority
+            ha_chassis.append(hc)
+        hcg = mock.Mock()
+        hcg.name = name
+        hcg.ha_chassis = ha_chassis
+        return hcg
+
+    def _make_port_binding(self, logical_port='cr-lrp-some-uuid'):
+        pb = mock.Mock()
+        pb.logical_port = logical_port
+        return pb
+
+    def test_demote_crashed_chassis_on_failover(self):
+        # The crashed chassis is demoted in place to the lowest HCG
+        # priority (no remove and reschedule round-trip).
+        hcg = self._make_hcg('fake-hcg', {'chassis-crashed': 3,
+                                          'chassis-active': 2,
+                                          'chassis-standby': 1})
+        self.nb_idl().get_ha_chassis_group_from_chassis.return_value = [hcg]
+
+        with mock.patch.object(self.l3_inst, '_reschedule_lrps') as mock_rs:
+            self.l3_inst.demote_crashed_chassis_on_failover(
+                self._make_port_binding(), 'chassis-crashed')
+
+        # The crashed chassis is re-added at the lowest priority; no deletion
+        # and no reschedule (others keep their priorities).
+        self.nb_idl().ha_chassis_group_add_chassis.assert_called_once_with(
+            'fake-hcg', 'chassis-crashed',
+            priority=ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY)
+        self.nb_idl().ha_chassis_group_del_chassis.assert_not_called()
+        mock_rs.assert_not_called()
+
+    def test_demote_crashed_chassis_on_failover_all_hcgs(self):
+        # When the chassis belongs to several HCGs (several gateway ports),
+        # all of them must be demoted in a single transaction.
+        hcg1 = self._make_hcg('hcg-router-1', {'chassis-crashed': 3,
+                                               'chassis-b': 1})
+        hcg2 = self._make_hcg('hcg-router-2', {'chassis-crashed': 5,
+                                               'chassis-c': 3})
+        self.nb_idl().get_ha_chassis_group_from_chassis.return_value = [
+            hcg1, hcg2]
+
+        self.l3_inst.demote_crashed_chassis_on_failover(
+            self._make_port_binding(), 'chassis-crashed')
+
+        calls = self.nb_idl().ha_chassis_group_add_chassis.call_args_list
+        demoted = {c.args[0]: c.kwargs['priority'] for c in calls}
+        self.assertEqual({
+            'hcg-router-1': ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY,
+            'hcg-router-2': ovn_const.HA_CHASSIS_GROUP_LOWEST_PRIORITY,
+        }, demoted)
+        self.nb_idl().ha_chassis_group_del_chassis.assert_not_called()
+
+    def test_demote_crashed_chassis_on_failover_no_hcg(self):
+        # The chassis does not belong to any HCG (for example, it was
+        # deleted); nothing to demote.
+        self.nb_idl().get_ha_chassis_group_from_chassis.return_value = []
+
+        self.l3_inst.demote_crashed_chassis_on_failover(
+            self._make_port_binding(), 'chassis-crashed')
+
+        self.nb_idl().ha_chassis_group_add_chassis.assert_not_called()
+        self.nb_idl().ha_chassis_group_del_chassis.assert_not_called()
+
     @mock.patch('neutron.db.segments_db.get_network_segments')
     def test_get_gateway_port_physnet_mapping_single_segment(
             self, mock_get_segs):
@@ -2135,10 +2205,13 @@ class BaseTestOVNL3RouterPluginMixin:
     @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
                 '_get_gateway_port_physnet_mapping')
     def test_schedule_unhosted_gateways_on_event_no_gw_chassis(self, get_gppm):
+        # When no HCG LRPs found for chassis (old-style deployment), return
+        # early without rescheduling — the BFD path already handled demotion.
         unhosted_gws = ['lrp-foo-1', 'lrp-foo-2', 'lrp-foo-3']
         get_gppm.return_value = {k[len(ovn_const.LRP_PREFIX):]: 'physnet1'
                                  for k in unhosted_gws}
-        self.nb_idl().get_chassis_gateways.return_value = []
+        # get_lrp_from_ha_chassis_group returns []
+        # by default (FakeOvsdbNbOvnIdl)
         self.l3_inst.schedule_unhosted_gateways(event_from_chassis='chassis4')
         self.nb_idl().get_unhosted_gateways.assert_not_called()
 
