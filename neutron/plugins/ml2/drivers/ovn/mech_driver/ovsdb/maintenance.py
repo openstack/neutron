@@ -789,6 +789,62 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(ralonsoh): to remove in 2029.1 cycle (2nd next SLURP release)
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    @log_maintenance_task(
+        start_message=(
+            'Set ``tag_request`` on localnet ports created before '
+            'Neutron started using it.'))
+    def set_tag_request_on_localnet_ports(self):
+        """Backfill ``tag_request`` on existing localnet ports.
+
+        Neutron writes the VLAN tag of a provider network into the
+        ``tag_request`` column of the localnet port since OVN northd
+        clears ``tag`` when ``tag_request`` is empty (OVN >= 26.03.2).
+        Localnet ports created before that change only have ``tag``
+        set; this one-time task backfills ``tag_request`` from the
+        Neutron segment so that ovn-northd does not clear the VLAN
+        tag of those ports.
+        """
+        context = n_context.get_admin_context()
+        segments = network_obj.NetworkSegment.get_objects(context)
+        port_tag_request = {}
+        needs_lswitch = {}
+        for segment in segments:
+            if not segment.segmentation_id:
+                continue
+            if segment.network_id not in needs_lswitch:
+                needs_lswitch[segment.network_id] = (
+                    utils.network_needs_lswitch(
+                        context, network_id=segment.network_id))
+            if needs_lswitch[segment.network_id]:
+                port_tag_request[utils.ovn_provnet_port_name(segment.id)] = (
+                    segment.segmentation_id)
+
+        cmds = []
+        for port in self._nb_idl.db_find_rows(
+                'Logical_Switch_Port',
+                ('type', '=', ovn_const.LSP_TYPE_LOCALNET)
+        ).execute(check_error=True):
+            if not port.tag_request:
+                tag_request = port_tag_request.get(port.name)
+                if tag_request:
+                    cmds.append(self._nb_idl.db_set(
+                        'Logical_Switch_Port', port.name,
+                        ('tag_request', [tag_request])))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @has_lock_periodic(
