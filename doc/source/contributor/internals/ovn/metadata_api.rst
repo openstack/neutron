@@ -134,6 +134,9 @@ will add the necessary headers to the metadata API request and then forward it
 to ``neutron-ovn-metadata-agent`` over a UNIX domain socket, which matches the
 behavior of the current metadata agent.
 
+.. note::
+   The ``neutron-ovn-metadata-agent`` service was replaced by
+   the ``neutron-ovn-agent``.
 
 Metadata Proxy Management Logic
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
