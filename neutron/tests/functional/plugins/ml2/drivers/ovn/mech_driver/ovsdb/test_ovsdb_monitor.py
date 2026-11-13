@@ -790,9 +790,16 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             # Check if the parent hostname has been updated in OVN and DB
             # by the event that eventually calls for method
             # OVNMechanismDriver.update_virtual_port_parent_host
+            # NOTE: this is the longest event chain in this test: the SB
+            # ``Port_Binding`` update triggers
+            # ``PortBindingUpdateVirtualPortsEvent``, that updates the
+            # Neutron DB and writes the parent hostname in the NB database;
+            # the check also waits for northd to copy it back to the SB
+            # ``Port_Binding.external_ids``. On a loaded CI node this can
+            # take more than 10 seconds.
             n_utils.wait_until_true(
                 lambda: self._check_port_parent_host_set(
-                    vip['id'], hosts[idx]), timeout=10)
+                    vip['id'], hosts[idx]), timeout=30)
             self._check_port_and_port_binding_revision_number(vip['id'])
 
     def _create_router(self):
