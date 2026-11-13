@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    Segment host-mapping callbacks (``AFTER_CREATE`` /
+    ``AFTER_DELETE``) now defer Nova aggregate notifications
+    until the database transaction commits.  Previously the
+    batch notifier thread could start a DB read before the
+    writer transaction was committed, which could fail under
+    MySQL transaction isolation.
+    `2168829 <https://bugs.launchpad.net/neutron/+bug/2168829>`_.

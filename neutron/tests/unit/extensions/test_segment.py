@@ -2115,21 +2115,6 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.mock_n_client = nova_updater.n_client
         self.batch_notifier = nova_updater.batch_notifier
         self.batch_notifier._waiting_to_send = True
-        # Drain the batch notifier before the next test starts: a test
-        # leaving a pending batch thread behind would otherwise fire
-        # its events into the next test, whose class level
-        # ``_get_clients`` patch routes them into the wrong mocks.
-        self.addCleanup(self._wait_batch_notifier_idle)
-
-    def _wait_batch_notifier_idle(self):
-        deadline = time.monotonic() + 30
-        notifier = self.batch_notifier
-        while time.monotonic() < deadline:
-            has_pending = not notifier._pending_events.empty()
-            busy = has_pending or notifier._mutex.locked()
-            if not busy:
-                break
-            time.sleep(0.05)
 
     def _mock_keystone_auth(self):
         # Use to remove MissingAuthPlugin exception when notifier is needed
@@ -2799,11 +2784,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         self.mock_n_client.aggregates.get_details.return_value = aggregate
         network, segment = self._test_create_network_and_segment('physnet')
         self._delete('networks', network['id'])
-        # The notifications are sent asynchronously by the BatchNotifier
-        # thread after send_events_interval seconds; wait for the
-        # notifier to go idle instead of sleeping a fixed amount of
-        # time, which is not enough when the build machine is loaded.
-        self._wait_batch_notifier_idle()
+        time.sleep(self.send_events_interval)
         self.mock_n_client.aggregates.remove_host.assert_has_calls(
             [mock.call(aggregate.id, 'fakehost1')])
         self.mock_n_client.aggregates.delete.assert_has_calls(
