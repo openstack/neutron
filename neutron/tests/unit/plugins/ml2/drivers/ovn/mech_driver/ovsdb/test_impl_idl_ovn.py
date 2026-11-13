@@ -13,7 +13,7 @@
 #
 
 import copy
-import select
+import os
 from unittest import mock
 
 from oslo_utils import uuidutils
@@ -1030,17 +1030,37 @@ class TestSBImplIdlOvnGetChassisByCardSerialFromCMSOptions(
 
 class TestSystemPoll(base.BaseTestCase):
 
-    # select.poll is a builtin function, not a type, so compare against the
-    # type of the object it returns.
-    POLL_TYPE = type(select.poll())
-
     def test_select_poll_is_replaced(self):
         self.assertIs(impl_idl_ovn.system_poll, ovs_poller.SelectPoll)
 
     @mock.patch.object(ovs_poller, '_using_eventlet_green_select',
                        return_value=False)
     def test_system_poll(self, *args):
-        self.assertIsInstance(impl_idl_ovn.system_poll(), self.POLL_TYPE)
+        self.assertIsInstance(impl_idl_ovn.system_poll(),
+                              impl_idl_ovn._PollPoll)
+
+    def _pipe(self):
+        rfd, wfd = os.pipe()
+        self.addCleanup(os.close, rfd)
+        self.addCleanup(os.close, wfd)
+        return rfd, wfd
+
+    def test_poll_accumulates_events(self):
+        # The write end of an empty pipe is writable but never readable, so
+        # it is only returned if POLLOUT survives the registration for POLLIN.
+        _, wfd = self._pipe()
+        poll = impl_idl_ovn._PollPoll()
+        poll.register(wfd, ovs_poller.POLLOUT)
+        poll.register(wfd, ovs_poller.POLLIN)
+        self.assertEqual([(wfd, ovs_poller.POLLOUT)], poll.poll(0))
+
+    def test_poll_register_object_with_fileno(self):
+        rfd, wfd = self._pipe()
+        os.write(wfd, b'x')
+        poll = impl_idl_ovn._PollPoll()
+        poll.register(mock.Mock(fileno=mock.Mock(return_value=rfd)),
+                      ovs_poller.POLLIN)
+        self.assertEqual([(rfd, ovs_poller.POLLIN)], poll.poll(0))
 
     @mock.patch.object(impl_idl_ovn, '_OVS_SELECT_POLL')
     @mock.patch.object(ovs_poller, '_using_eventlet_green_select',
