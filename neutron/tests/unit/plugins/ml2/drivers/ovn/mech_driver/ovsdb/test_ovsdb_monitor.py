@@ -37,6 +37,7 @@ from neutron.db import ovn_hash_ring_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.services.ovn_l3 import plugin  # noqa
+from neutron.services.portforwarding import constants as pf_const
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import \
@@ -1281,6 +1282,102 @@ class TestFIPAddDeleteEvent(base.BaseTestCase):
         self.event.run(self.event.ROW_UPDATE, row, old)
         self.driver.delete_mac_binding_entries.assert_called_once_with(
             '198.51.100.17')
+
+
+class TestPortForwardingLBAddDeleteEvent(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.driver = mock.Mock()
+        self.event = ovsdb_monitor.PortForwardingLBAddDeleteEvent(
+            self.driver)
+        self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+
+    def _lb_row(self, vips, device_owner=pf_const.PORT_FORWARDING_PLUGIN):
+        external_ids = {}
+        if device_owner:
+            external_ids[ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY] = (
+                device_owner)
+        return self.ovsdb_row(attrs={'external_ids': external_ids,
+                                     'vips': vips})
+
+    def test_match_fn_port_forwarding_lb(self):
+        row = self._lb_row({'192.0.2.10:22': '10.0.0.5:22'})
+        for event in (self.event.ROW_CREATE, self.event.ROW_DELETE):
+            self.assertTrue(self.event.match_fn(event, row))
+
+    def test_match_fn_other_lb_skipped(self):
+        row = self._lb_row({'192.0.2.10:80': '10.0.0.5:80'},
+                           device_owner='octavia')
+        self.assertFalse(self.event.match_fn(self.event.ROW_CREATE, row))
+
+    def test_match_fn_no_device_owner_skipped(self):
+        row = self._lb_row({'192.0.2.10:80': '10.0.0.5:80'},
+                           device_owner=None)
+        self.assertFalse(self.event.match_fn(self.event.ROW_CREATE, row))
+
+    def test_run_deletes_mac_binding_once_per_address(self):
+        row = self._lb_row({'192.0.2.10:22': '10.0.0.5:22',
+                            '192.0.2.10:443': '10.0.0.5:443'})
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.delete_mac_binding_entries.assert_called_once_with(
+            '192.0.2.10')
+
+    def test_run_delete_deletes_mac_binding(self):
+        row = self._lb_row({'192.0.2.10:22': '10.0.0.5:22'})
+        self.event.run(self.event.ROW_DELETE, row, None)
+        self.driver.delete_mac_binding_entries.assert_called_once_with(
+            '192.0.2.10')
+
+    def test_run_ipv6_vip(self):
+        row = self._lb_row({'[2001:db8::10]:22': '[fd00::5]:22'})
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.delete_mac_binding_entries.assert_called_once_with(
+            '2001:db8::10')
+
+    def test_run_no_vips(self):
+        row = self._lb_row({})
+        self.event.run(self.event.ROW_CREATE, row, None)
+        self.driver.delete_mac_binding_entries.assert_not_called()
+
+
+class TestLogicalRouterGatewayPortDeleteEvent(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.driver = mock.Mock()
+        self.event = ovsdb_monitor.LogicalRouterGatewayPortDeleteEvent(
+            self.driver)
+        self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+
+    def _lrp_row(self, is_ext_gw='True', mac='fa:16:3e:af:c1:2a'):
+        external_ids = {}
+        if is_ext_gw is not None:
+            external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW] = is_ext_gw
+        return self.ovsdb_row(attrs={'external_ids': external_ids,
+                                     'mac': mac,
+                                     'networks': ['192.0.2.10/24']})
+
+    def test_match_fn_gateway_port(self):
+        self.assertTrue(self.event.match_fn(self.event.ROW_DELETE,
+                                            self._lrp_row()))
+
+    def test_match_fn_not_gateway_port(self):
+        self.assertFalse(self.event.match_fn(self.event.ROW_DELETE,
+                                             self._lrp_row('False')))
+
+    def test_match_fn_no_ext_gw_key(self):
+        self.assertFalse(self.event.match_fn(self.event.ROW_DELETE,
+                                             self._lrp_row(None)))
+
+    def test_match_fn_no_mac(self):
+        self.assertFalse(self.event.match_fn(self.event.ROW_DELETE,
+                                             self._lrp_row(mac='')))
+
+    def test_run_deletes_mac_binding_by_mac(self):
+        self.event.run(self.event.ROW_DELETE, self._lrp_row(), None)
+        (self.driver._ovn_client.delete_mac_binding_entries_by_mac.
+         assert_called_once_with('fa:16:3e:af:c1:2a'))
 
 
 class TestFIPAddExternalMacEvent(base.BaseTestCase):

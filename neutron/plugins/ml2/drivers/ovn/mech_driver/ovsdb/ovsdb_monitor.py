@@ -15,6 +15,7 @@
 import abc
 import datetime
 
+import netaddr
 from neutron_lib import constants as n_const
 from neutron_lib import context as neutron_context
 from neutron_lib.plugins import constants
@@ -23,6 +24,7 @@ from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log
+from oslo_utils import strutils
 from oslo_utils import timeutils
 from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
@@ -39,6 +41,7 @@ from neutron.objects import router as router_obj
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
     placement
+from neutron.services.portforwarding import constants as pf_const
 
 
 CONF = cfg.CONF
@@ -898,6 +901,73 @@ class FIPAddDeleteEvent(row_event.RowEvent):
         self.driver.delete_mac_binding_entries(row.external_ip)
 
 
+class PortForwardingLBAddDeleteEvent(row_event.RowEvent):
+    """Row event - port forwarding Load_Balancer added or deleted
+
+    A floating IP with port forwardings has no NAT entry, its address is
+    a Load_Balancer VIP of the router, so ``FIPAddDeleteEvent`` does not
+    clean the MAC_Binding rows of that address. OVN does not send GARPs
+    for it either, because the gateway ports have
+    ``exclude-lb-vips-from-garp=true``. A MAC_Binding left by a previous
+    owner of the address (for example the gateway port of a deleted
+    router) would then be used forever by the other routers. Delete the
+    MAC_Binding rows of the floating IP when the port forwarding
+    Load_Balancer is created or deleted.
+    """
+
+    def __init__(self, driver):
+        self.driver = driver
+        table = 'Load_Balancer'
+        events = (self.ROW_CREATE, self.ROW_DELETE)
+        super().__init__(events, table, None)
+
+    def match_fn(self, event, row, old=None):
+        return (row.external_ids.get(ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY) ==
+                pf_const.PORT_FORWARDING_PLUGIN)
+
+    def run(self, event, row, old):
+        # A port forwarding VIP is "IPv4:port" or "[IPv6]:port".
+        addresses = {str(netaddr.IPAddress(vip.rsplit(':', 1)[0].strip('[]')))
+                     for vip in row.vips}
+        for address in sorted(addresses):
+            LOG.info('Port forwarding Load_Balancer %(lb)s %(event)s, '
+                     'deleting the MAC_Binding entries of %(address)s',
+                     {'lb': row.name, 'event': event, 'address': address})
+            self.driver.delete_mac_binding_entries(address)
+
+
+class LogicalRouterGatewayPortDeleteEvent(row_event.RowEvent):
+    """Row event - router gateway Logical_Router_Port deleted
+
+    The other routers connected to the external network can have
+    MAC_Binding rows that map the gateway port addresses to its MAC
+    address. ovn-northd only deletes the MAC_Binding rows of the deleted
+    port itself, and with ``always_learn_from_arp_request=false`` the
+    other routers keep these rows until they age out (aging is disabled
+    by default). If the address is later reused, for example by a
+    floating IP with port forwardings, the traffic from these routers
+    is sent to a MAC address that does not exist anymore. Delete the
+    MAC_Binding rows of the gateway port MAC address, as it is done for
+    the router interfaces in ``OVNClient.delete_router_port()``.
+    """
+
+    def __init__(self, driver):
+        self.driver = driver
+        table = 'Logical_Router_Port'
+        events = (self.ROW_DELETE,)
+        super().__init__(events, table, None)
+
+    def match_fn(self, event, row, old=None):
+        return bool(row.mac) and strutils.bool_from_string(
+            row.external_ids.get(ovn_const.OVN_ROUTER_IS_EXT_GW))
+
+    def run(self, event, row, old):
+        LOG.info('Router gateway port %(lrp)s deleted, deleting the '
+                 'MAC_Binding entries of %(mac)s',
+                 {'lrp': row.name, 'mac': row.mac})
+        self.driver._ovn_client.delete_mac_binding_entries_by_mac(row.mac)
+
+
 class FIPAddExternalMacEvent(row_event.RowEvent):
     """Row create event - NAT 'dnat_and_snat' entry added
 
@@ -1093,12 +1163,18 @@ class OvnNbIdl(OvnIdlDistributedLock):
             LogicalSwitchPortUpdateLogicalRouterPortEvent(driver))
         self._fip_create_delete_event = FIPAddDeleteEvent(driver)
         self._nat_dnat_and_snat_event = FIPAddExternalMacEvent(driver)
+        self._pf_lb_create_delete_event = PortForwardingLBAddDeleteEvent(
+            driver)
+        self._lrp_gw_delete_event = LogicalRouterGatewayPortDeleteEvent(
+            driver)
 
         self.notify_handler.watch_events([self._lsp_create_event,
                                           self._lsp_update_up_event,
                                           self._lsp_update_down_event,
                                           self._fip_create_delete_event,
                                           self._nat_dnat_and_snat_event,
+                                          self._pf_lb_create_delete_event,
+                                          self._lrp_gw_delete_event,
                                           self._lsp_lrp_event,
                                           ])
 

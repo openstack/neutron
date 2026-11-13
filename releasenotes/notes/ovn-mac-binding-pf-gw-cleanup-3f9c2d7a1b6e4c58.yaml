@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    [OVN] Stale ``MAC_Binding`` entries are now deleted when a port forwarding
+    floating IP is created or deleted and when a router gateway port is
+    deleted. Before, a floating IP used only for port forwardings could stay
+    unreachable from other routers on the external network, because those
+    routers kept the MAC address of the previous owner of the address.
+    For more information, see bug
+    `2173995 <https://bugs.launchpad.net/neutron/+bug/2173995>`_.
