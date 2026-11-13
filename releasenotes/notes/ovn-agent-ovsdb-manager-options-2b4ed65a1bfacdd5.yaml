@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    ``neutron-ovn-agent`` now honours the ``[OVS] ovsdb_timeout`` and
+    ``[OVS] of_inactivity_probe`` options when it creates the OVSDB
+    manager. It previously always used their default values.
