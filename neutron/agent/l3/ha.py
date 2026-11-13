@@ -105,7 +105,8 @@ class AgentMixin:
         self.state_change_notifier = batch_notifier.BatchNotifier(
             self._calculate_batch_duration(), self.notify_server)
         notifications_server = threading.Thread(
-            target=self._start_keepalived_notifications_server)
+            target=self._start_keepalived_notifications_server,
+            daemon=True)
         notifications_server.start()
         self._transition_states = {}
         self._transition_state_mutex = threading.Lock()
