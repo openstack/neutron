@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    The ``neutron-ovn-db-sync-util``/``neutron-ovn-migration-mysql`` database
+    migration (``migrate_neutron_database_to_ovn``) now retries a
+    ``PortBinding`` update that failed with ``DBDeadlock`` (up to three
+    attempts) instead of marking the binding as updated. Before, the binding
+    kept its OVS ``bridge_name`` and only a warning was logged. For more
+    information see bug `2173046
+    <https://bugs.launchpad.net/neutron/+bug/2173046>`_.
