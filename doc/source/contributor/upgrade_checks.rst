@@ -45,7 +45,7 @@ see the `Entry Points section of Contributing extensions to Neutron
 Checks can be run in random order and should be independent from each other.
 
 The recommended entry point name is a repository name: For example,
-'neutron-fwaas' for FWaaS and 'networking-sfc' for SFC:
+'neutron-fwaas' for FWaaS:
 
 .. code-block:: ini
 

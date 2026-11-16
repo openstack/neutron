@@ -36,7 +36,7 @@ series names. Never guess branch names or version numbers.
 **Stadium repos** (all need stable-branch `.gitreview` / constraints patches):
 neutron, neutron-lib, neutron-tempest-plugin, python-neutronclient,
 neutron-fwaas, neutron-fwaas-dashboard, neutron-vpnaas,
-neutron-vpnaas-dashboard, neutron-dynamic-routing, networking-sfc,
+neutron-vpnaas-dashboard, neutron-dynamic-routing,
 networking-bgpvpn, networking-bagpipe, tap-as-a-service, ovsdbapp, os-ken,
 ovn-bgp-agent, ovn-octavia-provider.
 

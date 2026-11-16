@@ -144,8 +144,6 @@ updating the core review team for the sub-project's repositories.
 |                         +-----------------------------+-------------------+
 |                         | Dongcan Ye                  | yedongcan         |
 +-------------------------+-----------------------------+-------------------+
-| networking-sfc          | Dharmendra Kushwaha         | dkushwaha         |
-+-------------------------+-----------------------------+-------------------+
 | ovn-octavia-provider    | Luis Tomas Bolivar          | ltomasbo          |
 |                         +-----------------------------+-------------------+
 |                         | Fernando Royo               | froyo             |

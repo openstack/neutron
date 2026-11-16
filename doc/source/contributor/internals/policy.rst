@@ -373,7 +373,7 @@ oslo.policy, so we cannot determine which projects are neutron related
 projects, so the second entry point is required.
 
 The recommended entry point name is a repository name: For example,
-'neutron-fwaas' for FWaaS and 'networking-sfc' for SFC:
+'neutron-fwaas' for FWaaS:
 
 .. code-block:: ini
 
