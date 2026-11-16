@@ -81,6 +81,27 @@ class TestPreparePeriodicWorkers(base.BaseTestCase):
         self.assertEqual([process_worker], prepared)
 
 
+class TestStartWorkers(base.BaseTestCase):
+
+    @mock.patch('neutron_lib.db.api.get_context_manager')
+    @mock.patch.object(neutron_service.common_service, 'ProcessLauncher')
+    def test_pool_disposed_before_forking(self, process_launcher,
+                                          get_context_manager):
+        manager = mock.Mock()
+        get_context_manager.return_value.dispose_pool = (
+            manager.dispose_pool)
+        process_launcher.return_value.launch_service = (
+            manager.launch_service)
+        worker = mock.Mock(worker_process_count=2)
+
+        self.assertIs(process_launcher.return_value,
+                      neutron_service._start_workers([worker]))
+
+        self.assertEqual([mock.call.dispose_pool(),
+                          mock.call.launch_service(worker, 2)],
+                         manager.mock_calls)
+
+
 class TestStartPeriodicWorkers(base.BaseTestCase):
 
     @mock.patch.object(neutron_service.registry, 'publish')

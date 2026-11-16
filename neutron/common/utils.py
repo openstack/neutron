@@ -41,7 +41,6 @@ import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
-from neutron_lib.db import api as db_api
 from neutron_lib.services.qos import constants as qos_consts
 from neutron_lib.services.trunk import constants as trunk_constants
 from neutron_lib.utils import helpers
@@ -639,6 +638,11 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
     give up after neutron_lib.db.api.MAX_RETRIES and raise the exception it
     encounters after that.
     """
+    # Imported here so that the agents, which import this module but have no
+    # database, do not load the DB API.
+    # pylint: disable=import-outside-toplevel
+    from neutron_lib.db import api as db_api
+
     result, dependency, dep_id, made_locally = None, None, None, False
     for attempts in range(1, db_api.MAX_RETRIES + 1):
         # we go to max + 1 here so the exception handlers can raise their
@@ -704,6 +708,11 @@ def transaction_guard(f):
     """
     @functools.wraps(f)
     def inner(*args, **kwargs):
+        # Imported here for the same reason as in
+        # create_object_with_dependency().
+        # pylint: disable=import-outside-toplevel
+        from neutron_lib.db import api as db_api
+
         context = (args[0] if issubclass(type(args[0]),
                                          n_context.ContextBaseWithSession) else
                    args[1])
