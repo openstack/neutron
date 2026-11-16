@@ -1,12 +1,12 @@
 - nodeset:
-    name: neutron-three-node-noble
+    name: neutron-three-node-resolute
     nodes:
       - name: controller
-        label: ubuntu-noble
+        label: ubuntu-resolute-8GB
       - name: compute1
-        label: ubuntu-noble
+        label: ubuntu-resolute-8GB
       - name: compute2
-        label: ubuntu-noble
+        label: ubuntu-resolute-8GB
     groups:
       # Node where tests are executed and test results collected
       - name: tempest
@@ -32,10 +32,40 @@
           - compute1
           - compute2
 
+- nodeset:
+    name: neutron-two-node-resolute
+    nodes:
+      - name: controller
+        label: ubuntu-resolute-8GB
+      - name: compute1
+        label: ubuntu-resolute-8GB
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - controller
+          - compute1
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
+
 - job:
     name: neutron-ovs-tempest-dvr-ha-multinode-full
     parent: tempest-multinode-full-py3
-    nodeset: neutron-three-node-noble
+    nodeset: neutron-three-node-resolute
     timeout: 10800
     roles:
       - zuul: openstack/neutron-tempest-plugin
@@ -207,6 +237,7 @@
 - job:
     name: neutron-ovs-tempest-multinode-full
     parent: tempest-multinode-full-py3
+    nodeset: neutron-two-node-resolute
     timeout: 10800
     irrelevant-files: *openvswitch-irrelevant-files
     vars:
@@ -293,6 +324,7 @@
 - job:
     name: neutron-ovs-tempest-slow
     parent: tempest-slow-py3
+    nodeset: neutron-two-node-resolute
     timeout: 10800
     irrelevant-files: *openvswitch-irrelevant-files
     vars:
@@ -369,6 +401,7 @@
     description: Base multinode job for devstack/tempest to test Neutron with ovn driver.
     abstract: true
     parent: tempest-multinode-full-py3
+    nodeset: neutron-two-node-resolute
     timeout: 10800
     required-projects:
       - openstack/neutron
