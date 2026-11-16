@@ -620,6 +620,79 @@ class TestOvsNeutronAgent:
                                             set(), expected_ports,
                                             expected_ancillary)
 
+    def test_process_ports_events_port_lost_ofport_is_re_added(self):
+        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        events = {'added': [], 'removed': [],
+                  'modified': [{'ofport': ovs_lib.INVALID_OFPORT,
+                                'external_ids': {'iface-id': port_id,
+                                                 'attached-mac': 'test-mac'},
+                                'name': 'tapf6f104bd-37'}]}
+        registered_ports = {port_id}
+        expected_ports = ovs_agent.PortInfo(
+            current={port_id}, re_added={port_id}, updated={port_id})
+        self._test_process_ports_events(events, registered_ports, set(),
+                                        expected_ports,
+                                        ovs_agent.PortInfo())
+
+    def test_process_ports_events_removed_port_with_invalid_ofport(self):
+        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        port = {'name': 'tapf6f104bd-37', 'ofport': -1,
+                'external_ids': {'iface-id': port_id,
+                                 'attached-mac': 'test-mac'}}
+        events = {'added': [], 'removed': [port], 'modified': []}
+        self._test_process_ports_events(
+            events, {port_id}, set(), ovs_agent.PortInfo(removed={port_id}),
+            ovs_agent.PortInfo())
+
+    def test_process_ports_events_removed_and_modified_invalid_ofport(self):
+        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        port = {'name': 'tapf6f104bd-37', 'ofport': -1,
+                'external_ids': {'iface-id': port_id,
+                                 'attached-mac': 'test-mac'}}
+        events = {'added': [], 'removed': [port], 'modified': [port.copy()]}
+        self._test_process_ports_events(
+            events, {port_id}, set(), ovs_agent.PortInfo(removed={port_id}),
+            ovs_agent.PortInfo())
+
+    def test_process_ports_events_re_added_port_with_invalid_old_ofport(self):
+        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        port = {'name': 'tapf6f104bd-37', 'ofport': -1,
+                'external_ids': {'iface-id': port_id,
+                                 'attached-mac': 'test-mac'}}
+        events = {'added': [dict(port, ofport=29)], 'removed': [port],
+                  'modified': []}
+        expected = ovs_agent.PortInfo(current={port_id}, added={port_id},
+                                      re_added={port_id})
+        with mock.patch.object(ovs_lib.BaseOVS, 'port_exists',
+                               return_value=True):
+            self._test_process_ports_events(events, {port_id}, set(),
+                                            expected, ovs_agent.PortInfo())
+
+    def test_process_ports_events_lost_ofport_unknown_port_not_re_added(self):
+        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        events = {'added': [], 'removed': [],
+                  'modified': [{'ofport': ovs_lib.INVALID_OFPORT,
+                                'external_ids': {'iface-id': port_id,
+                                                 'attached-mac': 'test-mac'},
+                                'name': 'tapf6f104bd-37'}]}
+        expected_ports = ovs_agent.PortInfo()
+        self._test_process_ports_events(events, set(), set(),
+                                        expected_ports,
+                                        ovs_agent.PortInfo())
+
+    def test_process_ports_events_ofport_change_not_re_added(self):
+        port_id = 'f6f104bd-37c7-4f7b-9d70-53a6bb42728f'
+        events = {'added': [], 'removed': [],
+                  'modified': [{'ofport': 3,
+                                'external_ids': {'iface-id': port_id,
+                                                 'attached-mac': 'test-mac'},
+                                'name': 'tapf6f104bd-37'}]}
+        registered_ports = {port_id}
+        expected_ports = ovs_agent.PortInfo(current={port_id})
+        self._test_process_ports_events(events, registered_ports, set(),
+                                        expected_ports,
+                                        ovs_agent.PortInfo())
+
     def test_process_ports_events_returns_current_for_unchanged_ports(self):
         events = {'added': [], 'removed': [], 'modified': []}
         registered_ports = {1, 3}
@@ -789,6 +862,25 @@ class TestOvsNeutronAgent:
         self.assertEqual(
             expected_failed_devices_retries_map,
             new_failed_devices_retries_map)
+
+    def test_failed_re_added_down_is_retried_and_bounded(self):
+        port_id = 'port-id'
+        failed = {'added': set(), 'removed': set(), 're_added': {port_id}}
+        ancillary = {'added': set(), 'removed': set()}
+        manager = mock.Mock()
+        manager.get_events.return_value = {'added': [], 'removed': [],
+                                           'modified': []}
+        with mock.patch.object(self.agent, 'check_changed_vlans',
+                               return_value=set()):
+            info, _, _, _ = self.agent.process_port_info(
+                0, manager, False, {port_id}, set(), set(), 0, set(),
+                failed, ancillary)
+        self.assertEqual({port_id}, info['re_added'])
+        self.assertIn(port_id, info['updated'])
+        retries = self.agent.update_retries_map_and_remove_devs_not_to_retry(
+            failed, ancillary, {port_id: self.agent.max_device_retries})
+        self.assertEqual(set(), failed['re_added'])
+        self.assertNotIn(port_id, retries)
 
     def test_bind_devices(self):
         devices_up = ['tap1']
@@ -1500,6 +1592,57 @@ class TestOvsNeutronAgent:
              'removed': set(),
              'added': {'eth1'},
              're_added': {'eth1'}})
+
+    def test_process_network_ports_retries_failed_re_added_down(self):
+        failed_port = 'failed-port'
+        good_port = 'good-port'
+        port_info = ovs_agent.PortInfo(current={failed_port, good_port},
+                                       updated={failed_port, good_port},
+                                       re_added={failed_port, good_port})
+        with mock.patch.object(self.agent.plugin_rpc, 'update_device_list',
+                               return_value={'failed_devices_down':
+                                             [failed_port]}), \
+                mock.patch.object(self.agent, 'treat_devices_added_or_updated',
+                                  return_value=([], set(), [], set(), set(),
+                                                set())) as treat, \
+                mock.patch.object(self.agent, '_bind_devices',
+                                  return_value=set()):
+            result = self.agent.process_network_ports(port_info, False)
+        self.assertEqual({failed_port}, result['re_added'])
+        treat.assert_called_once_with({good_port}, False,
+                                      {failed_port, good_port})
+
+    def test_failed_re_added_down_succeeds_on_next_iteration(self):
+        port_id = 'port-id'
+        info = ovs_agent.PortInfo(current={port_id}, updated={port_id},
+                                  re_added={port_id})
+        ancillary = {'added': set(), 'removed': set()}
+        manager = mock.Mock()
+        manager.get_events.return_value = {'added': [], 'removed': [],
+                                           'modified': []}
+        with mock.patch.object(
+                self.agent.plugin_rpc, 'update_device_list',
+                side_effect=[{'failed_devices_down': [port_id]},
+                             {'failed_devices_down': []}]) as rpc, \
+                mock.patch.object(
+                    self.agent, 'treat_devices_added_or_updated',
+                    return_value=([], set(), [{'device': port_id}], set(),
+                                  set(), set())) as treat, \
+                mock.patch.object(self.agent, '_bind_devices',
+                                  return_value=set()) as bind, \
+                mock.patch.object(self.agent, 'check_changed_vlans',
+                                  return_value=set()):
+            failed = self.agent.process_network_ports(info, False)
+            treat.assert_not_called()
+            info, _, _, _ = self.agent.process_port_info(
+                0, manager, False, info['current'], set(), set(), 0, set(),
+                failed, ancillary)
+            result = self.agent.process_network_ports(info, False)
+        self.assertEqual(2, rpc.call_count)
+        treat.assert_called_once_with({port_id}, False, {port_id})
+        self.assertEqual([mock.call([]), mock.call([{'device': port_id}])],
+                         bind.call_args_list)
+        self.assertNotIn('re_added', result)
 
     # TODO(ralonsoh): it is needed to refactor this test case
     @unittest.skip('This test is skipped after the eventlet removal and '

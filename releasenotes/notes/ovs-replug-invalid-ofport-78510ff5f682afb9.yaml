@@ -1,0 +1,12 @@
+---
+fixes:
+  - |
+    Fixed the OVS agent so a VIF replug during an instance rebuild is
+    reported as a real ``DOWN`` to ``ACTIVE`` transition. Removal and
+    re-add events are now processed even when the old interface has an
+    invalid ofport (``-1``), a port that loses its ofport is reported
+    ``DOWN`` before it is wired again, and a failed ``DOWN`` report is
+    retried before the port is reported ``UP``. Previously the port could
+    stay ``ACTIVE`` for the whole replug, so no ``network-vif-plugged``
+    event was sent to nova and the rebuild timed out and failed.
+    See `bug 2174701 <https://bugs.launchpad.net/neutron/+bug/2174701>`_.
