@@ -27,6 +27,7 @@ from neutron_lib.api.definitions import l3_enable_default_route_ecmp
 from neutron_lib.api.definitions import l3_ext_gw_multihoming
 from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import exceptions as callback_exc
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants
@@ -172,21 +173,36 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
         subnets = self._core_plugin.get_subnets_by_network(context,
                                                            new_network_id)
-        # TODO(dmitriis): publish an events.BEFORE_CREATE event for a new
-        # resource type e.g. resources.ROUTER_EXTRA_GATEWAY. Semantically
-        # this is a different resource from resources.ROUTER_GATEWAY.
         self._check_for_dup_router_subnets(
             context, router_db,
             subnets,
             constants.DEVICE_OWNER_ROUTER_GW
         )
-        self._create_router_gw_port(context, router_db,
-                                    new_network_id, ext_ips,
-                                    update_gw_port=False)
 
-        # TODO(dmitriis): publish an events.AFTER_CREATE event for a new
-        # resource type e.g. resources.ROUTER_EXTRA_GATEWAY. Semantically
-        # this is a different resource from resources.ROUTER_GATEWAY.
+        try:
+            registry.publish(
+                resources.ROUTER_GATEWAY, events.BEFORE_CREATE, self,
+                payload=events.DBEventPayload(
+                    context,
+                    metadata={'network_id': new_network_id,
+                              'subnets': subnets},
+                    resource_id=router_db.id))
+        except callback_exc.CallbackFailure as e:
+            raise e.errors[0].error
+
+        gw_port = self._create_router_gw_port(context, router_db,
+                                              new_network_id, ext_ips,
+                                              update_gw_port=False)
+
+        gw_ips = [ip['ip_address'] for ip in gw_port['fixed_ips']]
+        registry.publish(
+            resources.ROUTER_GATEWAY, events.AFTER_CREATE,
+            self._create_extra_gw_port,
+            payload=events.DBEventPayload(
+                context, states=(router_db,),
+                metadata={'gateway_ips': gw_ips,
+                          'network_id': new_network_id},
+                resource_id=router_db.id))
 
     def _check_for_dup_router_subnets(self, context, router_db,
                                       new_subnets, new_device_owner):
@@ -444,18 +460,34 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                 raise l3_exc.RouterExternalGatewayInUseByFloatingIp(
                     router_id=router_id, net_id=gw_port.network_id)
 
-        # TODO(dmitriis): publish an events.BEFORE_DELETE event for a new
-        # resource type e.g. resources.ROUTER_EXTRA_GATEWAY. Semantically this
-        # is a different resource from resources.ROUTER_GATEWAY.
+        router_db = self._get_router(context, router_id)
+        network_id = gw_port.network_id
+        gw_ips = [ip.ip_address for ip in gw_port.fixed_ips]
+
+        try:
+            registry.publish(
+                resources.ROUTER_GATEWAY, events.BEFORE_DELETE, self,
+                payload=events.DBEventPayload(
+                    context, states=(router_db,),
+                    resource_id=router_id))
+        except callback_exc.CallbackFailure as e:
+            if len(e.errors) == 1:
+                raise e.errors[0].error
+            raise l3_exc.RouterInUse(router_id=router_id, reason=e)
 
         if db_api.is_session_active(admin_ctx.session):
             admin_ctx.GUARD_TRANSACTION = False
         self._core_plugin.delete_port(
             admin_ctx, gw_port_id, l3_port_check=False)
 
-        # TODO(dmitriis): publish an events.AFTER_DELETE event for a new
-        # resource type e.g. resources.ROUTER_EXTRA_GATEWAY. Semantically this
-        # is a different resource from resources.ROUTER_GATEWAY.
+        registry.publish(
+            resources.ROUTER_GATEWAY, events.AFTER_DELETE, self,
+            payload=events.DBEventPayload(
+                context, states=(router_db,),
+                metadata={'network_id': network_id,
+                          'new_network_id': None,
+                          'gateway_ips': gw_ips},
+                resource_id=router_id))
 
     @db_api.retry_if_session_inactive()
     def add_external_gateways(self, context, router_id, body):
