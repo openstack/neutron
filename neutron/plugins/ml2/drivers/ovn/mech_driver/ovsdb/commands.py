@@ -137,6 +137,26 @@ class CheckLivenessCommand(command.BaseCommand):
         self.result = self.api.nb_global.nb_cfg
 
 
+class CheckSyncStartCommand(command.BaseCommand):
+    """Record a sync start after the minimum interval, specified in minutes."""
+
+    def __init__(self, api, min_interval):
+        super().__init__(api)
+        self.min_interval = min_interval * 60
+
+    def run_idl(self, txn):
+        now = timeutils.utcnow_ts()
+        last_sync = self.api.nb_global.external_ids.get(
+            ovn_const.OVN_SYNC_START_EXT_ID_KEY)
+        self.result = not (self.min_interval and last_sync and
+                           now - float(last_sync) < self.min_interval)
+        if self.result:
+            # Recheck the interval if our cached timestamp was stale.
+            self.api.nb_global.verify('external_ids')
+            self.api.nb_global.setkey(
+                'external_ids', ovn_const.OVN_SYNC_START_EXT_ID_KEY, str(now))
+
+
 class BumpNbCfgCommand(command.BaseCommand):
     """Increment NB_Global.nb_cfg to force a new configuration generation.
 

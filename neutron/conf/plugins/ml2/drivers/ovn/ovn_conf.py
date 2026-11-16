@@ -121,6 +121,17 @@ ovn_opts = [
                          "OVS to OVN.")],
                help=_('The synchronization mode of OVN_Northbound OVSDB '
                       'with Neutron DB.')),
+    cfg.IntOpt('neutron_sync_min_interval',
+               default=60,
+               min=0,
+               help=_('Minimum time in minutes between automatic startup '
+                      'synchronizations, shared across maintenance workers. '
+                      'A worker considers synchronization only on its first '
+                      'NB lock acquisition. Skipping because of this interval '
+                      'consumes that opportunity for the process lifetime. '
+                      'Zero disables the interval restriction. This option '
+                      'does not affect neutron-ovn-db-sync-util or periodic '
+                      'maintenance repairs.')),
     cfg.StrOpt("ovn_l3_scheduler",
                default=ovn_const.OVN_L3_SCHEDULER_LEASTLOADED,
                choices=[(ovn_const.OVN_L3_SCHEDULER_LEASTLOADED,
@@ -410,6 +421,10 @@ def get_ovn_ovsdb_probe_interval():
 
 def get_ovn_neutron_sync_mode():
     return cfg.CONF.ovn.neutron_sync_mode
+
+
+def get_ovn_neutron_sync_min_interval():
+    return cfg.CONF.ovn.neutron_sync_min_interval
 
 
 def get_ovn_l3_scheduler():

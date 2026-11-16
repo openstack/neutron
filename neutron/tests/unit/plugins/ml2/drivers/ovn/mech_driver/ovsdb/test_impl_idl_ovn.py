@@ -17,15 +17,67 @@ import select
 from unittest import mock
 
 from oslo_utils import uuidutils
+from ovs.db import idl as ovs_db_idl
 from ovs import poller as ovs_poller
 from ovsdbapp.backend import ovs_idl
 
+from neutron.api import wsgi
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
+from neutron import service
 from neutron.services.portforwarding import constants as pf_const
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
+
+
+class TestGetOvnApis(base.BaseTestCase):
+
+    def test_worker_idl_mapping(self):
+        ovn_conf.register_opts()
+
+        for worker_class, nb_ovs_idl, sb_ovs_idl in (
+                (worker.MaintenanceWorker, maintenance.MaintenanceOvnNbIdl,
+                 ovsdb_monitor.BaseOvnSbIdl),
+                (service.RpcWorker, ovsdb_monitor.BaseOvnIdl,
+                 ovsdb_monitor.BaseOvnSbIdl),
+                (wsgi.WorkerService, ovsdb_monitor.OvnNbIdl,
+                 ovsdb_monitor.OvnSbIdl)):
+            with self.subTest(worker=worker_class.__name__), \
+                    mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl,
+                                      'from_server') as nb_api, \
+                    mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl,
+                                      'from_server') as sb_api:
+                apis = impl_idl_ovn.get_ovn_apis(mock.sentinel.driver,
+                                               worker_class)
+                self.assertEqual((nb_api.return_value, sb_api.return_value),
+                                 apis)
+                nb_api.assert_called_once_with(nb_ovs_idl,
+                                               driver=mock.sentinel.driver)
+                sb_api.assert_called_once_with(sb_ovs_idl,
+                                               driver=mock.sentinel.driver)
+
+
+class TestWaitForChange(base.BaseTestCase):
+
+    def test_lock_notification_does_not_complete_initial_dump(self):
+        idl = mock.Mock(change_seqno=0)
+
+        def run():
+            idl.change_seqno += 1
+            idl.state = (ovs_db_idl.Idl.IDL_S_MONITORING
+                         if idl.change_seqno == 2 else
+                         ovs_db_idl.Idl.IDL_S_INITIAL)
+            return True
+
+        idl.run.side_effect = run
+        with mock.patch.object(impl_idl_ovn.idlutils.poller, 'Poller'):
+            impl_idl_ovn.wait_for_change(idl, timeout=1)
+        self.assertEqual(2, idl.run.call_count)
 
 
 class TestDBImplIdlOvn(base.BaseTestCase):
@@ -437,12 +489,10 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables['HA_Chassis_Group'] = self.hcg_table
         self._tables['HA_Chassis'] = self.ha_chassis_table
 
-        with mock.patch.object(impl_idl_ovn.OvsdbNbOvnIdl, 'from_worker',
-                               return_value=mock.Mock()):
-            with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
-                                   create=True):
-                impl_idl_ovn.OvsdbNbOvnIdl.ovsdb_connection = None
-                self.nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(mock.MagicMock())
+        with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
+                               create=True):
+            impl_idl_ovn.OvsdbNbOvnIdl.ovsdb_connection = None
+            self.nb_ovn_idl = impl_idl_ovn.OvsdbNbOvnIdl(mock.MagicMock())
 
         self.nb_ovn_idl.idl.tables = self._tables
 
@@ -995,12 +1045,10 @@ class TestSBImplIdlOvnBase(TestDBImplIdlOvn):
         self._tables = {}
         self._tables['Chassis'] = self.chassis_table
 
-        with mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'from_worker',
-                               return_value=mock.Mock()):
-            with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
-                                   create=True):
-                impl_idl_ovn.OvsdbSbOvnIdl.ovsdb_connection = None
-                self.sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(mock.MagicMock())
+        with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
+                               create=True):
+            impl_idl_ovn.OvsdbSbOvnIdl.ovsdb_connection = None
+            self.sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(mock.MagicMock())
 
         self.sb_ovn_idl.idl.tables = self._tables
 

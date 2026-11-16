@@ -97,6 +97,48 @@ class TestCheckLivenessCommand(TestBaseCommand):
         self.assertNotEqual(cmd.result, old_ng_cfg)
 
 
+class TestCheckSyncStartCommand(TestBaseCommand):
+
+    @mock.patch.object(commands.timeutils, 'utcnow_ts', return_value=10000)
+    def test_shared_interval(self, now):
+        for last_sync, interval_minutes, allowed in (
+                (None, 60, True),
+                ('6401', 60, False),
+                ('6400', 60, True),
+                ('10001', 0, True)):
+            with self.subTest(last_sync=last_sync,
+                              interval_minutes=interval_minutes):
+                self.ovn_api.nb_global = mock.Mock(external_ids={
+                    ovn_const.OVN_SYNC_START_EXT_ID_KEY: last_sync
+                } if last_sync else {})
+                cmd = commands.CheckSyncStartCommand(
+                    self.ovn_api, interval_minutes)
+                cmd.run_idl(self.transaction)
+                self.assertEqual(allowed, cmd.result)
+                if allowed:
+                    self.ovn_api.nb_global.verify.assert_called_once_with(
+                        'external_ids')
+                    self.ovn_api.nb_global.setkey.assert_called_once_with(
+                        'external_ids', ovn_const.OVN_SYNC_START_EXT_ID_KEY,
+                        '10000')
+                else:
+                    self.ovn_api.nb_global.setkey.assert_not_called()
+
+    @mock.patch.object(commands.timeutils, 'utcnow_ts', return_value=10000)
+    def test_transaction_retry_rechecks_timestamp(self, now):
+        self.ovn_api.nb_global = mock.Mock(external_ids={})
+        cmd = commands.CheckSyncStartCommand(self.ovn_api, 60)
+        cmd.run_idl(self.transaction)
+        self.assertTrue(cmd.result)
+
+        self.ovn_api.nb_global.external_ids[
+            ovn_const.OVN_SYNC_START_EXT_ID_KEY] = '9999'
+        self.ovn_api.nb_global.setkey.reset_mock()
+        cmd.run_idl(self.transaction)
+        self.assertFalse(cmd.result)
+        self.ovn_api.nb_global.setkey.assert_not_called()
+
+
 class TestAddNetworkCommand(TestBaseCommand):
 
     def setUp(self):

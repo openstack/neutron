@@ -1047,14 +1047,15 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
 
 
 class BaseOvnIdl(Ml2OvnIdlBase):
-    def __init__(self, remote, schema, **kwargs):
-        self.notify_handler = row_event.RowEventHandler()
+    def __init__(self, remote, schema, driver=None, notify_handler=None,
+                 **kwargs):
+        self.notify_handler = notify_handler or row_event.RowEventHandler()
         super().__init__(remote, schema, **kwargs)
 
     @classmethod
-    def from_server(cls, connection_string, helper):
+    def from_server(cls, connection_string, helper, driver=None):
         helper.register_all()
-        return cls(connection_string, helper)
+        return cls(connection_string, helper, driver=driver)
 
     def notify(self, event, row, updates=None):
         self.notify_handler.notify(event, row, updates)
@@ -1066,7 +1067,7 @@ class BaseOvnSbIdl(Ml2OvnIdlBase):
         super().__init__(remote, schema, **kwargs)
 
     @classmethod
-    def from_server(cls, connection_string, helper):
+    def from_server(cls, connection_string, helper, driver=None):
         helper.register_table('Chassis_Private')
         helper.register_table('Chassis')
         helper.register_table('Encap')

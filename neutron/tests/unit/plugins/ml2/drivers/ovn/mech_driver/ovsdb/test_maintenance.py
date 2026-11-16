@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import os
 import threading
 import time
 from unittest import mock
@@ -24,6 +25,7 @@ from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
+from ovs.db import idl as ovs_idl
 
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
@@ -37,6 +39,96 @@ from neutron.tests.unit.extensions import test_address_group as test_ag
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2 import test_security_group as test_sg
 from neutron.tests.unit import testlib_api
+
+
+class TestMaintenanceOvnNbIdl(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        ovn_conf.register_opts()
+        self.check_start = mock.patch.object(
+            maintenance.commands.CheckSyncStartCommand, 'execute',
+            return_value=True).start()
+        self.driver = mock.Mock()
+        self.idl = maintenance.MaintenanceOvnNbIdl.from_server(
+            'tcp:127.0.0.1:6641',
+            ovs_idl.SchemaHelper(os.path.join(
+                os.path.dirname(__file__), 'schemas', 'ovn-nb.ovsschema')),
+            driver=self.driver)
+        self.driver.nb_ovn.idl = self.idl
+        self.addCleanup(self.idl.close)
+        self.addCleanup(self.idl.notify_handler.notify_thread.join, 5)
+        self.addCleanup(self.idl.notify_handler.shutdown)
+        self.addCleanup(self.idl.notify_handler.sync_ready.set)
+
+    def test_initial_lock_waits_for_sync_ready(self):
+        self.assertEqual(constants.MAINTENANCE_NB_IDL_LOCK_NAME,
+                         self.idl.lock_name)
+        self.assertTrue(self.idl.leader_only)
+        self.idl.has_lock = True
+        waiting = threading.Event()
+        wait = self.idl.notify_handler.sync_ready.wait
+
+        def wait_for_sync():
+            waiting.set()
+            wait()
+
+        with mock.patch.object(self.idl.notify_handler.sync_ready, 'wait',
+                               side_effect=wait_for_sync):
+            self.idl.notify_lock(self.idl.lock_name, True)
+            self.assertTrue(waiting.wait(timeout=5))
+            self.check_start.assert_not_called()
+            self.idl.notify_handler.sync_ready.set()
+            self.idl.notify_handler.notifications.join()
+
+        self.check_start.assert_called_once_with(check_error=True)
+        self.driver.nb_synchronizer.sync.assert_called_once_with(
+            delay_seconds=0)
+        self.driver.sb_synchronizer.sync.assert_called_once_with(
+            delay_seconds=0)
+
+    def test_first_nb_lock_starts_sync_once(self):
+        self.idl.notify_handler.sync_ready.set()
+        # An acquisition can be stale by the time it is dispatched.
+        self.idl.notify_lock(self.idl.lock_name, True)
+        self.idl.notify_handler.notifications.join()
+        self.check_start.assert_not_called()
+        self.driver.nb_synchronizer.sync.assert_not_called()
+        self.driver.sb_synchronizer.sync.assert_not_called()
+
+        self.idl.has_lock = True
+        self.idl.notify_lock(self.idl.lock_name, True)
+        self.idl.notify_handler.notifications.join()
+        self.idl.has_lock = False
+        self.idl.notify_lock(self.idl.lock_name, False)
+        self.idl.notify_handler.notifications.join()
+        self.idl.has_lock = True
+        self.idl.notify_lock(self.idl.lock_name, True)
+        self.idl.notify_handler.notifications.join()
+        self.check_start.assert_called_once_with(check_error=True)
+        self.driver.nb_synchronizer.sync.assert_called_once_with(
+            delay_seconds=0)
+        self.driver.sb_synchronizer.sync.assert_called_once_with(
+            delay_seconds=0)
+
+    def test_cooldown_skip_consumes_startup_opportunity(self):
+        self.idl.notify_handler.sync_ready.set()
+        self.check_start.return_value = False
+        self.idl.has_lock = True
+        self.idl.notify_lock(self.idl.lock_name, True)
+        self.idl.notify_handler.notifications.join()
+
+        # Even if the cooldown has expired, this process must not try again.
+        self.check_start.return_value = True
+        self.idl.has_lock = False
+        self.idl.notify_lock(self.idl.lock_name, False)
+        self.idl.notify_handler.notifications.join()
+        self.idl.has_lock = True
+        self.idl.notify_lock(self.idl.lock_name, True)
+        self.idl.notify_handler.notifications.join()
+        self.check_start.assert_called_once_with(check_error=True)
+        self.driver.nb_synchronizer.sync.assert_not_called()
+        self.driver.sb_synchronizer.sync.assert_not_called()
 
 
 class TestMaintenanceThread(base.BaseTestCase):
