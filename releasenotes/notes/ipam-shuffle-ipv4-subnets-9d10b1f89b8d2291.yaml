@@ -1,0 +1,16 @@
+---
+upgrade:
+  - |
+    Ports on networks with several IPv4 subnets may now get addresses from
+    any of them, not only from the first subnets in database order.
+    Operators who relied on the old order can keep a subnet out of automatic
+    allocation by setting ``service_types`` on it.
+fixes:
+  - |
+    When a port is created without fixed IPs, the candidate IPv4 subnets
+    are now tried in random order instead of database order. On networks
+    with many nearly-full subnets, concurrent port creations no longer all
+    compete for the few free addresses of the first subnets, which caused
+    ``DBDuplicateEntry`` retries, API timeouts and subnets with free
+    addresses never being used. Subnets with ``service_types`` are still
+    tried first. Fixed IP requests and IPv6 allocation are unchanged.
