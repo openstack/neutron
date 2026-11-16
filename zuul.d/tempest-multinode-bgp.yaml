@@ -227,6 +227,9 @@
         #     routed spine-leaf fabric
         # - test_vlan_transparency: not relevant to BGP validation,
         #     too slow (1000s+) and risks job timeout
+        # - test_dhcp_lease_sibling_subnet_on_link: ML2/OVN does not
+        #     advertise the other subnets of a network as on-link
+        #     routes, see https://bugs.launchpad.net/neutron/+bug/2174334
         tempest_exclude_regex: "\
           (^neutron_tempest_plugin.scenario.test_port_forwardings)|\
           (^neutron_tempest_plugin.scenario.test_multiple_gws)|\
@@ -237,7 +240,8 @@
           (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_subnet_details)|\
           (^tempest.scenario.test_network_advanced_server_ops.TestNetworkAdvancedServerOps.test_server_connectivity_rebuild)|\
           (^neutron_tempest_plugin.scenario.test_multicast)|\
-          (^neutron_tempest_plugin.scenario.test_vlan_transparency)"
+          (^neutron_tempest_plugin.scenario.test_vlan_transparency)|\
+          (^neutron_tempest_plugin.scenario.test_dhcp.DHCPLeaseOptionsTest.test_dhcp_lease_sibling_subnet_on_link)"
       zbgp_compute:
         devstack_localrc:
           <<: *subnode_localrc
