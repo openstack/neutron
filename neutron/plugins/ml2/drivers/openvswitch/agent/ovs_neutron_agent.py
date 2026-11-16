@@ -1865,15 +1865,16 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             cur_ancillary_ports |= bridge.get_vif_port_set()
         cur_ancillary_ports |= ancillary_port_info['current']
 
-        def _process_port(port, ports, ancillary_ports):
+        def _process_port(port, ports, ancillary_ports, event_type):
             # check 'iface-id' is set otherwise is not a port
             # the agent should care about
             if 'attached-mac' in port.get('external_ids', []):
                 iface_id = self.int_br.portid_from_external_ids(
                     port['external_ids'])
                 if iface_id:
-                    if port['ofport'] in (ovs_lib.UNASSIGNED_OFPORT,
-                                          ovs_lib.INVALID_OFPORT):
+                    if (event_type == 'added' and port['ofport'] in
+                            (ovs_lib.UNASSIGNED_OFPORT,
+                             ovs_lib.INVALID_OFPORT)):
                         LOG.debug("Port %s not ready yet on the bridge "
                                   "(ofport=%s)",
                                   iface_id, port['ofport'])
@@ -1902,7 +1903,28 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         for event_type in ('added', 'removed', 're_added'):
             for port in events.get(event_type, []):
                 _process_port(port, port_info[event_type],
-                              ancillary_port_info[event_type])
+                              ancillary_port_info[event_type], event_type)
+
+        # A port we know is wired but that lost its ofport had the device
+        # removed from under it, e.g. nova deletes and recreates the tap
+        # during a rebuild. Report such ports DOWN and wire them again, so
+        # that the UP report is a real DOWN->UP transition and neutron sends
+        # the network-vif-plugged event to nova. Relying on the removed and
+        # added events pairing up does not work here, they can be delivered
+        # in different polling iterations.
+        lost_ofport_ports = set()
+        for port in events.get('modified', []):
+            if port['ofport'] not in (ovs_lib.UNASSIGNED_OFPORT,
+                                      ovs_lib.INVALID_OFPORT):
+                continue
+            iface_id = self.int_br.portid_from_external_ids(
+                port.get('external_ids', []))
+            if (iface_id and iface_id in port_info['current'] and
+                    iface_id not in port_info['removed']):
+                LOG.debug("Port %s lost its ofport, reporting it DOWN "
+                          "before wiring it again", iface_id)
+                port_info['re_added'].add(iface_id)
+                lost_ofport_ports.add(iface_id)
 
         self._update_port_info_failed_devices_stats(port_info, failed_devices)
         self._update_port_info_failed_devices_stats(ancillary_port_info,
@@ -1917,6 +1939,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # current ports.
             updated_ports &= port_info['current']
             port_info['updated'] = updated_ports
+        # Ports reported DOWN above must also be wired again so that their
+        # UP report is sent too.
+        port_info['updated'] |= lost_ofport_ports
         return port_info, ancillary_port_info, ports_not_ready_yet
 
     def scan_ports(self, registered_ports, sync, updated_ports=None):
@@ -2269,6 +2294,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         binding_no_activated_devices = set()
         devices_not_in_datapath = set()
         migrating_devices = set()
+        failed_re_added_down = set()
         start = time.time()
         if re_added:
             # NOTE(slaweq): to make sure that devices which were deleted and
@@ -2283,10 +2309,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 devices_down=re_added,
                 agent_id=self.agent_id,
                 host=self.conf.host)
-            failed_re_added_down = re_added_devices.get('failed_devices_down')
+            failed_re_added_down = set(
+                re_added_devices.get('failed_devices_down', []))
             if failed_re_added_down:
                 LOG.debug("Status updated failed for re_added devices: %s",
                           failed_re_added_down)
+                failed_devices['re_added'] = failed_re_added_down
+                devices_added_updated -= failed_re_added_down
             LOG.info("process_network_ports - iteration:%(iter_num)d - "
                      "reporting re_added devices DOWN completed. "
                      "Number of readded devices: %(re_added)s. "
@@ -2320,12 +2349,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # TODO(salv-orlando): Optimize avoiding applying filters
         # unnecessarily, (eg: when there are no IP address changes)
         added_ports = (port_info.get('added', set()) - skipped_devices -
-                       binding_no_activated_devices - migrating_devices)
+                       binding_no_activated_devices - migrating_devices -
+                       failed_re_added_down)
         self.process_install_ports_egress_flows(need_binding_devices)
         added_to_datapath = added_ports - devices_not_in_datapath
         self.sg_agent.setup_port_filters(
             added_to_datapath,
-            port_info.get('updated', set()) - binding_no_activated_devices)
+            port_info.get('updated', set()) - binding_no_activated_devices -
+            failed_re_added_down)
 
         LOG.info("process_network_ports - iteration:%(iter_num)d - "
                  "agent port security group processed in %(elapsed).3f",
@@ -2579,7 +2610,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def _port_info_has_changes(self, port_info):
         return (port_info.get('added') or
                 port_info.get('removed') or
-                port_info.get('updated'))
+                port_info.get('updated') or
+                port_info.get('re_added'))
 
     def check_ovs_status(self):
         try:
@@ -2700,6 +2732,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                  context=None,
                                  states=(events,)))
 
+        retry_re_added = (failed_devices.get('re_added', set()) &
+                          port_info['current']) - port_info.get('removed',
+                                                                set())
+        if retry_re_added:
+            port_info.setdefault('re_added', set()).update(retry_re_added)
+            port_info.setdefault('updated', set()).update(retry_re_added)
+
         return (port_info, ancillary_port_info, consecutive_resyncs,
                 ports_not_ready_yet)
 
@@ -2717,6 +2756,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             failed_ancillary_devices[event] = (
                 failed_ancillary_devices[event] -
                 ancillary_devices_not_to_retry[event])
+        if 're_added' in failed_devices:
+            failed_devices['re_added'] -= devices_not_to_retry['re_added']
 
     def _get_devices_not_to_retry(self, failed_devices,
                                   failed_ancillary_devices,
@@ -2745,6 +2786,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 failed_devices[event])
             ancillary_devices_not_to_retry[event] = _increase_retries(
                 failed_ancillary_devices[event])
+
+        if 're_added' in failed_devices:
+            devices_not_to_retry['re_added'] = _increase_retries(
+                failed_devices['re_added'])
 
         return (new_failed_devices_retries_map, devices_not_to_retry,
                 ancillary_devices_not_to_retry)
