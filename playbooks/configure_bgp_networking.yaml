@@ -7,6 +7,18 @@
          name: "openvswitch-switch"
          state: present
 
+- name: Install tools used by the tests on the tempest node
+  hosts: tempest
+  tasks:
+    # The tests send traffic from this node with "nc". The controller gets it
+    # from the DevStack package prerequisites, but this node does not.
+    - name: Install ncat
+      become: true
+      ansible.builtin.package:
+        name: "ncat"
+        state: present
+      when: enable_evpn | default(false)
+
 - name: Figure out VXLAN endpoints
   hosts: controller,compute1,leafs,spine
   tasks:
