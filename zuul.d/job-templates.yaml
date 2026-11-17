@@ -110,6 +110,7 @@
         - neutron-tempest-plugin-openvswitch-iptables_hybrid
         - devstack-enforce-scope
         - neutron-tox-py3-with-sqlalchemy-master
+        - neutron-tox-pep8-with-neutron-lib-master
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master

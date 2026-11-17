@@ -174,3 +174,10 @@
       - openstack/neutron-lib
       - name: github.com/sqlalchemy/alembic
         override-checkout: main
+
+- job:
+    name: neutron-tox-pep8-with-neutron-lib-master
+    branches: ^master$
+    parent: openstack-tox-pep8
+    required-projects:
+      - openstack/neutron-lib
