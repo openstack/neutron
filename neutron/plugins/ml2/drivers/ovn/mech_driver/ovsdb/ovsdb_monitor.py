@@ -80,9 +80,8 @@ class ChassisEvent(row_event.RowEvent):
 
             # The filter() is to get rid of the empty string in
             # the list that is returned because of split()
-            azs = {az for az in
-                   hcg.external_ids.get(
-                       ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '').split(',') if az}
+            azs = set(utils.get_az_hints_from_external_ids(
+                hcg.external_ids))
             # Find which Ha Chassis Group that is included in the
             # Availability Zone hints
             if az_hints.intersection(azs):

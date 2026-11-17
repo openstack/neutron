@@ -1525,8 +1525,12 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     LOG.warning('Logical_Router %s does not exist', r_name)
                     continue
 
-                az_hints = lr.external_ids.get(
-                    ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
+                # The AZ hints in the ``Logical_Router`` external_ids are
+                # already stored as a comma-separated string. Parse them
+                # into a list before joining them back, otherwise
+                # ``','.join()`` would iterate over the string characters.
+                az_hints = utils.get_az_hints_from_external_ids(
+                    lr.external_ids)
                 router_id = utils.get_neutron_name(r_name)
                 # Add the new HA_Chassis_Group and assign to the LRP.
                 external_ids = {

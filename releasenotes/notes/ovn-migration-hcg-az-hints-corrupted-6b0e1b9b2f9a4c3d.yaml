@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    The ML2/OVN maintenance task that migrates the gateway
+    ``Logical_Router_Port`` ``Gateway_Chassis`` registers to
+    ``HA_Chassis_Group`` no longer writes corrupted availability zone
+    hints into the new router ``HA_Chassis_Group``. The task was joining
+    the comma-separated AZ hints string stored in the ``Logical_Router``
+    external_ids character by character, so a router with AZ hints
+    ``nova`` ended up with ``n,o,v,a`` in the group external_ids. That
+    made the hints never match any chassis availability zone, so any
+    later re-sync of such a group removed all its chassis, leaving the
+    router gateway port unhosted. For more information, see bug
+    `2174719 <https://bugs.launchpad.net/neutron/+bug/2174719>`_.
