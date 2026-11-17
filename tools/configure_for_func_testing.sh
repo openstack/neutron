@@ -256,10 +256,11 @@ function _install_post_devstack {
         install_package isc-dhcp-client
         install_package nmap
     elif is_fedora; then
-        install_package dhclient
+        # NOTE: dhclient was removed from Fedora and CentOS Stream 10
+        install_package dhcpcd
         install_package nmap-ncat
     else
-        exit_distro_not_supported "installing dhclient and ncat packages"
+        exit_distro_not_supported "installing dhcpcd and ncat packages"
     fi
 
     enable_kernel_bridge_firewall

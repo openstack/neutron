@@ -204,8 +204,8 @@ attributes and configures dnsmasq for that network, the test:
 * Instantiates an instance of the DHCP agent class (But does not start its
   process).
 * Calls its top level function with prepared data.
-* Creates a temporary namespace and device, and calls 'dhclient' from that
-  namespace.
+* Creates a temporary namespace and device, and calls a DHCP client
+  ('dhclient' or 'dhcpcd') from that namespace.
 * Assert that the device successfully obtained the expected IP address.
 
 Test exceptions
