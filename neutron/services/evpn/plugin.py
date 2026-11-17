@@ -243,9 +243,8 @@ class EVPNPlugin(service_base.ServicePluginBase):
                                              payload):
         """Set advertise-host on the OVN logical router port.
 
-        Sets dynamic-routing-redistribute=connected-as-host and
-        dynamic-routing-advertise=false on LRP, in addition to the default
-        LRP redistribute route type from EVPN_LRP_REDISTRIBUTE_OPTION.
+        Set dynamic-routing-redistribute=EVPN_LRP_REDISTRIBUTE_OPTION and
+        dynamic-routing-advertise=false on LRP.
         If the network already has an OVN metadata port, also set
         dynamic-routing-advertise=false on that LSP.
         """
