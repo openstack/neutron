@@ -50,11 +50,12 @@ class MetadataProxyServer(socketserver.UnixStreamServer):
     """
 
     def __init__(self, workers, *kargs, **kwargs):
+        # NOTE: the parent constructor calls listen() with this value.
+        self.request_queue_size = cfg.CONF.metadata_backlog
         super().__init__(*kargs, **kwargs)
         self._pool = None
         if workers > 0:
             self._pool = futures.ThreadPoolExecutor(max_workers=workers)
-        self.request_queue_size = cfg.CONF.metadata_backlog
 
     def process_request_thread(self, request, client_address):
         """Same as in BaseServer but as a thread.
