@@ -27,6 +27,14 @@ the newest OVS/OVN release should work.
       - Neutron Release
       - ``OVS_BRANCH``
       - ``OVN_BRANCH``
+    * - 2027.1 (indri)
+      - 30.0
+      - branch-3.7
+      - branch-26.03
+    * - 2026.2 (hibiscus)
+      - 29.0
+      - branch-3.3
+      - branch-24.03
     * - 2026.1 (gazpacho)
       - 28.0
       - branch-3.3
