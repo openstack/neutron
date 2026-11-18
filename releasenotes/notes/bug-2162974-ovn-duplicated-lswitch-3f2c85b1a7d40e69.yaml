@@ -1,0 +1,25 @@
+---
+fixes:
+  - |
+    [``ML2/OVN``] Without OVS 3.1.0 (commit 55b9507) the ``Logical_Switch``
+    UUID is not persisted and does not match the Neutron network ID; such
+    register, as any register created before that, is only identifiable by
+    its ``neutron-<network_id>`` name. Two code paths still resolved it by
+    register UUID: the maintenance task, that passes the Neutron network ID
+    to ``get_lswitch``, and ``AddNetworkCommand``. Both missed such a
+    register and created a second one with the same name. Since the
+    ``Logical_Switch`` table has no index in the ``OVN_Northbound`` schema,
+    ``ovsdb-server`` accepts the duplicated register; the ports created
+    afterwards are resolved by name and land on any of them, and those
+    landing on the duplicated one have neither router port nor metadata
+    port. Both code paths now fall back to a lookup by name. For more
+    information, see bug
+    `2162974 <https://bugs.launchpad.net/neutron/+bug/2162974>`_.
+upgrade:
+  - |
+    [``ML2/OVN``] Deployments affected by bug
+    `2162974 <https://bugs.launchpad.net/neutron/+bug/2162974>`_ can already
+    have duplicated ``Logical_Switch`` registers. This patch prevents the
+    creation of new duplicates but does not remove the existing ones. Check
+    for registers sharing the same ``neutron-<network_id>`` name and delete
+    the one that has no router port and no ``ovn-metadata`` port.
