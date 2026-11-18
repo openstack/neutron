@@ -1022,6 +1022,43 @@ class TestOvsNeutronAgent:
         self.assertFalse(self._mock_treat_devices_added_updated(
             mock.MagicMock(), port, 'port_dead'))
 
+    def _treat_devices_added_updated_with_ofport(self, ofport):
+        port_id = '0952f719-ae0f-4e94-8572-016872699096'
+        details = {'device': port_id, 'port_id': port_id,
+                   'network_id': 'net-id', 'network_type': 'vxlan',
+                   'physical_network': None, 'segmentation_id': 1,
+                   'admin_state_up': True, 'fixed_ips': [],
+                   'device_owner': 'network:router_ha_interface'}
+        vif_port = ovs_lib.VifPort('ha-0952f719-ae', ofport, port_id,
+                                   'fa:16:3e:27:f8:d5', self.agent.int_br)
+        with mock.patch.object(
+                self.agent.plugin_rpc,
+                'get_devices_details_list_and_failed_devices',
+                return_value={'devices': [details], 'failed_devices': []}),\
+                mock.patch.object(self.agent.int_br, 'get_vifs_by_ids',
+                                  return_value={port_id: vif_port}),\
+                mock.patch.object(self.agent, 'ext_manager'),\
+                mock.patch.object(self.agent, 'port_bound',
+                                  return_value=True):
+            (_, _, need_binding_devices, failed_devices, _, _) = (
+                self.agent.treat_devices_added_or_updated(
+                    {port_id}, False, set()))
+        return port_id, need_binding_devices, failed_devices
+
+    def test_treat_devices_added_updated_retries_invalid_ofport(self):
+        for ofport in (ovs_lib.UNASSIGNED_OFPORT, ovs_lib.INVALID_OFPORT):
+            port_id, need_binding_devices, failed_devices = (
+                self._treat_devices_added_updated_with_ofport(ofport))
+            self.assertEqual([], need_binding_devices)
+            self.assertIn(port_id, failed_devices)
+
+    def test_treat_devices_added_updated_valid_ofport_not_retried(self):
+        port_id, need_binding_devices, failed_devices = (
+            self._treat_devices_added_updated_with_ofport(297))
+        self.assertEqual([port_id],
+                         [d['device'] for d in need_binding_devices])
+        self.assertNotIn(port_id, failed_devices)
+
     def test_treat_devices_added_updated_marks_unknown_port_as_dead(self):
         port = mock.Mock()
         port.ofport = 1
@@ -1430,6 +1467,32 @@ class TestOvsNeutronAgent:
 
     def test_process_network_port_with_empty_port(self):
         self._test_process_network_ports({})
+
+    def test_process_network_ports_retries_port_with_invalid_ofport(self):
+        port_id = '0952f719-ae0f-4e94-8572-016872699096'
+        details = {'device': port_id, 'port_id': port_id,
+                   'network_id': 'net-id', 'network_type': 'vxlan',
+                   'physical_network': None, 'segmentation_id': 1,
+                   'admin_state_up': True, 'fixed_ips': [],
+                   'device_owner': 'network:router_ha_interface'}
+        vif_port = ovs_lib.VifPort('ha-0952f719-ae', [], port_id,
+                                   'fa:16:3e:27:f8:d5', self.agent.int_br)
+        port_info = {'added': {port_id}, 'current': {port_id},
+                     'removed': set(), 'updated': set(), 're_added': set()}
+        with mock.patch.object(
+                self.agent.plugin_rpc,
+                'get_devices_details_list_and_failed_devices',
+                return_value={'devices': [details], 'failed_devices': []}),\
+                mock.patch.object(self.agent.int_br, 'get_vifs_by_ids',
+                                  return_value={port_id: vif_port}),\
+                mock.patch.object(self.agent.sg_agent,
+                                  'setup_port_filters'),\
+                mock.patch.object(self.agent, 'ext_manager'),\
+                mock.patch.object(self.agent, 'port_bound') as port_bound:
+            failed_devices = self.agent.process_network_ports(port_info,
+                                                              False)
+        port_bound.assert_not_called()
+        self.assertIn(port_id, failed_devices['added'])
 
     def test_process_network_ports_with_re_added_ports(self):
         self._test_process_network_ports(
