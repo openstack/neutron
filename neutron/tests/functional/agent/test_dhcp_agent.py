@@ -50,19 +50,17 @@ from neutron.tests.functional import base
 LOG = logging.getLogger(__name__)
 
 
-def _dhclient_available():
-    """Check if dhclient is available on the system."""
-    return shutil.which('dhclient') is not None
-
-
-def skip_if_dhclient_not_available(f):
-    """Skip test if dhclient is not available on the system."""
-    @functools.wraps(f)
-    def wrapper(self, *args, **kwargs):
-        if not _dhclient_available():
-            self.skipTest("dhclient is not available")
-        return f(self, *args, **kwargs)
-    return wrapper
+# dhclient (ISC) is not available on Fedora and CentOS Stream 10 anymore,
+# dhcpcd is the replacement there.
+_DHCP_CLIENTS = (
+    ['dhclient', '--no-pid', '-d', '-1'],
+    # NOTE: -A skips the ARP probe of the offered address, otherwise dhcpcd
+    # can exit on the -t timeout before the address is configured. -L disables
+    # the IPv4LL (169.254.0.0/16) fallback, -1 exits after configuring the
+    # interface (or after the -t timeout) and -p keeps the address configured
+    # on exit.
+    ['dhcpcd', '-4', '-A', '-L', '-1', '-p', '-t', '10'],
+)
 
 
 class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
@@ -256,7 +254,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             check_error=True)
         self.assertEqual([], tag)
 
-        self._run_dhclient(vif_name, network)
+        self._run_dhcp_client(vif_name, network)
 
         def predicate():
             return len(self._ip_list_for_vif(vif_name, network.namespace))
@@ -270,18 +268,19 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
     def assert_bad_allocation_for_port(self, network, port):
         vif_name = self.get_interface_name(network.id, port)
-        self._run_dhclient(vif_name, network)
+        self._run_dhcp_client(vif_name, network)
         # we need wait some time (10 seconds is enough) and check
-        # that dhclient not configured ip-address for interface
+        # that the DHCP client did not configure an IP address on the
+        # interface
         time.sleep(10)
 
         ip_list = self._ip_list_for_vif(vif_name, network.namespace)
         self.assertEqual([], ip_list)
 
-    def _run_dhclient(self, vif_name, network):
-        # NOTE: Before run dhclient we should create resolv.conf file
-        # in namespace,  where we will run dhclient for testing address
-        # allocation for port, otherwise, dhclient will override
+    def _run_dhcp_client(self, vif_name, network):
+        # NOTE: Before run the DHCP client we should create resolv.conf file
+        # in namespace, where we will run it for testing address
+        # allocation for port, otherwise, the client will override
         # system /etc/resolv.conf
         # By default, folder for dhcp-agent's namespace doesn't exist
         # that's why we use AdminDirFixture for create directory
@@ -290,11 +289,26 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
         self.useFixture(helpers.AdminDirFixture(etc_dir))
         cmd = ['touch', os.path.join(etc_dir, 'resolv.conf')]
         utils.execute(cmd, run_as_root=True)
-        dhclient_cmd = ['dhclient', '--no-pid', '-d', '-1', vif_name]
-        proc = net_helpers.RootHelperProcess(
-            cmd=dhclient_cmd, namespace=network.namespace)
-        self.addCleanup(proc.wait)
-        self.addCleanup(proc.kill)
+        for client_cmd in _DHCP_CLIENTS:
+            if (shutil.which(client_cmd[0]) or
+                    # The client is run as root, whose PATH includes sbin.
+                    shutil.which(client_cmd[0], path='/usr/sbin:/sbin')):
+                break
+        else:
+            self.fail('Neither dhclient nor dhcpcd is available')
+        client_cmd = client_cmd + [vif_name]
+        if client_cmd[0] == 'dhclient':
+            proc = net_helpers.RootHelperProcess(
+                cmd=client_cmd, namespace=network.namespace)
+            self.addCleanup(proc.wait)
+            self.addCleanup(proc.kill)
+        else:
+            # NOTE: dhcpcd changes its process title, so RootHelperProcess
+            # can't track it. It exits by itself once the interface is
+            # configured or the timeout expires, so run it synchronously.
+            ip_lib.IPWrapper(namespace=network.namespace).netns.execute(
+                client_cmd, run_as_root=True, check_exit_code=False,
+                log_fail_as_error=False)
 
     def _get_metadata_proxy_process(self, network):
         return external_process.ProcessManager(
@@ -343,7 +357,6 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         dev = ip_lib.IPDevice(iface_name, network.namespace)
         self.assertEqual(789, dev.link.mtu)
 
-    @skip_if_dhclient_not_available
     def test_good_address_allocation(self):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)
@@ -351,7 +364,6 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         self._plug_port_for_dhcp_request(network, port)
         self.assert_good_allocation_for_port(network, port)
 
-    @skip_if_dhclient_not_available
     def test_bad_address_allocation(self):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)

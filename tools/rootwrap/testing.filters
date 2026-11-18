@@ -15,13 +15,15 @@ ncat_filter: CommandFilter, ncat, root
 ncat_kill: KillFilter, root, ncat, -9
 ss_filter: CommandFilter, ss, root
 
-# enable dhclient from namespace
+# enable dhcp clients from namespace
 dhclient_filter: CommandFilter, dhclient, root
 dhclient_kill: KillFilter, root, dhclient, -9
+dhcpcd_filter: CommandFilter, dhcpcd, root
+dhcpcd_kill: KillFilter, root, dhcpcd, -9
 
-# Actually, dhclient is used for test dhcp-agent and runs
+# Actually, the DHCP client is used for test dhcp-agent and runs
 # in dhcp-agent namespace. If in that namespace resolv.conf file not exist
-# dhclient will override system /etc/resolv.conf
+# the client will override system /etc/resolv.conf
 # Filters below are limit functions mkdir, rm and touch
 # only to create and delete file resolv.conf in the namespace
 mkdir_filter: RegExpFilter, /bin/mkdir, root, mkdir, -p, /etc/netns/qdhcp-[0-9a-z./-]+
