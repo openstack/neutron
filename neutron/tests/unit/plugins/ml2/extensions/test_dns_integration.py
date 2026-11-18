@@ -998,6 +998,10 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
         self.load_auth = (
             mock.patch.object(driver.loading,
                               'load_auth_from_conf_options').start())
+        self.token = (
+            mock.patch.object(driver.token_endpoint, 'Token').start())
+        self.d_client = (
+            mock.patch.object(driver.d_client, 'Client').start())
 
     def test_insecure_client(self):
         cfg.CONF.set_override('insecure',
@@ -1023,3 +1027,48 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
     def test_auth_type_password(self):
         driver.get_clients(self.TEST_CONTEXT)
         self.load_auth.assert_called_with(cfg.CONF, 'designate')
+
+    def test_url_is_used_as_endpoint_override(self):
+        driver.get_clients(self.TEST_CONTEXT)
+
+        self.driver_session.return_value.get_endpoint.assert_not_called()
+        self.token.assert_called_once_with(
+            self.TEST_URL, self.TEST_CONTEXT.auth_token)
+        admin_call = self.d_client.call_args_list[1]
+        self.assertEqual(self.TEST_URL,
+                         admin_call.kwargs['endpoint_override'])
+
+    def test_endpoint_discovered_from_catalog(self):
+        cfg.CONF.clear_override('url', group='designate')
+        cfg.CONF.set_override('endpoint_type', 'internal', group='designate')
+        cfg.CONF.set_override('region_name', 'RegionOne', group='designate')
+        self.addCleanup(cfg.CONF.clear_override, 'endpoint_type',
+                        group='designate')
+        self.addCleanup(cfg.CONF.clear_override, 'region_name',
+                        group='designate')
+        self.driver_session.return_value.get_endpoint.return_value = (
+            self.TEST_URL)
+
+        driver.get_clients(self.TEST_CONTEXT)
+
+        self.driver_session.return_value.get_endpoint.assert_called_once_with(
+            auth=self.load_auth.return_value, service_type='dns',
+            interface='internal', region_name='RegionOne', min_version='2')
+        self.token.assert_called_once_with(
+            self.TEST_URL, self.TEST_CONTEXT.auth_token)
+        admin_call = self.d_client.call_args_list[1]
+        self.assertEqual(self.TEST_URL,
+                         admin_call.kwargs['endpoint_override'])
+
+    def test_all_projects_client_uses_catalog_endpoint(self):
+        cfg.CONF.clear_override('url', group='designate')
+        self.driver_session.return_value.get_endpoint.return_value = (
+            self.TEST_URL)
+
+        driver.get_all_projects_client(self.TEST_CONTEXT)
+
+        self.token.assert_called_once_with(
+            self.TEST_URL, self.TEST_CONTEXT.auth_token)
+        self.d_client.assert_called_once_with(
+            session=self.driver_session.return_value,
+            auth=self.token.return_value, all_projects=True)

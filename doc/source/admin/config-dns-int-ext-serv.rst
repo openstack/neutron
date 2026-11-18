@@ -32,8 +32,13 @@ Once this is done, the user has to take the following steps and restart
    section of ``/etc/neutron/neutron.conf`` must define the following
    parameters:
 
-   * ``url``: the OpenStack DNS service public endpoint URL. Note that
-     this must always be the versioned endpoint currently.
+   * ``url``: optional override for the OpenStack DNS service public endpoint
+     URL. If not set, the endpoint is discovered from the Identity service
+     catalog. Note that, when set, this must always be the versioned endpoint
+     currently.
+   * ``endpoint_type``: type of the endpoint to look up in the Identity
+     service catalog when ``url`` is not set. One of ``public`` (default),
+     ``internal`` or ``admin``.
    * ``auth_type``: the authorization plugin to use.
      Usually this should be ``password``, see
      https://docs.openstack.org/keystoneauth/latest/authentication-plugins.html
@@ -52,8 +57,8 @@ Once this is done, the user has to take the following steps and restart
      zones.
    * ``user_domain_name``: the name of the domain for the user to be used by
      the Networking service to create and update reverse lookup (PTR) zones.
-   * ``region_name``: the name of the region to be used by the
-     Networking service to create and update reverse lookup (PTR) zones.
+   * ``region_name``: name of the region to use when looking up the Designate
+     endpoint in the Identity service catalog when ``url`` is not set.
    * ``allow_reverse_dns_lookup``: a boolean value specifying whether to enable
      or not the creation of reverse lookup (PTR) records.
    * ``ipv4_ptr_zone_prefix_size``: the size in bits of the prefix for the IPv4

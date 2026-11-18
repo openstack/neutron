@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    The ``[designate] url`` parameter is now optional. If it is not set, the
+    Designate endpoint is discovered from the Identity service catalog,
+    including API version discovery. The new ``[designate] endpoint_type``
+    (``public``, ``internal`` or ``admin``) and ``[designate] region_name``
+    parameters select the catalog entry to use. When ``url`` is set, it is
+    still used as an endpoint override and the other two parameters are
+    ignored.
