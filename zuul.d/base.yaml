@@ -1,6 +1,7 @@
 - job:
     name: neutron-functional
     parent: devstack-minimal
+    nodeset: openstack-single-node-resolute
     description: Run neutron functional tests
     timeout: 9000
     required-projects:

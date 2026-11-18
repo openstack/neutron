@@ -2,6 +2,7 @@
     name: neutron-tempest-base
     description: Base job for tempest to test Neutron
     parent: tempest-integrated-networking
+    nodeset: openstack-single-node-resolute
     abstract: true
     timeout: 10800
     required-projects:
@@ -158,6 +159,7 @@
 - job:
     name: neutron-ovn-tempest-mariadb-full
     parent: tempest-integrated-networking
+    nodeset: openstack-single-node-resolute
     timeout: 10800
     required-projects:
       - openstack/neutron
@@ -287,6 +289,7 @@
     name: neutron-ovn-tempest-with-neutron-lib-master
     branches: ^master$
     parent: tempest-integrated-networking
+    nodeset: openstack-single-node-resolute
     timeout: 10800
     required-projects:
       - openstack/neutron
@@ -372,6 +375,7 @@
 - job:
     name: neutron-ovn-tempest
     parent: tempest-integrated-networking
+    nodeset: openstack-single-node-resolute
     description: Run neutron Tempest tests with uwsgi
     timeout: 10800
     vars:
@@ -449,6 +453,7 @@
     name: neutron-ovn-base
     description: Base job for devstack/tempest to test Neutron with ovn driver.
     parent: tempest-integrated-networking
+    nodeset: openstack-single-node-resolute
     timeout: 10800
     required-projects: &ovn-base-required-projects
       - openstack/neutron
@@ -740,6 +745,7 @@
     name: neutron-ovn-tempest-ipv6-only-base
     abstract: true
     parent: tempest-ipv6-only
+    nodeset: openstack-single-node-resolute
     timeout: 10800
     vars:
       tox_envlist: integrated-network
@@ -802,6 +808,7 @@
     name: neutron-ovn-tempest-with-sqlalchemy-master
     branches: ^master$
     parent: tempest-integrated-networking
+    nodeset: openstack-single-node-resolute
     timeout: 10800
     required-projects:
       - openstack/neutron
