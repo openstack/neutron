@@ -42,6 +42,19 @@ def monkey_patch():
                     'monkey_patched')
 
         # pylint: disable=import-outside-toplevel
+        # ``socketserver`` resolves its polling class at import time, with
+        # ``_ServerSelector = selectors.PollSelector``. It is imported before
+        # this call, through ``oslo_log`` -> ``logging.config``, so the
+        # attribute still points to the standard, non green ``PollSelector``
+        # even after ``eventlet.monkey_patch()`` replaced ``selectors``. Its
+        # ``select()`` performs a blocking ``poll()`` syscall that never
+        # yields to the eventlet hub. Because the monkey patched
+        # ``threading.Thread`` is a greenthread of the main OS thread,
+        # ``serve_forever()`` freezes the whole process.
+        import selectors
+        import socketserver
+        socketserver._ServerSelector = selectors.SelectSelector
+
         from oslo_utils import importutils
         p_c_e = importutils.import_module('pyroute2.config.asyncio')
         p_c_e.asyncio_config()
