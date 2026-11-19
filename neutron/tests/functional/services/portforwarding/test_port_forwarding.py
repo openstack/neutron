@@ -297,7 +297,7 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
 
     def test_negative_update_floatingip_port_forwarding(self):
         # prepare a port forwarding
-        res = self.pf_plugin.create_floatingip_port_forwarding(
+        self.pf_plugin.create_floatingip_port_forwarding(
             self.context, self.fip['id'], self.port_forwarding)
 
         # prepare another port and make its gateway set on other router
@@ -313,18 +313,13 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
 
         update_body = {
             apidef.RESOURCE_NAME: {
-                "external_port": 2227,
+                "external_port": 2225,
                 "internal_port": 27,
                 "protocol": "tcp",
                 "internal_port_id": new_port['id'],
                 "internal_ip_address": new_port['fixed_ips'][0]['ip_address']
             }
         }
-
-        # This will be fail, as the new found router_id not match.
-        self.assertRaises(lib_exc.BadRequest,
-                          self.pf_plugin.update_floatingip_port_forwarding,
-                          self.context, res['id'], self.fip['id'], update_body)
 
         # There is already a port forwarding. We create another port forwarding
         # with the new_port, and update the new one with the same params of the
@@ -351,10 +346,13 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
                                  apidef.RESOURCE_NAME]['external_port'] - 1
         })
         # This will be fail, as the duplicate record.
-        self.assertRaises(lib_exc.BadRequest,
-                          self.pf_plugin.update_floatingip_port_forwarding,
-                          self.context, new_res['id'], self.fip['id'],
-                          update_body)
+        self.assertRaisesRegex(
+            lib_exc.BadRequest,
+            "Another port forwarding entry with the same attributes "
+            "already exists",
+            self.pf_plugin.update_floatingip_port_forwarding,
+            self.context, new_res['id'], self.fip['id'],
+            update_body)
 
     def test_delete_floatingip_port_forwarding(self):
         # create two port forwardings for a floatingip

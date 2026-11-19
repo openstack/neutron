@@ -277,8 +277,15 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             if netaddr.IPNetwork(fixed_ip['ip_address']) == request_ip:
                 return fixed_ip['subnet_id']
 
-    def _find_a_router_for_fip_port_forwarding(
-            self, context, pf_dict, fip_obj):
+    def _validate_internal_port_and_ip(self, context, pf_dict):
+        """Validate the internal port and IP address of a port forwarding.
+
+        If internal_ip_address is not set in pf_dict, the first IPv4 address
+        of the internal port is used and stored in pf_dict.
+
+        :returns: tuple of the internal port and the ID of the subnet to
+                  which the internal IP address belongs.
+        """
         internal_port_id = pf_dict['internal_port_id']
         internal_port = self.core_plugin.get_port(context, internal_port_id)
         v4_fixed_ips = [fixed_ip for fixed_ip in internal_port['fixed_ips']
@@ -297,24 +304,31 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         # address.
         internal_ip_address = pf_dict.get('internal_ip_address')
         if not internal_ip_address:
-            internal_ip_address = v4_fixed_ips[0]['ip_address']
-            pf_dict['internal_ip_address'] = internal_ip_address
-            internal_subnet_id = v4_fixed_ips[0]['subnet_id']
-        else:
-            # check the matched fixed ip
-            internal_subnet_id = self._get_internal_ip_subnet(
-                internal_ip_address, v4_fixed_ips)
-            if not internal_subnet_id:
-                message = _(
-                    "Requested internal IP address %(internal_ip_address)s is "
-                    "not suitable for internal neutron port "
-                    "%(internal_port_id)s, as its fixed_ips are "
-                    "%(fixed_ips)s") % {
-                        'internal_ip_address': internal_ip_address,
-                        'internal_port_id': internal_port['id'],
-                        'fixed_ips': v4_fixed_ips}
-                raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
-                                         msg=message)
+            pf_dict['internal_ip_address'] = v4_fixed_ips[0]['ip_address']
+            return internal_port, v4_fixed_ips[0]['subnet_id']
+
+        # check the matched fixed ip
+        internal_subnet_id = self._get_internal_ip_subnet(
+            internal_ip_address, v4_fixed_ips)
+        if not internal_subnet_id:
+            message = _(
+                "Requested internal IP address %(internal_ip_address)s is "
+                "not suitable for internal neutron port "
+                "%(internal_port_id)s, as its fixed_ips are "
+                "%(fixed_ips)s") % {
+                    'internal_ip_address': internal_ip_address,
+                    'internal_port_id': internal_port['id'],
+                    'fixed_ips': v4_fixed_ips}
+            raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
+                                     msg=message)
+        return internal_port, internal_subnet_id
+
+    def _find_a_router_for_fip_port_forwarding(
+            self, context, fip_obj, internal_port, internal_subnet_id):
+        if fip_obj.router_id:
+            # There is no need to validate it, it was already validated when
+            # router_id was set for Floating IP address, now we can trust it
+            return fip_obj.router_id
 
         internal_subnet = self.core_plugin.get_subnet(
             context, internal_subnet_id)
@@ -330,7 +344,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 "Floating IP %(port_forwarding_id)s") % {
                     'external_net_id': external_network_id,
                     'internal_subnet_id': internal_subnet_id,
-                    'internal_port_id': internal_port_id,
+                    'internal_port_id': internal_port['id'],
                     'port_forwarding_id': fip_obj.id}
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                      msg=message)
@@ -365,8 +379,10 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                     floating_ip_address=fip_obj.floating_ip_address,
                     fixed_ip=str(port_forwarding['internal_ip_address']),
                     net_id=fip_obj.floating_network_id)
+            internal_port, internal_subnet_id = (
+                self._validate_internal_port_and_ip(context, port_forwarding))
             router_id = self._find_a_router_for_fip_port_forwarding(
-                context, port_forwarding, fip_obj)
+                context, fip_obj, internal_port, internal_subnet_id)
             pf_obj = pf.PortForwarding(context, **port_forwarding)
 
             # If this func does not raise an exception, means the
@@ -421,8 +437,11 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 ori_internal_port_id = pf_obj.internal_port_id
                 if new_internal_port_id and (new_internal_port_id !=
                                              ori_internal_port_id):
+                    internal_port, internal_subnet_id = (
+                        self._validate_internal_port_and_ip(
+                            context, port_forwarding))
                     router_id = self._find_a_router_for_fip_port_forwarding(
-                        context, port_forwarding, fip_obj)
+                        context, fip_obj, internal_port, internal_subnet_id)
                     self._check_router_match(context, fip_obj,
                                              router_id, port_forwarding)
 
