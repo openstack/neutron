@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fixed OVN Northbound transactions larger than the socket send buffer,
+    for example setting a network log on a security group with many rules,
+    taking up to ``[ovn] ovsdb_timeout`` and failing with a timeout. The
+    poll(2) based OVSDB poller no longer drops the request to wake up when
+    the socket becomes writable. For more information, see bug
+    `2174392 <https://bugs.launchpad.net/neutron/+bug/2174392>`_.

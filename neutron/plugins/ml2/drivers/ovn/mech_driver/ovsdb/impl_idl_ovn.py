@@ -131,6 +131,38 @@ class SSLStream(stream.SSLStream, NoProbesMixin):
 _OVS_SELECT_POLL = ovs_poller.SelectPoll
 
 
+# TODO(kyu0): python-ovs is moving ``ovs.poller`` to poll(2) [1], with the
+# same handling of the event mask as ``_PollPoll``. Once that change is
+# released and required, remove ``_PollPoll``, ``system_poll()`` and the
+# ``ovs_poller.SelectPoll`` override below, and use the python-ovs poller.
+# [1] https://patchwork.ozlabs.org/project/openvswitch/list/?series=529825
+class _PollPoll:
+    """``select.poll`` wrapper that accumulates the events of each fd.
+
+    ``select.poll.register()`` replaces the event mask of a file descriptor
+    that is already registered, whereas ``ovs.poller.SelectPoll`` waits for
+    all the events requested. ``Idl.wait()`` registers the OVSDB socket for
+    POLLOUT, when there is pending output, and then for POLLIN. With a bare
+    ``select.poll`` POLLOUT is lost, and a transaction that does not fit in
+    the socket send buffer is not sent until something is received on that
+    connection.
+    """
+
+    def __init__(self):
+        self._poll = select.poll()
+        self._events = {}
+
+    def register(self, fd, events):
+        if not isinstance(fd, int):
+            fd = fd.fileno()
+        events |= self._events.get(fd, 0)
+        self._events[fd] = events
+        self._poll.register(fd, events)
+
+    def poll(self, timeout):
+        return self._poll.poll(timeout)
+
+
 def system_poll():
     """Return a poll(2) based poller instead of the select(2) based one.
 
@@ -158,7 +190,7 @@ def system_poll():
     # but it is the very check ``get_system_poll()`` relies on.
     if ovs_poller._using_eventlet_green_select():
         return _OVS_SELECT_POLL()
-    return select.poll()
+    return _PollPoll()
 
 
 # Overwriting globals in a library is clearly a good idea
