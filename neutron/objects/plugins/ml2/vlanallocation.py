@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import sql
@@ -47,6 +48,7 @@ class VlanAllocation(base.NeutronDbObject, ml2_base.SegmentAllocation):
         return {physnet.physical_network for physnet in physnets}
 
     @staticmethod
+    @db_api.CONTEXT_WRITER
     def delete_physical_networks(context, physical_networks):
         """Delete the unallocated registers of the given physical networks
 
