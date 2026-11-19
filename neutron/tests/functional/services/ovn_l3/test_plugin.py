@@ -850,6 +850,59 @@ class TestRouter(base.TestOVNFunctionalBase):
             # hosted in any chassis.
             self.assertGreaterEqual(plugin_select.call_count, 2)
 
+    @ddt.data((False, False), (True, False), (False, True))
+    @ddt.unpack
+    def test_router_gateway_chassis_loss_and_rebind(
+            self, multiple_gateways, delete_chassis):
+        ext = self._create_ext_network(
+            'ext-loss', 'vlan', 'physnet3', 11, '10.1.0.1', '10.1.0.0/24')
+        router = self._create_router(
+            'router-loss', gw_info={'network_id': ext['network']['id']})
+        if multiple_gateways:
+            second = self._create_ext_network(
+                'ext-other', 'vlan', 'physnet3', 12,
+                '10.2.0.1', '10.2.0.0/24')
+            self._add_external_gateways(router['id'], [
+                {'network_id': second['network']['id']}])
+        ports = self.plugin.get_ports(self.context, filters={
+            'device_id': [router['id']],
+            'device_owner': [n_consts.DEVICE_OWNER_ROUTER_GW]})
+        gateway_id = router['gw_port_id']
+
+        def binding_matches(port_id, host, status):
+            port = self.plugin.get_port(self.context, port_id)
+            lsp = self.nb_api.lookup('Logical_Switch_Port', port_id)
+            return (port[portbindings.HOST_ID] == host ==
+                    lsp.external_ids.get(ovn_const.OVN_HOST_ID_EXT_ID_KEY) and
+                    port['status'] == status)
+
+        # Bind all gateways to the same chassis before removing one binding.
+        for port in ports:
+            name = ovn_utils.ovn_cr_lrouter_port_name(port['id'])
+            self.assertTrue(self.cr_lrp_pb_event.wait(name))
+            self.sb_api.lsp_bind(name, self.chassis1).execute(check_error=True)
+        n_utils.wait_until_true(lambda: all(
+            binding_matches(port['id'], 'ovs-host1',
+                            n_consts.PORT_STATUS_ACTIVE) for port in ports))
+        name = ovn_utils.ovn_cr_lrouter_port_name(gateway_id)
+        if delete_chassis:
+            self.sb_api.db_destroy('Chassis', self.chassis1).execute(
+                check_error=True)
+        else:
+            self.sb_api.lsp_unbind(name).execute(check_error=True)
+        n_utils.wait_until_true(lambda: all(
+            binding_matches(
+                port['id'], 'ovs-host1', n_consts.PORT_STATUS_DOWN
+                if port['id'] == gateway_id else n_consts.PORT_STATUS_ACTIVE)
+            for port in ports))
+
+        host = 'ovs-host1' if multiple_gateways else 'ovs-host2'
+        chassis = self.chassis1 if multiple_gateways else self.chassis2
+        self.sb_api.lsp_bind(name, chassis).execute(check_error=True)
+        n_utils.wait_until_true(lambda: all(
+            binding_matches(port['id'], host, n_consts.PORT_STATUS_ACTIVE)
+            for port in ports))
+
     def _find_port_binding(self, port_id):
         cmd = self.sb_api.db_find_rows('Port_Binding',
                                        ('logical_port', '=', port_id))
