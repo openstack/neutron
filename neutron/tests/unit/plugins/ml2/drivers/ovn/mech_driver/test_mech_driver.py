@@ -64,7 +64,6 @@ from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db
 from neutron.db import segments_db
 from neutron.objects import network as network_obj
-from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
@@ -101,14 +100,26 @@ class MechDriverSetupBase(abc.ABC):
         self.mech_driver._ovn_client._qos_driver = mock.Mock(
             get_lsp_options_qos=mock.Mock(return_value={})
         )
-        self._agent_cache = neutron_agent.AgentCache(self.mech_driver)
-        agent1 = self._add_agent('agent1')
-        neutron_agent.AgentCache().get_agents = mock.Mock()
-        neutron_agent.AgentCache().get_agents.return_value = [agent1]
         self.mock_vp_parents = mock.patch.object(
             ovn_utils, 'get_virtual_port_parents', return_value=None).start()
         mock.patch.object(ovn_utils, 'ovs_persist_uuid_supported',
                           return_value=True).start()
+
+    def _mock_get_agents(self, agents=None):
+        if agents is None:
+            agents = [{'alive': True,
+                       'configurations': {'chassis_name': 'agent1'},
+                       'agent_type': ovn_const.OVN_CONTROLLER_AGENT,
+                       'host': 'agent1_host'}]
+        return mock.patch.object(self.mech_driver._plugin, 'get_agents',
+                                 return_value=agents)
+
+    def _setup_bind_port_chassis(self, datapath_type=DEFAULT_DP_TYPE):
+        fake_chassis = fakes.FakeChassis.create(datapath_type=datapath_type)
+        self.mech_driver.sb_ovn.lookup.return_value = fake_chassis
+        self.mech_driver.sb_ovn.db_find.return_value.execute.return_value = [
+            {'other_config': fake_chassis.other_config}]
+        return fake_chassis
 
     def _add_chassis_private(self, nb_cfg, name=None):
         chassis_private = mock.Mock()
@@ -124,30 +135,6 @@ class MechDriverSetupBase(abc.ABC):
         other_config = other_config or {}
         return mock.Mock(name=name, hostname=hostname,
                          external_ids=external_ids, other_config=other_config)
-
-    def _add_chassis_agent(self, nb_cfg, agent_type, chassis_private=None,
-                           hostname=None):
-        chassis_private = chassis_private or self._add_chassis_private(nb_cfg)
-        hostname = hostname or chassis_private.name + '_host'
-        if hasattr(chassis_private, 'nb_cfg_timestamp') and isinstance(
-                chassis_private.nb_cfg_timestamp, mock.Mock):
-            del chassis_private.nb_cfg_timestamp
-        chassis_private.external_ids = {
-            ovn_const.OVN_AGENT_OVN_BRIDGE: n_const.DEFAULT_BR_INT,
-            ovn_const.OVN_DATAPATH_TYPE: DEFAULT_DP_TYPE,
-        }
-        chassis_private.chassis = [self._add_chassis(chassis_private.name,
-                                                     hostname)]
-        return neutron_agent.AgentCache().update(agent_type, chassis_private)
-
-    def _add_agent(self, name, nb_cfg_offset=0, hostname=None):
-        hostname = hostname or name + '_host'
-        nb_cfg = 5
-        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + nb_cfg_offset
-        chassis_private = self._add_chassis_private(nb_cfg, name=name)
-        return self._add_chassis_agent(
-            nb_cfg, ovn_const.OVN_CONTROLLER_AGENT,
-            chassis_private=chassis_private, hostname=hostname)
 
 
 class TestOVNMechanismDriverBase(MechDriverSetupBase,
@@ -1379,8 +1366,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         fake_port = fakes.FakePort.create_one_port(
             attrs={'binding:vnic_type': 'unknown'}).info()
         fake_port_context = fakes.FakePortContext(fake_port, 'host', [])
-        self.mech_driver.bind_port(fake_port_context)
-        neutron_agent.AgentCache().get_agents.assert_not_called()
+        with self._mock_get_agents() as mock_agents:
+            self.mech_driver.bind_port(fake_port_context)
+            mock_agents.assert_not_called()
         fake_port_context.set_binding.assert_not_called()
 
     def _test_bind_port_failed(self, fake_segments):
@@ -1390,16 +1378,17 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         with mock.patch.object(self.mech_driver,
                                '_get_allowed_binding_segments',
-                               return_value=fake_segments):
+                               return_value=fake_segments), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
-        neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host,
-             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         fake_port_context.set_binding.assert_not_called()
 
     def test_bind_port_host_not_found(self):
-        neutron_agent.AgentCache().get_agents.return_value = []
-        self._test_bind_port_failed([])
+        with self._mock_get_agents([]):
+            fake_port = fakes.FakePort.create_one_port().info()
+            fake_port_context = fakes.FakePortContext(fake_port, 'host', [])
+            self.mech_driver.bind_port(fake_port_context)
+            fake_port_context.set_binding.assert_not_called()
 
     def test_bind_port_no_segments_to_bind(self):
         self._test_bind_port_failed([])
@@ -1413,29 +1402,27 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self._test_bind_port_failed(fake_segments)
 
     def test_bind_port_host_not_alive(self):
-        agent = self._add_agent('agent_no_alive', 2)
-        now = timeutils.utcnow(with_timezone=True)
-        fake_now = now + datetime.timedelta(cfg.CONF.agent_down_time + 1)
-        with mock.patch.object(timeutils, 'utcnow') as get_now:
-            get_now.return_value = fake_now
-            neutron_agent.AgentCache().get_agents.return_value = [agent]
-            self._test_bind_port_failed([])
+        dead_agents = [{'alive': False,
+                        'configurations': {'chassis_name': 'dead_agent'},
+                        'agent_type': ovn_const.OVN_CONTROLLER_AGENT,
+                        'host': 'dead_host'}]
+        with self._mock_get_agents(dead_agents):
+            fake_port = fakes.FakePort.create_one_port().info()
+            fake_port_context = fakes.FakePortContext(fake_port, 'host', [])
+            self.mech_driver.bind_port(fake_port_context)
+            fake_port_context.set_binding.assert_not_called()
 
     def _test_bind_port(self, fake_segments):
-        fake_chassis = fakes.FakeChassis.create(datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         fake_port = fakes.FakePort.create_one_port().info()
         fake_host = 'host'
         fake_port_context = fakes.FakePortContext(
             fake_port, fake_host, fake_segments)
         with mock.patch.object(self.mech_driver,
                                '_get_allowed_binding_segments',
-                               return_value=fake_segments):
+                               return_value=fake_segments), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
-        neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host,
-             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         vif_details = copy.deepcopy(
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
         vif_details[
@@ -1445,9 +1432,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_segments[0]['id'], portbindings.VIF_TYPE_OVS, vif_details)
 
     def _test_bind_port_sriov(self, fake_segments):
-        fake_chassis = fakes.FakeChassis.create(datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         fake_port = fakes.FakePort.create_one_port(
             attrs={'binding:vnic_type': 'direct',
                    'binding:profile': {
@@ -1458,11 +1443,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         with mock.patch.object(self.mech_driver,
                                '_get_allowed_binding_segments',
-                               return_value=fake_segments):
+                               return_value=fake_segments), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
-        neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host,
-             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         vif_details = copy.deepcopy(
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
         vif_details[
@@ -1472,9 +1455,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_segments[0]['id'], portbindings.VIF_TYPE_OVS, vif_details)
 
     def _test_bind_port_virtio_forwarder(self, fake_segments):
-        fake_chassis = fakes.FakeChassis.create(datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         fake_port = fakes.FakePort.create_one_port(
             attrs={'binding:vnic_type': 'virtio-forwarder'}).info()
         fake_host = 'host'
@@ -1482,7 +1463,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         with mock.patch.object(self.mech_driver,
                                '_get_allowed_binding_segments',
-                               return_value=fake_segments):
+                               return_value=fake_segments), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
 
         vif_details = copy.deepcopy(
@@ -1495,9 +1477,6 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             portbindings.OVS_DATAPATH_TYPE: DEFAULT_DP_TYPE,
         })
 
-        neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host,
-             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         fake_port_context.set_binding.assert_called_once_with(
             fake_segments[0]['id'],
             portbindings.VIF_TYPE_AGILIO_OVS,
@@ -1520,9 +1499,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             attrs={'hostname': fake_smartnic_dpu},
             card_serial_number=fake_serial)
 
-        fake_chassis = fakes.FakeChassis.create(datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         self.sb_ovn.get_chassis_by_card_serial_from_cms_options.\
             return_value = ch_smartnic_dpu
         fake_host = 'host'
@@ -1530,11 +1507,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         with mock.patch.object(self.mech_driver,
                                '_get_allowed_binding_segments',
-                               return_value=fake_segments):
+                               return_value=fake_segments), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
-        neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_smartnic_dpu,
-             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         vif_details = copy.deepcopy(
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
         vif_details[
@@ -1544,9 +1519,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_segments[0]['id'], portbindings.VIF_TYPE_OVS, vif_details)
 
     def test_bind_port_vdpa(self):
-        fake_chassis = fakes.FakeChassis.create(datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         segment_attrs = {'network_type': 'geneve',
                          'physical_network': None,
                          'segmentation_id': 1023}
@@ -1561,11 +1534,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         with mock.patch.object(self.mech_driver,
                                '_get_allowed_binding_segments',
-                               return_value=fake_segments):
+                               return_value=fake_segments), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
-        neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host,
-             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         vif_details = copy.deepcopy(
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
         vif_details[
@@ -1655,16 +1626,15 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 attrs=segment_attrs_1).info(),
             fakes.FakeSegment.create_one_segment(
                 attrs=segment_attrs_2).info()]
-        fake_chassis = fakes.FakeChassis.create(datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         fake_port = fakes.FakePort.create_one_port().info()
         fake_host = 'host'
         fake_port_context = fakes.FakePortContext(
             fake_port, fake_host, fake_segments)
         with mock.patch.object(
                 self.mech_driver, '_get_subnets_from_fixed_ips',
-                return_value=[{'segment_id': fake_segments[1]['id']}]):
+                return_value=[{'segment_id': fake_segments[1]['id']}]), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
         vif_details = copy.deepcopy(
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
@@ -1687,16 +1657,15 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 attrs=segment_attrs_1).info(),
             fakes.FakeSegment.create_one_segment(
                 attrs=segment_attrs_2).info()]
-        fake_chassis = fakes.FakeChassis.create(datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         fake_port = fakes.FakePort.create_one_port().info()
         fake_host = 'host'
         fake_port_context = fakes.FakePortContext(
             fake_port, fake_host, fake_segments)
         with mock.patch.object(
                 self.mech_driver, '_get_subnets_from_fixed_ips',
-                return_value=[{'segment_id': None}]):
+                return_value=[{'segment_id': None}]), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
         vif_details = copy.deepcopy(
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
@@ -2846,81 +2815,6 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             raised_exc=ovn_revision_numbers_db.StandardAttributeIDNotFound,
             resource_id_name='resource_uuid')
 
-    def test_agent_alive_true(self):
-        chassis_private = self._add_chassis_private(5)
-        self.mech_driver.nb_ovn.nb_global.nb_cfg = 5
-        agent = self._add_chassis_agent(5, ovn_const.OVN_CONTROLLER_AGENT,
-                                        chassis_private)
-        self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
-                                     (agent.agent_type, agent.alive))
-
-    def test_agent_alive_true_one_diff(self):
-        # Agent should be reported as alive when the nb_cfg delta is 1
-        # even if the last update time was old enough.
-        nb_cfg = 5
-        chassis_private = self._add_chassis_private(nb_cfg)
-        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 1
-        agent = self._add_chassis_agent(nb_cfg,
-                                        ovn_const.OVN_CONTROLLER_AGENT,
-                                        chassis_private)
-        now = timeutils.utcnow()
-        fake_now = now + datetime.timedelta(cfg.CONF.agent_down_time + 1)
-        with mock.patch.object(timeutils, 'utcnow') as get_now:
-            get_now.return_value = fake_now
-            self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
-                                         (agent.agent_type, agent.alive))
-
-    def test_agent_alive_not_timed_out(self):
-        nb_cfg = 3
-        chassis_private = self._add_chassis_private(nb_cfg)
-        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
-        agent = self._add_chassis_agent(nb_cfg,
-                                        ovn_const.OVN_CONTROLLER_AGENT,
-                                        chassis_private)
-        self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
-                                     (agent.agent_type, agent.alive))
-
-    def test_agent_alive_timed_out(self):
-        nb_cfg = 3
-        chassis_private = self._add_chassis_private(nb_cfg)
-        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
-        now = timeutils.utcnow(with_timezone=True)
-        agent = self._add_chassis_agent(nb_cfg,
-                                        ovn_const.OVN_CONTROLLER_AGENT,
-                                        chassis_private)
-        fake_now = now + datetime.timedelta(cfg.CONF.agent_down_time + 1)
-        with mock.patch.object(timeutils, 'utcnow') as get_now:
-            get_now.return_value = fake_now
-            self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
-                             (agent.agent_type, agent.alive))
-
-    def test_agent_with_nb_cfg_timestamp_timeout(self):
-        nb_cfg = 3
-        chassis_private = self._add_chassis_private(nb_cfg)
-
-        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
-        updated_at = (timeutils.utcnow_ts() - cfg.CONF.agent_down_time - 1
-                      ) * 1000
-        chassis_private.nb_cfg_timestamp = updated_at
-        agent_type = ovn_const.OVN_CONTROLLER_AGENT
-        agent = self._add_chassis_agent(nb_cfg, agent_type,
-                                        chassis_private)
-        self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
-                         (agent.agent_type, agent.alive))
-
-    def test_agent_with_nb_cfg_timestamp_not_timeout(self):
-        nb_cfg = 3
-        chassis_private = self._add_chassis_private(nb_cfg)
-
-        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
-        updated_at = timeutils.utcnow_ts() * 1000
-        chassis_private.nb_cfg_timestamp = updated_at
-        agent_type = ovn_const.OVN_CONTROLLER_AGENT
-        agent = self._add_chassis_agent(nb_cfg, agent_type,
-                                        chassis_private)
-        self.assertTrue(agent.alive, "Agent of type {} alive={}".format(
-            agent.agent_type, agent.alive))
-
     def _test__update_dnat_entry_if_needed(self, up=True, dvr=True):
         if dvr:
             ovn_conf.cfg.CONF.set_override(
@@ -3028,38 +2922,45 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_ping_all_chassis(self):
         self.nb_ovn.nb_global.external_ids = {}
         self.mech_driver.ping_all_chassis()
+        self.nb_ovn.create_transaction.assert_called_once_with(
+            check_error=True, bump_nb_cfg=True)
         self.nb_ovn.check_liveness.assert_called_once_with()
 
-    def test_ping_all_chassis_interval_expired(self):
-        timeout = 10
-        ovn_conf.cfg.CONF.set_override('agent_down_time', timeout)
-
-        # Pretend the interval is already expired
-        time = (timeutils.utcnow(with_timezone=True) -
-                datetime.timedelta(seconds=timeout))
+    def test_report_state_with_recent_ping(self):
+        cfg.CONF.set_override('agent_down_time', 75)
+        self.nb_ovn.idl.has_lock = True
+        now = timeutils.utcnow(with_timezone=True)
+        # The previous transaction recorded its timestamp just after the
+        # callback started, so the next 37-second tick must still send a ping.
+        last_ping = (now - datetime.timedelta(seconds=37) +
+                     datetime.timedelta(milliseconds=1))
         self.nb_ovn.nb_global.external_ids = {
-            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY: str(time)}
+            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY: str(last_ping)}
 
-        update_db = self.mech_driver.ping_all_chassis()
-        # Since the interval has expired, assert that the "check_liveness"
-        # command has been invoked
+        with mock.patch.object(timeutils, 'utcnow', return_value=now):
+            self.mech_driver._report_state()
+
+        self.nb_ovn.create_transaction.assert_called_once_with(
+            check_error=True, bump_nb_cfg=True)
         self.nb_ovn.check_liveness.assert_called_once_with()
-        # Assert that ping_all_chassis returned True as it updated the db
-        self.assertTrue(update_db)
 
-    def test_ping_all_chassis_interval_not_expired(self):
-        ovn_conf.cfg.CONF.set_override('agent_down_time', 10)
+    def test_report_state_lock_changes(self):
+        self.nb_ovn.nb_global.external_ids = {}
+        self.nb_ovn.idl.has_lock = False
+        self.mech_driver._report_state()
+        self.nb_ovn.create_transaction.assert_not_called()
 
-        # Pretend the interval has NOT yet expired
-        time = timeutils.utcnow(with_timezone=True)
-        self.nb_ovn.nb_global.external_ids = {
-            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY: str(time)}
+        self.nb_ovn.idl.has_lock = True
+        self.mech_driver._report_state()
+        self.nb_ovn.create_transaction.assert_called_once_with(
+            check_error=True, bump_nb_cfg=True)
+        self.nb_ovn.check_liveness.assert_called_once_with()
 
-        update_db = self.mech_driver.ping_all_chassis()
-        # Assert that "check_liveness" wasn't invoked
-        self.assertFalse(self.nb_ovn.check_liveness.called)
-        # Assert ping_all_chassis returned False as it didn't update the db
-        self.assertFalse(update_db)
+        self.nb_ovn.idl.has_lock = False
+        self.mech_driver._report_state()
+        self.nb_ovn.create_transaction.assert_called_once_with(
+            check_error=True, bump_nb_cfg=True)
+        self.nb_ovn.check_liveness.assert_called_once_with()
 
     def test_get_candidates_for_scheduling_availability_zones(self):
         ovn_client = self.mech_driver._ovn_client
@@ -3910,10 +3811,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             attrs=seg2_attrs).info()
         fake_segments = [seg1, seg2]
 
-        fake_chassis = fakes.FakeChassis.create(
-            datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         fake_port = fakes.FakePort.create_one_port(
             attrs={'fixed_ips': [
                 {'subnet_id': 'sub-1'}]}).info()
@@ -3924,7 +3822,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         subnet = {'id': 'sub-1', 'segment_id': seg1['id']}
         with mock.patch.object(
                 self.mech_driver._plugin, 'get_subnet',
-                return_value=subnet):
+                return_value=subnet), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
 
         fake_port_context.set_binding.assert_called_once()
@@ -3943,10 +3842,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         seg1 = fakes.FakeSegment.create_one_segment(
             attrs=seg1_attrs).info()
 
-        fake_chassis = fakes.FakeChassis.create(
-            datapath_type=DEFAULT_DP_TYPE)
-        self.sb_ovn.db_find.return_value.execute.return_value = [
-            {'other_config': fake_chassis.other_config}]
+        self._setup_bind_port_chassis()
         fake_port = fakes.FakePort.create_one_port(
             attrs={'fixed_ips': [
                 {'subnet_id': 'sub-1'}]}).info()
@@ -3957,7 +3853,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         subnet = {'id': 'sub-1', 'segment_id': None}
         with mock.patch.object(
                 self.mech_driver._plugin, 'get_subnet',
-                return_value=subnet):
+                return_value=subnet), \
+                self._mock_get_agents():
             self.mech_driver.bind_port(fake_port_context)
 
         fake_port_context.set_binding.assert_called_once()
@@ -4264,6 +4161,8 @@ class TestOVNMechanismDriverPortsV2(test_plugin.TestMl2PortsV2,
     # NOTE(rtheis): Override this test to verify that updating
     # a port MAC fails when the port is bound.
     def test_update_port_mac(self):
+        self._setup_bind_port_chassis()
+        self._mock_get_agents().start()
         self.check_update_port_mac(
             host_arg={portbindings.HOST_ID: 'fake-host'},
             arg_list=(portbindings.HOST_ID,),
@@ -5914,11 +5813,13 @@ class TestOVNMechanismDriverMaintenanceThread(TestOVNMechanismDriverBase):
         p.update({'with_periodics': plugin_class})
         return p
 
+    @mock.patch.object(mech_driver.loopingcall, 'FixedIntervalLoopingCall')
     @mock.patch.object(maintenance, 'MaintenanceThread')
     @mock.patch.object(maintenance, 'DBInconsistenciesPeriodics')
     def test__start_maintenance_thread(self,
                                        mock_dbperiodics,
-                                       mock_thread):
+                                       mock_thread,
+                                       mock_loopingcall):
         plugin_with_periodics = directory.get_plugin('with_periodics')
 
         self.mech_driver._start_maintenance_thread()
@@ -5935,3 +5836,6 @@ class TestOVNMechanismDriverMaintenanceThread(TestOVNMechanismDriverBase):
                                                      any_order=True)
 
         mock_thread().start.assert_called()
+        mock_loopingcall.assert_called_once_with(
+            self.mech_driver._report_state)
+        mock_loopingcall.return_value.start.assert_called_once()

@@ -409,12 +409,8 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
 
 
 class ChassisAgentEvent(row_event.RowEvent):
-    GLOBAL = True
     table = 'Chassis_Private'
 
-    # NOTE (twilson) Do not run new transactions out of a GLOBAL Event since
-    # it will be running on every single process, and you almost certainly
-    # don't want to insert/update/delete something a bajillion times.
     def __init__(self, driver):
         self.driver = driver
         super().__init__(self.events, self.table, None)
@@ -429,10 +425,6 @@ class ChassisAgentDownEvent(ChassisAgentEvent):
     containerized deployments).
     """
     events = (row_event.RowEvent.ROW_DELETE, row_event.RowEvent.ROW_UPDATE)
-
-    def run(self, event, row, old):
-        for agent in n_agent.AgentCache().agents_by_chassis_private(row):
-            agent.set_down = True
 
     def match_fn(self, event, row, old=None):
         if event == self.ROW_DELETE:
@@ -450,20 +442,10 @@ class ChassisAgentDownEvent(ChassisAgentEvent):
         # new value is empty.
         return hasattr(old, 'chassis') and not row.chassis
 
-
-class ChassisAgentDeleteEvent(ChassisAgentEvent):
-    events = (row_event.RowEvent.ROW_UPDATE,)
-    table = 'SB_Global'
-
-    def match_fn(self, event, row, old=None):
-        try:
-            return (old.external_ids.get('delete_agent') !=
-                    row.external_ids['delete_agent'])
-        except (AttributeError, KeyError):
-            return False
-
     def run(self, event, row, old):
-        n_agent.AgentCache().delete(row.external_ids['delete_agent'])
+        self.driver._plugin.update_agent(
+            neutron_context.get_admin_context(), row.name,
+            {'agent': {'heartbeat_timestamp': datetime.datetime.min}})
 
 
 class ChassisAgentWriteEvent(ChassisAgentEvent):
@@ -471,29 +453,22 @@ class ChassisAgentWriteEvent(ChassisAgentEvent):
 
     def match_fn(self, event, row, old=None):
         # On updates to Chassis_Private because the Chassis has been deleted,
-        # don't update the AgentCache. We use chassis_private.chassis to return
+        # don't update the agent. We use chassis_private.chassis to return
         # data about the agent. The second condition matches either a normal
-        # nb_cfg update or a chassis reference being restored (e.g.
-        # ovn-controller reconnected after the Chassis was deleted while
-        # Chassis_Private remained).
+        # nb_cfg update or a chassis reference being restored.
         return (event == self.ROW_CREATE or
                 (row.chassis and (hasattr(old, 'nb_cfg') or
                  (hasattr(old, 'chassis') and not old.chassis))))
 
     def run(self, event, row, old):
-        # Clear down state on initial creation or when chassis reference is
-        # restored after being cleared.
-        chassis_restored = (hasattr(old, 'chassis') and
-                            not old.chassis and row.chassis)
-        clear_down = event == self.ROW_CREATE or chassis_restored
-        n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, row,
-                                    clear_down=clear_down)
+        agent = n_agent.ControllerAgent(row)
+        self.driver._plugin.create_or_update_agent(
+            neutron_context.get_admin_context(), agent.agent_state())
 
 
 class ChassisAgentTypeChangeEvent(ChassisEvent):
     """Chassis Agent class change event"""
-    GLOBAL = True
-    events = (row_event.RowEvent.ROW_UPDATE, )
+    events = (row_event.RowEvent.ROW_UPDATE,)
 
     def match_fn(self, event, row, old=None):
         try:
@@ -504,21 +479,19 @@ class ChassisAgentTypeChangeEvent(ChassisEvent):
             return False
 
     def run(self, event, row, old):
-        # the row is in the Chassis table but the agent cache uses
-        # Chassis_Private rows
         try:
             ch_private = self.driver.sb_ovn.db_find_rows(
                 'Chassis_Private', ('chassis', '=', row.uuid)).execute(
                     check_error=True)[0]
         except IndexError:
-            # The chassis private row was not found, this should never happen
             LOG.error("The Chassis_Private row for Chassis %s was not found.",
                       row.uuid)
             return
-        # The passed agent type is significant to the method obtaining the
-        # agent chassis id. This method is the same for both Gateway and
-        # Controller agent types so the type below can be either.
-        n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, ch_private)
+        agent = n_agent.ControllerAgent(ch_private)
+        state = agent.agent_state()
+        self.driver._plugin.update_agent(
+            neutron_context.get_admin_context(), state['id'],
+            {'agent': {'agent_type': state['agent_type']}})
 
 
 class ChassisOVNAgentWriteEvent(ChassisAgentEvent):
@@ -543,7 +516,7 @@ class ChassisOVNAgentWriteEvent(ChassisAgentEvent):
             return True
 
         # On updates to Chassis_Private because the Chassis has been
-        # deleted, don't update the AgentCache. We use
+        # deleted, don't update the agent. We use
         # chassis_private.chassis to return data about the agent.
         if not getattr(row, 'chassis', None):
             return False
@@ -561,8 +534,9 @@ class ChassisOVNAgentWriteEvent(ChassisAgentEvent):
             return False
 
     def run(self, event, row, old):
-        n_agent.AgentCache().update(ovn_const.OVN_NEUTRON_AGENT, row,
-                                    clear_down=True)
+        agent = n_agent.OVNNeutronAgent(row)
+        self.driver._plugin.create_or_update_agent(
+            neutron_context.get_admin_context(), agent.agent_state())
 
 
 class PortBindingChassisEvent(row_event.RowEvent):
@@ -1191,7 +1165,6 @@ class OvnSbIdl(OvnIdlDistributedLock):
     def __init__(self, driver, remote, schema, **kwargs):
         super().__init__(driver, remote, schema, **kwargs)
         self.notify_handler.watch_events([
-            ChassisAgentDeleteEvent(self.driver),
             ChassisAgentDownEvent(self.driver),
             ChassisAgentWriteEvent(self.driver),
             ChassisAgentTypeChangeEvent(self.driver),

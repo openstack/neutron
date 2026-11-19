@@ -1191,12 +1191,6 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                                         constants.DEVICE_OWNER_DISTRIBUTED}))
         return next(iter(cmd.execute(check_error=True)), None)
 
-    def set_chassis_neutron_description(self, chassis, description,
-                                        agent_type):
-        desc_key = ovn_const.OVN_AGENT_DESC_KEY
-        return cmd.UpdateChassisExtIdsCommand(
-            self, chassis, {desc_key: description}, if_exists=False)
-
     def get_network_port_bindings_by_ip(self, network, ip_address, mac=None):
         rows = self.db_list_rows('Port_Binding').execute(check_error=True)
         # TODO(twilson) It would be useful to have a db_find that takes a

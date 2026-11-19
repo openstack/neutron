@@ -22,9 +22,9 @@ import shutil
 import threading
 from unittest import mock
 import warnings
-import weakref
 
 import fixtures
+from neutron_lib import context as n_context
 from neutron_lib.ovn import constants as ovn_const
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
@@ -48,7 +48,6 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 # the SqlFixture
 from neutron.db import models  # noqa
 from neutron import manager
-from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
     placement as ovn_client_placement
 # Imported for its side effect of switching ovs.poller to poll(2) for every
@@ -374,7 +373,6 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
             'maintenance.HashRingHealthCheckPeriodics').start()
         self._start_idls()
         self._start_ovn_northd()
-        self.addCleanup(self._reset_agent_cache_singleton)
         self.addCleanup(self._reset_ovn_client_placement_extension)
         plugin = directory.get_plugin()
         mock.patch.object(
@@ -382,9 +380,11 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
             return_value=copy.deepcopy(
                 test_securitygroup.RULES_TEMPLATE_FOR_DEFAULT_SG)).start()
 
-    def _reset_agent_cache_singleton(self):
-        neutron_agent.AgentCache._singleton_instances = (
-            weakref.WeakValueDictionary())
+    def tearDown(self):
+        # Synchronizer cleanups can close the shared IDL connections before
+        # stop() runs. Finish any heartbeat transaction while they are open.
+        self.mech_driver._stop_heartbeat()
+        super().tearDown()
 
     def _reset_ovn_client_placement_extension(self):
         ovn_client_placement.OVNClientPlacementExtension._instance = None
@@ -519,6 +519,8 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
         self.sb_api = self.mech_driver.sb_ovn
 
     def stop(self):
+        # Also handle restarts and cleanups after an incomplete setUp().
+        self.mech_driver._stop_heartbeat()
         if self.maintenance_worker:
             self.mech_driver.nb_synchronizer.stop()
             self.mech_driver.sb_synchronizer.stop()
@@ -574,7 +576,8 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
 
     def add_fake_chassis(self, host, physical_nets=None, external_ids=None,
                          name=None, azs=None, enable_chassis_as_gw=False,
-                         enable_chassis_as_extport=False, other_config=None):
+                         enable_chassis_as_extport=False, other_config=None,
+                         wait_for_agent=False):
         def append_cms_options(ext_ids, value):
             if 'ovn-cms-options' not in ext_ids:
                 ext_ids['ovn-cms-options'] = value
@@ -616,8 +619,25 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
             'Chassis_Private', name=name, external_ids=external_ids,
             chassis=chassis.uuid, nb_cfg_timestamp=nb_cfg_timestamp
         ).execute(check_error=True)
+        if wait_for_agent:
+            plugin = directory.get_plugin()
+            ctx = n_context.get_admin_context()
+            n_utils.wait_until_true(
+                lambda: bool(plugin.get_agents(
+                    ctx, filters={'host': [host], 'alive': [True]})),
+                timeout=5)
         return name
 
     def del_fake_chassis(self, chassis, if_exists=True):
         self.sb_api.chassis_del(
             chassis, if_exists=if_exists).execute(check_error=True)
+        plugin = directory.get_plugin()
+        ctx = n_context.get_admin_context()
+        try:
+            agent = plugin.get_agent(ctx, chassis)
+            if agent['alive']:
+                n_utils.wait_until_true(
+                    lambda: not plugin.get_agent(ctx, chassis)['alive'],
+                    timeout=5)
+        except Exception:
+            pass
