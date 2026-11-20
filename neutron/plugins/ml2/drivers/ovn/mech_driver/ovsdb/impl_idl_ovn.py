@@ -664,11 +664,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         lrouter = self.lookup('Logical_Router', router_name, default=None)
         if not lrouter:
             return []
-        az_string = lrouter.external_ids.get(
-            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, "")
-        if not az_string:
-            return []
-        return az_string.split(",")
+        return utils.get_az_hints_from_external_ids(lrouter.external_ids)
 
     def get_chassis_gateways(self, chassis_name):
         gw_chassis = self.db_find_rows(

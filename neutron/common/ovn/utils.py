@@ -969,6 +969,23 @@ def get_chassis_availability_zones(chassis):
     return azs
 
 
+def get_az_hints_from_external_ids(external_ids):
+    """Return the list of AZ hints from an OVN register external_ids.
+
+    Read the ``OVN_AZ_HINTS_EXT_ID_KEY`` value from an OVN register
+    ``external_ids`` dictionary and return the AZ hints as a list. The
+    value is stored as a comma-separated string; empty entries and
+    leading/trailing spaces are discarded.
+
+    :param external_ids: the ``external_ids`` dictionary of an OVN
+                         register; it can be ``None`` or empty
+    :returns: a list of AZ hints
+    """
+    az_hints = (external_ids or {}).get(
+        constants.OVN_AZ_HINTS_EXT_ID_KEY, '')
+    return [az.strip() for az in az_hints.split(',') if az.strip()]
+
+
 def get_chassis_in_azs(chassis_list, az_list):
     """Return a set of Chassis that belongs to the AZs.
 

@@ -1757,6 +1757,4 @@ def get_network_availability_zones(cls, network, _driver):
     if not lswitch:
         return []
 
-    return [az.strip() for az in lswitch.external_ids.get(
-        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '').split(',')
-            if az.strip()]
+    return ovn_utils.get_az_hints_from_external_ids(lswitch.external_ids)

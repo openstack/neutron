@@ -506,9 +506,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         if not lr:
             return []
 
-        return [az.strip() for az in lr.external_ids.get(
-            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '').split(',')
-                if az.strip()]
+        return utils.get_az_hints_from_external_ids(lr.external_ids)
 
     def validate_availability_zones(self, context, resource_type,
                                     availability_zones):
