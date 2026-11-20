@@ -198,9 +198,6 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                            cancellable=True)
 
     def _post_fork_initialize(self, resource, event, trigger, payload=None):
-        # TODO(ralonsoh): once [1] is released and required in Neutron, it
-        # won't be needed the ``get_method_class`` method.
-        # [1] https://review.opendev.org/c/openstack/neutron-lib/+/988563
         if utils.get_class(trigger) != wsgi.WorkerService:
             return
 
