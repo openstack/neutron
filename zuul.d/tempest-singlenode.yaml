@@ -613,8 +613,8 @@
     vars:
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: branch-24.03
-        OVS_BRANCH: branch-3.3
+        OVN_BRANCH: branch-26.03
+        OVS_BRANCH: branch-3.7
 
 - job:
     name: neutron-ovn-tempest-plugin-ovs-master
@@ -635,8 +635,8 @@
     vars:
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: branch-24.03
-        OVS_BRANCH: branch-3.3
+        OVN_BRANCH: branch-26.03
+        OVS_BRANCH: branch-3.7
 
 - job:
     name: neutron-ovn-tempest-ovs-release-with-oslo-master
