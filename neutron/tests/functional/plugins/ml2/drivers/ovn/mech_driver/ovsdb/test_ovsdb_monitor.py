@@ -1308,29 +1308,32 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
         port_res = self._create_port(self.fmt, self.net['network']['id'])
         self.port = self.deserialize(self.fmt, port_res)['port']
         self.assertTrue(pb_event.wait())
-
-        self._port_binding_chassis_bind_event = (
-            WaitForPortBindingChassisBindEvent(
-                self.port['id'], self.src_chassis))
-        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(
-            self._port_binding_chassis_bind_event)
-        self.sb_api.lsp_bind(self.port['id'], self.src_chassis,
-                             may_exist=True).execute(check_error=True)
-        self._wait_for_single_chassis_lsp_bind()
+        self._bind_port_to_chassis(self.port['id'], self.src_chassis)
         self.nb_cfg_before = self._get_nb_global_nb_cfg()
 
-    def _wait_for_single_chassis_lsp_bind(self):
-        """Wait for setUp lsp_bind to finish on SB and in the IDL notifier."""
-        self.assertTrue(
-            self._port_binding_chassis_bind_event.wait(),
-            'Port_Binding chassis bind to %s did not complete' %
-            self.src_chassis)
-        chassis = self.sb_api.lookup('Chassis', self.src_chassis)
+    def _bind_port_to_chassis(self, port_id, chassis_name):
+        """Bind a port to a chassis and wait until the bind completes.
 
-        def port_bound_to_src():
+        Waits for the Port_Binding chassis bind on SB, the IDL notifier
+        and the NB Logical_Switch_Port.up propagation by northd. The
+        PortBindingChassisUpdateEvent.match_fn checks the NB LSP status,
+        so if additional_chassis is set on the Port_Binding before northd
+        propagates Port_Binding.up to LSP.up, the event will not match
+        and nb_cfg will never be bumped.
+        """
+        bind_event = WaitForPortBindingChassisBindEvent(port_id, chassis_name)
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(bind_event)
+        self.sb_api.lsp_bind(port_id, chassis_name,
+                             may_exist=True).execute(check_error=True)
+        self.assertTrue(
+            bind_event.wait(),
+            'Port_Binding chassis bind to %s did not complete' % chassis_name)
+        chassis = self.sb_api.lookup('Chassis', chassis_name)
+
+        def port_bound_to_chassis():
             rows = self.sb_api.db_find_rows(
                 'Port_Binding',
-                ('logical_port', '=', self.port['id'])).execute(
+                ('logical_port', '=', port_id)).execute(
                     check_error=True)
             if not rows:
                 return False
@@ -1341,11 +1344,11 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
                     binding.up == [True])
 
         n_utils.wait_until_true(
-            port_bound_to_src,
+            port_bound_to_chassis,
             timeout=10,
             exception=Exception(
                 'Port %s is not bound to chassis %s in SB' %
-                (self.port['id'], self.src_chassis)))
+                (port_id, chassis_name)))
 
         # Also wait for the NB Logical_Switch_Port.up to be propagated
         # by northd. The PortBindingChassisUpdateEvent.match_fn checks
@@ -1355,7 +1358,7 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
         def lsp_is_up():
             try:
                 lsp = self.nb_api.lookup(
-                    'Logical_Switch_Port', self.port['id'])
+                    'Logical_Switch_Port', port_id)
             except idlutils.RowNotFound:
                 return False
             return lsp.up == [True]
@@ -1364,8 +1367,7 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
             lsp_is_up,
             timeout=10,
             exception=Exception(
-                'Logical_Switch_Port %s is not UP in NB' %
-                self.port['id']))
+                'Logical_Switch_Port %s is not UP in NB' % port_id))
 
     def _get_nb_global_nb_cfg(self):
         return self.nb_api.db_get(
@@ -1416,6 +1418,46 @@ class TestPortBindingLiveMigrationFlow(base.TestOVNFunctionalBase,
                     'set_port_status_up was not called after '
                     'Chassis_Private.nb_cfg reached the target'))
             mock_status_up.assert_has_calls([mock.call(self.port['id'])])
+
+    def test_live_migration_multiple_ports_same_destination_chassis(self):
+        """Two concurrent live migrations to the same destination chassis.
+
+        Both migrations create a ``WaitForChassisNbCfgEvent`` with equal
+        class, table, event types, conditions and priority, differing
+        only in the per-instance ``port_id`` and ``expected_nb_cfg``.
+        Without the ``key`` override, the second event registration
+        would be silently dropped by the ovsdbapp event handler and the
+        second port would never be set UP.
+        """
+        port2_res = self._create_port(self.fmt, self.net['network']['id'])
+        port2 = self.deserialize(self.fmt, port2_res)['port']
+        self._bind_port_to_chassis(port2['id'], self.src_chassis)
+
+        with mock.patch.object(
+                self.mech_driver, 'set_port_status_up') as mock_status_up:
+            self._set_additional_chassis(self.port['id'], self.dst_chassis)
+            self._set_additional_chassis(port2['id'], self.dst_chassis)
+            # Both migrations bump NB_Global.nb_cfg; wait until the two
+            # bumps from ``PortBindingChassisUpdateEvent.run`` are
+            # committed, then read the final value the destination
+            # chassis must reach.
+            n_utils.wait_until_true(
+                lambda: self._get_nb_global_nb_cfg() >=
+                self.nb_cfg_before + 2,
+                timeout=5,
+                exception=Exception(
+                    'NB_Global.nb_cfg has not been bumped twice'))
+            nb_cfg_now = self._get_nb_global_nb_cfg()
+            mock_status_up.reset_mock()
+            self._set_chassis_private_nb_cfg(self.dst_chassis, nb_cfg_now)
+            n_utils.wait_until_true(
+                lambda: mock_status_up.call_count >= 2,
+                timeout=10,
+                exception=Exception(
+                    'set_port_status_up was not called for both ports'))
+            mock_status_up.assert_has_calls(
+                [mock.call(self.port['id']), mock.call(port2['id'])],
+                any_order=True)
 
     def test_no_live_migration_chassis_change(self):
         """Verify regular chassis change calls set_port_status_up directly.
