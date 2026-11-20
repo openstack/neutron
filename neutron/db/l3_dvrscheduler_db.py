@@ -142,10 +142,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                     agent_port_host_match = True
         if not agent_port_host_match:
             connected_router_ids = set(router_ids)
-            for router_id in router_ids:
+            for rtr_id in router_ids:
                 connected_router_ids.update(
                     self._get_other_dvr_router_ids_connected_router(
-                        context, router_id))
+                        context, rtr_id))
 
             LOG.debug('DVR: Handle new service port, host %(host)s, '
                       'router ids %(router_ids)s',

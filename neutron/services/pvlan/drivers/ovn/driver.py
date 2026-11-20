@@ -139,8 +139,8 @@ class PVLANDriver:
             self._create_promiscuous_port_group(network_id, txn)
 
         if txn is None:
-            with self.nb_ovn.transaction(check_error=True) as txn:
-                _create_pgs(txn)
+            with self.nb_ovn.transaction(check_error=True) as new_txn:
+                _create_pgs(new_txn)
         else:
             _create_pgs(txn)
 

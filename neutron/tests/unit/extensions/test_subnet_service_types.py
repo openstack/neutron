@@ -64,8 +64,8 @@ class SubnetServiceTypesExtensionTestCase(
     def _create_service_subnet(self, service_types=None, cidr=None,
                                network=None, enable_dhcp=False):
         if not network:
-            with self.network() as network:
-                pass
+            with self.network() as new_net:
+                network = new_net
         network = network['network']
         if not cidr:
             cidr = self.CIDRS[0]

@@ -82,7 +82,6 @@ disable=
  duplicate-code,
  inconsistent-return-statements,
  no-self-use,
- redefined-argument-from-local,
  too-few-public-methods,
  too-many-ancestors,
  too-many-arguments,

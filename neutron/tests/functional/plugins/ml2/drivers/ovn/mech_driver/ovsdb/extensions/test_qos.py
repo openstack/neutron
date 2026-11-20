@@ -100,8 +100,8 @@ class _TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
 
         # Remove the min-bw rule from the qos_rules because this is not added
         # to the OVN QoS registers.
-        for _, rules in qos_rules.items():
-            rules.pop(qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH, None)
+        for _, bw_rules in qos_rules.items():
+            bw_rules.pop(qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH, None)
 
         # Remove any direction in qos_rules without defined rules.
         for direction in copy.deepcopy(qos_rules):

@@ -271,8 +271,8 @@ class FipNamespace(namespaces.Namespace):
         if tbl_index is None:
             ip_version = common_utils.get_ip_version(gw_ip)
             tbl_index_list = self.get_fip_table_indexes(ip_version)
-            for tbl_index in tbl_index_list:
-                ip_device.route.add_gateway(gw_ip, table=tbl_index)
+            for tbl_idx in tbl_index_list:
+                ip_device.route.add_gateway(gw_ip, table=tbl_idx)
         else:
             ip_device.route.add_gateway(gw_ip, table=tbl_index)
 

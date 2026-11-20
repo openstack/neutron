@@ -57,9 +57,9 @@ class MeteringAgentNotifyAPI:
                 l3_router.append(router)
                 l3_routers[l3_agent.host] = l3_router
 
-        for host, routers in l3_routers.items():
+        for host, host_routers in l3_routers.items():
             cctxt = self.client.prepare(server=host)
-            cctxt.cast(context, method, routers=routers)
+            cctxt.cast(context, method, routers=host_routers)
 
     def _notification_fanout(self, context, method, router_id):
         LOG.debug('Fanout notify metering agent at %(topic)s the message '

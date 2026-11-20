@@ -1643,8 +1643,8 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
             # process conntrack updates in the queue
             while not self.firewall.ipconntrack._queue.empty():
                 self.firewall.ipconntrack._process_queue()
-            for direction in ['ingress', 'egress']:
-                direction = '-d' if direction == 'ingress' else '-s'
+            for direction_type in ['ingress', 'egress']:
+                direction = '-d' if direction_type == 'ingress' else '-s'
                 remote_ip_direction = '-s' if direction == '-d' else '-d'
                 conntrack_cmd = ['conntrack', '-D', '-f', ethertype,
                                  direction, ips[ethertype][0]]
