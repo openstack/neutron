@@ -13,12 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import enum
-
 from oslo_log import log
 
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.services.bgp import commands
+from neutron.services.bgp import constants
 from neutron.services.bgp import events
 from neutron.services.bgp import helpers
 from neutron.services.bgp import ovn
@@ -28,13 +27,17 @@ LOG = log.getLogger(__name__)
 
 
 class BGPTopologyReconciler:
-    class BGPReconcilerResource(enum.Enum):
-        CHASSIS_BGP_BRIDGES = 'chassis-bgp-bridges'
-
-        def __str__(self):
-            return self.value
-
     def __init__(self):
+        self.resource_map = {
+            constants.Action.RECONCILE: {
+                constants.BGPReconcilerResource.CHASSIS_BGP_BRIDGES:
+                    self.reconcile_chassis_bgp_bridges,
+                constants.BGPReconcilerResource.PROVIDER_SWITCH:
+                    self.reconcile_provider_switch,
+                constants.BGPReconcilerResource.GATEWAY_IP:
+                    self.reconcile_gateway_ip,
+            },
+        }
         self.nb_api = ovn.OvnNbIdl(
             ovn_conf.get_ovn_nb_connection(),
             self.nb_events).start(
@@ -49,15 +52,11 @@ class BGPTopologyReconciler:
         self.sb_api.stop()
 
     @property
-    def resource_map(self):
-        return {
-            self.BGPReconcilerResource.CHASSIS_BGP_BRIDGES:
-                self.reconcile_chassis_bgp_bridges,
-        }
-
-    @property
     def nb_events(self):
         return [
+            events.ProviderSwitchCreatedEvent(self),
+            events.GatewayIPCreatedEvent(self),
+            events.GatewayIPUpdatedEvent(self),
         ]
 
     @property
@@ -77,12 +76,13 @@ class BGPTopologyReconciler:
         else:
             LOG.info("Full BGP topology synchronization already in progress")
 
-    def reconcile(self, resource, trigger):
+    def reconcile(self, action, resource, trigger):
         try:
-            self.resource_map[resource](trigger)
+            self.resource_map[action][resource](trigger)
         except KeyError:
-            LOG.error("Resource %s not found in reconciler resource map",
-                      resource)
+            LOG.error(
+                "Resource %s or action %s not found in reconciler resource "
+                "map", resource, action)
 
     def reconcile_chassis_bgp_bridges(self, chassis):
         for bgp_bridge in helpers.get_chassis_bgp_bridges(chassis):
@@ -91,3 +91,15 @@ class BGPTopologyReconciler:
                 chassis,
                 network_name=bgp_bridge,
             ).execute(check_error=True)
+
+    def reconcile_provider_switch(self, switch):
+        commands.ReconcileNeutronSwitchCommand(
+            self.nb_api,
+            switch,
+        ).execute(check_error=True)
+
+    def reconcile_gateway_ip(self, dhcp_opt):
+        commands.ReconcileGatewayIPCommand(
+            self.nb_api,
+            dhcp_opt,
+        ).execute(check_error=True)
