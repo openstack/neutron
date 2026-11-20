@@ -46,6 +46,8 @@ DEFAULT_ADDRESS_SCOPE = "noscope"
 
 class BaseRouterInfo(metaclass=abc.ABCMeta):
 
+    internal_ports: list[dict]
+
     def __init__(self,
                  agent,
                  router_id,
@@ -62,7 +64,7 @@ class BaseRouterInfo(metaclass=abc.ABCMeta):
         self.driver = interface_driver
         self.use_ipv6 = use_ipv6
 
-        self.internal_ports: list[dict] = []
+        self.internal_ports = []
         self.ns_name = None
         self.process_monitor = None
 
