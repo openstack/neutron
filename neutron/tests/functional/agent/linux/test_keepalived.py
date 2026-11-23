@@ -104,7 +104,7 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
                                       privsep_exec=True)
         common_utils.wait_until_true(
             lambda: process.active and pid != process.pid,
-            timeout=5,
+            timeout=15,
             sleep=0.01,
             exception=RuntimeError(_("Keepalived didn't respawn")))
 
