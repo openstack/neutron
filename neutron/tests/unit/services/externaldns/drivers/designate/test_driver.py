@@ -316,13 +316,11 @@ class TestDesignateDriver(base.BaseTestCase):
 
     @mock.patch.object(driver, '_SESSION', new=mock.Mock())
     @mock.patch.object(driver, 'd_client')
-    @mock.patch('keystoneauth1.token_endpoint.Token')
     @mock.patch('keystoneauth1.loading.load_auth_from_conf_options')
     @mock.patch.object(driver, 'get_clients',
                        side_effect=driver.get_clients)
     def test_admin_client_passes_edit_managed(
-            self, mock_get_clients, mock_load_auth, mock_token,
-            mock_d_client):
+            self, mock_get_clients, mock_load_auth, mock_d_client):
         mock_get_clients(self.context)
         self.assertEqual(2, mock_d_client.Client.call_count)
         user_call, admin_call = mock_d_client.Client.call_args_list
@@ -331,11 +329,11 @@ class TestDesignateDriver(base.BaseTestCase):
 
     @mock.patch.object(driver, '_SESSION', new=mock.Mock())
     @mock.patch.object(driver, 'd_client')
-    @mock.patch('keystoneauth1.token_endpoint.Token')
     @mock.patch.object(driver, 'get_all_projects_client',
                        side_effect=driver.get_all_projects_client)
+    @mock.patch('keystoneauth1.loading.load_auth_from_conf_options')
     def test_all_projects_client_no_edit_managed(
-            self, mock_get_all, mock_token, mock_d_client):
+            self, mock_load_auth, mock_get_all, mock_d_client):
         mock_get_all(self.context)
         call = mock_d_client.Client.call_args
         self.assertNotIn('edit_managed', call.kwargs)

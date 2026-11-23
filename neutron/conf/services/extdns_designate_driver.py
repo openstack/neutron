@@ -47,7 +47,20 @@ class ZonePrefixIPv6(types.Integer):
 designate_opts = [
     cfg.URIOpt('url',
                schemes=['http', 'https'],
-               help=_('URL for connecting to designate')),
+               help=_('Optional URL override for connecting to designate. '
+                      'If not set, the endpoint is discovered from the '
+                      'Identity service catalog using endpoint_type and '
+                      'region_name.')),
+    cfg.StrOpt('endpoint_type', default='public',
+               choices=['public', 'admin', 'internal'],
+               help=_('Type of the designate endpoint to use. This endpoint '
+                      'will be looked up in the Identity service catalog and '
+                      'should be one of public, internal or admin. Ignored if '
+                      'url is set.')),
+    cfg.StrOpt('region_name',
+               help=_('Name of the region to use when looking up the '
+                      'designate endpoint in the Identity service catalog. '
+                      'Ignored if url is set.')),
     cfg.BoolOpt('allow_reverse_dns_lookup', default=True,
                 help=_('Allow the creation of PTR records')),
     cfg.Opt(

@@ -35,25 +35,45 @@ extdns_designate_driver.register_designate_opts()
 LOG = log.getLogger(__name__)
 
 
-def get_clients(context):
+def _get_session():
     global _SESSION
 
     if not _SESSION:
         _SESSION = loading.load_session_from_conf_options(
             CONF, 'designate')
+    return _SESSION
 
-    auth = token_endpoint.Token(CONF.designate.url, context.auth_token)
-    client = d_client.Client(session=_SESSION, auth=auth)
+
+def _get_endpoint(admin_auth):
+    # [designate] url is an optional override. If it is not set, the endpoint
+    # is discovered from the Identity service catalog. Version discovery is
+    # requested because the catalog may hold an unversioned URL.
+    if CONF.designate.url:
+        return CONF.designate.url
+    return _get_session().get_endpoint(
+        auth=admin_auth, service_type='dns',
+        interface=CONF.designate.endpoint_type,
+        region_name=CONF.designate.region_name,
+        min_version='2')
+
+
+def get_clients(context):
     admin_auth = loading.load_auth_from_conf_options(CONF, 'designate')
-    admin_client = d_client.Client(session=_SESSION, auth=admin_auth,
-                                   endpoint_override=CONF.designate.url,
+    endpoint = _get_endpoint(admin_auth)
+    auth = token_endpoint.Token(endpoint, context.auth_token)
+    client = d_client.Client(session=_get_session(), auth=auth)
+    admin_client = d_client.Client(session=_get_session(), auth=admin_auth,
+                                   endpoint_override=endpoint,
                                    edit_managed=True)
     return client, admin_client
 
 
 def get_all_projects_client(context):
-    auth = token_endpoint.Token(CONF.designate.url, context.auth_token)
-    return d_client.Client(session=_SESSION, auth=auth, all_projects=True)
+    admin_auth = loading.load_auth_from_conf_options(CONF, 'designate')
+    auth = token_endpoint.Token(_get_endpoint(admin_auth),
+                                context.auth_token)
+    return d_client.Client(session=_get_session(), auth=auth,
+                           all_projects=True)
 
 
 class Designate(driver.ExternalDNSService):
