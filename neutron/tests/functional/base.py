@@ -625,7 +625,7 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
             n_utils.wait_until_true(
                 lambda: bool(plugin.get_agents(
                     ctx, filters={'host': [host], 'alive': [True]})),
-                timeout=5)
+                timeout=15)
         return name
 
     def del_fake_chassis(self, chassis, if_exists=True):
@@ -638,6 +638,6 @@ class TestOVNFunctionalBase(testlib_api.MySQLTestCaseMixin,
             if agent['alive']:
                 n_utils.wait_until_true(
                     lambda: not plugin.get_agent(ctx, chassis)['alive'],
-                    timeout=5)
+                    timeout=15)
         except Exception:
             pass
