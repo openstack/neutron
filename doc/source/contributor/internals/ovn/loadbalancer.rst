@@ -285,8 +285,9 @@ Following actions are not supported by OVN Driver:
 
 - Creating HealthMonitors
 
-- Currently only one algorithm is supported for pool management
-  (Source IP Port)
+- Only the SOURCE_IP_PORT and SOURCE_IP algorithms are supported for pool
+  management. The SOURCE_IP algorithm requires OVN >= 20.03.0, which added
+  the selection_fields column to the Load_Balancer table.
 
 - Creating Listeners and Pools with different protocols. They should be of the
   same protocol type.
