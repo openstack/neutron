@@ -313,7 +313,14 @@ class ProcessMonitor:
                           {'service': service_id.service,
                            'resource_type': self._resource_type,
                            'uuid': service_id.uuid})
-                self._execute_action(service_id)
+                try:
+                    self._execute_action(service_id)
+                except Exception:
+                    LOG.exception("Failed to execute the check child "
+                                  "processes action for service %(service)s "
+                                  "with uuid %(uuid)s",
+                                  {'service': service_id.service,
+                                   'uuid': service_id.uuid})
 
     def _periodic_checking_thread(self):
         # Waiting on the stopping event lets stop() end the thread at once.
