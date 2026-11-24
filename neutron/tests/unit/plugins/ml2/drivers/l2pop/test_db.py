@@ -173,6 +173,38 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         _, agent = fdb_network_ports[0]
         self.assertEqual(constants.AGENT_TYPE_OVS, agent.agent_type)
 
+    def _add_inactive_binding(self, host):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            port_id = self.ctx.session.query(models.PortBinding).one().port_id
+            self.ctx.session.add(models.PortBinding(
+                port_id=port_id, host=host, status=constants.INACTIVE,
+                vif_type=portbindings.VIF_TYPE_OVS,
+                vnic_type=portbindings.VNIC_NORMAL))
+
+    def test_get_nondistributed_active_network_ports_inactive_binding(self):
+        self._setup_port_binding()
+        helpers.register_ovs_agent()
+        helpers.register_ovs_agent(host=HOST_2,
+                                   tunneling_ip=HOST_2_TUNNELING_IP)
+        self._add_inactive_binding(HOST_2)
+        fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
+            self.ctx, TEST_NETWORK_ID)
+        self.assertEqual(1, len(fdb_network_ports))
+        binding, agent = fdb_network_ports[0]
+        self.assertEqual(HOST, binding.host)
+        self.assertEqual(HOST, agent.host)
+
+    def test_active_port_count_inactive_binding(self):
+        self._setup_port_binding()
+        helpers.register_ovs_agent()
+        helpers.register_ovs_agent(host=HOST_2,
+                                   tunneling_ip=HOST_2_TUNNELING_IP)
+        self._add_inactive_binding(HOST_2)
+        self.assertEqual(1, l2pop_db.get_agent_network_active_port_count(
+            self.ctx, HOST, TEST_NETWORK_ID))
+        self.assertEqual(0, l2pop_db.get_agent_network_active_port_count(
+            self.ctx, HOST_2, TEST_NETWORK_ID))
+
     def test_get_nondistributed_active_network_ports_no_candidate(self):
         self._setup_port_binding(dvr=False)
         # Register a bunch of non-L2 agents on the same host

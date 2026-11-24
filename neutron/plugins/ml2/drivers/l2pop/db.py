@@ -80,8 +80,11 @@ def _get_active_network_ports(context, network_id):
         agent_model.Agent.host == ml2_models.PortBinding.host)
     query = query.join(models_v2.Port)
     query = query.options(orm.selectinload(ml2_models.PortBinding.port))
+    # A port can also have INACTIVE bindings, e.g. for the destination host
+    # of a live migration. Only the ACTIVE binding says where the port is.
     query = query.filter(models_v2.Port.network_id == network_id,
-                         models_v2.Port.status == const.PORT_STATUS_ACTIVE)
+                         models_v2.Port.status == const.PORT_STATUS_ACTIVE,
+                         ml2_models.PortBinding.status == const.ACTIVE)
     return query
 
 
@@ -167,7 +170,8 @@ def get_agent_network_active_port_count(context, agent_host,
                            const.PORT_STATUS_ACTIVE,
                            models_v2.Port.device_owner !=
                            const.DEVICE_OWNER_DVR_INTERFACE,
-                           ml2_models.PortBinding.host == agent_host)
+                           ml2_models.PortBinding.host == agent_host,
+                           ml2_models.PortBinding.status == const.ACTIVE)
 
     ha_iface_ids_query = _get_ha_router_interface_ids_subquery(
         context, network_id
