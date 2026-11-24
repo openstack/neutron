@@ -18,6 +18,7 @@ from unittest import mock
 from neutron_lib import context
 from neutron_lib.plugins.ml2 import ovs_constants as p_const
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l2.extensions.metadata import metadata_flows_process
@@ -222,7 +223,7 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
 
         class Port:
             def __init__(self):
-                self.device_id = "d1"
+                self.device_id = uuidutils.generate_uuid()
                 self.project_id = "p1"
 
         with mock.patch.object(self.meta_ext.meta_daemon,
@@ -255,6 +256,14 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
                 self.meta_ext.ext_api.get_provider_ip_info,
                 port2_id, None, None)
 
+    def test_get_provider_ip_info_invalid_device_id(self):
+        port = mock.Mock(device_id="vm1\n http-request deny\n #",
+                         project_id="p1")
+        with mock.patch.object(self.meta_ext.ext_api.cache_api,
+                               "get_resource_by_id", return_value=port):
+            self.assertIsNone(
+                self.meta_ext.ext_api.get_provider_ip_info("port1"))
+
     def test_delete_port(self):
         port_mac_address = "aa:aa:aa:aa:aa:aa"
         port_name = "tap-p1"
@@ -262,8 +271,17 @@ class MetadataPathAgentExtensionTestCase(base.BaseTestCase):
         port_ofport = 1
         port_device_owner = "compute:test"
         port_ip = "1.1.1.1"
+
+        # Need to return a mock entry from the resource cache
+        port_obj = mock.Mock(
+            port_id=port_id,
+            device_owner=port_device_owner,
+            device_id=uuidutils.generate_uuid())
+
         with mock.patch.object(self.meta_ext.meta_daemon,
-                               "config") as h_config:
+                               "config") as h_config, mock.patch.object(
+                self.meta_ext.ext_api.cache_api,
+                "get_resource_by_id", return_value=port_obj):
             port = {"port_id": port_id,
                     "fixed_ips": [{"ip_address": port_ip,
                                    "subnet_id": "1"}],
