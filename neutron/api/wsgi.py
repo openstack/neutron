@@ -21,7 +21,6 @@ from neutron_lib import exceptions as exception
 import oslo_i18n
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from oslo_service import wsgi
 from oslo_utils import encodeutils
 from oslo_utils import excutils
 import routes.middleware
@@ -47,7 +46,7 @@ class WorkerService:
     """
 
 
-class Request(wsgi.Request):
+class Request(webob.Request):
 
     def best_match_content_type(self):
         """Determine the most acceptable content-type.
