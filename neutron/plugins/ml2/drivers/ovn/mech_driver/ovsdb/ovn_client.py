@@ -2195,7 +2195,6 @@ class OVNClient:
             utils.ovn_lrouter_port_name(port_id),
             utils.ovn_name(router_id), if_exists=True)]
         self._transaction(commands, txn=txn)
-        db_rev.delete_revision(context, port_id, ovn_const.TYPE_ROUTER_PORTS)
 
     def delete_router_port(self, context, port_id, subnet_ids=None):
         try:
@@ -2204,6 +2203,18 @@ class OVNClient:
         except idlutils.RowNotFound:
             return
 
+        port_removed = self._delete_router_port(context, port_id, ovn_port,
+                                                subnet_ids)
+        # NOTE: the revision row is deleted only once the transaction that
+        # deletes the Logical_Router_Port has been committed. If anything in
+        # that transaction fails, the row is kept and the maintenance task
+        # deletes the Logical_Router_Port later.
+        if port_removed:
+            db_rev.delete_revision(context, port_id,
+                                   ovn_const.TYPE_ROUTER_PORTS)
+
+    def _delete_router_port(self, context, port_id, ovn_port, subnet_ids):
+        """Returns True if the LRP was deleted, False otherwise."""
         subnet_ids = subnet_ids or []
         port_removed = False
         port_mac = ovn_port.mac
@@ -2238,7 +2249,7 @@ class OVNClient:
                                               txn=txn)
                 if port_mac:
                     self.delete_mac_binding_entries_by_mac(port_mac)
-                return
+                return port_removed
 
             if not subnet_ids:
                 subnet_ids = ovn_port.external_ids.get(
@@ -2281,6 +2292,7 @@ class OVNClient:
                 # otherwise, we just update the revision database
                 db_rev.bump_revision(
                     context, port, ovn_const.TYPE_ROUTER_PORTS)
+        return port_removed
 
     def _iter_ipv4_gw_addrs(self, context, router_id):
         yield from (

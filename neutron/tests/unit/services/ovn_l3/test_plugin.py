@@ -488,6 +488,34 @@ class BaseTestOVNL3RouterPluginMixin:
         self.del_rev_p.assert_called_once_with(
             self.context, 'router-port-id', ovn_const.TYPE_ROUTER_PORTS)
 
+    def test_remove_router_interface_lrp_delete_not_committed(self):
+        router_id = 'router-id'
+        self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
+            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                          utils.ovn_name(router_id)})
+        self.get_port.side_effect = n_exc.PortNotFound(
+                                        port_id='router-port-id')
+
+        payload = self._create_payload_for_router_interface(router_id,
+                                                            pass_subnet=False)
+        interface_info = {'subnet_id': self.fake_subnet['id']}
+        payload.metadata['interface_info'] = interface_info
+        with mock.patch.object(
+                self.l3_inst._ovn_client, 'delete_mac_binding_entries_by_mac',
+                side_effect=RuntimeError), \
+                mock.patch.object(self.l3_inst,
+                                  'add_router_interface') as add_ri:
+            self.assertRaises(
+                RuntimeError, self.ovn_drv._process_remove_router_interface,
+                resources.ROUTER_INTERFACE, events.AFTER_DELETE, self,
+                payload)
+
+        self.l3_inst._nb_ovn.lrp_del.assert_called_once_with(
+            'lrp-router-port-id', 'neutron-router-id', if_exists=True)
+        self.del_rev_p.assert_not_called()
+        add_ri.assert_called_once_with(self.context, router_id,
+                                       interface_info)
+
     def test_remove_router_interface_update_lrouter_port(self):
         router_id = 'router-id'
         self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = {
