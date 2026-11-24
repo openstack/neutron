@@ -16,7 +16,6 @@
 from neutron_lib import constants
 from neutron_lib.utils import net
 from oslo_config import cfg
-from oslo_service import wsgi
 from oslo_utils import netutils
 
 from neutron._i18n import _
@@ -189,6 +188,9 @@ core_opts = [
                help=_('IPv6 address of this host. If no address is provided '
                       'and one cannot be determined, ::1 will be '
                       'used.')),
+    cfg.StrOpt('api_paste_config', default='api-paste.ini',
+               help=_('File name for the paste.deploy config for API '
+                      'service')),
 ]
 
 core_cli_opts = [
@@ -199,10 +201,22 @@ core_cli_opts = [
 ]
 
 
+class ConfigNotFound(Exception):
+    def __init__(self, path):
+        msg = _('Could not find config at %(path)s') % {'path': path}
+        super().__init__(msg)
+
+
+class PasteAppNotFound(Exception):
+    def __init__(self, name, path):
+        msg = (_("Could not load paste app '%(name)s' from %(path)s") %
+               {'name': name, 'path': path})
+        super().__init__(msg)
+
+
 def register_core_common_config_opts(cfg=cfg.CONF):
     cfg.register_opts(core_opts)
     cfg.register_cli_opts(core_cli_opts)
-    wsgi.register_opts(cfg)
 
 
 NOVA_CONF_SECTION = 'nova'
