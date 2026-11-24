@@ -24,6 +24,8 @@ from oslo_serialization import jsonutils
 from oslo_service import wsgi
 from oslo_utils import encodeutils
 from oslo_utils import excutils
+import routes.middleware
+import webob
 import webob.dec
 import webob.exc
 
@@ -619,3 +621,41 @@ class Serializer:
             return handlers[content_type]
         except Exception:
             raise exception.InvalidContentType(content_type=content_type)
+
+
+class Router:
+    """WSGI middleware that maps incoming requests to WSGI apps."""
+
+    def __init__(self, mapper):
+        """Create a router for the given routes.Mapper.
+
+        Each route in ``mapper`` must specify a 'controller', which is a
+        WSGI app to call.  You'll probably want to specify an 'action' as
+        well and have your controller be an object that can route the
+        request to the action-specific method.
+        """
+        self.map = mapper
+        self._router = routes.middleware.RoutesMiddleware(self._dispatch,
+                                                          self.map)
+
+    @webob.dec.wsgify(RequestClass=Request)
+    def __call__(self, req):
+        """Route the incoming request to a controller based on self.map.
+
+        If no match, return a 404.
+        """
+        return self._router
+
+    @staticmethod
+    @webob.dec.wsgify(RequestClass=Request)
+    def _dispatch(req):
+        """Dispatch the request to the appropriate controller.
+
+        Called by ``self._router`` after matching the incoming request to
+        a route and putting the information into ``req.environ``.  Either
+        returns 404 or the routed WSGI app's response.
+        """
+        match = req.environ['wsgiorg.routing_args'][1]
+        if not match:
+            return webob.exc.HTTPNotFound()
+        return match['controller']

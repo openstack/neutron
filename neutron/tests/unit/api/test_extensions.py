@@ -27,7 +27,6 @@ from neutron_lib.services import base as service_base
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
-from oslo_service import wsgi as base_wsgi
 import routes
 import testtools
 import webob
@@ -74,7 +73,7 @@ class CustomExtensionCheckMapMemento(fixtures.Fixture):
         )
 
 
-class ExtensionsTestApp(base_wsgi.Router):
+class ExtensionsTestApp(wsgi.Router):
 
     def __init__(self, options=None):
         options = options or {}
