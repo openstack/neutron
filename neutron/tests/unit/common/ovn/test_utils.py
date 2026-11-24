@@ -114,6 +114,29 @@ class TestUtils(base.BaseTestCase):
         self.assertEqual(
             set(), utils.get_chassis_availability_zones(chassis))
 
+    def test_get_az_hints_from_external_ids(self):
+        # The AZ hints are stored in the external_ids as a
+        # comma-separated string; the helper returns a list.
+        TC = namedtuple('TC', 'external_ids output description')
+        test_cases = [
+            TC(None, [], "None"),
+            TC({}, [], "empty dict"),
+            TC({constants.OVN_AZ_HINTS_EXT_ID_KEY: ''}, [], "empty value"),
+            TC({constants.OVN_AZ_HINTS_EXT_ID_KEY: 'az0'},
+               ['az0'], "single AZ"),
+            TC({constants.OVN_AZ_HINTS_EXT_ID_KEY: 'az0,az1'},
+               ['az0', 'az1'], "multiple AZs"),
+            TC({constants.OVN_AZ_HINTS_EXT_ID_KEY: 'az0,,az1'},
+               ['az0', 'az1'], "empty entry"),
+            TC({constants.OVN_AZ_HINTS_EXT_ID_KEY: ' az0 , az1 '},
+               ['az0', 'az1'], "leading/trailing spaces"),
+            TC({constants.OVN_NETWORK_ID_EXT_ID_KEY: 'net_id'},
+               [], "no AZ hints key"),
+        ]
+        for tc in test_cases:
+            rc = utils.get_az_hints_from_external_ids(tc.external_ids)
+            self.assertEqual(tc.output, rc, tc.description)
+
     def test_is_security_groups_enabled(self):
         self.assertTrue(utils.is_security_groups_enabled(
             {constants.PORT_SECURITYGROUPS: ['fake']}))

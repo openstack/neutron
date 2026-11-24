@@ -1624,7 +1624,10 @@ class TestMaintenance(_TestMaintenanceHelper):
         lrp_name = utils.ovn_lrouter_port_name(uuidutils.generate_uuid())
         gateway_chassis = ['gw_ch1', 'gw_ch2', 'gw_ch3']
 
-        self.nb_api.lr_add(lr_name).execute(check_error=True)
+        self.nb_api.lr_add(
+            lr_name,
+            external_ids={ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
+                          'nova,dc1'}).execute(check_error=True)
         ext_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lr_name}
         self.nb_api.add_lrouter_port(
             lrp_name, lr_name, mac=mac,
@@ -1660,7 +1663,7 @@ class TestMaintenance(_TestMaintenanceHelper):
         hcg = self.nb_api.lookup('HA_Chassis_Group', lr_name, default=None)
         self.assertEqual(len(chassis_prio), len(hcg.ha_chassis))
         self.assertEqual(
-            '',
+            'nova,dc1',
             hcg.external_ids[ovn_const.OVN_AZ_HINTS_EXT_ID_KEY])
         self.assertEqual(
             utils.get_neutron_name(lr_name),
