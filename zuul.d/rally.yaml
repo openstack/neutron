@@ -1,10 +1,7 @@
-# shortcut: rally registers its options at runtime, so its multiprocessing
-# workers lose them under the Python 3.14 "forkserver" start method used by
-# resolute. Move these to openstack-single-node-resolute once rally keeps
-# working on Python 3.14 https://bugs.launchpad.net/rally/+bug/2174568
 - job:
     name: neutron-ovs-rally-task
     parent: rally-task-neutron
+    nodeset: openstack-single-node-resolute
     timeout: 10800
     vars:
       devstack_localrc:
@@ -97,6 +94,7 @@
 - job:
     name: neutron-ovn-rally-task
     parent: rally-task-at-devstack
+    nodeset: openstack-single-node-resolute
     required-projects:
       - name: openstack/devstack
       - name: openstack/rally
