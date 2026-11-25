@@ -1,0 +1,9 @@
+---
+upgrade:
+  - |
+    Neutron no longer imports ``oslo_service.wsgi``, that still imports
+    eventlet at module level. The ``api_paste_config`` option is now
+    registered by Neutron itself; the remaining ``wsgi_*`` options
+    registered by ``oslo.service``, that only apply to its eventlet WSGI
+    server (never used by Neutron), are no longer registered and will
+    disappear from the generated sample configuration.

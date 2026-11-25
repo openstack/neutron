@@ -18,6 +18,7 @@ Routines for configuring Neutron
 """
 
 import importlib.metadata
+import os
 import sys
 
 from keystoneauth1 import loading as ks_loading
@@ -30,7 +31,7 @@ from oslo_middleware import cors
 from oslo_middleware import tracing
 from oslo_reports import guru_meditation_report as gmr
 from oslo_reports import opts as gmr_opts
-from oslo_service import wsgi
+from paste import deploy
 
 from neutron._i18n import _
 from neutron.conf import common as common_config
@@ -149,13 +150,27 @@ def load_paste_app(app_name):
 
     :param app_name: Name of the application to load
     """
-    loader = wsgi.Loader(cfg.CONF)
+    config_path = None
+
+    config_path_value = cfg.CONF.api_paste_config
+    if not os.path.isabs(config_path_value):
+        config_path = cfg.CONF.find_file(config_path_value)
+    elif os.path.exists(config_path_value):
+        config_path = config_path_value
+
+    if not config_path:
+        raise common_config.ConfigNotFound(path=config_path_value)
 
     # Log the values of registered opts
     if cfg.CONF.debug:
         cfg.CONF.log_opt_values(LOG, logging.DEBUG)
-    app = loader.load_app(app_name)
-    return app
+    try:
+        LOG.debug("Loading app %(name)s from %(path)s",
+                  {'name': app_name, 'path': config_path})
+        return deploy.loadapp("config:%s" % config_path, name=app_name)
+    except LookupError:
+        LOG.exception("Couldn't lookup app: %s", app_name)
+        raise common_config.PasteAppNotFound(name=app_name, path=config_path)
 
 
 def set_config_defaults():

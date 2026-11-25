@@ -21,13 +21,14 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import constants
 from oslo_config import cfg
 from oslo_middleware import base
-from oslo_service import wsgi
 from oslo_utils import uuidutils
 import testtools
 import webob.dec
 import webtest
 
 from neutron.api import extensions as exts
+from neutron.common import config
+from neutron.conf import common as common_config
 from neutron import manager
 from neutron import tests
 from neutron.tests.functional import base as functional_base
@@ -65,8 +66,7 @@ def create_test_app():
                                     'api-paste.ini')
     paste_config_loc = os.path.abspath(paste_config_loc)
     cfg.CONF.set_override('api_paste_config', paste_config_loc)
-    loader = wsgi.Loader(cfg.CONF)
-    app = loader.load_app('neutron')
+    app = config.load_paste_app('neutron')
     app = InjectContext(app)
     return webtest.TestApp(app)
 
@@ -147,9 +147,9 @@ class TestInvalidAuth(PecanFunctionalTest):
         cfg.CONF.set_override('auth_strategy', 'badvalue')
         # NOTE(blogan): the auth.pipeline_factory will throw a KeyError
         # with a bad value because that value is not the paste config.
-        # This KeyError is translated to a LookupError, which the oslo wsgi
-        # code translates into PasteAppNotFound.
-        with testtools.ExpectedException(wsgi.PasteAppNotFound):
+        # This KeyError is translated to a LookupError, which the
+        # paste loader translates into PasteAppNotFound.
+        with testtools.ExpectedException(common_config.PasteAppNotFound):
             create_test_app()
 
 
