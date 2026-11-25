@@ -127,9 +127,12 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def test__get_used_allocation_mapping(self):
         alloc_mapping = {}
-        for _ in range(5):
+        vlan_ids = random.sample(
+            range(constants.MIN_VLAN_TAG, constants.MAX_VLAN_TAG + 1), 5)
+        for vlan_id in vlan_ids:
             network = self._create_test_network()
-            segment = self._create_segment(network_id=network.id)
+            segment = self._create_segment(segmentation_id=vlan_id,
+                                           network_id=network.id)
             alloc_mapping.update({segment.segmentation_id: network.project_id})
 
         obj = self._create_network_segment_range(
