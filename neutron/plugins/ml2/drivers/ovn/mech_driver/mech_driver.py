@@ -16,7 +16,6 @@ import atexit
 import collections
 import copy
 import functools
-import multiprocessing
 import operator
 import os
 import threading
@@ -125,7 +124,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._maintenance_thread = None
         self._heartbeat = None
         self._hash_ring_thread = None
-        self._hash_ring_probe_event = multiprocessing.Event()
         self._node_uuid = None
         self.hash_ring_group = ovn_const.HASH_RING_ML2_GROUP
         self.sg_enabled = ovn_acl.is_sg_enabled()
