@@ -494,6 +494,47 @@ class TestL3_NAT_dbonly_mixin(
             mock_get_assoc_data.assert_called_once_with(
                 mock.ANY, fip, floatingip_obj)
 
+    def test__get_assoc_data_with_router_id_without_port(self):
+        router_id = uuidutils.generate_uuid()
+        floatingip_obj = mock.Mock(
+            project_id=uuidutils.generate_uuid(),
+            floating_network_id=uuidutils.generate_uuid())
+        fip = {'router_id': router_id}
+
+        with mock.patch.object(
+                self.db, '_internal_fip_assoc_data') as mock_internal_assoc, \
+                mock.patch.object(
+                    self.db, '_validate_requested_floatingip_router'
+        ) as mock_validate_router, \
+                mock.patch.object(
+                    self.db, 'is_router_distributed', return_value=False):
+            result = self.db._get_assoc_data(
+                self.ctx, fip, floatingip_obj)
+
+        self.assertEqual((None, None, router_id), result)
+        mock_internal_assoc.assert_not_called()
+        mock_validate_router.assert_called_once_with(
+            self.ctx, router_id, floatingip_obj.floating_network_id)
+
+    def test__get_assoc_data_router_without_external_gateway(self):
+        router_id = uuidutils.generate_uuid()
+        external_network_id = uuidutils.generate_uuid()
+        floatingip_obj = mock.Mock(floating_network_id=external_network_id)
+        fip = {'router_id': router_id}
+
+        with mock.patch.object(self.db, '_get_router') as mock_get_router, \
+                mock.patch.object(
+                    port_obj.Port, 'get_objects', return_value=[]
+        ) as mock_get_gw_ports:
+            self.assertRaises(
+                n_exc.Conflict, self.db._get_assoc_data,
+                self.ctx, fip, floatingip_obj)
+
+        mock_get_router.assert_called_once_with(self.ctx, router_id)
+        mock_get_gw_ports.assert_called_once_with(
+            mock.ANY, network_id=external_network_id, device_id=router_id,
+            device_owner=n_const.DEVICE_OWNER_ROUTER_GW)
+
     def test__notify_attaching_interface(self):
         with mock.patch.object(l3_db.registry, 'publish') as mock_notify:
             context = mock.MagicMock()
