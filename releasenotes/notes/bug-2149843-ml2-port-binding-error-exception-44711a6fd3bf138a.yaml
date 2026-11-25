@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    ML2 mechanism drivers can now raise the existing
+    ``neutron_lib.exceptions.PortBindingError`` from ``bind_port()`` when
+    binding cannot safely continue. ML2 stops trying other mechanism drivers,
+    including at higher levels of hierarchical binding, clears partial
+    binding state, and records ``binding_failed``. Other exceptions continue
+    to be logged and ignored so later drivers may bind the port.
+    [`bug 2149843 <https://bugs.launchpad.net/neutron/+bug/2149843>`_]
