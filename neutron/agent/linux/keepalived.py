@@ -41,6 +41,7 @@ KEEPALIVED_ROUTER_ID = 'neutron'
 GARP_PRIMARY_DELAY = 60
 HEALTH_CHECK_NAME = 'ha_health_check'
 _IS_NO_TRACK_SUPPORTED = None
+_IS_BFD_SUPPORTED = None
 
 LOG = logging.getLogger(__name__)
 SIGTERM_TIMEOUT = 5
@@ -52,6 +53,13 @@ def _is_keepalived_use_no_track_supported():
         _IS_NO_TRACK_SUPPORTED = (
             checks.keepalived_use_no_track_support())
     return _IS_NO_TRACK_SUPPORTED
+
+
+def _is_keepalived_bfd_supported():
+    global _IS_BFD_SUPPORTED
+    if _IS_BFD_SUPPORTED is None:
+        _IS_BFD_SUPPORTED = checks.keepalived_bfd_support()
+    return _IS_BFD_SUPPORTED
 
 
 def get_free_range(parent_range, excluded_ranges, size=PRIMARY_VIP_RANGE_SIZE):
@@ -500,6 +508,10 @@ class KeepalivedManager:
                    '-f', config_path,
                    '-p', pid_file,
                    '-r', self.get_vrrp_pid_file_name(pid_file)]
+            # Neutron does not use BFD; keepalived >= 2.3.2 would otherwise
+            # lock the BFD PID file (/run/bfd.pid), shared by all routers.
+            if _is_keepalived_bfd_supported():
+                cmd.append('-B')
             if logging.is_debug_enabled(cfg.CONF):
                 cmd.append('-D')
             return cmd

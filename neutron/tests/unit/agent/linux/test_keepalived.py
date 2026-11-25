@@ -553,6 +553,28 @@ class KeepalivedManagerTestCase(base.BaseTestCase):
         process.disable.assert_called_once_with(
             sig=str(int(signal.SIGTERM)))
 
+    def _get_keepalived_cmd(self, bfd_supported):
+        vrrp_pm = mock.Mock(active=False)
+        callback = self.keepalived_manager._get_keepalived_process_callback(
+            vrrp_pm, '/fake/keepalived.conf')
+        with mock.patch.object(keepalived, '_is_keepalived_bfd_supported',
+                               return_value=bfd_supported), \
+                mock.patch.object(keepalived.linux_utils,
+                                  'delete_if_exists'):
+            return callback('/fake/keepalived.pid')
+
+    def test_keepalived_cmd_bfd_supported(self):
+        cmd = self._get_keepalived_cmd(bfd_supported=True)
+        self.assertEqual(['keepalived', '-P',
+                          '-f', '/fake/keepalived.conf',
+                          '-p', '/fake/keepalived.pid',
+                          '-r', '/fake/keepalived.pid-vrrp',
+                          '-B'], cmd)
+
+    def test_keepalived_cmd_bfd_not_supported(self):
+        cmd = self._get_keepalived_cmd(bfd_supported=False)
+        self.assertNotIn('-B', cmd)
+
     def test_destroy_force(self):
         mock_get_process = self.mock_get_process.start()
         with mock.patch.object(keepalived, 'SIGTERM_TIMEOUT', 0):
