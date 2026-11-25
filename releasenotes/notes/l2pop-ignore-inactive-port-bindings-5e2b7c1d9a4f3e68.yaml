@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    The l2population mechanism driver no longer includes a port's
+    ``INACTIVE`` port bindings when it builds the forwarding entries it sends
+    to agents. Before, a leftover ``INACTIVE`` binding (for example from a
+    live migration that failed or was interrupted) made a full FDB sync
+    advertise the port's MAC and IP address on the binding's host as well as
+    on the host the port is actually bound to, which caused intermittent
+    loss of connectivity for that port. See
+    `bug 2175668 <https://bugs.launchpad.net/neutron/+bug/2175668>`_.
