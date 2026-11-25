@@ -76,7 +76,5 @@ def boot_server(server_func, prog=None):
     config.setup_gmr()
     try:
         return server_func()
-    except KeyboardInterrupt:
-        pass
     except RuntimeError as e:
         sys.exit(_("ERROR: %s") % e)

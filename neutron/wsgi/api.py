@@ -13,6 +13,7 @@
 """WSGI application entry-point for Neutron API."""
 import threading  # noqa:E402
 
+from neutron._i18n import _
 from neutron import server  # noqa:E402
 from neutron.server import api  # noqa:E402
 
@@ -21,3 +22,5 @@ lock = threading.Lock()
 with lock:
     if application is None:
         application = server.boot_server(api.api_server, prog='neutron-api')
+        if application is None:
+            raise RuntimeError(_('Failed to load Neutron WSGI application'))
