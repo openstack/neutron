@@ -539,6 +539,75 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
             'Logical_Switch_Port', 'foo')
 
 
+class TestWaitForChassisNbCfgEvent(base.BaseTestCase):
+    """Tests for the ``WaitForChassisNbCfgEvent.key`` override.
+
+    The event is registered once per live migration and carries
+    per-instance state (``port_id``, ``expected_nb_cfg``) that is not
+    part of the ``RowEvent`` conditions. The ``key`` override makes two
+    instances of the same class, e.g. two concurrent live migrations to
+    the same destination chassis, distinct for the event handler, which
+    registers both instead of silently dropping the second one.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.handler = ovsdb_monitor.OvnDbNotifyHandler(mock.ANY)
+
+    @staticmethod
+    def _create_event(port_id, expected_nb_cfg, chassis_name='dst-host'):
+        return ovsdb_monitor.WaitForChassisNbCfgEvent(
+            mock.Mock(), chassis_name, port_id, expected_nb_cfg)
+
+    def _watched_wait_events(self):
+        return [event for event in self.handler._watched_events
+                if isinstance(event, ovsdb_monitor.WaitForChassisNbCfgEvent)]
+
+    def test_key_reflects_per_instance_state(self):
+        event1 = self._create_event('port-1', 101)
+        event2 = self._create_event('port-2', 102)
+        self.assertNotEqual(event1.key, event2.key)
+        self.assertNotEqual(event1, event2)
+        self.assertNotEqual(hash(event1), hash(event2))
+
+    def test_watch_two_events_same_chassis(self):
+        # Two concurrent live migrations to the same destination chassis
+        # differ only in the per-instance state (``port_id``,
+        # ``expected_nb_cfg``). Both events must be registered: with the
+        # default ``RowEvent`` key the second registration would be
+        # silently dropped and that port would never be set UP.
+        event1 = self._create_event('port-1', 101)
+        event2 = self._create_event('port-2', 102)
+        self.handler.watch_events([event1, event2])
+        self.assertEqual(2, len(self._watched_wait_events()))
+
+    def test_watch_equal_event_is_idempotent(self):
+        # Watching an equal event, e.g. a retry of the same live
+        # migration, must not register a duplicate.
+        event1 = self._create_event('port-1', 101)
+        event2 = self._create_event('port-1', 101)
+        self.assertEqual(event1, event2)
+        self.handler.watch_events([event1, event2])
+        self.assertEqual(1, len(self._watched_wait_events()))
+
+    def test_unwatch_with_equal_event_removes_only_that_event(self):
+        # ``TimedOnetimeEvent`` expiry and the one-shot cleanup in the
+        # ovsdbapp notification loop call ``unwatch_event`` with the
+        # registered instance. A newly created equal instance must
+        # remove only that event, never a sibling registered for
+        # another port. Unwatching again must not remove the sibling.
+        event1 = self._create_event('port-1', 101)
+        event2 = self._create_event('port-2', 102)
+        self.handler.watch_events([event1, event2])
+        standin = self._create_event('port-1', 101)
+        self.handler.unwatch_event(standin)
+        watched = self._watched_wait_events()
+        self.assertEqual(1, len(watched))
+        self.assertEqual(event2.key, watched[0].key)
+        self.handler.unwatch_event(standin)
+        self.assertEqual(1, len(self._watched_wait_events()))
+
+
 class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):
     def setUp(self):
         super().setUp()

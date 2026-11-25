@@ -259,6 +259,11 @@ class WaitForChassisNbCfgEvent(utils.TimedOnetimeEvent):
         self._port_id = port_id
         self._expected_nb_cfg = expected_nb_cfg
 
+    @property
+    def key(self):
+        return (self.__class__, self.table, tuple(self.events),
+                self._port_id, self._expected_nb_cfg)
+
     def match_fn(self, event, row, old):
         if not hasattr(old, 'nb_cfg'):
             return False
