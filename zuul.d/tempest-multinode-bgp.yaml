@@ -322,8 +322,19 @@
     name: neutron-ovn-evpn-tempest-multinode
     parent: neutron-ovn-bgp-tempest-multinode-base
     nodeset: neutron-five-node-resolute-bgp-v2
+    required-projects:
+      - openstack/octavia
+      - openstack/octavia-lib
+      - openstack/octavia-tempest-plugin
+      - openstack/ovn-octavia-provider
+      - openstack/python-octaviaclient
     vars:
       enable_evpn: true
+      # Lists are replaced (not merged) when inheriting, so the parent's
+      # neutron-tempest-plugin must be repeated here.
+      tempest_plugins:
+        - neutron-tempest-plugin
+        - octavia-tempest-plugin
       # OVN discovers remote VTEPs from FDB entries and defaults
       # to DEFAULT_VXLAN_PORT (4789) when no port is specified.
       # The EVPN tunnel must match this port for bindings to be
@@ -332,6 +343,9 @@
       # tempest (EVPNVNIProvisioner).
       evpn_vxlan_port: 4789
       evpn_loopback_ip: '99.98.2.1'
+      devstack_plugins:
+        octavia: https://opendev.org/openstack/octavia
+        ovn-octavia-provider: https://opendev.org/openstack/ovn-octavia-provider
       devstack_localrc:
         FRR_USE_EVPN: True
         OVN_AGENT_EXTENSIONS: 'metadata,ovn-evpn'
@@ -339,8 +353,23 @@
         OVN_EVPN_BGP_LOCAL_INTERFACE: br-bgp-0
         OVN_EVPN_LOCAL_IP: "{{ evpn_loopback_ip }}"
         OVN_EVPN_VXLAN_PORT: "{{ evpn_vxlan_port }}"
+        # Octavia API and driver agent only (no amphora management network,
+        # flavor or image): only the OVN provider is used.
+        OCTAVIA_NODE: api
+        DISABLE_AMP_IMAGE_BUILD: true
       devstack_services:
         q-ovn-evpn: true
+        octavia: true
+        o-api: true
+        o-da: true
+        o-cw: false
+        o-hm: false
+      devstack_local_conf:
+        post-config:
+          $OCTAVIA_CONF:
+            api_settings:
+              enabled_provider_drivers: 'ovn:OVN provider driver'
+              default_provider_driver: 'ovn'
     group-vars:
       tempest:
         tempest_test_regex: "\
@@ -352,6 +381,10 @@
         devstack_local_conf:
           test-config:
             $TEMPEST_CONFIG:
+              service_available:
+                load_balancer: True
+              load_balancer:
+                provider: ovn
               neutron_plugin_options:
                 evpn_vtep_ip: 172.31.1.1
                 evpn_datapath_ip: 172.31.1.1
