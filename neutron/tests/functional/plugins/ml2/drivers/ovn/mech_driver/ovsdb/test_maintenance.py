@@ -27,6 +27,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
+from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
 from neutron_lib.utils import net as net_utils
 
@@ -846,6 +847,89 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertIsNone(db_rev.get_revision_row(
             self.context,
             neutron_obj['port_id']))
+
+    def _check_router_port_left_by_failed_interface_removal(
+            self, external_gateway_info=None, check_router=None):
+        net = self._create_network('network_rri')
+        subnet = self._create_subnet('subnet_rri', net['id'])
+        router = self._create_router(
+            'router_rri', external_gateway_info=external_gateway_info)
+        port_id = self._add_router_interface(router['id'],
+                                             subnet['id'])['port_id']
+        lrp = self._find_router_port_row_by_port_id(port_id)
+        self.assertIsNotNone(lrp)
+        if check_router:
+            check_router(router, subnet)
+
+        with mock.patch.object(self._l3_ovn_client,
+                               'delete_mac_binding_entries_by_mac',
+                               side_effect=RuntimeError('SB unreachable')
+                               ) as mock_del_mac:
+            self._remove_router_interface(router['id'], subnet['id'])
+        mock_del_mac.assert_called_once_with(lrp.mac)
+        self.assertRaises(n_exc.PortNotFound,
+                          self._ovn_client._plugin.get_port,
+                          self.context, port_id)
+        self.assertIsNotNone(self._find_router_port_row_by_port_id(port_id))
+        self.assertIsNotNone(db_rev.get_revision_row(
+            self.context, port_id, ovn_const.TYPE_ROUTER_PORTS))
+        new_ports = self._ovn_client._plugin.get_ports(
+            self.context,
+            filters={'device_id': [router['id']],
+                     'device_owner': [n_const.DEVICE_OWNER_ROUTER_INTF]})
+        self.assertEqual(1, len(new_ports))
+        new_port_id = new_ports[0]['id']
+        self.assertNotEqual(port_id, new_port_id)
+        if check_router:
+            check_router(router, subnet)
+
+        self.maint.check_for_inconsistencies()
+
+        self.assertIsNone(self._find_router_port_row_by_port_id(port_id))
+        self.assertIsNone(db_rev.get_revision_row(
+            self.context, port_id, ovn_const.TYPE_ROUTER_PORTS))
+        self.assertIsNotNone(
+            self._find_router_port_row_by_port_id(new_port_id))
+        if check_router:
+            check_router(router, subnet)
+        return router, subnet
+
+    def test_router_port_left_by_failed_interface_removal(self):
+        self._check_router_port_left_by_failed_interface_removal()
+
+    def test_router_port_left_by_failed_interface_removal_snat(self):
+        # One SNAT rule per attached subnet.
+        cfg.CONF.set_override('ovn_router_indirect_snat', False, 'ovn')
+        ext_net = self._create_network('ext_network_rri', external=True)
+        ext_subnet = self._create_subnet(
+            'ext_subnet_rri', ext_net['id'],
+            **{'cidr': '100.0.0.0/24',
+               'gateway_ip': '100.0.0.254',
+               'allocation_pools': [
+                   {'start': '100.0.0.2', 'end': '100.0.0.253'}],
+               'enable_dhcp': False})
+        external_gateway_info = {
+            'enable_snat': True,
+            'network_id': ext_net['id'],
+            'external_fixed_ips': [
+                {'ip_address': '100.0.0.2', 'subnet_id': ext_subnet['id']}]}
+
+        def check_snat(router, subnet):
+            self.assertIsNotNone(self._find_nat_rule(
+                router['id'], '100.0.0.2', logical_ip=subnet['cidr'],
+                nat_type='snat'))
+
+        router, subnet = (
+            self._check_router_port_left_by_failed_interface_removal(
+                external_gateway_info=external_gateway_info,
+                check_router=check_snat))
+        # The abandoned removal left the subnet's SNAT rule and the new
+        # interface added another one; the maintenance task removed one.
+        snat_rules = [
+            r for r in self.nb_api.get_lrouter_nat_rules(
+                utils.ovn_name(router['id']))
+            if r['type'] == 'snat' and r['logical_ip'] == subnet['cidr']]
+        self.assertEqual(1, len(snat_rules))
 
     def test_check_for_igmp_snooping_enabled(self):
         cfg.CONF.set_override('igmp_snooping_enable', False, group='OVS')
