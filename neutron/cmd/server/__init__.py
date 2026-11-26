@@ -24,13 +24,20 @@ from neutron.server import periodic  # noqa: E402
 from neutron.server import rpc  # noqa: E402
 
 
+def _boot_server(server_func):
+    try:
+        return server.boot_server(server_func)
+    except KeyboardInterrupt:
+        return None
+
+
 def main_ovn_maintenance():
-    return server.boot_server(ovn_maintenance.ovn_maintenance_worker)
+    return _boot_server(ovn_maintenance.ovn_maintenance_worker)
 
 
 def main_rpc():
-    server.boot_server(rpc.rpc_server)
+    _boot_server(rpc.rpc_server)
 
 
 def main_periodic():
-    server.boot_server(periodic.periodic_workers)
+    _boot_server(periodic.periodic_workers)
